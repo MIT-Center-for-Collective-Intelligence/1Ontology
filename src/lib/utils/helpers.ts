@@ -92,10 +92,7 @@ export const unlinkPropertyOf = async (
     | string,
   removeNodeId: string,
   removeFromId: string,
-  // When set, the spec/gen reciprocal write below also emits a child
-  // `NodeChange` linked to the user-initiated parent log. Other branches
-  // (parts/isPartOf, propertyOf) intentionally remain silent for now —
-  // see the scope-narrowing discussion in the diffValue/triggeredBy refactor.
+  // When set, makes a child log linked to this parent
   parentLog?: {
     logId: string;
     nodeId: string;
@@ -103,8 +100,7 @@ export const unlinkPropertyOf = async (
     changeType: NodeChange["changeType"];
   },
   uname?: string,
-  // Required for the child log to survive `appName` filters in
-  // HistoryTab / UserActivity. Mirrors the same field on the parent log.
+  // Mirrors parentLog.appName so child logs aren't filtered out
   appName?: string,
 ) => {
   if (!removeFromId) return;
@@ -134,8 +130,7 @@ export const unlinkPropertyOf = async (
   if (unlinkFromDoc.exists()) {
     const unlinkFromData = unlinkFromDoc.data() as INode;
     if (removeFrom === "generalizations" || removeFrom === "specializations") {
-      // Snapshot pre-mutation state so the child log's `previousValue` is
-      // independent of the in-place filter below.
+      // Snapshot before the in-place filter below.
       const previousValue = JSON.parse(
         JSON.stringify(unlinkFromData[removeFrom]),
       );
@@ -625,17 +620,9 @@ const updateProperty = async (
 };
 
 /**
- * Writes a NodeChange entry to NODES_LOGS and returns the doc id used.
- *
- * `preGeneratedId` lets the caller reserve a doc id up-front via
- * `doc(collection(db, NODES_LOGS)).id` so it can be referenced by the
- * `triggeredBy.logId` field on subsequent child logs *before* the parent log's
- * own write resolves. Firestore decides ids client-side, so this is safe even
- * though `setDoc` below is fire-and-forget — the id we hand back exists in
- * the database before any consumer reads it.
- *
- * Returns `undefined` for the `!modifiedBy` skip path so callers can detect
- * "no log written, do not attach children to me" without inspecting the data.
+ * Writes a NodeChange to NODES_LOGS and returns the doc id (or `undefined` if
+ * skipped due to missing `modifiedBy`). Pass `preGeneratedId` to reserve the
+ * id up-front so child logs can reference it via `triggeredBy.logId`.
  */
 export const saveNewChangeLog = (
   db: any,
@@ -643,12 +630,6 @@ export const saveNewChangeLog = (
   preGeneratedId?: string,
 ): string | undefined => {
   if (!data.modifiedBy) return undefined;
-  // Pre-compute the renderable diff so the UI never has to re-derive it.
-  // `computeDiffValue` returns null for non-collection changeTypes; in that
-  // case `diffValue` is left absent and consumers fall back to
-  // `previousValue` / `newValue` directly. Titles are read straight off the
-  // link nodes inside `previousValue` / `newValue` — callers are responsible
-  // for populating `ILinkNode.title` on every live write.
   const diffValue = computeDiffValue(data);
   if (diffValue) data.diffValue = diffValue;
   const changeUseRef = preGeneratedId
@@ -1503,9 +1484,7 @@ export const updateLinks = async (
   linkType: "specializations" | "generalizations",
   nodes: { [nodeId: string]: INode },
   db: any,
-  // When set, each successful push also emits a child log on `childId`
-  // linked to the user-initiated parent log. Callers that aren't part of
-  // the user-edit orchestration (e.g. clones) leave this undefined.
+  // When set, each push also emits a child log on `childId` linked to this parent.
   parentLog?: {
     logId: string;
     nodeId: string;
@@ -1513,8 +1492,7 @@ export const updateLinks = async (
     changeType: NodeChange["changeType"];
   },
   uname?: string,
-  // Required for the child log to survive `appName` filters in
-  // HistoryTab / UserActivity. Mirrors the same field on the parent log.
+  // Mirrors parentLog.appName so child logs aren't filtered out.
   appName?: string,
 ) => {
   for (let childId of links) {
@@ -1529,8 +1507,7 @@ export const updateLinks = async (
       (collection) => collection.collectionName === "main",
     );
     if (indexElmt === -1) {
-      // Snapshot pre-mutation so child log's `previousValue` is stable
-      // regardless of which branch below mutates `childLinks`.
+      // Snapshot before the in-place mutations below.
       const previousValue = JSON.parse(JSON.stringify(childLinks));
       if (mainCollection) {
         mainCollection.nodes.push(newLink);

@@ -1,23 +1,9 @@
 /**
- * Producer for `NodeChange.diffValue` — the pre-computed, ready-to-render
- * representation of a collection-typed change. Computed at write time inside
- * `saveNewChangeLog` so the UI never has to re-diff or resolve titles when
- * displaying history.
- *
- * Returns `null` for changeTypes that have no collection diff representation
- * (`change text`, `add images`, `add property`, `add node`, `delete node`,
- * etc.). Callers should treat `null` as "no diffValue field on this record"
- * and the UI falls back to its legacy rendering path.
- *
- * Title resolution is purely local — every `ILinkNode` inside
- * `previousValue` / `newValue` is expected to carry its `title` (set by
- * whichever caller wrote the link into the live document). The producer
- * never reaches outside the `NodeChange` to fetch titles, so the function
- * stays synchronous and historical entries render correctly even after a
- * node is renamed or unloaded from the local cache.
- *
- * Mirrors the runtime behaviour of `diffCollections` / `diffSortedCollections`
- * in `helpers.ts`, but emits the typed `DiffCollection[]` shape.
+ * Computes `NodeChange.diffValue` at write time so the UI never re-diffs.
+ * Returns `null` for non-collection changeTypes (caller falls back to the
+ * legacy render path). Titles are read off `ILinkNode.title` on the change —
+ * never fetched — so the function stays synchronous and historical entries
+ * are stable across renames.
  */
 
 import {
@@ -27,12 +13,7 @@ import {
   NodeChange,
 } from "@components/types/INode";
 
-/**
- * `NodeChange.changeType` values that produce a `diffValue`. All other
- * changeTypes (text edits, image add/remove, schema changes, node create/
- * delete, etc.) are renderable directly from `previousValue` / `newValue` and
- * carry no `diffValue`.
- */
+/** `NodeChange.changeType` values that produce a `diffValue`. */
 const COLLECTION_CHANGE_TYPES: ReadonlySet<NodeChange["changeType"]> = new Set([
   "add element",
   "remove element",
@@ -62,10 +43,6 @@ export const computeDiffValue = (
     : diffCollectionContents(previous, next);
 };
 
-// ---------------------------------------------------------------------------
-// Internals
-// ---------------------------------------------------------------------------
-
 const asCollections = (value: any): ICollection[] | null => {
   if (!Array.isArray(value)) return null;
   for (const v of value) {
@@ -81,13 +58,7 @@ const asCollections = (value: any): ICollection[] | null => {
   return value as ICollection[];
 };
 
-/**
- * Build a `DiffLinkNode` from a source `ILinkNode` carried inside
- * `previousValue` / `newValue`. The source's `title` is taken verbatim — it
- * is the snapshot at edit time, set by whichever caller wrote the link into
- * the live document. If `title` is missing, we fall back to the empty
- * string rather than throwing.
- */
+/** Build a `DiffLinkNode` from a source `ILinkNode`, snapshotting its title. */
 const buildDiffNode = (
   id: string,
   source: { title?: string; optional?: boolean },
@@ -140,10 +111,7 @@ const diffCollectionContents = (
     const newNodes = new Map((newCollection?.nodes || []).map((n) => [n.id, n]));
     const ids = new Set<string>([...oldNodes.keys(), ...newNodes.keys()]);
 
-    // Detect within-collection reorders: of the IDs present in BOTH sides of
-    // this collection, anything not in their LCS is one of the items that
-    // actually moved relative to the others. Skipped when the collection only
-    // exists on one side — there's no order to compare.
+    // Within-collection reorders: IDs missing from `stableIds` are the ones that moved.
     let stableIds: Set<string> = new Set();
     if (oldCollection && newCollection) {
       const sharedOldOrder = oldCollection.nodes
@@ -178,12 +146,7 @@ const diffCollectionContents = (
           }),
         );
       } else {
-        // Node is in both old and new of the same collection. Two annotations
-        // can fire here, independently and orthogonally:
-        //   * `sort` — moved relative to the other shared nodes (LCS-minimal).
-        //   * `optionalChange` — the `optional` boolean flipped, e.g. the
-        //     toggle-optional path in InheritedPartsViewerEdit.tsx that logs
-        //     a `modify elements` change differing only on this boolean.
+        // In both sides — annotate `sort` if reordered, `optionalChange` if the flag flipped.
         const oldOptional = !!oldNodes.get(id)?.optional;
         const newOptional = !!newNodes.get(id)?.optional;
         const optionalChange =
@@ -232,12 +195,7 @@ const diffCollectionContents = (
   return result;
 };
 
-/**
- * Mirrors `diffSortedCollections` for the `sort collections` changeType
- * (reordering of containers). Stable collections are kept in place; moved
- * ones get `changeType: "sort"` plus an `added`/`removed` pair at the new and
- * old positions.
- */
+/** Diff for the `sort collections` changeType (container reordering). */
 const diffSortedCollections = (
   oldValue: ICollection[],
   newValue: ICollection[],
@@ -292,15 +250,7 @@ const lcsCollectionNames = (
   );
 
 /**
- * Generic LCS: returns the set of values that appear in the longest common
- * subsequence of `a` and `b`. Used for two purposes:
- *   1. Finding stable collections during `sort collections` diffs.
- *   2. Finding stable nodes inside a collection during within-collection
- *      reorder detection.
- *
- * Tiebreaker (when `dp[i-1][j] === dp[i][j-1]` we move `i--`) matches
- * `findLcsNames` in helpers.ts:1599-1637 so emitted diffs stay byte-identical
- * to the legacy renderer's behaviour for the existing `sort collections` case.
+ * Returns values that appear in the same relative order in both `a` and `b`, the items that didn't move. 
  */
 const longestCommonSubsequence = <T>(a: T[], b: T[]): Set<T> => {
   const m = a.length;

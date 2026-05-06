@@ -190,39 +190,9 @@ export type NodeChange = {
   appName?: string;
   detailsOfChange?: any;
   logLLMId?: string;
-  /**
-   * Pre-computed, ready-to-render diff for collection-typed changes
-   * (`add element`, `remove element`, `add elements`, `remove elements`,
-   * `modify elements`, `sort elements`, `add collection`, `delete collection`,
-   * `sort collections`).
-   *
-   * Populated at write time by `saveNewChangeLog` via `computeDiffValue`, so
-   * the UI can render history without re-diffing or resolving titles. Titles
-   * are snapshotted into each `DiffLinkNode.title`, which means historical
-   * entries display the title that existed at the time of the edit even after
-   * a node is later renamed or removed from the local cache.
-   *
-   * Absent for non-collection changeTypes (`change text`, `add images`, etc.)
-   * and for legacy records written before the field was introduced — callers
-   * must fall back to recomputing from `previousValue` / `newValue` in that
-   * case.
-   */
+  /** Pre-computed diff for collection-typed changes */
   diffValue?: DiffCollection[];
-  /**
-   * Present on "child" logs — system-generated entries written as a
-   * side-effect of a user's direct edit (the "parent log"). The parent log is
-   * always a direct user action; child logs are reciprocal mutations on
-   * related nodes. `modifiedBy` on child logs attributes to the same user as
-   * the parent.
-   *
-   * Currently emitted for `generalizations` ↔ `specializations` edits via
-   * `unlinkPropertyOf` (removed reciprocals) and `updateLinks` (added
-   * reciprocals). `parts` ↔ `isPartOf`, `propertyOf` side-effects, and
-   * node-deletion cleanup are out of scope and remain orphaned.
-   *
-   * `nodeTitle` is snapshotted at write time so the activity-feed badge can
-   * render without a Firestore lookup or relying on the in-memory cache.
-   */
+  /** Set on child logs to point at the parent log */
   triggeredBy?: {
     logId: string;
     nodeId: string;
@@ -234,21 +204,20 @@ export type NodeChange = {
 export type DiffLinkNode = {
   id: string;
   title: string;
-  // "added": node present only in the new state
-  // "removed": node present only in the old state
-  // node is unchanged if both values are empty
+  /** "added" / "removed" relative to the previous state; absent if unchanged. */
   change?: "added" | "removed";
-  changeType?: "sort"; // node moved between collections
+  /** Node moved between collections. */
+  changeType?: "sort";
   optional?: boolean;
   optionalChange?: "added" | "removed";
 };
 
 export type DiffCollection = {
   collectionName: string;
-  // "added": collection appeared in the new state
-  // "removed": collection disappeared from the new state
-  change?: "added" | "removed"; 
-  changeType?: "sort"; //collection itself moved
+  /** "added" / "removed" relative to the previous state; absent if unchanged. */
+  change?: "added" | "removed";
+  /** Collection itself moved (only for `sort collections` diffs). */
+  changeType?: "sort";
   nodes: DiffLinkNode[];
 };
 

@@ -910,22 +910,8 @@ const CollectionStructure = ({
           return next;
         });
 
-        // Snapshot currentNode's specializations before / after the nodeBId
-        // removal so the parent log carries an actual element-level diff.
-        // `unlinkPropertyOf` above only mutates Firestore — the local
-        // `currentVisibleNode` object is untouched — so deriving here matches
-        // the on-write state. We deliberately do NOT use the `propertyValue`
-        // prop because that has been run through `processCollectionData` in
-        // StructuredProperty.tsx (pagination, `allNodes` / `loadedCount`
-        // annotations) and isn't a clean ICollection[] shape for
-        // `computeDiffValue`.
-        //
-        // Shallow rebuild: `.map` creates new collection wrappers and
-        // `.filter` returns a new nodes array, so nothing in
-        // `currentVisibleNode` is mutated. ILinkNode objects are shared but
-        // never mutated downstream (codebase invariant — every spec/gen
-        // write site assigns a new array or pushes onto one, never touches
-        // existing link objects).
+        // Snapshot specializations before/after nodeBId removal — `unlinkPropertyOf`
+        // above mutated Firestore but not `currentVisibleNode` locally.
         const previousSpecializations: ICollection[] =
           currentVisibleNode.specializations || [];
         const newSpecializations: ICollection[] = previousSpecializations.map(
@@ -935,16 +921,9 @@ const CollectionStructure = ({
           }),
         );
 
-        // Reserve a parent-log id up-front so the child log on nodeB can
-        // stamp `triggeredBy.logId` referencing the same doc that the parent
-        // log below will write to. Mirrors the pattern used in
-        // `handleSaveLinkChanges` (Node.tsx) and
-        // `unlinkSpecializationOrGeneralization` (LinkNode.tsx).
-        //
-        // Note: we deliberately do NOT thread `parentLog` into the
-        // `unlinkPropertyOf` call above. That call's effect *is* the parent
-        // mutation (currentNode losing nodeB from specializations), so its
-        // child-log emission would duplicate the explicit parent log here.
+        // Reserve a parent-log id so the child log on nodeB can reference it via
+        // `triggeredBy.logId`. Not passed to `unlinkPropertyOf` above because that
+        // call is itself part of the parent mutation.
         const parentLogId = doc(collection(db, NODES_LOGS)).id;
         const parentLog = {
           logId: parentLogId,

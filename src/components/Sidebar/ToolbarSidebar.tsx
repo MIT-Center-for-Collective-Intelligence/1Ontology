@@ -987,15 +987,7 @@ const ToolbarSidebar = ({
       ? data.fullNode?.propertyType[data.modifiedProperty]
       : "";
 
-    // Records written after the diffValue pipeline shipped already carry the
-    // pre-computed diff (see `computeDiffValue` in `src/lib/utils/diffValue.ts`),
-    // so the UI skips the recomputation entirely and just hands the stored
-    // `diffValue` to the renderer through the same `detailsOfChange.comparison`
-    // contract the legacy path uses. The `fromDiffValue` marker lets the
-    // renderer indicate visually that no UI-side diffing happened.
-    //
-    // Only legacy records lacking `diffValue` fall through to the in-place
-    // diff via the helper functions.
+    // Fast path: stored `diffValue` skips the UI-side diff entirely.
     if (data.diffValue) {
       data.detailsOfChange = {
         comparison: data.diffValue,
@@ -1035,8 +1027,6 @@ const ToolbarSidebar = ({
       if (targetProperty) {
         let firstChangedNodeId = null;
 
-        // `detailsOfChange.comparison` is set above for both pipelines —
-        // pre-computed `diffValue` (new) or freshly diffed (legacy).
         if (data.detailsOfChange?.comparison) {
           for (const collection of data.detailsOfChange.comparison) {
             const changedNode = collection.nodes.find(
