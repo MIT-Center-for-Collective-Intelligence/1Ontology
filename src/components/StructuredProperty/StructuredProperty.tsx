@@ -1239,7 +1239,6 @@ const StructuredProperty = ({
               : "2px solid orange",
         }}
       >
-        {/* Both pipelines feed `detailsOfChange.comparison`; `fromDiffValue` flags the new path. */}
         <VisualizeTheProperty
           currentImprovement={selectedDiffNode || currentImprovement}
           property={property}

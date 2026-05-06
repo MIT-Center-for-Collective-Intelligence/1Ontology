@@ -991,7 +991,6 @@ const ToolbarSidebar = ({
     if (data.diffValue) {
       data.detailsOfChange = {
         comparison: data.diffValue,
-        fromDiffValue: true,
       };
     } else if (
       (modified_property_type ||
