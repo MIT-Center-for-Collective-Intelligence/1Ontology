@@ -65,7 +65,7 @@ In this example, `ChildNode` is used to display a child node with the given prop
 - Error handling is implemented in the `deleteSubOntologyEditable` function, but it is important to ensure that proper error handling is in place throughout the application.
 - The component does not directly mutate the state but uses provided functions to handle state changes, ensuring a unidirectional data flow.
  */
-import { NODES } from "@components/lib/firestoreClient/collections";
+import { NODES, NODES_LOGS } from "@components/lib/firestoreClient/collections";
 import useConfirmDialog from "@components/lib/hooks/useConfirmDialog";
 import SwapVertIcon from "@mui/icons-material/SwapVert";
 import AddIcon from "@mui/icons-material/Add";
@@ -86,6 +86,7 @@ import {
   INodePath,
   ILinkNode,
   ICollection,
+  NodeChange,
 } from "@components/types/INode";
 import {
   Box,
@@ -242,6 +243,14 @@ const LinkNode = ({
     type: "specializations" | "generalizations",
     removeNodeId: string,
     removeIdFrom: string,
+    parentLog?: {
+      logId: string;
+      nodeId: string;
+      nodeTitle: string;
+      changeType: NodeChange["changeType"];
+    },
+    uname?: string,
+    childAppName?: string,
   ) => {
     const specOrGenDoc = await getDoc(doc(collection(db, NODES), removeIdFrom));
     let removeFrom: "specializations" | "generalizations" = "specializations";
@@ -251,6 +260,9 @@ const LinkNode = ({
     }
     if (specOrGenDoc.exists()) {
       const specOrGenData = specOrGenDoc.data() as INode;
+      const previousValue = JSON.parse(
+        JSON.stringify(specOrGenData[removeFrom]),
+      );
       for (let collection of specOrGenData[removeFrom]) {
         collection.nodes = collection.nodes.filter(
           (c: { id: string }) => c.id !== removeNodeId,
@@ -260,6 +272,21 @@ const LinkNode = ({
       await updateDoc(specOrGenDoc.ref, {
         [`${removeFrom}`]: specOrGenData[removeFrom],
       });
+
+      if (parentLog && uname) {
+        saveNewChangeLog(db, {
+          nodeId: removeIdFrom,
+          modifiedBy: uname,
+          modifiedProperty: removeFrom,
+          previousValue,
+          newValue: specOrGenData[removeFrom],
+          modifiedAt: new Date(),
+          changeType: "remove element",
+          fullNode: specOrGenData,
+          triggeredBy: parentLog,
+          ...(childAppName ? { appName: childAppName } : {}),
+        });
+      }
     }
   };
 
@@ -391,6 +418,13 @@ const LinkNode = ({
         );
         if (nodeDoc.exists()) {
           const nodeData = nodeDoc.data() as INode;
+          const parentLogId = doc(collection(db, NODES_LOGS)).id;
+          const parentLog = {
+            logId: parentLogId,
+            nodeId: currentVisibleNode?.id,
+            nodeTitle: nodeData.title ?? "",
+            changeType: "remove element" as const,
+          };
           const previousValue = JSON.parse(
             JSON.stringify(
               nodeData[property as "specializations" | "generalizations"],
@@ -415,6 +449,9 @@ const LinkNode = ({
               property as "specializations" | "generalizations",
               currentVisibleNode?.id,
               linkId,
+              parentLog,
+              user?.uname,
+              appName,
             );
           }
           if (shouldBeRemovedFromParent && linkNode && !linkNode.nodeType) {
@@ -521,18 +558,22 @@ const LinkNode = ({
             }
           }
 
-          saveNewChangeLog(db, {
-            nodeId: currentVisibleNode?.id,
-            modifiedBy: user?.uname,
-            modifiedProperty: property,
-            previousValue,
-            newValue:
-              nodeData[property as "specializations" | "generalizations"],
-            modifiedAt: new Date(),
-            changeType: "remove element",
-            fullNode: currentVisibleNode,
-            ...(appName ? { appName } : {}),
-          });
+          saveNewChangeLog(
+            db,
+            {
+              nodeId: currentVisibleNode?.id,
+              modifiedBy: user?.uname,
+              modifiedProperty: property,
+              previousValue,
+              newValue:
+                nodeData[property as "specializations" | "generalizations"],
+              modifiedAt: new Date(),
+              changeType: "remove element",
+              fullNode: currentVisibleNode,
+              ...(appName ? { appName } : {}),
+            },
+            parentLogId,
+          );
 
           // Instant tree update for local user
           if (onInstantTreeUpdate) {
@@ -568,7 +609,10 @@ const LinkNode = ({
               relatedNodes,
             );
           }
-          if (property === "specializations" || property === "generalizations") {
+          if (
+            property === "specializations" ||
+            property === "generalizations"
+          ) {
             await triggerUpdateDerivedPaths([currentVisibleNode.id, linkId]);
           }
         }

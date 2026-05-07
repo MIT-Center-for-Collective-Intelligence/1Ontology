@@ -42,7 +42,10 @@ import {
   getFirestore,
   updateDoc,
 } from "firebase/firestore";
-import { NODES } from "@components/lib/firestoreClient/collections";
+import {
+  NODES,
+  NODES_LOGS,
+} from "@components/lib/firestoreClient/collections";
 import {
   DndContext,
   DragOverlay,
@@ -907,22 +910,48 @@ const CollectionStructure = ({
           return next;
         });
 
-        saveNewChangeLog(db, {
+        // Snapshot specializations before/after nodeBId removal — `unlinkPropertyOf`
+        // above mutated Firestore but not `currentVisibleNode` locally.
+        const previousSpecializations: ICollection[] =
+          currentVisibleNode.specializations || [];
+        const newSpecializations: ICollection[] = previousSpecializations.map(
+          (col) => ({
+            ...col,
+            nodes: col.nodes.filter((n: ILinkNode) => n.id !== nodeBId),
+          }),
+        );
+
+        // Reserve a parent-log id so the child log on nodeB can reference it via
+        // `triggeredBy.logId`. Not passed to `unlinkPropertyOf` above because that
+        // call is itself part of the parent mutation.
+        const parentLogId = doc(collection(db, NODES_LOGS)).id;
+        const parentLog = {
+          logId: parentLogId,
           nodeId: currentNodeId,
-          modifiedBy: user.uname,
-          modifiedProperty: "specializations",
-          previousValue: propertyValue,
-          newValue: null,
-          modifiedAt: new Date(),
-          changeType: "modify elements",
-          changeDetails: {
-            action: "nest-specialization",
-            movedNode: nodeBId,
-            newParent: nodeAId,
+          nodeTitle: currentVisibleNode.title ?? "",
+          changeType: "modify elements" as const,
+        };
+
+        saveNewChangeLog(
+          db,
+          {
+            nodeId: currentNodeId,
+            modifiedBy: user.uname,
+            modifiedProperty: "specializations",
+            previousValue: previousSpecializations,
+            newValue: newSpecializations,
+            modifiedAt: new Date(),
+            changeType: "modify elements",
+            changeDetails: {
+              action: "nest-specialization",
+              movedNode: nodeBId,
+              newParent: nodeAId,
+            },
+            fullNode: currentVisibleNode,
+            ...(appName ? { appName } : {}),
           },
-          fullNode: currentVisibleNode,
-          ...(appName ? { appName } : {}),
-        });
+          parentLogId,
+        );
         saveNewChangeLog(db, {
           nodeId: nodeBId,
           modifiedBy: user.uname,
@@ -938,6 +967,7 @@ const CollectionStructure = ({
           },
           fullNode: nodeBData,
           ...(appName ? { appName } : {}),
+          triggeredBy: parentLog,
         });
 
         // Instant tree update: move nodeBId from currentNode's subtree to nodeA's subtree

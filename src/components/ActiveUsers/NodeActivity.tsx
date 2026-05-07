@@ -1,6 +1,6 @@
 import { Box, CircularProgress, Typography, Button } from "@mui/material";
 import { keyframes } from "@mui/system";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   collection,
   getFirestore,
@@ -15,6 +15,7 @@ import {
 import { NodeChange } from "@components/types/INode";
 import { NODES_LOGS } from "@components/lib/firestoreClient/collections";
 import { SCROLL_BAR_STYLE } from "@components/lib/CONSTANTS";
+import { groupActivityLogs } from "@components/lib/utils/groupActivityLogs";
 import ActivityDetails from "./ActivityDetails";
 
 const floatTimelineCard = keyframes`
@@ -150,6 +151,9 @@ const NodeActivity = ({
       setLoadingMore(false);
     }
   };
+
+  // Pull child logs out of the top-level feed and add them to their parent
+  const grouped = useMemo(() => groupActivityLogs(logs), [logs]);
 
   if (loading) {
     return (
@@ -341,7 +345,7 @@ const NodeActivity = ({
 
       {logs.length > 0 && (
         <>
-          {logs.map((log: NodeChange & { id: string }) => (
+          {grouped.items.map((log: NodeChange & { id: string }) => (
             <ActivityDetails
               key={log.id}
               activity={log}
@@ -349,6 +353,7 @@ const NodeActivity = ({
               modifiedByDetails={activeUsers[log.modifiedBy]}
               selectedDiffNode={selectedDiffNode}
               nodes={nodes}
+              childActivities={grouped.childrenByParent.get(log.id)}
             />
           ))}
 

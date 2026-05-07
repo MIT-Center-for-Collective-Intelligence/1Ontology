@@ -987,7 +987,12 @@ const ToolbarSidebar = ({
       ? data.fullNode?.propertyType[data.modifiedProperty]
       : "";
 
-    if (
+    // Fast path: stored `diffValue` skips the UI-side diff entirely.
+    if (data.diffValue) {
+      data.detailsOfChange = {
+        comparison: data.diffValue,
+      };
+    } else if (
       (modified_property_type ||
         data.modifiedProperty === "isPartOf" ||
         data.modifiedProperty === "parts" ||

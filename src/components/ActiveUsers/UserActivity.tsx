@@ -7,7 +7,7 @@ import {
   Typography,
   Pagination,
 } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   collection,
   doc,
@@ -23,6 +23,7 @@ import {
 import { NodeChange } from "@components/types/INode";
 import { NODES_LOGS } from "@components/lib/firestoreClient/collections";
 import { getChangeDescription } from "@components/lib/utils/helpers";
+import { groupActivityLogs } from "@components/lib/utils/groupActivityLogs";
 import { RiveComponentMemoized } from "../Common/RiveComponentExtended";
 import { SCROLL_BAR_STYLE } from "@components/lib/CONSTANTS";
 import ActivityDetails from "./ActivityDetails";
@@ -127,6 +128,9 @@ const UserActivity = ({
     }
   };
 
+  // Pull child logs out of the top-level feed and hand them to their parent
+  const grouped = useMemo(() => groupActivityLogs(logs), [logs]);
+
   if (loading) {
     return (
       <Box
@@ -186,13 +190,14 @@ const UserActivity = ({
 
       {logs.length > 0 && (
         <>
-          {logs.map((log) => (
+          {grouped.items.map((log) => (
             <ActivityDetails
               key={log.id}
               activity={log}
               displayDiff={displayDiff}
               selectedDiffNode={selectedDiffNode}
               nodes={nodes}
+              childActivities={grouped.childrenByParent.get(log.id)}
             />
           ))}
 

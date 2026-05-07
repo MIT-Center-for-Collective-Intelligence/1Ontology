@@ -6,8 +6,12 @@ import {
   Tooltip,
   Stack,
   IconButton,
+  Collapse,
 } from "@mui/material";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import SubdirectoryArrowRightIcon from "@mui/icons-material/SubdirectoryArrowRight";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import { alpha } from "@mui/material/styles";
 import OptimizedAvatar from "../Chat/OptimizedAvatar";
 import { getChangeDescription } from "@components/lib/utils/helpers";
@@ -23,17 +27,26 @@ const ActivityDetails = ({
   modifiedByDetails,
   selectedDiffNode,
   nodes,
+  childActivities,
+  nested = false,
 }: {
   activity: NodeChange;
   displayDiff: Function;
   modifiedByDetails?: any;
   selectedDiffNode: any;
   nodes: { [nodeId: string]: any };
+  childActivities?: (NodeChange & { id: string })[];
+  nested?: boolean;
 }) => {
   const [isSelected, setIsSelected] = useState(false);
+  const [childrenExpanded, setChildrenExpanded] = useState(false);
   const isHighlighted = isSelected || selectedDiffNode?.id === activity.id;
   const changeSummary = getChangeDescription(activity, "");
   const nodeTitle = nodes[activity.nodeId]?.title || activity.fullNode?.title;
+  const triggeredBy = activity.triggeredBy;
+  const isChildLog = !!triggeredBy;
+  const childCount = childActivities?.length ?? 0;
+  const hasChildren = childCount > 0 && !isChildLog;
 
   const relativeFromNow = () => {
     const t = dayjs(new Date(activity.modifiedAt.toDate())).fromNow();
@@ -99,12 +112,19 @@ const ActivityDetails = ({
   );
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", mt: 2 }}>
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        mt: nested ? 0 : isChildLog ? 1 : 2,
+      }}
+    >
       <Paper
         elevation={0}
         sx={(theme) => ({
-          mx: 2,
-          p: 3,
+          mx: nested ? 0 : 2,
+          ml: nested ? 0 : 2,
+          p: isChildLog ? 1.75 : 3,
           borderRadius: 3,
           border: "1px solid",
           borderColor: isHighlighted
@@ -112,6 +132,12 @@ const ActivityDetails = ({
             : theme.palette.mode === "dark"
               ? alpha(theme.palette.common.white, 0.22)
               : alpha(theme.palette.grey[700], 0.35),
+          ...(isChildLog
+            ? {
+                borderLeft: "3px dashed",
+                borderLeftColor: alpha(theme.palette.warning.main, 0.55),
+              }
+            : {}),
           bgcolor: isHighlighted
             ? alpha(
                 theme.palette.warning.main,
@@ -120,23 +146,25 @@ const ActivityDetails = ({
             : theme.palette.mode === "dark"
               ? alpha(theme.palette.common.black, 0.2)
               : theme.palette.background.paper,
+          opacity: isChildLog && !isHighlighted ? 0.92 : 1,
           boxShadow: isHighlighted
             ? `0 0 0 1px ${alpha(theme.palette.warning.main, 0.35)}, ${theme.shadows[2]}`
             : theme.palette.mode === "dark"
               ? `0 1px 0 ${alpha(theme.palette.common.white, 0.06)} inset`
               : theme.shadows[1],
           transition:
-            "box-shadow 0.2s ease, border-color 0.2s ease, background-color 0.2s ease",
+            "box-shadow 0.2s ease, border-color 0.2s ease, background-color 0.2s ease, opacity 0.2s ease",
           "&:hover": {
             borderColor: isHighlighted
               ? undefined
               : theme.palette.mode === "dark"
                 ? alpha(theme.palette.common.white, 0.32)
                 : alpha(theme.palette.grey[700], 0.5),
+            opacity: 1,
           },
         })}
       >
-        <Stack spacing={1.5}>
+        <Stack spacing={isChildLog ? 1 : 1.5}>
           <Stack
             direction="row"
             alignItems="stretch"
@@ -151,8 +179,10 @@ const ActivityDetails = ({
                 alignItems: "center",
               }}
             >
-              {!modifiedByDetails && <Box sx={{ py: 0.25 }}>{TimeLabel}</Box>}
-              {modifiedByDetails && (
+              {(!modifiedByDetails || isChildLog) && (
+                <Box sx={{ py: 0.25 }}>{TimeLabel}</Box>
+              )}
+              {modifiedByDetails && !isChildLog && (
                 <Stack
                   direction="row"
                   alignItems="center"
@@ -244,10 +274,10 @@ const ActivityDetails = ({
                   borderRadius: 999,
                   textTransform: "none",
                   fontWeight: 600,
-                  fontSize: "0.8125rem",
-                  px: 2.25,
-                  py: 0.65,
-                  minWidth: 92,
+                  fontSize: isChildLog ? "0.75rem" : "0.8125rem",
+                  px: isChildLog ? 1.5 : 2.25,
+                  py: isChildLog ? 0.4 : 0.65,
+                  minWidth: isChildLog ? 70 : 92,
                   boxShadow: "none",
                   ...(isHighlighted
                     ? {
@@ -372,43 +402,94 @@ const ActivityDetails = ({
             role="status"
             aria-label="Activity summary and node"
             sx={(theme) => ({
-              py: 1.25,
-              px: 1.5,
+              py: isChildLog ? 0 : 1.25,
+              px: isChildLog ? 0 : 1.5,
               borderRadius: 1.25,
-              border: "1px solid",
+              border: isChildLog ? "none" : "1px solid",
               borderColor: alpha(theme.palette.warning.main, 0.45),
-              bgcolor: alpha(
-                theme.palette.warning.main,
-                theme.palette.mode === "dark" ? 0.14 : 0.08,
-              ),
+              bgcolor: isChildLog
+                ? "transparent"
+                : alpha(
+                    theme.palette.warning.main,
+                    theme.palette.mode === "dark" ? 0.14 : 0.08,
+                  ),
               boxShadow:
-                theme.palette.mode === "dark"
-                  ? `0 0 0 1px ${alpha(theme.palette.common.white, 0.04)} inset`
-                  : "none",
+                isChildLog || theme.palette.mode !== "dark"
+                  ? "none"
+                  : `0 0 0 1px ${alpha(theme.palette.common.white, 0.04)} inset`,
             })}
           >
-            <Typography
-              variant="overline"
-              sx={{
-                display: "block",
-                fontSize: "0.65rem",
-                fontWeight: 700,
-                letterSpacing: "0.12em",
-                color: "warning.main",
-                lineHeight: 1.2,
-                mb: 0.5,
-              }}
-            >
-              What changed
-            </Typography>
+            {!isChildLog && (
+              <Typography
+                variant="overline"
+                sx={{
+                  display: "block",
+                  fontSize: "0.65rem",
+                  fontWeight: 700,
+                  letterSpacing: "0.12em",
+                  color: "warning.main",
+                  lineHeight: 1.2,
+                  mb: 0.5,
+                }}
+              >
+                What changed
+              </Typography>
+            )}
+            {triggeredBy && !nested && (
+              <Tooltip
+                title={`Triggered by ${triggeredBy.nodeTitle || "another node"}`}
+                placement="top"
+                arrow
+                slotProps={timeTooltipSlotProps}
+              >
+                <Box
+                  sx={(theme) => ({
+                    mb: 1,
+                    px: 1,
+                    py: 0.4,
+                    borderRadius: 999,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 0.5,
+                    fontSize: "0.75rem",
+                    fontWeight: 600,
+                    letterSpacing: "-0.005em",
+                    color: "warning.main",
+                    border: "1px dashed",
+                    borderColor: alpha(theme.palette.warning.main, 0.55),
+                    bgcolor: alpha(
+                      theme.palette.warning.main,
+                      theme.palette.mode === "dark" ? 0.1 : 0.06,
+                    ),
+                    transition:
+                      "background-color 0.15s ease, border-color 0.15s ease",
+                  })}
+                >
+                  <SubdirectoryArrowRightIcon sx={{ fontSize: 14 }} />
+                  Triggered by edit on
+                  <Box
+                    component="span"
+                    sx={{
+                      maxWidth: 220,
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                      fontWeight: 800,
+                    }}
+                  >
+                    {`"${triggeredBy.nodeTitle || "another node"}"`}
+                  </Box>
+                </Box>
+              </Tooltip>
+            )}
             <Typography
               component="p"
               sx={{
                 m: 0,
-                fontSize: "0.9375rem",
-                fontWeight: 600,
+                fontSize: isChildLog ? "0.8125rem" : "0.9375rem",
+                fontWeight: isChildLog ? 500 : 600,
                 lineHeight: 1.5,
-                color: "text.primary",
+                color: isChildLog ? "text.secondary" : "text.primary",
                 letterSpacing: "-0.01em",
                 wordBreak: "break-word",
               }}
@@ -420,9 +501,9 @@ const ActivityDetails = ({
                 component="p"
                 sx={{
                   m: 0,
-                  mt: 1.25,
-                  fontWeight: 800,
-                  fontSize: "1.25rem",
+                  mt: isChildLog ? 0.5 : 1.25,
+                  fontWeight: isChildLog ? 700 : 800,
+                  fontSize: isChildLog ? "0.9375rem" : "1.25rem",
                   lineHeight: 1.35,
                   letterSpacing: "-0.02em",
                   wordBreak: "break-word",
@@ -486,6 +567,62 @@ const ActivityDetails = ({
                   }}
                 />
               </Box>
+            </Box>
+          )}
+
+          {hasChildren && (
+            <Box sx={{ pt: 1.25 }}>
+              <Box sx={{ display: "flex", justifyContent: "flex-start" }}>
+                <Button
+                  onClick={() => setChildrenExpanded((v) => !v)}
+                  startIcon={
+                    childrenExpanded ? (
+                      <ExpandMoreIcon fontSize="small" />
+                    ) : (
+                      <ChevronRightIcon fontSize="small" />
+                    )
+                  }
+                  size="small"
+                  variant="text"
+                  disableElevation
+                  aria-expanded={childrenExpanded}
+                  aria-controls={`triggered-changes-${activity.id ?? "anon"}`}
+                  sx={(theme) => ({
+                    textTransform: "none",
+                    fontSize: "0.8125rem",
+                    fontWeight: 600,
+                    color: "warning.main",
+                    px: 2,
+                    py: 0.85,
+                    minWidth: 0,
+                    borderRadius: 999,
+                    "&:hover": {
+                      bgcolor: alpha(theme.palette.warning.main, 0.1),
+                    },
+                  })}
+                >
+                  {childrenExpanded ? "Hide" : "Show"} {childCount} triggered
+                  change{childCount === 1 ? "" : "s"}
+                </Button>
+              </Box>
+              <Collapse
+                in={childrenExpanded}
+                unmountOnExit
+                id={`triggered-changes-${activity.id ?? "anon"}`}
+              >
+                <Stack spacing={1} sx={{ mt: 1 }}>
+                  {childActivities!.map((child) => (
+                    <ActivityDetails
+                      key={child.id}
+                      activity={child}
+                      displayDiff={displayDiff}
+                      selectedDiffNode={selectedDiffNode}
+                      nodes={nodes}
+                      nested
+                    />
+                  ))}
+                </Stack>
+              </Collapse>
             </Box>
           )}
         </Stack>

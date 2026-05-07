@@ -33,6 +33,7 @@ import {
 import { NodeChange } from "@components/types/INode";
 import moment from "moment";
 import { capitalizeFirstLetter } from "./string.utils";
+import { computeDiffValue } from "./diffValue";
 import { User } from "@components/types/IAuth";
 import {
   getBrowser,
@@ -91,6 +92,16 @@ export const unlinkPropertyOf = async (
     | string,
   removeNodeId: string,
   removeFromId: string,
+  // When set, makes a child log linked to this parent
+  parentLog?: {
+    logId: string;
+    nodeId: string;
+    nodeTitle: string;
+    changeType: NodeChange["changeType"];
+  },
+  uname?: string,
+  // Mirrors parentLog.appName so child logs aren't filtered out
+  appName?: string,
 ) => {
   if (!removeFromId) return;
 
@@ -119,6 +130,10 @@ export const unlinkPropertyOf = async (
   if (unlinkFromDoc.exists()) {
     const unlinkFromData = unlinkFromDoc.data() as INode;
     if (removeFrom === "generalizations" || removeFrom === "specializations") {
+      // Snapshot before the in-place filter below.
+      const previousValue = JSON.parse(
+        JSON.stringify(unlinkFromData[removeFrom]),
+      );
       for (let collection of unlinkFromData[removeFrom]) {
         collection.nodes = collection.nodes.filter(
           (n: { id: string }) => n.id !== removeNodeId,
@@ -127,6 +142,20 @@ export const unlinkPropertyOf = async (
       await updateDoc(unlinkFromDoc.ref, {
         [`${removeFrom}`]: unlinkFromData[removeFrom],
       });
+      if (parentLog && uname) {
+        saveNewChangeLog(db, {
+          nodeId: removeFromId,
+          modifiedBy: uname,
+          modifiedProperty: removeFrom,
+          previousValue,
+          newValue: unlinkFromData[removeFrom],
+          modifiedAt: new Date(),
+          changeType: "remove element",
+          fullNode: unlinkFromData,
+          triggeredBy: parentLog,
+          ...(appName ? { appName } : {}),
+        });
+      }
     } else {
       if (
         (removeFrom === "parts" || removeFrom === "isPartOf") &&
@@ -590,9 +619,22 @@ const updateProperty = async (
   return batch;
 };
 
-export const saveNewChangeLog = (db: any, data: NodeChange) => {
-  if (!data.modifiedBy) return;
-  const changeUseRef = doc(collection(db, NODES_LOGS));
+/**
+ * Writes a NodeChange to NODES_LOGS and returns the doc id (or `undefined` if
+ * skipped due to missing `modifiedBy`). Pass `preGeneratedId` to reserve the
+ * id up-front so child logs can reference it via `triggeredBy.logId`.
+ */
+export const saveNewChangeLog = (
+  db: any,
+  data: NodeChange,
+  preGeneratedId?: string,
+): string | undefined => {
+  if (!data.modifiedBy) return undefined;
+  const diffValue = computeDiffValue(data);
+  if (diffValue) data.diffValue = diffValue;
+  const changeUseRef = preGeneratedId
+    ? doc(collection(db, NODES_LOGS), preGeneratedId)
+    : doc(collection(db, NODES_LOGS));
   setDoc(changeUseRef, data);
   const userRef = doc(collection(db, USERS), data.modifiedBy);
   if (data.modifiedBy !== "ouhrac") {
@@ -615,6 +657,7 @@ export const saveNewChangeLog = (db: any, data: NodeChange) => {
     }
     updateDoc(nodeRef, updatesObject);
   }
+  return changeUseRef.id;
 };
 
 export const getChangeDescription = (
@@ -1441,6 +1484,16 @@ export const updateLinks = async (
   linkType: "specializations" | "generalizations",
   nodes: { [nodeId: string]: INode },
   db: any,
+  // When set, each push also emits a child log on `childId` linked to this parent.
+  parentLog?: {
+    logId: string;
+    nodeId: string;
+    nodeTitle: string;
+    changeType: NodeChange["changeType"];
+  },
+  uname?: string,
+  // Mirrors parentLog.appName so child logs aren't filtered out.
+  appName?: string,
 ) => {
   for (let childId of links) {
     const childData = nodes[childId];
@@ -1454,6 +1507,8 @@ export const updateLinks = async (
       (collection) => collection.collectionName === "main",
     );
     if (indexElmt === -1) {
+      // Snapshot before the in-place mutations below.
+      const previousValue = JSON.parse(JSON.stringify(childLinks));
       if (mainCollection) {
         mainCollection.nodes.push(newLink);
         const childRef = doc(collection(db, NODES), childId);
@@ -1469,6 +1524,20 @@ export const updateLinks = async (
         const childRef = doc(collection(db, NODES), childId);
         await updateDoc(childRef, {
           [linkType]: childLinks,
+        });
+      }
+      if (parentLog && uname) {
+        saveNewChangeLog(db, {
+          nodeId: childId,
+          modifiedBy: uname,
+          modifiedProperty: linkType,
+          previousValue,
+          newValue: childLinks,
+          modifiedAt: new Date(),
+          changeType: "add element",
+          fullNode: childData,
+          triggeredBy: parentLog,
+          ...(appName ? { appName } : {}),
         });
       }
     }

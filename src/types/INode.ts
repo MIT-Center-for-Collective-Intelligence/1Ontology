@@ -190,6 +190,35 @@ export type NodeChange = {
   appName?: string;
   detailsOfChange?: any;
   logLLMId?: string;
+  /** Pre-computed diff for collection-typed changes */
+  diffValue?: DiffCollection[];
+  /** Set on child logs to point at the parent log */
+  triggeredBy?: {
+    logId: string;
+    nodeId: string;
+    nodeTitle: string;
+    changeType: NodeChange["changeType"];
+  };
+};
+
+export type DiffLinkNode = {
+  id: string;
+  title: string;
+  /** "added" / "removed" relative to the previous state; absent if unchanged. */
+  change?: "added" | "removed";
+  /** Node moved between collections. */
+  changeType?: "sort";
+  optional?: boolean;
+  optionalChange?: "added" | "removed";
+};
+
+export type DiffCollection = {
+  collectionName: string;
+  /** "added" / "removed" relative to the previous state; absent if unchanged. */
+  change?: "added" | "removed";
+  /** Collection itself moved (only for `sort collections` diffs). */
+  changeType?: "sort";
+  nodes: DiffLinkNode[];
 };
 
 export type PromptChange = {
