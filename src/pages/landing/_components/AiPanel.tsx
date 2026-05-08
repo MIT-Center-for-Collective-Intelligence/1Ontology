@@ -490,8 +490,12 @@ export const AiPanel: React.FC<Props> = ({ appName, navigateToNode }) => {
 
     // Snapshot so we can revert on error (avoids a half-tool-called log).
     const baseLog = msgLog;
-    // Rough budget: ~24 mixed user/assistant/tool messages.
-    const trimmed = baseLog.length > 24 ? baseLog.slice(-24) : baseLog;
+    // Rough budget: ~100 mixed user/assistant/tool messages
+    let trimmed = baseLog.length > 100 ? baseLog.slice(-100) : baseLog;
+    const firstSafe = trimmed.findIndex(
+      (m) => m.role === "user" || (m.role === "assistant" && !m.toolCalls?.length),
+    );
+    if (firstSafe > 0) trimmed = trimmed.slice(firstSafe);
     const initialMessages: ChatMsg[] = [
       { role: "system", content: SYSTEM_PROMPT },
       ...trimmed,
