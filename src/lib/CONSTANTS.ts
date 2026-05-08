@@ -189,11 +189,12 @@ export const ONTOLOGY_APPS = development
         id: "final-hierarchy-with-o*net",
         name: "Final Hierarchy with O*Net",
       },
-      {
+      { id: "sandbox", name: "Sandbox", type: "other" },
+      /* {
         id: "ontology-demo-version",
         name: "Ontology - Demo Version",
         type: "other",
-      },
+      }, */
       {
         id: "ontology-development-version",
         name: "Ontology - Development Version",
