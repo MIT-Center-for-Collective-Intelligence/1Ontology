@@ -13,12 +13,12 @@ import {
 } from "@mui/material";
 import React, { useCallback, useMemo, useState } from "react";
 import { DESIGN_SYSTEM_COLORS } from "../theme/colors";
-import { MODELS_OPTIONS } from "../utils/copilotPrompts";
+import { MODELS_OPTIONS, SystemPromptObjectiveDefinition } from "../utils/copilotPrompts";
 import CopilotPrompt from "@components/components/CopilotPrompt/CopilotPrompt";
 import { useAuth } from "@components/components/context/AuthContext";
 import { PROPERTIES_TO_IMPROVE } from "../CONSTANTS";
 import { INode } from "@components/types/INode";
-import { getNodesInThreeLevels } from "../utils/helpersCopilot";
+import { getNodesInLevels } from "../utils/helpersCopilot";
 
 const useSelectDropdown = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -28,8 +28,8 @@ const useSelectDropdown = () => {
     id: string;
     title: string;
   }>(MODELS_OPTIONS[0]);
-  const [inputValue, setInputValue] = useState<string>("");
-  const [numberValue, setNumberValue] = useState<number>(12);
+  const [userInstructions, setUserInstructions] = useState<string>("");
+  const [explorationDepth, setExplorationDepth] = useState<number>(12);
   const [nodeTitle, setNodeTitle] = useState("");
   const [generateNewNodes, setGenerateNewNodes] = useState(true);
   const [proposeDeleteNode, setProposeDeleteNodes] = useState(true);
@@ -42,6 +42,8 @@ const useSelectDropdown = () => {
   );
   const [nodes, setNodes] = useState<{ [nodeId: string]: INode }>({});
   const [nodeId, setNodeId] = useState("");
+  const [systemPromptObjectiveDefinition, setSystemPromptObjectiveDefinition] =
+    useState<SystemPromptObjectiveDefinition | null>(null);
 
   const resolveRef = React.useRef<any>(null);
   // localStorage.setItem(
@@ -81,15 +83,21 @@ const useSelectDropdown = () => {
       const savedInputValue = localStorage.getItem(`user-copilot-message`);
       const savedNumberValue = localStorage.getItem(`user-number-value`);
 
-      setInputValue(savedInputValue || "");
+      setUserInstructions(savedInputValue || "");
       if (savedNumberValue) {
-        setNumberValue(Number(savedNumberValue));
+        setExplorationDepth(Number(savedNumberValue));
       }
 
       return new Promise<{
         userMessage: string;
         model: string;
         deepNumber: number;
+        generateNewNodes: boolean;
+        selectedProperties: Set<string>;
+        proposeDeleteNode: boolean;
+        inputProperties: Set<string>;
+        systemPromptObjectiveDefinition: SystemPromptObjectiveDefinition | null;
+        aiAssistantContext: any;
       }>((resolve) => {
         resolveRef.current = resolve;
       });
@@ -97,44 +105,16 @@ const useSelectDropdown = () => {
     [],
   );
 
-  const closeDialog = useCallback(
-    (start: boolean = false) => {
-      setIsOpen(false);
-      localStorage.setItem(`user-copilot-message`, inputValue);
-      localStorage.setItem(`user-number-value`, String(numberValue));
-
-      if (resolveRef.current && start) {
-        resolveRef.current({
-          userMessage: inputValue,
-          model: selectedOption.id,
-          deepNumber: numberValue,
-          generateNewNodes,
-          selectedProperties: improveProperties,
-          proposeDeleteNode,
-          inputProperties,
-        });
-      }
-    },
-    [
-      inputValue,
-      numberValue,
-      selectedOption.id,
-      generateNewNodes,
-      improveProperties,
-      proposeDeleteNode,
-      inputProperties,
-    ],
-  );
-  const nodes_Array = useMemo(() => {
+  const aiAssistantContext = useMemo(() => {
     const nodeData = nodes[nodeId];
     if (!nodeData) {
       return;
     }
-    const n = getNodesInThreeLevels(
+    const n = getNodesInLevels(
       nodeData,
       nodes,
       new Set(),
-      numberValue,
+      explorationDepth,
       inputProperties,
     );
 
@@ -153,21 +133,47 @@ const useSelectDropdown = () => {
       }
     }
     return n;
-  }, [nodes, nodeId, numberValue, inputProperties]);
+  }, [nodes, nodeId, explorationDepth, inputProperties, nodeType]);
 
-  const handleSelectChange = (event: React.ChangeEvent<{ value: unknown }>) => {
-    const selected = MODELS_OPTIONS.find(
-      (option) => option.id === event.target.value,
-    );
-    setSelectedOption(selected || { id: "", title: "" });
-  };
+  const closeDialog = useCallback(
+    (start: boolean = false) => {
+      setIsOpen(false);
+      localStorage.setItem(`user-copilot-message`, userInstructions);
+      localStorage.setItem(`user-number-value`, String(explorationDepth));
+
+      if (resolveRef.current && start) {
+        resolveRef.current({
+          userMessage: userInstructions,
+          model: selectedOption.id,
+          deepNumber: explorationDepth,
+          generateNewNodes,
+          selectedProperties: improveProperties,
+          proposeDeleteNode,
+          inputProperties,
+          systemPromptObjectiveDefinition,
+          aiAssistantContext,
+        });
+      }
+    },
+    [
+      userInstructions,
+      explorationDepth,
+      selectedOption.id,
+      generateNewNodes,
+      improveProperties,
+      proposeDeleteNode,
+      inputProperties,
+      systemPromptObjectiveDefinition,
+      aiAssistantContext,
+    ],
+  );
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setInputValue(event.target.value);
+    setUserInstructions(event.target.value);
   };
 
   const handleNumberChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setNumberValue(Number(event.target.value));
+    setExplorationDepth(Number(event.target.value));
   };
 
   const dropdownDialog = (
@@ -308,12 +314,13 @@ const useSelectDropdown = () => {
           setImproveProperties={setImproveProperties}
           inputProperties={inputProperties}
           setInputProperties={setInputProperties}
-          nodes={nodes_Array}
+          aiAssistantContext={aiAssistantContext}
           nodeTitle={nodeTitle}
-          numberValue={numberValue}
+          explorationDepth={explorationDepth}
           handleNumberChange={handleNumberChange}
-          inputValue={inputValue}
+          userInstructions={userInstructions}
           handleInputChange={handleInputChange}
+          setSystemPromptObjectiveDefinition={setSystemPromptObjectiveDefinition}
         />
       </DialogContent>
       <DialogActions
@@ -399,13 +406,13 @@ const useSelectDropdown = () => {
             },
           }}
           disabled={
-            numberValue === 0 ||
+            explorationDepth === 0 ||
             (!generateNewNodes &&
               improveProperties.size <= 0 &&
               !proposeDeleteNode)
           }
         >
-          Improve Details
+          Improve Sub-Ontology
         </Button>
       </DialogActions>
     </Dialog>

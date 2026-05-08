@@ -2,28 +2,14 @@ import { NextApiRequest, NextApiResponse } from "next";
 
 import {
   ALGORITHMS,
-  COPILOT_PROMPTS,
-  GUIDELINES,
   LOGS,
   NODES,
 } from "@components/lib/firestoreClient/collections";
 import { db } from "@components/lib/firestoreServer/admin";
-import {
-  getNodesInThreeLevels,
-  getStructureForJSON,
-} from "@components/lib/utils/helpersCopilot";
 import { INode } from "@components/types/INode";
 import fbAuth from "@components/middlewares/fbAuth";
 import { extractJSON, getDoerCreate } from "@components/lib/utils/helpers";
-import {
-  copilotNewNode,
-  getCopilotPrompt,
-  Improvement,
-  MODELS_OPTIONS,
-} from "@components/lib/utils/copilotPrompts";
 import { ChatCompletionMessageParam } from "openai/resources/chat/completions";
-import { ChatModel } from "openai/resources/chat/chat";
-import { PROPERTIES_TO_IMPROVE } from "@components/lib/CONSTANTS";
 import { openai } from "./openaiClient";
 
 const GEMINI_MODELS = [

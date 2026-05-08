@@ -1,18 +1,22 @@
 import { db } from "@components/lib/firestoreServer/admin";
-import * as fs from "fs";
-const {
-  GoogleGenerativeAI,
-  HarmCategory,
+import {
+  Content,
+  GoogleGenAI,
   HarmBlockThreshold,
-} = require("@google/generative-ai");
+  HarmCategory,
+  Type,
+} from "@google/genai";
+import * as fs from "fs";
 const csv = require("fast-csv");
 
 interface CSVRow {
   [key: string]: string;
 }
 const API_KEY = process.env.GEMINI_Test1_API_KEY;
-/* const ai = new GoogleGenAI({ apiKey: API_KEY }); */
-const genAI = new GoogleGenerativeAI(process.env.MIT_CCI_GEMINI_API_KEY || "");
+
+const cciGenAI = new GoogleGenAI({
+  apiKey: process.env.MIT_CCI_GEMINI_API_KEY || "",
+});
 
 export const extractObject = (str: any) => {
   try {
@@ -63,21 +67,20 @@ async function writeCSV(filePath: string, data: CSVRow[]): Promise<void> {
 
 async function sendRequestToGemini({ prompt }: { prompt: string }) {
   try {
-    const model = genAI.getGenerativeModel({
+    console.log("Sending prompt to Gemini:", prompt);
+
+    const result = await cciGenAI.models.generateContent({
       model: "gemini-2.5-pro",
-      generationConfig: {
+      contents: prompt,
+      config: {
         maxOutputTokens: 3276,
         temperature: 0,
       },
     });
 
-    console.log("Sending prompt to Gemini:", prompt);
+    console.log(JSON.stringify(result, null, 2));
 
-    const result = await model.generateContent(prompt);
-    console.log(JSON.stringify(result.response, null, 2));
-    const response = result.response;
-
-    const text = response.text();
+    const text = result.text ?? "";
 
     console.log("Received response from Gemini.");
     return text;
@@ -162,8 +165,10 @@ const generationConfig = {
   // topP: 0.95,
   // topK: 64,
   maxOutputTokens: 65536,
-  responseModalities: [],
   responseMimeType: "application/json",
+  responseSchema: {
+    type: Type.OBJECT,
+  },
 };
 
 const safetySettings = [
@@ -198,28 +203,27 @@ export async function callGemini(messagesOrPrompt: any): Promise<string> {
     }
   }
   const apiKey = API_KEY || "";
-  const genAI = new GoogleGenerativeAI(apiKey);
+  const genAI = new GoogleGenAI({ apiKey });
 
-  const gemini = genAI.getGenerativeModel({
+  const contents: Content[] | string = Array.isArray(messagesOrPrompt)
+    ? messagesOrPrompt
+    : [
+        {
+          role: "user",
+          parts: [{ text: messagesOrPrompt }],
+        },
+      ];
+
+  const response = await genAI.models.generateContent({
     model: "gemini-2.5-pro-preview-05-06",
+    contents,
+    config: {
+      ...generationConfig,
+      safetySettings,
+    },
   });
 
-  const chatSession = await gemini.generateContent(
-    {
-      contents: Array.isArray(messagesOrPrompt)
-        ? messagesOrPrompt
-        : [
-            {
-              role: "user",
-              parts: { text: messagesOrPrompt },
-            },
-          ],
-    },
-    generationConfig,
-    safetySettings,
-  );
-  const response = chatSession.response.text() || "";
-  return response;
+  return response.text ?? "";
 }
 
 const checkClassification = async ({

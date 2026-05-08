@@ -1,10 +1,7 @@
 import { db } from "@components/lib/firestoreServer/admin";
 import { ICollection, INode } from "@components/types/INode";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextApiRequest, NextApiResponse } from "next";
-import { delay } from "@components/lib/utils/utils";
-import { ChromaClient, Embedding, OpenAIEmbeddingFunction } from "chromadb";
-import fbAuth from "@components/middlewares/fbAuth";
+import { ChromaClient } from "chromadb";
 import { development } from "@components/lib/CONSTANTS";
 import Cors from "cors";
 
@@ -122,9 +119,11 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     }
     let collectionName = "";
     if (nodeData.appName) {
-      collectionName = `ontology-${sanitizeCollectionName(nodeData.appName)}`;
+      collectionName = development
+        ? `ontology-dev-${sanitizeCollectionName(nodeData.appName)}`
+        : `ontology-${sanitizeCollectionName(nodeData.appName)}`;
     } else {
-      collectionName = "ontology";
+      collectionName = development ? "ontology-dev" : "ontology";
     }
 
     let collection = await client.getOrCreateCollection({

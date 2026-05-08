@@ -105,6 +105,7 @@ const GuidLines = ({
             p: 4,
             borderBottomLeftRadius: "25px",
             borderBottomRightRadius: "25px",
+            mb: "25px",
           }}
         >
           <Typography sx={{ fontSize: "45px" }}>Guidelines</Typography>
@@ -131,9 +132,29 @@ const GuidLines = ({
           defaultExpanded={true}
           key={catId}
           sx={{
+            "&:before": { display: "none" },
             borderRadius: "16px",
             border: "none",
-            // mb: "15px",
+            boxShadow: "none",
+            backgroundImage: "none",
+            mb: 1,
+            overflow: "hidden",
+            "&.Mui-expanded": {
+              margin: 0,
+            },
+            "& .MuiAccordionSummary-root": {
+              borderRadius: "16px",
+              minHeight: 48,
+              "&.Mui-expanded": {
+                minHeight: 48,
+              },
+            },
+            "& .MuiAccordionSummary-content": {
+              my: 1,
+              "&.Mui-expanded": {
+                my: 1,
+              },
+            },
             backgroundColor: (theme) =>
               !setDisplayGuidelines
                 ? theme.palette.mode === "dark"

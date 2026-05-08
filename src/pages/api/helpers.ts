@@ -1,66 +1,46 @@
-/*
- * Install the Generative AI SDK
- *
- * $ npm install @google/generative-ai
- *
- * See the getting started guide for more information
- * https://ai.google.dev/gemini-api/docs/get-started/node
- */
-
 import { dbCausal } from "@components/lib/firestoreServer/admin";
 import { delay } from "@components/lib/utils/utils";
-import {
-  Content,
-  GoogleGenerativeAI,
-  HarmBlockThreshold,
-  HarmCategory,
-  FunctionDeclaration,
-  Part,
-} from "@google/generative-ai";
-import OpenAI from "openai";
 import { ChromaClient, IncludeEnum, OpenAIEmbeddingFunction } from "chromadb";
 import { getNodesByIds } from "./copilot";
 import { embeddingFunctionDefault, openai } from "./openaiClient";
+import { Content, GoogleGenAI, Type } from "@google/genai";
+import { development } from "@components/lib/CONSTANTS";
 
-const key = process.env.MIT_CCI_GEMINI_API_KEY || "";
-
-if (!key) {
-  throw new Error("Gemini API key not found");
-}
-
-const genAI = new GoogleGenerativeAI(key);
-const genModel = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
-/**
- * Uploads the given file to Gemini.
- *
- * See https://ai.google.dev/gemini-api/docs/prompting_with_media
- */
-
-const generationConfig = {
-  temperature: 0,
-  topP: 0.95,
-  topK: 64,
-  responseMimeType: "application/json",
+type OntologyChromaQueryResultRow = {
+  title: string;
+  description: string;
+  generalizations: (string | undefined)[];
+  specializations: (string | undefined)[];
+  parts: { title: string; optional: string }[];
 };
 
-const safetySettings = [
-  {
-    category: HarmCategory.HARM_CATEGORY_HARASSMENT,
-    threshold: HarmBlockThreshold.BLOCK_NONE,
-  },
-  {
-    category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-    threshold: HarmBlockThreshold.BLOCK_NONE,
-  },
-  {
-    category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-    threshold: HarmBlockThreshold.BLOCK_NONE,
-  },
-  {
-    category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-    threshold: HarmBlockThreshold.BLOCK_NONE,
-  },
-];
+const ai = new GoogleGenAI({ apiKey: process.env.MIT_CCI_GEMINI_API_KEY });
+
+const extractObject = (str: string) => {
+  try {
+    const start = str.indexOf("{");
+    if (start === -1) return null;
+
+    let braceCount = 0;
+    for (let i = start; i < str.length; i++) {
+      if (str[i] === "{") braceCount++;
+      else if (str[i] === "}") braceCount--;
+
+      if (braceCount === 0) {
+        const jsonStr = str.slice(start, i + 1);
+        try {
+          return JSON.parse(jsonStr);
+        } catch {
+          return null;
+        }
+      }
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
+};
 
 const isValidJSON = (jsonString: string) => {
   try {
@@ -86,12 +66,17 @@ export const askGemini = async (contents: Content[], model: string) => {
     };
 
     try {
-      const result = await genModel.generateContent({
+      let llmResponse: any = await ai.models.generateContent({
+        model: model,
         contents,
-        generationConfig,
-        safetySettings,
+        config: {
+          temperature: 0,
+          thinkingConfig: {
+            thinkingBudget: 1024,
+          },
+        },
       });
-      response = result.response.text();
+      response = llmResponse?.candidates?.[0]?.content;
 
       await dbCausal.collection("responsesAI").doc().set({
         contents,
@@ -104,8 +89,6 @@ export const askGemini = async (contents: Content[], model: string) => {
       if (isJSONObject.isJSON) {
         return isJSONObject.jsonObject;
       }
-
-      console.error(`Invalid JSON from key ${key}. Trying next...`);
     } catch (error) {
       const errorCode =
         (error as any)?.code ||
@@ -113,9 +96,9 @@ export const askGemini = async (contents: Content[], model: string) => {
         (error as any)?.response?.status;
 
       if (errorCode === 429) {
-        console.warn(`Rate limit (429) on key ${key}. Skipping...`);
+        console.warn(`Rate limit (429)`);
       } else {
-        console.error(`Error with key ${key}:`, error);
+        console.error(`Error with key `);
       }
 
       await delay(5000);
@@ -127,7 +110,7 @@ export const askGemini = async (contents: Content[], model: string) => {
 
 const chromaUrl = `${process.env.CHROMA_PROTOCOL}://${process.env.CHROMA_HOST}:${process.env.CHROMA_PORT}`;
 
-const sanitizeCollectionName = (title: string) => {
+const sanitizeChromaCollectionName = (title: string) => {
   return (
     title
       .trim()
@@ -171,7 +154,9 @@ export const searchChromaCore = async ({
 }: SearchChromaParams) => {
   let collectionName = "ontology";
   if (appName) {
-    collectionName = `ontology-${sanitizeCollectionName(appName)}`;
+    collectionName = development
+      ? `ontology-dev-${sanitizeChromaCollectionName(appName)}`
+      : `ontology-${sanitizeChromaCollectionName(appName)}`;
   }
 
   const embeddingResponse = await openai.embeddings.create({
@@ -207,6 +192,16 @@ export const searchChromaCore = async ({
 
       const inputPropsSet = inputProperties ? new Set(inputProperties) : null;
       const res: any = { id, title: node.title || "Untitled" };
+
+      if (Array.isArray(node.pathIds) && node.pathIds.length > 0) {
+        res.pathIds = node.pathIds;
+      }
+      if (node.primaryParentId) {
+        res.primaryParentId = node.primaryParentId;
+      }
+      if (node.appName) {
+        res.appName = node.appName;
+      }
 
       if (!inputPropsSet || inputPropsSet.has("description")) {
         res.description = node.description || "";
@@ -267,9 +262,134 @@ async function generateWithBackoff(
     }
   }
 }
+const functionDeclaration = {
+  name: "QueryOntology",
+  description:
+    "Semantic search over an ontology index (Chroma). Use this to find facts that exist as ontology nodes. You may issue multiple queries in a single call to cover synonyms, related concepts, or different facets of the user's question. Each query string is searched independently and results are merged.",
+  parameters: {
+    type: Type.OBJECT,
+    properties: {
+      queries: {
+        type: Type.ARRAY,
+        items: {
+          type: Type.STRING,
+        },
+        description:
+          'One or more highly optimized phrases for embedding similarity. Each array item is ONE query phrase. Do NOT put multiple queries into a single comma-separated string. Example: ["Assemble","Create","Gather"]',
+      },
+    },
+    required: ["queries"],
+  },
+};
+
+export const getNodesByIdsObject = async (nodeIds: string[]) => {
+  const nodesObject = await getNodesByIds(new Set(nodeIds));
+
+  return nodesObject.nodes_ids;
+};
+
+export function chromaHitsToOntologyQueryResults(
+  chromaResults: Array<{ id: string; title?: string }> | null | undefined,
+  nodesById: Record<string, any>,
+): OntologyChromaQueryResultRow[] {
+  const queryResults: OntologyChromaQueryResultRow[] = [];
+  if (!chromaResults?.length) return queryResults;
+  for (const result of chromaResults) {
+    if (!result?.id) continue;
+    const nodeData = nodesById[result.id];
+    if (!nodeData) continue;
+    const parentNodes = nodeData.generalizations?.[0]?.nodes ?? [];
+    const generalizations = parentNodes.map(
+      (c: { id: string }) => nodesById[c.id]?.title,
+    );
+    const childNodes = (nodeData.specializations ?? []).flatMap(
+      (c: { nodes?: { id: string }[] }) => c.nodes ?? [],
+    );
+    const specializations = childNodes.map(
+      (c: { id: string }) => nodesById[c.id]?.title,
+    );
+    const partsNodes = nodeData.properties?.parts?.[0]?.nodes ?? [];
+    const parts = partsNodes.map((n: any) => {
+      return {
+        title: nodesById[n.id]?.title,
+        optional: !!n.optional ? "true" : "false",
+      };
+    });
+    queryResults.push({
+      title: result.title ?? nodeData.title,
+      description: nodeData.properties?.description,
+      generalizations,
+      specializations,
+      parts: parts,
+    });
+  }
+  return queryResults;
+}
+
+/** Loads hit nodes and one hop of generalizations/specializations so parent/child titles resolve. */
+export async function buildNodesByIdForChromaResults(
+  chromaResults: Array<{ id: string }> | null | undefined,
+): Promise<Record<string, any>> {
+  if (!chromaResults?.length) return {};
+  const seedIds = [
+    ...new Set(
+      chromaResults.map((r) => r.id).filter((id): id is string => !!id),
+    ),
+  ];
+  const primary = await getNodesByIdsObject(seedIds);
+  const neighborIds = new Set<string>();
+  for (const node of Object.values(primary) as any[]) {
+    for (const n of node?.generalizations?.[0]?.nodes ?? []) {
+      if (n?.id) neighborIds.add(n.id);
+    }
+    for (const coll of node?.specializations ?? []) {
+      for (const n of coll?.nodes ?? []) {
+        if (n?.id) neighborIds.add(n.id);
+      }
+    }
+
+    for (const n of node?.properties?.parts?.[0]?.nodes ?? []) {
+      if (n?.id) neighborIds.add(n.id);
+    }
+  }
+  for (const id of seedIds) neighborIds.delete(id);
+  const missing = [...neighborIds].filter((id) => !primary[id]);
+  const secondary = missing.length ? await getNodesByIdsObject(missing) : {};
+  return { ...secondary, ...primary };
+}
+
+export async function getOntologyQueryResultsFromChroma(
+  chromaResults: Array<{ id: string; title?: string }> | null | undefined,
+): Promise<OntologyChromaQueryResultRow[]> {
+  const nodesById = await buildNodesByIdForChromaResults(chromaResults);
+  return chromaHitsToOntologyQueryResults(chromaResults, nodesById);
+}
+
+/* const extractObject = (str: string) => {
+  const start = str.indexOf("{");
+  if (start === -1) return null;
+
+  let braceCount = 0;
+  for (let i = start; i < str.length; i++) {
+    if (str[i] === "{") braceCount++;
+    else if (str[i] === "}") braceCount--;
+
+    if (braceCount === 0) {
+      const jsonStr = str.slice(start, i + 1);
+      try {
+        return JSON.parse(jsonStr);
+      } catch (error) {
+        return null;
+      }
+    }
+  }
+
+  return null;
+}; */
+
 
 export const askGeminiWithFunctionCalling = async ({
-  contents,
+  contents: initialContents,
   model,
   appName,
   inputProperties,
@@ -281,96 +401,139 @@ export const askGeminiWithFunctionCalling = async ({
   inputProperties?: string[];
   maxIterations?: number;
 }): Promise<any> => {
-  const genModel = genAI.getGenerativeModel({ model });
+  const startTime = Date.now();
 
-  const searchChromaFunction: any = {
-    name: "searchChroma",
-    description: "Searches the Chroma vector database for ontology nodes...",
-    parameters: {
-      type: "object",
-      properties: {
-        query: { type: "string" },
-        nodeType: { type: "string" },
-        resultsNum: { type: "number" },
+  try {
+    // Build up contents as we go (starting from the caller-provided conversation)
+    const contents: any[] = Array.isArray(initialContents)
+      ? [...initialContents]
+      : [];
+
+    const usedTokensAcc = { input: 0, output: 0, thinking: 0, total: 0 };
+    const accumulateUsage = (response: any) => {
+      const m = response?.usageMetadata;
+      if (!m) return;
+      const input = m.promptTokenCount || 0;
+      const output = m.candidatesTokenCount || 0;
+      const thinking = m.thoughtsTokenCount || 0;
+      const callTotal = m.totalTokenCount ?? input + output + thinking;
+      usedTokensAcc.input += input;
+      usedTokensAcc.output += output;
+      usedTokensAcc.thinking += thinking;
+      usedTokensAcc.total += callTotal;
+    };
+
+    let llmResponse: any = await ai.models.generateContent({
+      model: model,
+      contents,
+      config: {
+        temperature: 0,
+        thinkingConfig: {
+          thinkingBudget: 1024,
+        },
+        tools: [{ functionDeclarations: [functionDeclaration] }],
       },
-      required: ["query"],
-    },
-  };
-
-  const tools = [{ functionDeclarations: [searchChromaFunction] }];
-  const generationConfig = { temperature: 0, topP: 0.95, topK: 64 };
-
-  let conversationHistory: Content[] = [...contents];
-  let iteration = 0;
-
-  while (iteration < maxIterations) {
-    iteration++;
-
-    const result = await generateWithBackoff(genModel, {
-      contents: conversationHistory,
-      tools,
-      generationConfig,
     });
+    accumulateUsage(llmResponse);
 
-    const candidate = result.response.candidates?.[0];
-    if (!candidate) throw new Error("No candidates in response");
+    // Loop until the model stops calling functions
+    while (true) {
+      const modelContent = llmResponse?.candidates?.[0]?.content;
+      const parts: any[] = modelContent?.parts ?? [];
+      const functionCallPart = parts.find((p: any) => p.functionCall);
 
-    conversationHistory.push(candidate.content);
+      // No more function calls — we have the final text response
+      if (!functionCallPart) break;
 
-    const messageParts = candidate.content.parts;
-    const functionCalls = messageParts.filter((p: any) => p.functionCall);
+      const functionCall = functionCallPart.functionCall;
+      console.log("functionCall:", functionCall?.name, functionCall?.args);
 
-    if (functionCalls.length > 0) {
-      const functionResponses: any[] = [];
+      // Preserve Gemini's model turn exactly so function-call thought signatures
+      // remain attached when the tool response is sent back.
+      contents.push(modelContent);
 
-      for (const part of functionCalls) {
-        const fc = part.functionCall;
-        if (fc.name === "searchChroma") {
-          const args = fc.args as any;
-          console.log(`[Function Call] searchChroma with:`, args);
+      // Execute the function call
+      let functionResult: any[] = [];
 
-          const searchResults = await searchChromaCore({
-            query: args.query,
-            appName,
-            nodeType: args.nodeType,
-            resultsNum: args.resultsNum || 100,
-            inputProperties,
-          });
+      if (functionCall?.name === "QueryOntology") {
+        const args = functionCall?.args || {};
+        const queriesInput = args.queries ?? args.query;
+        const normalizeQueryString = (raw: string): string[] => {
+          const s = String(raw || "").trim();
+          if (!s) return [];
+          // Handle models that return a single comma-separated string.
+          if (s.includes(",")) {
+            const parts = s
+              .split(",")
+              .map((p) => p.trim())
+              .filter(Boolean);
+            if (parts.length >= 2) return parts;
+          }
+          return [s];
+        };
 
-          functionResponses.push({
-            functionResponse: {
-              name: fc.name,
-              response: {
-                results: searchResults,
-                count: searchResults.length,
-              },
-            },
-          });
+        const queries = Array.isArray(queriesInput)
+          ? queriesInput.flatMap((q: any) => normalizeQueryString(q))
+          : normalizeQueryString(queriesInput);
+
+        let allChromaResults: any[] = [];
+        for (const query of queries) {
+          const chromaResults = query
+            ? await searchChromaCore({
+                query,
+                appName,
+                nodeType: "activity",
+                resultsNum: 10,
+              })
+            : [];
+          allChromaResults.push(...(chromaResults || []));
         }
+
+        const queryResults =
+          await getOntologyQueryResultsFromChroma(allChromaResults);
+        functionResult = [
+          {
+            functionResponse: {
+              name: "QueryOntology",
+              response: { results: queryResults ?? [] },
+            },
+          },
+        ];
+      } else {
+        console.warn("Unknown function call:", functionCall?.name);
+        functionResult = [
+          {
+            functionResponse: {
+              name: functionCall?.name,
+              response: { results: [] },
+            },
+          },
+        ];
       }
 
-      // 4. Push all function results back to the model for the next iteration
-      conversationHistory.push({
-        role: "user",
-        parts: functionResponses,
-      });
+      contents.push({ role: "user", parts: functionResult });
 
-      continue;
+      llmResponse = await ai.models.generateContent({
+        model: model,
+        contents,
+        config: {
+          temperature: 0,
+          tools: [{ functionDeclarations: [functionDeclaration] }],
+        },
+      });
+      accumulateUsage(llmResponse);
     }
 
-    const text = result.response.text();
-    const jsonResult = isValidJSON(text);
+    const text = llmResponse?.text || "";
+    const responseObject = extractObject(text);
 
-    const finalOutput = jsonResult.isJSON ? jsonResult.jsonObject : { text };
-    /* 
-    await dbCausal.collection("responsesAI").doc().set({
-      contents: conversationHistory,
-      response: text,
-      createdAt: new Date(),
-    }); */
-
-    return finalOutput;
+    return {
+      responseObject,
+      usedTokens: { ...usedTokensAcc },
+      executionTime: Date.now() - startTime,
+    };
+  } catch (error) {
+    console.error("sendRequest failed:", error);
+    throw error;
   }
-
-  throw new Error("Max iterations reached without final response");
 };

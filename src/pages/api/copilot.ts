@@ -1,40 +1,26 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import {
   askGemini,
-  searchChromaCore,
   askGeminiWithFunctionCalling,
+  chromaHitsToOntologyQueryResults,
 } from "./helpers";
-import { Content } from "@google/generative-ai";
 
-import {
-  COPILOT_PROMPTS,
-  GUIDELINES,
-  LOGS,
-  NODES,
-} from "@components/lib/firestoreClient/collections";
+import { LOGS, NODES } from "@components/lib/firestoreClient/collections";
 import { FieldPath } from "firebase-admin/firestore";
 import { db } from "@components/lib/firestoreServer/admin";
-import {
-  getNodesInThreeLevels,
-  getStructureForJSON,
-} from "@components/lib/utils/helpersCopilot";
 import { INode } from "@components/types/INode";
 import fbAuth from "@components/middlewares/fbAuth";
 import { extractJSON, getDoerCreate } from "@components/lib/utils/helpers";
 import {
-  copilotNewNode,
-  getCopilotPrompt,
-  Improvement,
   MODELS_OPTIONS,
+  buildCopilotLLMPrompt,
+  SystemPromptObjectiveDefinition,
 } from "@components/lib/utils/copilotPrompts";
 import { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 import { ChatModel } from "openai/resources/chat/chat";
-import { PROPERTIES_TO_IMPROVE } from "@components/lib/CONSTANTS";
-import {
-  getMainPromptAIPeerReviewer,
-  getSystemPrompt,
-} from "@components/lib/aiAssitantConstants";
 import { openai } from "./openaiClient";
+import { Content } from "@google/genai";
+import { GEMINI_MODEL } from "@components/lib/CONSTANTS";
 
 const GEMINI_MODELS = [
   "gemini-3.1-pro-preview",
@@ -122,20 +108,17 @@ const sendLLMRequest = async ({
         ],
       });
 
-      if (useFunctionCalling) {
-        const response = await askGeminiWithFunctionCalling({
-          contents,
-          model,
-          appName,
-          inputProperties,
-        });
-        return response;
-      }
-
-      const response = await askGemini(contents, model);
+      const response = useFunctionCalling
+        ? await askGeminiWithFunctionCalling({
+            contents,
+            model,
+            appName,
+            inputProperties,
+          })
+        : await askGemini(contents, model);
       return response;
     }
-    const temperature = model === "gpt-4o" ? 0 : 1;
+
     let isJSONObject: { jsonObject: any; isJSON: boolean } = {
       jsonObject: {},
       isJSON: false,
@@ -152,7 +135,7 @@ const sendLLMRequest = async ({
         const completion = await openai.chat.completions.create({
           messages,
           model,
-          temperature,
+          temperature: 0,
         });
 
         const response = completion.choices[0].message.content;
@@ -188,91 +171,6 @@ const sendLLMRequest = async ({
   }
 };
 
-const proposerAgent = async (
-  userMessage: string,
-  model: ChatModel | GeminiModels,
-  nodesArray: any[],
-  uname: string,
-  SYSTEM_PROMPT: string,
-  proposalsJSON: any = {},
-  evaluation: string = "",
-) => {
-  try {
-    const guidelinesSnapshot = await db.collection(GUIDELINES).get();
-    const guidelines = guidelinesSnapshot.docs
-      .map((doc) => {
-        const nodeData = doc.data();
-        delete nodeData.id;
-        delete nodeData.index;
-        return nodeData;
-      })
-      .sort((a, b) => a.index - b.index);
-
-    let prompt = `
-${SYSTEM_PROMPT}
-Guidelines:
-'''
-${JSON.stringify(guidelines, null, 2)}
-'''
-
-Ontology Data:
-'''
-${JSON.stringify(nodesArray, null, 2)}
-'''
-
-User Message:
-'''
-${userMessage}
-'''
-`;
-
-    if (
-      evaluation === "reject" &&
-      (proposalsJSON?.improvements?.length > 0 ||
-        proposalsJSON?.new_nodes?.length > 0 ||
-        proposalsJSON?.guidelines?.length > 0)
-    ) {
-      prompt +=
-        "\nYou previously generated the following proposal, but some of them got rejected with the reasoning detailed below:\n" +
-        JSON.stringify(proposalsJSON, null, 2) +
-        "\n\nPlease generate a new JSON object by improving upon your previous proposal.";
-    }
-    prompt +=
-      "\n\nPlease take your time and carefully respond a well-structured JSON object.\n" +
-      "For every helpful proposal, we will pay you $100 and for every unhelpful one, you'll lose $100.";
-    prompt +=
-      "Please only generate no more than 10 improvements and 10 new nodes";
-
-    // proposalsJSON = await callOpenAIChat([], prompt);
-    // proposalsJSON = await askGemini([], prompt);
-
-    const response: {
-      improvements: Improvement[];
-      new_nodes: copilotNewNode[];
-    } = await sendLLMRequest({
-      prompt,
-      model,
-      uname,
-    });
-
-    return { response, prompt };
-  } catch (error: any) {
-    console.error(error);
-    recordLogs(
-      {
-        type: "error",
-        error: JSON.stringify({
-          name: error.name,
-          message: error.message,
-          stack: error.stack,
-        }),
-        at: "proposerAgent",
-      },
-      uname,
-    );
-  }
-};
-
 export const getNodes = async (
   appName: string,
 ): Promise<Record<string, INode>> => {
@@ -291,160 +189,27 @@ export const getNodes = async (
   return nodes;
 };
 
-export const generateProposals = async (
-  userMessage: string,
-  model: ChatModel | GeminiModels,
-  deepNumber: number,
-  nodeId: string,
+const getEditedParts = async (
   uname: string,
-  SYSTEM_PROMPT: string,
-  inputProperties: Set<string>,
-  appName: string,
-  proposalsJSON: any = {},
-  evaluation: string = "",
-): Promise<any> => {
-  const nodesArray: any = [];
-  const nodes = await getNodes(appName);
-  if (!nodes[nodeId]) {
-    throw new Error("Node doesn't exist");
-  }
-  const currentNode = nodes[nodeId];
-  /*   if (currentNode.nodeType !== "activity") {
-    throw new Error("Node type not supported yet!");
-  } */
-
-  for (let nodeId in nodes) {
-    nodesArray.push(getStructureForJSON(nodes[nodeId], nodes));
-  }
-  if (
-    nodesArray &&
-    inputProperties.size !==
-      PROPERTIES_TO_IMPROVE[currentNode.nodeType].length +
-        PROPERTIES_TO_IMPROVE["allTypes"].length
-  ) {
-    for (let node of nodesArray) {
-      for (let property in node) {
-        if (!inputProperties.has(property) && property !== "nodeType") {
-          delete node[property];
-        }
-      }
-    }
-  }
-  if (nodesArray.length === 0) {
-    // "No related nodes found!"
-  } else {
-    // "Related Nodes:"
-    if (evaluation) {
-      const proposals = await proposerAgent(
-        userMessage,
-        model,
-        nodesArray,
-        uname,
-        SYSTEM_PROMPT,
-        proposalsJSON,
-        evaluation,
-      );
-      return { ...proposals, nodesArray };
-    } else {
-      return await proposerAgent(
-        userMessage,
-        model,
-        nodesArray,
-        uname,
-        SYSTEM_PROMPT,
-      );
-    }
-  }
-};
-
-const getPrompt = async (
-  uname: string,
-  generateNewNodes: boolean,
-  improveProperties: string[],
-  proposeDeleteNode: boolean,
-) => {
+): Promise<SystemPromptObjectiveDefinition> => {
   let promptDoc = await db.collection("copilotPrompts").doc(uname).get();
   if (!promptDoc.exists) {
     promptDoc = await db.collection("copilotPrompts").doc("1man").get();
   }
-  let prompt = "";
-  if (promptDoc.exists) {
-    const promptData = promptDoc.data() as {
-      systemPrompt: {
-        id: string;
-        value?: string;
-        editablePart?: string;
-        endClose?: string;
-        newNode?: boolean;
-        improvement?: boolean;
-      }[];
-    };
+  if (!promptDoc.exists) throw new Error("System prompt missing!");
 
-    let objective = promptData.systemPrompt[0].editablePart as string;
-    let definition = promptData.systemPrompt[1].editablePart as string;
-    prompt = getCopilotPrompt({
-      improvement: improveProperties.length > 0,
-      newNodes: generateNewNodes,
-      improveProperties: new Set(improveProperties),
-      editedPart: { objective, definition },
-      proposeDeleteNode,
-    });
-    return prompt;
-  } else {
-    throw new Error("System prompt missing!");
-  }
-};
+  const promptData = promptDoc.data() as {
+    systemPrompt: {
+      id: string;
+      value?: string;
+      editablePart?: string;
+    }[];
+  };
 
-const _generateProposals = async ({
-  subOntology,
-  task,
-  actors,
-  mainPrompt,
-  uname,
-  appName,
-  inputProperties,
-}: {
-  subOntology: any;
-  task: string;
-  actors: string[];
-  mainPrompt: string;
-  uname: string;
-  appName?: string;
-  inputProperties?: string[];
-}) => {
-  try {
-    let approved = false;
-    let taskImprovements = null;
-    while (!approved) {
-      const response: any = await sendLLMRequest({
-        prompt: mainPrompt,
-        model: "gemini-2.5-pro",
-        uname,
-        appName,
-        useFunctionCalling: true,
-        inputProperties,
-      });
-
-      const reviewerPrompt = getMainPromptAIPeerReviewer({
-        subOntology,
-        task,
-        actors,
-        response,
-      });
-      // const reviewerResponse: any = await sendLLMRequest({
-      //   prompt: reviewerPrompt,
-      //   model: process.env.MODEL as ChatModel,
-      //   uname,
-      // });
-      if (true) {
-        approved = true;
-        taskImprovements = response;
-      }
-    }
-    return taskImprovements;
-  } catch (error) {
-    return;
-  }
+  return {
+    objective: String(promptData?.systemPrompt?.[0]?.editablePart || ""),
+    definition: String(promptData?.systemPrompt?.[1]?.editablePart || ""),
+  };
 };
 
 /**
@@ -581,68 +346,330 @@ const loadAllNodesFlat = async ({
 };
 
 const getSubOntology = async ({
-  appName,
-  task,
+  nodeId,
   hops,
-  inputProperties,
 }: {
-  appName: string;
-  task: string;
+  nodeId: string;
   hops: number;
-  inputProperties?: string[];
 }): Promise<any> => {
+  const nodesById: Record<string, any> = {};
+  const subgraphIds = new Set<string>();
+
+  const collectDirected = async (options: {
+    step: (
+      node: Record<string, any>,
+    ) => Array<{ id?: string | null } | null | undefined>;
+  }) => {
+    let frontier = new Set([nodeId]);
+    for (let depth = 0; depth <= hops; depth++) {
+      const { nodes_ids } = await getNodesByIds(frontier);
+      Object.assign(nodesById, nodes_ids);
+
+      for (const id of frontier) {
+        if (nodesById[id]) subgraphIds.add(id);
+      }
+
+      if (depth === hops || frontier.size === 0) break;
+
+      const next = new Set<string>();
+      for (const id of frontier) {
+        const node = nodesById[id];
+        if (!node) continue;
+        for (const neighbor of options.step(node)) {
+          const nid = neighbor?.id;
+          if (nid) next.add(String(nid));
+        }
+      }
+      frontier = next;
+    }
+  };
+
   try {
-    const searchResults = await searchChromaCore({
-      query: task,
-      resultsNum: 100,
-      appName,
-      nodeType: "activity",
-      inputProperties,
+    await collectDirected({
+      step: (node) => node.generalizations?.[0]?.nodes ?? [],
+    });
+    await collectDirected({
+      step: (node) =>
+        (node.specializations ?? []).flatMap(
+          (coll: { nodes?: Array<{ id?: string | null }> }) =>
+            coll?.nodes ?? [],
+        ),
     });
 
-    let required_ids: string[] = [];
-    if (searchResults) {
-      required_ids.push(
-        ...searchResults.flatMap((c) => (c != null && c.id ? [c.id] : [])),
-      );
+    const referencedNeighborIds = new Set<string>();
+    for (const node of Object.values(nodesById)) {
+      const n = node as Record<string, any>;
+      for (const p of n.generalizations?.[0]?.nodes ?? []) {
+        const nid = p?.id;
+        if (nid && !nodesById[String(nid)]) {
+          referencedNeighborIds.add(String(nid));
+        }
+      }
+      for (const coll of n.specializations ?? []) {
+        for (const c of coll?.nodes ?? []) {
+          const nid = c?.id;
+          if (nid && !nodesById[String(nid)]) {
+            referencedNeighborIds.add(String(nid));
+          }
+        }
+      }
+    }
+    if (referencedNeighborIds.size > 0) {
+      const { nodes_ids } = await getNodesByIds(referencedNeighborIds);
+      Object.assign(nodesById, nodes_ids);
     }
 
-    const all_related_nodes = new Set(required_ids);
-    const { nodes_ids, nodes_titles } = await getNodesByIds(all_related_nodes);
-    const ontology_object = await loadAllNodesFlat({
-      exclusiveIds: new Set(required_ids),
-      nodes_ids,
-      nodes_titles,
-      appName,
-      inputProperties,
-    });
+    const hitList = [...subgraphIds].map((id) => ({
+      id,
+      title: nodesById[id]?.title,
+    }));
 
-    return ontology_object;
+    return chromaHitsToOntologyQueryResults(hitList, nodesById);
   } catch (error) {
     console.error(error);
   }
 };
 
+const FIRESTORE_TITLE_IN_QUERY_LIMIT = 30;
+
+async function getNodeIdsByTitle({
+  appName,
+  titles,
+}: {
+  appName?: string;
+  titles: Set<string>;
+}): Promise<Record<string, string>> {
+  const titleToId: Record<string, string> = {};
+  const allTitles = [...titles]
+    .map((t) => String(t || "").trim())
+    .filter(Boolean);
+  if (!allTitles.length) return titleToId;
+
+  for (let i = 0; i < allTitles.length; i += FIRESTORE_TITLE_IN_QUERY_LIMIT) {
+    const chunk = allTitles.slice(i, i + FIRESTORE_TITLE_IN_QUERY_LIMIT);
+    let snapshot: FirebaseFirestore.QuerySnapshot<FirebaseFirestore.DocumentData> | null =
+      null;
+
+    // Prefer the most selective query first (may require an index).
+    try {
+      const q = db
+        .collection("nodes")
+        .where("deleted", "==", false)
+        .where("title", "in", chunk);
+      snapshot = appName
+        ? await q.where("appName", "==", appName).get()
+        : await q.get();
+    } catch (e) {
+      // Fallback: title-only query (filter remaining constraints in memory).
+      const q = db.collection("nodes").where("title", "in", chunk);
+      snapshot = await q.get();
+    }
+
+    snapshot?.docs.forEach((doc) => {
+      const data = doc.data() as any;
+      if (data?.deleted) return;
+      if (appName && data?.appName !== appName) return;
+      const title = String(data?.title || "").trim();
+      if (!title) return;
+      if (!titleToId[title]) {
+        titleToId[title] = doc.id;
+      }
+    });
+  }
+
+  return titleToId;
+}
+
+function collectReferencedTitlesForIds(responseObject: any): Set<string> {
+  const titles = new Set<string>();
+  const add = (t: any) => {
+    const s = String(t || "").trim();
+    if (s) titles.add(s);
+  };
+
+  const improvements = responseObject?.improvements ?? [];
+  for (const imp of improvements) {
+    add(imp?.title);
+    const changes = imp?.changes ?? [];
+    for (const ch of changes) {
+      // Specializations: nested collections with nodes as string titles.
+      const specs = ch?.specializations ?? [];
+      for (const s of specs) {
+        const nodes = s?.collection_to_add?.nodes ?? s?.nodes ?? [];
+        if (Array.isArray(nodes)) nodes.forEach(add);
+      }
+
+      // Generalizations: sometimes returned as an array of titles.
+      const gens = ch?.generalizations ?? [];
+      if (Array.isArray(gens)) gens.forEach(add);
+
+      // Parts: array of objects with a title.
+      const parts = ch?.parts ?? [];
+      if (Array.isArray(parts)) parts.forEach((p: any) => add(p?.title));
+    }
+  }
+
+  // New nodes: generalizations is an array of titles, parts are objects with titles.
+  const newNodes = responseObject?.new_nodes ?? [];
+  for (const n of newNodes) {
+    add(n?.title);
+    const gens = n?.generalizations ?? [];
+    if (Array.isArray(gens)) gens.forEach(add);
+    const parts = n?.parts ?? [];
+    if (Array.isArray(parts)) parts.forEach((p: any) => add(p?.title));
+  }
+
+  // Delete nodes: titles only.
+  const delNodes = responseObject?.delete_nodes ?? [];
+  for (const n of delNodes) add(n?.title);
+
+  // Required nodes: titles only.
+  const reqNodes = responseObject?.required_nodes ?? [];
+  if (Array.isArray(reqNodes)) reqNodes.forEach(add);
+
+  return titles;
+}
+
+function enrichResponseObjectWithIds(
+  responseObject: any,
+  titleToId: Record<string, string>,
+) {
+  try {
+    if (!responseObject || typeof responseObject !== "object") {
+      return responseObject;
+    }
+
+    const out = responseObject;
+
+    const normalizeTitle = (v: any): string => {
+      if (typeof v === "string") return v.trim();
+      return String(v || "").trim();
+    };
+
+    const lookup = (rawTitle: any): string | undefined => {
+      const t = normalizeTitle(rawTitle);
+      return t ? titleToId[t] : undefined;
+    };
+
+    const buildTitleIdArray = (
+      arr: any[],
+    ): { title: string; id?: string }[] => {
+      const res: { title: string; id?: string }[] = [];
+      for (let i = 0; i < arr.length; i++) {
+        const title = normalizeTitle(arr[i]);
+        if (!title) continue;
+        res.push({ title, id: titleToId[title] });
+      }
+      return res;
+    };
+
+    const addIdsToPartsInPlace = (parts: any[]) => {
+      for (let i = 0; i < parts.length; i++) {
+        const p = parts[i];
+        if (!p || typeof p !== "object") continue;
+        (p as any).id = lookup((p as any).title);
+      }
+    };
+
+    const improvements = out.improvements;
+    if (Array.isArray(improvements)) {
+      for (let i = 0; i < improvements.length; i++) {
+        const imp = improvements[i];
+        const changes = imp?.changes;
+        if (!Array.isArray(changes)) continue;
+
+        for (let j = 0; j < changes.length; j++) {
+          const ch = changes[j];
+
+          const specs = ch?.specializations;
+          if (Array.isArray(specs)) {
+            for (let k = 0; k < specs.length; k++) {
+              const s = specs[k];
+              const cta = s?.collection_to_add;
+              const nodes =
+                (cta && typeof cta === "object" ? cta.nodes : null) ?? s?.nodes;
+              if (!Array.isArray(nodes)) continue;
+
+              const nodesWithIds = buildTitleIdArray(nodes);
+              if (cta && typeof cta === "object") {
+                cta.nodes_with_ids = nodesWithIds;
+              } else if (s && typeof s === "object") {
+                s.nodes_with_ids = nodesWithIds;
+              }
+            }
+          }
+
+          const gens = ch?.generalizations;
+          if (Array.isArray(gens)) {
+            ch.generalizations_with_ids = buildTitleIdArray(gens);
+          }
+
+          const parts = ch?.parts;
+          if (Array.isArray(parts)) {
+            addIdsToPartsInPlace(parts);
+          }
+        }
+      }
+    }
+
+    const newNodes = out.new_nodes;
+    if (Array.isArray(newNodes)) {
+      for (let i = 0; i < newNodes.length; i++) {
+        const n = newNodes[i];
+
+        const gens = n?.generalizations;
+        if (Array.isArray(gens)) {
+          n.generalizations_with_ids = buildTitleIdArray(gens);
+        }
+
+        const parts = n?.parts;
+        if (Array.isArray(parts)) {
+          addIdsToPartsInPlace(parts);
+        }
+      }
+    }
+
+    const delNodes = out.delete_nodes;
+    if (Array.isArray(delNodes)) {
+      for (let i = 0; i < delNodes.length; i++) {
+        const n = delNodes[i];
+        if (!n || typeof n !== "object") continue;
+        if (!("title" in n)) continue;
+        (n as any).id = lookup((n as any).title);
+      }
+    }
+
+    const reqNodes = out.required_nodes;
+    if (Array.isArray(reqNodes)) {
+      out.required_nodes_with_ids = buildTitleIdArray(reqNodes);
+    }
+
+    return out;
+  } catch (error) {
+    console.log(error, "error");
+  }
+}
+
 async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
   const {
+    user,
     userMessage,
     model,
-    deepNumber,
     nodeId,
-    user,
     generateNewNodes,
     improveProperties,
     proposeDeleteNode,
     inputProperties,
     appName,
+    systemPromptObjectiveDefinition,
   } = req.body.data;
 
   const { uname } = user?.userData;
   try {
-    const model_index = MODELS_OPTIONS.findIndex(
+    const modelIndex = MODELS_OPTIONS.findIndex(
       (option) => option.id === model,
     );
-    if (!user?.userData || model_index === -1) {
+    if (!user?.userData || modelIndex === -1) {
       throw new Error("Access forbidden");
     }
     const nodeDoc = await db.collection("nodes").doc(nodeId).get();
@@ -650,85 +677,56 @@ async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
     if (!nodeDoc.exists || !nodeData || !nodeData?.title) {
       throw new Error("Node not found, or missing title");
     }
-    const task = nodeData?.title;
+
     const subOntology = await getSubOntology({
-      appName,
-      task,
-      hops: deepNumber || 4,
-      inputProperties: inputProperties || [],
+      nodeId,
+      hops: 5,
     });
-    const actors: string[] = [];
-    const SYSTEM_PROMPT = getSystemPrompt(
-      nodeData?.title || "",
-      actors,
+
+    console.log("subOntology", subOntology);
+
+    const editedPartFromClient = (systemPromptObjectiveDefinition ||
+      null) as SystemPromptObjectiveDefinition | null;
+    const editedPart = editedPartFromClient ?? (await getEditedParts(uname));
+
+    const SYSTEM_PROMPT = buildCopilotLLMPrompt({
+      editedPart,
+      improvement: (improveProperties || []).length > 0,
+      newNodes: !!generateNewNodes,
+      proposeDeleteNode: !!proposeDeleteNode,
+      improveProperties: improveProperties || [],
+      userMessage,
       subOntology,
-    );
-    const generatedProposals = await _generateProposals({
-      subOntology,
-      task,
-      actors,
-      mainPrompt: SYSTEM_PROMPT,
+      nodeTitle: nodeData?.title || "",
+    });
+    const response: any = await sendLLMRequest({
+      prompt: SYSTEM_PROMPT,
+      model: GEMINI_MODEL,
       uname,
       appName,
+      useFunctionCalling: true,
       inputProperties,
     });
+    const generatedProposals = response.responseObject;
+    try {
+      await db.collection("copilotResponses").doc().set({
+        nodeId,
+        model,
+        response,
+        createdAt: new Date(),
+      });
+    } catch (error) {
+      console.error(error);
+    }
 
-
-    await db.collection("copilotResponses").doc().set({
-      nodeId,
-      model,
-      generatedProposals,
-      createdAt: new Date(),
+    const referencedTitles = collectReferencedTitlesForIds(generatedProposals);
+    const titleToId = await getNodeIdsByTitle({
+      appName,
+      titles: referencedTitles,
     });
-
-    return res.status(200).json(generatedProposals);
-    // const changes = generatedProposals.response;
-    // const nodes_array = generatedProposals.nodes_array;
-    // const prompt = generatedProposals.prompt;
-
-    // saveLogs(uname, "info", {
-    //   changes,
-    //   nodes_array,
-    //   prompt,
-    //   nodeId,
-    //   model,
-    //   userMessage,
-    //   deepNumber,
-    //   SYSTEM_PROMPT,
-    //   at: "copilot",
-    // });
-
-    // const filteredImprovements = [];
-
-    // for (let improvement of changes?.improvements || []) {
-    //   if (improvement.title.toLowerCase() === "unclassified") {
-    //     continue;
-    //   }
-    //   const propertyCount: { [prop: string]: number } = {};
-
-    //   for (let change of improvement.changes) {
-    //     const prop = change.modified_property;
-    //     propertyCount[prop] = (propertyCount[prop] || 0) + 1;
-    //   }
-
-    //   const hasDuplicatePropertyChange = Object.values(propertyCount).some(
-    //     (count) => count > 1,
-    //   );
-    //   if (hasDuplicatePropertyChange) continue;
-
-    //   for (let change of improvement.changes) {
-    //     filteredImprovements.push({
-    //       ...improvement,
-    //       change,
-    //     });
-    //   }
-    // }
-    // if (!changes?.new_nodes) {
-    //   changes.new_nodes = [];
-    // }
-    // if (!changes?.delete_nodes) changes.delete_nodes = [];
-    // changes.improvements = filteredImprovements;
-    // return res.status(200).send(changes);
+    const enriched = enrichResponseObjectWithIds(generatedProposals, titleToId);
+    console.log(JSON.stringify(enriched, null, 2));
+    return res.status(200).json(enriched);
   } catch (error: any) {
     console.error("error", error);
     recordLogs(

@@ -164,7 +164,7 @@ export const PROPERTIES_TO_IMPROVE: { [nodeType: string]: string[] } | any = {
 };
 
 export const MODEL = "o3";
-export const GEMINI_MODEL = "gemini-2.5-pro";
+export const GEMINI_MODEL = "gemini-3.1-pro-preview";
 
 export const ONTOLOGY_APPS = development
   ? [

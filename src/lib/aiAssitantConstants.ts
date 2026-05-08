@@ -26,6 +26,13 @@ Review the given ontology nodes (provided via *Your Last Search Query Results*) 
 3. **Required Nodes** You will *not* have access to the search results from the current turn in subsequent turns. If you need access to any nodes, list **their titles** here.
 4. **Notes to Yourself** a detailed internal monologue. Record your thought process, hypotheses, assumptions, what you have analyzed, what you have prioritized, and your strategic plan for the next iteration. This is vital as the interaction is stateless; we will provide these notes back to you next time.
 5. **Given Activity Added** - a boolean indicating whether you have completely added the activity titled "${task}"${actors?.length ? `, performed by "${actors.join('", "')}"` : ""}, to the ontology.
+
+## Tool Use
+You may use the QueryOntology tool to find existing nodes that can serve as parts.
+- Search for "${task}" and close semantic equivalents.
+- Search for likely sub-activities or lifecycle steps.
+- Do not guess exact existing node titles.
+- Use a maximum of 5 search queries. After that, produce the final JSON.
     
 ## 3. Ontology Definition:
 
@@ -329,51 +336,9 @@ Use the steps below to add the activity "${task}"${actors?.length ? ` performed 
 ## 6. Context for this Interaction:
 
 * You are working with a **subset** of a larger ontology.
-* Your "search_queries" are essential for exploring beyond the provided data.
+* Use **QueryOntology** and your own "search_queries" to explore the full ontology. You will receive results as *Your Last Search Query Results* in subsequent turns.
 
-${JSON.stringify(subOntology, null, 2)}
+Current sub-ontology: ${JSON.stringify(subOntology, null, 2)}
 
 Take your time. Analyze the provided data carefully in accordance with all guidelines and instructions. Generate a **high-quality and well-structured JSON** response.`;
-};
-
-export const getMainPromptAIPeerReviewer = ({
-  subOntology,
-  task,
-  actors,
-  response,
-}: {
-  subOntology: any;
-  task: string;
-  actors: string[];
-  response: any;
-}) => {
-  return `# Ontology Quality Auditor
-
-## 1. Your Role and Goal:
-You are a Senior Ontological Auditor. Your sole purpose is to validate the output of the Ontology Enhancement Agent. You must determine if the proposed changes (New Nodes, Improvements, and Parts) follow the strict structural rules of the activity-based ontology.
-
-## 2. Input Data:
-- **Target Activity to Add:** "${task}" ${actors?.length ? `performed by "${actors.join('", "')}"` : ""}
-- **Original Sub-Ontology:** ${JSON.stringify(subOntology, null, 2)}
-
-- **Proposed JSON Response (To be Audited):** ${JSON.stringify(response, null, 2)}
-
-## 3. Mandatory Review Checklist:
-* **Recursive Parts:** Does the core execution part of a node share the exact title of the node itself? (e.g., node "Write" must have a part titled "Write").
-* **Inheritance:** Do parts correctly reference the parent node and parent part in the 'inheritedFrom' field?
-* **Specialization vs. Process:** Ensure sequential steps (e.g., "Prepare", "Finish") are in the 'parts' array and NOT listed as specializations.
-* **Collection Naming:** Are all collections phrased as "Verb + WH-question?" (e.g., "Analyze how?").
-* **Intermediate Nodes:** Did the agent avoid "level skipping"? (e.g., no direct links from "Do" to "Perform Heart Surgery" without intermediate generalizations).
-* **Virtual Specializations:** Did the agent correctly generate composite virtual nodes from the parent's other collections?
-* **Atomicity & "The Given Activity":** * Did the agent break down the task into atomic verbs? 
-    * Is there exactly one node with "the_given_activity": "true"? 
-    * Does that leaf node correctly point to the atomic components as generalizations?
-
-## 4. Expected Output:
-Return **only** a valid JSON object with this structure:
-
-{
- "approved": boolean,
- "reasoning": "A detailed explanation of why the proposal passed or failed. If false, list every specific violation of the guidelines (e.g., missing recursive parts, improper collection naming, or level-skipping in the hierarchy)."
-}`;
 };

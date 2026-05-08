@@ -217,7 +217,7 @@ const ChatSideBar = ({
       const usersQuery = query(collection(db, USERS));
       const usersDocs = await getDocs(usersQuery);
       const _users: any = [];
-      usersDocs.docs.forEach((userDoc: any, index: number) => {
+      usersDocs.docs.forEach((userDoc: any) => {
         _users.push({
           id: userDoc.data().uname,
           display: `${userDoc.data().fName} ${userDoc.data().lName}`,

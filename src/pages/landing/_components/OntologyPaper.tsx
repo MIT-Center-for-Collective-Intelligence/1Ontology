@@ -39,6 +39,7 @@ const ontologyPaperInstrumentSerif = Instrument_Serif({
   style: ["normal", "italic"],
   display: "swap",
   variable: "--ontology-paper-instrument-serif",
+  adjustFontFallback: false,
 });
 import Footer from "./Footer";
 import { useAuth } from "@components/components/context/AuthContext";

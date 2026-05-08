@@ -113,6 +113,7 @@ import {
   copilotNewNode,
   Improvement,
   sendLLMRequest,
+  SystemPromptObjectiveDefinition,
 } from "@components/lib/utils/copilotPrompts";
 import OntologyHistory from "../ActiveUsers/OntologyHistory";
 import { handleDownload } from "@components/lib/utils/random";
@@ -137,7 +138,6 @@ type MainSidebarProps = {
   setActiveSidebar: any;
   handleExpandSidebar: any;
   navigateToNode: any;
-  treeVisualization: any;
   expandedNodes: any;
   setExpandedNodes: any;
   onOpenNodesTree: any;
@@ -171,7 +171,6 @@ const ToolbarSidebar = ({
   setActiveSidebar,
   handleExpandSidebar,
   navigateToNode,
-  treeVisualization,
   expandedNodes,
   setExpandedNodes,
   onOpenNodesTree,
@@ -1314,6 +1313,8 @@ const ToolbarSidebar = ({
       selectedProperties: Set<string>;
       proposeDeleteNode: boolean;
       inputProperties: Set<string>;
+      systemPromptObjectiveDefinition: SystemPromptObjectiveDefinition | null;
+      aiAssistantContext: any;
     };
 
     if (!options) return;
@@ -1325,11 +1326,13 @@ const ToolbarSidebar = ({
       selectedProperties,
       proposeDeleteNode,
       inputProperties,
+      systemPromptObjectiveDefinition,
+      aiAssistantContext,
     } = options;
     setIsLoadingCopilot(true);
     setCurrentIndex(0);
     try {
-      const response: any = (await sendLLMRequest(
+      let response: any = (await sendLLMRequest(
         userMessage,
         model,
         deepNumber,
@@ -1339,6 +1342,8 @@ const ToolbarSidebar = ({
         proposeDeleteNode,
         inputProperties,
         currentVisibleNode?.appName ?? "",
+        systemPromptObjectiveDefinition,
+        aiAssistantContext,
       )) as {
         improvements: Improvement[];
         new_nodes: copilotNewNode[];
@@ -1358,11 +1363,24 @@ const ToolbarSidebar = ({
       ) {
         confirmIt(
           <Box>
-            {`I've analyzed your sub-ontology graph and found no areas for improvement or new nodes to add.`}{" "}
-            <strong style={{ color: "orange" }}>
-              {currentVisibleNode.title}
-            </strong>
-            .
+            {`I've analyzed your sub-ontology graph around `}{" "}
+            <Tooltip title={currentVisibleNode.title} arrow placement="top">
+              <Box
+                component="strong"
+                sx={{
+                  color: "orange",
+                  display: "inline-block",
+                  maxWidth: "min(100%, 280px)",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                  verticalAlign: "bottom",
+                }}
+              >
+                {currentVisibleNode.title}
+              </Box>
+            </Tooltip>
+            {` and found no areas for improvement or new nodes to add.`}
           </Box>,
           "Ok",
         );

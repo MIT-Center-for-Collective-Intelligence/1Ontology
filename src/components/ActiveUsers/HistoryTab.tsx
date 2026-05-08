@@ -405,37 +405,182 @@ const NodeActivity = ({
             flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
-            marginTop: "20%",
+            mt: { xs: "22%", sm: "20%" },
+            px: 2,
+            color: "text.primary",
+            "@keyframes historyEmptyFloat": {
+              "0%, 100%": { transform: "translateY(0px)" },
+              "50%": { transform: "translateY(-10px)" },
+            },
+            "@keyframes historyEmptyPulse": {
+              "0%, 100%": { opacity: 0.6, transform: "scale(0.98)" },
+              "50%": { opacity: 1, transform: "scale(1)" },
+            },
+            "@keyframes historyEmptyDot": {
+              "0%, 80%, 100%": { transform: "translateY(0)", opacity: 0.55 },
+              "40%": { transform: "translateY(-6px)", opacity: 1 },
+            },
           }}
         >
           <Box
-            sx={{
-              height: "100%",
-              display: "grid",
-              placeItems: "center",
-            }}
+            sx={(theme) => ({
+              width: "100%",
+              maxWidth: 360,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 2,
+              borderRadius: 3,
+              p: 2.25,
+              background:
+                theme.palette.mode === "dark"
+                  ? "linear-gradient(160deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04))"
+                  : "linear-gradient(160deg, rgba(255,255,255,0.78), rgba(255,255,255,0.46))",
+              border:
+                theme.palette.mode === "dark"
+                  ? "1px solid rgba(255,255,255,0.10)"
+                  : "1px solid rgba(15,23,42,0.08)",
+              boxShadow:
+                theme.palette.mode === "dark"
+                  ? "0 22px 55px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06)"
+                  : "0 18px 45px rgba(15,23,42,0.10), inset 0 1px 0 rgba(255,255,255,0.9)",
+            })}
           >
-            <Box>
+            <Box
+              aria-hidden
+              sx={(theme) => ({
+                width: "100%",
+                maxWidth: 320,
+                minHeight: 160,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                position: "relative",
+                animation: "historyEmptyFloat 3.1s ease-in-out infinite",
+                "&::before": {
+                  content: '""',
+                  position: "absolute",
+                  inset: -10,
+                  borderRadius: 999,
+                  background:
+                    theme.palette.mode === "dark"
+                      ? "radial-gradient(circle at 40% 30%, rgba(255,175,110,0.18), transparent 55%), radial-gradient(circle at 70% 60%, rgba(120,180,255,0.14), transparent 60%)"
+                      : "radial-gradient(circle at 40% 30%, rgba(230,120,50,0.14), transparent 55%), radial-gradient(circle at 70% 60%, rgba(60,120,255,0.10), transparent 60%)",
+                  filter: "blur(10px)",
+                  opacity: 0.95,
+                },
+              })}
+            >
               <Box
+                sx={(theme) => ({
+                  width: "100%",
+                  maxWidth: 300,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 1,
+                })}
+              >
+                {[
+                  { align: "flex-start" as const, w: "70%", h: 34, d: "0s" },
+                  { align: "flex-end" as const, w: "56%", h: 28, d: "0.12s" },
+                  { align: "flex-start" as const, w: "62%", h: 32, d: "0.24s" },
+                ].map((b, i) => (
+                  <Box
+                    key={i}
+                    sx={(theme) => ({
+                      alignSelf: b.align,
+                      width: b.w,
+                      height: b.h,
+                      borderRadius: 2.25,
+                      bgcolor:
+                        i === 1
+                          ? theme.palette.mode === "dark"
+                            ? "rgba(10, 132, 255, 0.18)"
+                            : "rgba(0, 122, 255, 0.14)"
+                          : theme.palette.mode === "dark"
+                            ? "rgba(255,255,255,0.08)"
+                            : "rgba(255,255,255,0.7)",
+                      border:
+                        theme.palette.mode === "dark"
+                          ? "1px solid rgba(255,255,255,0.12)"
+                          : "1px solid rgba(15,23,42,0.08)",
+                      boxShadow:
+                        theme.palette.mode === "dark"
+                          ? "inset 0 1px 0 rgba(255,255,255,0.06), 0 10px 28px rgba(0,0,0,0.24)"
+                          : "inset 0 1px 0 rgba(255,255,255,0.75), 0 10px 28px rgba(15,23,42,0.08)",
+                      animation: "historyEmptyPulse 2.8s ease-in-out infinite",
+                      animationDelay: b.d,
+                    })}
+                  />
+                ))}
+              </Box>
+            </Box>
+
+            <Box sx={{ textAlign: "center" }}>
+              <Typography sx={{ fontWeight: 800, letterSpacing: "0.01em" }}>
+                No history yet
+              </Typography>
+              <Typography
+                variant="body2"
                 sx={{
-                  width: { xs: "250px", sm: "300px" },
-                  height: { xs: "250px", sm: "200px" },
-                  "& .rive-canvas": {
-                    height: "100%",
-                  },
+                  mt: 0.5,
+                  color: (t) =>
+                    t.palette.mode === "dark"
+                      ? "rgba(255,255,255,0.58)"
+                      : "rgba(15,23,42,0.6)",
                 }}
               >
-                <RiveComponentMemoized
-                  src="/rive/notification.riv"
-                  animations={"Timeline 1"}
-                  artboard="New Artboard"
-                  autoplay={true}
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                  }}
-                />
-              </Box>
+                When changes happen, they’ll show up here.
+              </Typography>
+            </Box>
+
+            <Box
+              aria-hidden
+              sx={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 0.75,
+                mt: 0.25,
+              }}
+            >
+              <Box
+                sx={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: 999,
+                  bgcolor: (t) =>
+                    t.palette.mode === "dark"
+                      ? "rgba(255, 175, 110, 0.9)"
+                      : "rgba(180, 83, 9, 0.78)",
+                  animation: "historyEmptyDot 1.2s ease-in-out infinite",
+                }}
+              />
+              <Box
+                sx={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: 999,
+                  bgcolor: (t) =>
+                    t.palette.mode === "dark"
+                      ? "rgba(255, 175, 110, 0.9)"
+                      : "rgba(180, 83, 9, 0.78)",
+                  animation: "historyEmptyDot 1.2s ease-in-out infinite",
+                  animationDelay: "0.12s",
+                }}
+              />
+              <Box
+                sx={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: 999,
+                  bgcolor: (t) =>
+                    t.palette.mode === "dark"
+                      ? "rgba(255, 175, 110, 0.9)"
+                      : "rgba(180, 83, 9, 0.78)",
+                  animation: "historyEmptyDot 1.2s ease-in-out infinite",
+                  animationDelay: "0.24s",
+                }}
+              />
             </Box>
           </Box>
         </Box>
