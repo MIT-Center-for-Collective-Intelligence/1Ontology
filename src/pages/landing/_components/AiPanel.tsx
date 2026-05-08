@@ -264,8 +264,9 @@ const renderInline = (
   keyPrefix: string,
 ): React.ReactNode[] => {
   const out: React.ReactNode[] = [];
-  // Split on **#ID Title** first since chips take priority
-  const chipRe = /\*\*#([A-Za-z0-9_-]+)\s+([^*]+)\*\*/g;
+  // Chips first; the optional prefix recovers a chip when the model
+  // wraps surrounding words in the same bold span.
+  const chipRe = /\*\*([^*]*?)#([A-Za-z0-9_-]+)\s+(.+?)\*\*/g;
   let last = 0;
   let m: RegExpExecArray | null;
   let i = 0;
@@ -279,8 +280,20 @@ const renderInline = (
         ),
       );
     }
-    const id = m[1];
-    const title = m[2].trim();
+    const prefix = m[1];
+    const id = m[2];
+    const title = m[3].trim();
+    if (prefix) {
+      out.push(
+        <Box
+          key={`${keyPrefix}-bp${i}`}
+          component="strong"
+          sx={{ fontWeight: 700 }}
+        >
+          {prefix}
+        </Box>,
+      );
+    }
     out.push(
       <Box
         key={`${keyPrefix}-chip${i}`}
@@ -323,7 +336,10 @@ const renderPlain = (
   keyPrefix: string,
 ): React.ReactNode[] => {
   const out: React.ReactNode[] = [];
-  const tokenRe = /\*\*([^*]+)\*\*|`([^`]+)`|\n/g;
+  // Block-level handling (lists, headings, rules, line breaks) is upstream
+  // in renderTextBlock; this pass only needs the inline tokens.
+  // Non-greedy bold so `*` inside the run (e.g. "5* hotels") survives.
+  const tokenRe = /\*\*(.+?)\*\*|`([^`]+)`/g;
   let last = 0;
   let m: RegExpExecArray | null;
   let i = 0;
@@ -357,13 +373,126 @@ const renderPlain = (
           {m[2]}
         </Box>,
       );
-    } else {
-      out.push(<br key={`${keyPrefix}-br${i}`} />);
     }
     last = m.index + m[0].length;
     i++;
   }
   if (last < text.length) out.push(text.slice(last));
+  return out;
+};
+
+// Block-level pass: split on newlines, emit headings / rules / lists / paragraph
+// lines, and delegate inline parsing (chips, bold, code) to renderInline.
+const renderTextBlock = (
+  text: string,
+  onNav: (id: string, title?: string) => void,
+  accent: string,
+  keyPrefix: string,
+): React.ReactNode[] => {
+  const lines = text.split("\n");
+  const out: React.ReactNode[] = [];
+  let listBuffer: string[] = [];
+  let listOrdered = false;
+  let listSeq = 0;
+
+  const flushList = () => {
+    if (listBuffer.length === 0) return;
+    const items = listBuffer.slice();
+    const ordered = listOrdered;
+    const seq = listSeq++;
+    out.push(
+      <Box
+        key={`${keyPrefix}-list${seq}`}
+        component={ordered ? "ol" : "ul"}
+        sx={{
+          pl: 2.5,
+          my: 0.4,
+          "& li": { mb: 0.15 },
+          "& li::marker": { color: alpha(accent, 0.7) },
+        }}
+      >
+        {items.map((content, j) => (
+          <li key={j}>
+            {renderInline(content, onNav, accent, `${keyPrefix}-l${seq}-${j}`)}
+          </li>
+        ))}
+      </Box>,
+    );
+    listBuffer = [];
+  };
+
+  lines.forEach((rawLine, idx) => {
+    const line = rawLine.trimEnd();
+
+    // Horizontal rule: --- or *** alone on a line.
+    if (/^\s*(?:---+|\*\*\*+)\s*$/.test(line)) {
+      flushList();
+      out.push(
+        <Box
+          key={`${keyPrefix}-hr${idx}`}
+          component="hr"
+          sx={{
+            border: 0,
+            borderTop: (t) =>
+              `1px solid ${alpha(t.palette.text.primary, 0.12)}`,
+            my: 1,
+          }}
+        />,
+      );
+      return;
+    }
+
+    // Headings: # / ## / ###. Sized down so they sit nicely in a chat bubble.
+    const heading = /^\s*(#{1,3})\s+(.+)$/.exec(line);
+    if (heading) {
+      flushList();
+      const level = heading[1].length;
+      const fontSize =
+        level === 1 ? "1.05rem" : level === 2 ? "0.95rem" : "0.88rem";
+      out.push(
+        <Box
+          key={`${keyPrefix}-h${idx}`}
+          sx={{
+            fontSize,
+            fontWeight: 700,
+            mt: idx === 0 ? 0 : 0.8,
+            mb: 0.3,
+            letterSpacing: "-0.005em",
+          }}
+        >
+          {renderInline(heading[2], onNav, accent, `${keyPrefix}-h${idx}`)}
+        </Box>,
+      );
+      return;
+    }
+
+    // List items: bullet (- or *) or numbered (1.). The bullet `*` regex
+    // requires a trailing space, so it can't swallow a leading **bold**.
+    const bullet = /^\s*[-*]\s+(.*)$/.exec(line);
+    const numbered = /^\s*\d+\.\s+(.*)$/.exec(line);
+    if (bullet || numbered) {
+      const ordered = !!numbered;
+      if (listBuffer.length > 0 && ordered !== listOrdered) flushList();
+      listOrdered = ordered;
+      listBuffer.push((bullet ?? numbered)![1]);
+      return;
+    }
+
+    // Plain line — flush any pending list before emitting.
+    flushList();
+    if (line.length === 0) {
+      out.push(
+        <Box key={`${keyPrefix}-gap${idx}`} sx={{ height: "0.45em" }} />,
+      );
+      return;
+    }
+    out.push(
+      <Box key={`${keyPrefix}-line${idx}`}>
+        {renderInline(line, onNav, accent, `${keyPrefix}-line${idx}`)}
+      </Box>,
+    );
+  });
+  flushList();
   return out;
 };
 
@@ -415,9 +544,9 @@ const AssistantText: React.FC<{
             {seg.text}
           </Box>
         ) : (
-          <Box key={`seg${idx}`} component="span">
-            {renderInline(seg.text, onNav, accent, `seg${idx}`)}
-          </Box>
+          <React.Fragment key={`seg${idx}`}>
+            {renderTextBlock(seg.text, onNav, accent, `seg${idx}`)}
+          </React.Fragment>
         ),
       )}
     </Box>
