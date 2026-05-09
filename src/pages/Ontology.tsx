@@ -287,10 +287,12 @@ const Ontology = ({
     () => ONTOLOGY_APPS.filter((app) => app.type !== "other"),
     [],
   );
-  const ontologyAppsOtherGroup = useMemo(
-    () => ONTOLOGY_APPS.filter((app) => app.type === "other"),
-    [],
-  );
+  const ontologyAppsOtherGroup = useMemo(() => {
+    const editAccess = userHasOntologyEditAccess(user, appName);
+    return ONTOLOGY_APPS.filter(
+      (app) => app.type === "other" && (editAccess || app.editAccess),
+    );
+  }, [user, appName]);
 
   const firstLoad = useRef(true);
   const prevAppNameRef = useRef<string>(appName);
@@ -2359,7 +2361,6 @@ const Ontology = ({
             setActiveSidebar={setActiveSidebar}
             handleExpandSidebar={handleExpandSidebar}
             navigateToNode={navigateToNode}
-            treeVisualization={treeVisualization}
             expandedNodes={expandedNodes}
             setExpandedNodes={setExpandedNodes}
             onOpenNodesTree={onOpenNodesTree}
@@ -2435,7 +2436,7 @@ const Ontology = ({
               }}
             >
               {" "}
-              {appName && userHasOntologyEditAccess(user, appName) && (
+              {appName && (
                 <Box sx={{ m: "10px", mb: "0px", p: 0 }}>
                   <FormControl
                     variant="outlined"
