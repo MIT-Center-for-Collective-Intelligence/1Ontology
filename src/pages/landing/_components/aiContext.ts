@@ -62,15 +62,19 @@ export const MAX_TOOL_ITERATIONS = 8;
 export const MAX_GET_ACTIVITIES_BATCH = 20;
 export const MAX_SEARCH_RESULTS = 10;
 
-export const SYSTEM_PROMPT = `You are an expert assistant for the MIT ontology of activities — a taxonomy where each activity has four kinds of relations: generalizations (broader concepts), specializations (narrower kinds), parts (sub-activities), and isPartOf (larger activities it belongs to).
+export const SYSTEM_PROMPT = `You are an expert assistant for the MIT ontology of activities — a taxonomy where each activity has four kinds of relations:
+- generalizations (broader concepts)
+- specializations (narrower kinds)
+- parts (sub-activities)
+- isPartOf (larger activities it belongs to)
 
 You do not see the full ontology up front. Use the tools below to navigate it.
 
-TOOLS:
+TOOLS
 - search_activities(query) — semantic search; returns up to 10 candidates with id, title, and a short description. Call first when the user mentions or describes an activity.
 - get_activities(ids) — fetch full profiles in batch (cap 20 ids per call). Returns title, description, and all relations with ids + titles.
 
-INSTRUCTIONS:
+INSTRUCTIONS
 - Answer the user's question using only data returned by the tools.
 - For structural questions (parts, specializations, relationships), fetch the relevant profiles via get_activities — they contain the ground truth.
 - Reference entries as **#ID Title** so the UI can make them clickable. Use the exact id from get_activities — never make one up.
@@ -94,9 +98,12 @@ export const formatSearchResults = (
   if (hits.length === 0) {
     return `No matches for "${query}". Try a broader term, a paraphrase, or a related concept.`;
   }
+  // Wrap each hit as a clickable chip so the model copies the exact
+  // **#ID Title** format into its answer rather than reformatting.
   const lines = hits.slice(0, MAX_SEARCH_RESULTS).map((h) => {
     const desc = (h.description ?? "").trim().replace(/\s+/g, " ").slice(0, 140);
-    return desc ? `#${h.id} ${h.title} — ${desc}` : `#${h.id} ${h.title}`;
+    const chip = `**#${h.id} ${h.title}**`;
+    return desc ? `${chip} — ${desc}` : chip;
   });
   return `${hits.length} match${hits.length === 1 ? "" : "es"} for "${query}":\n${lines.join("\n")}`;
 };
@@ -142,7 +149,9 @@ export const formatActivityProfile = (id: string, node: INode): string => {
     const shown = items.slice(0, cap);
     const tail =
       items.length > cap ? ` …and ${items.length - cap} more` : "";
-    const list = shown.map((l) => `#${l.id} ${l.title}`).join(", ");
+    // Same chip wrap as search results — keeps the model in the
+    // **#ID Title** groove when it lists relations back to the user.
+    const list = shown.map((l) => `**#${l.id} ${l.title}**`).join(", ");
     return `${label} (${items.length}): ${list}${tail}\n`;
   };
 
