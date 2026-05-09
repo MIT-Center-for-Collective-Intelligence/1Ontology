@@ -101,10 +101,7 @@ import {
   INodeTypes,
   MainSpecializations,
 } from "@components/types/INode";
-import {
-  NODES,
-  NODES_LOGS,
-} from "@components/lib/firestoreClient/collections";
+import { NODES, NODES_LOGS } from "@components/lib/firestoreClient/collections";
 import NodeBody from "../NodBody/NodeBody";
 import NodeCompass from "../NodBody/NodeCompass";
 
@@ -139,7 +136,10 @@ import NodeActivityFlow from "../NodBody/NodeActivityFlow";
 import { development } from "@components/lib/CONSTANTS";
 import { Post } from "@components/lib/utils/Post";
 import ChipsProperty from "../StructuredProperty/ChipsProperty";
-import { addLinkToNode, removeLinkFromNode } from "@components/lib/utils/instantTreeUpdate";
+import {
+  addLinkToNode,
+  removeLinkFromNode,
+} from "@components/lib/utils/instantTreeUpdate";
 import { triggerUpdateDerivedPaths } from "@components/lib/utils/triggerUpdateDerivedPaths";
 
 type INodeProps = {
@@ -546,9 +546,9 @@ const Node = ({
   }, []);
 
   const searchResultsForSelection = useMemo(() => {
-    const propertyType = currentVisibleNode.propertyType?.[
-      selectedProperty
-    ] as INodeTypes | undefined;
+    const propertyType = currentVisibleNode.propertyType?.[selectedProperty] as
+      | INodeTypes
+      | undefined;
     if (propertyType) {
       return searchWithFuse(searchValue, propertyType);
     }
@@ -702,7 +702,6 @@ const Node = ({
               });
             }
           }
-
         }
 
         // Handle the addition of specializations or generalizations
@@ -920,7 +919,7 @@ const Node = ({
               collectionName,
               relatedNodes,
               newNode.title,
-              newNode.nodeType
+              newNode.nodeType,
             );
           });
         }
@@ -1014,9 +1013,7 @@ const Node = ({
         .flatMap((l: ICollection) => l.nodes || [])
         .map((n: { id: string }) => n.id);
 
-      setEditableProperty(
-        JSON.parse(JSON.stringify(propertyCollection || [])),
-      );
+      setEditableProperty(JSON.parse(JSON.stringify(propertyCollection || [])));
     }
     setCheckedItems(new Set(previousCheckedItems));
     setCheckedItemsCopy(new Set(previousCheckedItems));
@@ -1373,7 +1370,7 @@ const Node = ({
                 nodeId,
                 removedId,
                 selectedProperty,
-                collectionIdx
+                collectionIdx,
               );
             }
 
@@ -1393,7 +1390,6 @@ const Node = ({
             return updatedTree;
           });
         }
-
       } catch (error: any) {
         // Handle any errors that occur during the process
         console.error(error);
@@ -2113,7 +2109,6 @@ const Node = ({
               setCheckedItemsCopy={setCheckedItemsCopy}
               checkedItemsCopy={checkedItemsCopy}
               handleCloning={handleCloning}
-              selectFromTree={selectFromTree}
               expandedNodes={expandedNodes}
               setExpandedNodes={setExpandedNodes}
               handleToggle={handleToggle}

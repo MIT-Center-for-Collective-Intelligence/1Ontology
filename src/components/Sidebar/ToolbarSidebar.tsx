@@ -96,6 +96,7 @@ import {
 import { NODES, USERS } from "@components/lib/firestoreClient/collections";
 import { useRouter } from "next/router";
 import ROUTES from "@components/lib/utils/routes";
+import { userHasOntologyEditAccess } from "@components/lib/utils/helpers";
 
 import NodeActivity from "../ActiveUsers/NodeActivity";
 import { User } from "@components/types/IAuth";
@@ -2264,7 +2265,7 @@ const ToolbarSidebar = ({
             />
 
             {!!user?.admin &&
-              user?.claims.editAccess &&
+              userHasOntologyEditAccess(user, appName) &&
               (window.location.origin.startsWith("http://localhost") ||
                 window.location.origin ===
                   "https://ontology-163479774214.us-central1.run.app") && (

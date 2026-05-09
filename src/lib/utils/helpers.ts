@@ -40,7 +40,24 @@ import {
   getOperatingSystem,
 } from "../firestoreClient/errors.firestore";
 import { getAuth } from "firebase/auth";
-import { DISPLAY } from "../CONSTANTS";
+import { DISPLAY, SANDBOX_ONTOLOGY_APP_ID } from "../CONSTANTS";
+
+export function userHasOntologyEditAccess(
+  user: { claims?: { editAccess?: boolean } } | null | undefined,
+  appName: string | undefined | null,
+): boolean {
+  if (!user) return false;
+  if (appName === SANDBOX_ONTOLOGY_APP_ID) return true;
+  return !!user.claims?.editAccess;
+}
+
+export function isOntologyEditClaimDenied(
+  user: { claims?: { editAccess?: boolean } } | null | undefined,
+  appName: string | undefined | null,
+): boolean {
+  if (appName === SANDBOX_ONTOLOGY_APP_ID) return false;
+  return user?.claims?.editAccess === false;
+}
 
 export const getDoerCreate = (uname: string) => {
   const now = new Date();

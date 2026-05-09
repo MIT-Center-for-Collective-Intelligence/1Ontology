@@ -22,6 +22,7 @@ import { useAuth } from "../context/AuthContext";
 import { FillFlexParent } from "./fill-flex-parent";
 import { triggerUpdateDerivedPaths } from "@components/lib/utils/triggerUpdateDerivedPaths";
 import { findNode, removeNode } from "./treeUtils";
+import { userHasOntologyEditAccess } from "@components/lib/utils/helpers";
 
 const INDENT_STEP = 15;
 const INITIAL_LOAD_COUNT = 20;
@@ -1321,7 +1322,7 @@ function DraggableTree({
 
   return (
     <Box className={styles.container}>
-      {treeType !== "oNet" && user?.claims.editAccess && (
+      {treeType !== "oNet" && userHasOntologyEditAccess(user, appName) && (
         <Box
           sx={{
             position: "sticky",

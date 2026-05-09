@@ -122,6 +122,7 @@ import {
   SCROLL_BAR_STYLE,
   ONTOLOGY_APPS,
 } from "@components/lib/CONSTANTS";
+import { userHasOntologyEditAccess } from "@components/lib/utils/helpers";
 import {
   NODES,
   USERS,
@@ -1354,9 +1355,7 @@ const Ontology = ({
       // Strip the `/navigate` mode marker so the rest treats `raw` as a node id.
       const raw = window.location.hash.split("#").reverse()[0] ?? "";
       const isNavigateMode = raw.endsWith("/navigate");
-      const hashId = isNavigateMode
-        ? raw.slice(0, -"/navigate".length)
-        : raw;
+      const hashId = isNavigateMode ? raw.slice(0, -"/navigate".length) : raw;
       const userCurrentNodeId = user?.currentNode?.[appName]?.id;
       let node: INode | null = null;
 
@@ -1375,9 +1374,7 @@ const Ontology = ({
       }
 
       if (node) {
-        window.location.hash = isNavigateMode
-          ? `${node.id}/navigate`
-          : node.id;
+        window.location.hash = isNavigateMode ? `${node.id}/navigate` : node.id;
         setCurrentVisibleNode(node);
       }
 
@@ -2438,7 +2435,7 @@ const Ontology = ({
               }}
             >
               {" "}
-              {appName && user?.claims.editAccess && (
+              {appName && userHasOntologyEditAccess(user, appName) && (
                 <Box sx={{ m: "10px", mb: "0px", p: 0 }}>
                   <FormControl
                     variant="outlined"
@@ -2812,7 +2809,10 @@ const Ontology = ({
           >
             <Box ref={scrolling}></Box>
             {displayGuidelines && (
-              <GuidLines setDisplayGuidelines={setDisplayGuidelines} />
+              <GuidLines
+                appName={appName}
+                setDisplayGuidelines={setDisplayGuidelines}
+              />
             )}
             {navigationError && (
               <NavigationError
@@ -2899,7 +2899,6 @@ const Ontology = ({
           setActiveSidebar={setActiveSidebar}
           handleExpandSidebar={handleExpandSidebar}
           navigateToNode={navigateToNode}
-          treeVisualization={treeVisualization}
           expandedNodes={expandedNodes}
           setExpandedNodes={setExpandedNodes}
           onOpenNodesTree={onOpenNodesTree}

@@ -11,6 +11,7 @@ import {
 } from "@mui/material";
 import { INode, InheritanceType } from "@components/types/INode";
 import { DISPLAY, SCROLL_BAR_STYLE } from "@components/lib/CONSTANTS";
+import { isOntologyEditClaimDenied } from "@components/lib/utils/helpers";
 import { capitalizeFirstLetter } from "@components/lib/utils/string.utils";
 import { NODES } from "@components/lib/firestoreClient/collections";
 import {
@@ -213,7 +214,10 @@ const Inheritance: React.FC<InheritanceProps> = ({ selectedNode, nodes, fetchNod
             <Box sx={{ padding: 2 }}>
               <FormControl
                 component="fieldset"
-                disabled={!user?.manageLock || user?.claims?.editAccess === false}
+                disabled={
+                  !user?.manageLock ||
+                  isOntologyEditClaimDenied(user, selectedNode.appName)
+                }
               >
                 <RadioGroup
                   value={inheritanceState[key]}

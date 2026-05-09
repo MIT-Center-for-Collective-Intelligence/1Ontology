@@ -27,6 +27,7 @@ import AccountTreeIcon from "@mui/icons-material/AccountTree";
 import DeleteIcon from "@mui/icons-material/Delete";
 import HistoryIcon from "@mui/icons-material/History";
 import { getTooltipHelper } from "@components/lib/utils/string.utils";
+import { userHasOntologyEditAccess } from "@components/lib/utils/helpers";
 import { collection, doc, getFirestore, updateDoc } from "firebase/firestore";
 import { db } from "@components/lib/firestoreServer/admin-exp";
 
@@ -48,6 +49,7 @@ const ManageNodeButtons = ({
   handleCloseAddLinksModel,
   aiPeer,
   hasComments,
+  appName,
 }: {
   locked: boolean;
   lockedInductor: boolean;
@@ -66,7 +68,9 @@ const ManageNodeButtons = ({
   handleCloseAddLinksModel: any;
   aiPeer: { on: boolean; waiting: boolean };
   hasComments: boolean;
+  appName?: string;
 }) => {
+  const canEditOntology = userHasOntologyEditAccess(user, appName);
   const db = getFirestore();
   const displayNodeChat = () => displaySidebar("chat");
   const displayNodeHistory = () => displaySidebar("nodeHistory");
@@ -219,7 +223,7 @@ const ManageNodeButtons = ({
             />
           </IconButton>
         </Tooltip>
-        {!locked && !unclassified && user?.claims.editAccess && (
+        {!locked && !unclassified && canEditOntology && (
           <Tooltip title="Delete Node">
             <IconButton onClick={() => deleteNode()}>
               <DeleteIcon />
@@ -299,7 +303,7 @@ const ManageNodeButtons = ({
             </Tooltip>
           </>
         )}
-        {user?.claims.editAccess && (
+        {canEditOntology && (
           <ToggleButton
             value="edit"
             selected={enableEdit}
@@ -346,7 +350,7 @@ const ManageNodeButtons = ({
             Edit Node {enableEdit ? "On" : "Off"}
           </ToggleButton>
         )}
-        {(locked || manageLock) && user?.claims.editAccess && (
+        {(locked || manageLock) && canEditOntology && (
           <Tooltip
             title={
               !manageLock

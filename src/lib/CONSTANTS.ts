@@ -213,6 +213,8 @@ export const ONTOLOGY_APPS = development
       },
     ];
 
+export const SANDBOX_ONTOLOGY_APP_ID = "sandbox";
+
 /** Max nodes visited when walking the specialization graph (cycle check, BFS). */
 export const MAX_DERIVED_PATH_OP_VISITS = 100_000;
 

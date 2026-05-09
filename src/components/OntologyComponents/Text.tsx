@@ -598,6 +598,7 @@ const Text = ({
                   user={user}
                   aiPeer={aiPeer}
                   hasComments={hasComments}
+                  appName={appName}
                 />
               )}{" "}
             {enableEdit &&
