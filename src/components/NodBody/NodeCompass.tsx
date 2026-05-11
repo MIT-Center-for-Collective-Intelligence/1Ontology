@@ -46,6 +46,11 @@ import {
 
 type Props = {
   currentVisibleNode: INode;
+  /**
+   * Lookup of nearby nodes by id. Used *only* as a title fallback for
+   * satellites whose `ILinkNode.title` is missing on the focused node's
+   * own link arrays.
+   */
   relatedNodes: { [id: string]: INode };
   navigateToNode: (nodeId: string) => void;
   /** Height of the compass canvas. Pass a number (px) or any CSS length/calc string. Defaults to 540px. */
@@ -345,20 +350,7 @@ const NodeCompass: React.FC<Props> = ({
     ],
   );
 
-  // Inheritance-resolved parts
-  const inheritanceRef = currentVisibleNode.inheritance?.parts?.ref ?? null;
-  const inheritedFromNode = inheritanceRef
-    ? relatedNodes[inheritanceRef]
-    : null;
-  const resolvedParts = useMemo<ICollection[] | null>(() => {
-    if (inheritanceRef) {
-      const inh = inheritedFromNode?.properties?.parts;
-      return Array.isArray(inh) ? (inh as ICollection[]) : null;
-    }
-    const direct = currentVisibleNode.properties?.parts;
-    return Array.isArray(direct) ? (direct as ICollection[]) : null;
-  }, [inheritanceRef, inheritedFromNode, currentVisibleNode.properties?.parts]);
-
+  // Parts are read straight from this node's `properties.parts` and will no longer follow `inheritance.parts.ref`.
   const ids = useMemo(
     () => ({
       left: flattenIds(currentVisibleNode.generalizations),
@@ -366,9 +358,11 @@ const NodeCompass: React.FC<Props> = ({
       top: flattenIds(
         currentVisibleNode.properties?.isPartOf as ICollection[] | undefined,
       ),
-      bottom: flattenIds(resolvedParts),
+      bottom: flattenIds(
+        currentVisibleNode.properties?.parts as ICollection[] | undefined,
+      ),
     }),
-    [currentVisibleNode, resolvedParts],
+    [currentVisibleNode],
   );
 
   const layout = useMemo(
@@ -401,9 +395,9 @@ const NodeCompass: React.FC<Props> = ({
     collect(
       currentVisibleNode.properties?.isPartOf as ICollection[] | undefined,
     );
-    collect(resolvedParts);
+    collect(currentVisibleNode.properties?.parts as ICollection[] | undefined);
     return m;
-  }, [currentVisibleNode, resolvedParts]);
+  }, [currentVisibleNode]);
 
   const lPad = layout.effectiveL1X + COMPASS.N1W / 2 + COMPASS.LABEL_PAD;
   const tPad = layout.effectiveL1Y + COMPASS.N1H / 2 + COMPASS.LABEL_PAD;
