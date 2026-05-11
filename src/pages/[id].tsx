@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Box, ThemeProvider, useTheme } from "@mui/material";
+import Head from "next/head";
 import withAuthUser from "@components/components/hoc/withAuthUser";
 import Ontology from "./Ontology";
 import { NavigateLandingSection } from "./landing/navigate";
@@ -27,6 +28,8 @@ const SkillsFuture = () => {
   const [mode, setMode] = useState<Mode>("platform");
   const [navInitialNodeId, setNavInitialNodeId] = useState<string | null>(null);
   const [hasVisitedNavigator, setHasVisitedNavigator] = useState(false);
+  const [platformTitle, setPlatformTitle] = useState<string | null>(null);
+  const [navigatorTitle, setNavigatorTitle] = useState<string | null>(null);
 
   useEffect(() => {
     if (!router.isReady) return;
@@ -83,12 +86,21 @@ const SkillsFuture = () => {
 
   if (!appName) return null;
 
+  const tabTitle =
+    (mode === "navigate"
+      ? navigatorTitle ?? platformTitle
+      : platformTitle ?? navigatorTitle) ?? "Ontology of Collective Intelligence";
+
   return (
     <>
+      <Head>
+        <title>{tabTitle}</title>
+      </Head>
       <Box sx={{ display: mode === "platform" ? "block" : "none" }}>
         <Ontology
           appName={appName}
           onOpenInNavigator={openInNavigator}
+          onFocusedTitleChange={setPlatformTitle}
         />
       </Box>
       {hasVisitedNavigator && (
@@ -101,6 +113,7 @@ const SkillsFuture = () => {
               appName={appName}
               initialNodeId={navInitialNodeId}
               onBackToPlatform={backToPlatform}
+              onFocusedTitleChange={setNavigatorTitle}
             />
           </ThemeProvider>
         </Box>

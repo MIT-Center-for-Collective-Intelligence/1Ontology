@@ -202,6 +202,7 @@ type WalkedNode = {
   title: string;
   hasChildren: boolean;
   hasUnresolved: boolean;
+  wasUserExpanded: boolean;
   parentTreeId: string | null;
 };
 
@@ -224,6 +225,10 @@ function walkHierarchy(tree: TreeData[]): WalkedNode[] {
         !!node.outlineLoadChildren ||
         (!!node.hasUnresolvedChildren &&
           (!node.children || node.children.length === 0)),
+      wasUserExpanded:
+        node.outlineLoadChildren === false &&
+        Array.isArray(node.children) &&
+        node.children.length > 0,
       parentTreeId,
     });
     if (node.children) {
@@ -270,16 +275,12 @@ const NodeGraph: React.FC<Props> = ({
     [theme.palette.primary.main, isDark],
   );
 
+  // Sets for spinner loader
   const [expandingTreeIds, setExpandingTreeIds] = useState<Set<string>>(
     new Set(),
   );
-  // Path-interior nodes are NOT added here — their children belong to
-  // the canonical hierarchy, not a user expansion. That's what makes
-  // collapse safe: clicks on them don't match and become no-ops.
-  const [userExpanded, setUserExpanded] = useState<Set<string>>(new Set());
   useEffect(() => {
     setExpandingTreeIds(new Set());
-    setUserExpanded(new Set());
   }, [focusedId]);
 
   const { nodes, edges } = useMemo(() => {
@@ -333,7 +334,7 @@ const NodeGraph: React.FC<Props> = ({
           role,
           color: colors[role],
           canExpand: n.hasUnresolved,
-          isExpanded: userExpanded.has(n.treeId),
+          isExpanded: n.wasUserExpanded,
           isExpanding: expandingTreeIds.has(n.treeId),
           treeId: n.treeId,
           nodeId: n.nodeId,
@@ -370,7 +371,7 @@ const NodeGraph: React.FC<Props> = ({
     }
 
     return { nodes: rfNodes, edges: rfEdges };
-  }, [hierarchyTree, focusedId, colors, expandingTreeIds, userExpanded]);
+  }, [hierarchyTree, focusedId, colors, expandingTreeIds]);
 
   const [rfInstance, setRfInstance] = useState<ReactFlowInstance | null>(null);
 
@@ -386,22 +387,14 @@ const NodeGraph: React.FC<Props> = ({
   const onNodeClick = useCallback(
     (_e: React.MouseEvent, node: Node) => {
       const d = node.data as unknown as GraphNodeData;
-      if (userExpanded.has(d.treeId)) {
+      if (d.isExpanded) {
         onCollapseNode(d.treeId, d.nodeId);
-        setUserExpanded((prev) => {
-          const next = new Set(prev);
-          next.delete(d.treeId);
-          return next;
-        });
         return;
       }
       if (!d.canExpand) return;
       if (expandingTreeIds.has(d.treeId)) return;
       setExpandingTreeIds((prev) => new Set(prev).add(d.treeId));
       Promise.resolve(onExpandNode(d.treeId, d.nodeId))
-        .then(() => {
-          setUserExpanded((prev) => new Set(prev).add(d.treeId));
-        })
         .catch((err) => console.error("graph expand failed:", err))
         .finally(() => {
           setExpandingTreeIds((prev) => {
@@ -411,7 +404,7 @@ const NodeGraph: React.FC<Props> = ({
           });
         });
     },
-    [onExpandNode, onCollapseNode, expandingTreeIds, userExpanded],
+    [onExpandNode, onCollapseNode, expandingTreeIds],
   );
 
   if (!hierarchyTree) {

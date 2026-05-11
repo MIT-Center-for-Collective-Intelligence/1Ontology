@@ -1167,6 +1167,76 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                             >
                               <Tooltip
                                 title={
+                                  entry.toOptional
+                                    ? "Mark as required"
+                                    : "Mark as optional"
+                                }
+                                placement="top"
+                              >
+                                <Box
+                                  component="button"
+                                  type="button"
+                                  onMouseDown={(e: React.MouseEvent) => {
+                                    e.stopPropagation();
+                                  }}
+                                  onClick={(e: React.MouseEvent) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    toggleOptional(entry.to);
+                                  }}
+                                  sx={{
+                                    cursor: "pointer",
+                                    textTransform: "none",
+                                    fontSize: 12,
+                                    fontWeight: entry.toOptional ? 700 : 600,
+                                    color: entry.toOptional
+                                      ? "#f2a43a"
+                                      : (theme) =>
+                                          theme.palette.mode === "light"
+                                            ? "#111827"
+                                            : "#f3f4f6",
+                                    width: 28,
+                                    height: 28,
+                                    flexShrink: 0,
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    borderRadius: "50%",
+                                    border: entry.toOptional
+                                      ? "1px solid rgba(242, 164, 58, 0.55)"
+                                      : (theme) =>
+                                          theme.palette.mode === "light"
+                                            ? "1px solid #d0d5dd"
+                                            : "1px solid #3b3b3b",
+                                    background: entry.toOptional
+                                      ? (theme) =>
+                                          theme.palette.mode === "light"
+                                            ? "linear-gradient(180deg, #f8fafc 0%, #e8edf3 100%)"
+                                            : "linear-gradient(180deg, #2b2f39 0%, #1d2129 100%)"
+                                      : (theme) =>
+                                          theme.palette.mode === "light"
+                                            ? "linear-gradient(180deg, #ffffff 0%, #f3f5f8 100%)"
+                                            : "linear-gradient(180deg, #17191f 0%, #101217 100%)",
+                                    boxShadow: entry.toOptional
+                                      ? (theme) =>
+                                          theme.palette.mode === "light"
+                                            ? "inset 0 0 0 1px rgba(242, 164, 58, 0.22)"
+                                            : "inset 0 0 0 1px rgba(255, 187, 86, 0.16)"
+                                      : "none",
+                                    transition: "all 0.2s ease",
+                                    "&:hover": {
+                                      background: (theme) =>
+                                        theme.palette.mode === "light"
+                                          ? "rgba(15, 23, 42, 0.05)"
+                                          : "rgba(255, 255, 255, 0.06)",
+                                    },
+                                  }}
+                                >
+                                  (o)
+                                </Box>
+                              </Tooltip>
+                              <Tooltip
+                                title={
                                   !isSelectOpen
                                     ? allNodes[entry.to]?.title || ""
                                     : ""
@@ -1205,8 +1275,8 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                         ? "white"
                                         : "black",
                                     fontSize: "0.9rem",
-                                    maxWidth: 250,
-                                    width: "100%",
+                                    flex: 1,
+                                    minWidth: 0,
                                     borderRadius: "15px",
                                     backgroundColor: (theme) =>
                                       theme.palette.background.paper,
@@ -1332,73 +1402,6 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                     ),
                                   )}
                                 </Select>
-                              </Tooltip>
-                              <Tooltip
-                                title={
-                                  entry.toOptional
-                                    ? "Mark as required"
-                                    : "Mark as optional"
-                                }
-                                placement="top"
-                              >
-                                <Box
-                                  component="button"
-                                  type="button"
-                                  onMouseDown={(e: React.MouseEvent) => {
-                                    e.stopPropagation();
-                                  }}
-                                  onClick={(e: React.MouseEvent) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    toggleOptional(entry.to);
-                                  }}
-                                  sx={{
-                                    cursor: "pointer",
-                                    textTransform: "none",
-                                    fontSize: 12,
-                                    fontWeight: entry.toOptional ? 700 : 600,
-                                    color: entry.toOptional
-                                      ? "#f2a43a"
-                                      : (theme) =>
-                                          theme.palette.mode === "light"
-                                            ? "#111827"
-                                            : "#f3f4f6",
-                                    px: 1.5,
-                                    py: 0.5,
-                                    minHeight: 28,
-                                    borderRadius: "999px",
-                                    border: entry.toOptional
-                                      ? "1px solid rgba(242, 164, 58, 0.55)"
-                                      : (theme) =>
-                                          theme.palette.mode === "light"
-                                            ? "1px solid #d0d5dd"
-                                            : "1px solid #3b3b3b",
-                                    background: entry.toOptional
-                                      ? (theme) =>
-                                          theme.palette.mode === "light"
-                                            ? "linear-gradient(180deg, #f8fafc 0%, #e8edf3 100%)"
-                                            : "linear-gradient(180deg, #2b2f39 0%, #1d2129 100%)"
-                                      : (theme) =>
-                                          theme.palette.mode === "light"
-                                            ? "linear-gradient(180deg, #ffffff 0%, #f3f5f8 100%)"
-                                            : "linear-gradient(180deg, #17191f 0%, #101217 100%)",
-                                    boxShadow: entry.toOptional
-                                      ? (theme) =>
-                                          theme.palette.mode === "light"
-                                            ? "inset 0 0 0 1px rgba(242, 164, 58, 0.22)"
-                                            : "inset 0 0 0 1px rgba(255, 187, 86, 0.16)"
-                                      : "none",
-                                    transition: "all 0.2s ease",
-                                    "&:hover": {
-                                      background: (theme) =>
-                                        theme.palette.mode === "light"
-                                          ? "rgba(15, 23, 42, 0.05)"
-                                          : "rgba(255, 255, 255, 0.06)",
-                                    },
-                                  }}
-                                >
-                                  (o)
-                                </Box>
                               </Tooltip>
                             </Box>
                           ) : null

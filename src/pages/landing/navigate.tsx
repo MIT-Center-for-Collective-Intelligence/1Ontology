@@ -212,11 +212,14 @@ export const NavigateLandingSection = ({
   appName,
   initialNodeId,
   onBackToPlatform,
+  onFocusedTitleChange,
 }: {
   isDark: boolean;
   appName: string;
   initialNodeId?: string | null;
   onBackToPlatform: () => void;
+  // Reported up to the parent component, which owns the <title> tag.
+  onFocusedTitleChange?: (title: string | null) => void;
 }) => {
   const theme = useTheme();
   const accent = theme.palette.primary.main;
@@ -303,6 +306,13 @@ export const NavigateLandingSection = ({
       );
     }
   }, [activeId]);
+
+  // Report the focused node's title up to the parent
+  useEffect(() => {
+    if (!activeId) return;
+    const title = nodes[activeId]?.title;
+    if (title) onFocusedTitleChange?.(title);
+  }, [activeId, nodes, onFocusedTitleChange]);
 
   // Re-seed activeId when the URL hash is updated externally — e.g. the
   // platform firing "Open in Navigator" again while the navigator is still
