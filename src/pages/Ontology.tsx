@@ -688,17 +688,6 @@ const Ontology = ({
   }, [user]);
 
   useEffect(() => {
-    // Check if a user is logged in
-    if (user) {
-      // Check if the user's email is verified
-      if (!emailVerified) {
-        // If the email is not verified, redirect to the sign-in page
-        router.replace("/signin");
-      }
-    }
-  }, [user, emailVerified]);
-
-  useEffect(() => {
     if (fuseRebuildTimerRef.current) {
       window.clearTimeout(fuseRebuildTimerRef.current);
     }

@@ -45,6 +45,7 @@ import React, { ReactNode, useState } from "react";
 import * as yup from "yup";
 import { getAuth, signOut } from "firebase/auth";
 import { delay } from "@components/lib/utils/utils";
+import { ONTOLOGY_APPS } from "@components/lib/CONSTANTS";
 
 interface SignInFormValues {
   email: string;
@@ -121,7 +122,7 @@ const SignInPage: NextPageWithLayout = () => {
       }
       closeSnackbar();
       await delay(5000);
-      await router.push("/");
+      await router.push(`/${ONTOLOGY_APPS[0].id}`);
     } catch (error) {
       const errorMessage = getFirebaseFriendlyError(error as FirebaseError);
       setSignInError(
