@@ -260,6 +260,7 @@ const Ontology = ({
   );
   const [addedElements, setAddedElements] = useState<Set<string>>(new Set());
   const [loadingNodes, setLoadingNodes] = useState(false);
+  const [isPageReady, setIsPageReady] = useState(false);
   const [partsInheritance, setPartsInheritance] = useState<any>({});
   const [currentNodeTreeData, setCurrentNodeTreeData] = useState<TreeData[]>(
     [],
@@ -1083,15 +1084,24 @@ const Ontology = ({
     if (relatedIds.length === 0) {
       setRelatedNodes({});
       setLoadingNodes(false);
+      setIsPageReady(true);
       return;
     }
 
     // Firestore query has a limit of 30 items, so batch if needed
     const batches = chunkArray(relatedIds, 30);
     const unsubscribers: (() => void)[] = [];
+    const initializedBatches = new Set<number>();
+    const markBatchInitialized = (batchIndex: number) => {
+      initializedBatches.add(batchIndex);
+      if (initializedBatches.size === batches.length) {
+        setLoadingNodes(false);
+        setIsPageReady(true);
+      }
+    };
 
     // Set up snapshot listeners for each batch
-    batches.forEach((batch) => {
+    batches.forEach((batch, batchIndex) => {
       let nodesQuery;
 
       // Build query based on app configuration
@@ -1135,7 +1145,7 @@ const Ontology = ({
             return updated;
           });
 
-          setLoadingNodes(false);
+          markBatchInitialized(batchIndex);
         },
         (error) => {
           console.error("Error fetching related nodes:", error);
@@ -1146,7 +1156,7 @@ const Ontology = ({
               message: error.message,
             }),
           });
-          setLoadingNodes(false);
+          markBatchInitialized(batchIndex);
         },
       );
 
@@ -1352,41 +1362,52 @@ const Ontology = ({
 
     const loadNode = async () => {
       // Strip the `/navigate` mode marker so the rest treats `raw` as a node id.
-      const raw = window.location.hash.split("#").reverse()[0] ?? "";
-      const isNavigateMode = raw.endsWith("/navigate");
-      const hashId = isNavigateMode ? raw.slice(0, -"/navigate".length) : raw;
-      const userCurrentNodeId = user?.currentNode?.[appName]?.id;
+      setIsPageReady(false);
       let node: INode | null = null;
+      try {
+        const raw = window.location.hash.split("#").reverse()[0] ?? "";
+        const isNavigateMode = raw.endsWith("/navigate");
+        const hashId = isNavigateMode
+          ? raw.slice(0, -"/navigate".length)
+          : raw;
+        const userCurrentNodeId = user?.currentNode?.[appName]?.id;
 
-      if (hashId) {
-        node = await fetchSingleNode(db, hashId, appName);
-      }
+        if (hashId) {
+          node = await fetchSingleNode(db, hashId, appName);
+        }
 
-      // If not found, try user's currentNode for this app
-      if (!node && userCurrentNodeId) {
-        node = await fetchSingleNode(db, userCurrentNodeId, appName);
-      }
+        // If not found, try user's currentNode for this app
+        if (!node && userCurrentNodeId) {
+          node = await fetchSingleNode(db, userCurrentNodeId, appName);
+        }
 
-      // If still not found, fallback to root node for this app
-      if (!node) {
-        node = await fetchRootNode(db, appName);
-      }
+        // If still not found, fallback to root node for this app
+        if (!node) {
+          node = await fetchRootNode(db, appName);
+        }
 
-      if (node) {
-        window.location.hash = isNavigateMode ? `${node.id}/navigate` : node.id;
-        setCurrentVisibleNode(node);
-      }
+        if (node) {
+          window.location.hash = isNavigateMode
+            ? `${node.id}/navigate`
+            : node.id;
+          setCurrentVisibleNode(node);
+        }
+      } finally {
+        if (!node) {
+          setIsPageReady(true);
+        }
 
-      // Update refs
-      if (isInitialLoad) {
-        firstLoad.current = false;
-      }
-      if (isAppSwitch) {
-        prevAppNameRef.current = appName;
-        // Delay clearing the flag to ensure updateTheUrl can check it
-        setTimeout(() => {
-          isSwitchingAppRef.current = false;
-        }, 100);
+        // Update refs
+        if (isInitialLoad) {
+          firstLoad.current = false;
+        }
+        if (isAppSwitch) {
+          prevAppNameRef.current = appName;
+          // Delay clearing the flag to ensure updateTheUrl can check it
+          setTimeout(() => {
+            isSwitchingAppRef.current = false;
+          }, 100);
+        }
       }
     };
 
@@ -1543,12 +1564,6 @@ const Ontology = ({
       // Check if a user is logged in, if not, exit the function.
       if (!user) return;
 
-      // Keep outline (tree view) in sync with graph navigation.
-      setViewValue(0);
-      if (isMobile) {
-        setMobileTreeOpen(true);
-      }
-
       // Get the node from cache or fetch it
       let node: INode | null = relatedNodes[nodeId] || null;
       const needsFetch = !node;
@@ -1583,7 +1598,7 @@ const Ontology = ({
         }
       }
     },
-    [relatedNodes, db, user, isMobile],
+    [relatedNodes, db, user],
   );
 
   // Function to handle opening node tree
@@ -2045,7 +2060,7 @@ const Ontology = ({
     setPartsInheritance(_inheritanceDetails);
   }, [currentVisibleNode, relatedNodes, eachNodePath]);
 
-  if (Object.keys(relatedNodes).length <= 0) {
+  if (!isPageReady) {
     return <FullPageLogoLoading />;
   }
 
@@ -2239,6 +2254,7 @@ const Ontology = ({
                   id="mobile-property-type"
                   value={appName}
                   onChange={(event) => {
+                    setIsPageReady(false);
                     setRelatedNodes({});
                     isSwitchingAppRef.current = true;
                     const app = event.target.value.replaceAll(" ", "_");
@@ -2442,6 +2458,7 @@ const Ontology = ({
                       id="property-type"
                       value={appName}
                       onChange={(event) => {
+                        setIsPageReady(false);
                         setRelatedNodes({});
                         isSwitchingAppRef.current = true;
                         const app = event.target.value.replaceAll(" ", "_");
