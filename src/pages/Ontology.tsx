@@ -137,7 +137,6 @@ import { MemoizedToolbarSidebar } from "@components/components/Sidebar/ToolbarSi
 import { NodeChange } from "@components/types/INode";
 import GuidLines from "@components/components/Guidelines/GuideLines";
 import SearchSideBar from "@components/components/SearchSideBar/SearchSideBar";
-import Head from "next/head";
 import DraggableTree from "@components/components/OntologyComponents/DraggableTree";
 import { TreeApi } from "react-arborist";
 import { capitalizeFirstLetter } from "@components/lib/utils/string.utils";
@@ -188,9 +187,12 @@ export const tokenize = (str: string) => {
 const Ontology = ({
   appName,
   onOpenInNavigator,
+  onFocusedTitleChange,
 }: {
   appName: string;
   onOpenInNavigator?: (nodeId: string) => void;
+  // Reported up to the parent component, which owns the <title> tag.
+  onFocusedTitleChange?: (title: string | null) => void;
 }) => {
   const db = getFirestore();
   const rtdb = getDatabase();
@@ -313,6 +315,12 @@ const Ontology = ({
   useEffect(() => {
     hasInstantUpdateRef.current = hasInstantUpdate;
   }, [hasInstantUpdate]);
+
+  // Report the focused node's title up to the parent
+  useEffect(() => {
+    const title = currentVisibleNode?.title;
+    if (title) onFocusedTitleChange?.(title);
+  }, [currentVisibleNode?.title, onFocusedTitleChange]);
 
   // Instant tree update callback for instant UI feedback
   const handleInstantTreeUpdate = useCallback(
@@ -2062,12 +2070,6 @@ const Ontology = ({
             : "linear-gradient(150deg, #ffffff 0%, #8fa0b8 40%, #c8d6e8 70%, #eef4fc 100%)",
       }}
     >
-      <Head>
-        <title>
-          {currentVisibleNode ? currentVisibleNode.title : "1ontology"}
-        </title>
-      </Head>
-
       {/* Mobile Header */}
       {isMobile && (
         <Box
