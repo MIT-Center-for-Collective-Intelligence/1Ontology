@@ -290,11 +290,11 @@ const Ontology = ({
     [],
   );
   const ontologyAppsOtherGroup = useMemo(() => {
-    const editAccess = userHasOntologyEditAccess(user, appName);
+    const editAccess = !!user?.claims?.editAccess;
     return ONTOLOGY_APPS.filter(
       (app) => app.type === "other" && (editAccess || app.editAccess),
     );
-  }, [user, appName]);
+  }, [user]);
 
   const firstLoad = useRef(true);
   const prevAppNameRef = useRef<string>(appName);
