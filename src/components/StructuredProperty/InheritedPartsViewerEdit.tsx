@@ -965,6 +965,20 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
       }),
     );
 
+    // Parts that exist on the node but aren't yet reflected in the inheritedPartsDetails returned from endpoint
+    const currentPartIds: string[] =
+      currentVisibleNode.properties?.parts?.[0]?.nodes?.map(
+        (n: { id: string }) => n.id,
+      ) ?? [];
+    const idsAlreadyInDetails = new Set<string>();
+    for (const d of details) {
+      if (d.to) idsAlreadyInDetails.add(d.to);
+      if (d.from) idsAlreadyInDetails.add(d.from);
+    }
+    const pendingRecomputeIds = currentPartIds.filter(
+      (id) => !idsAlreadyInDetails.has(id),
+    );
+
     return (
       <Box
         sx={{
@@ -1416,6 +1430,89 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
             </List>
           )}
         </Droppable>
+        {pendingRecomputeIds.length > 0 && (
+          <List sx={{ px: 1.8, py: 0, mt: -0.5 }}>
+            {pendingRecomputeIds.map((partId: string) => (
+              <ListItem
+                key={`pending-recompute-${partId}`}
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1,
+                  px: 1,
+                  py: 0,
+                  backgroundImage:
+                    "repeating-linear-gradient(to right, gray 0, gray 1px, transparent 1px, transparent 6px)",
+                  backgroundPosition: "top",
+                  backgroundRepeat: "repeat-x",
+                  backgroundSize: "100% 1px",
+                }}
+              >
+                <ListItemText
+                  primary={null}
+                  sx={{ flex: 1, minWidth: 0.3 }}
+                />
+                {/* Hidden spaces to align buttons with above rows */}
+                <Box aria-hidden sx={{ width: 20, flexShrink: 0 }} />
+                <Box aria-hidden sx={{ width: 30, flexShrink: 0 }} />
+                <ListItemText
+                  primary={
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        minHeight: 40,
+                      }}
+                    >
+                      <Tooltip
+                        title="Calculating inheritance for this part"
+                        placement="top"
+                      >
+                        <Box
+                          sx={{
+                            width: 28,
+                            height: 28,
+                            flexShrink: 0,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <CircularProgress
+                            size={18}
+                            sx={{ color: "orange" }}
+                          />
+                        </Box>
+                      </Tooltip>
+                      <Box
+                        sx={{
+                          flex: 1,
+                          minWidth: 0,
+                          display: "flex",
+                          alignItems: "center",
+                          pl: "22px",
+                          pr: "14px",
+                        }}
+                      >
+                        <Typography
+                          sx={{
+                            fontSize: "0.9rem",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {allNodes[partId]?.title ?? ""}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  }
+                  sx={{ flex: 1, minWidth: 0.3 }}
+                />
+              </ListItem>
+            ))}
+          </List>
+        )}
         <Popover
           id={id}
           open={open}
