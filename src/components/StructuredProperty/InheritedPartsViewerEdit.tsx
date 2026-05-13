@@ -203,6 +203,13 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
 
   // Merge nodes from props with locally fetched nodes
   const allNodes = { ...nodes, ...fetchedNodes };
+  // Ids of parts already on this node — used to filter them out of the
+  // dropdown options so the user can't pick a duplicate.
+  const currentNodePartIdsSet = new Set<string>(
+    currentVisibleNode.properties?.parts?.[0]?.nodes?.map(
+      (n: { id: string }) => n.id,
+    ) ?? [],
+  );
 
   useEffect(() => {
     const currentQueuedIds = Object.keys(clonedNodesQueue || {});
@@ -422,16 +429,13 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
       return [];
     }
 
-    const value = node.specializations
+    return node.specializations
       .flatMap((s: { nodes: { id: string }[] }) => s.nodes)
-      .map((n: { id: string }) => {
-        return {
-          title: allNodes[n.id]?.title,
-          id: n.id,
-        };
-      });
-
-    return value;
+      .filter((n: { id: string }) => !currentNodePartIdsSet.has(n.id))
+      .map((n: { id: string }) => ({
+        title: allNodes[n.id]?.title,
+        id: n.id,
+      }));
   };
   const getGeneralizations = (nodeId: string) => {
     const node = allNodes[nodeId];
@@ -439,16 +443,13 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
       return [];
     }
 
-    const value = node.generalizations
+    return node.generalizations
       .flatMap((s: { nodes: { id: string }[] }) => s.nodes)
-      .map((n: { id: string }) => {
-        return {
-          title: allNodes[n.id]?.title,
-          id: n.id,
-        };
-      });
-
-    return value;
+      .filter((n: { id: string }) => !currentNodePartIdsSet.has(n.id))
+      .map((n: { id: string }) => ({
+        title: allNodes[n.id]?.title,
+        id: n.id,
+      }));
   };
 
   const handleSelect = async (option: string) => {
@@ -1443,6 +1444,32 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                       </MenuItem>
                                     ),
                                   )}
+                                  {/* Fallback when filtering has emptied both
+                                      sections, so the menu isn't blank. */}
+                                  {!loadingSpecializations.has(entry.to) &&
+                                    getSpecializations(entry.to).length === 0 &&
+                                    getGeneralizations(entry.to).length ===
+                                      0 && (
+                                      <MenuItem
+                                        disabled
+                                        sx={{
+                                          "&.Mui-disabled": { opacity: 1 },
+                                        }}
+                                      >
+                                        <Typography
+                                          sx={{
+                                            fontStyle: "italic",
+                                            fontSize: "0.9rem",
+                                            color: (theme) =>
+                                              theme.palette.mode === "light"
+                                                ? "#555"
+                                                : "#cfcfcf",
+                                          }}
+                                        >
+                                          No alternatives available
+                                        </Typography>
+                                      </MenuItem>
+                                    )}
                                 </Select>
                               </Tooltip>
                             </Box>
