@@ -661,21 +661,30 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
   const onRemovePart = (partId: string) => {
     setOptimisticallyRemovedIds((prev) => new Set(prev).add(partId));
     removePart(partId);
+
+    // For parts with (= or > symbol), keep the row visible with a
+    // spinner in place of the symbol until the API recompute lands.
+    // For "+"" parts, filter the row out instantly.
+    let hasInheritanceSource = false;
+    if (inheritedPartsDetails) {
+      for (const gen of inheritedPartsDetails) {
+        const entry = gen.details.find((d) => d.to === partId);
+        if (entry?.from) {
+          hasInheritanceSource = true;
+          break;
+        }
+      }
+    }
+
+    if (hasInheritanceSource) {
+      setCalculatingPartIds((prev) => new Set(prev).add(partId));
+      debouncedRefetch?.();
+      return;
+    }
+
     optimisticUpdate((data) => {
       for (const gen of data) {
-        const entry = gen.details.find((d) => d.to === partId);
-        if (entry) {
-          if (entry.from) {
-            entry.symbol = "x";
-            entry.to = "";
-            entry.toTitle = "";
-            entry.toOptional = false;
-            entry.optionalChange = "none";
-          } else {
-            // It was a "+" entry (added part with no generalization source)
-            gen.details = gen.details.filter((d) => d.to !== partId);
-          }
-        }
+        gen.details = gen.details.filter((d) => d.to !== partId);
       }
       return data;
     });
@@ -1160,21 +1169,38 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
 
                       {!!removePart && entry.symbol !== "x" && (
                         <Tooltip title={"Remove part"} placement="top">
-                          <IconButton
-                            sx={{ p: 0.5 }}
-                            onClick={() => {
-                              onRemovePart(entry.to);
+                          <span
+                            style={{
+                              cursor: calculatingPartIds.has(entry.to)
+                                ? "not-allowed"
+                                : undefined,
+                              display: "inline-flex",
                             }}
                           >
-                            <RemoveIcon
-                              sx={{
-                                fontSize: 20,
-                                color: "red",
-                                border: "1px solid red",
-                                borderRadius: "50%",
+                            <IconButton
+                              sx={{ p: 0.5 }}
+                              disabled={calculatingPartIds.has(entry.to)}
+                              onClick={() => {
+                                onRemovePart(entry.to);
                               }}
-                            />
-                          </IconButton>
+                            >
+                              <RemoveIcon
+                                sx={{
+                                  fontSize: 20,
+                                  color: calculatingPartIds.has(entry.to)
+                                    ? "gray"
+                                    : "red",
+                                  border: calculatingPartIds.has(entry.to)
+                                    ? "1px solid gray"
+                                    : "1px solid red",
+                                  borderRadius: "50%",
+                                  opacity: calculatingPartIds.has(entry.to)
+                                    ? 0.5
+                                    : 1,
+                                }}
+                              />
+                            </IconButton>
+                          </span>
                         </Tooltip>
                       )}
 
@@ -1219,6 +1245,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                 <Box
                                   component="button"
                                   type="button"
+                                  disabled={calculatingPartIds.has(entry.to)}
                                   onMouseDown={(e: React.MouseEvent) => {
                                     e.stopPropagation();
                                   }}
@@ -1228,7 +1255,10 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                     toggleOptional(entry.to);
                                   }}
                                   sx={{
-                                    cursor: "pointer",
+                                    cursor: calculatingPartIds.has(entry.to)
+                                      ? "not-allowed"
+                                      : "pointer",
+                                    "&:disabled": { opacity: 0.5 },
                                     textTransform: "none",
                                     fontSize: 12,
                                     fontWeight: entry.toOptional ? 700 : 600,
@@ -1289,6 +1319,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                               >
                                 <Select
                                   value={entry.to}
+                                  disabled={calculatingPartIds.has(entry.to)}
                                   onChange={(e) => {
                                     const newPartId = e.target.value;
                                     onReplacePart(entry.to, newPartId);
