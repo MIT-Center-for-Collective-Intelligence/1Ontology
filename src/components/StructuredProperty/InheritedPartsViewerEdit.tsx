@@ -163,6 +163,11 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
   const [calculatingPartIds, setCalculatingPartIds] = useState<Set<string>>(
     new Set(),
   );
+  // Parts the user just removed or replaced. Suppresses a false
+  // pending-recompute spinner until properties.parts catches up.
+  const [optimisticallyRemovedIds, setOptimisticallyRemovedIds] = useState<
+    Set<string>
+  >(new Set());
   const prevLoadingInheritedRef = useRef<boolean | undefined>(
     loadingInheritedPartsDetails,
   );
@@ -176,6 +181,25 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
     }
     prevLoadingInheritedRef.current = loadingInheritedPartsDetails;
   }, [loadingInheritedPartsDetails]);
+
+  // Drop ids once they're gone from properties.parts (snapshot landed).
+  useEffect(() => {
+    setOptimisticallyRemovedIds((prev) => {
+      if (prev.size === 0) return prev;
+      const stillInParts = new Set<string>(
+        currentVisibleNode.properties?.parts?.[0]?.nodes?.map(
+          (n: { id: string }) => n.id,
+        ) ?? [],
+      );
+      let changed = false;
+      const next = new Set<string>();
+      for (const id of prev) {
+        if (stillInParts.has(id)) next.add(id);
+        else changed = true;
+      }
+      return changed ? next : prev;
+    });
+  }, [currentVisibleNode.properties?.parts]);
 
   // Merge nodes from props with locally fetched nodes
   const allNodes = { ...nodes, ...fetchedNodes };
@@ -634,6 +658,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
   };
 
   const onRemovePart = (partId: string) => {
+    setOptimisticallyRemovedIds((prev) => new Set(prev).add(partId));
     removePart(partId);
     optimisticUpdate((data) => {
       for (const gen of data) {
@@ -657,6 +682,8 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
 
   const onReplacePart = async (oldPartId: string, newPartId: string) => {
     if (!oldPartId || !newPartId || oldPartId === newPartId) return;
+
+    setOptimisticallyRemovedIds((prev) => new Set(prev).add(oldPartId));
 
     // Build updated inheritedPartsDetails locally for instant UI feedback on
     // to/toTitle and to fold into replaceWith's single updateDoc. The symbol
@@ -976,7 +1003,8 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
       if (d.from) idsAlreadyInDetails.add(d.from);
     }
     const pendingRecomputeIds = currentPartIds.filter(
-      (id) => !idsAlreadyInDetails.has(id),
+      (id) =>
+        !idsAlreadyInDetails.has(id) && !optimisticallyRemovedIds.has(id),
     );
 
     return (
