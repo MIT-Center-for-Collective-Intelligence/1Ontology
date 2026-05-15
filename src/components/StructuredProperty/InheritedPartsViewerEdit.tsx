@@ -423,35 +423,6 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
     }
   };
 
-  const getSpecializations = (nodeId: string) => {
-    const node = allNodes[nodeId];
-    if (!node || !node.specializations) {
-      return [];
-    }
-
-    return node.specializations
-      .flatMap((s: { nodes: { id: string }[] }) => s.nodes)
-      .filter((n: { id: string }) => !currentNodePartIdsSet.has(n.id))
-      .map((n: { id: string }) => ({
-        title: allNodes[n.id]?.title,
-        id: n.id,
-      }));
-  };
-  const getGeneralizations = (nodeId: string) => {
-    const node = allNodes[nodeId];
-    if (!node || !node.generalizations) {
-      return [];
-    }
-
-    return node.generalizations
-      .flatMap((s: { nodes: { id: string }[] }) => s.nodes)
-      .filter((n: { id: string }) => !currentNodePartIdsSet.has(n.id))
-      .map((n: { id: string }) => ({
-        title: allNodes[n.id]?.title,
-        id: n.id,
-      }));
-  };
-
   const handleSelect = async (option: string) => {
     const fromId = pickingFor;
     const activeGenId = activeTab;
@@ -991,6 +962,35 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
       {} as { [key: string]: string[] },
     );
     const draggableItems = details.filter((entry: any) => entry.to);
+
+    const partAlternativesLookup: {
+      [partId: string]: {
+        specs: { id: string; title: string }[];
+        gens: { id: string; title: string }[];
+      };
+    } = {};
+    
+    // Calculate available dropdown options per part
+    for (const entry of draggableItems) {
+      if (partAlternativesLookup[entry.to]) continue;
+      const node = allNodes[entry.to];
+      const specs = (node?.specializations ?? [])
+        .flatMap((c: { nodes: { id: string }[] }) => c.nodes)
+        .filter((n: { id: string }) => !currentNodePartIdsSet.has(n.id))
+        .map((n: { id: string }) => ({
+          id: n.id,
+          title: allNodes[n.id]?.title,
+        }));
+      const gens = (node?.generalizations ?? [])
+        .flatMap((c: { nodes: { id: string }[] }) => c.nodes)
+        .filter((n: { id: string }) => !currentNodePartIdsSet.has(n.id))
+        .map((n: { id: string }) => ({
+          id: n.id,
+          title: allNodes[n.id]?.title,
+        }));
+      partAlternativesLookup[entry.to] = { specs, gens };
+    }
+    
     const nonDraggableItems = Object.keys(nonPickedOnes).filter((id) => {
       const index = details.findIndex((d) => d.from === id);
       return index === -1;
@@ -1398,7 +1398,8 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                       </Box>
                                     </MenuItem>
                                   )}
-                                  {getSpecializations(entry.to).length > 0 && (
+                                  {(partAlternativesLookup[entry.to]?.specs
+                                    .length ?? 0) > 0 && (
                                     <ListSubheader
                                       sx={{
                                         color: (theme) =>
@@ -1417,7 +1418,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                       Specializations{" "}
                                     </ListSubheader>
                                   )}
-                                  {getSpecializations(entry.to).map(
+                                  {(partAlternativesLookup[entry.to]?.specs ?? []).map(
                                     (spec: any) => (
                                       <MenuItem
                                         key={`spec-${spec.id}`}
@@ -1437,7 +1438,8 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                     ),
                                   )}
 
-                                  {getGeneralizations(entry.to).length > 0 && (
+                                  {(partAlternativesLookup[entry.to]?.gens
+                                    .length ?? 0) > 0 && (
                                     <ListSubheader
                                       sx={{
                                         color: (theme) =>
@@ -1456,7 +1458,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                       Generalizations
                                     </ListSubheader>
                                   )}
-                                  {getGeneralizations(entry.to).map(
+                                  {(partAlternativesLookup[entry.to]?.gens ?? []).map(
                                     (gen: any) => (
                                       <MenuItem
                                         key={`gen-${gen.id}`}
@@ -1478,9 +1480,10 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                   {/* Fallback when filtering has emptied both
                                       sections, so the menu isn't blank. */}
                                   {!loadingSpecializations.has(entry.to) &&
-                                    getSpecializations(entry.to).length === 0 &&
-                                    getGeneralizations(entry.to).length ===
-                                      0 && (
+                                    (partAlternativesLookup[entry.to]?.specs
+                                      .length ?? 0) === 0 &&
+                                    (partAlternativesLookup[entry.to]?.gens
+                                      .length ?? 0) === 0 && (
                                       <MenuItem
                                         disabled
                                         sx={{
