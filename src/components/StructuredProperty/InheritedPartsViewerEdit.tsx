@@ -163,6 +163,11 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
   const [calculatingPartIds, setCalculatingPartIds] = useState<Set<string>>(
     new Set(),
   );
+  // Parts the user just removed or replaced. Suppresses a false
+  // pending-recompute spinner until properties.parts catches up.
+  const [optimisticallyRemovedIds, setOptimisticallyRemovedIds] = useState<
+    Set<string>
+  >(new Set());
   const prevLoadingInheritedRef = useRef<boolean | undefined>(
     loadingInheritedPartsDetails,
   );
@@ -177,8 +182,34 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
     prevLoadingInheritedRef.current = loadingInheritedPartsDetails;
   }, [loadingInheritedPartsDetails]);
 
+  // Drop ids once they're gone from properties.parts (snapshot landed).
+  useEffect(() => {
+    setOptimisticallyRemovedIds((prev) => {
+      if (prev.size === 0) return prev;
+      const stillInParts = new Set<string>(
+        currentVisibleNode.properties?.parts?.[0]?.nodes?.map(
+          (n: { id: string }) => n.id,
+        ) ?? [],
+      );
+      let changed = false;
+      const next = new Set<string>();
+      for (const id of prev) {
+        if (stillInParts.has(id)) next.add(id);
+        else changed = true;
+      }
+      return changed ? next : prev;
+    });
+  }, [currentVisibleNode.properties?.parts]);
+
   // Merge nodes from props with locally fetched nodes
   const allNodes = { ...nodes, ...fetchedNodes };
+  // Ids of parts already on this node — used to filter them out of the
+  // dropdown options so the user can't pick a duplicate.
+  const currentNodePartIdsSet = new Set<string>(
+    currentVisibleNode.properties?.parts?.[0]?.nodes?.map(
+      (n: { id: string }) => n.id,
+    ) ?? [],
+  );
 
   useEffect(() => {
     const currentQueuedIds = Object.keys(clonedNodesQueue || {});
@@ -392,41 +423,6 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
     }
   };
 
-  const getSpecializations = (nodeId: string) => {
-    const node = allNodes[nodeId];
-    if (!node || !node.specializations) {
-      return [];
-    }
-
-    const value = node.specializations
-      .flatMap((s: { nodes: { id: string }[] }) => s.nodes)
-      .map((n: { id: string }) => {
-        return {
-          title: allNodes[n.id]?.title,
-          id: n.id,
-        };
-      });
-
-    return value;
-  };
-  const getGeneralizations = (nodeId: string) => {
-    const node = allNodes[nodeId];
-    if (!node || !node.generalizations) {
-      return [];
-    }
-
-    const value = node.generalizations
-      .flatMap((s: { nodes: { id: string }[] }) => s.nodes)
-      .map((n: { id: string }) => {
-        return {
-          title: allNodes[n.id]?.title,
-          id: n.id,
-        };
-      });
-
-    return value;
-  };
-
   const handleSelect = async (option: string) => {
     const fromId = pickingFor;
     const activeGenId = activeTab;
@@ -634,22 +630,32 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
   };
 
   const onRemovePart = (partId: string) => {
+    setOptimisticallyRemovedIds((prev) => new Set(prev).add(partId));
     removePart(partId);
+
+    // For parts with (= or > symbol), keep the row visible with a
+    // spinner in place of the symbol until the API recompute lands.
+    // For "+"" parts, filter the row out instantly.
+    let hasInheritanceSource = false;
+    if (inheritedPartsDetails) {
+      for (const gen of inheritedPartsDetails) {
+        const entry = gen.details.find((d) => d.to === partId);
+        if (entry?.from) {
+          hasInheritanceSource = true;
+          break;
+        }
+      }
+    }
+
+    if (hasInheritanceSource) {
+      setCalculatingPartIds((prev) => new Set(prev).add(partId));
+      debouncedRefetch?.();
+      return;
+    }
+
     optimisticUpdate((data) => {
       for (const gen of data) {
-        const entry = gen.details.find((d) => d.to === partId);
-        if (entry) {
-          if (entry.from) {
-            entry.symbol = "x";
-            entry.to = "";
-            entry.toTitle = "";
-            entry.toOptional = false;
-            entry.optionalChange = "none";
-          } else {
-            // It was a "+" entry (added part with no generalization source)
-            gen.details = gen.details.filter((d) => d.to !== partId);
-          }
-        }
+        gen.details = gen.details.filter((d) => d.to !== partId);
       }
       return data;
     });
@@ -657,6 +663,8 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
 
   const onReplacePart = async (oldPartId: string, newPartId: string) => {
     if (!oldPartId || !newPartId || oldPartId === newPartId) return;
+
+    setOptimisticallyRemovedIds((prev) => new Set(prev).add(oldPartId));
 
     // Build updated inheritedPartsDetails locally for instant UI feedback on
     // to/toTitle and to fold into replaceWith's single updateDoc. The symbol
@@ -954,6 +962,35 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
       {} as { [key: string]: string[] },
     );
     const draggableItems = details.filter((entry: any) => entry.to);
+
+    const partAlternativesLookup: {
+      [partId: string]: {
+        specs: { id: string; title: string }[];
+        gens: { id: string; title: string }[];
+      };
+    } = {};
+    
+    // Calculate available dropdown options per part
+    for (const entry of draggableItems) {
+      if (partAlternativesLookup[entry.to]) continue;
+      const node = allNodes[entry.to];
+      const specs = (node?.specializations ?? [])
+        .flatMap((c: { nodes: { id: string }[] }) => c.nodes)
+        .filter((n: { id: string }) => !currentNodePartIdsSet.has(n.id))
+        .map((n: { id: string }) => ({
+          id: n.id,
+          title: allNodes[n.id]?.title,
+        }));
+      const gens = (node?.generalizations ?? [])
+        .flatMap((c: { nodes: { id: string }[] }) => c.nodes)
+        .filter((n: { id: string }) => !currentNodePartIdsSet.has(n.id))
+        .map((n: { id: string }) => ({
+          id: n.id,
+          title: allNodes[n.id]?.title,
+        }));
+      partAlternativesLookup[entry.to] = { specs, gens };
+    }
+    
     const nonDraggableItems = Object.keys(nonPickedOnes).filter((id) => {
       const index = details.findIndex((d) => d.from === id);
       return index === -1;
@@ -963,6 +1000,21 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
         id: queuedId,
         title: queuedNode?.title || "",
       }),
+    );
+
+    // Parts that exist on the node but aren't yet reflected in the inheritedPartsDetails returned from endpoint
+    const currentPartIds: string[] =
+      currentVisibleNode.properties?.parts?.[0]?.nodes?.map(
+        (n: { id: string }) => n.id,
+      ) ?? [];
+    const idsAlreadyInDetails = new Set<string>();
+    for (const d of details) {
+      if (d.to) idsAlreadyInDetails.add(d.to);
+      if (d.from) idsAlreadyInDetails.add(d.from);
+    }
+    const pendingRecomputeIds = currentPartIds.filter(
+      (id) =>
+        !idsAlreadyInDetails.has(id) && !optimisticallyRemovedIds.has(id),
     );
 
     return (
@@ -1117,21 +1169,38 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
 
                       {!!removePart && entry.symbol !== "x" && (
                         <Tooltip title={"Remove part"} placement="top">
-                          <IconButton
-                            sx={{ p: 0.5 }}
-                            onClick={() => {
-                              onRemovePart(entry.to);
+                          <span
+                            style={{
+                              cursor: calculatingPartIds.has(entry.to)
+                                ? "not-allowed"
+                                : undefined,
+                              display: "inline-flex",
                             }}
                           >
-                            <RemoveIcon
-                              sx={{
-                                fontSize: 20,
-                                color: "red",
-                                border: "1px solid red",
-                                borderRadius: "50%",
+                            <IconButton
+                              sx={{ p: 0.5 }}
+                              disabled={calculatingPartIds.has(entry.to)}
+                              onClick={() => {
+                                onRemovePart(entry.to);
                               }}
-                            />
-                          </IconButton>
+                            >
+                              <RemoveIcon
+                                sx={{
+                                  fontSize: 20,
+                                  color: calculatingPartIds.has(entry.to)
+                                    ? "gray"
+                                    : "red",
+                                  border: calculatingPartIds.has(entry.to)
+                                    ? "1px solid gray"
+                                    : "1px solid red",
+                                  borderRadius: "50%",
+                                  opacity: calculatingPartIds.has(entry.to)
+                                    ? 0.5
+                                    : 1,
+                                }}
+                              />
+                            </IconButton>
+                          </span>
                         </Tooltip>
                       )}
 
@@ -1176,6 +1245,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                 <Box
                                   component="button"
                                   type="button"
+                                  disabled={calculatingPartIds.has(entry.to)}
                                   onMouseDown={(e: React.MouseEvent) => {
                                     e.stopPropagation();
                                   }}
@@ -1185,7 +1255,10 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                     toggleOptional(entry.to);
                                   }}
                                   sx={{
-                                    cursor: "pointer",
+                                    cursor: calculatingPartIds.has(entry.to)
+                                      ? "not-allowed"
+                                      : "pointer",
+                                    "&:disabled": { opacity: 0.5 },
                                     textTransform: "none",
                                     fontSize: 12,
                                     fontWeight: entry.toOptional ? 700 : 600,
@@ -1246,6 +1319,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                               >
                                 <Select
                                   value={entry.to}
+                                  disabled={calculatingPartIds.has(entry.to)}
                                   onChange={(e) => {
                                     const newPartId = e.target.value;
                                     onReplacePart(entry.to, newPartId);
@@ -1324,7 +1398,8 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                       </Box>
                                     </MenuItem>
                                   )}
-                                  {getSpecializations(entry.to).length > 0 && (
+                                  {(partAlternativesLookup[entry.to]?.specs
+                                    .length ?? 0) > 0 && (
                                     <ListSubheader
                                       sx={{
                                         color: (theme) =>
@@ -1343,7 +1418,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                       Specializations{" "}
                                     </ListSubheader>
                                   )}
-                                  {getSpecializations(entry.to).map(
+                                  {(partAlternativesLookup[entry.to]?.specs ?? []).map(
                                     (spec: any) => (
                                       <MenuItem
                                         key={`spec-${spec.id}`}
@@ -1363,7 +1438,8 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                     ),
                                   )}
 
-                                  {getGeneralizations(entry.to).length > 0 && (
+                                  {(partAlternativesLookup[entry.to]?.gens
+                                    .length ?? 0) > 0 && (
                                     <ListSubheader
                                       sx={{
                                         color: (theme) =>
@@ -1382,7 +1458,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                       Generalizations
                                     </ListSubheader>
                                   )}
-                                  {getGeneralizations(entry.to).map(
+                                  {(partAlternativesLookup[entry.to]?.gens ?? []).map(
                                     (gen: any) => (
                                       <MenuItem
                                         key={`gen-${gen.id}`}
@@ -1401,6 +1477,33 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                       </MenuItem>
                                     ),
                                   )}
+                                  {/* Fallback when filtering has emptied both
+                                      sections, so the menu isn't blank. */}
+                                  {!loadingSpecializations.has(entry.to) &&
+                                    (partAlternativesLookup[entry.to]?.specs
+                                      .length ?? 0) === 0 &&
+                                    (partAlternativesLookup[entry.to]?.gens
+                                      .length ?? 0) === 0 && (
+                                      <MenuItem
+                                        disabled
+                                        sx={{
+                                          "&.Mui-disabled": { opacity: 1 },
+                                        }}
+                                      >
+                                        <Typography
+                                          sx={{
+                                            fontStyle: "italic",
+                                            fontSize: "0.9rem",
+                                            color: (theme) =>
+                                              theme.palette.mode === "light"
+                                                ? "#555"
+                                                : "#cfcfcf",
+                                          }}
+                                        >
+                                          No alternatives available
+                                        </Typography>
+                                      </MenuItem>
+                                    )}
                                 </Select>
                               </Tooltip>
                             </Box>
@@ -1416,6 +1519,89 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
             </List>
           )}
         </Droppable>
+        {pendingRecomputeIds.length > 0 && (
+          <List sx={{ px: 1.8, py: 0, mt: -0.5 }}>
+            {pendingRecomputeIds.map((partId: string) => (
+              <ListItem
+                key={`pending-recompute-${partId}`}
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1,
+                  px: 1,
+                  py: 0,
+                  backgroundImage:
+                    "repeating-linear-gradient(to right, gray 0, gray 1px, transparent 1px, transparent 6px)",
+                  backgroundPosition: "top",
+                  backgroundRepeat: "repeat-x",
+                  backgroundSize: "100% 1px",
+                }}
+              >
+                <ListItemText
+                  primary={null}
+                  sx={{ flex: 1, minWidth: 0.3 }}
+                />
+                {/* Hidden spaces to align buttons with above rows */}
+                <Box aria-hidden sx={{ width: 20, flexShrink: 0 }} />
+                <Box aria-hidden sx={{ width: 30, flexShrink: 0 }} />
+                <ListItemText
+                  primary={
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        minHeight: 40,
+                      }}
+                    >
+                      <Tooltip
+                        title="Calculating inheritance for this part"
+                        placement="top"
+                      >
+                        <Box
+                          sx={{
+                            width: 28,
+                            height: 28,
+                            flexShrink: 0,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <CircularProgress
+                            size={18}
+                            sx={{ color: "orange" }}
+                          />
+                        </Box>
+                      </Tooltip>
+                      <Box
+                        sx={{
+                          flex: 1,
+                          minWidth: 0,
+                          display: "flex",
+                          alignItems: "center",
+                          pl: "22px",
+                          pr: "14px",
+                        }}
+                      >
+                        <Typography
+                          sx={{
+                            fontSize: "0.9rem",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {allNodes[partId]?.title ?? ""}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  }
+                  sx={{ flex: 1, minWidth: 0.3 }}
+                />
+              </ListItem>
+            ))}
+          </List>
+        )}
         <Popover
           id={id}
           open={open}
