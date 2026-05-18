@@ -15,7 +15,13 @@ import {
   unlinkPropertyOf,
   updateLinksForInheritance,
 } from "@components/lib/utils/helpers";
-import { collection, doc, getFirestore, updateDoc } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDoc,
+  getFirestore,
+  updateDoc,
+} from "firebase/firestore";
 import { ICollection, TreeData } from "@components/types/INode";
 import { NODES } from "@components/lib/firestoreClient/collections";
 import { useAuth } from "../context/AuthContext";
@@ -627,6 +633,19 @@ function DraggableTree({
     try {
       if (!editEnabled || !user?.uname) return;
 
+      // Fetch from Firestore if the node isn't in the relatedNodes cache
+      const ensureNodeDoc = async (nodeId: string): Promise<any | null> => {
+        if (nodes[nodeId]) return nodes[nodeId];
+        try {
+          const snap = await getDoc(doc(collection(db, NODES), nodeId));
+          if (!snap.exists()) return null;
+          return { id: snap.id, ...snap.data() };
+        } catch (e) {
+          console.error("ensureNodeDoc failed for", nodeId, e);
+          return null;
+        }
+      };
+
       const draggedNodes = args.dragNodes.map((node) => node.data);
       if (draggedNodes[0].isLoadMore) {
         return;
@@ -727,7 +746,13 @@ function DraggableTree({
         const parentId = args.parentId;
         if (parentId) {
           const nodeRef = doc(collection(db, NODES), parentId);
-          const nodeData = nodes[parentId];
+          const nodeData = await ensureNodeDoc(parentId);
+          if (!nodeData) {
+            setSnackbarMessage(
+              "Could not load parent node; reorder not saved.",
+            );
+            return;
+          }
           const specializations = nodeData.specializations;
           const previousValue = JSON.parse(JSON.stringify(specializations));
           const draggedElement = args.dragIds[0];
@@ -750,7 +775,7 @@ function DraggableTree({
             newValue: newSpecializations,
             modifiedAt: new Date(),
             changeType: "sort collections",
-            fullNode: nodes[parentId],
+            fullNode: nodeData,
             ...(appName ? { appName } : {}),
           });
         }
@@ -759,7 +784,11 @@ function DraggableTree({
 
       if (toParent.nodeId === fromParents[0].nodeId) {
         const nodeRef = doc(collection(db, NODES), toParent.nodeId);
-        const nodeData = nodes[toParent.nodeId];
+        const nodeData = await ensureNodeDoc(toParent.nodeId);
+        if (!nodeData) {
+          setSnackbarMessage("Could not load parent node; reorder not saved.");
+          return;
+        }
 
         // Determine source and target collection names
         let from = "main";
@@ -865,7 +894,7 @@ function DraggableTree({
             newValue: specializations,
             modifiedAt: new Date(),
             changeType: "sort elements",
-            fullNode: nodes[toParent.nodeId],
+            fullNode: nodeData,
             ...(appName ? { appName } : {}),
           });
           return;
@@ -923,7 +952,7 @@ function DraggableTree({
             newValue: specializations,
             modifiedAt: new Date(),
             changeType: "sort elements",
-            fullNode: nodes[toParent.nodeId],
+            fullNode: nodeData,
             ...(appName ? { appName } : {}),
           });
           return;
@@ -949,10 +978,14 @@ function DraggableTree({
       const addedLinks = [toParent.nodeId];
       const removedLinks = [generalizationId];
       const specializationId = draggedNodes[0].nodeId;
-      const specializationData = nodes[specializationId];
+      const specializationData = await ensureNodeDoc(specializationId);
+      if (!specializationData) {
+        setSnackbarMessage("Could not load dragged node; move not saved.");
+        return;
+      }
       const newLinks = [toParent.nodeId];
 
-      const newGeneralizations = nodes[specializationId].generalizations;
+      const newGeneralizations = specializationData.generalizations;
       const previousValue = JSON.parse(JSON.stringify(newGeneralizations));
 
       newGeneralizations[0].nodes = newGeneralizations[0].nodes.filter(
@@ -974,7 +1007,11 @@ function DraggableTree({
         await unlinkPropertyOf(db, "generalizations", specializationId, linkId);
       }
 
-      const newGeneralizationData = nodes[toParent.nodeId];
+      const newGeneralizationData = await ensureNodeDoc(toParent.nodeId);
+      if (!newGeneralizationData) {
+        setSnackbarMessage("Could not load target node; move not saved.");
+        return;
+      }
       const specializations = newGeneralizationData.specializations;
       const previousSValue = JSON.parse(JSON.stringify(specializations));
 
@@ -1021,7 +1058,7 @@ function DraggableTree({
         newValue: newGeneralizations,
         modifiedAt: new Date(),
         changeType: "modify elements",
-        fullNode: nodes[specializationId],
+        fullNode: specializationData,
         ...(appName ? { appName } : {}),
       });
 
@@ -1033,7 +1070,7 @@ function DraggableTree({
         newValue: specializations,
         modifiedAt: new Date(),
         changeType: "modify elements",
-        fullNode: nodes[toParent.nodeId],
+        fullNode: newGeneralizationData,
         ...(appName ? { appName } : {}),
       });
 
