@@ -722,21 +722,31 @@ function DraggableTree({
 
       // Update shared tree state with local update to prevent glitch when treeViewData updates
       if (onInstantTreeUpdate) {
-        // Clean the newData to remove pagination properties
+        // Drop pagination/loading fields and keep lazy flags so chevrons persist after edits
         const cleanTreeData = (data: PaginatedTreeData[]): TreeData[] => {
           return data
-            .filter((node) => !node.isLoadMore)
-            .map((node) => ({
-              id: node.id,
-              nodeId: node.nodeId,
-              name: node.name,
-              nodeType: node.nodeType,
-              category: node.category,
-              unclassified: node.unclassified,
-              children: node.children
-                ? cleanTreeData(node.children)
-                : undefined,
-            }));
+            .filter((node) => !node.isLoadMore && !node.isLoadingPlaceholder)
+            .map((node) => {
+              const {
+                isLoadMore,
+                isLoadingPlaceholder,
+                parentId,
+                totalChildren,
+                loadedChildren,
+                allChildren,
+                isTopLoader,
+                isBottomLoader,
+                loadDirection,
+                children,
+                ...rest
+              } = node;
+              return {
+                ...rest,
+                children: children
+                  ? cleanTreeData(children as PaginatedTreeData[])
+                  : undefined,
+              } as TreeData;
+            });
         };
 
         onInstantTreeUpdate(() => cleanTreeData(newData));
