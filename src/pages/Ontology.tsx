@@ -152,6 +152,7 @@ import {
   batchGetNodesByIds,
   buildPathTreeWithSiblings,
   collectSpecializationChildIds,
+  mergePreservedSubtrees,
   nodeHasNonEmptySpecializations,
   replaceSpineWithOneLevel,
   replaceWithOneLevel,
@@ -336,14 +337,23 @@ const Ontology = ({
         hasInstantUpdateRef.current = false;
       }, 30000);
 
-      setCurrentNodeTreeData((prevTree) => {
-        const newTree = updateFn(prevTree);
-
-        return newTree;
-      });
+      setCurrentNodeTreeData((prevTree) => updateFn(prevTree));
     },
     [currentVisibleNode?.id, currentVisibleNode, db],
   );
+
+  // Clear the instant update guard on navigation so loadPathOutline runs
+  // mergeOutlines preserves prior expansion across the reload.
+  useEffect(() => {
+    if (!hasInstantUpdateRef.current) return;
+    setHasInstantUpdate(false);
+    hasInstantUpdateRef.current = false;
+    if (instantUpdateTimeoutRef.current) {
+      clearTimeout(instantUpdateTimeoutRef.current);
+      instantUpdateTimeoutRef.current = null;
+    }
+  }, [currentVisibleNode?.id]);
+
   // Auto-focus search input on mobile search open
   useEffect(() => {
     if (mobileSearchOpen && isMobile) {
@@ -459,7 +469,7 @@ const Ontology = ({
 
       const tree = [...pathTree, ...otherRoots];
       const filtered = filterTreeForTargetNode(tree, focused.id);
-      setCurrentNodeTreeData(filtered);
+      setCurrentNodeTreeData((prev) => mergePreservedSubtrees(filtered, prev));
     } catch {
       setCurrentNodeTreeData([]);
     } finally {
