@@ -265,10 +265,10 @@ function DraggableTree({
           allChildren: node.children ? [...node.children] : undefined,
         };
 
-        // Always render all children directly (no pagination "Show … more" nodes).
-        if (node.children) processedNode.children = [...node.children];
+        // Always assign a children array (empty) so react-arborist classifies every node as a drop target
+        processedNode.children = node.children ? [...node.children] : [];
 
-        if (processedNode.children) {
+        if (processedNode.children.length > 0) {
           processedNode.children = processTreeData(processedNode.children);
         }
 
