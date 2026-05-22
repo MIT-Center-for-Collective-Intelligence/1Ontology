@@ -384,28 +384,42 @@ export async function resolvePathIds(
   return { pathIds: chain, usedPrimaryParentFallback: true };
 }
 
+/**
+ * Carry loaded subtrees from `oldTree` into `newTree` where row ids match
+ * so that old expansion survives when outline is rebuilt by navigation
+ */
 export function mergePreservedSubtrees(
-  newChildren: TreeData[],
-  oldChildren: TreeData[] | undefined,
+  newTree: TreeData[],
+  oldTree: TreeData[] | undefined,
 ): TreeData[] {
-  if (!oldChildren?.length) return newChildren;
-  // Key by "id": categories share nodeId and would cause visual inconsistencies
-  const byId = new Map(oldChildren.map((c) => [c.id, c]));
-  return newChildren.map((nc) => {
-    const prev = byId.get(nc.id);
-    // Only keep old row if it has loaded children; let fresh data win otherwise
-    const prevHasLoadedSubtree = !!prev?.children && prev.children.length > 0;
-    if (prev && prevHasLoadedSubtree) {
+  if (!oldTree?.length) return newTree;
+  const oldById = new Map(oldTree.map((row) => [row.id, row]));
+  return newTree.map((newRow) => {
+    const oldRow = oldById.get(newRow.id);
+    // No prior row with this id, nothing to merge
+    if (!oldRow) return newRow;
+    // "Loaded" = has real children; rows have empty array to show a chevron without loading
+    const newHasLoaded = !!newRow.children && newRow.children.length > 0;
+    const oldHasLoaded = !!oldRow.children && oldRow.children.length > 0;
+    // newRow is lazy but oldRow has the user's expansion: keep oldRow's subtree and lazy flags
+    if (!newHasLoaded && oldHasLoaded) {
       return {
-        ...nc,
-        children: prev.children,
-        outlineSpineOnly: prev.outlineSpineOnly,
-        outlineLoadChildren: prev.outlineLoadChildren,
+        ...newRow,
+        children: oldRow.children,
+        outlineSpineOnly: oldRow.outlineSpineOnly,
+        outlineLoadChildren: oldRow.outlineLoadChildren,
         hasUnresolvedChildren:
-          prev.hasUnresolvedChildren ?? nc.hasUnresolvedChildren,
+          oldRow.hasUnresolvedChildren ?? newRow.hasUnresolvedChildren,
       } as TreeData;
     }
-    return nc;
+    // If both is expanded, keep fresh structure here, recurse to carry deeper expansions
+    if (newHasLoaded && oldHasLoaded) {
+      return {
+        ...newRow,
+        children: mergePreservedSubtrees(newRow.children!, oldRow.children!),
+      } as TreeData;
+    }
+    return newRow;
   });
 }
 
