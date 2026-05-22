@@ -389,10 +389,13 @@ export function mergePreservedSubtrees(
   oldChildren: TreeData[] | undefined,
 ): TreeData[] {
   if (!oldChildren?.length) return newChildren;
-  const byNodeId = new Map(oldChildren.map((c) => [c.nodeId, c]));
+  // Key by "id": categories share nodeId and would cause visual inconsistencies
+  const byId = new Map(oldChildren.map((c) => [c.id, c]));
   return newChildren.map((nc) => {
-    const prev = byNodeId.get(nc.nodeId);
-    if (prev) {
+    const prev = byId.get(nc.id);
+    // Only keep old row if it has loaded children; let fresh data win otherwise
+    const prevHasLoadedSubtree = !!prev?.children && prev.children.length > 0;
+    if (prev && prevHasLoadedSubtree) {
       return {
         ...nc,
         children: prev.children,
