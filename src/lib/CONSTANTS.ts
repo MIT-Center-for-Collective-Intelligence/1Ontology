@@ -208,7 +208,12 @@ export const ONTOLOGY_APPS = development
       { id: "noun-ontology", name: "Noun Ontology", type: "other" },
       {
         id: "onet-ontology-1",
-        name: "O*Net Ontology",
+        name: "O*NET Ontology Including Tasks",
+        type: "other",
+      },
+      {
+        id: "onet-ontology-no-tasks",
+        name: "O*NET Ontology Excluding Tasks",
         type: "other",
       },
     ];
