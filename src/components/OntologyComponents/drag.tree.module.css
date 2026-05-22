@@ -158,9 +158,9 @@
 }
 
 .node:global(.willReceiveDrop) {
-    background: rgba(76, 175, 80, 0.2);
+    background: var(--tree-hover-bg, rgba(0, 0, 0, 0.04));
     color: inherit;
-    box-shadow: inset 0 0 0 1px rgba(76, 175, 80, 0.55);
+    box-shadow: inset 0 0 0 1px rgba(145, 158, 171, 0.55);
 }
 
 
