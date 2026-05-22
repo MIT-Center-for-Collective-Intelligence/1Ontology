@@ -207,7 +207,7 @@ export const ONTOLOGY_APPS = development
       },
       { id: "noun-ontology", name: "Noun Ontology", type: "other" },
       {
-        id: "onet-ontology",
+        id: "onet-ontology-1",
         name: "O*Net Ontology",
         type: "other",
       },
