@@ -309,10 +309,10 @@ export function buildPathTreeWithSiblings(
       return {
         id: treeId,
         nodeId,
-        name: "…",
+        name: "",
         nodeType: "group",
         hasUnresolvedChildren: true,
-        children: isLast ? undefined : [build(index + 1)],
+        children: undefined,
       };
     }
 

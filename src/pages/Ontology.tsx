@@ -397,10 +397,13 @@ const Ontology = ({
     if (hasInstantUpdateRef.current) {
       return;
     }
-    if (!currentVisibleNode?.id) {
+    if (!currentVisibleNode?.id || currentVisibleNode.appName !== appName) {
       setCurrentNodeTreeData([]);
       setPathOutlineMessage(null);
       setIsLoadingOutline(false);
+      return;
+    }
+    if ((currentVisibleNode as any)._isMinimal) {
       return;
     }
     setIsLoadingOutline(true);
@@ -1377,9 +1380,7 @@ const Ontology = ({
       try {
         const raw = window.location.hash.split("#").reverse()[0] ?? "";
         const isNavigateMode = raw.endsWith("/navigate");
-        const hashId = isNavigateMode
-          ? raw.slice(0, -"/navigate".length)
-          : raw;
+        const hashId = isNavigateMode ? raw.slice(0, -"/navigate".length) : raw;
         const userCurrentNodeId = user?.currentNode?.[appName]?.id;
 
         if (hashId) {
@@ -1580,7 +1581,7 @@ const Ontology = ({
 
       if (!node) {
         // Create minimal node with just id and title for instant highlighting
-        node = { id: nodeId, title: nodeTitle || "" } as any;
+        node = { id: nodeId, title: nodeTitle || "", appName, _isMinimal: true } as any;
         setIsLoadingNodeDetails(true);
       } else {
         setIsLoadingNodeDetails(false);
@@ -1632,7 +1633,7 @@ const Ontology = ({
 
       if (!node) {
         // Create minimal node with just id and title for instant highlighting
-        node = { id: nodeId, title: nodeTitle || "" } as any;
+        node = { id: nodeId, title: nodeTitle || "", appName, _isMinimal: true } as any;
         setIsLoadingNodeDetails(true);
       } else {
         setIsLoadingNodeDetails(false);
@@ -2069,7 +2070,6 @@ const Ontology = ({
     }
     setPartsInheritance(_inheritanceDetails);
   }, [currentVisibleNode, relatedNodes, eachNodePath]);
-
   if (!isPageReady) {
     return <FullPageLogoLoading />;
   }
@@ -2269,6 +2269,7 @@ const Ontology = ({
                     isSwitchingAppRef.current = true;
                     const app = event.target.value.replaceAll(" ", "_");
                     router.replace(`/${app}`);
+                    setCurrentNodeTreeData([]);
                   }}
                   label="Property Type"
                   sx={{ borderRadius: "20px" }}
