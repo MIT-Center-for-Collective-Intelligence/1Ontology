@@ -1289,7 +1289,7 @@ function DraggableTree({
           })}
         </Box>
         <Box
-          onClick={(e) => {
+    /*       onClick={(e) => {
             e.stopPropagation();
             if (!node.isInternal) return;
             const opening = !node.isOpen;
@@ -1298,7 +1298,7 @@ function DraggableTree({
             if (opening) {
               ensureExpandedWithLazyLoad(node);
             }
-          }}
+          }} */
           className={clsx(styles.arrowHitbox, {
             [styles.clickableArrow]: node.isInternal,
           })}

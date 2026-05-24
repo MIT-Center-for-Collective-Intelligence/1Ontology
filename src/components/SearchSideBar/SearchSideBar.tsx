@@ -52,7 +52,7 @@ const SearchSideBar = ({
   const theme = useTheme();
 
   const getSearchResults = (query: string) => {
-    return searchWithFuse(query).slice(0, 30);
+    return [];
   };
 
   const handleFocus = () => {
