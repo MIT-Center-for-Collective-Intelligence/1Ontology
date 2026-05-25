@@ -114,6 +114,7 @@ import {
 } from "firebase/firestore";
 
 import CloseIcon from "@mui/icons-material/Close";
+import CheckIcon from "@mui/icons-material/Check";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getTitleDeleted } from "@components/lib/utils/string.utils";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
@@ -166,6 +167,7 @@ type ILinkNodeProps = {
   currentImprovement: any;
   loadingIds: any;
   saveNewSpecialization: any;
+  cancelPendingClone?: (queuedId: string) => void;
   enableEdit: boolean;
   setEditableProperty: any;
   unlinkNodeRelation: any;
@@ -200,6 +202,7 @@ const LinkNode = ({
   currentImprovement,
   loadingIds,
   saveNewSpecialization,
+  cancelPendingClone,
   enableEdit,
   setEditableProperty,
   unlinkNodeRelation,
@@ -732,6 +735,40 @@ const LinkNode = ({
               sx={{ color: getLinkColor(link.change), pl: "5px" }}
             />
           )}{" "}
+          {isQueuedClone &&
+            property !== "parts" &&
+            enableEdit &&
+            !selectedDiffNode &&
+            !currentImprovement &&
+            (loadingIds.has(link.id) ? (
+              <LoadingButton
+                loading
+                loadingIndicator={<CircularProgress size={20} />}
+                sx={{ borderRadius: "16px", p: "3px", minWidth: "40px" }}
+                disabled
+              />
+            ) : (
+              <Box sx={{ display: "flex" }}>
+                <Tooltip title="Save new specialization">
+                  <IconButton
+                    sx={{ ml: "8px", borderRadius: "18px", p: 0.2 }}
+                    onClick={() =>
+                      saveNewSpecialization(link.id, collectionName)
+                    }
+                  >
+                    <CheckIcon sx={{ color: "green" }} />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="Discard">
+                  <IconButton
+                    sx={{ ml: "4px", borderRadius: "18px", p: 0.2 }}
+                    onClick={() => cancelPendingClone?.(link.id)}
+                  >
+                    <CloseIcon sx={{ color: "red" }} />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+            ))}
           {selectedProperty === property &&
             selectedProperty === "parts" &&
             !isQueuedClone && (

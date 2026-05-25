@@ -1521,7 +1521,11 @@ const StructuredProperty = ({
               selectedDiffNode={selectedDiffNode}
               currentImprovement={currentImprovement}
               property={property}
-              propertyValue={propertyValue ?? []}
+              propertyValue={
+                selectedProperty === property
+                  ? editableProperty ?? []
+                  : propertyValue ?? []
+              }
               setEditableProperty={setEditableProperty}
               getCategoryStyle={getCategoryStyle}
               navigateToNode={navigateToNode}
@@ -1574,6 +1578,7 @@ const StructuredProperty = ({
               setNewOnes={setNewOnes}
               loadingIds={loadingIds}
               saveNewSpecialization={saveNewSpecialization}
+              cancelPendingClone={cancelPendingPart}
               setLoadingIds={setLoadingIds}
               editableProperty={editableProperty}
               onGetPropertyValue={onGetPropertyValue}
