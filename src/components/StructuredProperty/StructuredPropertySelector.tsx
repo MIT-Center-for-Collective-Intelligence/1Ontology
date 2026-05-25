@@ -124,7 +124,9 @@ const StructuredPropertySelector = ({
     title?: string,
   ) => Promise<string | null>;
   setClonedNodesQueue: Function;
-  clonedNodesQueue: { [nodeId: string]: { title: string; id: string } };
+  clonedNodesQueue: {
+    [nodeId: string]: { title: string; id: string; property: string };
+  };
   newOnes: any;
   setNewOnes: any;
   loadingIds: any;
@@ -845,7 +847,9 @@ const StructuredPropertySelector = ({
     });
 
     setClonedNodesQueue(
-      (prev: { [nodeId: string]: { title: string; id: string } }) => {
+      (prev: {
+        [nodeId: string]: { title: string; id: string; property: string };
+      }) => {
         const updated = { ...prev };
         delete updated[queuedCloneId];
         return updated;

@@ -539,12 +539,14 @@ const StructuredProperty = ({
         _prev.add(nId);
         return _prev;
       });
+      const queued = clonedNodesQueue[nId];
+      const property = queued.property;
       const addedElements: string[] = [nId];
 
       await handleSaveLinkChanges(
         [],
         addedElements,
-        selectedProperty,
+        property,
         currentVisibleNode?.id,
         collectionName,
       );
@@ -553,14 +555,14 @@ const StructuredProperty = ({
         _prev.delete(nId);
         return _prev;
       });
-      const id = clonedNodesQueue[nId].id;
-      const title = clonedNodesQueue[nId].title;
+      const id = queued.id;
+      const title = queued.title;
       setClonedNodesQueue((prev: any) => {
         const _prev = { ...prev };
         delete _prev[nId];
         return _prev;
       });
-      await handleCloning({ id }, title, nId, collectionName);
+      await handleCloning({ id }, title, nId, collectionName, property);
     } catch (error) {
       console.error(error);
     }
@@ -584,7 +586,9 @@ const StructuredProperty = ({
       return updated;
     });
     setClonedNodesQueue(
-      (prev: { [nodeId: string]: { title: string; id: string } }) => {
+      (prev: {
+        [nodeId: string]: { title: string; id: string; property: string };
+      }) => {
         const updated = { ...prev };
         delete updated[queuedId];
         return updated;
@@ -594,7 +598,9 @@ const StructuredProperty = ({
 
   const updatePendingPartTitle = (queuedId: string, title: string) => {
     setClonedNodesQueue(
-      (prev: { [nodeId: string]: { title: string; id: string } }) => ({
+      (prev: {
+        [nodeId: string]: { title: string; id: string; property: string };
+      }) => ({
         ...prev,
         [queuedId]: {
           ...prev[queuedId],

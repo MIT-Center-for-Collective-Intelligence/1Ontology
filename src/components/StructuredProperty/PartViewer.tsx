@@ -24,7 +24,9 @@ interface PartViewerProps {
   appName?: string;
   getGeneralizationParts: any;
   onDisplayDetailsChange?: (isExpanded: boolean) => void;
-  clonedNodesQueue?: { [nodeId: string]: { title: string; id: string } };
+  clonedNodesQueue?: {
+    [nodeId: string]: { title: string; id: string; property: string };
+  };
   saveNewSpecialization?: (queuedId: string, collectionName: string) => void;
   cancelPendingPart?: (queuedId: string) => void;
   updatePendingPartTitle?: (queuedId: string, title: string) => void;

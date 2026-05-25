@@ -674,8 +674,9 @@ const LinkNode = ({
       .filter((n) => !!relatedNodes[n.id]?.title);
   };
 
-  const isQueuedClone = clonedNodesQueue.hasOwnProperty(link.id);
-  const queuedTitle = clonedNodesQueue[link.id]?.title;
+  const queueEntry = clonedNodesQueue[link.id];
+  const isQueuedClone = queueEntry?.property === property;
+  const queuedTitle = queueEntry?.title;
   return (
     <Box
       id={`${link.id}-${property}`}
@@ -700,7 +701,7 @@ const LinkNode = ({
           borderRadius: "25px",
 
           ":hover": {
-            backgroundColor: clonedNodesQueue.hasOwnProperty(link.id)
+            backgroundColor: isQueuedClone
               ? ""
               : (theme) =>
                   theme.palette.mode === "dark" ? "#5f5e5d" : "#d9dfe6",
@@ -834,7 +835,7 @@ const LinkNode = ({
           {property === "parts" &&
             !currentImprovement &&
             !selectedDiffNode &&
-            !clonedNodesQueue.hasOwnProperty(link.id) &&
+            !isQueuedClone &&
             !loadingIds.has(link.id) &&
             enableEdit && (
               <Tooltip title={swapIt ? "Close" : "Specialize"}>

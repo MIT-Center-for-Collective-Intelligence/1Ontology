@@ -576,9 +576,11 @@ const Node = ({
     const newId = doc(collection(db, NODES)).id;
     const newTitle = title ? title : `New ${node.title}`;
     setClonedNodesQueue(
-      (prev: { [nodeId: string]: { title: string; id: string } }) => ({
+      (prev: {
+        [nodeId: string]: { title: string; id: string; property: string };
+      }) => ({
         ...prev,
-        [newId]: { title: newTitle, id: nodeId },
+        [newId]: { title: newTitle, id: nodeId, property: selectedProperty },
       }),
     );
     setNewOnes((newOnes: any) => {
@@ -954,17 +956,12 @@ const Node = ({
     searchValue = null,
     newId = null,
     collectionName: string = "main",
+    property: string = selectedProperty,
   ) => {
     // Call the asynchronous function to clone the node with the given ID.
     // Close the modal or perform any necessary cleanup.
     // handleCloseAddLinksModel();
-    await cloneNode(
-      node.id,
-      searchValue,
-      newId,
-      selectedProperty,
-      collectionName,
-    );
+    await cloneNode(node.id, searchValue, newId, property, collectionName);
   };
 
   const editStructuredProperty = async (

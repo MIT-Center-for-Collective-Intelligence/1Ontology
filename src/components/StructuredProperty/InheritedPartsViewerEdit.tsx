@@ -86,7 +86,9 @@ interface InheritedPartsViewerProps {
   mutateData?: (newData: InheritedPartsDetail[] | null) => void;
   debouncedRefetch?: () => void;
   refetchNow?: () => void;
-  clonedNodesQueue?: { [nodeId: string]: { title: string; id: string } };
+  clonedNodesQueue?: {
+    [nodeId: string]: { title: string; id: string; property: string };
+  };
   approvePendingPart?: (queuedId: string) => Promise<void> | void;
   cancelPendingPart?: (queuedId: string) => void;
   updatePendingPartTitle?: (queuedId: string, title: string) => void;
@@ -995,12 +997,12 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
       const index = details.findIndex((d) => d.from === id);
       return index === -1;
     });
-    const pendingQueuedParts = Object.entries(clonedNodesQueue || {}).map(
-      ([queuedId, queuedNode]) => ({
+    const pendingQueuedParts = Object.entries(clonedNodesQueue || {})
+      .filter(([, queuedNode]) => queuedNode?.property === "parts")
+      .map(([queuedId, queuedNode]) => ({
         id: queuedId,
         title: queuedNode?.title || "",
-      }),
-    );
+      }));
 
     // Parts that exist on the node but aren't yet reflected in the inheritedPartsDetails returned from endpoint
     const currentPartIds: string[] =
