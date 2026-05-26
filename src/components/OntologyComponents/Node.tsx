@@ -736,6 +736,9 @@ const Node = ({
               });
             }
           }
+        } else if (mProperty === "parts") {
+          // Keeps parts out of the catch-all else below that
+          // would self-reference newNode.id into its own parts
         } else {
           // Handling property updates
           if (newNode.inheritance[mProperty]?.ref) {
