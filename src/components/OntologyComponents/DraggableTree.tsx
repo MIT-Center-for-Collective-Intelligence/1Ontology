@@ -1289,19 +1289,19 @@ function DraggableTree({
           })}
         </Box>
         <Box
-    /*       onClick={(e) => {
-            e.stopPropagation();
-            if (!node.isInternal) return;
-            const opening = !node.isOpen;
-            node.toggle();
-            node.select();
-            if (opening) {
-              ensureExpandedWithLazyLoad(node);
-            }
-          }} */
           className={clsx(styles.arrowHitbox, {
             [styles.clickableArrow]: node.isInternal,
           })}
+          onClick={(e) => {
+            if (node.isInternal) {
+              e.stopPropagation();
+              const wasOpen = node.isOpen;
+              node.toggle();
+              if (!wasOpen) {
+                ensureExpandedWithLazyLoad(node);
+              }
+            }
+          }}
         >
           <FolderArrow node={node} />
         </Box>
@@ -1477,9 +1477,9 @@ function DraggableTree({
                 // onSelect={(selected) => setSelectedCount(selected.length)}
                 onActivate={(node) => {
                   if (node.data.category) {
-                    const opening = !node.isOpen;
+                    const wasOpen = node.isOpen;
                     node.toggle();
-                    if (opening) {
+                    if (!wasOpen) {
                       ensureExpandedWithLazyLoad(node as any);
                     }
                     return;
@@ -1491,7 +1491,9 @@ function DraggableTree({
                   treeActivatedNodeIdRef.current = node.data.nodeId;
                   onOpenNodesTree(node.data.nodeId, node.data.name);
                   // Selecting a node should also expand it (and lazy-load children if needed).
-                  ensureExpandedWithLazyLoad(node as any);
+                  if (!node.isOpen) {
+                    ensureExpandedWithLazyLoad(node as any);
+                  }
                 }}
                 disableDrag={!editEnabled}
                 disableDrop={!editEnabled}

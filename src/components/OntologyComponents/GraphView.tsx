@@ -1,4 +1,3 @@
-
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 import dagreD3 from "dagre-d3";
@@ -53,7 +52,8 @@ const GraphView = ({
   const lastRootNodeIdsRef = useRef<string>("");
 
   const getNodeId = useCallback(
-    (node: TreeData): string => node.category ? node.id : node.nodeId || node.id || "",
+    (node: TreeData): string =>
+      node.category ? node.id : node.nodeId || node.id || "",
     [],
   );
 
@@ -74,32 +74,39 @@ const GraphView = ({
 
   const getNodeStyle = useCallback(
     (node: TreeData, nodeId: string): string => {
-      const strokeColor = currentVisibleNode?.id === nodeId ? ACTIVE_STROKE : DEFAULT_STROKE;
+      const strokeColor =
+        currentVisibleNode?.id === nodeId ? ACTIVE_STROKE : DEFAULT_STROKE;
       return `fill: ${getNodeFill(node, nodeId)}; stroke: ${strokeColor}; stroke-width: 0.1px; cursor: pointer;`;
     },
     [currentVisibleNode?.id, getNodeFill],
   );
 
-  const toggleExpandedNode = useCallback((nodeId: string) => {
-    const newExpandedNodes = new Set(expandedNodes);
-    if (newExpandedNodes.has(nodeId)) {
-      newExpandedNodes.delete(nodeId);
-    } else {
-      newExpandedNodes.add(nodeId);
-    }
-    setExpandedNodes(newExpandedNodes);
-  }, [expandedNodes, setExpandedNodes]);
+  const toggleExpandedNode = useCallback(
+    (nodeId: string) => {
+      const newExpandedNodes = new Set(expandedNodes);
+      if (newExpandedNodes.has(nodeId)) {
+        newExpandedNodes.delete(nodeId);
+      } else {
+        newExpandedNodes.add(nodeId);
+      }
+      setExpandedNodes(newExpandedNodes);
+    },
+    [expandedNodes, setExpandedNodes],
+  );
 
-  const centerNodeTransform = useCallback((
-    svgWidth: number,
-    svgHeight: number,
-    nodePosition: { x: number; y: number },
-    scale: number,
-  ) => {
-    const translateX = svgWidth / 2 - nodePosition.x * scale;
-    const translateY = svgHeight / 2.5 - nodePosition.y * scale;
-    return { translateX, translateY };
-  }, []);
+  const centerNodeTransform = useCallback(
+    (
+      svgWidth: number,
+      svgHeight: number,
+      nodePosition: { x: number; y: number },
+      scale: number,
+    ) => {
+      const translateX = svgWidth / 2 - nodePosition.x * scale;
+      const translateY = svgHeight / 2.5 - nodePosition.y * scale;
+      return { translateX, translateY };
+    },
+    [],
+  );
 
   useEffect(() => {
     const currentRootNodeIds = treeData
@@ -142,7 +149,10 @@ const GraphView = ({
 
   // Helper to find node by ID in tree
   const findNodeById = useCallback(
-    function searchNodeById(nodes: TreeData[], targetId: string): TreeData | null {
+    function searchNodeById(
+      nodes: TreeData[],
+      targetId: string,
+    ): TreeData | null {
       for (const node of nodes) {
         const currentNodeId = getNodeId(node);
         if (currentNodeId === targetId) {
@@ -174,7 +184,13 @@ const GraphView = ({
       newExpandedNodes.add(visibleNodeId);
       setExpandedNodes(newExpandedNodes);
     }
-  }, [currentVisibleNode?.id, expandedNodes, isCategoryNodeId, setExpandedNodes, treeData]);
+  }, [
+    currentVisibleNode?.id,
+    expandedNodes,
+    isCategoryNodeId,
+    setExpandedNodes,
+    treeData,
+  ]);
 
   const handleNodeClick = useCallback(
     (nodeId: string) => {
@@ -251,7 +267,10 @@ const GraphView = ({
         for (const node of nodes) {
           const currentNodeId = getNodeId(node);
           const newPath = [...path, currentNodeId];
-          if (!node.category && (node.nodeId === targetNodeId || node.id === targetNodeId)) {
+          if (
+            !node.category &&
+            (node.nodeId === targetNodeId || node.id === targetNodeId)
+          ) {
             ancestors.push(...path);
             return true;
           }
@@ -277,7 +296,7 @@ const GraphView = ({
       const children = node.children || [];
       const childCount = children.length;
       const isExpanded = expandedNodes.has(nodeId);
-
+      console.log(node, "node -->");
       if (childCount === 0) {
         return;
       }
@@ -292,24 +311,65 @@ const GraphView = ({
           const bbox = (nodeSelection.node() as SVGGraphicsElement).getBBox();
           const nodeXPosition = bbox.width / 2;
           const indicatorText = `${childCount}▸`;
-          const indicatorTooltip = `Collapsed: this node has ${childCount} child ${childCount === 1 ? "node" : "nodes"}. Click the node to expand.`;
+          const indicatorTooltipText = `This ${node.category ? "collection" : "node"} has ${childCount === 1 ? "a" : childCount} specialization${childCount > 1 ? "s" : ""} under it. Click to expand.`;
 
           const indicatorGroup = nodeSelection
             .append("g")
             .attr("class", "child-indicator")
             .attr("transform", `translate(${nodeXPosition + 14}, 0)`)
-            .style("pointer-events", "auto");
+            .style("pointer-events", "auto")
+            .style("cursor", "pointer");
 
-          const indicatorCircle = indicatorGroup
+          let tooltip = d3
+            .select("body")
+            .select<HTMLDivElement>("div.graph-tooltip");
+          if (tooltip.empty()) {
+            tooltip = d3
+              .select("body")
+              .append("div")
+              .attr("class", "graph-tooltip")
+              .style("position", "absolute")
+              .style("background", "rgba(0, 0, 0, 0.85)")
+              .style("color", "#fff")
+              .style("padding", "6px 10px")
+              .style("border-radius", "4px")
+              .style("font-size", "12px")
+              .style("pointer-events", "none")
+              .style("opacity", 0)
+              .style("z-index", "1000")
+              .style("box-shadow", "0 2px 4px rgba(0,0,0,0.2)");
+          }
+
+          indicatorGroup
+            .on("click", (event: any) => {
+              event.stopPropagation();
+              tooltip.style("opacity", 0);
+              toggleExpandedNode(nodeId);
+            })
+            .on("mouseover", (event: any) => {
+              tooltip.transition().duration(100).style("opacity", 1);
+              tooltip
+                .html(indicatorTooltipText)
+                .style("left", event.pageX + 10 + "px")
+                .style("top", event.pageY - 28 + "px");
+            })
+            .on("mousemove", (event: any) => {
+              tooltip
+                .style("left", event.pageX + 10 + "px")
+                .style("top", event.pageY - 28 + "px");
+            })
+            .on("mouseout", () => {
+              tooltip.transition().duration(200).style("opacity", 0);
+            });
+
+          indicatorGroup
             .append("circle")
             .attr("r", INDICATOR_RADIUS)
             .attr("fill", INDICATOR_BG)
             .attr("stroke", INDICATOR_BORDER)
             .attr("stroke-width", 1);
 
-          indicatorCircle.append("title").text(indicatorTooltip);
-
-          const indicatorLabel = indicatorGroup
+          indicatorGroup
             .append("text")
             .attr("text-anchor", "middle")
             .attr("dy", "0.35em")
@@ -317,8 +377,6 @@ const GraphView = ({
             .attr("font-size", "10px")
             .attr("font-weight", "700")
             .text(indicatorText);
-
-          indicatorLabel.append("title").text(indicatorTooltip);
         }
       }
 
@@ -331,7 +389,7 @@ const GraphView = ({
         addHiddenNodeIndicators(childNode, svgGroup);
       }
     },
-    [expandedNodes, getNodeId],
+    [expandedNodes, getNodeId, toggleExpandedNode],
   );
 
   useEffect(() => {
@@ -361,7 +419,7 @@ const GraphView = ({
 
       if (currentVisibleNode?.id) {
         const ancestors = findAncestorIds(treeData, currentVisibleNode.id);
-        ancestors.forEach(ancestorId => nodesToExpand.add(ancestorId));
+        ancestors.forEach((ancestorId) => nodesToExpand.add(ancestorId));
       }
 
       setExpandedNodes(nodesToExpand);
@@ -389,14 +447,16 @@ const GraphView = ({
       indicateHiddenNodes(node, svgGroup);
     }
 
-    const zoom: any = d3.zoom<SVGSVGElement, unknown>().on("zoom", function (event) {
-      svgGroup.attr("transform", event.transform);
-      updateZoomState({
-        translateX: event.transform.x,
-        translateY: event.transform.y,
-        scale: event.transform.k,
-      }); // Save zoom state
-    });
+    const zoom: any = d3
+      .zoom<SVGSVGElement, unknown>()
+      .on("zoom", function (event) {
+        svgGroup.attr("transform", event.transform);
+        updateZoomState({
+          translateX: event.transform.x,
+          translateY: event.transform.y,
+          scale: event.transform.k,
+        }); // Save zoom state
+      });
 
     svg.call(zoom);
 
@@ -420,7 +480,10 @@ const GraphView = ({
       svg.call(
         zoom.transform,
         d3.zoomIdentity
-          .translate(zoomStateRef.current.translateX, zoomStateRef.current.translateY)
+          .translate(
+            zoomStateRef.current.translateX,
+            zoomStateRef.current.translateY,
+          )
           .scale(zoomStateRef.current.scale),
       );
     } else if (selectedNodeId && graph.node(selectedNodeId)) {
@@ -449,7 +512,9 @@ const GraphView = ({
       // Apply initial zoom only if there is no existing zoom state and no currentVisibleNode
       svg.call(
         zoom.transform,
-        d3.zoomIdentity.translate(defaultTranslateX, defaultTranslateY).scale(zoomScale),
+        d3.zoomIdentity
+          .translate(defaultTranslateX, defaultTranslateY)
+          .scale(zoomScale),
       );
     }
 
@@ -476,7 +541,6 @@ const GraphView = ({
   useEffect(() => {
     const nodeId = currentVisibleNode?.id;
     if (graph && nodeId) {
-
       if (graph.node(nodeId)) {
         const nodePosition = graph.node(nodeId);
         const svg = d3.select<SVGSVGElement, unknown>(svgRef.current!);
@@ -486,7 +550,8 @@ const GraphView = ({
         const svgHeight = svg.node()?.clientHeight || 0;
 
         // Use current zoom state scale if available, otherwise default to 1
-        const scale = zoomStateRef.current.scale !== 0 ? zoomStateRef.current.scale : 1;
+        const scale =
+          zoomStateRef.current.scale !== 0 ? zoomStateRef.current.scale : 1;
         const { translateX, translateY } = centerNodeTransform(
           svgWidth,
           svgHeight,
