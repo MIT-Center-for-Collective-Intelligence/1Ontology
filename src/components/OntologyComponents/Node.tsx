@@ -1091,6 +1091,10 @@ const Node = ({
             );
           }
         }
+        // Initialize an empty collection structure if the property doesn't exist or has no collections yet
+        if (!previousValue || previousValue.length === 0) {
+          previousValue = [{ collectionName: "main", nodes: [] }];
+        }
         const newValue = JSON.parse(JSON.stringify(previousValue));
         for (let collection of newValue) {
           collection.nodes = collection.nodes.filter(
