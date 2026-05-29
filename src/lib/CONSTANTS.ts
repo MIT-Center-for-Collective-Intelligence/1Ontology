@@ -190,6 +190,12 @@ export const ONTOLOGY_APPS = development
         name: "Final Hierarchy with O*Net",
       },
       { id: "sandbox", name: "Sandbox", type: "other", editAccess: true },
+      {
+        id: "sandbox-5",
+        name: "AI-Peer Result",
+        type: "other",
+        adminAccess: true,
+      },
       /* {
         id: "ontology-demo-version",
         name: "Ontology - Demo Version",

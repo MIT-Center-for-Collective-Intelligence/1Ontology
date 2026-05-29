@@ -294,7 +294,10 @@ const Ontology = ({
   const ontologyAppsOtherGroup = useMemo(() => {
     const editAccess = !!user?.claims?.editAccess;
     return ONTOLOGY_APPS.filter(
-      (app) => app.type === "other" && (editAccess || app.editAccess),
+      (app) =>
+        app.type === "other" &&
+        (editAccess || app.editAccess) &&
+        (user?.claims?.admin || !app.adminAccess),
     );
   }, [user]);
 
