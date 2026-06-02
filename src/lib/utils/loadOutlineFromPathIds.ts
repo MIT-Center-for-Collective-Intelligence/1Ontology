@@ -299,10 +299,9 @@ export function buildPathTreeWithSiblings(
       ? pathIds
       : [...pathIds, ...(pathIds.includes(focusedId) ? [] : [focusedId])];
 
-  const build = (index: number): TreeData => {
+  const build = (index: number, treeId: string): TreeData => {
     const nodeId = p[index];
     const node = nodesById[nodeId];
-    const treeId = p.slice(0, index + 1).join("-");
     const isLast = index === p.length - 1;
 
     if (!node) {
@@ -331,13 +330,24 @@ export function buildPathTreeWithSiblings(
     }
 
     const nextNodeId = p[index + 1];
-    const nextTreeId = p.slice(0, index + 2).join("-");
 
-    // Show all siblings (one-level) at this depth.
     const oneLevel = buildOneLevelFromSpecializations(node, treeId, childById);
+    let actualNextTreeId = `${treeId}-${nextNodeId}`;
+    const findId = (items: TreeData[]) => {
+      for (const item of items) {
+        if (item.nodeId === nextNodeId) {
+          actualNextTreeId = item.id;
+          return true;
+        }
+        if (item.children && findId(item.children)) {
+          return true;
+        }
+      }
+      return false;
+    };
+    findId(oneLevel);
 
-    // Recursively expand the canonical next node in the path.
-    const nextTree = build(index + 1);
+    const nextTree = build(index + 1, actualNextTreeId);
 
     return {
       id: treeId,
@@ -347,7 +357,7 @@ export function buildPathTreeWithSiblings(
       ...(node.unclassified && { unclassified: true }),
       children: attachChildAlongPath(
         oneLevel,
-        nextTreeId,
+        actualNextTreeId,
         nextNodeId,
         nextTree,
       ),
@@ -356,7 +366,7 @@ export function buildPathTreeWithSiblings(
     };
   };
 
-  return [build(0)];
+  return [build(0, p[0])];
 }
 
 /**

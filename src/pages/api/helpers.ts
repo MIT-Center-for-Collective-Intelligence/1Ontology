@@ -179,61 +179,13 @@ export const searchChromaCore = async ({
 
   const metaDatas: any[] = results.metadatas[0] || [];
 
-  const nodeIds = metaDatas.map((m) => m.id).filter(Boolean);
+  const resultsWithIds = metaDatas.map((m) => {
+    return { id: m.id, title: m.title };
+  });
 
-  if (nodeIds.length === 0) return [];
+  if (resultsWithIds.length === 0) return [];
 
-  const { nodes_ids, nodes_titles } = await getNodesByIds(new Set(nodeIds));
-
-  const formattedResults = nodeIds
-    .map((id) => {
-      const node = nodes_ids[id];
-      if (!node) return null;
-
-      const inputPropsSet = inputProperties ? new Set(inputProperties) : null;
-      const res: any = { id, title: node.title || "Untitled" };
-
-      if (Array.isArray(node.pathIds) && node.pathIds.length > 0) {
-        res.pathIds = node.pathIds;
-      }
-      if (node.primaryParentId) {
-        res.primaryParentId = node.primaryParentId;
-      }
-      if (node.appName) {
-        res.appName = node.appName;
-      }
-
-      if (!inputPropsSet || inputPropsSet.has("description")) {
-        res.description = node.description || "";
-      }
-      if (!inputPropsSet || inputPropsSet.has("specializations")) {
-        res.specializations = (node.specializations || []).flatMap((col: any) =>
-          (col.nodes || []).map((n: any) => n.title),
-        );
-      }
-      if (!inputPropsSet || inputPropsSet.has("generalizations")) {
-        res.generalizations = (node.generalizations?.[0]?.nodes || []).flatMap(
-          (col: any) => (col.nodes || []).map((n: any) => n.title),
-        );
-      }
-      if (!inputPropsSet || inputPropsSet.has("parts")) {
-        res.parts = (node.parts || []).flatMap((col: any) =>
-          (col.nodes || []).map((n: any) => n.title),
-        );
-      }
-      if (!inputPropsSet || inputPropsSet.has("isPartOf")) {
-        res.isPartOf = (node.isPartOf || []).flatMap((col: any) =>
-          (col.nodes || []).map((n: any) => n.title),
-        );
-      }
-
-      return res;
-    })
-    .filter(Boolean);
-
-  return formattedResults.sort((a: any, b) =>
-    a.title.toLowerCase() === query.toLowerCase() ? -1 : 1,
-  );
+  return resultsWithIds;
 };
 
 // Helper function for Exponential Backoff
@@ -386,7 +338,6 @@ export async function getOntologyQueryResultsFromChroma(
 
   return null;
 }; */
-
 
 export const askGeminiWithFunctionCalling = async ({
   contents: initialContents,

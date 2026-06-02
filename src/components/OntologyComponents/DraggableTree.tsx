@@ -468,6 +468,10 @@ function DraggableTree({
 
   // Track whether the last navigation attempt needs to wait for new treeData.
   const expansionPendingForTreeData = useRef(false);
+  // Track the node id we last scrolled/selected to. Used to distinguish a real
+  // navigation (focused node changed) from an incidental treeData update caused
+  // by expanding an unrelated node — we must NOT scroll in the latter case.
+  const lastScrolledNodeIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     const tree = treeRef.current;
@@ -493,6 +497,9 @@ function DraggableTree({
       pendingExpansionNodeId.current = null;
       expansionPendingForTreeData.current = false;
       isTreeClickRef.current = false;
+      // The node the user clicked is already in view; record it so later
+      // treeData updates (e.g. expanding another node) don't re-scroll here.
+      lastScrolledNodeIdRef.current = targetNodeId;
       setFirstLoad(false);
       return;
     }
@@ -506,6 +513,12 @@ function DraggableTree({
     // Without this, treeData can have updated in React state while the tree
     // API still reflects the previous render — causing findNodesByNodeId to
     // return nothing and leaving the target stuck in pendingExpansionNodeId.
+    // Only scroll/select when the focused node actually changed. When this
+    // effect re-fires solely because `treeData` changed (e.g. the user expanded
+    // an unrelated node and its children loaded), the outline must stay where it
+    // is instead of jumping back to the current node.
+    const isNewNavigation = lastScrolledNodeIdRef.current !== targetNodeId;
+
     const rafId = requestAnimationFrame(() => {
       expandNodeById(targetNodeId);
 
@@ -514,7 +527,10 @@ function DraggableTree({
       if (paths && paths.length > 0) {
         // Select the first occurrence found
         const treeId = paths[0][paths[0].length - 1];
-        tree.select(treeId, { align: "auto" });
+        if (isNewNavigation) {
+          tree.select(treeId, { align: "auto" });
+          lastScrolledNodeIdRef.current = targetNodeId;
+        }
         expansionPendingForTreeData.current = false;
       } else {
         // Node still not in tree; mark pending so the retry effect can pick it up.
@@ -559,6 +575,7 @@ function DraggableTree({
           const targetNodes = findNodesByNodeId(tree, currentVisibleNode.id);
           if (targetNodes.length > 0) {
             tree.select(targetNodes[0].id, { align: "auto" });
+            lastScrolledNodeIdRef.current = currentVisibleNode.id;
           }
         }
       }
