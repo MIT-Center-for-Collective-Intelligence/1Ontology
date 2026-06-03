@@ -249,7 +249,7 @@ const Ontology = ({
   );
   const [searchValue, setSearchValue] = useState("");
   const [clonedNodesQueue, setClonedNodesQueue] = useState<{
-    [nodeId: string]: { title: string; id: string };
+    [nodeId: string]: { title: string; id: string; property: string };
   }>({});
   const [newOnes, setNewOnes] = useState(new Set());
   const [loadingIds, setLoadingIds] = useState(new Set());

@@ -86,7 +86,9 @@ interface InheritedPartsViewerProps {
   mutateData?: (newData: InheritedPartsDetail[] | null) => void;
   debouncedRefetch?: () => void;
   refetchNow?: () => void;
-  clonedNodesQueue?: { [nodeId: string]: { title: string; id: string } };
+  clonedNodesQueue?: {
+    [nodeId: string]: { title: string; id: string; property: string };
+  };
   approvePendingPart?: (queuedId: string) => Promise<void> | void;
   cancelPendingPart?: (queuedId: string) => void;
   updatePendingPartTitle?: (queuedId: string, title: string) => void;
@@ -588,7 +590,6 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
     if (!inheritedPartsDetails || !mutateData) return;
     const updated = updater(JSON.parse(JSON.stringify(inheritedPartsDetails)));
     mutateData(updated);
-    debouncedRefetch?.();
   };
 
   const onAddPart = (partId: string) => {
@@ -627,6 +628,8 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
       }
       return data;
     });
+    // Show a spinner in place of the symbol until the API recompute lands
+    setCalculatingPartIds((prev) => new Set(prev).add(partId));
   };
 
   const onRemovePart = (partId: string) => {
@@ -757,6 +760,9 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
       }
       return data;
     });
+
+    // Show a spinner in place of the symbol until the API recompute lands
+    setCalculatingPartIds((prev) => new Set(prev).add(queuedId));
 
     setApprovingPendingIds((prev) => {
       const updated = new Set(prev);
@@ -894,7 +900,124 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
     const hasParts =
       currentVisibleNode.properties?.parts?.[0]?.nodes?.length > 0;
 
+    // Computed first so the nodes with no parts can render pending rows too
+    const pendingQueuedParts = Object.entries(clonedNodesQueue || {})
+      .filter(([, queuedNode]) => queuedNode?.property === "parts")
+      .map(([queuedId, queuedNode]) => ({
+        id: queuedId,
+        title: queuedNode?.title || "",
+      }));
+
+    const pendingRowsList =
+      pendingQueuedParts.length > 0 ? (
+        <List sx={{ px: 1.8, py: 1, mt: -0.5 }}>
+          {pendingQueuedParts.map((pendingPart) => {
+            const isNewlyQueued = highlightedPendingIds.has(pendingPart.id);
+
+            return (
+              <ListItem
+                key={`pending-${pendingPart.id}`}
+                sx={{
+                  display: "flex",
+                  gap: 1,
+                  px: 1,
+                  py: 0.2,
+                  borderRadius: "12px",
+                  border: "1px dashed",
+                  borderColor: (theme) =>
+                    theme.palette.mode === "dark" ? "#5a5a5a" : "#c8c8c8",
+                  mb: 0.5,
+                  "@keyframes pendingPartHighlight": {
+                    "0%": {
+                      backgroundColor: "rgba(255, 165, 0, 0.32)",
+                      boxShadow: "0 0 0 1px rgba(255, 165, 0, 0.45)",
+                    },
+                    "100%": {
+                      backgroundColor: "transparent",
+                      boxShadow: "0 0 0 0 rgba(255, 165, 0, 0)",
+                    },
+                  },
+                  animation: isNewlyQueued
+                    ? "pendingPartHighlight 1s ease-out"
+                    : "none",
+                }}
+              >
+                <ListItemText primary={null} sx={{ flex: 1, minWidth: 0.3 }} />
+                <ListItemIcon sx={{ minWidth: "auto" }}>
+                  <AddIcon sx={{ fontSize: 20, color: "orange" }} />
+                </ListItemIcon>
+                <ListItemText
+                  primary={
+                    <TextField
+                      size="small"
+                      fullWidth
+                      value={pendingPart.title}
+                      onChange={(e) =>
+                        updatePendingPartTitle?.(pendingPart.id, e.target.value)
+                      }
+                      placeholder="New part title"
+                      sx={{
+                        "& .MuiInputBase-root": {
+                          borderRadius: "12px",
+                        },
+                      }}
+                    />
+                  }
+                  sx={{ flex: 1, minWidth: 0.3 }}
+                />
+                {!!approvePendingPart && (
+                  <Tooltip title={"Approve part"} placement="top">
+                    <IconButton
+                      sx={{ p: 0.5 }}
+                      disabled={approvingPendingIds.has(pendingPart.id)}
+                      onClick={() => {
+                        onApprovePendingPart(pendingPart.id, pendingPart.title);
+                      }}
+                    >
+                      {approvingPendingIds.has(pendingPart.id) ? (
+                        <CircularProgress size={20} />
+                      ) : (
+                        <CheckIcon
+                          sx={{
+                            fontSize: 20,
+                            color: "green",
+                            border: "1px solid green",
+                            borderRadius: "50%",
+                          }}
+                        />
+                      )}
+                    </IconButton>
+                  </Tooltip>
+                )}
+                {!!cancelPendingPart && (
+                  <Tooltip title={"Cancel part"} placement="top">
+                    <IconButton
+                      sx={{ p: 0.5 }}
+                      onClick={() => {
+                        cancelPendingPart(pendingPart.id);
+                      }}
+                    >
+                      <CloseIcon
+                        sx={{
+                          fontSize: 20,
+                          color: "red",
+                          border: "1px solid red",
+                          borderRadius: "50%",
+                        }}
+                      />
+                    </IconButton>
+                  </Tooltip>
+                )}
+              </ListItem>
+            );
+          })}
+        </List>
+      ) : null;
+
     if (!hasParts) {
+      if (pendingRowsList) {
+        return <Box>{pendingRowsList}</Box>;
+      }
       return (
         <Box
           sx={{
@@ -926,27 +1049,30 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
 
     if (!inheritedPartsDetails || !cachedGeneralizationData) {
       return (
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 1,
-            py: 2,
-          }}
-        >
-          <CircularProgress size={16} />
-          <Typography
-            variant="body2"
+        <Box>
+          <Box
             sx={{
-              color: (theme) =>
-                theme.palette.mode === "light" ? "#95a5a6" : "#7f8c8d",
-              fontStyle: "italic",
-              fontSize: "0.75rem",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 1,
+              py: 2,
             }}
           >
-            Loading...
-          </Typography>
+            <CircularProgress size={16} />
+            <Typography
+              variant="body2"
+              sx={{
+                color: (theme) =>
+                  theme.palette.mode === "light" ? "#95a5a6" : "#7f8c8d",
+                fontStyle: "italic",
+                fontSize: "0.75rem",
+              }}
+            >
+              Loading...
+            </Typography>
+          </Box>
+          {pendingRowsList}
         </Box>
       );
     }
@@ -995,12 +1121,6 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
       const index = details.findIndex((d) => d.from === id);
       return index === -1;
     });
-    const pendingQueuedParts = Object.entries(clonedNodesQueue || {}).map(
-      ([queuedId, queuedNode]) => ({
-        id: queuedId,
-        title: queuedNode?.title || "",
-      }),
-    );
 
     // Parts that exist on the node but aren't yet reflected in the inheritedPartsDetails returned from endpoint
     const currentPartIds: string[] =
@@ -1708,110 +1828,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
             ))}
           </List>
         )}
-        {pendingQueuedParts.length > 0 && (
-          <List sx={{ px: 1.8, py: 1, mt: -0.5 }}>
-            {pendingQueuedParts.map((pendingPart) => {
-              const isNewlyQueued = highlightedPendingIds.has(pendingPart.id);
-
-              return (
-                <ListItem
-                  key={`pending-${pendingPart.id}`}
-                  sx={{
-                    display: "flex",
-                    gap: 1,
-                    px: 1,
-                    py: 0.2,
-                    borderRadius: "12px",
-                    border: "1px dashed",
-                    borderColor: (theme) =>
-                      theme.palette.mode === "dark" ? "#5a5a5a" : "#c8c8c8",
-                    mb: 0.5,
-                    "@keyframes pendingPartHighlight": {
-                      "0%": {
-                        backgroundColor: "rgba(255, 165, 0, 0.32)",
-                        boxShadow: "0 0 0 1px rgba(255, 165, 0, 0.45)",
-                      },
-                      "100%": {
-                        backgroundColor: "transparent",
-                        boxShadow: "0 0 0 0 rgba(255, 165, 0, 0)",
-                      },
-                    },
-                    animation: isNewlyQueued
-                      ? "pendingPartHighlight 1s ease-out"
-                      : "none",
-                  }}
-                >
-                  <ListItemText primary={null} sx={{ flex: 1, minWidth: 0.3 }} />
-                  <ListItemIcon sx={{ minWidth: "auto" }}>
-                    <AddIcon sx={{ fontSize: 20, color: "orange" }} />
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={
-                      <TextField
-                        size="small"
-                        fullWidth
-                        value={pendingPart.title}
-                        onChange={(e) =>
-                          updatePendingPartTitle?.(pendingPart.id, e.target.value)
-                        }
-                        placeholder="New part title"
-                        sx={{
-                          "& .MuiInputBase-root": {
-                            borderRadius: "12px",
-                          },
-                        }}
-                      />
-                    }
-                    sx={{ flex: 1, minWidth: 0.3 }}
-                  />
-                  {!!approvePendingPart && (
-                    <Tooltip title={"Approve part"} placement="top">
-                      <IconButton
-                        sx={{ p: 0.5 }}
-                        disabled={approvingPendingIds.has(pendingPart.id)}
-                        onClick={() => {
-                          onApprovePendingPart(pendingPart.id, pendingPart.title);
-                        }}
-                      >
-                        {approvingPendingIds.has(pendingPart.id) ? (
-                          <CircularProgress size={20} />
-                        ) : (
-                          <CheckIcon
-                            sx={{
-                              fontSize: 20,
-                              color: "green",
-                              border: "1px solid green",
-                              borderRadius: "50%",
-                            }}
-                          />
-                        )}
-                      </IconButton>
-                    </Tooltip>
-                  )}
-                  {!!cancelPendingPart && (
-                    <Tooltip title={"Cancel part"} placement="top">
-                      <IconButton
-                        sx={{ p: 0.5 }}
-                        onClick={() => {
-                          cancelPendingPart(pendingPart.id);
-                        }}
-                      >
-                        <CloseIcon
-                          sx={{
-                            fontSize: 20,
-                            color: "red",
-                            border: "1px solid red",
-                            borderRadius: "50%",
-                          }}
-                        />
-                      </IconButton>
-                    </Tooltip>
-                  )}
-                </ListItem>
-              );
-            })}
-          </List>
-        )}
+        {pendingRowsList}
       </Box>
     );
   };

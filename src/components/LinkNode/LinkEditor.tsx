@@ -48,7 +48,9 @@ const LinkEditor: React.FC<LinkEditorProps> = ({
   const handleChanges = (e: any) => {
     setEditorContent(e.target.value);
     setClonedNodesQueue(
-      (prev: { [nodeId: string]: { title: string; id: string } }) => {
+      (prev: {
+        [nodeId: string]: { title: string; id: string; property: string };
+      }) => {
         prev[reviewId].title = e.target.value;
         return prev;
       },

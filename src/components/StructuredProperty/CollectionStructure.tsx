@@ -210,6 +210,7 @@ const CollectionStructure = ({
   loadingIds,
   setLoadingIds,
   saveNewSpecialization,
+  cancelPendingClone,
   editableProperty,
   onGetPropertyValue,
   setRemovedElements,
@@ -279,6 +280,7 @@ const CollectionStructure = ({
   loadingIds: any;
   setLoadingIds: any;
   saveNewSpecialization: any;
+  cancelPendingClone?: (queuedId: string) => void;
   editableProperty: any;
   onGetPropertyValue: any;
   setRemovedElements: any;
@@ -2195,6 +2197,9 @@ const CollectionStructure = ({
                                                   loadingIds={loadingIds}
                                                   saveNewSpecialization={
                                                     saveNewSpecialization
+                                                  }
+                                                  cancelPendingClone={
+                                                    cancelPendingClone
                                                   }
                                                   enableEdit={enableEdit}
                                                   setClonedNodesQueue={

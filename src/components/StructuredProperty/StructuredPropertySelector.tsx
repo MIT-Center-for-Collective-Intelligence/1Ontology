@@ -124,7 +124,9 @@ const StructuredPropertySelector = ({
     title?: string,
   ) => Promise<string | null>;
   setClonedNodesQueue: Function;
-  clonedNodesQueue: { [nodeId: string]: { title: string; id: string } };
+  clonedNodesQueue: {
+    [nodeId: string]: { title: string; id: string; property: string };
+  };
   newOnes: any;
   setNewOnes: any;
   loadingIds: any;
@@ -317,7 +319,8 @@ const StructuredPropertySelector = ({
         [];
     }
 
-    setEditableProperty([...freshData]);
+    // Deep clone so edits to editableProperty don't mutate the source node.
+    setEditableProperty(JSON.parse(JSON.stringify(freshData)));
   }, [
     selectedProperty,
     currentVisibleNode,
@@ -800,10 +803,12 @@ const StructuredPropertySelector = ({
         where("nodeType", "==", nodeType),
       ),
     );
-    if (unclassifiedNodeDocs.docs.length > 0) {
-      const unclassifiedId = unclassifiedNodeDocs.docs[0].id;
-      // Reuse the same queue + UI pending flow used by search-result add.
-      await _add(unclassifiedId, searchValue);
+    // Pick the first non-deleted candidate.
+    const candidate = unclassifiedNodeDocs.docs.find(
+      (d) => (d.data() as any).deleted !== true,
+    );
+    if (candidate) {
+      await _add(candidate.id, searchValue);
     }
   };
 
@@ -845,7 +850,9 @@ const StructuredPropertySelector = ({
     });
 
     setClonedNodesQueue(
-      (prev: { [nodeId: string]: { title: string; id: string } }) => {
+      (prev: {
+        [nodeId: string]: { title: string; id: string; property: string };
+      }) => {
         const updated = { ...prev };
         delete updated[queuedCloneId];
         return updated;

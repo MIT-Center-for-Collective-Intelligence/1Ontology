@@ -576,9 +576,11 @@ const Node = ({
     const newId = doc(collection(db, NODES)).id;
     const newTitle = title ? title : `New ${node.title}`;
     setClonedNodesQueue(
-      (prev: { [nodeId: string]: { title: string; id: string } }) => ({
+      (prev: {
+        [nodeId: string]: { title: string; id: string; property: string };
+      }) => ({
         ...prev,
-        [newId]: { title: newTitle, id: nodeId },
+        [newId]: { title: newTitle, id: nodeId, property: selectedProperty },
       }),
     );
     setNewOnes((newOnes: any) => {
@@ -734,6 +736,9 @@ const Node = ({
               });
             }
           }
+        } else if (mProperty === "parts") {
+          // Keeps parts out of the catch-all else below that
+          // would self-reference newNode.id into its own parts
         } else {
           // Handling property updates
           if (newNode.inheritance[mProperty]?.ref) {
@@ -954,17 +959,12 @@ const Node = ({
     searchValue = null,
     newId = null,
     collectionName: string = "main",
+    property: string = selectedProperty,
   ) => {
     // Call the asynchronous function to clone the node with the given ID.
     // Close the modal or perform any necessary cleanup.
     // handleCloseAddLinksModel();
-    await cloneNode(
-      node.id,
-      searchValue,
-      newId,
-      selectedProperty,
-      collectionName,
-    );
+    await cloneNode(node.id, searchValue, newId, property, collectionName);
   };
 
   const editStructuredProperty = async (
@@ -1093,6 +1093,10 @@ const Node = ({
               JSON.stringify(nodeData.properties[selectedProperty]),
             );
           }
+        }
+        // Initialize an empty collection structure if the property doesn't exist or has no collections yet
+        if (!previousValue || previousValue.length === 0) {
+          previousValue = [{ collectionName: "main", nodes: [] }];
         }
         const newValue = JSON.parse(JSON.stringify(previousValue));
         for (let collection of newValue) {
