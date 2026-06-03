@@ -60,9 +60,11 @@ import {
   Box,
   Button,
   CircularProgress,
+  Divider,
   FormControl,
   IconButton,
   InputLabel,
+  ListSubheader,
   MenuItem,
   Select,
   Switch,
@@ -77,18 +79,23 @@ import {
   Timestamp,
   collection,
   doc,
+  documentId,
+  getDocs,
   getFirestore,
+  limit,
   onSnapshot,
   query,
   setDoc,
   updateDoc,
   where,
+  writeBatch,
 } from "firebase/firestore";
 import Fuse from "fuse.js";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 // import markdownContent from "../components/OntologyComponents/Markdown-Here-Cheatsheet.md";
 import SneakMessage from "@components/components/OntologyComponents/SneakMessage";
 import Node from "@components/components/OntologyComponents/Node";
+import NavigationError from "@components/components/OntologyComponents/NavigationError";
 import TreeViewSimplified from "@components/components/OntologyComponents/TreeViewSimplified";
 import {
   ICollection,
@@ -97,8 +104,10 @@ import {
   INode,
   INodePath,
   INodeTypes,
+  InheritedPartsDetail,
   MainSpecializations,
   TreeData,
+  TreeViewNode,
   TreeVisual,
 } from "@components/types/INode";
 import { TabPanel, a11yProps } from "@components/lib/utils/TabPanel";
@@ -111,22 +120,53 @@ import GraphView from "@components/components/OntologyComponents/GraphView";
 import {
   DISPLAY,
   SCROLL_BAR_STYLE,
-  SKILLS_FUTURE_APP_NAMES,
+  ONTOLOGY_APPS,
 } from "@components/lib/CONSTANTS";
-import { NODES, USERS } from "@components/lib/firestoreClient/collections";
+import { userHasOntologyEditAccess } from "@components/lib/utils/helpers";
+import {
+  NODES,
+  USERS,
+  UNREAD_COMMENTS,
+} from "@components/lib/firestoreClient/collections";
+import { getDatabase, onValue, ref } from "firebase/database";
 
 import { recordLogs } from "@components/lib/utils/helpers";
 import { useHover } from "@components/lib/hooks/useHover";
+import { useInheritedPartsDetails } from "@components/lib/hooks/useInheritedPartsDetails";
 import { MemoizedToolbarSidebar } from "@components/components/Sidebar/ToolbarSidebar";
 import { NodeChange } from "@components/types/INode";
 import GuidLines from "@components/components/Guidelines/GuideLines";
 import SearchSideBar from "@components/components/SearchSideBar/SearchSideBar";
-import Head from "next/head";
 import DraggableTree from "@components/components/OntologyComponents/DraggableTree";
 import { TreeApi } from "react-arborist";
 import { capitalizeFirstLetter } from "@components/lib/utils/string.utils";
 import ROUTES from "@components/lib/utils/routes";
 import { getAuth } from "firebase/auth";
+import FullPageLogoLoading from "@components/components/layouts/FullPageLogoLoading";
+
+import {
+  filterTreeForTargetNode,
+  expandEllipsisNode,
+} from "@components/lib/utils/treeFiltering";
+import {
+  batchGetNodesByIds,
+  buildPathTreeWithSiblings,
+  collectSpecializationChildIds,
+  mergePreservedSubtrees,
+  nodeHasNonEmptySpecializations,
+  replaceSpineWithOneLevel,
+  replaceWithOneLevel,
+  resolvePathIds,
+} from "@components/lib/utils/loadOutlineFromPathIds";
+import {
+  AddContext,
+  TreeOutlineSkeleton,
+  chunkArray,
+  extractRelatedNodeIds,
+  fetchRootNode,
+  fetchSingleNode,
+} from "@components/lib/utils/ontology.helpers";
+
 const stem = require("wink-porter2-stemmer");
 const tokenizer = require("wink-tokenizer");
 
@@ -141,38 +181,26 @@ export const tokenize = (str: string) => {
         tokens.push(stem(w.value));
       }
     }
-    // tokens = stopword.removeStopwords(tokens);
   }
   return tokens;
 };
 
-const AddContext = (nodes: any, nodesObject: any): INode[] => {
-  for (let node of nodes) {
-    if (node.nodeType === "context" && Array.isArray(node.properties.context)) {
-      const contextId = node.properties.context[0].nodes[0]?.id;
-      if (nodesObject[contextId]) {
-        node.context = {
-          id: contextId,
-          title: nodesObject[contextId].title,
-        };
-      }
-    }
-  }
-  return nodes;
-};
-
 const Ontology = ({
-  skillsFuture = false,
   appName,
+  onOpenInNavigator,
+  onFocusedTitleChange,
 }: {
-  skillsFuture: boolean;
   appName: string;
+  onOpenInNavigator?: (nodeId: string) => void;
+  // Reported up to the parent component, which owns the <title> tag.
+  onFocusedTitleChange?: (title: string | null) => void;
 }) => {
   const db = getFirestore();
-  const [{ emailVerified, user }] = useAuth();
+  const rtdb = getDatabase();
+  const [{ emailVerified, user, isAuthInitialized }] = useAuth();
   const router = useRouter();
-  const isMobile = useMediaQuery("(max-width:599px)");
-  const [nodes, setNodes] = useState<{ [id: string]: INode }>({});
+  const isMobile = useMediaQuery("(max-width:599px)", { noSsr: true });
+  const [relatedNodes, setRelatedNodes] = useState<{ [id: string]: INode }>({});
   const [currentVisibleNode, setCurrentVisibleNode] = useState<INode | null>(
     null,
   );
@@ -181,21 +209,19 @@ const Ontology = ({
   const [treeVisualization, setTreeVisualization] = useState<TreeVisual>({});
   const { confirmIt, ConfirmDialog } = useConfirmDialog();
   const [viewValue, setViewValue] = useState<number>(0);
-  const fuse = new Fuse(AddContext(Object.values(nodes), nodes), {
-    keys: ["title", "context.title"],
-  });
+  const fuseRef = useRef<Fuse<INode>>(
+    new Fuse([], {
+      keys: ["title", "context.title"],
+    }),
+  );
+  const fuseRebuildTimerRef = useRef<number | null>(null);
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
-  const [eachOntologyPath, setEachOntologyPath] = useState<{
+  const [eachNodePath, setEachNodePath] = useState<{
     [key: string]: INodePath[];
   }>({});
-  const [multipleOntologyPaths, setMultipleOntologyPaths] = useState<{ [nodeId: string]: INodePath[][] }>({});
+  const [multipleOntologyPaths, setMultipleOntologyPaths] = useState<any>({});
   const columnResizerRef = useRef<any>();
   const [lastUpdate, setLastUpdate] = useState<number | null>(null);
-
-  //last interaction date from the user
-  const [lastInteractionDate, setLastInteractionDate] = useState<Date>(
-    new Date(Date.now()),
-  );
 
   const [selectedDiffNode, setSelectedDiffNode] = useState<NodeChange | null>(
     null,
@@ -234,30 +260,111 @@ const Ontology = ({
     new Set(),
   );
   const [addedElements, setAddedElements] = useState<Set<string>>(new Set());
-  const [treeViewData, setTreeViewData] = useState([]);
   const [loadingNodes, setLoadingNodes] = useState(false);
+  const [isPageReady, setIsPageReady] = useState(false);
   const [partsInheritance, setPartsInheritance] = useState<any>({});
+  const [currentNodeTreeData, setCurrentNodeTreeData] = useState<TreeData[]>(
+    [],
+  );
+  const [pathOutlineMessage, setPathOutlineMessage] = useState<string | null>(
+    null,
+  );
+  const [isLoadingOutline, setIsLoadingOutline] = useState<boolean>(true);
+  const [sidebarSearchValue, setSidebarSearchValue] = useState("");
+  const [isSidebarSearchFocused, setIsSidebarSearchFocused] = useState(false);
+  const [isLoadingNodeDetails, setIsLoadingNodeDetails] = useState(false);
+  const [navigationError, setNavigationError] = useState<{
+    type: "not-found" | "wrong-app";
+  } | null>(null);
 
   const [scrollTrigger, setScrollTrigger] = useState(false);
   const [enableEdit, setEnableEdit] = useState(false);
   const [specializationNumsUnder, setSpecializationNumsUnder] = useState({});
   const [editableProperty, setEditableProperty] = useState<ICollection[]>([]);
-
+  const [rootNode, setRootNode] = useState<string | null>(null);
+  const [isExperimentalSearch, setIsExperimentalSearch] = useState(true);
   const treeRef = useRef<TreeApi<TreeData>>(null);
+  const [nodesWithComments, setNodesWithComments] = useState<Set<string>>(
+    new Set(),
+  );
+  const ontologyAppsTopGroup = useMemo(
+    () => ONTOLOGY_APPS.filter((app) => app.type !== "other"),
+    [],
+  );
+  const ontologyAppsOtherGroup = useMemo(() => {
+    const editAccess = !!user?.claims?.editAccess;
+    return ONTOLOGY_APPS.filter(
+      (app) =>
+        app.type === "other" &&
+        (editAccess || app.editAccess) &&
+        (user?.claims?.admin || !app.adminAccess),
+    );
+  }, [user]);
 
   const firstLoad = useRef(true);
+  const prevAppNameRef = useRef<string>(appName);
+  const isSwitchingAppRef = useRef(false);
+  const lastHashSetRef = useRef<string>("");
+  const pageOpenTime = useRef(Date.now());
 
   // Mobile state
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [mobileTreeOpen, setMobileTreeOpen] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
+  // Track instant updates to prevent overwriting with stale data
+  const [hasInstantUpdate, setHasInstantUpdate] = useState(false);
+  const hasInstantUpdateRef = useRef(false);
+  const instantUpdateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    hasInstantUpdateRef.current = hasInstantUpdate;
+  }, [hasInstantUpdate]);
+
+  // Report the focused node's title up to the parent
+  useEffect(() => {
+    const title = currentVisibleNode?.title;
+    if (title) onFocusedTitleChange?.(title);
+  }, [currentVisibleNode?.title, onFocusedTitleChange]);
+
+  // Instant tree update callback for instant UI feedback
+  const handleInstantTreeUpdate = useCallback(
+    (updateFn: (treeData: TreeData[]) => TreeData[]) => {
+      setHasInstantUpdate(true);
+      hasInstantUpdateRef.current = true;
+      if (instantUpdateTimeoutRef.current) {
+        clearTimeout(instantUpdateTimeoutRef.current);
+      }
+      instantUpdateTimeoutRef.current = setTimeout(() => {
+        setHasInstantUpdate(false);
+        hasInstantUpdateRef.current = false;
+      }, 30000);
+
+      setCurrentNodeTreeData((prevTree) => updateFn(prevTree));
+    },
+    [currentVisibleNode?.id, currentVisibleNode, db],
+  );
+
+  // Clear the instant update guard on navigation so loadPathOutline runs
+  // mergeOutlines preserves prior expansion across the reload.
+  useEffect(() => {
+    if (!hasInstantUpdateRef.current) return;
+    setHasInstantUpdate(false);
+    hasInstantUpdateRef.current = false;
+    if (instantUpdateTimeoutRef.current) {
+      clearTimeout(instantUpdateTimeoutRef.current);
+      instantUpdateTimeoutRef.current = null;
+    }
+  }, [currentVisibleNode?.id]);
+
   // Auto-focus search input on mobile search open
   useEffect(() => {
     if (mobileSearchOpen && isMobile) {
       // Small delay to ensure the component is rendered
       setTimeout(() => {
-        const searchInput = document.querySelector('input[placeholder="Search..."]') as HTMLInputElement;
+        const searchInput = document.querySelector(
+          'input[placeholder="Search..."]',
+        ) as HTMLInputElement;
         if (searchInput) {
           searchInput.focus();
         }
@@ -266,11 +373,314 @@ const Ontology = ({
   }, [mobileSearchOpen, isMobile]);
 
   const signOut = async () => {
-    router.push(ROUTES.signIn);
     getAuth().signOut();
+    router.push(ROUTES.signIn);
   };
 
+  // Memoized fetchNode helper to fetch nodes not in cache and add to relatedNodes
+  const fetchNode = useCallback(
+    async (nodeId: string): Promise<INode | null> => {
+      // Skip if already in cache
+      if (relatedNodes[nodeId]) {
+        return relatedNodes[nodeId];
+      }
+      const node = await fetchSingleNode(db, nodeId);
+      if (node) {
+        setRelatedNodes((prev) => {
+          if (prev[nodeId]) return prev;
+          return { ...prev, [nodeId]: node };
+        });
+      }
+      return node;
+    },
+    [db, relatedNodes],
+  );
+
+  const loadPathOutline = useCallback(async () => {
+    if (hasInstantUpdateRef.current) {
+      return;
+    }
+    if (!currentVisibleNode?.id || currentVisibleNode.appName !== appName) {
+      setCurrentNodeTreeData([]);
+      setPathOutlineMessage(null);
+      setIsLoadingOutline(false);
+      return;
+    }
+    if ((currentVisibleNode as any)._isMinimal) {
+      return;
+    }
+    setIsLoadingOutline(true);
+    const focused = currentVisibleNode;
+    /*     if (!focused.pathIds?.length && !focused.primaryParentId) {
+      setPathOutlineMessage("No root path found");
+    } else {
+      setPathOutlineMessage(null);
+    } */
+    try {
+      const { pathIds } = await resolvePathIds(focused, (id) =>
+        fetchSingleNode(db, id, appName),
+      );
+      if (pathIds.length === 0) {
+        setCurrentNodeTreeData([]);
+        return;
+      }
+      const byId = await batchGetNodesByIds(db, pathIds, appName);
+      if (!byId[focused.id]) {
+        byId[focused.id] = focused;
+      }
+
+      // Also show siblings for every node on the displayed path:
+      // fetch direct children for each path node (still no grandchildren).
+      const childIds = pathIds.flatMap((id) => {
+        const n = byId[id];
+        return n ? collectSpecializationChildIds(n) : [];
+      });
+      const childrenById = await batchGetNodesByIds(db, childIds, appName);
+      const pathTree = buildPathTreeWithSiblings(
+        pathIds,
+        byId,
+        childrenById,
+        focused.id,
+      );
+
+      // If the ontology has multiple roots, show them all at top level.
+      // Only the canonical path root is expanded; other roots are collapsed but expandable.
+      const rootsSnap = await getDocs(
+        query(
+          collection(db, NODES),
+          where("root", "==", true),
+          where("appName", "==", appName),
+          where("deleted", "==", false),
+        ),
+      );
+      const rootNodes: INode[] = rootsSnap.docs.map(
+        (d) => ({ id: d.id, ...d.data() }) as INode,
+      );
+      const pathRootId = pathIds[0];
+      const otherRoots = rootNodes
+        .filter((r) => r.id !== pathRootId)
+        .map((r) => {
+          const hasKids = nodeHasNonEmptySpecializations(r);
+          return {
+            id: r.id,
+            nodeId: r.id,
+            name: r.title,
+            nodeType: r.nodeType,
+            ...(r.unclassified && { unclassified: true }),
+            children: hasKids ? [] : undefined,
+            hasUnresolvedChildren: hasKids,
+            outlineLoadChildren: hasKids,
+          } as TreeData;
+        });
+
+      const tree = [...pathTree, ...otherRoots];
+      const filtered = filterTreeForTargetNode(tree, focused.id);
+      setCurrentNodeTreeData((prev) => mergePreservedSubtrees(filtered, prev));
+    } catch {
+      setCurrentNodeTreeData([]);
+    } finally {
+      setIsLoadingOutline(false);
+    }
+  }, [appName, currentVisibleNode, db]);
+
+  const handleOutlineNodeOpen = useCallback(
+    async (apiNode: { data: TreeData }) => {
+      const d = apiNode.data;
+      if (!d.outlineSpineOnly && !d.outlineLoadChildren) {
+        return;
+      }
+      const full = await fetchSingleNode(db, d.nodeId, appName);
+      if (!full) {
+        return;
+      }
+      const childIds = collectSpecializationChildIds(full);
+      const childDocs = await batchGetNodesByIds(db, childIds, appName);
+      const merged: Record<string, INode> = { ...childDocs, [full.id]: full };
+      setCurrentNodeTreeData((prev) => {
+        const next = d.outlineSpineOnly
+          ? replaceSpineWithOneLevel(prev, d.id, full, merged)
+          : replaceWithOneLevel(prev, d.id, full, merged);
+        return currentVisibleNode
+          ? filterTreeForTargetNode(next, currentVisibleNode.id)
+          : next;
+      });
+    },
+    [appName, currentVisibleNode, db],
+  );
+
+  const dynamicUnsubscribeRef = useRef<Map<string, () => void>>(new Map()); // Stores unsubscribe functions for each dynamically added node
+  const dynamicNodeMappingRef = useRef<Map<string, Set<string>>>(new Map()); // Used to clean up child node snapshots when navigating away from parent
+
+  // Add nodes to cache with listeners (triggered by dropdown selections in @inheritedPartsViewerEdit)
+  const addNodesToCache = useCallback(
+    (newNodes: { [id: string]: INode }, parentNodeId?: string) => {
+      // Filter out nodes already being snapshotted
+      const nodesToAdd: { [id: string]: INode } = {};
+      const nodeIdsToSnapshot: string[] = [];
+      Object.entries(newNodes).forEach(([id, node]) => {
+        if (!dynamicUnsubscribeRef.current.has(id)) {
+          nodesToAdd[id] = node;
+          nodeIdsToSnapshot.push(id);
+        }
+      });
+
+      if (Object.keys(nodesToAdd).length === 0) {
+        return;
+      }
+
+      // Immediately add to relatedNodes state
+      setRelatedNodes((prev) => {
+        const toAdd: { [id: string]: INode } = {};
+        Object.entries(nodesToAdd).forEach(([id, node]) => {
+          if (!prev[id]) {
+            toAdd[id] = node;
+          }
+        });
+        return Object.keys(toAdd).length > 0 ? { ...prev, ...toAdd } : prev;
+      });
+
+      // Set up snapshot listeners for new nodes
+      const batches = chunkArray(nodeIdsToSnapshot, 30);
+
+      batches.forEach((batch) => {
+        let nodesQuery;
+        if (appName) {
+          nodesQuery = query(
+            collection(db, NODES),
+            where(documentId(), "in", batch),
+            where("deleted", "==", false),
+            where("appName", "==", appName),
+          );
+        } else {
+          nodesQuery = query(
+            collection(db, NODES),
+            where(documentId(), "in", batch),
+            where("deleted", "==", false),
+          );
+        }
+
+        const unsubscribe = onSnapshot(
+          nodesQuery,
+          (snapshot) => {
+            setRelatedNodes((prev) => {
+              const updated = { ...prev };
+
+              snapshot.docChanges().forEach((change) => {
+                const nodeId = change.doc.id;
+
+                if (change.type === "removed") {
+                  delete updated[nodeId];
+                } else {
+                  updated[nodeId] = {
+                    id: nodeId,
+                    ...change.doc.data(),
+                  } as INode;
+                }
+              });
+              return updated;
+            });
+          },
+          (error) => {
+            console.error(
+              "[ADD TO CACHE] Error in cached node snapshot:",
+              error,
+            );
+          },
+        );
+
+        // Store unsubscribe function to prevent duplicate listeners for the same nodes
+        batch.forEach((nodeId) => {
+          if (!dynamicUnsubscribeRef.current.has(nodeId)) {
+            dynamicUnsubscribeRef.current.set(nodeId, unsubscribe);
+          }
+        });
+      });
+
+      // Track node relationship for cleanup
+      if (parentNodeId) {
+        if (!dynamicNodeMappingRef.current.has(parentNodeId)) {
+          dynamicNodeMappingRef.current.set(parentNodeId, new Set());
+        }
+        const childSet = dynamicNodeMappingRef.current.get(parentNodeId)!;
+        nodeIdsToSnapshot.forEach((nodeId) => childSet.add(nodeId));
+      }
+    },
+    [db, appName],
+  );
+
+  // Cleanup dynamic snapshots when navigating away from a node
+  const previousVisibleNodeIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    const prevNodeId = previousVisibleNodeIdRef.current;
+    const currentNodeId = currentVisibleNode?.id || null;
+
+    if (prevNodeId && prevNodeId !== currentNodeId) {
+      const childNodes = dynamicNodeMappingRef.current.get(prevNodeId);
+
+      if (childNodes && childNodes.size > 0) {
+        childNodes.forEach((nodeId) => {
+          const unsubscribe = dynamicUnsubscribeRef.current.get(nodeId);
+          if (unsubscribe) {
+            unsubscribe();
+            dynamicUnsubscribeRef.current.delete(nodeId);
+          }
+        });
+
+        // Remove the parent-child mapping
+        dynamicNodeMappingRef.current.delete(prevNodeId);
+      }
+    }
+
+    // Update the previous node ID
+    previousVisibleNodeIdRef.current = currentNodeId;
+  }, [currentVisibleNode?.id]);
+
+  // Cleanup ALL dynamic snapshots on unmount
+  useEffect(() => {
+    return () => {
+      dynamicUnsubscribeRef.current.forEach((unsub) => unsub());
+      dynamicUnsubscribeRef.current.clear();
+      dynamicNodeMappingRef.current.clear();
+
+      // Cleanup instant update timeout
+      if (instantUpdateTimeoutRef.current) {
+        clearTimeout(instantUpdateTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const handleCloseAddLinksModel = () => {
+    setCurrentVisibleNode((prev: any) => {
+      const _prev = { ...prev };
+      if (_prev && selectedProperty) {
+        if (
+          selectedProperty === "specializations" ||
+          selectedProperty === "generalizations"
+        ) {
+          _prev[selectedProperty] = _prev[selectedProperty].map(
+            (collection: ICollection) => {
+              collection.nodes = collection.nodes.filter(
+                (n: { id: string }) => !clonedNodesQueue[n.id],
+              );
+              return collection;
+            },
+          );
+        } else {
+          _prev.properties[selectedProperty] = _prev.properties[
+            selectedProperty
+          ].map((collection: ICollection) => {
+            collection.nodes = collection.nodes.filter(
+              (n: { id: string }) => !clonedNodesQueue[n.id],
+            );
+            return collection;
+          });
+        }
+      }
+
+      return _prev;
+    });
+
     setSelectedProperty("");
     setSelectedCollection("");
     setSearchValue("");
@@ -295,46 +705,31 @@ const Ontology = ({
   }, [user]);
 
   useEffect(() => {
-    // Check if a user is logged in
-    if (user) {
-      // Check if the user's email is verified
-      if (!emailVerified) {
-        // If the email is not verified, redirect to the sign-in page
-        router.replace("/signin");
-      }
+    if (fuseRebuildTimerRef.current) {
+      window.clearTimeout(fuseRebuildTimerRef.current);
     }
-  }, [user, emailVerified]);
-
-  useEffect(() => {
-    // Function to handle changes in the URL hash
-    const handleHashChange = async () => {
-      // Check if there is a hash in the URL
-      if (window.location.hash) {
-        // Call updateUserDoc with the hash split into an array
-        const visibleNodeId = window.location.hash.split("#").reverse()[0];
-
-        if (visibleNodeId !== prevHash.current) {
-          navigateToNode(visibleNodeId);
-          prevHash.current = visibleNodeId;
-        }
-
-        // Update the previous hash
+    fuseRebuildTimerRef.current = window.setTimeout(() => {
+      const values = Object.values(relatedNodes) as INode[];
+      if (values.length === 0) {
+        fuseRef.current = new Fuse([], {
+          keys: ["title", "context.title"],
+        });
+        return;
       }
-    };
+      const list = values.map((n) => ({ ...n })) as INode[];
+      AddContext(list, relatedNodes);
+      fuseRef.current = new Fuse(list, {
+        keys: ["title", "context.title"],
+      });
+    }, 200);
 
-    if (typeof window !== "undefined") {
-      // Call handleHashChange immediately to handle any initial hash
-      handleHashChange();
-
-      // Add an event listener to the window for hash changes
-      window.addEventListener("hashchange", handleHashChange);
-    }
-
-    // Clean up the event listener when the component is unmounted
     return () => {
-      window.removeEventListener("hashchange", handleHashChange);
+      if (fuseRebuildTimerRef.current) {
+        window.clearTimeout(fuseRebuildTimerRef.current);
+        fuseRebuildTimerRef.current = null;
+      }
     };
-  }, [eachOntologyPath]);
+  }, [relatedNodes, loadingNodes]);
 
   // Function to update last searches
   const updateLastSearches = (searchedNode: any) => {
@@ -342,7 +737,7 @@ const Ontology = ({
       // If searchedNode is null, only filter valid searches from prevSearches
       if (!searchedNode) {
         const validSearches = prevSearches.filter((node) => {
-          const nodeInNodes = nodes[node.id];
+          const nodeInNodes = relatedNodes[node.id];
           return nodeInNodes && !nodeInNodes.deleted; // Keep only non-deleted nodes
         });
 
@@ -360,7 +755,7 @@ const Ontology = ({
       const updatedSearches = [searchedNode, ...filteredSearches];
 
       const validSearches = updatedSearches.filter((node) => {
-        const nodeInNodes = nodes[node.id];
+        const nodeInNodes = relatedNodes[node.id];
         return nodeInNodes && !nodeInNodes.deleted; // Keep only non-deleted nodes
       });
 
@@ -383,7 +778,7 @@ const Ontology = ({
     }
 
     // Perform search using Fuse.js, filter out deleted items
-    return fuse
+    return fuseRef.current
       .search(query)
       .map((result) => result.item)
       .filter(
@@ -412,23 +807,6 @@ const Ontology = ({
       controller.applyResizer(resizer);
     }
   }, []); // Removed dependencies to fix column auto-resizing when node content changes (when editing nodes through yjsEditor)
-
-  useEffect(() => {
-    const checkIfDifferentDay = () => {
-      const today = new Date();
-      if (
-        today.getDate() !== lastInteractionDate.getDate() ||
-        today.getMonth() !== lastInteractionDate.getMonth() ||
-        today.getFullYear() !== lastInteractionDate.getFullYear()
-      ) {
-        window.location.reload();
-      }
-    };
-
-    const intervalId = setInterval(checkIfDifferentDay, 1000);
-
-    return () => clearInterval(intervalId);
-  }, [lastInteractionDate]);
 
   /* ------- ------- ------- */
 
@@ -466,7 +844,7 @@ const Ontology = ({
             const specializationsData: INode[] = [];
 
             collection.nodes.forEach((n: ILinkNode) =>
-              specializationsData.push(nodes[n.id]),
+              specializationsData.push(relatedNodes[n.id]),
             );
 
             const subPath = [...path];
@@ -508,7 +886,7 @@ const Ontology = ({
         });
       }
     },
-    [nodes],
+    [relatedNodes],
   );
 
   // This function returns a map where each nodeId maps to an array of all possible paths to that node
@@ -528,7 +906,7 @@ const Ontology = ({
         for (let node of mainNodes) {
           if (!node) continue;
 
-          const pathSignature = `${node.id}-${path.map(p => p.id).join('-')}`;
+          const pathSignature = `${node.id}-${path.map((p) => p.id).join("-")}`;
           if (visited.has(pathSignature)) continue;
           visited.add(pathSignature);
 
@@ -544,9 +922,10 @@ const Ontology = ({
           if (!multipleOntologyPaths[node.id]) {
             multipleOntologyPaths[node.id] = [newPath];
           } else {
-            const newPathIds = newPath.map(p => p.id).join(':');
-            const isDuplicate = multipleOntologyPaths[node.id].some(existingPath =>
-              existingPath.map(p => p.id).join(':') === newPathIds
+            const newPathIds = newPath.map((p) => p.id).join(":");
+            const isDuplicate = multipleOntologyPaths[node.id].some(
+              (existingPath) =>
+                existingPath.map((p) => p.id).join(":") === newPathIds,
             );
 
             if (!isDuplicate) {
@@ -557,7 +936,7 @@ const Ontology = ({
           node.specializations.forEach((collection) => {
             const specializationsData: INode[] = [];
             collection.nodes.forEach((n: ILinkNode) =>
-              specializationsData.push(nodes[n.id]),
+              specializationsData.push(relatedNodes[n.id]),
             );
 
             const subPath = [...newPath];
@@ -594,25 +973,30 @@ const Ontology = ({
         });
       }
     },
-    [nodes],
+    [relatedNodes],
   );
 
   useEffect(() => {
-    const mainNodes = Object.values(nodes).filter(
-      (node: any) =>
-        node.category || (typeof node.root === "boolean" && !!node.root),
-    );
-    if (mainNodes.length > 0) {
-      let eachOntologyPath = findOntologyPath({
+    // These traversals can be expensive for large graphs; debounce to avoid
+    // repeated recomputation while snapshots stream in.
+    if (loadingNodes) return;
+    const timer = window.setTimeout(() => {
+      const mainNodes = Object.values(relatedNodes).filter(
+        (node: any) =>
+          node.category || (typeof node.root === "boolean" && !!node.root),
+      );
+      if (mainNodes.length === 0) return;
+
+      const eachOntologyPath = findOntologyPath({
         mainNodes,
         path: [],
         eachOntologyPath: {},
       });
       if (eachOntologyPath) {
-        setEachOntologyPath(eachOntologyPath);
+        setEachNodePath(eachOntologyPath);
       }
 
-      let multipleOntologyPaths = findMultipleOntologyPaths({
+      const multipleOntologyPaths = findMultipleOntologyPaths({
         mainNodes,
         path: [],
         multipleOntologyPaths: {},
@@ -620,8 +1004,10 @@ const Ontology = ({
       if (multipleOntologyPaths) {
         setMultipleOntologyPaths(multipleOntologyPaths);
       }
-    }
-  }, [nodes]);
+    }, 150);
+
+    return () => window.clearTimeout(timer);
+  }, [relatedNodes]);
 
   // Function to generate a tree structure of specializations based on main nodes
   const getSpecializationsTree = (
@@ -660,7 +1046,7 @@ const Ontology = ({
         // Filter nodes based on the current collection
         const specializations: INode[] = [];
         collection.nodes.forEach((nodeLink: { id: string }) => {
-          specializations.push(nodes[nodeLink.id]);
+          specializations.push(relatedNodes[nodeLink.id]);
         });
 
         if (collection.collectionName === "main") {
@@ -696,70 +1082,132 @@ const Ontology = ({
     // Return the main specializations tree
     return newSpecializationsTree;
   };
+  // Main snapshot: Extract all directly related nodes from currentVisibleNode
+  // This includes the node itself, generalizations, specializations, all properties, and inheritance reference nodes
+  useEffect(() => {
+    // Only fetch nodes if we have a current visible node
+    if (!currentVisibleNode) {
+      setRelatedNodes({});
+      setLoadingNodes(false);
+      return;
+    }
+
+    setLoadingNodes(true);
+
+    // Extract all related node IDs from the current visible node
+    const relatedIds = extractRelatedNodeIds(currentVisibleNode);
+
+    if (relatedIds.length === 0) {
+      setRelatedNodes({});
+      setLoadingNodes(false);
+      setIsPageReady(true);
+      return;
+    }
+
+    // Firestore query has a limit of 30 items, so batch if needed
+    const batches = chunkArray(relatedIds, 30);
+    const unsubscribers: (() => void)[] = [];
+    const initializedBatches = new Set<number>();
+    const markBatchInitialized = (batchIndex: number) => {
+      initializedBatches.add(batchIndex);
+      if (initializedBatches.size === batches.length) {
+        setLoadingNodes(false);
+        setIsPageReady(true);
+      }
+    };
+
+    // Set up snapshot listeners for each batch
+    batches.forEach((batch, batchIndex) => {
+      let nodesQuery;
+
+      // Build query based on app configuration
+      if (appName) {
+        nodesQuery = query(
+          collection(db, NODES),
+          where(documentId(), "in", batch),
+          where("deleted", "==", false),
+          where("appName", "==", appName),
+        );
+      } else {
+        nodesQuery = query(
+          collection(db, NODES),
+          where(documentId(), "in", batch),
+          where("deleted", "==", false),
+        );
+      }
+
+      const unsubscribe = onSnapshot(
+        nodesQuery,
+        (snapshot) => {
+          setRelatedNodes((prev) => {
+            const updated = { ...prev };
+            let addedCount = 0;
+            let modifiedCount = 0;
+            let removedCount = 0;
+
+            snapshot.docChanges().forEach((change) => {
+              const nodeId = change.doc.id;
+
+              if (change.type === "removed") {
+                delete updated[nodeId];
+                removedCount++;
+              } else {
+                updated[nodeId] = { id: nodeId, ...change.doc.data() } as INode;
+                if (change.type === "added") addedCount++;
+                else modifiedCount++;
+              }
+            });
+
+            return updated;
+          });
+
+          markBatchInitialized(batchIndex);
+        },
+        (error) => {
+          console.error("Error fetching related nodes:", error);
+          recordLogs({
+            type: "error",
+            error: JSON.stringify({
+              name: error.name,
+              message: error.message,
+            }),
+          });
+          markBatchInitialized(batchIndex);
+        },
+      );
+
+      unsubscribers.push(unsubscribe);
+    });
+
+    // Cleanup: unsubscribe from all listeners
+    return () => {
+      unsubscribers.forEach((unsub) => unsub());
+    };
+  }, [currentVisibleNode?.id, db, appName]);
 
   useEffect(() => {
-    // Create a query for the NODES collection where "deleted" is false
-    let nodesQuery = null;
-
-    if (skillsFuture && appName) {
-      nodesQuery = query(
-        collection(db, NODES),
-        where("deleted", "==", false),
-        where("appName", "==", appName),
-      );
-    } else {
-      nodesQuery = query(
-        collection(db, NODES),
-        where("deleted", "==", false),
-        where("skillsFuture", "==", false),
-      );
-    }
-    setLoadingNodes(true);
-    // Set up a snapshot listener to track changes in the nodes collection
-    const unsubscribeNodes = onSnapshot(nodesQuery, (snapshot) => {
-      // Get the changes (added, modified, removed) in the snapshot
-      const docChanges = snapshot.docChanges();
-
-      // Update the state based on the changes in the nodes collection
-      setNodes((prev: any) => {
-        const _prev = { ...prev };
-        let changed = false;
-
-        for (let change of docChanges) {
-          const nodeId = change.doc.id;
-          const data = { id: nodeId, ...change.doc.data() };
-
-          if (change.type === "removed") {
-            if (nodeId in _prev) {
-              delete _prev[nodeId];
-              changed = true;
-            }
-          } else {
-            const prevNode = _prev[nodeId];
-            const isDifferent =
-              JSON.stringify(prevNode) !== JSON.stringify(data);
-            if (isDifferent) {
-              _prev[nodeId] = data;
-              changed = true;
-            }
-          }
-        }
-
-        return _prev;
-      });
+    if (!user?.uname) return;
+    const unreadRef = ref(rtdb, `/${UNREAD_COMMENTS}/${appName}/${user.uname}`);
+    const unsubscribe = onValue(unreadRef, (snapshot) => {
+      const data = snapshot.val();
+      setNodesWithComments(new Set<string>(data ? Object.keys(data) : []));
     });
-    setTimeout(() => {
-      setLoadingNodes(false);
-    }, 4000);
-    // Unsubscribe from the snapshot listener when the component is unmounted
-    return () => unsubscribeNodes();
-  }, [db, appName]);
+    return () => unsubscribe();
+  }, [user?.uname, appName]);
 
   useEffect(() => {
     if (currentVisibleNode?.id) {
-      setCurrentVisibleNode(nodes[currentVisibleNode?.id]);
+      setCurrentVisibleNode((prev) => {
+        if (relatedNodes[currentVisibleNode?.id]) {
+          return relatedNodes[currentVisibleNode?.id];
+        }
+        return prev;
+      });
     }
-  }, [nodes]);
+  }, [relatedNodes, appName]);
+
+  // NOTE: Avoid subscribing to *all nodes* in the app here (very expensive initial snapshot).
+  // Outline already loads on navigation and can be refreshed via more targeted listeners when needed.
 
   const getTreeView = ({ mainCategories, visited, path }: any): any => {
     const newNodes = [];
@@ -785,12 +1233,12 @@ const Ontology = ({
 
       const specializations = node.specializations;
       let childrenInOrder = [];
-      
+
       for (let collection of specializations) {
         const children = [];
         for (let _node of collection.nodes) {
-          if (nodes[_node.id]) {
-            children.push(nodes[_node.id]);
+          if (relatedNodes[_node.id]) {
+            children.push(relatedNodes[_node.id]);
           }
         }
 
@@ -854,12 +1302,12 @@ const Ontology = ({
 
   useEffect(() => {
     // Filter nodes to get only those with a defined category
-    const spreadNodes = Object.values(nodes);
+    const spreadNodes = Object.values(relatedNodes);
     let mainCategories = spreadNodes.filter(
       (node: INode) =>
         node.category || (typeof node.root === "boolean" && !!node.root),
     );
-    if (skillsFuture) {
+    if (appName) {
       mainCategories = mainCategories.sort((a: any, b: any) => {
         const aHasAct = a.title.toLowerCase().includes("act");
         const bHasAct = b.title.toLowerCase().includes("act");
@@ -883,10 +1331,9 @@ const Ontology = ({
     let treeOfSpecializations = getSpecializationsTree(mainCategories, []);
     const specNums: any = {};
     if (
-      skillsFuture &&
-      (appName === "Full WordNet O*Net Verb Hierarchy - Tom's Version" ||
-        appName === "Ontology - Demo Version" ||
-        appName === "Ontology - Development Version")
+      appName === "Full WordNet O*Net Verb Hierarchy - Tom's Version" ||
+      appName === "Ontology - Demo Version" ||
+      appName === "Ontology - Development Version"
     ) {
       for (let rootNode of mainCategories) {
         const filterMNodes = spreadNodes.filter(
@@ -904,45 +1351,106 @@ const Ontology = ({
       setSpecializationNumsUnder(specNums);
     }
 
-    const _result = getTreeView({
-      mainCategories,
-      visited: new Map(),
-      path: [],
-    });
-
-    setTreeViewData(_result);
     // Set the generated tree structure for visualization
     setTreeVisualization(treeOfSpecializations);
-  }, [nodes]);
+  }, [relatedNodes, appName]);
 
+  // Load initial node on mount and when switching apps
   useEffect(() => {
-    // if (currentVisibleNode) return;
-    if (firstLoad) {
-      const nodeFromHash = window.location.hash.split("#").reverse()[0];
-      if (nodeFromHash && nodes[nodeFromHash]) {
-        setCurrentVisibleNode(nodes[nodeFromHash]);
-      } else if (user?.currentNode && nodes[user.currentNode]) {
-        setCurrentVisibleNode(nodes[user.currentNode]);
-      } else {
-        setCurrentVisibleNode(nodes["hn9pGQNxmQe9Xod5MuKK"]!);
-      }
-      firstLoad.current = false;
+    if (!isAuthInitialized) {
+      return;
     }
-  }, [user?.currentNode]);
+
+    const isInitialLoad = firstLoad.current;
+    const isAppSwitch =
+      !firstLoad.current && prevAppNameRef.current !== appName;
+
+    // Only load on initial mount or app switch
+    if (!isInitialLoad && !isAppSwitch) {
+      return;
+    }
+
+    // Set flag when switching apps
+    // To work for user changing app name in url
+    if (isAppSwitch) {
+      isSwitchingAppRef.current = true;
+    }
+
+    const loadNode = async () => {
+      // Strip the `/navigate` mode marker so the rest treats `raw` as a node id.
+      setIsPageReady(false);
+      let node: INode | null = null;
+      try {
+        const raw = window.location.hash.split("#").reverse()[0] ?? "";
+        const isNavigateMode = raw.endsWith("/navigate");
+        const hashId = isNavigateMode ? raw.slice(0, -"/navigate".length) : raw;
+        const userCurrentNodeId = user?.currentNode?.[appName]?.id;
+
+        if (hashId) {
+          node = await fetchSingleNode(db, hashId, appName);
+        }
+
+        // If not found, try user's currentNode for this app
+        if (!node && userCurrentNodeId) {
+          node = await fetchSingleNode(db, userCurrentNodeId, appName);
+        }
+
+        // If still not found, fallback to root node for this app
+        if (!node) {
+          node = await fetchRootNode(db, appName);
+        }
+
+        if (node) {
+          window.location.hash = isNavigateMode
+            ? `${node.id}/navigate`
+            : node.id;
+          setCurrentVisibleNode(node);
+        }
+      } finally {
+        if (!node) {
+          setIsPageReady(true);
+        }
+
+        // Update refs
+        if (isInitialLoad) {
+          firstLoad.current = false;
+        }
+        if (isAppSwitch) {
+          prevAppNameRef.current = appName;
+          // Delay clearing the flag to ensure updateTheUrl can check it
+          setTimeout(() => {
+            isSwitchingAppRef.current = false;
+          }, 100);
+        }
+      }
+    };
+
+    loadNode();
+  }, [isAuthInitialized, appName, user?.currentNode?.[appName]?.id, db]);
 
   // Function to update the user document with the current ontology path
-  const openedANode = async (currentNode: string) => {
+  const openedANode = async (nodeId: string, nodeTitle?: string) => {
     if (!user) return;
     const userRef = doc(collection(db, USERS), user.uname);
-    // Update the user document with the ontology path
-
-    await updateDoc(userRef, { currentNode });
+    await setDoc(
+      userRef,
+      {
+        currentNode: {
+          [appName]: {
+            id: nodeId,
+            title: nodeTitle || "",
+          },
+        },
+      },
+      { merge: true },
+    );
 
     // Record logs if ontology path is not empty
-    if (currentNode) {
+    if (nodeId) {
       recordLogs({
         action: "Opened a node",
-        node: currentNode,
+        node: nodeId,
+        user: user.uname,
       });
     }
   };
@@ -951,8 +1459,29 @@ const Ontology = ({
     if (!path) {
       return;
     }
+    // Skip hash change handling during app switch
+    if (isSwitchingAppRef.current) {
+      return;
+    }
     let newHash = "";
     path.forEach((p: any) => (newHash = newHash + `#${p.id.trim()}`));
+
+    // Preserve the `/navigate` mode marker if it's currently in the URL.
+    // Without this, any platform-side write strips the suffix and flips
+    // the mode back to platform on every render.
+    if (window.location.hash.endsWith("/navigate")) {
+      newHash = `${newHash}/navigate`;
+    }
+
+    // Don't update if hash is already correct to prevent duplicate history entries
+    if (window.location.hash === newHash) {
+      lastHashSetRef.current = newHash;
+      return;
+    }
+
+    // Track the hash set by this function to prevent handling of users' own hash change
+    lastHashSetRef.current = newHash;
+
     window.location.hash = newHash;
   };
   const initializeExpanded = (ontologyPath: INodePath[]) => {
@@ -961,7 +1490,7 @@ const Ontology = ({
     }
     const newExpandedSet: Set<string> = new Set();
 
-    const node = nodes[ontologyPath[ontologyPath.length - 1].id];
+    const node = relatedNodes[ontologyPath[ontologyPath.length - 1].id];
     const nodeGeneralizations = node.generalizations[0].nodes;
 
     const generalizationSet: Set<string> = new Set(
@@ -976,7 +1505,7 @@ const Ontology = ({
 
       expandedSet.add(id);
 
-      const currentNode = nodes[id];
+      const currentNode = relatedNodes[id];
 
       if (!currentNode) return;
 
@@ -1017,56 +1546,78 @@ const Ontology = ({
   };
 
   useEffect(() => {
-    if (!currentVisibleNode?.id || !nodes[currentVisibleNode?.id]) {
+    if (!currentVisibleNode?.id) {
       return;
     }
 
-    openedANode(currentVisibleNode?.id);
+    // Only save currentNode if it belongs to the current app
+    if (currentVisibleNode.appName === appName) {
+      openedANode(currentVisibleNode?.id, currentVisibleNode?.title);
+    }
 
     // Check if this is a root node - if so, skip initializeExpanded to prevent scrolling
     const isRootNode =
-      eachOntologyPath[currentVisibleNode?.id] &&
-      eachOntologyPath[currentVisibleNode?.id].length === 1;
-
+      currentVisibleNode.category ||
+      (typeof currentVisibleNode.root === "boolean" &&
+        !!currentVisibleNode.root);
     if (expandedNodes.size === 0 && !isRootNode) {
-      initializeExpanded(eachOntologyPath[currentVisibleNode?.id]);
+      initializeExpanded(eachNodePath[currentVisibleNode?.id]);
     }
     // setOntologyPath(eachOntologyPath[currentVisibleNode?.id]);
 
     updateTheUrl([
-        { id: currentVisibleNode?.id, title: currentVisibleNode.title },
-      ]);
-  }, [currentVisibleNode?.id, eachOntologyPath]);
+      { id: currentVisibleNode?.id, title: currentVisibleNode.title },
+    ]);
+  }, [currentVisibleNode?.id]);
 
   // Callback function to add a new node to the database
 
   // Define a callback function to handle the opening of the ontology DAGRE view.
   const onOpenNodeDagre = useCallback(
-    async (nodeId: string) => {
+    async (nodeId: string, nodeTitle?: string) => {
       // Check if a user is logged in, if not, exit the function.
       if (!user) return;
 
-      // Check if the node with the specified ID exists and is not a main node (no category).
-      if (nodes[nodeId] && !nodes[nodeId].category) {
-        // Set the currentVisibleNode as the currently selected node.
-        setCurrentVisibleNode(nodes[nodeId]);
+      // Get the node from cache or fetch it
+      let node: INode | null = relatedNodes[nodeId] || null;
+      const needsFetch = !node;
 
-        // Record logs for the action of opening the DAGRE view for the node.
+      if (!node) {
+        // Create minimal node with just id and title for instant highlighting
+        node = { id: nodeId, title: nodeTitle || "", appName, _isMinimal: true } as any;
+        setIsLoadingNodeDetails(true);
+      } else {
+        setIsLoadingNodeDetails(false);
+      }
+
+      if (node && !node.category) {
+        setNavigationError(null); // Clear any error when navigating via graph
+        setCurrentVisibleNode(node);
+
         recordLogs({
           action: "opened dagre-view",
-          itemClicked: nodes[nodeId].id,
+          itemClicked: node.id,
         });
       }
+
+      // If node wasn't in cache, fetch it in background
+      if (needsFetch) {
+        try {
+          const fullNode = await fetchSingleNode(db, nodeId);
+          if (fullNode && !fullNode.category) {
+            setCurrentVisibleNode(fullNode);
+          }
+        } finally {
+          setIsLoadingNodeDetails(false);
+        }
+      }
     },
-    // Dependency array includes ontologies and user, ensuring the function re-renders when these values change.
-    [nodes, user],
+    [relatedNodes, db, user],
   );
 
   // Function to handle opening node tree
   const onOpenNodesTree = useCallback(
-    async (nodeId: string) => {
-      // Check if user is logged in
-
+    async (nodeId: string, nodeTitle?: string) => {
       if (!user) return;
       //update the expanded state
       /*    setExpandedNodes((prevExpanded: Set<string>) => {
@@ -1079,19 +1630,42 @@ const Ontology = ({
         return newExpanded;
       }); */
 
-      // Check if node exists and has a category
-      if (nodes[nodeId] && !nodes[nodeId].category) {
-        // Set the currently open node
-        setCurrentVisibleNode(nodes[nodeId]);
+      // Get the node from cache or fetch it
+      let node: INode | null = relatedNodes[nodeId] || null;
+      const needsFetch = !node;
+
+      if (!node) {
+        // Create minimal node with just id and title for instant highlighting
+        node = { id: nodeId, title: nodeTitle || "", appName, _isMinimal: true } as any;
+        setIsLoadingNodeDetails(true);
+      } else {
+        setIsLoadingNodeDetails(false);
+      }
+
+      if (node && !node.category) {
+        setNavigationError(null); // Clear any error when navigating via tree
+        setCurrentVisibleNode(node);
 
         // Record logs for the action of clicking the tree-view
         recordLogs({
           action: "clicked tree-view",
-          itemClicked: nodes[nodeId].id,
+          itemClicked: node.id,
         });
       }
+
+      // If node wasn't in cache, fetch it in background
+      if (needsFetch) {
+        try {
+          const fullNode = await fetchSingleNode(db, nodeId);
+          if (fullNode && !fullNode.category) {
+            setCurrentVisibleNode(fullNode);
+          }
+        } finally {
+          setIsLoadingNodeDetails(false);
+        }
+      }
     },
-    [nodes, user],
+    [relatedNodes, db, user],
   );
 
   // Function to retrieve main specializations from tree visualization data
@@ -1107,9 +1681,10 @@ const Ontology = ({
     }
 
     for (let type in mainSpecializations) {
-      if (nodes[mainSpecializations[type].id]?.nodeType) {
-        mainSpecializations[nodes[mainSpecializations[type].id].nodeType] =
-          mainSpecializations[type];
+      if (relatedNodes[mainSpecializations[type].id]?.nodeType) {
+        mainSpecializations[
+          relatedNodes[mainSpecializations[type].id].nodeType
+        ] = mainSpecializations[type];
       }
       delete mainSpecializations[type];
     }
@@ -1126,21 +1701,7 @@ const Ontology = ({
       if (currentImprovement) {
         return;
       }
-      /* if (
-        selectedProperty &&
-        (addedElements.size > 0 || removedElements.size > 0) &&
-        (await confirmIt(
-          `Unsaved changes detected in ${capitalizeFirstLetter(
-            DISPLAY[selectedProperty]
-              ? DISPLAY[selectedProperty]
-              : selectedProperty,
-          )}. Do you want to discard them?`,
-          "Keep Changes",
-          "Discard Changes",
-        ))
-      ) {
-        return;
-      } */
+
       handleCloseAddLinksModel();
       if (currentVisibleNode && nodeId === currentVisibleNode.id) {
         const element = document.getElementById(`property-title`);
@@ -1155,41 +1716,98 @@ const Ontology = ({
         }
       }
 
-      if (nodes[nodeId]) {
-        setCurrentVisibleNode(nodes[nodeId]);
-        initializeExpanded(eachOntologyPath[nodeId]);
+      // Get the node from cache or fetch it
+      let node: INode | null = relatedNodes[nodeId] || null;
+      let errorType: "not-found" | "wrong-app" | null = null;
+
+      if (!node) {
+        node = await fetchSingleNode(db, nodeId, appName);
+        errorType = "not-found"; // set error type
+      } else {
+        // Validate if cached node belongs to this app
+        if (node.appName !== appName) {
+          errorType = "wrong-app"; // set error type
+          node = null;
+        } else {
+        }
+      }
+
+      if (node) {
+        setNavigationError(null);
+        setCurrentVisibleNode(node);
+        initializeExpanded(eachNodePath[nodeId]);
         setSelectedDiffNode(null);
         setScrollTrigger((prev) => !prev);
+      } else {
+        // Update lastHashSetRef to keep it in sync with current hash
+        lastHashSetRef.current = window.location.hash;
+        setNavigationError({
+          type: errorType || "not-found",
+        });
       }
     },
     [
       selectedProperty,
       addedElements,
       removedElements,
-      nodes,
-      eachOntologyPath,
+      relatedNodes,
+      db,
+      eachNodePath,
       currentImprovement,
+      appName,
+      currentVisibleNode,
     ],
   );
+
+  useEffect(() => {
+    const handleHashChange = async () => {
+      if (isSwitchingAppRef.current) return;
+      if (!appName) return;
+
+      const currentHash = window.location.hash;
+      if (!currentHash) return;
+
+      if (currentHash.endsWith("/navigate")) return;
+
+      const visibleNodeId = currentHash.split("#").reverse()[0];
+
+      if (currentHash === lastHashSetRef.current) return;
+
+      if (visibleNodeId === prevHash.current) return;
+
+      prevHash.current = visibleNodeId;
+      navigateToNode(visibleNodeId);
+    };
+
+    handleHashChange();
+    window.addEventListener("hashchange", handleHashChange);
+    return () => window.removeEventListener("hashchange", handleHashChange);
+  }, [appName, navigateToNode]);
 
   // This function is called when a search result node is clicked.
   const openSearchedNode = useCallback(
     (node: INode, searched = true) => {
       try {
+        // Clear outline tree filter (react-arborist `searchTerm`); leftover query
+        // from the search box would otherwise hide every outline row.
+        setSidebarSearchValue("");
         // Set the clicked node as the open currentVisibleNode
         // setCurrentVisibleNode(node);
 
         navigateToNode(node.id);
 
         setTimeout(() => {
-          const elements = document.getElementsByClassName("node-" + node?.id);
-          const firstElement = elements.length > 0 ? elements[0] : null;
-
-          if (firstElement) {
-            firstElement.scrollIntoView({
-              behavior: "smooth",
-              block: "center",
-            });
+          const elements: any = document.querySelector(
+            `[node-id="${node?.id}"]`,
+          );
+          if (elements) {
+            const firstElement = elements.length > 0 ? elements[0] : elements;
+            if (firstElement) {
+              firstElement.scrollIntoView({
+                behavior: "smooth",
+                block: "center",
+              });
+            }
           }
         }, 500);
         // initializeExpanded(eachOntologyPath[node.id]);
@@ -1211,7 +1829,6 @@ const Ontology = ({
     if (process.env.NODE_ENV === "development") return;
     const handleUserActivity = () => {
       const currentTime = Date.now();
-      setLastInteractionDate(new Date(currentTime));
 
       if (user && user?.uname !== "ouhrac") {
         const timeSinceLastUpdate =
@@ -1234,21 +1851,70 @@ const Ontology = ({
   }, [user, lastUpdate, db]);
 
   useEffect(() => {
-    const checkIfDifferentDay = () => {
-      const today = new Date();
+    const MAX_SESSION_HOURS = 8;
+    const MAX_SESSION_MS = MAX_SESSION_HOURS * 60 * 60 * 1000;
+    const CHECK_INTERVAL_MS = 60000;
+
+    const checkSessionAndDay = () => {
+      const now = new Date();
+      const elapsedMs = Date.now() - pageOpenTime.current;
+
+      const openDate = new Date(pageOpenTime.current);
       if (
-        today.getDate() !== lastInteractionDate.getDate() ||
-        today.getMonth() !== lastInteractionDate.getMonth() ||
-        today.getFullYear() !== lastInteractionDate.getFullYear()
+        now.getDate() !== openDate.getDate() ||
+        now.getMonth() !== openDate.getMonth() ||
+        now.getFullYear() !== openDate.getFullYear()
       ) {
         window.location.reload();
+        return;
+      }
+
+      if (elapsedMs > MAX_SESSION_MS) {
+        const hoursOpen = Math.round(elapsedMs / (1000 * 60 * 60));
+        recordLogs({
+          type: "warning",
+          message: `Long session detected: ${hoursOpen} hours`,
+        });
       }
     };
 
-    const intervalId = setInterval(checkIfDifferentDay, 1000);
+    const intervalId = setInterval(checkSessionAndDay, CHECK_INTERVAL_MS);
 
     return () => clearInterval(intervalId);
-  }, [lastInteractionDate]);
+  }, [setSnackbarMessage]);
+
+  useEffect(() => {
+    if (
+      typeof window === "undefined" ||
+      typeof performance === "undefined" ||
+      !("memory" in performance)
+    ) {
+      return;
+    }
+
+    const MEMORY_WARNING_THRESHOLD_MB = 700;
+
+    const memoryInterval = setInterval(() => {
+      const mem = (performance as any).memory;
+      if (!mem) return;
+
+      const usedMB = Math.round(mem.usedJSHeapSize / (1024 * 1024));
+      const limitMB = Math.round(mem.jsHeapSizeLimit / (1024 * 1024));
+
+      if (usedMB > MEMORY_WARNING_THRESHOLD_MB) {
+        const message = `High memory usage detected (${usedMB}MB/${limitMB}MB). This page has likely accumulated state from long use and may crash soon (Aw, Snap! error). Please refresh the page now (Cmd/Ctrl + R) to reset memory.`;
+
+        recordLogs({
+          type: "warning",
+          message: `High memory usage: ${usedMB}MB`,
+          usedMB,
+          limitMB,
+        });
+      }
+    }, 30000);
+
+    return () => clearInterval(memoryInterval);
+  }, [setSnackbarMessage]);
 
   // Handle escape key for mobile overlays
   // useEffect(() => {
@@ -1299,6 +1965,27 @@ const Ontology = ({
     );
   };
 
+  // Load outline from node.pathIds (batched) or primaryParentId chain; expand loads specializations.
+  useEffect(() => {
+    if (hasInstantUpdateRef.current) {
+      return;
+    }
+    void loadPathOutline();
+  }, [
+    currentVisibleNode?.id,
+    currentVisibleNode?.pathIds,
+    currentVisibleNode?.primaryParentId,
+    loadPathOutline,
+  ]);
+
+  // Handler for expanding ellipsis nodes
+  const handleExpandEllipsis = useCallback((ellipsisNodeId: string) => {
+    setCurrentNodeTreeData((prevTree) => {
+      const expandedTree = expandEllipsisNode(prevTree, ellipsisNodeId);
+      return expandedTree;
+    });
+  }, []);
+
   useEffect(() => {
     if (!currentVisibleNode) return;
 
@@ -1306,11 +1993,7 @@ const Ontology = ({
 
     const _currentVisibleNode = { ...currentVisibleNode };
 
-    let parts = _currentVisibleNode?.properties.parts || [];
-    const inheritanceRef = _currentVisibleNode.inheritance["parts"]?.ref;
-    if (inheritanceRef && nodes[inheritanceRef]) {
-      parts = nodes[inheritanceRef].properties["parts"];
-    }
+    let parts = _currentVisibleNode?.properties?.parts || [];
 
     const generalizations = (
       _currentVisibleNode?.generalizations || []
@@ -1321,13 +2004,14 @@ const Ontology = ({
       let inheritanceDetails: { genId: string; partOf: string | null }[] = [];
 
       for (let generalization of generalizations) {
-        if (!nodes[generalization.id]) {
+        if (!relatedNodes[generalization.id]) {
           continue;
         }
-        const refPartsId = nodes[generalization.id].inheritance["parts"].ref;
-        let generalizationParts = nodes[generalization.id]?.properties.parts;
-        if (refPartsId && nodes[refPartsId]) {
-          generalizationParts = nodes[refPartsId]?.properties.parts;
+        let generalizationParts =
+          relatedNodes[generalization.id]?.properties?.parts;
+
+        if (!generalizationParts || !generalizationParts[0]) {
+          continue;
         }
 
         const partIdex = generalizationParts[0].nodes.findIndex(
@@ -1339,7 +2023,7 @@ const Ontology = ({
         if (partIdex === -1) {
           for (let { id } of generalizationParts[0].nodes) {
             const specializationPart = (
-              nodes[id]?.specializations || []
+              relatedNodes[id]?.specializations || []
             ).flatMap((c) => c.nodes);
             partOfIdx = specializationPart.findIndex((c) => c.id === partId);
             if (partOfIdx !== -1) {
@@ -1351,7 +2035,7 @@ const Ontology = ({
           }
         }
         if (partIdex === -1) {
-          const ontologyPathForPart = eachOntologyPath[partId] ?? [];
+          const ontologyPathForPart = eachNodePath[partId] ?? [];
 
           const exacts = generalizationParts[0].nodes.filter((n) => {
             const findIndex = ontologyPathForPart.findIndex(
@@ -1380,45 +2064,29 @@ const Ontology = ({
       return null;
     };
 
-    if (parts) {
+    if (parts && parts[0]) {
       for (let node of parts[0].nodes) {
-        if (nodes[node.id]) {
+        if (relatedNodes[node.id]) {
           _inheritanceDetails[node.id] = checkGeneralizations(node.id);
         }
       }
     }
     setPartsInheritance(_inheritanceDetails);
-  }, [currentVisibleNode, nodes]);
-
-  if (Object.keys(nodes).length <= 0) {
-    return (
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100vh",
-          flexDirection: "column",
-        }}
-      >
-        <Box
-          component="img"
-          src="../loader.gif"
-          alt="Loading..."
-          sx={{ width: 200, height: 200, borderRadius: "25px" }}
-        />
-      </Box>
-    );
+  }, [currentVisibleNode, relatedNodes, eachNodePath]);
+  if (!isPageReady) {
+    return <FullPageLogoLoading />;
   }
 
   return (
-    <>
-      <Head>
-        <title>
-          {currentVisibleNode ? currentVisibleNode.title : "1ontology"}
-        </title>
-      </Head>
-      
+    <Box
+      sx={{
+        minHeight: "100vh",
+        background:
+          theme.palette.mode === "dark"
+            ? "linear-gradient(150deg, #060608 0%, #14141c 30%, #3a3a48 60%, #101014 100%)"
+            : "linear-gradient(150deg, #ffffff 0%, #8fa0b8 40%, #c8d6e8 70%, #eef4fc 100%)",
+      }}
+    >
       {/* Mobile Header */}
       {isMobile && (
         <Box
@@ -1428,11 +2096,13 @@ const Ontology = ({
             left: 0,
             right: 0,
             zIndex: 1000,
-            backgroundColor: theme.palette.mode === "dark" ? "#303134" : "white",
+            backgroundColor:
+              theme.palette.mode === "dark" ? "#303134" : "white",
             borderBottom: "1px solid",
-            borderColor: theme.palette.mode === "dark" 
-              ? "rgba(255, 255, 255, 0.08)" 
-              : "rgba(0, 0, 0, 0.08)",
+            borderColor:
+              theme.palette.mode === "dark"
+                ? "rgba(255, 255, 255, 0.08)"
+                : "rgba(0, 0, 0, 0.08)",
             display: "flex",
             alignItems: "center",
             padding: "8px 16px",
@@ -1442,12 +2112,14 @@ const Ontology = ({
           <IconButton
             onClick={() => setMobileTreeOpen(!mobileTreeOpen)}
             sx={{
-              color: mobileTreeOpen ? theme.palette.primary.main : theme.palette.text.secondary,
+              color: mobileTreeOpen
+                ? theme.palette.primary.main
+                : theme.palette.text.secondary,
             }}
           >
             <AccountTreeIcon />
           </IconButton>
-          
+
           <Box
             onClick={() => setMobileSearchOpen(true)}
             sx={{
@@ -1478,7 +2150,9 @@ const Ontology = ({
           <IconButton
             onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
             sx={{
-              color: mobileSidebarOpen ? theme.palette.primary.main : theme.palette.text.secondary,
+              color: mobileSidebarOpen
+                ? theme.palette.primary.main
+                : theme.palette.text.secondary,
             }}
           >
             <MenuIcon />
@@ -1505,9 +2179,10 @@ const Ontology = ({
               alignItems: "center",
               padding: "8px 16px",
               borderBottom: "1px solid",
-              borderColor: theme.palette.mode === "dark" 
-                ? "rgba(255, 255, 255, 0.08)" 
-                : "rgba(0, 0, 0, 0.08)",
+              borderColor:
+                theme.palette.mode === "dark"
+                  ? "rgba(255, 255, 255, 0.08)"
+                  : "rgba(0, 0, 0, 0.08)",
               gap: 1,
             }}
           >
@@ -1521,10 +2196,10 @@ const Ontology = ({
               Search
             </Typography>
           </Box>
-          
-          <Box 
-            sx={{ 
-              height: "calc(100vh - 64px)", 
+
+          <Box
+            sx={{
+              height: "calc(100vh - 64px)",
               overflow: "auto",
               ...SCROLL_BAR_STYLE,
             }}
@@ -1537,8 +2212,10 @@ const Ontology = ({
               searchWithFuse={searchWithFuse}
               lastSearches={lastSearches}
               updateLastSearches={updateLastSearches}
-              skillsFuture={skillsFuture}
-              skillsFutureApp={appName}
+              appName={appName}
+              isExperimentalSearch={isExperimentalSearch}
+              onSearchChange={(value) => setSidebarSearchValue(value)}
+              onFocusChange={setIsSidebarSearchFocused}
             />
           </Box>
         </Box>
@@ -1553,26 +2230,30 @@ const Ontology = ({
             left: 0,
             right: 0,
             height: mobileTreeOpen ? "50vh" : "0",
-            backgroundColor: theme.palette.mode === "dark" ? "#303134" : "white",
+            backgroundColor:
+              theme.palette.mode === "dark" ? "#303134" : "white",
             overflow: "hidden",
             display: "flex",
             flexDirection: "column",
             zIndex: 999,
             transition: "height 0.3s ease-in-out",
             borderBottom: mobileTreeOpen ? "1px solid" : "none",
-            borderColor: theme.palette.mode === "dark" 
-              ? "rgba(255, 255, 255, 0.08)" 
-              : "rgba(0, 0, 0, 0.08)",
+            borderColor:
+              theme.palette.mode === "dark"
+                ? "rgba(255, 255, 255, 0.08)"
+                : "rgba(0, 0, 0, 0.08)",
           }}
         >
-          {skillsFuture && (
-            <Box sx={{ 
-              m: "10px", 
-              mt: "20px", 
-              flexShrink: 0,
-              opacity: mobileTreeOpen ? 1 : 0,
-              transition: "opacity 0.3s ease-in-out",
-            }}>
+          {appName && (
+            <Box
+              sx={{
+                m: "10px",
+                mt: "20px",
+                flexShrink: 0,
+                opacity: mobileTreeOpen ? 1 : 0,
+                transition: "opacity 0.3s ease-in-out",
+              }}
+            >
               <FormControl
                 variant="outlined"
                 sx={{ borderRadius: "20px" }}
@@ -1583,16 +2264,30 @@ const Ontology = ({
                 </InputLabel>
                 <Select
                   labelId="mobile-property-type-label"
+                  id="mobile-property-type"
                   value={appName}
                   onChange={(event) => {
-                    setNodes({});
+                    setIsPageReady(false);
+                    setRelatedNodes({});
+                    isSwitchingAppRef.current = true;
                     const app = event.target.value.replaceAll(" ", "_");
                     router.replace(`/${app}`);
+                    setCurrentNodeTreeData([]);
                   }}
                   label="Property Type"
                   sx={{ borderRadius: "20px" }}
                 >
-                  {SKILLS_FUTURE_APP_NAMES.map(({ id, name }) => (
+                  {ontologyAppsTopGroup.map(({ id, name }) => (
+                    <MenuItem key={id} value={id}>
+                      {name}
+                    </MenuItem>
+                  ))}
+                  {ontologyAppsOtherGroup.length > 0 && (
+                    <ListSubheader disableSticky>
+                      Other Ontologies
+                    </ListSubheader>
+                  )}
+                  {ontologyAppsOtherGroup.map(({ id, name }) => (
                     <MenuItem key={id} value={id}>
                       {name}
                     </MenuItem>
@@ -1605,27 +2300,47 @@ const Ontology = ({
             sx={{
               flex: 1,
               overflow: "auto",
-              paddingTop: skillsFuture ? "0" : "16px", // Add top padding only if no ontology selector
+              paddingTop: appName ? "0" : "16px", // Add top padding only if no ontology selector
               opacity: mobileTreeOpen ? 1 : 0,
               transition: "opacity 0.3s ease-in-out",
               ...SCROLL_BAR_STYLE,
             }}
           >
-            <DraggableTree
-            treeViewData={treeViewData}
-            setSnackbarMessage={setSnackbarMessage}
-            treeRef={treeRef}
-            currentVisibleNode={currentVisibleNode}
-            nodes={nodes}
-            onOpenNodesTree={(nodeId: string) => {
-              onOpenNodesTree(nodeId);
-              // Don't close tree on node selection to allow parallel browsing
-            }}
-            eachOntologyPath={eachOntologyPath}
-            skillsFuture={skillsFuture}
-            specializationNumsUnder={specializationNumsUnder}
-            skillsFutureApp={appName}
-          />
+            {mobileTreeOpen && (
+              <>
+                {pathOutlineMessage && (
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ display: "block", px: 1, py: 0.5 }}
+                  >
+                    {pathOutlineMessage}
+                  </Typography>
+                )}
+                {isLoadingOutline && currentNodeTreeData.length === 0 ? (
+                  <TreeOutlineSkeleton />
+                ) : (
+                  <DraggableTree
+                    treeViewData={currentNodeTreeData}
+                    setSnackbarMessage={setSnackbarMessage}
+                    treeRef={treeRef}
+                    currentVisibleNode={currentVisibleNode}
+                    nodes={relatedNodes}
+                    onOpenNodesTree={(nodeId: string) => {
+                      onOpenNodesTree(nodeId);
+                      // Don't close tree on node selection to allow parallel browsing
+                    }}
+                    appName={appName}
+                    specializationNumsUnder={specializationNumsUnder}
+                    nodesWithComments={nodesWithComments}
+                    onOutlineNodeOpen={handleOutlineNodeOpen}
+                    searchTerm={
+                      isSidebarSearchFocused ? "" : sidebarSearchValue
+                    }
+                  />
+                )}
+              </>
+            )}
           </Box>
         </Box>
       )}
@@ -1636,14 +2351,12 @@ const Ontology = ({
           sx={{
             position: "fixed",
             top: 0,
-            right: mobileSidebarOpen 
-              ? 0 
-              : activeSidebar 
+            right: mobileSidebarOpen
+              ? 0
+              : activeSidebar
                 ? { xs: "-90%", sm: "-450px" }
                 : "-70px",
-            width: activeSidebar 
-              ? { xs: "90%", sm: "450px" }
-              : "70px",
+            width: activeSidebar ? { xs: "90%", sm: "450px" } : "70px",
             height: "100vh",
             backgroundColor: "transparent",
             zIndex: 1200,
@@ -1658,7 +2371,8 @@ const Ontology = ({
             user={user}
             openSearchedNode={openSearchedNode}
             searchWithFuse={searchWithFuse}
-            nodes={nodes}
+            relatedNodes={relatedNodes}
+            fetchNode={fetchNode}
             selectedDiffNode={selectedDiffNode}
             setSelectedDiffNode={setSelectedDiffNode}
             currentVisibleNode={currentVisibleNode}
@@ -1668,7 +2382,6 @@ const Ontology = ({
             setActiveSidebar={setActiveSidebar}
             handleExpandSidebar={handleExpandSidebar}
             navigateToNode={navigateToNode}
-            treeVisualization={treeVisualization}
             expandedNodes={expandedNodes}
             setExpandedNodes={setExpandedNodes}
             onOpenNodesTree={onOpenNodesTree}
@@ -1681,8 +2394,9 @@ const Ontology = ({
             setSelectedChatTab={setSelectedChatTab}
             displayGuidelines={displayGuidelines}
             signOut={signOut}
-            skillsFuture={skillsFuture}
-            skillsFutureApp={appName}
+            appName={appName}
+            isExperimentalSearch={isExperimentalSearch}
+            setIsExperimentalSearch={setIsExperimentalSearch}
           />
         </Box>
       )}
@@ -1703,239 +2417,439 @@ const Ontology = ({
         />
       )}
 
-      <Box>
-        <Container
-          style={{
-            height: "100vh",
-            display: "flex",
-            overflow: "hidden",
-            backgroundColor:
-              theme.palette.mode === "dark" ? "#1b1a1a" : "#f8f9fa",
-            paddingTop: isMobile 
-              ? mobileTreeOpen 
-                ? "calc(56px + 50vh)" // Mobile header + tree panel height
-                : "56px" // Just mobile header
-              : "0",
-            transition: isMobile ? "padding-top 0.3s ease-in-out" : "none",
-          }}
-          columnResizerRef={columnResizerRef}
-        >
-          {!isMobile && (
-            <Section
-              minSize={0}
-              defaultSize={500}
-              style={{
-                height: "100vh",
-                overflow: "hidden",
-                position: "relative",
-                display: "flex",
-                flexDirection: "column",
-                backgroundColor:
-                  theme.palette.mode === "dark" ? "#303134" : "white",
-                borderTopRightRadius: "25px",
-                borderBottomRightRadius: "25px",
-                borderStyle: "none solid none none",
+      <Container
+        style={{
+          height: "100vh",
+          display: "flex",
+          overflow: "hidden",
+          backgroundColor: "transparent",
+          paddingTop: isMobile
+            ? mobileTreeOpen
+              ? "calc(56px + 50vh)"
+              : "56px"
+            : "0",
+          transition: isMobile ? "padding-top 0.3s ease-in-out" : "none",
+        }}
+        columnResizerRef={columnResizerRef}
+      >
+        {!isMobile && (
+          <Section
+            minSize={0}
+            defaultSize={500}
+            style={{
+              height: "100vh",
+              overflow: "hidden",
+              position: "relative",
+              display: "flex",
+              flexDirection: "column",
+              backgroundColor:
+                theme.palette.mode === "dark" ? "#303134" : "white",
+              borderTopRightRadius: "25px",
+              borderBottomRightRadius: "25px",
+              borderStyle: "none solid none none",
+            }}
+          >
+            <Box
+              sx={{
+                width: "100%",
+                backgroundColor: (theme) =>
+                  theme.palette.mode === "dark" ? "#191c21" : "#eaecf0",
               }}
             >
+              {" "}
+              {appName && (
+                <Box sx={{ m: "10px", mb: "0px", p: 0 }}>
+                  <FormControl
+                    variant="outlined"
+                    sx={{ borderRadius: "20px" }}
+                    fullWidth
+                  >
+                    <InputLabel id="property-type-label">
+                      Which Ontology
+                    </InputLabel>
+                    <Select
+                      labelId="property-type-label"
+                      id="property-type"
+                      value={appName}
+                      onChange={(event) => {
+                        setIsPageReady(false);
+                        setRelatedNodes({});
+                        isSwitchingAppRef.current = true;
+                        const app = event.target.value.replaceAll(" ", "_");
+                        router.replace(`/${app}`);
+                      }}
+                      label="Ontology Type"
+                      sx={{
+                        borderRadius: "20px",
+                        "& .MuiSelect-select": {
+                          padding: "10px 14px",
+                        },
+                      }}
+                      MenuProps={{
+                        PaperProps: {
+                          sx: {
+                            backgroundColor: (theme) =>
+                              theme.palette.mode === "dark" ? "#1a1a1a" : "",
+                            borderLeftBottomRadius: "20px",
+                            borderRightBottomRadius: "20px",
+                            px: 1.5,
+                            border: "1.5px solid gray",
+                            borderRadius: "25px",
+                            pb: "15px",
+                          },
+                        },
+                      }}
+                    >
+                      {ontologyAppsTopGroup.map(({ id, name }) => (
+                        <MenuItem
+                          key={id}
+                          value={id}
+                          sx={{
+                            borderRadius: "25px",
+                            mt: "3px",
+                            border: "1px solid gray",
+                            background:
+                              "linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.02))",
+                            fontSize: "15px",
+                            fontWeight: appName === id ? "bold" : "400",
+                            color:
+                              appName === id
+                                ? (theme) =>
+                                    theme.palette.mode === "light"
+                                      ? "#FF6600"
+                                      : "orange"
+                                : "",
+                          }}
+                        >
+                          {name}
+                        </MenuItem>
+                      ))}
+                      {ontologyAppsOtherGroup.length > 0 && (
+                        <ListSubheader
+                          disableSticky
+                          sx={{ fontSize: "16px", mt: "12px" }}
+                        >
+                          Other Ontologies:
+                        </ListSubheader>
+                      )}
+                      {ontologyAppsOtherGroup.map(({ id, name }) => (
+                        <MenuItem
+                          key={id}
+                          value={id}
+                          sx={{
+                            borderRadius: "25px",
+                            mt: "3px",
+                            mx: "13px",
+                            border: "1px solid gray",
+                            background:
+                              "linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.02))",
+                            fontSize: "15px",
+                            fontWeight: appName === id ? "bold" : "400",
+                            color:
+                              appName === id
+                                ? (theme) =>
+                                    theme.palette.mode === "light"
+                                      ? "#FF6600"
+                                      : "orange"
+                                : "",
+                          }}
+                        >
+                          {name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Box>
+              )}
+              <SearchSideBar
+                openSearchedNode={openSearchedNode}
+                searchWithFuse={searchWithFuse}
+                lastSearches={lastSearches}
+                updateLastSearches={updateLastSearches}
+                appName={appName}
+                isExperimentalSearch={isExperimentalSearch}
+                onSearchChange={(value) => setSidebarSearchValue(value)}
+                onFocusChange={setIsSidebarSearchFocused}
+              />{" "}
+              <Divider sx={{ borderBottomWidth: 1.5, borderColor: "gray" }} />
               <Tabs
                 value={viewValue}
                 onChange={handleViewChange}
                 sx={{
                   width: "100%",
-                  borderColor: "divider",
-                  position: "absolute",
-                  top: 76,
-                  zIndex: 9,
-                  backgroundColor: (theme) =>
-                    theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
-                  ".MuiTab-root.Mui-selected": {
-                    color: "#ff6d00",
+                  minHeight: "50px",
+                  height: "50px",
+                  p: 0.25,
+                  borderRadius: "999px",
+                  display: "flex",
+                  alignItems: "center",
+
+                  borderColor: (theme) =>
+                    theme.palette.mode === "dark"
+                      ? "rgba(255, 255, 255, 0.16)"
+                      : "rgba(15, 23, 42, 0.12)",
+                  "& .MuiTabs-indicator": {
+                    display: "none",
                   },
+                  "& .MuiTabs-scroller": {
+                    display: "flex",
+                    alignItems: "center",
+                    width: "100%",
+                  },
+                  "& .MuiTabs-flexContainer": {
+                    gap: "6px",
+                    alignItems: "center",
+                    width: "100%",
+                  },
+                  "& .MuiTab-root": {
+                    top: "1px",
+                  },
+                  px: "8px",
                 }}
               >
                 <Tab
                   label="Outline"
                   {...a11yProps(0)}
-                  sx={{ width: "50%", fontSize: "20px" }}
+                  sx={{
+                    flex: 1,
+                    minWidth: 0,
+                    maxWidth: "none",
+                    minHeight: "38px",
+                    height: "38px",
+                    p: 0,
+                    textTransform: "none",
+                    fontSize: "15px",
+                    fontWeight: 700,
+                    lineHeight: 1,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: (theme) =>
+                      theme.palette.mode === "dark" ? "#9fb0c6" : "#475569",
+                    borderRadius: "999px",
+                    border: "2px solid",
+                    borderColor: "transparent",
+                    backgroundColor: (theme) =>
+                      theme.palette.mode === "dark"
+                        ? "rgba(148, 163, 184, 0.06)"
+                        : "rgba(255, 255, 255, 0.5)",
+                    transition: "all 150ms ease",
+                    "&:hover": {
+                      backgroundColor: (theme) =>
+                        theme.palette.mode === "dark"
+                          ? "rgba(148, 163, 184, 0.14)"
+                          : "rgba(255, 255, 255, 0.8)",
+                    },
+                    "&.Mui-selected": {
+                      color: "#ffffff",
+                      borderColor: (theme) =>
+                        theme.palette.mode === "dark" ? "#ff9b3d" : "#f97316",
+                      background: (theme) =>
+                        theme.palette.mode === "dark"
+                          ? "linear-gradient(180deg, #ffb15c 0%, #ff8a1f 100%)"
+                          : "linear-gradient(180deg, #fb923c 0%, #ea580c 100%)",
+                      boxShadow:
+                        "0 4px 12px rgba(249, 115, 22, 0.38), inset 0 1px 0 rgba(255,255,255,0.28)",
+                    },
+                  }}
                 />
                 <Tab
                   label="Graph View"
                   {...a11yProps(1)}
-                  sx={{ width: "50%", fontSize: "20px" }}
-                />
-              </Tabs>
-
-              <Box
-                sx={{
-                  height: "100vh",
-                  marginTop: "156px",
-                  flexGrow: 1,
-                  overflow: "auto",
-                  ...SCROLL_BAR_STYLE,
-                  "&::-webkit-scrollbar": {
-                    display: "none",
-                  },
-                }}
-              >
-                <TabPanel
-                  value={viewValue}
-                  index={0}
                   sx={{
-                    height: "100%",
-                    overflowX: "auto",
-                    whiteSpace: "nowrap",
-                    "&::-webkit-scrollbar": {
-                      display: "none",
+                    flex: 1,
+                    minWidth: 0,
+                    maxWidth: "none",
+                    minHeight: "38px",
+                    height: "38px",
+                    p: 0,
+                    textTransform: "none",
+                    fontSize: "15px",
+                    fontWeight: 700,
+                    lineHeight: 1,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: (theme) =>
+                      theme.palette.mode === "dark" ? "#9fb0c6" : "#475569",
+                    borderRadius: "999px",
+                    border: "2px solid",
+                    borderColor: "transparent",
+                    backgroundColor: (theme) =>
+                      theme.palette.mode === "dark"
+                        ? "rgba(148, 163, 184, 0.06)"
+                        : "rgba(255, 255, 255, 0.5)",
+                    transition: "all 150ms ease",
+                    "&:hover": {
+                      backgroundColor: (theme) =>
+                        theme.palette.mode === "dark"
+                          ? "rgba(148, 163, 184, 0.14)"
+                          : "rgba(255, 255, 255, 0.8)",
+                    },
+                    "&.Mui-selected": {
+                      color: "#ffffff",
+                      borderColor: (theme) =>
+                        theme.palette.mode === "dark" ? "#ff9b3d" : "#f97316",
+                      background: (theme) =>
+                        theme.palette.mode === "dark"
+                          ? "linear-gradient(180deg, #ffb15c 0%, #ff8a1f 100%)"
+                          : "linear-gradient(180deg, #fb923c 0%, #ea580c 100%)",
+                      boxShadow:
+                        "0 4px 12px rgba(249, 115, 22, 0.38), inset 0 1px 0 rgba(255,255,255,0.28)",
                     },
                   }}
-                >
-                  <Box
-                    sx={{
-                      display: "inline-block",
-                      minWidth: "100%",
-                    }}
-                  >
-                    <DraggableTree
-                      treeViewData={treeViewData}
-                      setSnackbarMessage={setSnackbarMessage}
-                      treeRef={treeRef}
-                      currentVisibleNode={currentVisibleNode}
-                      nodes={nodes}
-                      onOpenNodesTree={onOpenNodesTree}
-                      eachOntologyPath={eachOntologyPath}
-                      multipleOntologyPaths={multipleOntologyPaths}
-                      skillsFuture={skillsFuture}
-                      specializationNumsUnder={specializationNumsUnder}
-                      skillsFutureApp={appName}
-                    />
-
-                    {/*  <TreeViewSimplified
-                      treeVisualization={treeVisualization}
-                      onOpenNodesTree={onOpenNodesTree}
-                      expandedNodes={expandedNodes}
-                      setExpandedNodes={setExpandedNodes}
-                      currentVisibleNode={currentVisibleNode}
-                    /> */}
-                  </Box>
-                </TabPanel>
-                <TabPanel value={viewValue} index={1}>
-                  <GraphView
-                    treeVisualization={treeVisualization}
-                    setExpandedNodes={setExpandedNodes}
-                    expandedNodes={expandedNodes}
-                    onOpenNodeDagre={onOpenNodeDagre}
-                    currentVisibleNode={currentVisibleNode}
-                    // nodes={nodes}
-                  />
-                </TabPanel>
-              </Box>
-
-              <Box
-                sx={{
-                  position: "absolute",
-                  top: 0,
-                  width: "100%",
-                }}
-              >
-                {" "}
-                {skillsFuture && (
-                  <Box sx={{ m: "10px" }}>
-                    <FormControl
-                      variant="outlined"
-                      sx={{ borderRadius: "20px" }}
-                      fullWidth
-                    >
-                      <InputLabel id="property-type-label">
-                        Which Ontology
-                      </InputLabel>
-                      <Select
-                        labelId="property-type-label"
-                        value={appName}
-                        onChange={(event) => {
-                          setNodes({});
-                          const app = event.target.value.replaceAll(" ", "_");
-                          router.replace(`/${app}`);
-                        }}
-                        label="Property Type"
-                        sx={{ borderRadius: "20px" }}
-                      >
-                        {SKILLS_FUTURE_APP_NAMES.map(({ id, name }) => (
-                          <MenuItem key={id} value={id}>
-                            {name}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                  </Box>
-                )}
-                <SearchSideBar
-                  openSearchedNode={openSearchedNode}
-                  searchWithFuse={searchWithFuse}
-                  lastSearches={lastSearches}
-                  updateLastSearches={updateLastSearches}
-                  skillsFuture={skillsFuture}
-                  skillsFutureApp={appName}
                 />
-              </Box>
-            </Section>
-          )}
+              </Tabs>
+            </Box>
 
-          {!isMobile && (
-            <Bar
-              size={0.1}
-              style={{
-                background: "transparent",
-                cursor: "col-resize",
-                position: "relative",
-                borderRadius: "4px",
-              }}
-            >
-              <SettingsEthernetIcon
-                sx={{
-                  position: "absolute",
-                  top: "50%",
-                  left: "50%",
-                  transform: "translate(-50%, -50%)",
-                  color: (theme) =>
-                    theme.palette.mode === "dark"
-                      ? theme.palette.common.gray50
-                      : theme.palette.common.notebookMainBlack,
-                  borderRadius: "50%",
-                  ":hover": {
-                    backgroundColor: "orange",
-                  },
-                }}
-              />
-            </Bar>
-          )}
-
-          <Section minSize={0}>
             <Box
-              id="node-section"
               sx={{
-                backgroundColor: (theme) =>
-                  theme.palette.mode === "dark"
-                    ? theme.palette.common.notebookMainBlack
-                    : theme.palette.common.gray50,
-                p: "20px",
-                pt: 0,
-                overflow: "auto",
-                height: isMobile 
-                  ? mobileTreeOpen 
-                    ? "calc(100vh - 56px - 50vh)" // Account for header + tree
-                    : "calc(100vh - 56px)" // Just header
-                  : "100vh",
-                transition: isMobile ? "height 0.3s ease-in-out" : "none",
+                flexGrow: 1,
+                overflow: "hidden",
+                display: "flex",
+                flexDirection: "column",
+                minHeight: 0,
+                ...SCROLL_BAR_STYLE,
                 "&::-webkit-scrollbar": {
                   display: "none",
                 },
               }}
             >
-              <Box ref={scrolling}></Box>
-              {displayGuidelines && (
-                <GuidLines setDisplayGuidelines={setDisplayGuidelines} />
-              )}
-              {currentVisibleNode && user && !displayGuidelines && (
+              <TabPanel
+                value={viewValue}
+                index={0}
+                sx={{
+                  flex: 1,
+                  minHeight: 0,
+                  overflowX: "auto",
+                  overflowY: "hidden",
+                  whiteSpace: "nowrap",
+                  "&::-webkit-scrollbar": {
+                    display: "none",
+                  },
+                }}
+              >
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    flex: 1,
+                    minHeight: 0,
+                    minWidth: "100%",
+                  }}
+                >
+                  {pathOutlineMessage && (
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ display: "block", px: 1, py: 0.5 }}
+                    >
+                      {pathOutlineMessage}
+                    </Typography>
+                  )}
+                  {isLoadingOutline && currentNodeTreeData.length === 0 ? (
+                    <TreeOutlineSkeleton />
+                  ) : (
+                    <DraggableTree
+                      treeViewData={currentNodeTreeData}
+                      setSnackbarMessage={setSnackbarMessage}
+                      treeRef={treeRef}
+                      currentVisibleNode={currentVisibleNode}
+                      nodes={relatedNodes}
+                      onOpenNodesTree={onOpenNodesTree}
+                      appName={appName}
+                      specializationNumsUnder={specializationNumsUnder}
+                      onInstantTreeUpdate={handleInstantTreeUpdate}
+                      onExpandEllipsis={handleExpandEllipsis}
+                      nodesWithComments={nodesWithComments}
+                      onOutlineNodeOpen={handleOutlineNodeOpen}
+                      searchTerm={
+                        isSidebarSearchFocused ? "" : sidebarSearchValue
+                      }
+                    />
+                  )}
+                </Box>
+              </TabPanel>
+              <TabPanel value={viewValue} index={1}>
+                <GraphView
+                  treeData={currentNodeTreeData}
+                  setExpandedNodes={setExpandedNodes}
+                  expandedNodes={expandedNodes}
+                  onOpenNodeDagre={onOpenNodeDagre}
+                  currentVisibleNode={currentVisibleNode}
+                />
+              </TabPanel>
+            </Box>
+          </Section>
+        )}
+
+        {!isMobile && (
+          <Bar
+            size={0.1}
+            style={{
+              background: "transparent",
+              cursor: "col-resize",
+              position: "relative",
+              borderRadius: "4px",
+            }}
+          >
+            <SettingsEthernetIcon
+              sx={{
+                position: "absolute",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+                color: (theme) =>
+                  theme.palette.mode === "dark"
+                    ? theme.palette.common.gray50
+                    : theme.palette.common.notebookMainBlack,
+                borderRadius: "50%",
+                ":hover": {
+                  backgroundColor: "orange",
+                },
+              }}
+            />
+          </Bar>
+        )}
+
+        <Section minSize={0}>
+          <Box
+            id="node-section"
+            sx={{
+              p: "20px",
+              pt: 0,
+              overflow: "auto",
+              height: isMobile
+                ? mobileTreeOpen
+                  ? "calc(100vh - 56px - 50vh)"
+                  : "calc(100vh - 56px)"
+                : "100vh",
+              transition: isMobile ? "height 0.3s ease-in-out" : "none",
+              "&::-webkit-scrollbar": {
+                display: "none",
+              },
+            }}
+          >
+            <Box ref={scrolling}></Box>
+            {displayGuidelines && (
+              <GuidLines
+                appName={appName}
+                setDisplayGuidelines={setDisplayGuidelines}
+              />
+            )}
+            {navigationError && (
+              <NavigationError
+                type={navigationError.type}
+                onGoBack={() => {
+                  setNavigationError(null);
+                  window.history.back();
+                }}
+              />
+            )}
+            {currentVisibleNode &&
+              user &&
+              !displayGuidelines &&
+              !navigationError && (
                 <Node
                   currentVisibleNode={
                     currentImprovement?.node || currentVisibleNode
@@ -1944,16 +2858,19 @@ const Ontology = ({
                   setSnackbarMessage={setSnackbarMessage}
                   user={user}
                   mainSpecializations={mainSpecializations}
-                  nodes={nodes}
+                  relatedNodes={relatedNodes}
+                  fetchNode={fetchNode}
+                  addNodesToCache={addNodesToCache}
                   navigateToNode={navigateToNode}
-                  eachOntologyPath={eachOntologyPath}
+                  eachOntologyPath={eachNodePath}
                   searchWithFuse={searchWithFuse}
                   locked={!!currentVisibleNode.locked && !user?.manageLock}
+                  isLoadingNodeDetails={isLoadingNodeDetails}
                   selectedDiffNode={selectedDiffNode}
                   displaySidebar={displaySidebar}
                   activeSidebar={activeSidebar}
                   currentImprovement={currentImprovement}
-                  setNodes={setNodes}
+                  setRelatedNodes={setRelatedNodes}
                   checkedItems={checkedItems}
                   setCheckedItems={setCheckedItems}
                   checkedItemsCopy={checkedItemsCopy}
@@ -1975,61 +2892,59 @@ const Ontology = ({
                   handleCloseAddLinksModel={handleCloseAddLinksModel}
                   setSelectedCollection={setSelectedCollection}
                   selectedCollection={selectedCollection}
-                  skillsFuture={skillsFuture}
-                  partsInheritance={partsInheritance}
+                  appName={appName}
                   enableEdit={enableEdit}
                   setEnableEdit={setEnableEdit}
-                  inheritanceDetails={partsInheritance}
-                  skillsFutureApp={appName ?? null}
                   editableProperty={editableProperty}
                   setEditableProperty={setEditableProperty}
+                  onInstantTreeUpdate={handleInstantTreeUpdate}
+                  nodesWithComments={nodesWithComments}
+                  onOpenInNavigator={onOpenInNavigator}
                 />
               )}
-            </Box>
-          </Section>
+          </Box>
+        </Section>
 
-          {!isMobile && (
-            <MemoizedToolbarSidebar
-            // isHovered={toolbarIsHovered}
-            toolbarRef={toolbarRef}
-            user={user}
-            openSearchedNode={openSearchedNode}
-            searchWithFuse={searchWithFuse}
-            nodes={nodes}
-            selectedDiffNode={selectedDiffNode}
-            setSelectedDiffNode={setSelectedDiffNode}
-            currentVisibleNode={currentVisibleNode}
-            setCurrentVisibleNode={setCurrentVisibleNode}
-            confirmIt={confirmIt}
-            activeSidebar={activeSidebar}
-            setActiveSidebar={setActiveSidebar}
-            handleExpandSidebar={handleExpandSidebar}
-            navigateToNode={navigateToNode}
-            treeVisualization={treeVisualization}
-            expandedNodes={expandedNodes}
-            setExpandedNodes={setExpandedNodes}
-            onOpenNodesTree={onOpenNodesTree}
-            setDisplayGuidelines={setDisplayGuidelines}
-            currentImprovement={currentImprovement}
-            setCurrentImprovement={setCurrentImprovement}
-            lastSearches={lastSearches}
-            updateLastSearches={updateLastSearches}
-            selectedChatTab={selectedChatTab}
-            setSelectedChatTab={setSelectedChatTab}
-            displayGuidelines={displayGuidelines}
-            signOut={signOut}
-            skillsFuture={skillsFuture}
-            skillsFutureApp={appName ?? null}
-          />
-          )}
-        </Container>
-        {ConfirmDialog}
-        <SneakMessage
-          newMessage={snackbarMessage}
-          setNewMessage={setSnackbarMessage}
+        <MemoizedToolbarSidebar
+          // isHovered={toolbarIsHovered}
+          searchWithFuse={searchWithFuse}
+          toolbarRef={toolbarRef}
+          user={user}
+          openSearchedNode={openSearchedNode}
+          relatedNodes={relatedNodes}
+          fetchNode={fetchNode}
+          selectedDiffNode={selectedDiffNode}
+          setSelectedDiffNode={setSelectedDiffNode}
+          currentVisibleNode={currentVisibleNode}
+          setCurrentVisibleNode={setCurrentVisibleNode}
+          confirmIt={confirmIt}
+          activeSidebar={activeSidebar}
+          setActiveSidebar={setActiveSidebar}
+          handleExpandSidebar={handleExpandSidebar}
+          navigateToNode={navigateToNode}
+          expandedNodes={expandedNodes}
+          setExpandedNodes={setExpandedNodes}
+          onOpenNodesTree={onOpenNodesTree}
+          setDisplayGuidelines={setDisplayGuidelines}
+          currentImprovement={currentImprovement}
+          setCurrentImprovement={setCurrentImprovement}
+          lastSearches={lastSearches}
+          updateLastSearches={updateLastSearches}
+          selectedChatTab={selectedChatTab}
+          setSelectedChatTab={setSelectedChatTab}
+          displayGuidelines={displayGuidelines}
+          signOut={signOut}
+          appName={appName}
+          isExperimentalSearch={isExperimentalSearch}
+          setIsExperimentalSearch={setIsExperimentalSearch}
         />
-      </Box>
-    </>
+      </Container>
+      {ConfirmDialog}
+      <SneakMessage
+        newMessage={snackbarMessage}
+        setNewMessage={setSnackbarMessage}
+      />
+    </Box>
   );
 };
 export default Ontology;

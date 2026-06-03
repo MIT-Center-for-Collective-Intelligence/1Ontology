@@ -1075,8 +1075,10 @@ const Consultant = () => {
               </Tooltip>
               {diagrams.length > 0 && (
                 <FormControl disabled={!!loadingResponse}>
-                  <InputLabel>Diagram</InputLabel>
+                  <InputLabel id="ideaevaluator-diagram-label">Diagram</InputLabel>
                   <Select
+                    labelId="ideaevaluator-diagram-label"
+                    id="ideaevaluator-diagram"
                     label="diagram"
                     value={selectedDiagram?.title || ""}
                     onChange={handleChangeDiagram}

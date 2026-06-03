@@ -882,8 +882,12 @@ const Consultant = () => {
 
                 {diagrams.length > 0 && (
                   <FormControl disabled={!!loadingResponse}>
-                    <InputLabel>Project</InputLabel>
+                    <InputLabel id="consultant-chat-project-label">
+                      Project
+                    </InputLabel>
                     <Select
+                      labelId="consultant-chat-project-label"
+                      id="consultant-chat-project"
                       label="diagram"
                       value={selectedDiagram?.title || ""}
                       onChange={handleChangeDiagram}

@@ -18,6 +18,8 @@ const YjsEditor = ({
   onEditorReady,
   setEditorContent,
   pendingInheritanceMessage,
+  fallbackContent,
+  placeholder,
 }: {
   fullname: string;
   property: string;
@@ -31,6 +33,8 @@ const YjsEditor = ({
   onEditorReady?: (editor: any) => void;
   setEditorContent: any;
   pendingInheritanceMessage?: any;
+  fallbackContent?: string;
+  placeholder?: string;
 }) => {
   return (
     <YjsEditorWrapper
@@ -46,6 +50,8 @@ const YjsEditor = ({
       onEditorReady={onEditorReady}
       setEditorContent={setEditorContent}
       pendingInheritanceMessage={pendingInheritanceMessage}
+      fallbackContent={fallbackContent}
+      placeholder={placeholder}
     />
   );
 };

@@ -1,6 +1,5 @@
 import { DESIGN_SYSTEM_COLORS } from "@components/lib/theme/colors";
 import { IChatMessage } from "@components/types/IChat";
-import AddReactionIcon from "@mui/icons-material/AddReaction";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import MarkAsUnreadIcon from "@mui/icons-material/MarkAsUnread";
@@ -42,13 +41,34 @@ export const MessageButtons = ({
         position: "absolute",
         background: (theme) =>
           theme.palette.mode === "dark"
-            ? DESIGN_SYSTEM_COLORS.notebookG700
-            : DESIGN_SYSTEM_COLORS.gray100,
-        top: "-40px",
+            ? "rgba(24, 25, 29, 0.95)"
+            : "rgba(255, 255, 255, 0.95)",
+        top: "-44px",
         right: "0px",
-        borderRadius: "8px",
-        p: "3px",
+        borderRadius: "12px",
+        border: (theme) =>
+          theme.palette.mode === "dark"
+            ? "1px solid rgba(255,255,255,0.1)"
+            : "1px solid rgba(18,30,60,0.12)",
+        boxShadow: (theme) =>
+          theme.palette.mode === "dark"
+            ? "0 10px 22px rgba(0,0,0,0.35)"
+            : "0 8px 18px rgba(15,28,59,0.14)",
+        p: "3px 4px",
         ...sx,
+        "& .MuiIconButton-root": {
+          borderRadius: "9px",
+          color: (theme) =>
+            theme.palette.mode === "dark"
+              ? "rgba(255,255,255,0.82)"
+              : "rgba(24,37,64,0.72)",
+          "&:hover": {
+            background: (theme) =>
+              theme.palette.mode === "dark"
+                ? "rgba(255,255,255,0.08)"
+                : "rgba(12, 30, 60, 0.08)",
+          },
+        },
       }}
     >
       {replyMessage && !message.parentMessage && (

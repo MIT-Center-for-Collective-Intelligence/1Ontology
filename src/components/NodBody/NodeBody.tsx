@@ -33,7 +33,8 @@ interface NodeBodyProps {
   navigateToNode: Function;
   setSnackbarMessage: Function;
   setSelectedProperty: Function;
-  nodes: { [id: string]: INode };
+  relatedNodes: { [id: string]: INode };
+  fetchNode: (nodeId: string) => Promise<INode | null>;
   locked: boolean;
   selectedDiffNode: any;
   getTitleNode: any;
@@ -51,7 +52,6 @@ interface NodeBodyProps {
   setCheckedItemsCopy?: any;
   checkedItemsCopy?: any;
   handleCloning?: any;
-  selectFromTree?: any;
   expandedNodes?: any;
   setExpandedNodes?: any;
   handleToggle?: any;
@@ -76,9 +76,8 @@ interface NodeBodyProps {
   setGlowIds: any;
   selectedCollection: string;
   storage: any;
-  skillsFuture: boolean;
+  appName?: string;
   enableEdit: boolean;
-  skillsFutureApp: string;
   deleteProperty: Function;
 }
 
@@ -89,7 +88,8 @@ const NodeBody: React.FC<NodeBodyProps> = ({
   navigateToNode,
   setSnackbarMessage,
   setSelectedProperty,
-  nodes,
+  relatedNodes,
+  fetchNode,
   locked,
   selectedDiffNode,
   getTitleNode,
@@ -107,7 +107,6 @@ const NodeBody: React.FC<NodeBodyProps> = ({
   setCheckedItemsCopy,
   checkedItemsCopy,
   handleCloning,
-  selectFromTree,
   expandedNodes,
   setExpandedNodes,
   handleToggle,
@@ -132,9 +131,8 @@ const NodeBody: React.FC<NodeBodyProps> = ({
   setGlowIds,
   selectedCollection,
   storage,
-  skillsFuture,
+  appName,
   enableEdit,
-  skillsFutureApp,
   deleteProperty,
 }) => {
   const theme = useTheme();
@@ -198,6 +196,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
               "inheritUnlessAlreadyOverRidden",
             [`properties.${property}`]: propertyValue,
             [`inheritance.${property}.ref`]: ref,
+            [`inheritance.${property}.title`]: currentVisibleNode?.title ?? "",
             [`propertyType.${property}`]: propertyType,
           };
 
@@ -211,14 +210,21 @@ const NodeBody: React.FC<NodeBodyProps> = ({
             newBatch = writeBatch(db);
           }
 
-          newBatch = await updateSpecializationsInheritance(
-            nodes[link.id].specializations,
-            newBatch,
-            property,
-            propertyValue,
-            ref,
-            propertyType,
-          );
+          let linkNodeData: INode | null = relatedNodes[link.id] || null;
+          if (!linkNodeData) {
+            linkNodeData = await fetchNode(link.id);
+          }
+
+          if (linkNodeData) {
+            newBatch = await updateSpecializationsInheritance(
+              linkNodeData.specializations,
+              newBatch,
+              property,
+              propertyValue,
+              ref,
+              propertyType,
+            );
+          }
         }
       }
 
@@ -263,6 +269,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
       }
       inheritance[newProperty] = {
         ref: null,
+        title: "",
         inheritanceType: "inheritUnlessAlreadyOverRidden",
       };
       setCurrentVisibleNode((prev: any) => {
@@ -452,8 +459,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
           modifiedAt: new Date(),
           changeType: "edit property",
           fullNode: currentNode,
-          skillsFuture,
-          ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
+          ...(appName ? { appName } : {}),
         });
       } catch (error) {
         console.error(error);
@@ -469,7 +475,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
           const shouldRenderImageManager = property === "References";
           return (
             <React.Fragment key={property}>
-              {shouldRenderImageManager && user && !skillsFuture && (
+              {shouldRenderImageManager && user && !appName && (
                 <Box sx={{ mt: "15px" }}>
                   <NodeImageManager
                     nodeId={currentVisibleNode?.id}
@@ -480,7 +486,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                     confirmIt={confirmIt}
                     saveNewChangeLog={saveNewChangeLog}
                     selectedDiffNode={selectedDiffNode}
-                    nodes={nodes}
+                    nodes={relatedNodes}
                     getTitleNode={getTitleNode}
                     enableEdit={enableEdit}
                   />
@@ -488,7 +494,8 @@ const NodeBody: React.FC<NodeBodyProps> = ({
               )}
               <Box sx={{ mt: "15px" }}>
                 {currentNode.propertyType[property] === "string-select" ? (
-                  <SelectProperty
+                  <></>
+                ) : /*    <SelectProperty
                     currentVisibleNode={currentVisibleNode}
                     property={property}
                     nodes={nodes}
@@ -501,35 +508,34 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                       "collaboration of humans and ai",
                       "ai",
                     ]}
-                    skillsFuture={skillsFuture}
                     enableEdit={enableEdit}
-                    skillsFutureApp={skillsFutureApp}
-                  />
-                ) : currentNode.propertyType[property] === "string-array" ? (
+                    appName={appName}
+                  /> */
+                currentNode.propertyType[property] === "string-array" ? (
                   <ChipsProperty
                     currentVisibleNode={currentVisibleNode}
                     property={property}
-                    nodes={nodes}
+                    relatedNodes={relatedNodes}
+                    fetchNode={fetchNode}
                     locked={locked}
                     currentImprovement={currentImprovement}
                     selectedDiffNode={selectedDiffNode}
                     user={user}
-                    skillsFuture={skillsFuture}
                     enableEdit={enableEdit}
-                    skillsFutureApp={skillsFutureApp}
+                    appName={appName}
                   />
                 ) : currentNode.propertyType[property] === "numeric" ? (
                   <NumericProperty
                     currentVisibleNode={currentNode}
                     property={property}
                     value={onGetPropertyValue(property)}
-                    nodes={nodes}
+                    relatedNodes={relatedNodes}
+                    fetchNode={fetchNode}
                     locked={locked}
                     selectedDiffNode={selectedDiffNode}
                     currentImprovement={currentImprovement}
-                    skillsFuture={skillsFuture}
                     enableEdit={enableEdit}
-                    skillsFutureApp={skillsFutureApp}
+                    appName={appName}
                     deleteProperty={deleteProperty}
                     modifyProperty={modifyProperty}
                   />
@@ -545,7 +551,8 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                     setSnackbarMessage={setSnackbarMessage}
                     setCurrentVisibleNode={setCurrentVisibleNode}
                     property={property}
-                    nodes={nodes}
+                    relatedNodes={relatedNodes}
+                    fetchNode={fetchNode}
                     locked={locked}
                     onGetPropertyValue={onGetPropertyValue}
                     currentImprovement={currentImprovement}
@@ -560,7 +567,6 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                     checkedItemsCopy={checkedItemsCopy}
                     handleCloning={handleCloning}
                     user={user}
-                    selectFromTree={selectFromTree}
                     expandedNodes={expandedNodes}
                     setExpandedNodes={setExpandedNodes}
                     handleToggle={handleToggle}
@@ -584,9 +590,8 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                     glowIds={glowIds}
                     setGlowIds={setGlowIds}
                     selectedCollection={selectedCollection}
-                    skillsFuture={skillsFuture}
                     enableEdit={enableEdit}
-                    skillsFutureApp={skillsFutureApp}
+                    appName={appName}
                     deleteProperty={deleteProperty}
                     modifyProperty={modifyProperty}
                   />
@@ -598,15 +603,15 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                       currentVisibleNode={currentNode}
                       property={property}
                       setCurrentVisibleNode={setCurrentVisibleNode}
-                      nodes={nodes}
+                      relatedNodes={relatedNodes}
+                      fetchNode={fetchNode}
                       locked={locked}
                       selectedDiffNode={selectedDiffNode}
                       getTitleNode={getTitleNode}
                       confirmIt={confirmIt}
                       currentImprovement={currentImprovement}
-                      skillsFuture={skillsFuture}
                       enableEdit={enableEdit}
-                      skillsFutureApp={skillsFutureApp}
+                      appName={appName}
                       deleteProperty={deleteProperty}
                       modifyProperty={modifyProperty}
                     />
@@ -622,7 +627,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
           )}
         {!hasReferences &&
           user &&
-          (!skillsFuture ||
+          (!appName ||
             currentVisibleNode.appName === "Top-Down Gemini 2.5 Pro") && (
             <Box sx={{ mt: "15px" }}>
               <NodeImageManager
@@ -634,7 +639,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                 confirmIt={confirmIt}
                 saveNewChangeLog={saveNewChangeLog}
                 selectedDiffNode={selectedDiffNode}
-                nodes={nodes}
+                nodes={relatedNodes}
                 getTitleNode={getTitleNode}
                 enableEdit={enableEdit}
               />
@@ -649,7 +654,6 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                 borderRadius: "30px",
                 borderBottomRightRadius: "18px",
                 borderBottomLeftRadius: "18px",
-                minWidth: "500px",
                 width: "100%",
                 maxHeight: "100%",
                 overflow: "auto",
@@ -705,7 +709,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
           setOpenAddProperty={setOpenAddProperty}
           locked={locked}
           exitingProperties={Object.keys(currentVisibleNode.properties || {})}
-          skillsFuture={skillsFuture}
+          appName={appName}
         />
       )}
       {!locked && !openAddProperty && !currentImprovement && (

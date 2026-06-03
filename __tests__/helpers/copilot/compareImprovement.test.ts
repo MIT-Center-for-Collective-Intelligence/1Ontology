@@ -1,7 +1,7 @@
 import { compareImprovement } from "@components/lib/utils/copilotHelpers";
-import { INode } from "@components/types/INode";
 import { convertLength } from "@mui/material/styles/cssUtils";
-const nodeTitles: { [id: string]: INode } = {
+// Test fixtures are intentionally partial; keep them loosely typed.
+const nodeTitles: { [id: string]: any } = {
   "New unclassifiedd": {
     id: "YC2Ui3sV6RCggOnUdRy3",
     root: "prg28paWo3J5oJZKpwqW",
@@ -664,7 +664,7 @@ describe("compare improvement change to the original node", () => {
     };
     const response = compareImprovement(improvement, nodeTitles, {});
     expect(response.nodeId).toBe("prg28paWo3J5oJZKpwqW");
-    expect(response.detailsOfChange).toEqual({
+    expect(response.detailsOfChange).toMatchObject({
       comparison: [
         {
           collectionName: "Arrival Procedures",

@@ -1,18 +1,8 @@
 import { MESSAGES, USERS } from "@components/lib/firestoreClient/collections";
 import CloseIcon from "@mui/icons-material/Close";
-import { TabPanel, a11yProps } from "@components/lib/utils/TabPanel";
+import { a11yProps } from "@components/lib/utils/TabPanel";
 
-import {
-  Box,
-  Tabs,
-  Tab,
-  Button,
-  ListItem,
-  Modal,
-  Paper,
-  Typography,
-  IconButton,
-} from "@mui/material";
+import { Box, Tabs, Tab, Modal, Paper, IconButton } from "@mui/material";
 import {
   query,
   collection,
@@ -28,9 +18,9 @@ import React, {
   useState,
 } from "react";
 import Chat from "../Chat/Chat";
-import { SCROLL_BAR_STYLE } from "@components/lib/CONSTANTS";
-import { DESIGN_SYSTEM_COLORS } from "@components/lib/theme/colors";
-import TreeViewSimplified from "../OntologyComponents/TreeViewSimplified";
+import { SCROLL_BAR_STYLE, development } from "@components/lib/CONSTANTS";
+import { Post } from "@components/lib/utils/Post";
+import ExpandSearchResult from "../OntologyComponents/ExpandSearchResult";
 import { SearchBox } from "../SearchBox/SearchBox";
 import { INode } from "@components/types/INode";
 
@@ -39,29 +29,25 @@ const ChatSideBar = ({
   user,
   confirmIt,
   searchWithFuse,
-  treeVisualization,
-  expandedNodes,
-  setExpandedNodes,
-  onOpenNodesTree,
   navigateToNode,
   chatTabs,
   selectedChatTab,
   setSelectedChatTab,
   nodes,
+  fetchNode,
+  appName,
 }: {
   currentVisibleNode: any;
   user: any;
   confirmIt: any;
   searchWithFuse: any;
-  treeVisualization: any;
-  expandedNodes: any;
-  setExpandedNodes: any;
-  onOpenNodesTree: any;
   navigateToNode: any;
   chatTabs: { title: string; id: string; placeholder: string }[];
   selectedChatTab: number;
   setSelectedChatTab: Function;
   nodes: { [nodeId: string]: INode };
+  fetchNode: (nodeId: string) => Promise<INode | null>;
+  appName: string;
 }) => {
   const db = getFirestore();
   const [users, setUsers] = useState<
@@ -75,6 +61,10 @@ const ChatSideBar = ({
   >([]);
   const [openModel, setOpenModel] = useState(false);
   const [searchValue, setSearchValue] = useState("");
+  const [chromaSearchResults, setChromaSearchResults] = useState<any[]>([]);
+  const [loadingChromaSearch, setLoadingChromaSearch] = useState(false);
+  const [useChromaResults, setUseChromaResults] = useState(false);
+  const previousSearchValue = useRef(searchValue);
   const scrollingRef = useRef<any>();
 
   const handleChatTabsChange = (event: any, newValue: number) => {
@@ -85,13 +75,141 @@ const ChatSideBar = ({
     // });
   };
 
+  // Reset to fuse search when user types
+  // This will be removed after fuse search is removed entirely
+  useEffect(() => {
+    if (searchValue !== previousSearchValue.current && useChromaResults) {
+      setUseChromaResults(false);
+      setChromaSearchResults([]);
+    }
+    previousSearchValue.current = searchValue;
+  }, [searchValue, useChromaResults]);
+
+  // Fetch all child nodes from search results
+  const fetchChildNodesForSearchResults = useCallback(
+    async (searchResults: any[]) => {
+      if (!fetchNode || searchResults.length === 0) return;
+
+      const childIds = new Set<string>();
+
+      searchResults.forEach((result) => {
+        // Get specializations
+        result.specializations?.forEach((collection: any) => {
+          collection.nodes?.forEach((node: any) => {
+            if (!nodes[node.id]) {
+              childIds.add(node.id);
+            }
+          });
+        });
+
+        // Get generalizations
+        result.generalizations?.forEach((collection: any) => {
+          collection.nodes?.forEach((node: any) => {
+            if (!nodes[node.id]) {
+              childIds.add(node.id);
+            }
+          });
+        });
+
+        // Get parts if applicable
+        if (result.properties?.parts) {
+          result.properties.parts.forEach((collection: any) => {
+            collection.nodes?.forEach((node: any) => {
+              if (!nodes[node.id]) {
+                childIds.add(node.id);
+              }
+            });
+          });
+        }
+      });
+
+      // Fetch all missing child nodes in parallel
+      if (childIds.size > 0) {
+        await Promise.all(Array.from(childIds).map((id) => fetchNode(id)));
+      }
+    },
+    [fetchNode, nodes],
+  );
+
+  // Handle Chroma search with child node fetching
+  const handleChromaSearch = useCallback(async () => {
+    if (!searchValue || searchValue.trim().length < 3) {
+      return;
+    }
+
+    const fuseSearch = searchWithFuse(searchValue);
+
+    try {
+      setLoadingChromaSearch(true);
+      setUseChromaResults(true);
+
+      const response: any = await Post("/searchChroma", {
+        query: searchValue,
+        appName: appName || null,
+      });
+
+      const results: any = [...(response.results || [])];
+
+      // Fallback to fuse if no chroma results
+      if (results.length <= 0 && fuseSearch.length > 0) {
+        results.push(...fuseSearch);
+      }
+      const exactResult = fuseSearch[0];
+      if (
+        exactResult &&
+        exactResult.title.trim() === searchValue.toLowerCase().trim() &&
+        !results.some((r: any) => r.id === exactResult.id)
+      ) {
+        results.unshift({ id: exactResult.id, title: exactResult.title });
+      }
+
+      setChromaSearchResults(development ? fuseSearch : results);
+
+      // Fetch child nodes for all search results
+      await fetchChildNodesForSearchResults(development ? fuseSearch : results);
+    } catch (error) {
+      console.error("[CHAT SIDEBAR] Error in chroma search:", error);
+      setChromaSearchResults(fuseSearch);
+    } finally {
+      setLoadingChromaSearch(false);
+    }
+  }, [searchValue, appName, searchWithFuse, fetchChildNodesForSearchResults]);
+
   const searchResults = useMemo(() => {
     /*  recordLogs({
       action: "Searched",
       query: searchValue,
     }); */
     return searchWithFuse(searchValue);
-  }, [searchValue]);
+  }, [searchValue, searchWithFuse]);
+
+  // Always show currentVisibleNode at the top, with search results below if present
+  const displayResults = useMemo(() => {
+    if (!currentVisibleNode) return [];
+
+    const results: INode[] = [];
+    results.push(currentVisibleNode);
+
+    // Determine which search results to use
+    const resultsToUse = useChromaResults ? chromaSearchResults : searchResults;
+
+    // Add search results if searchValue exists
+    if (searchValue && resultsToUse.length > 0) {
+      // Filter out currentVisibleNode from search results to avoid duplicates
+      const filteredResults = resultsToUse.filter(
+        (node: INode) => node.id !== currentVisibleNode.id,
+      );
+      results.push(...filteredResults);
+    }
+
+    return results;
+  }, [
+    currentVisibleNode,
+    searchValue,
+    searchResults,
+    useChromaResults,
+    chromaSearchResults,
+  ]);
 
   useEffect(() => {
     (async () => {
@@ -147,7 +265,7 @@ const ChatSideBar = ({
       await addDoc(collection(db, MESSAGES), messageData);
       scrollToBottom();
     },
-    [selectedChatTab, currentVisibleNode?.id, user],
+    [chatTabs, currentVisibleNode?.id, db, selectedChatTab, user],
   );
 
   // useEffect(() => {
@@ -192,87 +310,224 @@ const ChatSideBar = ({
   //     killHelpSnapshot();
   //   };
   // }, [db, user]);
+  const activeChatTab = chatTabs[selectedChatTab] ?? chatTabs[0];
+
   return (
-    <Box>
+    <Box
+      sx={(theme) => ({
+        position: "relative",
+        flex: 1,
+        minHeight: 0,
+        display: "flex",
+        flexDirection: "column",
+        p: { xs: 1, sm: 1.25 },
+        overflow: "hidden",
+      })}
+    >
       {chatTabs.length > 1 && (
         <Tabs
           id="chat-tabs"
+          variant="scrollable"
+          scrollButtons={false}
           value={selectedChatTab}
           onChange={handleChatTabsChange}
           aria-label="chat tabs"
+          slotProps={{
+            indicator: {
+              sx: { display: "none" },
+            },
+          }}
           sx={{
-            background: (theme) =>
-              theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
-            borderRadius: "10px",
-            boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.1)",
             width: "100%",
+            minHeight: 0,
+            flexShrink: 0,
+            borderRadius: 9999,
+            px: 0.75,
+            py: 0.5,
+            mb: 1.25,
+            background: (theme) =>
+              theme.palette.mode === "dark"
+                ? "linear-gradient(160deg, rgba(38, 39, 44, 0.98), rgba(22, 23, 27, 0.96))"
+                : "linear-gradient(160deg, rgba(252, 253, 255, 0.98), rgba(238, 242, 250, 0.96))",
+            border: (theme) =>
+              theme.palette.mode === "dark"
+                ? "1px solid rgba(255, 255, 255, 0.09)"
+                : "1px solid rgba(18, 30, 60, 0.09)",
+            boxShadow:
+              "inset 0 1px 0 rgba(255,255,255,0.06), inset 0 -1px 0 rgba(0,0,0,0.12), 0 2px 8px rgba(0, 0, 0, 0.06)",
+            ".MuiTabs-scroller": {
+              mx: 0,
+              scrollBehavior: "smooth",
+              scrollbarWidth: "thin",
+              "&::-webkit-scrollbar": {
+                height: "4px",
+              },
+              "&::-webkit-scrollbar-track": {
+                background: "transparent",
+              },
+              "&::-webkit-scrollbar-thumb": {
+                borderRadius: 999,
+                backgroundColor: "rgba(127, 128, 140, 0.35)",
+              },
+            },
+            ".MuiTabs-flexContainer": {
+              gap: { xs: 0.375, sm: 0.5 },
+              justifyContent: "flex-start",
+              alignItems: "stretch",
+              minHeight: 44,
+            },
             ".MuiTab-root": {
-              transition: "0.3s ease-in-out",
+              flex: "0 0 auto",
+              maxWidth: "none",
+              minHeight: 44,
+              borderRadius: 9999,
+              fontWeight: 700,
+              fontSize: "0.875rem",
+              letterSpacing: "0.01em",
+              textTransform: "none",
+              whiteSpace: "nowrap",
+              justifyContent: "center",
+              alignItems: "center",
+              boxSizing: "border-box",
+              opacity: 1,
+              color: (theme) =>
+                theme.palette.mode === "dark"
+                  ? "rgba(255, 255, 255, 0.82)"
+                  : "rgba(30, 32, 40, 0.78)",
+              backgroundColor: "transparent",
+              transition:
+                "color 0.18s ease, background-color 0.18s ease, opacity 0.18s ease",
+              "&:not(.Mui-selected):hover": {
+                backgroundColor: (theme) =>
+                  theme.palette.mode === "dark"
+                    ? "rgba(255, 255, 255, 0.06)"
+                    : "rgba(0, 0, 0, 0.04)",
+                color: (theme) =>
+                  theme.palette.mode === "dark"
+                    ? "rgba(255, 255, 255, 0.96)"
+                    : "rgba(20, 22, 30, 0.92)",
+              },
             },
             ".MuiTab-root.Mui-selected": {
-              color: "#ff6d00",
-              fontWeight: "bold",
-              backgroundColor: (theme) =>
-                theme.palette.mode === "dark" ? "#080707" : "#e0e0e0",
-              borderRadius: "10px 10px 0 0",
+              color: "inherit",
+              backgroundColor: "transparent",
+              border: "none",
+              boxShadow: "none",
             },
-            ".MuiTabs-indicator": {
-              backgroundColor: "#ff6d00",
-              height: "3px",
-              borderRadius: "50%",
-              transition: "transform 0.3s ease-in-out",
-            },
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
           }}
         >
-          {chatTabs.map((tab, idx) => (
-            <Tab
-              key={tab.id}
-              label={tab.title}
-              {...a11yProps(idx)}
-              sx={{
-                borderRadius: "10px",
-                /*                 margin: "0 10px", */
-                padding: "10px 20px",
-                minWidth: "auto",
-                transition: "all 0.3s ease-in-out",
-                "&:hover": {
-                  backgroundColor: "#ff6d00",
-                  color: "white",
-                  transform: "scale(1.05)",
-                },
-              }}
-            />
-          ))}
+          {chatTabs.map((tab, idx) => {
+            const isSelected = selectedChatTab === idx;
+            return (
+              <Tab
+                key={tab.id}
+                {...a11yProps(idx)}
+                label={
+                  isSelected ? (
+                    <Box
+                      component="span"
+                      sx={(theme) => ({
+                        display: "inline-flex",
+                        alignItems: "center",
+                        maxWidth: "max-content",
+                        px: { xs: 2, sm: 2.5 },
+                        py: 0.625,
+                        borderRadius: 9999,
+                        boxSizing: "border-box",
+                        lineHeight: 1.25,
+                        color:
+                          theme.palette.mode === "dark"
+                            ? "rgb(255, 186, 132)"
+                            : "rgb(145, 58, 14)",
+                        background:
+                          theme.palette.mode === "dark"
+                            ? "linear-gradient(165deg, rgba(72, 48, 36, 0.98) 0%, rgba(52, 34, 26, 0.92) 100%)"
+                            : "linear-gradient(165deg, rgba(255, 222, 186, 0.85) 0%, rgba(255, 188, 128, 0.65) 100%)",
+                        border:
+                          theme.palette.mode === "dark"
+                            ? "1px solid rgba(255, 168, 108, 0.45)"
+                            : "1px solid rgba(180, 72, 20, 0.35)",
+                        boxShadow:
+                          theme.palette.mode === "dark"
+                            ? "inset 0 1px 0 rgba(255, 200, 150, 0.12), 0 1px 0 rgba(0,0,0,0.35), 0 2px 10px rgba(255, 120, 50, 0.12)"
+                            : "inset 0 1px 0 rgba(255,255,255,0.65), 0 1px 2px rgba(120, 50, 10, 0.08)",
+                        transition:
+                          "background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease",
+                      })}
+                    >
+                      {tab.title}
+                    </Box>
+                  ) : (
+                    tab.title
+                  )
+                }
+                sx={{
+                  maxWidth: "none",
+                  "&&": {
+                    minWidth: "unset",
+                    py: 0.625,
+                    px: { xs: 1, sm: 1.25 },
+                  },
+                }}
+              />
+            );
+          })}
         </Tabs>
       )}
-      <Box>
-        {chatTabs.map((tab, idx: number) => (
-          <TabPanel key={tab.id} value={selectedChatTab} index={idx}>
+      <Box
+        sx={(theme) => ({
+          flex: 1,
+          minHeight: 0,
+          display: "flex",
+          flexDirection: "column",
+          backdropFilter: "blur(8px)",
+          WebkitBackdropFilter: "blur(8px)",
+          boxShadow:
+            theme.palette.mode === "dark"
+              ? "inset 0 1px 0 rgba(255,255,255,0.03), 0 10px 24px rgba(0,0,0,0.25)"
+              : "inset 0 1px 0 rgba(255,255,255,0.82), 0 8px 22px rgba(17,30,59,0.08)",
+          overflow: "hidden",
+        })}
+      >
+        {activeChatTab ? (
+          <Box
+            role="tabpanel"
+            id={`simple-tabpanel-${selectedChatTab}`}
+            aria-labelledby={`simple-tab-${selectedChatTab}`}
+            sx={{
+              flex: 1,
+              minHeight: 0,
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
             <Chat
+              key={activeChatTab.id}
               user={user}
-              chatType={tab.id}
-              nodeId={tab.id === "node" ? currentVisibleNode?.id : ""}
+              chatType={activeChatTab.id}
+              nodeId={activeChatTab.id === "node" ? currentVisibleNode?.id : ""}
               users={users}
               confirmIt={confirmIt}
               setOpenSelectModel={setOpenModel}
               navigateToNode={navigateToNode}
-              nodes={nodes}
+              relatedNodes={nodes}
+              fetchNode={fetchNode}
               scrollingRef={scrollingRef}
-              placeholder={tab.placeholder}
+              placeholder={activeChatTab.placeholder}
+              appName={appName}
             />
-          </TabPanel>
-        ))}
+          </Box>
+        ) : null}
       </Box>
       <Modal
         sx={{
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          backgroundColor: "transparent",
-          // backgroundColor: "rgba(0, 0, 0, 0.5)",
+          background:
+            "radial-gradient(circle at 50% 20%, rgba(35, 35, 40, 0.35), rgba(0, 0, 0, 0.45))",
+          backdropFilter: "blur(6px)",
+          WebkitBackdropFilter: "blur(6px)",
         }}
         open={openModel}
         onClose={handleClose}
@@ -282,78 +537,104 @@ const ChatSideBar = ({
             maxHeight: "80vh",
             minWidth: "900px",
             overflowY: "auto",
-            borderRadius: 2,
-            boxShadow: 24,
+            borderRadius: 3,
+            border: (theme) =>
+              theme.palette.mode === "dark"
+                ? "1px solid rgba(255, 255, 255, 0.12)"
+                : "1px solid rgba(18, 30, 60, 0.12)",
+            bgcolor: (theme) =>
+              theme.palette.mode === "dark"
+                ? "rgba(22, 23, 27, 0.9)"
+                : "rgba(255, 255, 255, 0.95)",
+            boxShadow: "0 28px 70px rgba(0, 0, 0, 0.38)",
             ...SCROLL_BAR_STYLE,
             "&::-webkit-scrollbar": {
               display: "none",
             },
           }}
         >
-          <Paper sx={{ position: "sticky", top: "0", px: "15px", zIndex: 1 }}>
+          <Paper
+            sx={(theme) => ({
+              position: "sticky",
+              top: "0",
+              px: "15px",
+              py: 0.5,
+              zIndex: 1,
+              borderBottom:
+                theme.palette.mode === "dark"
+                  ? "1px solid rgba(255, 255, 255, 0.08)"
+                  : "1px solid rgba(18, 30, 60, 0.08)",
+              bgcolor:
+                theme.palette.mode === "dark"
+                  ? "rgba(27, 28, 32, 0.92)"
+                  : "rgba(252, 253, 255, 0.92)",
+              backdropFilter: "blur(8px)",
+              WebkitBackdropFilter: "blur(8px)",
+            })}
+          >
             <Box sx={{ display: "flex", alignItems: "center" }}>
               <SearchBox
                 setSearch={setSearchValue}
                 search={searchValue}
                 label={"Search ..."}
+                onSearch={handleChromaSearch}
+                loading={loadingChromaSearch}
               />
               <IconButton
                 onClick={() => {
                   setOpenModel(false);
                 }}
+                sx={(theme) => ({
+                  ml: 0.5,
+                  color:
+                    theme.palette.mode === "dark"
+                      ? "rgba(255,255,255,0.78)"
+                      : "rgba(20,24,31,0.7)",
+                  border:
+                    theme.palette.mode === "dark"
+                      ? "1px solid rgba(255,255,255,0.12)"
+                      : "1px solid rgba(18,30,60,0.14)",
+                  bgcolor:
+                    theme.palette.mode === "dark"
+                      ? "rgba(255,255,255,0.03)"
+                      : "rgba(255,255,255,0.9)",
+                  "&:hover": {
+                    bgcolor:
+                      theme.palette.mode === "dark"
+                        ? "rgba(255,255,255,0.09)"
+                        : "rgba(244,247,255,0.95)",
+                  },
+                })}
               >
                 <CloseIcon />
               </IconButton>
             </Box>
           </Paper>
-          <Paper>
-            {searchValue ? (
-              <Box>
-                {" "}
-                {searchResults.map((node: any) => (
-                  <ListItem
-                    key={node.id}
-                    onClick={() => {}}
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      color: "white",
-                      cursor: "pointer",
-                      borderRadius: "4px",
-                      padding: "8px",
-                      transition: "background-color 0.3s",
-                      // border: "1px solid #ccc",
-                      mt: "5px",
-                      "&:hover": {
-                        backgroundColor: (theme) =>
-                          theme.palette.mode === "dark"
-                            ? DESIGN_SYSTEM_COLORS.notebookG450
-                            : DESIGN_SYSTEM_COLORS.gray200,
-                      },
-                    }}
-                  >
-                    {" "}
-                    <Typography>{node.title}</Typography>
-                    <Button
-                      variant="outlined"
-                      onClick={() => sendNode(node.id, node.title)}
-                    >
-                      Send
-                    </Button>
-                  </ListItem>
-                ))}
-              </Box>
-            ) : (
-              <TreeViewSimplified
-                treeVisualization={treeVisualization}
-                expandedNodes={expandedNodes}
-                setExpandedNodes={setExpandedNodes}
-                onOpenNodesTree={onOpenNodesTree}
-                sendNode={sendNode}
-                currentVisibleNode={currentVisibleNode}
-                loadingIds={new Set()}
-              />
-            )}
+          <Paper
+            sx={{
+              background: "transparent",
+            }}
+          >
+            <ExpandSearchResult
+              searchResultsForSelection={displayResults}
+              markItemAsChecked={(nodeId: string) => {
+                const node = displayResults.find((n) => n.id === nodeId);
+                if (node) {
+                  sendNode(node.id, node.title);
+                }
+              }}
+              handleCloning={null}
+              checkedItems={new Set()}
+              user={user}
+              nodes={nodes}
+              cloning={false}
+              isSaving={false}
+              disabledAddButton={false}
+              getNumOfGeneralizations={() => false}
+              selectedProperty=""
+              addACloneNodeQueue={() => {}}
+              currentVisibleNode={currentVisibleNode}
+            />
           </Paper>
         </Box>
       </Modal>

@@ -1,9 +1,23 @@
-import { Box, Typography, Paper, Button, Tooltip } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Paper,
+  Button,
+  Tooltip,
+  Stack,
+  IconButton,
+  Collapse,
+} from "@mui/material";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import SubdirectoryArrowRightIcon from "@mui/icons-material/SubdirectoryArrowRight";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import { alpha } from "@mui/material/styles";
 import OptimizedAvatar from "../Chat/OptimizedAvatar";
 import { getChangeDescription } from "@components/lib/utils/helpers";
 import { NodeChange } from "@components/types/INode";
 import dayjs from "dayjs";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import MarkdownRender from "../Markdown/MarkdownRender";
 import moment from "moment";
 
@@ -13,14 +27,32 @@ const ActivityDetails = ({
   modifiedByDetails,
   selectedDiffNode,
   nodes,
+  childActivities,
+  nested = false,
 }: {
   activity: NodeChange;
   displayDiff: Function;
   modifiedByDetails?: any;
   selectedDiffNode: any;
   nodes: { [nodeId: string]: any };
+  childActivities?: (NodeChange & { id: string })[];
+  nested?: boolean;
 }) => {
   const [isSelected, setIsSelected] = useState(false);
+  const [childrenExpanded, setChildrenExpanded] = useState(false);
+  const isHighlighted = isSelected || selectedDiffNode?.id === activity.id;
+  const changeSummary = getChangeDescription(activity, "");
+  const nodeTitle = nodes[activity.nodeId]?.title || activity.fullNode?.title;
+  const triggeredBy = activity.triggeredBy;
+  const isChildLog = !!triggeredBy;
+  const childCount = childActivities?.length ?? 0;
+  const hasChildren = childCount > 0 && !isChildLog;
+
+  const relativeFromNow = () => {
+    const t = dayjs(new Date(activity.modifiedAt.toDate())).fromNow();
+    return t.includes("NaN") ? "a few minutes ago" : t;
+  };
+
   const getToolTip = () => {
     let tooltipText = "";
     const modifiedMoment = moment(activity.modifiedAt.toDate());
@@ -35,219 +67,565 @@ const ActivityDetails = ({
     return tooltipText;
   };
 
+  const timeTooltipSlotProps = {
+    tooltip: {
+      sx: {
+        bgcolor: "grey.900",
+        color: "grey.50",
+        fontSize: "0.75rem",
+        fontWeight: 500,
+        px: 1,
+        py: 0.75,
+        boxShadow: 4,
+        "& .MuiTooltip-arrow": { color: "grey.900" },
+      },
+    },
+  };
+
+  const metaSecondarySx = {
+    fontSize: "0.8125rem",
+    lineHeight: 1.45,
+    color: "text.secondary",
+  } as const;
+
+  const TimeLabel = (
+    <Tooltip
+      title={getToolTip()}
+      placement="top"
+      arrow
+      slotProps={timeTooltipSlotProps}
+    >
+      <Typography
+        component="span"
+        sx={{
+          ...metaSecondarySx,
+          display: "inline",
+          cursor: "default",
+          letterSpacing: "0.01em",
+          transition: "color 0.15s ease",
+          "&:hover": { color: "text.primary" },
+        }}
+      >
+        {relativeFromNow()}
+      </Typography>
+    </Tooltip>
+  );
+
   return (
     <Box
       sx={{
         display: "flex",
         flexDirection: "column",
-        mt: 2,
+        mt: nested ? 0 : isChildLog ? 1 : 2,
       }}
     >
       <Paper
-        elevation={3}
-        sx={{
-          position: "relative",
-          p: 3,
-          mx: 2,
+        elevation={0}
+        sx={(theme) => ({
+          mx: nested ? 0 : 2,
+          ml: nested ? 0 : 2,
+          p: isChildLog ? 1.75 : 3,
           borderRadius: 3,
-          boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-          transition: "box-shadow 0.3s ease-in-out",
+          border: "1px solid",
+          borderColor: isHighlighted
+            ? alpha(theme.palette.warning.main, 0.55)
+            : theme.palette.mode === "dark"
+              ? alpha(theme.palette.common.white, 0.22)
+              : alpha(theme.palette.grey[700], 0.35),
+          ...(isChildLog
+            ? {
+                borderLeft: "3px dashed",
+                borderLeftColor: alpha(theme.palette.warning.main, 0.55),
+              }
+            : {}),
+          bgcolor: isHighlighted
+            ? alpha(
+                theme.palette.warning.main,
+                theme.palette.mode === "dark" ? 0.1 : 0.06,
+              )
+            : theme.palette.mode === "dark"
+              ? alpha(theme.palette.common.black, 0.2)
+              : theme.palette.background.paper,
+          opacity: isChildLog && !isHighlighted ? 0.92 : 1,
+          boxShadow: isHighlighted
+            ? `0 0 0 1px ${alpha(theme.palette.warning.main, 0.35)}, ${theme.shadows[2]}`
+            : theme.palette.mode === "dark"
+              ? `0 1px 0 ${alpha(theme.palette.common.white, 0.06)} inset`
+              : theme.shadows[1],
+          transition:
+            "box-shadow 0.2s ease, border-color 0.2s ease, background-color 0.2s ease, opacity 0.2s ease",
           "&:hover": {
-            boxShadow: "0 12px 32px rgba(0,0,0,0.15)",
+            borderColor: isHighlighted
+              ? undefined
+              : theme.palette.mode === "dark"
+                ? alpha(theme.palette.common.white, 0.32)
+                : alpha(theme.palette.grey[700], 0.5),
+            opacity: 1,
           },
-          backgroundColor: (theme) =>
-            theme.palette.mode === "dark"
-              ? isSelected || selectedDiffNode?.id === activity.id
-                ? "rgba(173, 216, 230, 0.5)"
-                : "#303134"
-              : isSelected || selectedDiffNode?.id === activity.id
-                ? "rgba(173, 216, 230, 0.5)"
-                : "#e9ebf5",
-        }}
+        })}
       >
-        {modifiedByDetails && (
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              gap: 2,
-              mb: 2,
-            }}
+        <Stack spacing={isChildLog ? 1 : 1.5}>
+          <Stack
+            direction="row"
+            alignItems="stretch"
+            justifyContent="space-between"
+            gap={2}
           >
-            <OptimizedAvatar
-              alt={`${modifiedByDetails.fName} ${modifiedByDetails.lName}`}
-              imageUrl={modifiedByDetails.imageUrl || ""}
-              size={40}
+            <Box
               sx={{
-                width: 40,
-                height: 40,
-                borderRadius: "50%",
-                objectFit: "cover",
+                minWidth: 0,
+                flex: 1,
+                display: "flex",
+                alignItems: "center",
               }}
-            />
-            <Box>
-              <Typography sx={{ fontWeight: 600 }}>
-                {modifiedByDetails.fName} {modifiedByDetails.lName}
-              </Typography>
-              <Tooltip
-                title={getToolTip()}
-                placement="top"
-                componentsProps={{
-                  tooltip: {
-                    sx: {
-                      backgroundColor: "black",
-                      color: "#fff",
-                      fontSize: "12px",
-                      "& .MuiTooltip-arrow": {
-                        color: "black",
-                      },
-                    },
-                  },
+            >
+              {(!modifiedByDetails || isChildLog) && (
+                <Box sx={{ py: 0.25 }}>{TimeLabel}</Box>
+              )}
+              {modifiedByDetails && !isChildLog && (
+                <Stack
+                  direction="row"
+                  alignItems="center"
+                  spacing={2}
+                  sx={{ minWidth: 0, width: "100%" }}
+                >
+                  <Box
+                    sx={(theme) => {
+                      const ring = 44;
+                      const inner = 40;
+                      return {
+                        flexShrink: 0,
+                        width: ring,
+                        height: ring,
+                        borderRadius: "50%",
+                        boxSizing: "border-box",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        lineHeight: 0,
+                        background: `linear-gradient(135deg, ${theme.palette.warning.light} 0%, ${theme.palette.warning.dark} 100%)`,
+                        "& > *": {
+                          flexShrink: 0,
+                        },
+                        [`& .MuiAvatar-root`]: {
+                          width: inner,
+                          height: inner,
+                          minWidth: inner,
+                          boxSizing: "border-box",
+                        },
+                      };
+                    }}
+                  >
+                    <OptimizedAvatar
+                      alt={`${modifiedByDetails.fName} ${modifiedByDetails.lName}`}
+                      imageUrl={modifiedByDetails.imageUrl || ""}
+                      size={40}
+                      sx={{
+                        m: 0,
+                        p: 0,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        overflow: "hidden",
+                      }}
+                    />
+                  </Box>
+                  <Stack
+                    spacing={0.35}
+                    sx={{ minWidth: 0, justifyContent: "center" }}
+                  >
+                    <Typography
+                      sx={{
+                        fontWeight: 600,
+                        fontSize: "0.9375rem",
+                        lineHeight: 1.35,
+                        color: "text.primary",
+                      }}
+                    >
+                      {modifiedByDetails.fName} {modifiedByDetails.lName}
+                    </Typography>
+                    {TimeLabel}
+                  </Stack>
+                </Stack>
+              )}
+            </Box>
+            <Stack
+              direction="row"
+              alignItems="center"
+              spacing={0.5}
+              sx={{ flexShrink: 0 }}
+            >
+              <Button
+                onClick={() => {
+                  if (isHighlighted) {
+                    displayDiff(null);
+                  } else {
+                    displayDiff(null);
+                    displayDiff(activity);
+                    setIsSelected(true);
+                    setTimeout(() => setIsSelected(false), 500);
+                  }
                 }}
+                variant="contained"
+                color="warning"
+                disableElevation
+                size="small"
+                sx={(theme) => ({
+                  borderRadius: 999,
+                  textTransform: "none",
+                  fontWeight: 600,
+                  fontSize: isChildLog ? "0.75rem" : "0.8125rem",
+                  px: isChildLog ? 1.5 : 2.25,
+                  py: isChildLog ? 0.4 : 0.65,
+                  minWidth: isChildLog ? 70 : 92,
+                  boxShadow: "none",
+                  ...(isHighlighted
+                    ? {
+                        bgcolor: "warning.main",
+                        color: "warning.contrastText",
+                        "&:hover": {
+                          bgcolor: "warning.dark",
+                          boxShadow: "none",
+                        },
+                      }
+                    : {
+                        bgcolor:
+                          theme.palette.mode === "dark"
+                            ? alpha(theme.palette.common.white, 0.12)
+                            : theme.palette.grey[200],
+                        color:
+                          theme.palette.mode === "dark"
+                            ? theme.palette.grey[100]
+                            : theme.palette.grey[900],
+                        border: "1px solid",
+                        borderColor:
+                          theme.palette.mode === "dark"
+                            ? alpha(theme.palette.common.white, 0.14)
+                            : theme.palette.grey[300],
+                        "&:hover": {
+                          bgcolor:
+                            theme.palette.mode === "dark"
+                              ? alpha(theme.palette.common.white, 0.18)
+                              : theme.palette.grey[300],
+                          borderColor:
+                            theme.palette.mode === "dark"
+                              ? alpha(theme.palette.common.white, 0.22)
+                              : theme.palette.grey[400],
+                          boxShadow: "none",
+                        },
+                      }),
+                })}
               >
-                <Typography
-                  sx={{
-                    fontSize: "12px",
-                    color: "text.secondary",
-                    display: "inline",
-                    ":hover": {
-                      borderBottom: "2px solid gray",
+                {isHighlighted ? "Unselect" : "View"}
+              </Button>
+              {process.env.NODE_ENV === "development" && (
+                <Tooltip
+                  placement="left"
+                  arrow
+                  title={
+                    <Box
+                      sx={{ py: 0.25, textAlign: "left", maxWidth: 320 }}
+                      component="div"
+                    >
+                      {(
+                        [
+                          ["Log ID", activity.id],
+                          ["Node ID", activity.nodeId],
+                          [
+                            "Log LLM ID",
+                            activity.logLLMId != null &&
+                            activity.logLLMId !== ""
+                              ? String(activity.logLLMId)
+                              : "—",
+                          ],
+                        ] as const
+                      ).map(([label, value]) => (
+                        <Typography
+                          key={label}
+                          variant="caption"
+                          component="div"
+                          sx={{
+                            fontFamily:
+                              "ui-monospace, SFMono-Regular, Menlo, monospace",
+                            fontSize: "0.7rem",
+                            lineHeight: 1.65,
+                            wordBreak: "break-all",
+                          }}
+                        >
+                          <Box
+                            component="span"
+                            sx={{ color: "grey.400", mr: 0.5 }}
+                          >
+                            {label}:
+                          </Box>
+                          <Box component="span" sx={{ color: "grey.100" }}>
+                            {value}
+                          </Box>
+                        </Typography>
+                      ))}
+                    </Box>
+                  }
+                  slotProps={{
+                    tooltip: {
+                      sx: {
+                        bgcolor: "grey.900",
+                        color: "grey.100",
+                        border: "1px solid",
+                        borderColor: alpha("#fff", 0.12),
+                        px: 1.25,
+                        py: 0.75,
+                        boxShadow: 6,
+                        "& .MuiTooltip-arrow": { color: "grey.900" },
+                      },
                     },
                   }}
                 >
-                  {dayjs(new Date(activity.modifiedAt.toDate()))
-                    .fromNow()
-                    .includes("NaN")
-                    ? "a few minutes ago"
-                    : `${dayjs(new Date(activity.modifiedAt.toDate())).fromNow()}`}
-                </Typography>
-              </Tooltip>
+                  <IconButton
+                    size="small"
+                    aria-label="Debug identifiers for this activity"
+                    sx={(theme) => ({
+                      color: "grey.400",
+                      "&:hover": {
+                        color: "common.white",
+                        bgcolor: alpha(theme.palette.common.white, 0.08),
+                      },
+                    })}
+                  >
+                    <InfoOutlinedIcon sx={{ fontSize: 20 }} />
+                  </IconButton>
+                </Tooltip>
+              )}
+            </Stack>
+          </Stack>
+
+          <Box
+            role="status"
+            aria-label="Activity summary and node"
+            sx={(theme) => ({
+              py: isChildLog ? 0 : 1.25,
+              px: isChildLog ? 0 : 1.5,
+              borderRadius: 1.25,
+              border: isChildLog ? "none" : "1px solid",
+              borderColor: alpha(theme.palette.warning.main, 0.45),
+              bgcolor: isChildLog
+                ? "transparent"
+                : alpha(
+                    theme.palette.warning.main,
+                    theme.palette.mode === "dark" ? 0.14 : 0.08,
+                  ),
+              boxShadow:
+                isChildLog || theme.palette.mode !== "dark"
+                  ? "none"
+                  : `0 0 0 1px ${alpha(theme.palette.common.white, 0.04)} inset`,
+            })}
+          >
+            {!isChildLog && (
               <Typography
+                variant="overline"
                 sx={{
-                  fontSize: "13px",
-                  color: "text.secondary",
-                  mt: 0.5,
+                  display: "block",
+                  fontSize: "0.65rem",
+                  fontWeight: 700,
+                  letterSpacing: "0.12em",
+                  color: "warning.main",
+                  lineHeight: 1.2,
+                  mb: 0.5,
                 }}
               >
-                {getChangeDescription(activity, "")}
+                What changed
               </Typography>
-            </Box>
+            )}
+            {triggeredBy && !nested && (
+              <Tooltip
+                title={`Triggered by ${triggeredBy.nodeTitle || "another node"}`}
+                placement="top"
+                arrow
+                slotProps={timeTooltipSlotProps}
+              >
+                <Box
+                  sx={(theme) => ({
+                    mb: 1,
+                    px: 1,
+                    py: 0.4,
+                    borderRadius: 999,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 0.5,
+                    fontSize: "0.75rem",
+                    fontWeight: 600,
+                    letterSpacing: "-0.005em",
+                    color: "warning.main",
+                    border: "1px dashed",
+                    borderColor: alpha(theme.palette.warning.main, 0.55),
+                    bgcolor: alpha(
+                      theme.palette.warning.main,
+                      theme.palette.mode === "dark" ? 0.1 : 0.06,
+                    ),
+                    transition:
+                      "background-color 0.15s ease, border-color 0.15s ease",
+                  })}
+                >
+                  <SubdirectoryArrowRightIcon sx={{ fontSize: 14 }} />
+                  Triggered by edit on
+                  <Box
+                    component="span"
+                    sx={{
+                      maxWidth: 220,
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                      fontWeight: 800,
+                    }}
+                  >
+                    {`"${triggeredBy.nodeTitle || "another node"}"`}
+                  </Box>
+                </Box>
+              </Tooltip>
+            )}
+            <Typography
+              component="p"
+              sx={{
+                m: 0,
+                fontSize: isChildLog ? "0.8125rem" : "0.9375rem",
+                fontWeight: isChildLog ? 500 : 600,
+                lineHeight: 1.5,
+                color: isChildLog ? "text.secondary" : "text.primary",
+                letterSpacing: "-0.01em",
+                wordBreak: "break-word",
+              }}
+            >
+              {changeSummary}
+            </Typography>
+            {nodeTitle ? (
+              <Typography
+                component="p"
+                sx={{
+                  m: 0,
+                  mt: isChildLog ? 0.5 : 1.25,
+                  fontWeight: isChildLog ? 700 : 800,
+                  fontSize: isChildLog ? "0.9375rem" : "1.25rem",
+                  lineHeight: 1.35,
+                  letterSpacing: "-0.02em",
+                  wordBreak: "break-word",
+                  color: "text.primary",
+                }}
+              >
+                {nodeTitle}
+              </Typography>
+            ) : null}
           </Box>
-        )}
-
-        {!modifiedByDetails && (
-          <Typography
-            sx={{
-              fontSize: "13px",
-              color: "text.secondary",
-              mb: 2,
-            }}
-          >
-            {getChangeDescription(activity, "")}
-          </Typography>
-        )}
-
-        <Button
-          onClick={() => {
-            if (isSelected || selectedDiffNode?.id === activity.id) {
-              displayDiff(null);
-            } else {
-              displayDiff(null);
-              displayDiff(activity);
-              setIsSelected(true);
-              setTimeout(() => setIsSelected(false), 500);
-            }
-          }}
-          variant={
-            isSelected || selectedDiffNode?.id === activity.id
-              ? "contained"
-              : "outlined"
-          }
-          sx={{
-            position: "absolute",
-            top: 16,
-            right: 16,
-            borderRadius: 20,
-            fontSize: "12px",
-            textTransform: "none",
-            px: 2,
-            py: 0.5,
-            backgroundColor:
-              isSelected || selectedDiffNode?.id === activity.id
-                ? undefined
-                : (theme) =>
-                    theme.palette.mode === "dark" ? "#29292a" : "#d3d3d3",
-          }}
-        >
-          {isSelected || selectedDiffNode?.id === activity.id
-            ? "Unselect"
-            : "View"}
-        </Button>
-        <Box
-          sx={{
-            mt: modifiedByDetails ? 1 : 0,
-          }}
-        >
-          <Typography
-            variant="h6"
-            sx={{
-              fontWeight: 700,
-              fontSize: "18px",
-              mb: activity.reasoning ? 2 : 0,
-              wordBreak: "break-word",
-            }}
-          >
-            {nodes[activity.nodeId]?.title || activity.fullNode?.title}
-          </Typography>
 
           {activity.reasoning && (
             <Box
-              sx={{
-                p: 2,
-                border: "1px solid #ccc",
-                borderRadius: 2,
-                backgroundColor: (theme) =>
-                  theme.palette.mode === "dark" ? "#424242" : "#f9f9f9",
-              }}
+              sx={(theme) => ({
+                pt: 2,
+                borderTop: "1px solid",
+                borderColor:
+                  theme.palette.mode === "dark"
+                    ? alpha(theme.palette.common.white, 0.06)
+                    : alpha(theme.palette.divider, 0.85),
+              })}
             >
-              <Typography sx={{ fontWeight: 600, mb: 1 }}>Comments</Typography>
-              <MarkdownRender
-                text={activity.reasoning}
-                sx={{
-                  fontSize: "16px",
-                  fontWeight: 400,
-                  letterSpacing: "inherit",
-                }}
-              />
-              {/*<Typography
-                sx={{
-                  fontSize: "14px",
-                  wordBreak: "break-word",
-                }}
+              <Box
+                sx={(theme) => ({
+                  p: 2,
+                  borderRadius: 1.5,
+                  border: "1px solid",
+                  borderColor:
+                    theme.palette.mode === "dark"
+                      ? alpha(theme.palette.common.white, 0.1)
+                      : theme.palette.divider,
+                  bgcolor:
+                    theme.palette.mode === "dark"
+                      ? alpha(theme.palette.common.white, 0.04)
+                      : alpha(theme.palette.warning.main, 0.06),
+                  borderLeft: "2px solid",
+                  borderLeftColor: "warning.main",
+                })}
               >
-                {activity.reasoning}
-              </Typography> */}
+                <Typography
+                  variant="caption"
+                  sx={{
+                    display: "block",
+                    fontWeight: 700,
+                    letterSpacing: "0.06em",
+                    textTransform: "uppercase",
+                    color: "text.secondary",
+                    mb: 1.25,
+                  }}
+                >
+                  Comments
+                </Typography>
+                <MarkdownRender
+                  text={activity.reasoning}
+                  sx={{
+                    fontSize: "0.875rem",
+                    fontWeight: 400,
+                    letterSpacing: "inherit",
+                    lineHeight: 1.65,
+                    color: "text.primary",
+                  }}
+                />
+              </Box>
             </Box>
           )}
-        </Box>
-        {process.env.NODE_ENV === "development" && (
-          <div>
-            <ul>
-              <li>
-                <span style={{ color: "orange" }}>Activity ID:</span>{" "}
-                {activity.id}
-              </li>
-              <li>  
-                <span style={{ color: "orange" }}>Node ID:</span>{" "}
-                {activity.nodeId}
-              </li>
-              <li>
-                <span style={{ color: "orange" }}>Log LLM ID:</span>{" "}
-                {activity.logLLMId}
-              </li>
-            </ul>
-          </div>
-        )}
+
+          {hasChildren && (
+            <Box sx={{ pt: 1.25 }}>
+              <Box sx={{ display: "flex", justifyContent: "flex-start" }}>
+                <Button
+                  onClick={() => setChildrenExpanded((v) => !v)}
+                  startIcon={
+                    childrenExpanded ? (
+                      <ExpandMoreIcon fontSize="small" />
+                    ) : (
+                      <ChevronRightIcon fontSize="small" />
+                    )
+                  }
+                  size="small"
+                  variant="text"
+                  disableElevation
+                  aria-expanded={childrenExpanded}
+                  aria-controls={`triggered-changes-${activity.id ?? "anon"}`}
+                  sx={(theme) => ({
+                    textTransform: "none",
+                    fontSize: "0.8125rem",
+                    fontWeight: 600,
+                    color: "warning.main",
+                    px: 2,
+                    py: 0.85,
+                    minWidth: 0,
+                    borderRadius: 999,
+                    "&:hover": {
+                      bgcolor: alpha(theme.palette.warning.main, 0.1),
+                    },
+                  })}
+                >
+                  {childrenExpanded ? "Hide" : "Show"} {childCount} triggered
+                  change{childCount === 1 ? "" : "s"}
+                </Button>
+              </Box>
+              <Collapse
+                in={childrenExpanded}
+                unmountOnExit
+                id={`triggered-changes-${activity.id ?? "anon"}`}
+              >
+                <Stack spacing={1} sx={{ mt: 1 }}>
+                  {childActivities!.map((child) => (
+                    <ActivityDetails
+                      key={child.id}
+                      activity={child}
+                      displayDiff={displayDiff}
+                      selectedDiffNode={selectedDiffNode}
+                      nodes={nodes}
+                      nested
+                    />
+                  ))}
+                </Stack>
+              </Collapse>
+            </Box>
+          )}
+        </Stack>
       </Paper>
     </Box>
   );

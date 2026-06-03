@@ -409,7 +409,7 @@ function OntTree() {
             onOpenNodesTree={() => {}}
             treeRef={treeRef}
             treeType="oNet"
-            skillsFutureApp={""}
+            appName=""
             specializationNumsUnder={{}}
           />
         </Box>

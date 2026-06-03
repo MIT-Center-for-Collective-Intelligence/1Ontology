@@ -1,7 +1,7 @@
 import { db } from "@components/lib/firestoreServer/admin-exp";
 import { NextApiRequest, NextApiResponse } from "next";
-import { openai } from "./helpers";
 import { extractJSON } from "@components/lib/utils/helpers";
+import { openai } from "./openaiClient";
 
 interface SolutionsResponse {
   description: string;

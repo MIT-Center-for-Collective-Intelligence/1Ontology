@@ -90,7 +90,7 @@ export const propagatePartsChangeToSpecializations = async (
   nodeId: string,
   nodes: { [nodeId: string]: INode },
   user: any,
-  skillsFutureApp: string,
+  appName: string,
   updateLocalNodeCallback?: (
     nodeId: string,
     updatedNodeData: Partial<INode>,
@@ -177,8 +177,7 @@ export const propagatePartsChangeToSpecializations = async (
             changeDetails: {
               reason: `Parts inheritance updated due to changes in parent node ${nodeId}`,
             },
-            skillsFuture: !!skillsFutureApp,
-            ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
+            ...(appName ? { appName } : {}),
           });
         }
 
@@ -187,7 +186,7 @@ export const propagatePartsChangeToSpecializations = async (
           spec.id,
           updatedNodes,
           user,
-          skillsFutureApp,
+          appName,
           updateLocalNodeCallback,
         );
       } catch (error) {
@@ -213,7 +212,7 @@ export const saveAsInheritancePart = async (
   inheritedFromTitle: string,
   user: any,
   action: "add" | "remove" = "add",
-  skillsFutureApp: string,
+  appName: string,
 ): Promise<boolean> => {
   try {
     const db = getFirestore();
@@ -287,8 +286,7 @@ export const saveAsInheritancePart = async (
           inheritedFromTitle,
           inheritedFromId,
         },
-        skillsFuture: !!skillsFutureApp,
-        ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
+        ...(appName ? { appName } : {}),
       });
     }
 
@@ -308,7 +306,7 @@ export const breakInheritanceAndCopyParts = async (
   partIdToRemove: string,
   nodes: { [nodeId: string]: INode },
   user: any,
-  skillsFutureApp: string,
+  appName: string,
 ): Promise<boolean> => {
   try {
     const db = getFirestore();
@@ -358,7 +356,6 @@ export const breakInheritanceAndCopyParts = async (
 
     await updateDoc(nodeDoc.ref, {
       inheritanceParts: nodeData.inheritanceParts,
-      "inheritance.parts.ref": null,
     });
 
     if (user) {
@@ -375,8 +372,7 @@ export const breakInheritanceAndCopyParts = async (
           reason:
             "Broke inheritance and copied inherited parts to inheritanceParts",
         },
-        skillsFuture: !!skillsFutureApp,
-        ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
+        ...(appName ? { appName } : {}),
       });
     }
 
@@ -405,10 +401,6 @@ export const getGeneralizationParts = (
   }[] = [];
 
   let genParts = generalizationNode.properties?.parts;
-  const partInheritanceRef = generalizationNode.inheritance["parts"].ref;
-  if (partInheritanceRef) {
-    genParts = nodes[partInheritanceRef]?.properties["parts"] || [];
-  }
 
   // Add direct parts
   if (genParts) {
@@ -459,10 +451,29 @@ export const getAllGeneralizations = (
     .flatMap((collection: any) =>
       collection.nodes.map((node: any) => ({
         id: node.id,
-        title: getTitle(nodes, node.id),
+        title: node.title || getTitle(nodes, node.id) || "Unknown",
       })),
-    )
-    .filter((gen: any) => nodes[gen.id]);
+    );
+};
+
+export const getEffectiveGeneralizations = (
+  currentVisibleNode: INode,
+  nodes: { [nodeId: string]: INode },
+): { id: string; title: string }[] => {
+  const generalizations = getAllGeneralizations(currentVisibleNode, nodes);
+  if (generalizations.length > 0) return generalizations;
+
+  const parts = currentVisibleNode.properties?.parts;
+  const hasParts = (parts?.[0]?.nodes?.length ?? 0) > 0;
+  if (hasParts) {
+    return [
+      {
+        id: currentVisibleNode.id,
+        title: getTitle(nodes, currentVisibleNode.id),
+      },
+    ];
+  }
+  return [];
 };
 
 // /**

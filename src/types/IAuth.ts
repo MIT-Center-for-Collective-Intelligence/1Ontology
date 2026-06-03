@@ -68,10 +68,11 @@ export type User = {
   email: string;
   claims: any;
   rightPanel: boolean;
-  currentNode: string;
+  currentNode: { [appName: string]: { id: string; title?: string } };
   manageLock: boolean;
   copilot: boolean;
   admin: boolean;
+  searchIsExperimental?: boolean;
 };
 
 export type UserSettings = {

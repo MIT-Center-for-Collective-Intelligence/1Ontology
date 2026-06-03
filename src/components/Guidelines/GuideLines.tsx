@@ -23,11 +23,14 @@ import {
 import { GUIDELINES } from "@components/lib/firestoreClient/collections";
 import { useAuth } from "../context/AuthContext";
 import GuideLineText from "./GuideLineText";
+import { isOntologyEditClaimDenied } from "@components/lib/utils/helpers";
 
 const GuidLines = ({
   setDisplayGuidelines,
+  appName,
 }: {
   setDisplayGuidelines?: any;
+  appName?: string;
 }) => {
   const db = getFirestore();
   const [{ user }] = useAuth();
@@ -35,11 +38,12 @@ const GuidLines = ({
   const [newGuidelines, setNewGuidelines] = useState<{ [id: string]: string }>(
     {},
   );
+  const isEditDisabled = isOntologyEditClaimDenied(user, appName);
 
   useEffect(() => {
-    const nodesQuery = query(collection(db, GUIDELINES));
+    const guidelinesQuery = query(collection(db, GUIDELINES));
 
-    const unsubscribeNodes = onSnapshot(nodesQuery, (snapshot) => {
+    const unsubscribeNodes = onSnapshot(guidelinesQuery, (snapshot) => {
       const docChanges = snapshot.docChanges();
       setGuidelines((prev) => {
         const updatedGuidelines = { ...prev };
@@ -101,12 +105,22 @@ const GuidLines = ({
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
+            p: 4,
+            borderBottomLeftRadius: "25px",
+            borderBottomRightRadius: "25px",
+            mb: "25px",
           }}
         >
           <Typography sx={{ fontSize: "45px" }}>Guidelines</Typography>
           <Button
             variant="contained"
-            sx={{ mb: "3px", mr: 2, ml: "auto" }}
+            sx={{
+              mb: "3px",
+              mr: 2,
+              ml: "auto",
+              borderRadius: "25px",
+              fontSize: "18px",
+            }}
             onClick={() => {
               setDisplayGuidelines(false);
             }}
@@ -116,81 +130,110 @@ const GuidLines = ({
         </Box>
       )}
 
-      {sortedCategories.map((catId) => (
-        <Accordion
-          defaultExpanded={true}
-          key={catId}
-          sx={{
-            borderRadius: "16px",
-            border: "none",
-            // mb: "15px",
-            backgroundColor: (theme) =>
-              !setDisplayGuidelines
-                ? theme.palette.mode === "dark"
-                  ? "#1e1919"
-                  : "#d0d5dd"
-                : "",
-          }}
-        >
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography
-              sx={{
-                fontSize: setDisplayGuidelines ? "29px" : "20px",
-                fontWeight: "bold",
-              }}
-            >
-              {guidelines[catId].category}
-            </Typography>
-          </AccordionSummary>
-          <AccordionDetails sx={{ mt: -5.5 }}>
-            {!!user?.copilot ? (
-              guidelines[catId].guidelines.map(
-                (guideline: string, index: number) => (
-                  <GuideLineText
-                    key={index + catId}
-                    guideline={guideline}
-                    index={index}
-                    onSaveGuideline={modifyGuidelines}
-                    catId={catId}
-                  />
-                ),
-              )
-            ) : (
-              <ul>
-                {guidelines[catId].guidelines.map(
-                  (guideline: string, index: number) => (
-                    <li key={guideline + index}>{guideline}</li>
-                  ),
-                )}
-              </ul>
-            )}
-            {!!user?.copilot && (
-              <TextField
-                fullWidth
-                label="Add new guideline"
-                value={newGuidelines[catId] || ""}
-                onChange={(e) =>
-                  handleNewGuidelineChange(catId, e.target.value)
-                }
-                variant="outlined"
-                margin="normal"
-                InputLabelProps={{
-                  style: { color: "grey" },
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 2,
+        }}
+      >
+        {sortedCategories.map((catId) => (
+          <Accordion
+            defaultExpanded={true}
+            key={catId}
+            sx={{
+              "&:before": { display: "none" },
+              borderRadius: "16px",
+              border: "none",
+              boxShadow: "none",
+              backgroundImage: "none",
+              overflow: "hidden",
+              "&.Mui-expanded": {
+                margin: 0,
+              },
+              "& .MuiAccordionSummary-root": {
+                borderRadius: "16px",
+                minHeight: 48,
+                "&.Mui-expanded": {
+                  minHeight: 48,
+                },
+              },
+              "& .MuiAccordionSummary-content": {
+                my: 1,
+                "&.Mui-expanded": {
+                  my: 1,
+                },
+              },
+              backgroundColor: (theme) =>
+                !setDisplayGuidelines
+                  ? theme.palette.mode === "dark"
+                    ? "#1e1919"
+                    : "#d0d5dd"
+                  : "",
+            }}
+          >
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Typography
+                sx={{
+                  fontSize: setDisplayGuidelines ? "29px" : "20px",
+                  fontWeight: "bold",
                 }}
-              />
-            )}
-            {newGuidelines[catId]?.trim() && !!user?.copilot && (
-              <Button
-                color="primary"
-                onClick={() => addNewGuideline(catId)}
-                disabled={!newGuidelines[catId]?.trim()}
               >
-                Add new guideline
-              </Button>
-            )}
-          </AccordionDetails>
-        </Accordion>
-      ))}
+                {guidelines[catId].category}
+              </Typography>
+            </AccordionSummary>
+            <AccordionDetails sx={{ mt: -5.5 }}>
+              {!!user?.copilot ? (
+                guidelines[catId].guidelines.map(
+                  (guideline: string, index: number) => (
+                    <GuideLineText
+                      key={index + catId}
+                      guideline={guideline}
+                      index={index}
+                      onSaveGuideline={modifyGuidelines}
+                      catId={catId}
+                      disabled={isEditDisabled}
+                    />
+                  ),
+                )
+              ) : (
+                <ul>
+                  {guidelines[catId].guidelines.map(
+                    (guideline: string, index: number) => (
+                      <li key={guideline + index}>{guideline}</li>
+                    ),
+                  )}
+                </ul>
+              )}
+              {!!user?.copilot && (
+                <TextField
+                  fullWidth
+                  disabled={isEditDisabled}
+                  label="Add new guideline"
+                  value={newGuidelines[catId] || ""}
+                  onChange={(e) =>
+                    handleNewGuidelineChange(catId, e.target.value)
+                  }
+                  variant="outlined"
+                  margin="normal"
+                  InputLabelProps={{
+                    style: { color: "grey" },
+                  }}
+                />
+              )}
+              {newGuidelines[catId]?.trim() && !!user?.copilot && (
+                <Button
+                  color="primary"
+                  onClick={() => addNewGuideline(catId)}
+                  disabled={!newGuidelines[catId]?.trim()}
+                >
+                  Add new guideline
+                </Button>
+              )}
+            </AccordionDetails>
+          </Accordion>
+        ))}
+      </Box>
     </Box>
   );
 };

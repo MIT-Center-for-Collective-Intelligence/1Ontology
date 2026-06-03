@@ -78,8 +78,10 @@ const LinkEditor = ({
           sx={{ width: "95%", m: 0.5, my: "15px" }}
         />
         <FormControl fullWidth sx={{ my: "15px" }}>
-          <InputLabel>Certainty</InputLabel>
+          <InputLabel id="link-editor-certainty-label">Certainty</InputLabel>
           <Select
+            labelId="link-editor-certainty-label"
+            id="link-editor-certainty"
             value={selectedLink.certainty || ""}
             label="Certainty"
             onChange={(e) =>
@@ -97,8 +99,10 @@ const LinkEditor = ({
           </Select>
         </FormControl>
         <FormControl fullWidth sx={{ my: "15px" }}>
-          <InputLabel>Polarity</InputLabel>
+          <InputLabel id="link-editor-polarity-label">Polarity</InputLabel>
           <Select
+            labelId="link-editor-polarity-label"
+            id="link-editor-polarity"
             value={selectedLink.polarity || ""}
             label="Polarity"
             onChange={(e) =>

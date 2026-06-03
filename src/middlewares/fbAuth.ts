@@ -1,4 +1,3 @@
-import { getAuth } from "firebase-admin/auth";
 import { Timestamp } from "firebase-admin/firestore";
 import { NextApiHandler, NextApiRequest, NextApiResponse } from "next";
 
@@ -16,18 +15,16 @@ export interface IRequestLog {
 const retrieveAuthenticatedUser = async ({
   uname,
   uid,
+  claims,
 }: {
   uname: string | null;
   uid: string;
+  claims?: Record<string, unknown>;
 }) => {
   try {
     let userData: any = {};
     let query: any;
     let errorMessage = "";
-
-    const auth = getAuth();
-    const userRecord = await auth.getUser(uid);
-    const userClaims = userRecord.customClaims || {};
 
     if (uname) {
       query = db.doc(`/users/${uname}`);
@@ -42,7 +39,7 @@ const retrieveAuthenticatedUser = async ({
       } else if (uid) {
         userData = userDoc.docs[0].data();
       }
-      userData.claims = userClaims;
+      userData.claims = claims || {};
     } else {
       errorMessage = "The user does not exist!";
       console.error(errorMessage);
@@ -95,6 +92,7 @@ const fbAuth = (handler: NextApiHandler, addCors: boolean = false) => {
       const { status, data } = await retrieveAuthenticatedUser({
         uname: null,
         uid: user.uid,
+        claims: user,
       });
       if (status !== 200) return res.status(status).send({ error: data });
       //authenticated

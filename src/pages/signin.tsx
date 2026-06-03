@@ -25,25 +25,77 @@ import { getFirebaseFriendlyError } from "@components/lib/utils/firebaseErrors";
 import ROUTES from "@components/lib/utils/routes";
 import { NextPageWithLayout } from "@components/types/IAuth";
 import { LoadingButton } from "@mui/lab";
-import { Box, Button, TextField, Typography } from "@mui/material";
+import {
+  Alert,
+  AlertTitle,
+  Box,
+  Button,
+  GlobalStyles,
+  Paper,
+  TextField,
+  Typography,
+} from "@mui/material";
 import { FirebaseError } from "firebase/app";
 import { useFormik } from "formik";
 import NextLink from "next/link";
+import { useRouter } from "next/router";
 import { useSnackbar } from "notistack";
 import React, { ReactNode, useState } from "react";
 
 import * as yup from "yup";
 import { getAuth, signOut } from "firebase/auth";
+import { delay } from "@components/lib/utils/utils";
+import { ONTOLOGY_APPS } from "@components/lib/CONSTANTS";
 
 interface SignInFormValues {
   email: string;
   password: string;
 }
 
+const IosDotsLoader = ({
+  color = "rgba(255, 255, 255, 0.92)",
+}: {
+  color?: string;
+}) => {
+  return (
+    <Box
+      aria-label="loading"
+      sx={{
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: "5px",
+        height: 18,
+        "@keyframes iosDotPulse": {
+          "0%, 80%, 100%": { transform: "scale(0.55)", opacity: 0.35 },
+          "40%": { transform: "scale(1)", opacity: 1 },
+        },
+      }}
+    >
+      {[0, 1, 2].map((i) => (
+        <Box
+          // eslint-disable-next-line react/no-array-index-key
+          key={i}
+          sx={{
+            width: 5,
+            height: 5,
+            borderRadius: "999px",
+            backgroundColor: color,
+            boxShadow: "0 1px 1px rgba(0,0,0,0.28)",
+            animation: "iosDotPulse 1.05s infinite ease-in-out",
+            animationDelay: `${i * 0.16}s`,
+          }}
+        />
+      ))}
+    </Box>
+  );
+};
+
 const SignInPage: NextPageWithLayout = () => {
+  const router = useRouter();
   const [, { handleError }] = useAuth();
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();
-  const [isLoading, setIsLoading] = useState(false);
+  const [signInError, setSignInError] = useState<string | null>(null);
 
   const initialValues: SignInFormValues = {
     email: "",
@@ -56,21 +108,30 @@ const SignInPage: NextPageWithLayout = () => {
   });
   const handleSignIn = async ({ email, password }: SignInFormValues) => {
     try {
-      setIsLoading(true);
+      setSignInError(null);
       const returnR = await signIn(email, password);
       if (!returnR.emailVerified) {
-        enqueueSnackbar("Please verify your email first.", {
+        const msg = "Please verify your email first.";
+        setSignInError(msg);
+        enqueueSnackbar(msg, {
           variant: "error",
           autoHideDuration: 10000,
         });
-        setIsLoading(false);
         await signOut(getAuth());
         return;
       }
       closeSnackbar();
+      await delay(5000);
+      await router.push(`/${ONTOLOGY_APPS[0].id}`);
     } catch (error) {
       const errorMessage = getFirebaseFriendlyError(error as FirebaseError);
-      setIsLoading(false);
+      setSignInError(
+        errorMessage ===
+          "There is no user record corresponding to this identifier." ||
+          errorMessage === "The password is invalid."
+          ? "The login information you entered is incorrect."
+          : errorMessage,
+      );
       handleError({ error, errorMessage });
     }
   };
@@ -82,66 +143,262 @@ const SignInPage: NextPageWithLayout = () => {
   });
 
   return (
-    <Box sx={{ p: { xs: "8px", md: "24px", width: "100%" }, my: "92px" }}>
-      <Typography variant="h1" sx={{ mb: "8px" }}>
-        Log in
-      </Typography>
-
-      <form data-testid="signin-form" onSubmit={formik.handleSubmit}>
-        <TextField
-          id="email"
-          name="email"
-          label="Email"
-          type="email"
-          value={formik.values.email}
-          onChange={formik.handleChange}
-          onBlur={formik.handleBlur}
-          variant="outlined"
-          error={Boolean(formik.errors.email) && Boolean(formik.touched.email)}
-          helperText={formik.errors.email}
-          fullWidth
-          sx={{ mb: "24px" }}
-        />
-        <TextField
-          id="password"
-          name="password"
-          label="Password"
-          type="password"
-          value={formik.values.password}
-          onChange={formik.handleChange}
-          onBlur={formik.handleBlur}
-          variant="outlined"
-          error={
-            Boolean(formik.errors.password) && Boolean(formik.touched.password)
-          }
-          helperText={formik.errors.password}
-          fullWidth
-        />
-        <Box
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        width: "100%",
+        px: { xs: 2, sm: 3 },
+        py: { xs: 4, sm: 6 },
+      }}
+    >
+      <Paper
+        elevation={6}
+        sx={{
+          p: { xs: 3, sm: 5 },
+          borderRadius: "28px",
+          maxWidth: 420,
+          width: "100%",
+          mx: "auto",
+          textAlign: "center",
+          border: "1px solid rgba(255,255,255,0.10)",
+          backgroundColor: "rgba(20, 20, 22, 0.68)",
+          backdropFilter: "blur(22px)",
+          WebkitBackdropFilter: "blur(22px)",
+          boxShadow:
+            "0 24px 70px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.06)",
+        }}
+      >
+        <Typography
+          variant="h4"
           sx={{
-            textAlign: "center",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            my: "32px",
+            mb: 0.75,
+            fontWeight: 900,
+            letterSpacing: "-0.02em",
+            color: "rgba(255,255,255,0.94)",
+            fontSize: { xs: "34px", sm: "52px" },
           }}
         >
+          Sign In
+        </Typography>
+        <Typography
+          sx={{
+            mb: 3.25,
+            color: "rgba(255,255,255,0.70)",
+            fontSize: { xs: "0.98rem", sm: "1.05rem" },
+            lineHeight: 1.4,
+          }}
+        >
+          Welcome back. Sign in to continue.
+        </Typography>
+        <GlobalStyles
+          styles={{
+            "& input:-webkit-autofill": {
+              boxShadow: `0px 0px 0px 100px #313131 inset !important`,
+              WebkitTextFillColor: `${"#fff"} !important`,
+              caretColor: "#fff !important",
+            },
+          }}
+        />
+        <form data-testid="signin-form" onSubmit={formik.handleSubmit}>
+          {signInError ? (
+            <Alert
+              severity="error"
+              onClose={() => setSignInError(null)}
+              icon={false}
+              sx={{
+                mb: 3,
+                textAlign: "left",
+                borderRadius: "18px",
+                border: "1px solid rgba(255, 99, 99, 0.35)",
+                background:
+                  "linear-gradient(135deg, rgba(255, 78, 78, 0.18), rgba(255, 255, 255, 0.06))",
+                backdropFilter: "blur(10px)",
+                boxShadow:
+                  "0 18px 45px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.08)",
+                "& .MuiAlert-message": { width: "100%" },
+                "& .MuiAlert-action": { pt: 0.75 },
+              }}
+            >
+              <AlertTitle
+                sx={{
+                  mb: 0.5,
+                  fontWeight: 800,
+                  letterSpacing: "0.2px",
+                  color: "rgba(255,255,255,0.95)",
+                }}
+              >
+                Sign-in failed
+              </AlertTitle>
+              <Typography
+                variant="body2"
+                sx={{
+                  color: "rgba(255,255,255,0.85)",
+                  lineHeight: 1.5,
+                  fontSize: "0.95rem",
+                }}
+              >
+                {signInError}
+              </Typography>
+            </Alert>
+          ) : null}
+          <TextField
+            id="email"
+            name="email"
+            label="Email"
+            type="email"
+            value={formik.values.email}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            variant="outlined"
+            error={Boolean(formik.errors.email && formik.touched.email)}
+            helperText={formik.touched.email && formik.errors.email}
+            fullWidth
+            sx={{
+              mb: 2.25,
+              "& .MuiInputLabel-root": { color: "rgba(255,255,255,0.70)" },
+              "& .MuiInputLabel-root.Mui-focused": {
+                color: "rgba(255,255,255,0.88)",
+              },
+              "& .MuiFormHelperText-root": {
+                color: "rgba(255, 160, 160, 0.95)",
+              },
+            }}
+            InputProps={{
+              sx: {
+                fontSize: "17px",
+                borderRadius: "18px",
+                color: "rgba(255,255,255,0.92)",
+                background:
+                  "linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.03))",
+                "& .MuiOutlinedInput-notchedOutline": {
+                  borderRadius: "18px",
+                  borderColor: "rgba(255,255,255,0.18)",
+                },
+                "&:hover .MuiOutlinedInput-notchedOutline": {
+                  borderColor: "rgba(255,255,255,0.28)",
+                },
+                "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                  borderColor: "rgba(255, 140, 0, 0.65)",
+                  boxShadow: "0 0 0 4px rgba(255, 140, 0, 0.18)",
+                },
+              },
+            }}
+          />
+
+          <TextField
+            id="password"
+            name="password"
+            label="Password"
+            type="password"
+            value={formik.values.password}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            variant="outlined"
+            error={Boolean(formik.errors.password && formik.touched.password)}
+            helperText={formik.touched.password && formik.errors.password}
+            fullWidth
+            sx={{
+              mb: 3,
+              "& .MuiInputLabel-root": { color: "rgba(255,255,255,0.70)" },
+              "& .MuiInputLabel-root.Mui-focused": {
+                color: "rgba(255,255,255,0.88)",
+              },
+              "& .MuiFormHelperText-root": {
+                color: "rgba(255, 160, 160, 0.95)",
+              },
+            }}
+            InputProps={{
+              sx: {
+                fontSize: "17px",
+                borderRadius: "18px",
+                color: "rgba(255,255,255,0.92)",
+                background:
+                  "linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.03))",
+                "& .MuiOutlinedInput-notchedOutline": {
+                  borderRadius: "18px",
+                  borderColor: "rgba(255,255,255,0.18)",
+                },
+                "&:hover .MuiOutlinedInput-notchedOutline": {
+                  borderColor: "rgba(255,255,255,0.28)",
+                },
+                "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                  borderColor: "rgba(255, 140, 0, 0.65)",
+                  boxShadow: "0 0 0 4px rgba(255, 140, 0, 0.18)",
+                },
+              },
+            }}
+          />
+
           <LoadingButton
             aria-label="submit"
-            loading={isLoading}
+            loading={formik.isSubmitting}
+            loadingIndicator={<IosDotsLoader />}
             disabled={formik.isSubmitting}
+            loadingPosition="center"
             type="submit"
             variant="contained"
             fullWidth
-            sx={{ borderRadius: "26px", width: "90px" }}
+            sx={{
+              borderRadius: "14px",
+              py: 1.75,
+              px: 3,
+              fontWeight: 600,
+              fontSize: "15px",
+              letterSpacing: "0.02em",
+              textTransform: "none",
+              color: "#ffffff",
+              backgroundColor: "#3b82f6",
+              border: "none",
+              boxShadow: "none",
+              transition: "background-color 120ms ease",
+              "& .MuiLoadingButton-loadingIndicator": {
+                left: "50%",
+                transform: "translateX(-50%)",
+                color: "#ffffff",
+              },
+              "&:hover": {
+                backgroundColor: "#2563eb",
+                boxShadow: "none",
+              },
+              "&:active": {
+                backgroundColor: "#1d4ed8",
+              },
+              "&.Mui-disabled": {
+                color: "rgba(255,255,255,0.85)",
+                backgroundColor: "rgba(59, 130, 246, 0.5)",
+              },
+            }}
           >
-            LOG IN
+            {formik.isSubmitting ? (
+              <Box component="span" sx={{ display: "block", height: 18 }} />
+            ) : (
+              "Sign In"
+            )}
           </LoadingButton>
+
           <NextLink href={ROUTES.forgotPassword} passHref>
-            <Button sx={{ my: "20px" }}>Forgot Password?</Button>
+            <Button
+              sx={{
+                mt: 2.5,
+                textTransform: "none",
+                fontSize: "14px",
+                fontWeight: 650,
+                borderRadius: "999px",
+                color: "rgba(255,255,255,0.75)",
+                px: 2.25,
+                "&:hover": {
+                  color: "rgba(255,255,255,0.92)",
+                  backgroundColor: "rgba(255,255,255,0.06)",
+                },
+              }}
+            >
+              Forgot Password?
+            </Button>
           </NextLink>
-        </Box>
-      </form>
+        </form>
+      </Paper>
     </Box>
   );
 };

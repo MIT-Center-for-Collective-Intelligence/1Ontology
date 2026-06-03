@@ -17,7 +17,7 @@ interface AddPropertyFormProps {
   locked: boolean;
   setOpenAddProperty: any;
   exitingProperties: string[];
-  skillsFuture: boolean;
+  appName?: string;
 }
 
 const SpecialCharacterRegex = /^[a-zA-Z0-9 ]*$/; // Adjust regex as necessary
@@ -27,7 +27,7 @@ const AddPropertyForm: React.FC<AddPropertyFormProps> = ({
   locked,
   setOpenAddProperty,
   exitingProperties,
-  skillsFuture,
+  appName,
 }) => {
   const [propertyType, setPropertyType] = useState<string>("String");
   const [newPropertyTitle, setNewPropertyTitle] = useState<string>("");
@@ -96,12 +96,13 @@ const AddPropertyForm: React.FC<AddPropertyFormProps> = ({
           <InputLabel id="property-type-label">Type</InputLabel>
           <Select
             labelId="property-type-label"
+            id="add-property-type"
             value={propertyType}
             onChange={(event) => setPropertyType(event.target.value)}
             label="Property Type"
             sx={{ borderRadius: "20px" }}
           >
-            {(skillsFuture
+            {(!!appName
               ? ["String", "Activity"]
               : [
                   "String",

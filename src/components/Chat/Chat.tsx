@@ -5,7 +5,9 @@ import {
   // Divider,
   Popover,
   Skeleton,
+  Typography,
 } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import { EmojiClickData } from "emoji-picker-react";
 import CloseIcon from "@mui/icons-material/Close";
 import {
@@ -17,6 +19,7 @@ import {
   doc,
   FieldValue,
   getDoc,
+  getDocs,
   getFirestore,
   increment,
   onSnapshot,
@@ -26,14 +29,20 @@ import {
   where,
   writeBatch,
 } from "firebase/firestore";
+import { getDatabase, ref, remove, update } from "firebase/database";
 import dynamic from "next/dynamic";
+import Image from "next/image";
 import React, { Suspense, useEffect, useRef, useState } from "react";
 import { TransitionGroup } from "react-transition-group";
 // import { NotFoundNotification } from "../Sidebar/SidebarV2/NotificationSidebar";
 import { IChatMessage, Reaction } from "@components/types/IChat";
 
-import { RiveComponentMemoized } from "../Common/RiveComponentExtended";
-import { MESSAGES, NODES } from "@components/lib/firestoreClient/collections";
+import {
+  MESSAGES,
+  NODES,
+  NOTIFICATIONS,
+  UNREAD_COMMENTS,
+} from "@components/lib/firestoreClient/collections";
 import {
   chatChange,
   getMessagesSnapshot,
@@ -58,10 +67,27 @@ type ChatProps = {
   setOpenSelectModel: React.Dispatch<React.SetStateAction<boolean>>;
   users: any;
   navigateToNode: any;
-  nodes: { [nodeId: string]: INode };
+  relatedNodes: { [nodeId: string]: INode };
+  fetchNode: (nodeId: string) => Promise<INode | null>;
   scrollingRef: any;
   placeholder: string;
+  appName: string;
 };
+
+const CHAT_EMPTY_STATE_BY_TYPE: Record<string, string> = {
+  node: "No messages yet for this node. Add the first one below.",
+  discussion: "No discussion yet. Start the discussion below.",
+  bug_report: "No bug reports yet. Describe the issue below.",
+  feature_request: "No feature requests yet. Suggest one below.",
+  help: "No help requests yet. Ask a question below.",
+};
+
+function emptyStateMessageForChatType(chatType: string): string {
+  return (
+    CHAT_EMPTY_STATE_BY_TYPE[chatType] ??
+    "No messages yet. Add the first message below."
+  );
+}
 
 const Chat = ({
   user,
@@ -71,11 +97,14 @@ const Chat = ({
   setOpenSelectModel,
   users,
   navigateToNode,
-  nodes,
+  relatedNodes,
+  fetchNode,
   scrollingRef,
   placeholder,
+  appName,
 }: ChatProps) => {
   const db = getFirestore();
+  const rtdb = getDatabase();
   const [showReplies, setShowReplies] = useState<string | null>(null);
   const [editing, setEditing] = useState<any | null>(null);
   const [replies, setReplies] = useState<any[]>([]);
@@ -94,6 +123,13 @@ const Chat = ({
   const [openMedia, setOpenMedia] = useState<any>("");
 
   const scrolled = useRef(false);
+
+  // Mark this node's comments as read when the user opens the chat panel
+  useEffect(() => {
+    if (chatType !== "node" || !nodeId || !user?.uname) return;
+    remove(ref(rtdb, `/${UNREAD_COMMENTS}/${appName}/${user.uname}/${nodeId}`));
+  }, [nodeId, chatType, user?.uname]);
+
   useEffect(() => {
     setMessages([]);
     if (!user) return;
@@ -374,8 +410,9 @@ const Chat = ({
         seen: false,
         type: chatType,
         createdAt: new Date(),
+        deleted: false,
       };
-      const notificationRef = doc(collection(db, "notifications"));
+      const notificationRef = doc(collection(db, NOTIFICATIONS));
       batch.set(notificationRef, notificationData);
     }
     await batch.commit();
@@ -411,10 +448,22 @@ const Chat = ({
       (nodeData?.contributors || []).forEach((contributor: string) => {
         taggedUsers.add(contributor);
       });
+
+      // Mark this node as having unread comments for all other users
+      const updates: { [key: string]: boolean } = {};
+      for (const userData of users) {
+        if (userData.uname === user.uname) continue;
+        updates[
+          `/${UNREAD_COMMENTS}/${appName}/${userData.uname}/${nodeId}/${docRef.id}`
+        ] = true;
+      }
+      if (Object.keys(updates).length > 0) {
+        update(ref(rtdb), updates);
+      }
     }
 
     createNotifications(
-      `New Message from ${user.fName + " " + user.lName}`,
+      `New Comment from ${user.fName + " " + user.lName}`,
       text,
       docRef.id,
       taggedUsers,
@@ -485,15 +534,51 @@ const Chat = ({
       editedAt: new Date(),
     });
   };
+  const clearCommentNotifications = async (entityId: string) => {
+    const db = getFirestore();
+    if (!nodeId) return;
+    let batch = writeBatch(db);
+    const notificationDocs = await getDocs(
+      query(
+        collection(db, NOTIFICATIONS),
+        where("entityId", "==", entityId),
+        where("deleted", "==", false),
+      ),
+    );
+    let writeCount = 0;
+    for (let notDoc of notificationDocs.docs) {
+      batch.update(notDoc.ref, { deleted: true });
+      if (writeCount++ > 498) {
+        await batch.commit();
+        batch = writeBatch(db);
+        writeCount = 0;
+      }
+    }
+    await batch.commit();
+  };
 
   const deleteMessage = async (messageId: string) => {
     try {
       if (!messageId) return;
       const commentRef = getMessageDocRef(messageId);
+      await updateDoc(commentRef, { deleted: true });
+
+      if (chatType === "node" && nodeId) {
+        const updates: { [path: string]: null } = {};
+        for (const userData of users) {
+          updates[
+            `/${UNREAD_COMMENTS}/${appName}/${userData.uname}/${nodeId}/${messageId}`
+          ] = null;
+        }
+        if (Object.keys(updates).length > 0) {
+          update(ref(rtdb), updates);
+        }
+      }
+
       await updateDoc(commentRef, {
         deleted: true,
       });
-
+      await clearCommentNotifications(messageId);
       recordLogs({
         action: "Deleted a message",
         messageId: messageId,
@@ -547,6 +632,7 @@ const Chat = ({
       await updateDoc(replyRef, {
         deleted: true,
       });
+      await clearCommentNotifications(replyId);
       await updateDoc(commentRef, {
         totalReplies: increment(-1),
       });
@@ -609,7 +695,8 @@ const Chat = ({
             navigateToNode={navigateToNode}
             replies={replies}
             chatType={chatType}
-            nodes={nodes}
+            relatedNodes={relatedNodes}
+            fetchNode={fetchNode}
             setOpenMedia={setOpenMedia}
           />
         ))}
@@ -621,42 +708,136 @@ const Chat = ({
     <Box
       sx={{
         position: "relative",
-        borderRadius: "15px",
+        borderRadius: "28px",
         listStyle: "none",
-        transition: "box-shadow 0.3s",
+        transition: "box-shadow 0.3s, border-color 0.3s, background 0.3s",
+        flex: 1,
+        minHeight: 0,
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+        isolation: "isolate",
+        backdropFilter: "blur(28px) saturate(180%)",
+        WebkitBackdropFilter: "blur(28px) saturate(180%)",
+        background: (theme) =>
+          theme.palette.mode === "dark"
+            ? `linear-gradient(145deg, ${alpha("#ffffff", 0.16)} 0%, ${alpha(
+                "#8ab4ff",
+                0.1,
+              )} 42%, ${alpha("#05070d", 0.58)} 100%)`
+            : `linear-gradient(145deg, ${alpha("#ffffff", 0.82)} 0%, ${alpha(
+                "#dfeaff",
+                0.68,
+              )} 44%, ${alpha("#ffffff", 0.42)} 100%)`,
+        border: (theme) =>
+          theme.palette.mode === "dark"
+            ? "1px solid rgba(255, 255, 255, 0.24)"
+            : "1px solid rgba(255, 255, 255, 0.72)",
+        boxShadow: (theme) =>
+          theme.palette.mode === "dark"
+            ? `inset 0 1px 0 ${alpha("#ffffff", 0.2)}, inset 0 -1px 0 ${alpha(
+                "#ffffff",
+                0.06,
+              )}, 0 24px 70px ${alpha("#000000", 0.36)}`
+            : `inset 0 1px 0 ${alpha("#ffffff", 0.9)}, inset 0 -1px 0 ${alpha(
+                "#ffffff",
+                0.42,
+              )}, 0 24px 70px ${alpha("#1d3769", 0.16)}`,
+        "&::before": {
+          content: '""',
+          position: "absolute",
+          inset: 0,
+          zIndex: -2,
+          background: (theme) =>
+            theme.palette.mode === "dark"
+              ? `radial-gradient(circle at 20% 8%, ${alpha(
+                  theme.palette.primary.light,
+                  0.28,
+                )}, transparent 34%), radial-gradient(circle at 88% 4%, ${alpha(
+                  "#ffffff",
+                  0.14,
+                )}, transparent 24%), radial-gradient(circle at 50% 110%, ${alpha(
+                  theme.palette.secondary?.main || theme.palette.primary.main,
+                  0.18,
+                )}, transparent 36%)`
+              : `radial-gradient(circle at 18% 8%, ${alpha(
+                  theme.palette.primary.light,
+                  0.3,
+                )}, transparent 34%), radial-gradient(circle at 88% 6%, ${alpha(
+                  "#ffffff",
+                  0.88,
+                )}, transparent 26%), radial-gradient(circle at 50% 112%, ${alpha(
+                  theme.palette.primary.main,
+                  0.13,
+                )}, transparent 38%)`,
+        },
+        "&::after": {
+          content: '""',
+          position: "absolute",
+          inset: "1px",
+          zIndex: -1,
+          borderRadius: "27px",
+          pointerEvents: "none",
+          background:
+            "linear-gradient(135deg, rgba(255,255,255,0.34), rgba(255,255,255,0.06) 38%, rgba(255,255,255,0.18) 100%)",
+          mixBlendMode: "screen",
+          opacity: 0.75,
+        },
       }}
     >
-      <Popover
-        open={openPicker}
-        anchorEl={anchorEl}
-        onClose={handleCloseEmojiPicker}
-        anchorOrigin={{
-          vertical: "top",
-          horizontal: "left",
+      <Box
+        sx={{
+          position: "absolute",
+          left: 0,
+          top: 0,
+          width: 0,
+          height: 0,
+          overflow: "visible",
+          zIndex: 2,
         }}
       >
-        {openPicker && (
-          <DynamicMemoEmojiPicker
-            width="300px"
-            height="400px"
-            onEmojiClick={handleEmojiClick}
-            lazyLoadEmojis={true}
-            theme={"dark"}
-          />
-        )}
-      </Popover>
+        <Popover
+          open={openPicker}
+          anchorEl={anchorEl}
+          onClose={handleCloseEmojiPicker}
+          anchorOrigin={{
+            vertical: "top",
+            horizontal: "left",
+          }}
+        >
+          {openPicker && (
+            <DynamicMemoEmojiPicker
+              width="300px"
+              height="400px"
+              onEmojiClick={handleEmojiClick}
+              lazyLoadEmojis={true}
+              theme={"dark"}
+            />
+          )}
+        </Popover>
+      </Box>
       <Box
         sx={{
           display: "flex",
           flexDirection: "column",
-          justifyContent: "space-between",
+          flex: "1 1 0",
+          minHeight: 0,
+          position: "relative",
+          zIndex: 1,
         }}
       >
         <Box
           id="comments-section"
           sx={{
-            height: "calc(100vh - 180px)",
+            flex: "1 1 0",
+            minHeight: 0,
             overflow: "auto",
+            borderRadius: "28px 28px 18px 18px",
+            background: (theme) =>
+              `linear-gradient(180deg, ${alpha(
+                theme.palette.background.paper,
+                theme.palette.mode === "dark" ? 0.08 : 0.22,
+              )}, transparent 36%)`,
             "&::-webkit-scrollbar": {
               display: "none",
             },
@@ -731,45 +912,115 @@ const Chat = ({
                 alignItems: "center",
                 justifyContent: "center",
                 marginTop: "40%",
+                px: 2,
+                color: "text.primary",
+                "@keyframes chatEmptyFloat": {
+                  "0%, 100%": { transform: "translateY(0)" },
+                  "50%": { transform: "translateY(-10px)" },
+                },
+                "@keyframes chatEmptyShimmer": {
+                  "0%": { opacity: 0.45 },
+                  "50%": { opacity: 1 },
+                  "100%": { opacity: 0.45 },
+                },
               }}
             >
               <Box
-                sx={{ height: "100%", display: "grid", placeItems: "center" }}
+                sx={{
+                  width: "100%",
+                  maxWidth: 320,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: 2.5,
+                }}
               >
                 <Box
                   sx={{
-                    width: { xs: "250px", sm: "300px" },
-                    height: { xs: "250px", sm: "200px" },
-                    "& .rive-canvas": {
-                      height: "100%",
-                    },
+                    width: "100%",
+                    minHeight: 140,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 1.25,
+                    justifyContent: "center",
                   }}
                 >
-                  <RiveComponentMemoized
-                    src="/rive/notification.riv"
-                    animations={"Timeline 1"}
-                    artboard="New Artboard"
-                    autoplay={true}
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                    }}
-                  />
+                  {[
+                    {
+                      align: "flex-start" as const,
+                      w: "72%",
+                      h: 36,
+                      delay: "0s",
+                    },
+                    {
+                      align: "flex-end" as const,
+                      w: "58%",
+                      h: 28,
+                      delay: "0.12s",
+                    },
+                    {
+                      align: "flex-start" as const,
+                      w: "64%",
+                      h: 32,
+                      delay: "0.24s",
+                    },
+                  ].map((b, i) => (
+                    <Box
+                      key={i}
+                      sx={{
+                        alignSelf: b.align,
+                        width: b.w,
+                        height: b.h,
+                        borderRadius: 2.5,
+                        backdropFilter: "blur(18px) saturate(180%)",
+                        WebkitBackdropFilter: "blur(18px) saturate(180%)",
+                        bgcolor: (t) =>
+                          i === 1
+                            ? alpha(t.palette.primary.main, 0.3)
+                            : alpha(
+                                t.palette.common.white,
+                                t.palette.mode === "dark" ? 0.1 : 0.52,
+                              ),
+                        border: "1px solid",
+                        borderColor: (t) =>
+                          alpha(
+                            t.palette.common.white,
+                            t.palette.mode === "dark" ? 0.2 : 0.72,
+                          ),
+                        animation:
+                          "chatEmptyFloat 2.8s ease-in-out infinite, chatEmptyShimmer 2.8s ease-in-out infinite",
+                        animationDelay: b.delay,
+                        boxShadow: (t) =>
+                          `inset 0 1px 0 ${alpha(
+                            t.palette.common.white,
+                            t.palette.mode === "dark" ? 0.24 : 0.86,
+                          )}, 0 10px 28px ${alpha(
+                            t.palette.common.black,
+                            t.palette.mode === "dark" ? 0.26 : 0.08,
+                          )}`,
+                      }}
+                    />
+                  ))}
                 </Box>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ textAlign: "center", maxWidth: 280 }}
+                >
+                  {emptyStateMessageForChatType(chatType)}
+                </Typography>
               </Box>
             </Box>
           ) : (
-            <Box sx={{ px: 2, mb: "133px" }}>
-              {renderMessages([...messages])}
-            </Box>
+            <Box sx={{ px: 2, pb: 1 }}>{renderMessages([...messages])}</Box>
           )}
         </Box>
         <Box
           sx={{
-            position: "fixed",
-            bottom: "13px",
-            mt: "15px",
+            flexShrink: 0,
+            mt: "auto",
             p: 2,
+            pt: 1,
             width: "100%",
           }}
         >
@@ -787,56 +1038,69 @@ const Chat = ({
           />
         </Box>
       </Box>
-      <Suspense fallback={<div></div>}>
-        <Modal
-          open={Boolean(openMedia)}
-          onClose={() => setOpenMedia(null)}
-          aria-labelledby="modal-modal-title"
-          aria-describedby="modal-modal-description"
-          sx={{ backgroundColor: "black" }}
-        >
-          <>
-            <Paper
-              sx={{
-                position: "relative",
-                height: "100vh",
-                width: "100vw",
-                background: "transparent",
-                padding: 0,
-                margin: 0,
-                overflow: "hidden",
-              }}
-            >
-              <CloseIcon
+      <Box
+        sx={{
+          position: "absolute",
+          left: 0,
+          top: 0,
+          width: 0,
+          height: 0,
+          overflow: "visible",
+        }}
+      >
+        <Suspense fallback={<div></div>}>
+          <Modal
+            open={Boolean(openMedia)}
+            onClose={() => setOpenMedia(null)}
+            aria-labelledby="modal-modal-title"
+            aria-describedby="modal-modal-description"
+            sx={{ backgroundColor: "black" }}
+          >
+            <>
+              <Paper
                 sx={{
-                  position: "absolute",
-                  top: 16,
-                  right: 16,
-                  zIndex: 1,
-                  cursor: "pointer",
-                  backgroundColor: "gray",
-                  borderRadius: "50%",
-                  padding: 1,
-                  fontSize: "40px",
-                  ":hover": {
-                    backgroundColor: "#303134",
-                  },
+                  position: "relative",
+                  height: "100vh",
+                  width: "100vw",
+                  background: "transparent",
+                  padding: 0,
+                  margin: 0,
+                  overflow: "hidden",
                 }}
-                onClick={() => setOpenMedia(null)}
-              />
-              <img
-                src={openMedia || ""}
-                alt="Node image"
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "contain",
-                }}
-              />
-            </Paper>
-          </>
-        </Modal>
-      </Suspense>
+              >
+                <CloseIcon
+                  sx={{
+                    position: "absolute",
+                    top: 16,
+                    right: 16,
+                    zIndex: 1,
+                    cursor: "pointer",
+                    backgroundColor: "gray",
+                    borderRadius: "50%",
+                    padding: 1,
+                    fontSize: "40px",
+                    ":hover": {
+                      backgroundColor: "#303134",
+                    },
+                  }}
+                  onClick={() => setOpenMedia(null)}
+                />
+                {openMedia && (
+                  <Image
+                    src={openMedia}
+                    alt="Node image"
+                    fill
+                    sizes="100vw"
+                    style={{
+                      objectFit: "contain",
+                    }}
+                  />
+                )}
+              </Paper>
+            </>
+          </Modal>
+        </Suspense>
+      </Box>
     </Box>
   );
 };
@@ -853,7 +1117,8 @@ const areEqual = (prevProps: any, nextProps: any) => {
     prevProps.isLoading === nextProps.isLoading &&
     prevProps.type === nextProps.type &&
     prevProps.onlineUsers === nextProps.onlineUsers &&
-    prevProps.nodeId === nextProps.nodeId
+    prevProps.nodeId === nextProps.nodeId &&
+    prevProps.chatType === nextProps.chatType
   );
 };
 

@@ -10,6 +10,8 @@ import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
 import FiberManualRecordIcon from "@mui/icons-material/FiberManualRecord";
+import ToggleOnIcon from "@mui/icons-material/ToggleOn";
+import ToggleOffIcon from "@mui/icons-material/ToggleOff";
 
 type CollectionListProps = {
   currentImprovement: any;
@@ -139,6 +141,14 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
                         fontSize: "27px",
                       }}
                     />
+                  ) : node.optionalChange === "added" ? (
+                    <ToggleOnIcon
+                      sx={{ color: "green", mr: "3px", fontSize: "27px" }}
+                    />
+                  ) : node.optionalChange === "removed" ? (
+                    <ToggleOffIcon
+                      sx={{ color: "red", mr: "3px", fontSize: "27px" }}
+                    />
                   ) : (
                     <FiberManualRecordIcon
                       sx={{
@@ -170,10 +180,31 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
                     {node.title || getTitle(nodes, node.id)}
                   </Typography>
 
-                  {node.optional && (
-                    <Tooltip title={"optional"} placement="top">
+                  {(node.optional || node.optionalChange === "removed") && (
+                    <Tooltip
+                      title={
+                        node.optionalChange === "added"
+                          ? "marked optional"
+                          : node.optionalChange === "removed"
+                            ? "no longer optional"
+                            : "optional"
+                      }
+                      placement="top"
+                    >
                       <Typography
-                        sx={{ color: "orange", marginLeft: "9px" }}
+                        sx={{
+                          color:
+                            node.optionalChange === "added"
+                              ? "green"
+                              : node.optionalChange === "removed"
+                                ? "red"
+                                : "orange",
+                          textDecoration:
+                            node.optionalChange === "removed"
+                              ? "line-through"
+                              : "",
+                          marginLeft: "9px",
+                        }}
                       >{`(O)`}</Typography>
                     </Tooltip>
                   )}

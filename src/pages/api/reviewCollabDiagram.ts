@@ -1,6 +1,7 @@
 import { db } from "@components/lib/firestoreServer/admin-exp";
 import { NextApiRequest, NextApiResponse } from "next";
-import { openai } from "./helpers";
+import { openai } from "./openaiClient";
+
 
 interface Node {
   id: string;

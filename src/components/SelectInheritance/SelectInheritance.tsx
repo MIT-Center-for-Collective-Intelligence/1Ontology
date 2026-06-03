@@ -47,8 +47,8 @@ const SelectInheritance = ({
 
     _generalizations = _generalizations.filter((g: any) => {
       return (
-        !nodes[g.id]?.inheritance[property]?.ref ||
-        nodes[g.id]?.inheritance[property]?.ref !== inheritanceRef
+        !nodes[g.id]?.inheritance?.[property]?.ref ||
+        nodes[g.id]?.inheritance?.[property]?.ref !== inheritanceRef
       );
     });
     const index = _generalizations.findIndex(
@@ -93,12 +93,16 @@ const SelectInheritance = ({
       for (let link of links) {
         const nodeRef = doc(collection(db, NODES), link.id);
         if (
-          !nodes[link.id].inheritance.ref ||
-          generalizationId === nodes[link.id].inheritance[property].ref ||
-          modifiedInheritanceFor === nodes[link.id].inheritance[property].ref
+          nodes[link.id] &&
+          (!nodes[link.id].inheritance[property]?.ref ||
+            generalizationId === nodes[link.id].inheritance[property]?.ref ||
+            modifiedInheritanceFor ===
+              nodes[link.id].inheritance[property]?.ref)
         ) {
+          const refTitle = getTitle(nodes, ref);
           let objectUpdate = {
             [`inheritance.${property}.ref`]: ref,
+            [`inheritance.${property}.title`]: refTitle,
           };
           if (newBatch._committed) {
             newBatch = writeBatch(db);
@@ -111,14 +115,16 @@ const SelectInheritance = ({
           newBatch = writeBatch(db);
         }
 
-        newBatch = await updateSpecializationsInheritance(
-          nodes[link.id].specializations,
-          newBatch,
-          property,
-          ref,
-          link.id,
-          modifiedInheritanceFor,
-        );
+        if (nodes[link.id]?.specializations) {
+          newBatch = await updateSpecializationsInheritance(
+            nodes[link.id].specializations,
+            newBatch,
+            property,
+            ref,
+            link.id,
+            modifiedInheritanceFor,
+          );
+        }
       }
     }
 
@@ -142,6 +148,10 @@ const SelectInheritance = ({
 
         updateDoc(nodeRef, {
           [`inheritance.${property}.ref`]: newGeneralizationId,
+          [`inheritance.${property}.title`]: getTitle(
+            nodes,
+            newGeneralizationId,
+          ),
         });
 
         // Notify parent component (Text) about the inheritance change
@@ -179,6 +189,12 @@ const SelectInheritance = ({
       });
     }
   };
+  // Don't render if inheritanceType is neverInherit
+  if (
+    currentVisibleNode.inheritance[property]?.inheritanceType === "neverInherit"
+  ) {
+    return null;
+  }
 
   return (
     <Box sx={{ ml: "auto" }}>
@@ -191,23 +207,35 @@ const SelectInheritance = ({
           minWidth: "200px",
           display: !enableEdit ? "none" : "flex",
         }}
-        InputProps={{
-          sx: {
-            height: "40px",
-            borderRadius: "18px",
-            color: inheritanceRef === "inheritance-overridden" ? "gray" : "",
+        slotProps={{
+          input: {
+            sx: {
+              height: "40px",
+              borderRadius: "18px",
+              color: inheritanceRef === "inheritance-overridden" ? "gray" : "",
+            },
+          },
+          inputLabel: {
+            style: { color: "grey" },
           },
         }}
-        InputLabelProps={{
-          style: { color: "grey" },
-        }}
       >
+        <MenuItem
+          value="inheritance-overridden"
+          disabled
+          sx={{
+            display: "none",
+          }}
+        >
+          Inheritance Overridden
+        </MenuItem>
         <MenuItem
           value=""
           disabled
           sx={{
             backgroundColor: (theme) =>
               theme.palette.mode === "dark" ? "" : "white",
+            mx: "13px",
           }}
         >
           Select Inheritance
@@ -217,8 +245,16 @@ const SelectInheritance = ({
             key={generalization.id}
             value={generalization.id}
             sx={{
+              borderRadius: "25px",
+              mt: "3px",
+              border: "1px solid gray",
+              background:
+                "linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.02))",
+              fontSize: "15px",
+              fontWeight: "400",
               color:
                 generalization.id === "inheritance-overridden" ? "orange" : "",
+              mx: "6px",
             }}
           >
             {generalization.title}

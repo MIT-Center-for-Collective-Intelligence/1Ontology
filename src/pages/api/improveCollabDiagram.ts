@@ -1,8 +1,8 @@
 import { db } from "@components/lib/firestoreServer/admin-exp";
 import { NextApiRequest, NextApiResponse } from "next";
-import { openai } from "./helpers";
 import { ChatCompletionMessageParam } from "openai/resources";
 import { delay } from "@components/lib/utils/utils";
+import { openai } from "./openaiClient";
 
 interface DiagramNode {
   id: string;

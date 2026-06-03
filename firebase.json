@@ -4,7 +4,7 @@
       {
         "source": "/**",
         "run": {
-          "serviceId": "ontology-app",
+          "serviceId": "ontology",
           "region": "us-central1"
         }
       }

@@ -32,6 +32,7 @@ interface MarkdownEditorProps {
   };
   setEditorContent: any;
   pendingInheritanceMessage?: any;
+  placeholder?: string;
 }
 
 const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
@@ -41,6 +42,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
   collaborationData,
   setEditorContent,
   pendingInheritanceMessage
+  placeholder,
 }) => {
   const theme = useTheme();
   const editorRef = useRef<Quill | null>(null);
@@ -101,7 +103,14 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
   return (
     <Box sx={{ width: "100%" }}>
       {mode.isPreview && content.property !== "title" ? (
-        <Box sx={{ p: 3 }}>
+        <Box
+          sx={{
+            p: 3,
+            userSelect: "text",
+            WebkitUserSelect: "text",
+            MozUserSelect: "text",
+          }}
+        >
           <MarkdownRender text={content.text} />
         </Box>
       ) : (
@@ -133,6 +142,8 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
                 onEditorReady={handleEditorReady}
                 setEditorContent={setEditorContent}
                 pendingInheritanceMessage={pendingInheritanceMessage}
+                fallbackContent={content.text}
+                placeholder={placeholder}
               />
             ) : (
               <SimpleEditor

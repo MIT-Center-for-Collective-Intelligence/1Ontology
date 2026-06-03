@@ -34,7 +34,7 @@ export const useUsers = () => {
             email: data.email || "",
             claims: data.claims || {},
             rightPanel: data.rightPanel || false,
-            currentNode: data.currentNode || "",
+            currentNode: data.currentNode || {},
             manageLock: data.manageLock || false,
             copilot: data.copilot || false,
             admin: data.admin || false,

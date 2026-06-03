@@ -23,17 +23,41 @@ import {
   query,
   FieldValue,
 } from "firebase/firestore";
-import { LOGS, NODES, NODES_LOGS, USERS } from "../firestoreClient/collections";
+import {
+  LOGS,
+  NODES,
+  NODES_LOGS,
+  NOTIFICATIONS,
+  USERS,
+} from "../firestoreClient/collections";
 import { NodeChange } from "@components/types/INode";
 import moment from "moment";
 import { capitalizeFirstLetter } from "./string.utils";
+import { computeDiffValue } from "./diffValue";
 import { User } from "@components/types/IAuth";
 import {
   getBrowser,
   getOperatingSystem,
 } from "../firestoreClient/errors.firestore";
 import { getAuth } from "firebase/auth";
-import { DISPLAY } from "../CONSTANTS";
+import { DISPLAY, SANDBOX_ONTOLOGY_APP_ID } from "../CONSTANTS";
+
+export function userHasOntologyEditAccess(
+  user: { claims?: { editAccess?: boolean } } | null | undefined,
+  appName: string | undefined | null,
+): boolean {
+  if (!user) return false;
+  if (appName === SANDBOX_ONTOLOGY_APP_ID) return true;
+  return !!user.claims?.editAccess;
+}
+
+export function isOntologyEditClaimDenied(
+  user: { claims?: { editAccess?: boolean } } | null | undefined,
+  appName: string | undefined | null,
+): boolean {
+  if (appName === SANDBOX_ONTOLOGY_APP_ID) return false;
+  return user?.claims?.editAccess === false;
+}
 
 export const getDoerCreate = (uname: string) => {
   const now = new Date();
@@ -47,15 +71,20 @@ export const getDoerCreate = (uname: string) => {
   return `${uname}-${year}-${month}-${day}-${hours}-${minutes}-${seconds}`;
 };
 
-export const recordLogs = async (logs: { [key: string]: any }) => {
+export const recordLogs = async (
+  logs: { [key: string]: any },
+  userName?: string,
+) => {
   try {
     const db = getFirestore();
     const auth = getAuth();
     const logRef = doc(collection(db, LOGS));
 
-    const uname = auth.currentUser?.displayName;
-    if (uname === "ouhrac") return;
-    const doerCreate = getDoerCreate(uname || "");
+    const uname = auth.currentUser?.displayName || userName || "unknown";
+    if (uname === "ouhrac" || uname === "unknown") {
+      return;
+    }
+    const doerCreate = getDoerCreate(uname);
     await setDoc(logRef, {
       type: "info",
       ...logs,
@@ -67,15 +96,6 @@ export const recordLogs = async (logs: { [key: string]: any }) => {
     });
   } catch (error: any) {
     console.error(error);
-    recordLogs({
-      type: "error",
-      error: JSON.stringify({
-        name: error.name,
-        message: error.message,
-        stack: error.stack,
-      }),
-      at: "recordLogs",
-    });
   }
 };
 
@@ -89,6 +109,16 @@ export const unlinkPropertyOf = async (
     | string,
   removeNodeId: string,
   removeFromId: string,
+  // When set, makes a child log linked to this parent
+  parentLog?: {
+    logId: string;
+    nodeId: string;
+    nodeTitle: string;
+    changeType: NodeChange["changeType"];
+  },
+  uname?: string,
+  // Mirrors parentLog.appName so child logs aren't filtered out
+  appName?: string,
 ) => {
   if (!removeFromId) return;
 
@@ -117,6 +147,10 @@ export const unlinkPropertyOf = async (
   if (unlinkFromDoc.exists()) {
     const unlinkFromData = unlinkFromDoc.data() as INode;
     if (removeFrom === "generalizations" || removeFrom === "specializations") {
+      // Snapshot before the in-place filter below.
+      const previousValue = JSON.parse(
+        JSON.stringify(unlinkFromData[removeFrom]),
+      );
       for (let collection of unlinkFromData[removeFrom]) {
         collection.nodes = collection.nodes.filter(
           (n: { id: string }) => n.id !== removeNodeId,
@@ -125,6 +159,20 @@ export const unlinkPropertyOf = async (
       await updateDoc(unlinkFromDoc.ref, {
         [`${removeFrom}`]: unlinkFromData[removeFrom],
       });
+      if (parentLog && uname) {
+        saveNewChangeLog(db, {
+          nodeId: removeFromId,
+          modifiedBy: uname,
+          modifiedProperty: removeFrom,
+          previousValue,
+          newValue: unlinkFromData[removeFrom],
+          modifiedAt: new Date(),
+          changeType: "remove element",
+          fullNode: unlinkFromData,
+          triggeredBy: parentLog,
+          ...(appName ? { appName } : {}),
+        });
+      }
     } else {
       if (
         (removeFrom === "parts" || removeFrom === "isPartOf") &&
@@ -317,6 +365,7 @@ export const updateInheritance = async ({
       ObjectUpdates = {
         ...ObjectUpdates,
         [`inheritance.${property}.ref`]: null,
+        [`inheritance.${property}.title`]: "",
       };
     }
     for (let property of deletedProperties) {
@@ -334,6 +383,7 @@ export const updateInheritance = async ({
 
     // Recursively update specializations
     if (nodeData) {
+      const inheritanceRefTitle = (nodeData as INode).title ?? "";
       batch = await recursivelyUpdateSpecializations({
         nodeId: nodeId,
         updatedProperties,
@@ -343,6 +393,7 @@ export const updateInheritance = async ({
         batch,
         inheritanceType: nodeData.inheritance,
         generalizationId: nodeId,
+        inheritanceRefTitle,
         db,
       });
     }
@@ -380,6 +431,7 @@ const recursivelyUpdateSpecializations = async ({
   batch,
   inheritanceType,
   generalizationId,
+  inheritanceRefTitle = "",
   db,
   nestedCall = false,
 }: {
@@ -395,6 +447,8 @@ const recursivelyUpdateSpecializations = async ({
   batch: WriteBatch;
   inheritanceType: IInheritance;
   generalizationId: string | null;
+  /** Title of the node identified by `generalizationId`; empty when ref is null. */
+  inheritanceRefTitle?: string;
   db: any;
   nestedCall?: boolean;
 }): Promise<any> => {
@@ -412,6 +466,7 @@ const recursivelyUpdateSpecializations = async ({
         if (!inheritanceType[p]) {
           inheritanceType[p] = {
             ref: null,
+            title: "",
             inheritanceType: "inheritUnlessAlreadyOverRidden",
           };
         }
@@ -419,9 +474,7 @@ const recursivelyUpdateSpecializations = async ({
           return false;
         }
 
-        // Handling for parts property with broken inheritance
-        if (p === "parts" && inheritance.parts?.ref === null) {
-          // Skip parts handling when inheritance is broken (inheritance.parts.ref is null)
+        if (p === "parts") {
           return false;
         }
 
@@ -442,6 +495,7 @@ const recursivelyUpdateSpecializations = async ({
         editedProperties,
         addedProperties,
         generalizationId,
+        inheritanceRefTitle,
         nodeData,
         db,
       );
@@ -460,6 +514,7 @@ const recursivelyUpdateSpecializations = async ({
         nestedCall: true,
         inheritanceType: inheritance,
         generalizationId,
+        inheritanceRefTitle,
         db,
       });
     }
@@ -482,6 +537,7 @@ const updateProperty = async (
     propertyValue: any;
   }[],
   inheritanceRef: string | null,
+  inheritanceRefTitle: string,
   nodeData: INode,
   db: any,
 ) => {
@@ -490,6 +546,9 @@ const updateProperty = async (
     ObjectUpdates = {
       ...ObjectUpdates,
       [`inheritance.${property}.ref`]: inheritanceRef,
+      [`inheritance.${property}.title`]: inheritanceRef
+        ? inheritanceRefTitle
+        : "",
     };
   }
   for (let property of deletedProperties) {
@@ -507,6 +566,7 @@ const updateProperty = async (
       [`inheritance.${property.propertyName}`]: {
         inheritanceType: "inheritUnlessAlreadyOverRidden",
         ref: inheritanceRef,
+        title: inheritanceRef ? inheritanceRefTitle : "",
       },
       [`properties.${property.propertyName}`]: property.propertyValue,
     };
@@ -525,7 +585,11 @@ const updateProperty = async (
     updatedEditedProperty = true;
     const propertyValue = nodeData.properties[previousValue];
     const propertyType = nodeData.propertyType[previousValue];
-    const inheritanceValue = nodeData.inheritance[previousValue];
+    const rawInheritance = nodeData.inheritance[previousValue];
+    const inheritanceValue = {
+      ...rawInheritance,
+      title: rawInheritance?.title ?? "",
+    };
 
     ObjectUpdates = {
       ...ObjectUpdates,
@@ -572,9 +636,22 @@ const updateProperty = async (
   return batch;
 };
 
-export const saveNewChangeLog = (db: any, data: NodeChange) => {
-  if (!data.modifiedBy) return;
-  const changeUseRef = doc(collection(db, NODES_LOGS));
+/**
+ * Writes a NodeChange to NODES_LOGS and returns the doc id (or `undefined` if
+ * skipped due to missing `modifiedBy`). Pass `preGeneratedId` to reserve the
+ * id up-front so child logs can reference it via `triggeredBy.logId`.
+ */
+export const saveNewChangeLog = (
+  db: any,
+  data: NodeChange,
+  preGeneratedId?: string,
+): string | undefined => {
+  if (!data.modifiedBy) return undefined;
+  const diffValue = computeDiffValue(data);
+  if (diffValue) data.diffValue = diffValue;
+  const changeUseRef = preGeneratedId
+    ? doc(collection(db, NODES_LOGS), preGeneratedId)
+    : doc(collection(db, NODES_LOGS));
   setDoc(changeUseRef, data);
   const userRef = doc(collection(db, USERS), data.modifiedBy);
   if (data.modifiedBy !== "ouhrac") {
@@ -597,6 +674,7 @@ export const saveNewChangeLog = (db: any, data: NodeChange) => {
     }
     updateDoc(nodeRef, updatesObject);
   }
+  return changeUseRef.id;
 };
 
 export const getChangeDescription = (
@@ -746,11 +824,16 @@ export const checkIfCanDeleteANode = (
 export const generateInheritance = (
   inheritance: IInheritance,
   currentNodeId: string,
+  currentNodeTitle: string = "",
 ) => {
   const newInheritance = JSON.parse(JSON.stringify({ ...inheritance }));
   for (let property in newInheritance) {
+    if (newInheritance[property].title === undefined) {
+      newInheritance[property].title = "";
+    }
     if (!newInheritance[property].ref && property !== "isPartOf") {
       newInheritance[property].ref = currentNodeId;
+      newInheritance[property].title = currentNodeTitle;
     }
   }
   return newInheritance;
@@ -764,9 +847,35 @@ export const createNewNode = (
   inheritance: IInheritance,
   generalizationId: string,
   uname: string,
-  skillsFuture: boolean,
-  skillsFutureApp?: string,
+  ontologyAppName?: string,
 ): INode => {
+  const updatedProperties: { [key: string]: any } = {};
+  const updatedInheritance: IInheritance = { ...inheritance };
+  for (const key of Object.keys(updatedInheritance)) {
+    const entry = updatedInheritance[key];
+    if (entry && entry.title === undefined) {
+      entry.title = "";
+    }
+  }
+
+  // Process each property from parent
+  for (const propertyName in parentNodeData.properties) {
+    if (shouldNeverInheritValue(parentNodeData.inheritance, propertyName)) {
+      // Copy property structure but use default value instead of parent's value
+      updatedProperties[propertyName] = getDefaultValueForProperty(
+        parentNodeData.propertyType[propertyName],
+      );
+      // Ensure inheritance ref is null for neverInherit properties
+      if (updatedInheritance[propertyName]) {
+        updatedInheritance[propertyName].ref = null;
+        updatedInheritance[propertyName].title = "";
+      }
+    } else {
+      // Normal inheritance - copy the actual value
+      updatedProperties[propertyName] = parentNodeData.properties[propertyName];
+    }
+  }
+
   const newNode: any = {
     ...parentNodeData,
     contributors: [],
@@ -776,7 +885,7 @@ export const createNewNode = (
     unclassified: false,
     id: newNodeRefId,
     title: newTitle,
-    inheritance,
+    inheritance: updatedInheritance,
     specializations: [
       {
         collectionName: "main",
@@ -789,6 +898,10 @@ export const createNewNode = (
         nodes: [
           {
             id: generalizationId,
+            title:
+              generalizationId === parentNodeData.id
+                ? parentNodeData.title ?? ""
+                : "",
           },
         ],
       },
@@ -798,13 +911,12 @@ export const createNewNode = (
     root: parentNodeData.root || "",
     numberOfGeneralizations: (parentNodeData.numberOfGeneralizations || 0) + 1,
     properties: {
-      ...parentNodeData.properties,
+      ...updatedProperties,
       isPartOf: [{ collectionName: "main", nodes: [] }],
     },
     propertyType: { ...parentNodeData.propertyType },
     nodeType: parentNodeData.nodeType,
-    skillsFuture: !!skillsFuture,
-    ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
+    ...(ontologyAppName ? { appName: ontologyAppName } : {}),
     createdAt: new Date(),
   };
   delete newNode.root;
@@ -826,6 +938,7 @@ export const updateSpecializations = (
   parentNode: INode,
   newNodeRefId: string,
   collectionName: string = "main",
+  newNodeTitle: string = "",
 ) => {
   const collectionIdx = parentNode.specializations.findIndex(
     (spec) => spec.collectionName === collectionName,
@@ -840,20 +953,21 @@ export const updateSpecializations = (
       // Create the collection if it doesn't exist
       parentNode.specializations.push({
         collectionName,
-        nodes: [{ id: newNodeRefId }],
+        nodes: [{ id: newNodeRefId, title: newNodeTitle }],
       });
     } else {
       // Add the new node to the collection if it exists
       parentNode.specializations[collectionIdx].nodes.push({
         id: newNodeRefId,
+        title: newNodeTitle,
       });
     }
   }
 };
 
 export const updatePartsAndPartsOf = async (
-  links: { id: string }[],
-  newLink: { id: string },
+  links: { id: string; title?: string }[],
+  newLink: { id: string; title: string },
   property: "isPartOf" | "parts",
   db: Firestore,
   nodes: { [nodeId: string]: INode },
@@ -1024,6 +1138,12 @@ export const updateLinksForInheritance = async (
   nodes: { [nodeId: string]: INode } | any,
 ) => {
   try {
+    const getTitleFromCacheOrDb = async (nodeId: string) => {
+      if (nodes?.[nodeId]?.title) return nodes[nodeId].title as string;
+      const snap = await getDoc(doc(collection(db, NODES), nodeId));
+      return (snap.data() as any)?.title || "";
+    };
+
     const deletedProperties = [];
     const updatedProperties: {
       [ref: string]: string[];
@@ -1040,12 +1160,7 @@ export const updateLinksForInheritance = async (
     for (let property in specializationData.inheritance) {
       const propertyRef = specializationData.inheritance[property]?.ref;
       if (!!propertyRef) {
-        // Handling for parts property with broken inheritance
-        if (
-          property === "parts" &&
-          specializationData.inheritance.parts?.ref === null
-        ) {
-          // Skip parts handling when inheritance is broken (inheritance.parts.ref is null)
+        if (property === "parts") {
           continue;
         }
 
@@ -1099,6 +1214,7 @@ export const updateLinksForInheritance = async (
         batch,
         inheritanceType: specializationData.inheritance,
         generalizationId: inheritedFromId,
+        inheritanceRefTitle: await getTitleFromCacheOrDb(inheritedFromId),
         db,
       });
     }
@@ -1111,6 +1227,7 @@ export const updateLinksForInheritance = async (
       batch,
       inheritanceType: specializationData.inheritance,
       generalizationId: null,
+      inheritanceRefTitle: "",
       db,
     });
     for (let inheritedFromId in updatedProperties) {
@@ -1124,6 +1241,7 @@ export const updateLinksForInheritance = async (
         batch,
         inheritanceType: inheritsFromData.inheritance,
         generalizationId: inheritedFromId,
+        inheritanceRefTitle: await getTitleFromCacheOrDb(inheritedFromId),
         db,
       });
     }
@@ -1152,6 +1270,13 @@ export const updateLinksForInheritanceSpecializations = async (
 ) => {
   try {
     const batch = writeBatch(db);
+
+    const getTitleFromCacheOrDb = async (nodeId: string) => {
+      if (nodes?.[nodeId]?.title) return nodes[nodeId].title as string;
+      const snap = await getDoc(doc(collection(db, NODES), nodeId));
+      return (snap.data() as any)?.title || "";
+    };
+
     for (let addedLink of addedLinks) {
       const addedProperties: {
         propertyName: string;
@@ -1165,7 +1290,14 @@ export const updateLinksForInheritanceSpecializations = async (
           addedProperties.push({
             propertyName: property,
             propertyType: generalizationData.propertyType[property],
-            propertyValue: generalizationData.properties[property],
+            propertyValue: shouldNeverInheritValue(
+              generalizationData.inheritance,
+              property,
+            )
+              ? getDefaultValueForProperty(
+                  generalizationData.propertyType[property],
+                )
+              : generalizationData.properties[property],
           });
         }
       }
@@ -1179,6 +1311,7 @@ export const updateLinksForInheritanceSpecializations = async (
         batch,
         inheritanceType: specializationData.inheritance,
         generalizationId: generalizationId,
+        inheritanceRefTitle: await getTitleFromCacheOrDb(generalizationId),
         db,
       });
     }
@@ -1202,6 +1335,7 @@ export const updateLinksForInheritanceSpecializations = async (
         batch,
         inheritanceType: specializationData.inheritance,
         generalizationId: generalizationId,
+        inheritanceRefTitle: await getTitleFromCacheOrDb(generalizationId),
         db,
       });
     }
@@ -1229,6 +1363,12 @@ export const updateInheritanceWhenUnlinkAGeneralization = async (
 ) => {
   try {
     if (specializationData) {
+      const getTitleFromCacheOrDb = async (nodeId: string) => {
+        if (nodes?.[nodeId]?.title) return nodes[nodeId].title as string;
+        const snap = await getDoc(doc(collection(db, NODES), nodeId));
+        return (snap.data() as any)?.title || "";
+      };
+
       const addedProperties: {
         propertyName: string;
         propertyType: string;
@@ -1257,12 +1397,7 @@ export const updateInheritanceWhenUnlinkAGeneralization = async (
               nodes[unlinkedGeneralizationId].inheritance[property]?.ref ===
                 specializationData.inheritance[property].ref)
           ) {
-            // Handling for parts property with broken inheritance
-            if (
-              property === "parts" &&
-              specializationData.inheritance.parts?.ref === null
-            ) {
-              // Skip parts handling when inheritance is broken (inheritance.parts.ref is null)
+            if (property === "parts") {
               continue;
             }
 
@@ -1302,7 +1437,14 @@ export const updateInheritanceWhenUnlinkAGeneralization = async (
             addedProperties.push({
               propertyName: property,
               propertyType: nextGeneralizationData.propertyType[property],
-              propertyValue: nextGeneralizationData.properties[property],
+              propertyValue: shouldNeverInheritValue(
+                nextGeneralizationData.inheritance,
+                property,
+              )
+                ? getDefaultValueForProperty(
+                    nextGeneralizationData.propertyType[property],
+                  )
+                : nextGeneralizationData.properties[property],
             });
           }
         }
@@ -1319,6 +1461,7 @@ export const updateInheritanceWhenUnlinkAGeneralization = async (
         batch,
         inheritanceType: unlinkedGeneralization.inheritance,
         generalizationId: nextGeneralization.id,
+        inheritanceRefTitle: await getTitleFromCacheOrDb(nextGeneralization.id),
         db,
       });
 
@@ -1333,6 +1476,7 @@ export const updateInheritanceWhenUnlinkAGeneralization = async (
           batch,
           inheritanceType: inheritsFromData.inheritance,
           generalizationId: inheritFrom,
+          inheritanceRefTitle: await getTitleFromCacheOrDb(inheritFrom),
           db,
         });
       }
@@ -1353,10 +1497,20 @@ export const updateInheritanceWhenUnlinkAGeneralization = async (
 /*  updateLinks takes links and push the new link to its specializations or generalizations */
 export const updateLinks = async (
   links: string[],
-  newLink: { id: string },
+  newLink: { id: string; title: string },
   linkType: "specializations" | "generalizations",
   nodes: { [nodeId: string]: INode },
   db: any,
+  // When set, each push also emits a child log on `childId` linked to this parent.
+  parentLog?: {
+    logId: string;
+    nodeId: string;
+    nodeTitle: string;
+    changeType: NodeChange["changeType"];
+  },
+  uname?: string,
+  // Mirrors parentLog.appName so child logs aren't filtered out.
+  appName?: string,
 ) => {
   for (let childId of links) {
     const childData = nodes[childId];
@@ -1370,10 +1524,12 @@ export const updateLinks = async (
       (collection) => collection.collectionName === "main",
     );
     if (indexElmt === -1) {
+      // Snapshot before the in-place mutations below.
+      const previousValue = JSON.parse(JSON.stringify(childLinks));
       if (mainCollection) {
         mainCollection.nodes.push(newLink);
         const childRef = doc(collection(db, NODES), childId);
-        updateDoc(childRef, {
+        await updateDoc(childRef, {
           [linkType]: childLinks,
         });
       } else {
@@ -1385,6 +1541,20 @@ export const updateLinks = async (
         const childRef = doc(collection(db, NODES), childId);
         await updateDoc(childRef, {
           [linkType]: childLinks,
+        });
+      }
+      if (parentLog && uname) {
+        saveNewChangeLog(db, {
+          nodeId: childId,
+          modifiedBy: uname,
+          modifiedProperty: linkType,
+          previousValue,
+          newValue: childLinks,
+          modifiedAt: new Date(),
+          changeType: "add element",
+          fullNode: childData,
+          triggeredBy: parentLog,
+          ...(appName ? { appName } : {}),
         });
       }
     }
@@ -1475,16 +1645,28 @@ export const updateLinks = async (
 //   }
 // };
 
-export const clearNotifications = async (nodeId: string) => {
+export const clearNodeNotifications = async (nodeId: string) => {
   const db = getFirestore();
   if (!nodeId) return;
-  const batch = writeBatch(db);
+  let batch = writeBatch(db);
+  let writeCount = 0;
   const notificationDocs = await getDocs(
-    query(collection(db, "notifications"), where("nodeId", "==", nodeId)),
+    query(
+      collection(db, NOTIFICATIONS),
+      where("nodeId", "==", nodeId),
+      where("deleted", "==", false),
+    ),
   );
   for (let notDoc of notificationDocs.docs) {
-    batch.update(notDoc.ref, { seen: true });
+    batch.update(notDoc.ref, { deleted: true });
+    if (writeCount > 498) {
+      await batch.commit();
+      batch = writeBatch(db);
+      writeCount = 0;
+    }
+    writeCount++;
   }
+  await batch.commit();
 };
 
 export const extractJSON = (text: string) => {
@@ -1702,4 +1884,31 @@ export const diffCollections = (
   }
 
   return result;
+};
+
+export const shouldNeverInheritValue = (
+  inheritance: IInheritance,
+  propertyName: string,
+): boolean => {
+  return inheritance[propertyName]?.inheritanceType === "neverInherit";
+};
+
+// Helper function to get default value for a property based on its type
+export const getDefaultValueForProperty = (propertyType: string): any => {
+  switch (propertyType) {
+    case "string":
+      return "";
+    case "string-array":
+      return [];
+    case "string-select":
+      return "";
+    case "numeric":
+      return 0;
+    default:
+      return "";
+  }
+};
+
+export const sanitizeFirestoreKey = (key: string): string => {
+  return key.replace(/[\~\*\/\[\]]/g, "_");
 };

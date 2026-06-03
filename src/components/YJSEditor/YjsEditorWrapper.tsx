@@ -45,6 +45,8 @@ const YjsEditorWrapper = ({
   onEditorReady,
   setEditorContent,
   pendingInheritanceMessage,
+  fallbackContent,
+  placeholder,
 }: {
   fullname: string;
   property: string;
@@ -58,6 +60,8 @@ const YjsEditorWrapper = ({
   onEditorReady?: (editor: Quill) => void;
   setEditorContent: any;
   pendingInheritanceMessage?: any;
+  fallbackContent?: string;
+  placeholder?: string;
 }) => {
   const editorContainerRef = useRef(null);
   const editorRef = useRef<Quill | null>(null);
@@ -108,7 +112,6 @@ const YjsEditorWrapper = ({
     if (!property || !fullname || !nodeId) return;
     // Create Yjs document and WebSocket provider
     const ydoc = new Y.Doc();
-
     const provider = new WebsocketProvider(
       WS_URL,
       `${nodeId}-${property}`,
@@ -165,21 +168,37 @@ const YjsEditorWrapper = ({
             ],
           },
         },
-        placeholder: `${capitalizeFirstLetter(
-          DISPLAY[property] ? DISPLAY[property] : property,
-        )}...`,
+        placeholder: `${
+          placeholder ||
+          capitalizeFirstLetter(
+            DISPLAY[property] ? DISPLAY[property] : property,
+          )
+        }...`,
         theme: "snow",
         formats: [],
       });
 
       editorRef.current = editor;
 
+      // Show fallback content if yjs is not synced
+      if (!synced && fallbackContent) {
+        editor.setText(fallbackContent);
+      }
+
       // Notify parent when editor is ready
       if (onEditorReady) {
         onEditorReady(editor);
       }
 
-      const binding = new QuillBinding(yText, editor, provider.awareness);
+      let binding: QuillBinding;
+
+      // Since quill binding instantly overwrites the firestore
+      // Create binding only when WebSocket connects successfully
+      provider.on("status", (event) => {
+        if (event.status === "connected" && !binding) {
+          binding = new QuillBinding(yText, editor, provider.awareness);
+        }
+      });
 
       provider.awareness.setLocalStateField("user", {
         name: fullname,
@@ -236,7 +255,9 @@ const YjsEditorWrapper = ({
         saveChangeLog(changeHistoryRef.current);
         provider.disconnect();
         provider.destroy();
-        binding.destroy();
+        if (binding) {
+          binding.destroy();
+        }
         editor.off("selection-change", handleSelectionChange);
         editor.off("text-change");
         window.removeEventListener("beforeunload", saveChanges);

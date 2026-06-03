@@ -30,9 +30,8 @@ const SelectProperty = ({
   currentImprovement,
   user,
   options,
-  skillsFuture,
   enableEdit,
-  skillsFutureApp,
+  appName,
 }: {
   currentVisibleNode: INode;
   property: string;
@@ -41,9 +40,8 @@ const SelectProperty = ({
   currentImprovement: any;
   user: any;
   options: string[];
-  skillsFuture: boolean;
   enableEdit: boolean;
-  skillsFutureApp: string;
+  appName?: string;
 }) => {
   const db = getFirestore();
   const [value, setValue] = useState<{
@@ -106,12 +104,12 @@ const SelectProperty = ({
         modifiedAt: new Date(),
         changeType: "change select-string",
         fullNode: currentVisibleNode,
-        skillsFuture,
-        ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
+        ...(appName ? { appName } : {}),
       });
       await updateDoc(nodeRef, {
         [`properties.${property}`]: newValue,
         [`inheritance.${property}.ref`]: null,
+        [`inheritance.${property}.title`]: "",
       });
     } catch (error) {
       console.error(error);
@@ -284,7 +282,6 @@ const SelectProperty = ({
         borderRadius: "30px",
         borderBottomRightRadius: "18px",
         borderBottomLeftRadius: "18px",
-        minWidth: "500px",
         width: "100%",
         maxHeight: "100%",
         overflow: "auto",

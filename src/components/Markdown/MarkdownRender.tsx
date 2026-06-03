@@ -147,4 +147,7 @@ const MarkdownRender: FC<Props> = ({
   );
 };
 
-export default MarkdownRender;
+export default React.memo(
+  MarkdownRender,
+  (prevProps, nextProps) => prevProps.text === nextProps.text,
+);

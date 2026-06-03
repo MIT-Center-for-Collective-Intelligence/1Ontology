@@ -1,14 +1,11 @@
 import { db } from "@components/lib/firestoreServer/admin";
 import { ICollection, INode } from "@components/types/INode";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextApiRequest, NextApiResponse } from "next";
-import { delay } from "@components/lib/utils/utils";
-import { ChromaClient, OpenAIEmbeddingFunction } from "chromadb";
-import fbAuth from "@components/middlewares/fbAuth";
+import { ChromaClient } from "chromadb";
 import { development } from "@components/lib/CONSTANTS";
 import Cors from "cors";
 
-const EMBEDDING_MODEL = "gemini-embedding-exp-03-07";
+import { embeddingFunctionDefault, openai } from "./openaiClient";
 
 const url = `${process.env.CHROMA_PROTOCOL}://${process.env.CHROMA_HOST}:${process.env.CHROMA_PORT}`;
 
@@ -66,6 +63,7 @@ const getFullNodeStructure = (
     id: nodeData.id,
     title: nodeData.title,
     content: `${fullDescription}`,
+    nodeType: nodeData.nodeType,
   };
 };
 const createChunks = (elements: any[], chunkSize = 10): any[][] => {
@@ -87,10 +85,6 @@ const sanitizeCollectionName = (title: string) => {
       .slice(0, 512) || "default_collection"
   );
 };
-const embeddingFunction = new OpenAIEmbeddingFunction({
-  openai_api_key: process.env.MIT_CCI_API_KEY,
-  openai_model: "text-embedding-3-large",
-});
 const cors = Cors({
   origin: "*",
   methods: ["GET", "POST", "PUT", "DELETE"],
@@ -108,127 +102,68 @@ const runMiddleware = (req: any, res: any, fn: any) => {
   });
 };
 async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const { nodeId, updatedShortIds, deleteNode } = req.body;
-  await runMiddleware(req, res, cors);
-  if (development) {
-    res.status(200).json({});
-  }
-  const nodeDoc = await db.collection("nodes").doc(nodeId).get();
+  try {
+    const { nodeId, update, deleted } = req.body;
+    await runMiddleware(req, res, cors);
+    if (development) {
+      res.status(200).json({});
+    }
 
-  const client = new ChromaClient({ path: url });
+    const nodeDoc = await db.collection("nodes").doc(nodeId).get();
 
-  const nodeData = nodeDoc.data() as INode;
-  let collectionName = "";
-  if (nodeData.appName) {
-    collectionName = `ontology-${sanitizeCollectionName(nodeData.appName)}`;
-  } else if (nodeData.skillsFuture) {
-    collectionName = "ontology-skills";
-  } else {
-    collectionName = "ontology";
-  }
+    const client = new ChromaClient({ path: url });
 
-  let collection = await client.getOrCreateCollection({
-    name: collectionName,
-    embeddingFunction: embeddingFunction,
-  });
+    const nodeData = nodeDoc.data() as INode;
+    if (!nodeData) {
+      throw new Error("empty");
+    }
+    let collectionName = "";
+    if (nodeData.appName) {
+      collectionName = development
+        ? `ontology-dev-${sanitizeCollectionName(nodeData.appName)}`
+        : `ontology-${sanitizeCollectionName(nodeData.appName)}`;
+    } else {
+      collectionName = development ? "ontology-dev" : "ontology";
+    }
 
-  if (updatedShortIds) {
-    const descriptionRef = nodeData.inheritance?.description?.ref;
-    const rawDescription = nodeData.properties?.description || "";
-
-    const pageContent = `${nodeData.title}\n${!descriptionRef ? `Description:\n${rawDescription.trim()}` : ""}`;
-
-    await collection.upsert({
-      documents: [pageContent.toLowerCase()],
-      ids: [nodeId],
-      metadatas: [
-        {
-          title: nodeData.title,
-          id: nodeData.id,
-        },
-      ],
+    let collection = await client.getOrCreateCollection({
+      name: collectionName,
+      embeddingFunction: embeddingFunctionDefault,
     });
-  }
-  if (!!deleteNode && nodeData.id) {
-    await collection.delete({ ids: [nodeData.id] });
-    await collection.delete({ ids: [`${nodeData.id}-properties`] });
-  }
 
-  const propertyOf: { [propertyName: string]: ICollection[] } =
-    nodeData.propertyOf || {};
+    if (update) {
+      const descriptionRef = nodeData.inheritance?.description?.ref;
+      const rawDescription = nodeData.properties?.description || "";
+      const pageContent = `${nodeData.title}\n${!descriptionRef ? `Description:\n${rawDescription.trim()}` : ""}`;
 
-  const nodesDocs =
-    nodeData.skillsFuture && nodeData.appName
-      ? await db
-          .collection("nodes")
-          .where("deleted", "==", false)
-          .where("appName", "==", nodeData.appName)
-          .get()
-      : await db
-          .collection("nodes")
-          .where("deleted", "==", false)
-          .where("skillsFuture", "==", false)
-          .get();
+      const embeddingsResponse = await openai.embeddings.create({
+        model: "text-embedding-3-large",
+        input: pageContent,
+      });
+      if (embeddingsResponse.data.length > 0) {
+        const _embedding = embeddingsResponse.data[0].embedding;
 
-  const nodesByIds: Record<string, any> = {};
-  nodesDocs.docs.forEach((n) => {
-    const nodeData = n.data();
-    if (!nodeData.category) {
-      nodesByIds[n.id] = nodeData;
-    }
-  });
-  const updateDocuments = [];
-  const updateDocumentsIds: string[] = [];
-  const nodeStructure = getFullNodeStructure(nodeData, nodesByIds);
-  if (!deleteNode) {
-    updateDocumentsIds.push(`${nodeData.id}-properties`);
-    updateDocuments.push(nodeStructure);
-  }
-
-  for (let property of [
-    ...Object.keys(propertyOf),
-    "specializations",
-    "generalizations",
-  ]) {
-    let propertyValue = propertyOf[property];
-    if (property === "specializations" || property === "generalizations") {
-      propertyValue = nodeData[property];
-    }
-
-    for (let { id } of propertyValue.flatMap((c) => c.nodes)) {
-      const nodeStructure = getFullNodeStructure(nodesByIds[id], nodesByIds);
-      updateDocuments.push(nodeStructure);
-      if (!updateDocumentsIds.includes(`${id}-properties`)) {
-        updateDocumentsIds.push(`${id}-properties`);
+        await collection.upsert({
+          documents: [pageContent.toLowerCase()],
+          ids: [nodeId],
+          metadatas: [
+            {
+              title: nodeData.title,
+              id: nodeData.id,
+              nodeType: nodeData.nodeType,
+            },
+          ],
+          embeddings: [_embedding],
+        });
       }
+    } else if (deleted && nodeData.id) {
+      await collection.delete({ ids: [nodeData.id] });
     }
+    return res.status(200).json({});
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({});
   }
-  const docsChunks = createChunks(updateDocuments);
-  const idsChunks = createChunks(updateDocumentsIds);
-
-  for (let i = 0; i < idsChunks.length; i++) {
-    try {
-      const chunkIdsLong = idsChunks[i];
-      const chunkDocs = docsChunks[i];
-      const fullDocuments = chunkDocs.map((doc) => doc.content.toLowerCase());
-
-      const titles = chunkDocs.map((d) => {
-        return {
-          title: d.title,
-          id: d.id,
-        };
-      });
-
-      await collection.upsert({
-        documents: fullDocuments,
-        ids: chunkIdsLong,
-        metadatas: titles,
-      });
-    } catch (error) {
-      console.error("Error embedding batch:", error);
-    }
-  }
-  return res.status(200).json({});
 }
 
 export default handler;

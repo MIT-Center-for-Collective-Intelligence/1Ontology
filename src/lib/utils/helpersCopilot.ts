@@ -137,13 +137,16 @@ export const getStructureForJSON = (
 
   const getTitles = (propertyValue: ICollection[]) => {
     const propertyWithTitles: string[] = [];
-    for (let collection of propertyValue) {
-      for (let node of collection?.nodes || []) {
-        if (nodes[node.id]) {
-          propertyWithTitles.push(nodes[node.id].title);
+    if (Array.isArray(propertyValue)) {
+      for (let collection of propertyValue) {
+        for (let node of collection?.nodes || []) {
+          if (nodes[node.id]) {
+            propertyWithTitles.push(nodes[node.id].title);
+          }
         }
       }
     }
+
     return propertyWithTitles;
   };
 
@@ -178,7 +181,7 @@ export const getStructureForJSON = (
   };
 };
 
-export const getNodesInThreeLevels = (
+export const getNodesInLevels = (
   nodeData: INode,
   nodes: Record<string, INode>,
   visited: Set<string>,
@@ -223,7 +226,7 @@ export const getNodesInThreeLevels = (
       const nodeD = getStructureForJSON(itemData, nodes);
       nodesArray.push(nodeD);
       visited.add(itemData.title);
-      const p = getNodesInThreeLevels(
+      const p = getNodesInLevels(
         itemData,
         nodes,
         visited,

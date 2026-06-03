@@ -10,7 +10,9 @@ export const sendLLMRequest = async (
   improveProperties: Set<string>,
   proposeDeleteNode: boolean,
   inputProperties: Set<string>,
-  skillsFutureApp: string,
+  appName: string,
+  systemPromptObjectiveDefinition?: SystemPromptObjectiveDefinition | null,
+  aiAssistantContext?: unknown,
 ) => {
   try {
     const response = await Post("/copilot", {
@@ -22,7 +24,9 @@ export const sendLLMRequest = async (
       proposeDeleteNode,
       improveProperties: new Array(...improveProperties),
       inputProperties: new Array(...inputProperties),
-      skillsFutureApp,
+      appName,
+      systemPromptObjectiveDefinition:
+        systemPromptObjectiveDefinition ?? undefined,
     });
     recordLogs({
       reason: "sendLLMRequest",
@@ -130,22 +134,26 @@ export type Improvement = {
 };
 
 export const MODELS_OPTIONS = [
-  { id: "o3", title: "O3" },
-  { id: "o1", title: "O1" },
-  { id: "chatgpt-4o-latest", title: "GPT-4o latest" },
-  { id: "gemini-2.0-flash-exp", title: "GEMINI-2.0 FLASH EXP" },
-  { id: "o1-mini", title: "O1 mini" },
+  // { id: "o3", title: "O3" },
+  // { id: "o1", title: "O1" },
+  // { id: "chatgpt-4o-latest", title: "GPT-4o latest" },
+  // { id: "gemini-2.0-flash-exp", title: "GEMINI-2.0 FLASH EXP" },
+  // { id: "o1-mini", title: "O1 mini" },
+  // {
+  //   id: "gemini-2.0-flash-thinking-exp",
+  //   title: "GEMINI-2.0 FLASH THINKING EXP",
+  // },
+  // {
+  //   id: "gemini-exp-1206",
+  //   title: "Gemini Exp 1206",
+  // },
+  // {
+  //   id: "gemini-2.5-pro-exp-03-25",
+  //   title: "Gemini-2.5 PRO EXP 03-25",
+  // },
   {
-    id: "gemini-2.0-flash-thinking-exp",
-    title: "GEMINI-2.0 FLASH THINKING EXP",
-  },
-  {
-    id: "gemini-exp-1206",
-    title: "Gemini Exp 1206",
-  },
-  {
-    id: "gemini-2.5-pro-exp-03-25",
-    title: "Gemini-2.5 PRO EXP 03-25",
+    id: "gemini-3-pro-preview",
+    title: "Gemini-3 PRO PREVIEW",
   },
 ];
 const properties = {
@@ -179,21 +187,29 @@ export const getResponseStructure = (
   improvement: boolean,
   proposeDeleteNode: boolean,
 ) => {
-  return `
-Please carefully generate a JSON object with the following structure:
+  const fields: string[] = [
+    `  "message": "A string message to the user, which may include your analysis, questions, or explanations regarding the proposed changes.",`,
+  ];
+
+  if (improvement) {
+    fields.push(
+      `  "improvements": [], // An array of improvements to existing nodes.`,
+    );
+  }
+
+  fields.push(
+    `  "new_nodes": [], // An array of new nodes. Note that you should not propose a new node if a node with the same meaning already exists in the ontology, even if their titles are different.`,
+  );
+
+  if (proposeDeleteNode) {
+    fields.push(
+      `  "delete_nodes": [], // An array of nodes proposed for deletion. If it is not necessary to delete any node, and you think all the nodes in the ontology are relevant, you can leave this array empty.`,
+    );
+  }
+
+  return `Please carefully generate a JSON object with the following structure:
 {
-  "message": "A string message to the user, which may include your analysis, questions, or explanations regarding the proposed changes.",
-  ${
-    improvement
-      ? `"improvements": [], // An array of improvements to existing nodes.`
-      : ""
-  }
-  "new_nodes": [], // An array of new nodes. Note that you should not propose a new node if a node with the same meaning already exists in the ontology, even if their titles are different.
-  ${
-    proposeDeleteNode
-      ? `"delete_nodes": [], // An array of nodes proposed for deletion. If it is not necessary to delete any node, and you think all the nodes in the ontology are relevant, you can leave this array empty.\n`
-      : ""
-  }
+${fields.join("\n")}
 }
 `;
 };
@@ -578,8 +594,8 @@ Each item should be an object proposing a new node, structured as follows:
 export const getDeleteNodesPrompt = (proposeDeleteNode: boolean) => {
   return `${
     proposeDeleteNode
-      ? ` ------------------
-  
+      ? `
+
   **For the "delete_nodes" array**:
   Each item should be an object proposing the deletion of an existing node:
   
@@ -592,7 +608,7 @@ export const getDeleteNodesPrompt = (proposeDeleteNode: boolean) => {
 };
 export const getNotesPrompt = () => {
   return `
-- Do not create a 'Main' collection if it doesn't exist.
+- Do not create a 'default' collection if it doesn't exist.
 - Take ample time to generate high-quality improvements and additions.
 - A panel of experts will review your proposals and for every satisfactory proposal, you will be rewarded $100. For every unsatisfactory proposal, you will lose $100.
 - In the title of the parts, do not mention that they are inherited from another node. We do not need any comments about whether and where each part is inherited from.`;
@@ -619,7 +635,8 @@ export const getCopilotPrompt = ({
       `# Objective:
 '''
   ${editedPart.objective}
-'''\n------------------\n`;
+'''
+`;
   }
   /* Ontology Definition */
   if (!!editedPart.definition && !!editedPart.definition.trim()) {
@@ -628,7 +645,8 @@ export const getCopilotPrompt = ({
       `\n# Ontology Definition:
 '''
   ${editedPart.definition}
-'''\n------------------\n`;
+'''
+`;
   }
   /* Response structure */
   prompt =
@@ -642,8 +660,69 @@ ${getResponseStructure(improvement, proposeDeleteNode)}`;
   prompt = prompt + getNewNodesPrompt(newNodes);
   prompt = prompt + getDeleteNodesPrompt(proposeDeleteNode);
   prompt = prompt + "\n\n### Important Notes:\n" + getNotesPrompt();
-  prompt = prompt + "'''\n------------------\n";
+  prompt = prompt + "'''\n";
   return prompt;
+};
+
+/** Same instruction tail the copilot API appends after ontology context (QueryOntology tool). */
+export const getCopilotToolUseInstructions = (): string => {
+  return `## Tool use
+
+You may call **QueryOntology** with an array of search strings to find existing nodes in the full ontology. Do not guess exact node titles—verify with search when needed. Use at most **5** searches, then respond with the final JSON object that follows the response structure above.
+`;
+};
+
+/** Objective + ontology definition blocks from the Copilot “System prompt” UI (Firestore-backed). */
+export type SystemPromptObjectiveDefinition = {
+  objective: string;
+  definition: string;
+};
+
+function toImprovePropertiesSet(
+  improveProperties: Set<string> | string[],
+): Set<string> {
+  return improveProperties instanceof Set
+    ? improveProperties
+    : new Set(improveProperties);
+}
+
+/**
+ * Full user-message text for the ontology copilot: matches {@link getCopilotPrompt} plus
+ * optional instructions, context JSON, anchor title, and tool-use rules.
+ */
+export const buildCopilotLLMPrompt = (args: {
+  editedPart: SystemPromptObjectiveDefinition;
+  improvement: boolean;
+  newNodes: boolean;
+  proposeDeleteNode: boolean;
+  improveProperties: Set<string> | string[];
+  userMessage?: string;
+  subOntology?: unknown;
+  nodeTitle?: string;
+}): string => {
+  let out = getCopilotPrompt({
+    improvement: args.improvement,
+    newNodes: args.newNodes,
+    proposeDeleteNode: args.proposeDeleteNode,
+    improveProperties: toImprovePropertiesSet(args.improveProperties),
+    editedPart: args.editedPart,
+  });
+
+  const um = args.userMessage?.trim();
+  if (um) {
+    out += `\n\n## Additional instructions\n\n${um}\n`;
+  }
+
+  if (args.nodeTitle) {
+    out += `\n\n## Focus node (anchor)\n\nThe user opened the assistant from ontology node titled: **${args.nodeTitle}**.\n`;
+  }
+
+  if (args.subOntology !== undefined && args.subOntology !== null) {
+    out += `\n\n## Sub-ontology / context (JSON)\n\n\`\`\`json\n${JSON.stringify(args.subOntology, null, 2)}\n\`\`\`\n`;
+  }
+
+  out += `\n\n${getCopilotToolUseInstructions()}`;
+  return out;
 };
 
 export const getConsultantPrompt = (

@@ -1,8 +1,6 @@
 import { DESIGN_SYSTEM_COLORS } from "./theme/colors";
 export const development = process.env.NODE_ENV === "development";
 
-// TO-DO: Consider storing this data in the database to identify node types in the project
-
 // Defining an object to hold initial values for various node types
 
 export const DISPLAY: {
@@ -143,11 +141,11 @@ export const PROPERTIES_TO_IMPROVE: { [nodeType: string]: string[] } | any = {
   ],
   actor: ["abilities", "typeOfActor"],
   activity: [
-    "actor",
-    "objectsActedOn",
-    "evaluationDimension",
-    "PreConditions",
-    "postConditions",
+    // "actor",
+    // "objectsActedOn",
+    // "evaluationDimension",
+    // "PreConditions",
+    // "postConditions",
   ],
   object: ["lifeSpan", "modifiability", "perceivableProperties"],
   evaluationDEmention: [
@@ -166,34 +164,76 @@ export const PROPERTIES_TO_IMPROVE: { [nodeType: string]: string[] } | any = {
 };
 
 export const MODEL = "o3";
-export const GEMINI_MODEL = "gemini-2.5-pro";
+export const GEMINI_MODEL = "gemini-3.1-pro-preview";
 
-export const SKILLS_FUTURE_APP_NAMES = [
-  {
-    id: "Full WordNet O*Net Verb Hierarchy - Tom's Version",
-    name: "Full WordNet O*Net Verb Hierarchy - Tom's Version",
-  },
-  {
-    id: "Full WordNet O*Net Verb Hierarchy Manual GPT Upper",
-    name: "Full WordNet O*Net Verb Hierarchy Manual GPT Upper",
-  },
-  { id: "Ontology - Demo Version", name: "Ontology - Demo Version" },
-  {
-    id: "Ontology - Development Version",
-    name: "Ontology - Development Version",
-  },
-  { id: "Top-Down Gemini 2.5 Pro", name: "AI Peer Generated Ontology" },
-  {
-    id: "activities-actors-objects-gemini-2-5pro",
-    name: "Activities, Actors, Objects - Gemini 2.5 Pro",
-  },
-  /*"Holistic Embedding - o3-mini Proposer-Reviewer Generated Titles & Parts",
-  "Holistic Embedding - Gemini 2.5 Pro Generated Titles & Parts",
-  "Holistic Embedding (Sector, Title, JobRole, CWF, Parts) - Gemini 2.5 Pro",
-  "O*Net Verbs o3 Deep Research",
-  "O*Net Verbs - o1 Pro", */
-  // "Full WordNet O*Net Verb Hierarchy Auto GPT Upper",
-];
+export const ONTOLOGY_APPS = development
+  ? [
+      {
+        id: "final-hierarchy-with-o*net",
+        name: "Final Hierarchy with O*Net",
+      },
+      {
+        id: "ontology-development-version",
+        name: "Ontology - Development Version",
+        type: "other",
+      },
+
+      {
+        id: "final-hierarchy-with-o*net-parts",
+        name: "Final Hierarchy with Parts",
+        type: "other",
+      },
+    ]
+  : [
+      {
+        id: "final-hierarchy-with-o*net",
+        name: "Final Hierarchy with O*Net",
+      },
+      { id: "sandbox", name: "Sandbox", type: "other", editAccess: true },
+      {
+        id: "sandbox-5",
+        name: "AI-Peer Result",
+        type: "other",
+        adminAccess: true,
+      },
+      /* {
+        id: "ontology-demo-version",
+        name: "Ontology - Demo Version",
+        type: "other",
+      }, */
+      {
+        id: "ontology-development-version",
+        name: "Ontology - Development Version",
+        type: "other",
+      },
+      {
+        id: "final-hierarchy-with-o*net-parts",
+        name: "Final Hierarchy with Parts",
+        type: "other",
+      },
+      { id: "noun-ontology", name: "Noun Ontology", type: "other" },
+      {
+        id: "onet-ontology",
+        name: "O*NET Ontology Including Tasks",
+        type: "other",
+      },
+      {
+        id: "onet-ontology-no-tasks",
+        name: "O*NET Ontology Excluding Tasks",
+        type: "other",
+      },
+    ];
+
+export const SANDBOX_ONTOLOGY_APP_ID = "sandbox";
+
+/** Max nodes visited when walking the specialization graph (cycle check, BFS). */
+export const MAX_DERIVED_PATH_OP_VISITS = 100_000;
+
+/** Max nodes collected in the affected specialization subtree for one derived-path run. */
+export const MAX_DERIVED_PATH_BFS_NODES = 20_000;
+
+/** Max Firestore writes in a single derived-path maintenance run. */
+export const MAX_DERIVED_PATH_WRITES = 10_000;
 
 export const performerColors: Record<string, string> = {
   "A single human": "#1976d2",

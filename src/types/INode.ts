@@ -53,6 +53,8 @@ export type ICollection = {
 export type IInheritance = {
   [key: string]: {
     ref: string | null;
+    /** Display title of the node in `ref` (empty when `ref` is null). */
+    title: string;
     inheritanceType:
       | "neverInherit"
       | "alwaysInherit"
@@ -76,6 +78,7 @@ export type INode = {
       inheritedFromId: string;
     } | null;
   };
+  inheritedPartsDetails: InheritedPartsDetail[];
   specializations: ICollection[];
   generalizations: ICollection[];
   root: string;
@@ -110,12 +113,15 @@ export type INode = {
   oNet?: boolean;
   actionAlternatives?: string[];
   appName?: string;
-  skillsFuture?: boolean;
   rootId?: string;
   oNetTask?: {
     id: string;
     title: string;
   };
+  synsets?: string;
+  pathIds?: string[];
+  parentIds?: string[];
+  primaryParentId?: string | null;
 };
 
 export type TreeVisual = {
@@ -181,10 +187,38 @@ export type NodeChange = {
   fullNode: INode | null;
   changeDetails?: { [key: string]: any };
   reasoning?: string;
-  skillsFuture?: boolean;
   appName?: string;
   detailsOfChange?: any;
   logLLMId?: string;
+  /** Pre-computed diff for collection-typed changes */
+  diffValue?: DiffCollection[];
+  /** Set on child logs to point at the parent log */
+  triggeredBy?: {
+    logId: string;
+    nodeId: string;
+    nodeTitle: string;
+    changeType: NodeChange["changeType"];
+  };
+};
+
+export type DiffLinkNode = {
+  id: string;
+  title: string;
+  /** "added" / "removed" relative to the previous state; absent if unchanged. */
+  change?: "added" | "removed";
+  /** Node moved between collections. */
+  changeType?: "sort";
+  optional?: boolean;
+  optionalChange?: "added" | "removed";
+};
+
+export type DiffCollection = {
+  collectionName: string;
+  /** "added" / "removed" relative to the previous state; absent if unchanged. */
+  change?: "added" | "removed";
+  /** Collection itself moved (only for `sort collections` diffs). */
+  changeType?: "sort";
+  nodes: DiffLinkNode[];
 };
 
 export type PromptChange = {
@@ -230,7 +264,20 @@ export type TreeData = {
   task?: boolean;
   comments?: boolean;
   unclassified?: boolean;
+  outlineSpineOnly?: boolean;
+  outlineLoadChildren?: boolean;
+  hasUnresolvedChildren?: boolean;
 };
+
+export interface TreeViewNode {
+  id: string;
+  nodeId: string;
+  name: string;
+  category: boolean;
+  nodeType?: string;
+  unclassified?: boolean;
+  childIds: string[];
+}
 
 /**
  * Temporary types for activity flow implementation
@@ -329,4 +376,28 @@ export type TransferInheritance = {
   toOptional: boolean;
   optionalChange: "added" | "removed" | "none";
   hops: number;
+};
+
+export type InheritedPartsDetail = {
+  generalizationId: string;
+  generalizationTitle: string;
+  createdAt: any; // Can be either firebase/firestore or firebase-admin/firestore Timestamp
+  details: {
+    from: string;
+    to: string;
+    symbol: ">" | "x" | "=" | "+";
+    fromTitle: string;
+    toTitle: string;
+    fromOptional: boolean;
+    toOptional: boolean;
+    optionalChange: "added" | "removed" | "none";
+    hops: number;
+    userOverride?: boolean;
+  }[];
+  nonPickedOnes: {
+    [fromId: string]: {
+      id: string;
+      title: string;
+    }[];
+  };
 };

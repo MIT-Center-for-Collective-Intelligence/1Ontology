@@ -1,0 +1,28 @@
+{
+  "publications": [
+    {
+      "id": "malone-2003-process-handbook",
+      "title": "Organizing business knowledge: the MIT process handbook",
+      "authors": ["Malone, T. W.", "Crowston, K.", "Herman, G. A."],
+      "journal": "MIT press",
+      "year": 2003,
+      "url": "http://diglib.globalcollege.edu.et:8080/xmlui/bitstream/handle/123456789/1592/08768.pdf?sequence=1&isAllowed=y"
+    },
+    {
+      "id": "malone-2004-future-work",
+      "title": "The future of work",
+      "authors": ["Malone, T. W."],
+      "journal": "Audio-Tech Business Book Summaries, Incorporated",
+      "year": 2004,
+      "url": "https://www.researchgate.net/profile/Thomas-Malone-2/publication/45816303_The_Future_of_Work/links/09e4151027f9e0655b000000/The-Future-of-Work.pdf"
+    },
+    {
+      "id": "malone-2018-superminds",
+      "title": "Superminds: The surprising power of people and computers thinking together",
+      "authors": ["Malone, T. W."],
+      "journal": "Little, Brown Spark",
+      "year": 2018,
+      "url": "https://ilp.mit.edu/sites/default/files/2020-01/Malone.2018.ICT_.pdf"
+    }
+  ]
+}

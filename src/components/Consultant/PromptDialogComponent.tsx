@@ -11,7 +11,6 @@ import {
 import React, { useEffect, useState, useCallback } from "react";
 
 import { Box, Paper } from "@mui/material";
-import { debounce } from "lodash";
 import CircularProgress from "@mui/material/CircularProgress";
 import {
   collection,
@@ -24,6 +23,7 @@ import {
 } from "firebase/firestore";
 import WbSunnyIcon from "@mui/icons-material/WbSunny";
 import BedtimeIcon from "@mui/icons-material/Bedtime";
+import FullPageLogoLoading from "../layouts/FullPageLogoLoading";
 
 const LoadingConsultant = () => {
   return (
@@ -89,7 +89,7 @@ const PromptDialogComponent = ({
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const debouncedSavePrompt = useCallback(
-    debounce(async (promptToSave) => {
+    async (promptToSave: any) => {
       const promptDocs = await getDocs(
         query(
           collection(db, "diagramPrompts"),
@@ -112,7 +112,7 @@ const PromptDialogComponent = ({
           consultant: true,
         });
       }
-    }, 1000),
+    },
     [db, confirmation],
   );
 
@@ -146,7 +146,7 @@ const PromptDialogComponent = ({
   };
 
   const handleUserInputChange = (event: any) => {
-    setCaseDescription("");
+    setCaseDescription(event.target.value);
     localStorage.setItem(`caseDescription-${!!ignoreCLD}`, event.target.value);
   };
 
@@ -166,8 +166,6 @@ const PromptDialogComponent = ({
   };
 
   const savePrompt = async () => {
-    debouncedSavePrompt.cancel();
-
     const promptDocs = await getDocs(
       query(
         collection(db, "diagramPrompts"),
@@ -193,31 +191,8 @@ const PromptDialogComponent = ({
     }
   };
 
-  // Clean up debounce on unmount
-  useEffect(() => {
-    return () => {
-      debouncedSavePrompt.cancel();
-    };
-  }, [debouncedSavePrompt]);
   if (loadingResponse === "generate") {
-    return (
-      <Container
-        maxWidth="sm"
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          minHeight: "100vh",
-        }}
-      >
-        <Box
-          component="img"
-          src="loader.gif"
-          alt="Loading..."
-          sx={{ width: 200, height: 200, borderRadius: "25px" }}
-        />
-      </Container>
-    );
+    return <FullPageLogoLoading />;
   }
   return (
     <Box
@@ -329,9 +304,11 @@ const PromptDialogComponent = ({
             onChange={handleConsultingTopic}
             fullWidth
             variant="outlined"
-            InputLabelProps={{
-              sx: {
-                color: "gray",
+            slotProps={{
+              inputLabel: {
+                sx: {
+                  color: "gray",
+                },
               },
             }}
             sx={{
@@ -372,8 +349,7 @@ const PromptDialogComponent = ({
         </Box>
         <Grid container spacing={2} sx={{ flexGrow: 1, overflow: "hidden" }}>
           <Grid
-            item
-            xs={admin && !ignoreCLD ? 6 : 12}
+            size={admin && !ignoreCLD ? 6 : 12}
             sx={{ display: "flex", flexDirection: "column", gap: 2 }}
           >
             <TextField
@@ -386,7 +362,6 @@ const PromptDialogComponent = ({
               minRows={14}
               maxRows={ideaEvaluator ? 14 : 500}
               variant="outlined"
-              inputProps={{ maxRows: 14 }}
               sx={{
                 // flexGrow: 3,
                 overflow: "auto",
@@ -395,14 +370,16 @@ const PromptDialogComponent = ({
                   borderRadius: "12px",
                 },
               }}
-              InputLabelProps={{
-                shrink: true,
-                sx: {
-                  fontWeight: 600,
-                  color: "text.primary",
-                  fontSize: "1rem",
-                  transform: "none",
-                  position: "relative",
+              slotProps={{
+                inputLabel: {
+                  shrink: true,
+                  sx: {
+                    fontWeight: 600,
+                    color: "text.primary",
+                    fontSize: "1rem",
+                    transform: "none",
+                    position: "relative",
+                  },
                 },
               }}
             />
@@ -426,14 +403,16 @@ const PromptDialogComponent = ({
                   borderRadius: "12px",
                 },
               }}
-              InputLabelProps={{
-                shrink: true,
-                sx: {
-                  fontWeight: 600,
-                  color: "text.primary",
-                  fontSize: "1rem",
-                  transform: "none",
-                  position: "relative",
+              slotProps={{
+                inputLabel: {
+                  shrink: true,
+                  sx: {
+                    fontWeight: 600,
+                    color: "text.primary",
+                    fontSize: "1rem",
+                    transform: "none",
+                    position: "relative",
+                  },
                 },
               }}
             />
@@ -441,8 +420,7 @@ const PromptDialogComponent = ({
 
           {admin && !ignoreCLD && (
             <Grid
-              item
-              xs={6}
+              size={6}
               sx={{ display: "flex", flexDirection: "column", gap: 2 }}
             >
               <Typography
