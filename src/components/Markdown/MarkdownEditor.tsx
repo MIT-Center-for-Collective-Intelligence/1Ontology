@@ -41,7 +41,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
   editor,
   collaborationData,
   setEditorContent,
-  pendingInheritanceMessage
+  pendingInheritanceMessage,
   placeholder,
 }) => {
   const theme = useTheme();
