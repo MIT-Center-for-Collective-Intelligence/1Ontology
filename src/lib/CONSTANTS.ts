@@ -190,12 +190,12 @@ export const ONTOLOGY_APPS = development
         name: "Final Hierarchy with O*Net",
       },
       { id: "sandbox", name: "Sandbox", type: "other", editAccess: true },
-      {
+      /*  {
         id: "sandbox-5",
         name: "AI-Peer Result",
         type: "other",
         adminAccess: true,
-      },
+      }, */
       /* {
         id: "ontology-demo-version",
         name: "Ontology - Demo Version",
@@ -206,11 +206,11 @@ export const ONTOLOGY_APPS = development
         name: "Ontology - Development Version",
         type: "other",
       },
-      {
+      /*   {
         id: "final-hierarchy-with-o*net-parts",
         name: "Final Hierarchy with Parts",
         type: "other",
-      },
+      }, */
       { id: "noun-ontology", name: "Noun Ontology", type: "other" },
       {
         id: "onet-ontology",
