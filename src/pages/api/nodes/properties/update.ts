@@ -11,15 +11,16 @@ import {
   USERS,
 } from "@components/lib/firestoreClient/collections";
 import { getDoerCreate } from "@components/lib/utils/helpers";
+import { computeDiffValue } from "@components/lib/utils/diffValue";
 import { FieldValue } from "firebase-admin/firestore";
-import { INode, NodeChange } from "@components/types/INode";
+import { ICollection, INode, NodeChange } from "@components/types/INode";
 
 /**
  * Single endpoint for generic node-property operations — add / delete /
- * rename / change — selected by `action` in the request body.
+ * rename / change / change-links — selected by `action` in the request body.
  */
 
-type PropertyAction = "add" | "delete" | "rename" | "change";
+type PropertyAction = "add" | "delete" | "rename" | "change" | "change-links";
 
 type OperationContext = {
   nodeId: string;
@@ -179,6 +180,36 @@ async function walkSpecializations(
   return { written, skipped };
 }
 
+/**
+ * Make descendants that inherit this property point at `nodeId`. Only the
+ * inheritance ref is written — values are read through it, never copied. A
+ * descendant with its own value keeps it, and its subtree is left alone too.
+ */
+async function rewireInheritingDescendants(
+  nodeId: string,
+  nodeTitle: string,
+  propertyName: string,
+): Promise<void> {
+  await walkSpecializations(
+    nodeId,
+    (node) => {
+      const inh = node.inheritance?.[propertyName];
+      if (!inh || inh.inheritanceType === "neverInherit") return null;
+      const stillInherits = inh.ref !== null; // null === overridden, leave it
+      const rewire =
+        inh.inheritanceType === "alwaysInherit" ||
+        (inh.inheritanceType === "inheritUnlessAlreadyOverRidden" &&
+          stillInherits);
+      if (!rewire) return null;
+      return {
+        [`inheritance.${propertyName}.ref`]: nodeId,
+        [`inheritance.${propertyName}.title`]: nodeTitle,
+      };
+    },
+    { descendPastSkipped: false },
+  );
+}
+
 /** Write an info/error log to LOGS, attributed to `uname`. */
 const recordLogs = async (logs: { [key: string]: any }, uname: string) => {
   try {
@@ -200,6 +231,8 @@ const recordLogs = async (logs: { [key: string]: any }, uname: string) => {
 /** Write a NodeChange to NODES_LOGS and bump the user's last-activity timestamp. */
 async function writeChangeLog(change: NodeChange): Promise<void> {
   if (!change.modifiedBy) return;
+  const diffValue = computeDiffValue(change);
+  if (diffValue) change.diffValue = diffValue;
   await db
     .collection(NODES_LOGS)
     .doc()
@@ -525,28 +558,9 @@ async function changeProperty(
   }
   await db.collection(NODES).doc(nodeId).update(nodeUpdates);
 
-  // When newly overriding, re-point inheriting descendants at this node —
-  // ref only, values resolve through it. A descendant that doesn't rewire
-  // prunes its subtree: nodes below it inherit from it, not from us.
+  // When newly overriding, re-point inheriting descendants at this node.
   if (wasInheriting) {
-    await walkSpecializations(
-      nodeId,
-      (node) => {
-        const inh = node.inheritance?.[cleanName];
-        if (!inh || inh.inheritanceType === "neverInherit") return null;
-        const stillInherits = inh.ref !== null; // null === overridden, leave it
-        const rewire =
-          inh.inheritanceType === "alwaysInherit" ||
-          (inh.inheritanceType === "inheritUnlessAlreadyOverRidden" &&
-            stillInherits);
-        if (!rewire) return null;
-        return {
-          [`inheritance.${cleanName}.ref`]: nodeId,
-          [`inheritance.${cleanName}.title`]: nodeData.title ?? "",
-        };
-      },
-      { descendPastSkipped: false },
-    );
+    await rewireInheritingDescendants(nodeId, nodeData.title ?? "", cleanName);
   }
 
   // No-op edits still persist the value (an override can pin the inherited
@@ -566,7 +580,169 @@ async function changeProperty(
   return { ok: true, changedProperty: cleanName };
 }
 
-const ACTIONS: PropertyAction[] = ["add", "delete", "rename", "change"];
+/**
+ * Add/remove link elements on a link-typed property.
+ * Maintains propertyOf back-links on the linked nodes.
+ */
+async function changeLinks(
+  ctx: OperationContext,
+): Promise<{ ok: true; changedProperty: string }> {
+  const { nodeId, nodeData, data, uname, appName } = ctx;
+
+  const nameError = validatePropertyName(data?.propertyName);
+  if (nameError) throw new HttpError(400, nameError);
+  const cleanName = (data.propertyName as string).trim();
+
+  if (!hasOwn(nodeData.properties, cleanName)) {
+    throw new HttpError(404, `Property "${cleanName}" not found on this node`);
+  }
+  const propertyType = (nodeData.propertyType as any)?.[cleanName];
+  if (propertyType === "string" || CHANGE_TYPES.has(propertyType)) {
+    throw new HttpError(
+      400,
+      `Property "${cleanName}" (type "${propertyType ?? "unknown"}") is not link-typed`,
+    );
+  }
+
+  const isIdArray = (v: any): v is string[] =>
+    Array.isArray(v) && v.every((x) => typeof x === "string");
+  const added: string[] = isIdArray(data.added)
+    ? [...new Set<string>(data.added)]
+    : [];
+  const removed: string[] = isIdArray(data.removed)
+    ? [...new Set<string>(data.removed)]
+    : [];
+  if (added.length === 0 && removed.length === 0) {
+    throw new HttpError(400, "added and/or removed link ids are required");
+  }
+  const collectionName =
+    typeof data.collectionName === "string" ? data.collectionName : "main";
+
+  // Apply the edit to the collections the user actually saw: while inheriting,
+  // those live on the referenced node, not in this node's own (stale) copy.
+  const inheritedRef = nodeData.inheritance?.[cleanName]?.ref;
+  let refData: INode | undefined;
+  if (inheritedRef) {
+    refData = (await db.collection(NODES).doc(inheritedRef).get()).data() as
+      | INode
+      | undefined;
+  }
+  let base: any =
+    refData && hasOwn(refData.properties, cleanName)
+      ? refData.properties[cleanName]
+      : nodeData.properties[cleanName];
+  if (!Array.isArray(base) || base.length === 0) {
+    base = [{ collectionName: "main", nodes: [] }];
+  }
+  const previousValue: ICollection[] = JSON.parse(JSON.stringify(base));
+  const newValue: ICollection[] = JSON.parse(JSON.stringify(base));
+
+  for (const c of newValue) {
+    c.nodes = (c.nodes || []).filter((n) => !removed.includes(n.id));
+  }
+  let collectionIdx = newValue.findIndex(
+    (c) => c.collectionName === collectionName,
+  );
+  if (collectionIdx === -1) collectionIdx = 0;
+  const existingIds = new Set(
+    newValue.flatMap((c) => c.nodes.map((n) => n.id)),
+  );
+
+  // Fetch each added node for its title and back-links. Ids that don't exist,
+  // are deleted, or point at this node itself are skipped, not errors.
+  const addedNodes: { id: string; data: INode }[] = [];
+  for (const id of added) {
+    if (existingIds.has(id) || id === nodeId) continue;
+    const d = (await db.collection(NODES).doc(id).get()).data() as
+      | INode
+      | undefined;
+    if (d && !d.deleted) addedNodes.push({ id, data: d });
+  }
+  newValue[collectionIdx].nodes.push(
+    ...addedNodes.map((n) => ({ id: n.id, title: n.data.title ?? "" })),
+  );
+
+  // Write the new collections. Editing an inherited property makes it an
+  // override: break the ref and copy the referenced node's comments down.
+  const wasInheriting = !!inheritedRef;
+  const nodeUpdates: Record<string, any> = {
+    [`properties.${cleanName}`]: newValue,
+  };
+  if (wasInheriting) {
+    nodeUpdates[`inheritance.${cleanName}.ref`] = null;
+    nodeUpdates[`inheritance.${cleanName}.title`] = "";
+    if (refData?.textValue && hasOwn(refData.textValue, cleanName)) {
+      nodeUpdates[`textValue.${cleanName}`] = refData.textValue[cleanName];
+    }
+  }
+  if (uname && uname !== "ouhrac") {
+    nodeUpdates.contributors = FieldValue.arrayUnion(uname);
+    nodeUpdates[`contributorsByProperty.${cleanName}`] =
+      FieldValue.arrayUnion(uname);
+  }
+  await db.collection(NODES).doc(nodeId).update(nodeUpdates);
+
+  // Update the back-links: each linked node records in propertyOf which
+  // nodes use it as a value of this property.
+  const batch = db.batch();
+  for (const id of removed) {
+    const snap = await db.collection(NODES).doc(id).get();
+    const backLinks = (snap.data() as INode | undefined)?.propertyOf?.[
+      cleanName
+    ];
+    if (!Array.isArray(backLinks)) continue;
+    for (const c of backLinks) {
+      c.nodes = (c.nodes || []).filter((n) => n.id !== nodeId);
+    }
+    batch.update(snap.ref, { [`propertyOf.${cleanName}`]: backLinks });
+  }
+  for (const { id, data: d } of addedNodes) {
+    const backLinks: ICollection[] = Array.isArray(d.propertyOf?.[cleanName])
+      ? (d.propertyOf as any)[cleanName]
+      : [{ collectionName: "main", nodes: [] }];
+    let main = backLinks.find((c) => c.collectionName === "main");
+    if (!main) {
+      main = { collectionName: "main", nodes: [] };
+      backLinks.push(main);
+    }
+    if (!main.nodes.some((n) => n.id === nodeId)) {
+      main.nodes.push({ id: nodeId });
+      batch.update(db.collection(NODES).doc(id), {
+        [`propertyOf.${cleanName}`]: backLinks,
+      });
+    }
+  }
+  await batch.commit();
+
+  // When newly overriding, re-point inheriting descendants at this node.
+  if (wasInheriting) {
+    await rewireInheritingDescendants(nodeId, nodeData.title ?? "", cleanName);
+  }
+
+  if (uname) {
+    await writeChangeLog({
+      nodeId,
+      modifiedBy: uname,
+      modifiedProperty: cleanName,
+      previousValue,
+      newValue,
+      modifiedAt: new Date(),
+      changeType: "modify elements",
+      fullNode: nodeData,
+      ...(appName ? { appName } : {}),
+    } as NodeChange);
+  }
+
+  return { ok: true, changedProperty: cleanName };
+}
+
+const ACTIONS: PropertyAction[] = [
+  "add",
+  "delete",
+  "rename",
+  "change",
+  "change-links",
+];
 
 function fail(res: NextApiResponse, status: number, msg: string) {
   return res.status(status).json({ error: msg, message: msg });
@@ -615,6 +791,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         break;
       case "change":
         result = await changeProperty(ctx);
+        break;
+      case "change-links":
+        result = await changeLinks(ctx);
         break;
     }
 
