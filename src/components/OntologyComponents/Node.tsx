@@ -144,7 +144,9 @@ import { triggerUpdateDerivedPaths } from "@components/lib/utils/triggerUpdateDe
 
 type INodeProps = {
   currentVisibleNode: INode;
-  setCurrentVisibleNode: (node: INode) => void;
+  setCurrentVisibleNode: (
+    node: INode | ((prev: INode | null) => INode | null),
+  ) => void;
   setSnackbarMessage: (message: string) => void;
   user: User;
   mainSpecializations: MainSpecializations;
@@ -1607,77 +1609,78 @@ const Node = ({
     [eachOntologyPath],
   );
   const deleteProperty = async (property: string) => {
+    const confirm = await confirmIt(
+      <Box>
+        <Typography>
+          Are you sure you want to delete the property{" "}
+          <strong style={{ color: "orange" }}>{property}</strong> from this
+          node:
+        </Typography>
+      </Box>,
+      "Yes",
+      "Cancel",
+    );
+    if (!confirm) return;
+    if (!currentVisibleNode.properties?.hasOwnProperty(property)) return;
+
+    // Captured before the await so the failure path can restore / report
+    // against the right node even if the user navigates away mid-flight.
+    const targetNodeId = currentVisibleNode?.id;
+    const targetNodeTitle = currentVisibleNode?.title ?? "";
+
+    // Remove instantly from the current node's view.
+    setCurrentVisibleNode((prev: any) => {
+      if (!prev || prev.id !== targetNodeId) return prev;
+      const _prev = { ...prev };
+      const { [property]: _p, ...restProps } = _prev.properties || {};
+      const { [property]: _t, ...restTypes } = _prev.propertyType || {};
+      const { [property]: _i, ...restInh } = _prev.inheritance || {};
+      _prev.properties = restProps;
+      _prev.propertyType = restTypes;
+      _prev.inheritance = restInh;
+      if (_prev.textValue) {
+        const { [property]: _tv, ...restTv } = _prev.textValue;
+        _prev.textValue = restTv;
+      }
+      if (_prev.propertyOf) {
+        const { [property]: _po, ...restPo } = _prev.propertyOf;
+        _prev.propertyOf = restPo;
+      }
+      return _prev;
+    });
+
     try {
-      const confirm = await confirmIt(
-        <Box>
-          <Typography>
-            Are you sure you want to delete the property{" "}
-            <strong style={{ color: "orange" }}>{property}</strong> from this
-            node:
-          </Typography>
-        </Box>,
-        "Yes",
-        "Cancel",
+      await Post("/nodes/properties/update", {
+        action: "delete",
+        nodeId: targetNodeId,
+        propertyName: property,
+        ...(appName ? { appName } : {}),
+      });
+    } catch (error: any) {
+      // The write failed, so no snapshot will arrive to undo the instant
+      // update — reset from the source of truth (only if still on that node).
+      const fresh = await fetchNode(targetNodeId);
+      setCurrentVisibleNode((prev: any) =>
+        prev?.id === targetNodeId && fresh ? fresh : prev,
       );
 
-      if (confirm) {
-        const currentNode = { ...currentVisibleNode };
-        const properties = currentNode.properties;
+      const reason =
+        (typeof error === "string" ? error : error?.message) ||
+        "Please try again.";
+      setSnackbarMessage(
+        `Failed to delete property "${property}" from "${targetNodeTitle}": ${reason}`,
+      );
 
-        /*     
-        const propertyType = currentNode.propertyType;
-        const inheritance = currentNode.inheritance; */
-        if (properties.hasOwnProperty(property)) {
-          const element = document.getElementById(`property-${property}`);
-          if (element) {
-            element.scrollIntoView({ behavior: "smooth", block: "center" });
-
-            element.style.transition =
-              "box-shadow 0.3s ease, opacity 0.5s ease, transform 0.5s ease";
-            element.style.boxShadow = "0 0 0 3px red";
-            element.style.opacity = "0";
-            element.style.transform = "translateX(-20px)";
-          }
-
-          updateInheritance({
-            nodeId: currentNode.id,
-            updatedProperties: [],
-            deletedProperties: [property],
-            db,
-          });
-        }
-        const inheritedRef = currentNode.inheritance[property].ref;
-
-        // Fetch inheritedRef if missing
-        let previousValue = currentNode.properties[property];
-        if (inheritedRef) {
-          let inheritedRefNode: INode | null =
-            relatedNodes[inheritedRef] || null;
-          if (!inheritedRefNode) {
-            const fetchedNode = await fetchNode(inheritedRef);
-            if (fetchedNode) {
-              inheritedRefNode = fetchedNode;
-            }
-          }
-          previousValue = inheritedRefNode
-            ? inheritedRefNode.properties[property]
-            : currentNode.properties[property];
-        }
-
-        saveNewChangeLog(db, {
-          nodeId: currentNode.id,
-          modifiedBy: user?.uname,
-          modifiedProperty: property,
-          previousValue,
-          newValue: null,
-          modifiedAt: new Date(),
-          changeType: "remove property",
-          fullNode: currentNode,
-          ...(appName ? { appName } : {}),
-        });
-      }
-    } catch (error) {
-      console.error(error);
+      recordLogs({
+        type: "error",
+        error: JSON.stringify({
+          name: error?.name,
+          message: typeof error === "string" ? error : error?.message,
+          stack: error?.stack,
+        }),
+        action: "delete property (failed)",
+        node: targetNodeId,
+      });
     }
   };
 

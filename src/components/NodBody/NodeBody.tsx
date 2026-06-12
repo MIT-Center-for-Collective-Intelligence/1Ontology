@@ -2,17 +2,10 @@ import React, { useCallback, useMemo, useRef, useState } from "react";
 import { Box, Button, Paper, Typography, useTheme } from "@mui/material";
 import { ICollection, INode } from "@components/types/INode";
 import Text from "../OntologyComponents/Text";
-import {
-  collection,
-  deleteField,
-  doc,
-  getFirestore,
-  updateDoc,
-  writeBatch,
-} from "firebase/firestore";
-import { NODES } from "@components/lib/firestoreClient/collections";
+import { getFirestore } from "firebase/firestore";
+import { Post } from "@components/lib/utils/Post";
 import StructuredProperty from "../StructuredProperty/StructuredProperty";
-import { DISPLAY, PROPERTIES_ORDER } from "@components/lib/CONSTANTS";
+import { PROPERTIES_ORDER } from "@components/lib/CONSTANTS";
 import {
   recordLogs,
   saveNewChangeLog,
@@ -154,90 +147,14 @@ const NodeBody: React.FC<NodeBodyProps> = ({
     }
   }, [currentVisibleNode, selectedDiffNode]);
 
-  const removeProperty = async (property: string) => {
-    if (
-      await confirmIt(
-        <Typography>
-          Are sure you want delete the property{" "}
-          <strong>{DISPLAY[property] || property}</strong>?
-        </Typography>,
-        "Delete",
-        "Keep",
-      )
-    ) {
-      const nodeRef = doc(collection(db, NODES), currentVisibleNode?.id);
-      const properties = currentVisibleNode.properties;
-      const propertyType = currentVisibleNode.propertyType;
-      delete properties[property];
-      await updateDoc(nodeRef, { propertyType, properties });
-      recordLogs({
-        action: "removeProperty",
-        node: currentVisibleNode?.id,
-        property,
-      });
-    }
-  };
-
-  const updateSpecializationsInheritance = async (
-    specializations: ICollection[],
-    batch: any,
-    property: string,
-    propertyValue: any,
-    ref: string,
-    propertyType: string,
-  ) => {
-    try {
-      let newBatch = batch;
-      for (let { nodes: links } of specializations) {
-        for (let link of links) {
-          const nodeRef = doc(collection(db, NODES), link.id);
-          let objectUpdate = {
-            [`inheritance.${property}.inheritanceType`]:
-              "inheritUnlessAlreadyOverRidden",
-            [`properties.${property}`]: propertyValue,
-            [`inheritance.${property}.ref`]: ref,
-            [`inheritance.${property}.title`]: currentVisibleNode?.title ?? "",
-            [`propertyType.${property}`]: propertyType,
-          };
-
-          if (newBatch._committed) {
-            newBatch = writeBatch(db);
-          }
-          updateDoc(nodeRef, objectUpdate);
-
-          if (newBatch._mutations.length > 498) {
-            await newBatch.commit();
-            newBatch = writeBatch(db);
-          }
-
-          let linkNodeData: INode | null = relatedNodes[link.id] || null;
-          if (!linkNodeData) {
-            linkNodeData = await fetchNode(link.id);
-          }
-
-          if (linkNodeData) {
-            newBatch = await updateSpecializationsInheritance(
-              linkNodeData.specializations,
-              newBatch,
-              property,
-              propertyValue,
-              ref,
-              propertyType,
-            );
-          }
-        }
-      }
-
-      return newBatch;
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
   const addNewProperty = async (
     newProperty: string,
     newPropertyType: string,
   ) => {
+    // Captured outside `try` so the catch can roll back / report against the
+    // node the property was added to, even if the user has since navigated.
+    const targetNodeId = currentVisibleNode?.id;
+    const targetNodeTitle = currentVisibleNode?.title ?? "";
     try {
       if (!user) return;
       if (newProperty in currentVisibleNode.properties) {
@@ -250,33 +167,33 @@ const NodeBody: React.FC<NodeBodyProps> = ({
       }
       if (!newProperty.trim() || !newPropertyType.trim()) return;
 
-      const nodeRef = doc(collection(db, NODES), currentVisibleNode?.id);
-      const properties = currentVisibleNode.properties;
-      const previousValue = JSON.parse(
-        JSON.stringify(currentVisibleNode.properties),
-      );
-      const propertyType = currentVisibleNode.propertyType;
-      const inheritance = currentVisibleNode.inheritance;
+      const normalizedType = newPropertyType.toLowerCase();
+      const propertyValue =
+        normalizedType === "string"
+          ? ""
+          : normalizedType === "numeric"
+            ? 0
+            : [{ collectionName: "main", nodes: [] }];
 
-      propertyType[newProperty] = newPropertyType.toLowerCase();
-
-      if (newPropertyType.toLowerCase() === "string") {
-        properties[newProperty] = "";
-      } else if (newPropertyType.toLowerCase() === "numeric") {
-        properties[newProperty] = 0;
-      } else {
-        properties[newProperty] = [{ collectionName: "main", nodes: [] }];
-      }
-      inheritance[newProperty] = {
-        ref: null,
-        title: "",
-        inheritanceType: "inheritUnlessAlreadyOverRidden",
-      };
+      // Show the new (empty) property instantly.
       setCurrentVisibleNode((prev: any) => {
         const _prev = { ...prev };
-        _prev.properties = properties;
-        _prev.propertyType = propertyType;
-        _prev.inheritance = inheritance;
+        _prev.properties = {
+          ...(_prev.properties || {}),
+          [newProperty]: propertyValue,
+        };
+        _prev.propertyType = {
+          ...(_prev.propertyType || {}),
+          [newProperty]: normalizedType,
+        };
+        _prev.inheritance = {
+          ...(_prev.inheritance || {}),
+          [newProperty]: {
+            ref: null,
+            title: "",
+            inheritanceType: "inheritUnlessAlreadyOverRidden",
+          },
+        };
         return _prev;
       });
       setTimeout(() => {
@@ -292,35 +209,16 @@ const NodeBody: React.FC<NodeBodyProps> = ({
           }, 2000);
         }
       }, 500);
-      await updateDoc(nodeRef, {
-        properties,
-        propertyType,
-        inheritance,
-      });
-      saveNewChangeLog(db, {
-        nodeId: currentVisibleNode?.id,
-        modifiedBy: user?.uname,
-        modifiedProperty: null,
-        previousValue,
-        newValue: properties,
-        modifiedAt: new Date(),
-        changeType: "add property",
-        fullNode: currentVisibleNode,
-        changeDetails: { addedProperty: newProperty },
-      });
 
       setOpenAddProperty(false);
 
-      const batch = writeBatch(db);
-      await updateSpecializationsInheritance(
-        currentVisibleNode.specializations,
-        batch,
-        newProperty,
-        properties[newProperty],
-        currentVisibleNode?.id,
-        newPropertyType.toLowerCase(),
-      );
-      await batch.commit();
+      await Post("/nodes/properties/update", {
+        action: "add",
+        nodeId: targetNodeId,
+        propertyName: newProperty,
+        propertyType: newPropertyType,
+        ...(appName ? { appName } : {}),
+      });
 
       recordLogs({
         action: "add new property",
@@ -330,13 +228,30 @@ const NodeBody: React.FC<NodeBodyProps> = ({
       });
     } catch (error: any) {
       setOpenAddProperty(false);
+
+      // The write failed, so no snapshot will arrive to undo the instant
+      // update — reset from the source of truth (only if still on that node).
+      const fresh = await fetchNode(targetNodeId);
+      setCurrentVisibleNode((prev: any) =>
+        prev?.id === targetNodeId && fresh ? fresh : prev,
+      );
+
+      const reason =
+        (typeof error === "string" ? error : error?.message) ||
+        "Please try again.";
+      setSnackbarMessage(
+        `Failed to add property "${newProperty}" to "${targetNodeTitle}": ${reason}`,
+      );
+
       recordLogs({
         type: "error",
         error: JSON.stringify({
-          name: error.name,
-          message: error.message,
-          stack: error.stack,
+          name: error?.name,
+          message: typeof error === "string" ? error : error?.message,
+          stack: error?.stack,
         }),
+        action: "add new property (failed)",
+        node: targetNodeId,
       });
     }
   };
@@ -398,8 +313,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
       try {
         if (!user?.uname) return;
 
-        const currentNode = JSON.parse(JSON.stringify(currentVisibleNode));
-        const properties = currentNode.properties;
+        const properties = currentVisibleNode.properties || {};
 
         if (
           properties.hasOwnProperty(newValue) ||
@@ -411,61 +325,74 @@ const NodeBody: React.FC<NodeBodyProps> = ({
           return;
         }
 
-        const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
+        // Captured before the await so the failure path can revert / report
+        // against the right node even if the user navigates away mid-flight.
+        const targetNodeId = currentVisibleNode?.id;
+        const targetNodeTitle = currentVisibleNode?.title ?? "";
 
-        const propertyValue = currentNode.properties[previousValue];
-        const propertyType = currentNode.propertyType[previousValue];
-        const inheritanceValue = currentNode.inheritance[previousValue];
-
-        let ObjectUpdates = {
-          [`propertyType.${previousValue}`]: deleteField(),
-          [`properties.${previousValue}`]: deleteField(),
-          [`inheritance.${previousValue}`]: deleteField(),
-          /* new values */
-          [`propertyType.${newValue}`]: propertyType,
-          [`properties.${newValue}`]: propertyValue,
-          [`inheritance.${newValue}`]: inheritanceValue,
+        // Move a property key from `from` -> `to` across all of a node's maps.
+        const renameKeyInNode = (node: any, from: string, to: string) => {
+          const _node = { ...node };
+          for (const mapName of [
+            "properties",
+            "propertyType",
+            "inheritance",
+            "textValue",
+            "propertyOf",
+          ]) {
+            const map = _node[mapName];
+            if (map && Object.prototype.hasOwnProperty.call(map, from)) {
+              const { [from]: val, ...rest } = map;
+              _node[mapName] = { ...rest, [to]: val };
+            }
+          }
+          return _node;
         };
-        if (currentNode.textValue && currentNode.textValue[previousValue]) {
-          const comments = currentNode.textValue[previousValue];
-          ObjectUpdates = {
-            ...ObjectUpdates,
-            [`textValue.${previousValue}`]: deleteField(),
-            [`textValue.${newValue}`]: comments,
-          };
+
+        // Rename instantly on the current node.
+        setCurrentVisibleNode((prev: any) =>
+          !prev || prev.id !== targetNodeId
+            ? prev
+            : renameKeyInNode(prev, previousValue, newValue),
+        );
+
+        try {
+          await Post("/nodes/properties/update", {
+            action: "rename",
+            nodeId: targetNodeId,
+            previousValue,
+            newValue,
+            ...(appName ? { appName } : {}),
+          });
+        } catch (error: any) {
+          // The write failed, so no snapshot will arrive to undo the instant
+          // update — reset from truth (only if still on that node).
+          const fresh = await fetchNode(targetNodeId);
+          setCurrentVisibleNode((prev: any) =>
+            prev?.id === targetNodeId && fresh ? fresh : prev,
+          );
+          const reason =
+            (typeof error === "string" ? error : error?.message) ||
+            "Please try again.";
+          setSnackbarMessage(
+            `Failed to rename property "${previousValue}" on "${targetNodeTitle}": ${reason}`,
+          );
+          recordLogs({
+            type: "error",
+            error: JSON.stringify({
+              name: error?.name,
+              message: typeof error === "string" ? error : error?.message,
+              stack: error?.stack,
+            }),
+            action: "rename property (failed)",
+            node: targetNodeId,
+          });
         }
-        if (currentNode.propertyOf && currentNode.propertyOf[previousValue]) {
-          const propertyOfValue = currentNode.propertyOf[previousValue];
-          ObjectUpdates = {
-            ...ObjectUpdates,
-            [`propertyOf.${previousValue}`]: deleteField(),
-            [`propertyOf.${newValue}`]: propertyOfValue,
-          };
-        }
-        updateDoc(nodeRef, ObjectUpdates);
-        await updateInheritance({
-          nodeId: currentVisibleNode.id,
-          updatedProperties: [],
-          deletedProperties: [],
-          editedProperties: [{ previousValue, newValue }],
-          db,
-        });
-        saveNewChangeLog(db, {
-          nodeId: currentNode.id,
-          modifiedBy: user?.uname,
-          modifiedProperty: newValue,
-          previousValue,
-          newValue,
-          modifiedAt: new Date(),
-          changeType: "edit property",
-          fullNode: currentNode,
-          ...(appName ? { appName } : {}),
-        });
       } catch (error) {
         console.error(error);
       }
     },
-    [user?.uname, currentVisibleNode],
+    [user?.uname, currentVisibleNode, appName, fetchNode],
   );
 
   return (
