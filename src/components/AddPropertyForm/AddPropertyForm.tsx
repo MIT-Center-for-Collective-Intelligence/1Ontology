@@ -27,6 +27,15 @@ interface AddPropertyFormProps {
 
 const SpecialCharacterRegex = /^[a-zA-Z0-9 ]*$/; // Adjust regex as necessary
 
+// Mirrors RESERVED_PROPERTIES in /api/nodes/properties/update.
+const RESERVED_PROPERTIES = new Set([
+  "title",
+  "specializations",
+  "generalizations",
+  "parts",
+  "isPartOf",
+]);
+
 const AddPropertyForm: React.FC<AddPropertyFormProps> = ({
   addNewProperty,
   locked,
@@ -41,6 +50,7 @@ const AddPropertyForm: React.FC<AddPropertyFormProps> = ({
   const [newPropertyTitle, setNewPropertyTitle] = useState<string>("");
   const [inputError, setInputError] = useState<boolean>(false);
   const [duplicateError, setDuplicateError] = useState<boolean>(false);
+  const [reservedError, setReservedError] = useState<boolean>(false);
 
   const handleTitleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
@@ -49,6 +59,7 @@ const AddPropertyForm: React.FC<AddPropertyFormProps> = ({
     setNewPropertyTitle(value);
     setInputError(!isValid);
     setDuplicateError(false);
+    setReservedError(RESERVED_PROPERTIES.has(value.trim()));
   };
 
   const handleAddProperty = () => {
@@ -57,7 +68,8 @@ const AddPropertyForm: React.FC<AddPropertyFormProps> = ({
       !propertyType ||
       inputError ||
       locked ||
-      duplicateError
+      duplicateError ||
+      reservedError
     ) {
       return;
     }
@@ -85,6 +97,7 @@ const AddPropertyForm: React.FC<AddPropertyFormProps> = ({
     setNewPropertyTitle("");
     setInputError(false);
     setDuplicateError(false);
+    setReservedError(false);
   };
 
   const disableAdd =
@@ -92,7 +105,8 @@ const AddPropertyForm: React.FC<AddPropertyFormProps> = ({
     !newPropertyTitle ||
     inputError ||
     locked ||
-    duplicateError;
+    duplicateError ||
+    reservedError;
 
   const modernFieldSx = {
     "& .MuiOutlinedInput-root": {
@@ -254,7 +268,7 @@ const AddPropertyForm: React.FC<AddPropertyFormProps> = ({
               label="Property Title"
               value={newPropertyTitle}
               onChange={handleTitleChange}
-              error={inputError || duplicateError}
+              error={inputError || duplicateError || reservedError}
               fullWidth
               variant="outlined"
               helperText={
@@ -262,7 +276,9 @@ const AddPropertyForm: React.FC<AddPropertyFormProps> = ({
                   ? "Max 30 characters, no special characters allowed."
                   : duplicateError
                     ? "This property already exists."
-                    : ""
+                    : reservedError
+                      ? `"${newPropertyTitle.trim()}" is a reserved property name.`
+                      : ""
               }
               slotProps={{
                 inputLabel: {
