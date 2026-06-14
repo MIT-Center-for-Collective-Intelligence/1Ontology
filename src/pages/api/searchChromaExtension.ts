@@ -54,15 +54,8 @@ const cosineSimilarity = (vecA: any[], vecB: any[]) => {
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     await runMiddleware(req, res, cors);
-    let {
-      query,
-      appName,
-      user,
-      nodeType,
-      resultsNum,
-      searchAll,
-      oNetTask,
-    } = req.body;
+    let { query, appName, user, nodeType, resultsNum, searchAll, oNetTask } =
+      req.body;
 
     searchAll = false;
     let collectionName = "";
@@ -147,7 +140,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       whereFilter["nodeType"] = nodeType;
     }
 
-    if (oNetTask !== undefined) {
+    if (oNetTask !== undefined && appName === "final-hierarchy-with-o*net") {
       whereFilter["oNetTask"] = !!oNetTask;
     }
 
@@ -160,7 +153,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
     const metaDatas: any = results.metadatas[0];
     const embeddings: any = (results.embeddings || [])[0];
-
+    console.log(metaDatas);
     const _data = [];
     for (let nodeIdx = 0; nodeIdx < metaDatas.length; nodeIdx++) {
       if (metaDatas[nodeIdx]?.nodeType === "activity") {
