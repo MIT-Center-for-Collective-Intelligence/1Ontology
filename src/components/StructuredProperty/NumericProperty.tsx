@@ -15,14 +15,8 @@ import {
   Typography,
 } from "@mui/material";
 
-import { collection, doc, updateDoc, getFirestore } from "firebase/firestore";
 import { useTheme } from "@emotion/react";
 import { INode } from "@components/types/INode";
-import { NODES } from "@components/lib/firestoreClient/collections";
-import {
-  saveNewChangeLog,
-  updateInheritance,
-} from "@components/lib/utils/helpers";
 import {
   capitalizeFirstLetter,
   getTooltipHelper,
@@ -35,6 +29,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import EditProperty from "../AddPropertyForm/EditProperty";
 import InheritanceDetailsPanel from "./InheritanceDetailsPanel";
 import SelectInheritance from "../SelectInheritance/SelectInheritance";
+import { Post } from "@components/lib/utils/Post";
 
 interface NumericPropertyValue {
   value: number | string;
@@ -72,7 +67,6 @@ const NumericProperty = ({
   modifyProperty,
   deleteProperty,
 }: INumericPropertyProps) => {
-  const db = getFirestore();
   const theme: any = useTheme();
   const [numericValue, setNumericValue] = useState<number | string>("");
   const [unit, setUnit] = useState<string>("");
@@ -80,7 +74,6 @@ const NumericProperty = ({
   const [isEditingValue, setIsEditingValue] = useState(false);
   const [isEditingUnit, setIsEditingUnit] = useState(false);
   const [{ user }] = useAuth();
-  const [reference, setReference] = useState<string | null>(null);
   const [editProperty, setEditProperty] = useState("");
   const [newPropertyValue, setNewPropertyValue] = useState("");
   const valueInputRef = useRef<HTMLInputElement>(null);
@@ -111,42 +104,11 @@ const NumericProperty = ({
   }, [currentImprovement, property]);
 
   useEffect(() => {
-    setReference(currentVisibleNode.inheritance[property]?.ref || null);
-  }, [currentVisibleNode, property]);
-
-  useEffect(() => {
     if (!isEditingValue && !isEditingUnit) {
       setNumericValue(displayValue);
       setUnit(displayUnit);
     }
   }, [displayValue, displayUnit, isEditingValue, isEditingUnit]);
-
-  const saveChangeHistory = useCallback(
-    async (
-      previousValue: NumericPropertyValue,
-      newValue: NumericPropertyValue,
-      nodeId: string,
-    ) => {
-      if (
-        !user?.uname ||
-        JSON.stringify(previousValue) === JSON.stringify(newValue)
-      )
-        return;
-
-      saveNewChangeLog(db, {
-        nodeId,
-        modifiedBy: user.uname,
-        modifiedProperty: property,
-        previousValue: JSON.stringify(previousValue),
-        newValue: JSON.stringify(newValue),
-        modifiedAt: new Date(),
-        changeType: "change text",
-        fullNode: currentVisibleNode,
-        ...(appName ? { appName } : {}),
-      });
-    },
-    [db, property, user, currentVisibleNode, appName],
-  );
 
   const onSaveNumericChange = useCallback(
     async (newValue: number | string, newUnit: string) => {
@@ -167,50 +129,30 @@ const NumericProperty = ({
           unit: newUnit.trim(),
         };
 
-        const nodeRef = doc(collection(db, NODES), currentVisibleNode?.id);
-
-        const updateData = {
-          [`properties.${property}`]: newPropertyValue,
-          ...(reference
-            ? {
-                [`inheritance.${property}.ref`]: null,
-                [`inheritance.${property}.title`]: "",
-              }
-            : {}),
-        };
-
-        await updateDoc(nodeRef, updateData);
-
-        if (reference) {
-          updateInheritance({
-            nodeId: currentVisibleNode?.id,
-            updatedProperties: [property],
-            db,
-          });
-        }
-
-        await saveChangeHistory(
-          previousValue,
-          newPropertyValue,
-          currentVisibleNode?.id,
-        );
+        await Post("/nodes/properties/update", {
+          action: "change",
+          nodeId: currentVisibleNode?.id,
+          propertyName: property,
+          value: newPropertyValue,
+          ...(appName ? { appName } : {}),
+        });
 
         setIsEditingValue(false);
         setIsEditingUnit(false);
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error saving numeric value:", error);
-        setError("Failed to save value");
+        // The write didn't land — revert the local edit and surface why.
+        setNumericValue(previousValue.value);
+        setUnit(previousValue.unit);
+        setIsEditingValue(false);
+        setIsEditingUnit(false);
+        setError(
+          (typeof error === "string" ? error : error?.message) ||
+            "Failed to save value",
+        );
       }
     },
-    [
-      user?.uname,
-      currentVisibleNode?.id,
-      reference,
-      property,
-      db,
-      saveChangeHistory,
-      normalizedValue,
-    ],
+    [user?.uname, currentVisibleNode?.id, property, normalizedValue, appName],
   );
 
   const handleDeleteProperty = useCallback(() => {
