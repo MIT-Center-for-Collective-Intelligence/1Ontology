@@ -140,9 +140,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       whereFilter["nodeType"] = nodeType;
     }
 
-    if (oNetTask !== undefined && appName === "final-hierarchy-with-o*net") {
+    /*     if (oNetTask !== undefined && appName === "final-hierarchy-with-o*net") {
       whereFilter["oNetTask"] = !!oNetTask;
-    }
+    } */
 
     const results = await collection.query({
       queryEmbeddings: [queryEmbedding],
