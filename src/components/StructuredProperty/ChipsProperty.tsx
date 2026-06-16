@@ -9,14 +9,9 @@ import {
 import { Box, Paper, Tooltip, Typography } from "@mui/material";
 import { DISPLAY } from "@components/lib/CONSTANTS";
 import SelectInheritance from "../SelectInheritance/SelectInheritance";
-import {
-  saveNewChangeLog,
-  updateInheritance,
-} from "@components/lib/utils/helpers";
-import { collection, doc, getFirestore, updateDoc } from "firebase/firestore";
-import { NODES } from "@components/lib/firestoreClient/collections";
 import PropertyContributors from "./PropertyContributors";
 import InheritanceDetailsPanel from "./InheritanceDetailsPanel";
+import { Post } from "@components/lib/utils/Post";
 
 const ChipsProperty = ({
   currentVisibleNode,
@@ -41,7 +36,6 @@ const ChipsProperty = ({
   enableEdit: boolean;
   appName?: string;
 }) => {
-  const db = getFirestore();
   const [value, setValue] = useState<
     { title: string; added?: boolean; removed?: boolean }[]
   >([]);
@@ -114,56 +108,19 @@ const ChipsProperty = ({
       )
         return;
 
-      setValue(newValue);
+      setValue(newValue); // shown instantly; the server write confirms via snapshot
 
-      const previousValue: string[] = currentVisibleNode.properties[
-        property
-      ] as string[];
-
-      const nodeRef = doc(collection(db, NODES), currentVisibleNode?.id);
-
-      await updateDoc(nodeRef, {
-        [`properties.${property}`]: newValue.map((c) => c.title),
-        [`inheritance.${property}.ref`]: null,
-        [`inheritance.${property}.title`]: "",
-      });
-      if (!!currentVisibleNode.inheritance[property]?.ref) {
-        await updateInheritance({
-          nodeId: currentVisibleNode?.id,
-          updatedProperties: [property],
-          db,
-        });
-      }
-      let changeMessage: "add element" | "remove element" | "modify elements" =
-        "add element";
-
-      if (added.length === 1) {
-        changeMessage = "add element";
-      }
-      if (removed.length === 1) {
-        changeMessage = "remove element";
-      }
-      if (added.length > 1 || removed.length > 1) {
-        changeMessage = "modify elements";
-      }
-
-      saveNewChangeLog(db, {
+      await Post("/nodes/properties/update", {
+        action: "change",
         nodeId: currentVisibleNode?.id,
-        modifiedBy: user?.uname,
-        modifiedProperty: property,
-        previousValue,
-        newValue: newValue.map((c) => c.title),
-        modifiedAt: new Date(),
-        changeType: changeMessage,
-        fullNode: currentVisibleNode,
-        changeDetails: {
-          addedElements: added.map((c) => c.title),
-          removedElements: removed.map((c) => c.title),
-        },
+        propertyName: property,
+        value: newValue.map((c) => c.title),
         ...(appName ? { appName } : {}),
       });
     } catch (error) {
       console.error(error);
+      // The write failed — revert the chips to the node's stored value.
+      setValue(propertyValue);
     }
   };
 
