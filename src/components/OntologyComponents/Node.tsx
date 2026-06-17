@@ -1070,6 +1070,39 @@ const Node = ({
           id: l,
         }));
 
+        // Parts are saved through the dedicated parts endpoint
+        if (selectedProperty === "parts") {
+          const source = relatedNodes[nodeId]?.properties?.parts;
+          const next: ICollection[] =
+            Array.isArray(source) && source.length
+              ? JSON.parse(JSON.stringify(source))
+              : [{ collectionName: "main", nodes: [] }];
+          for (const c of next) {
+            c.nodes = (c.nodes || []).filter(
+              (n: { id: string }) => !removedElements.includes(n.id),
+            );
+          }
+          let i = next.findIndex((c) => c.collectionName === selectedCollection);
+          if (i === -1) i = 0;
+          const existing = new Set(
+            next.flatMap((c) => c.nodes.map((n: { id: string }) => n.id)),
+          );
+          next[i].nodes.push(...addedLinks.filter((l) => !existing.has(l.id)));
+
+          setCurrentVisibleNode((prev: any) =>
+            prev && prev.id === nodeId
+              ? { ...prev, properties: { ...prev.properties, parts: next } }
+              : prev,
+          );
+
+          await Post("/nodes/parts/update", {
+            nodeId,
+            parts: next,
+            ...(appName ? { appName } : {}),
+          });
+          return;
+        }
+
         // Generic link-typed properties (actor, …) are saved through the API.
         // The structural edges below keep their existing flow.
         if (
