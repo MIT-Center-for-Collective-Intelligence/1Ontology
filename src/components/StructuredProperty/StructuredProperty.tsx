@@ -711,6 +711,47 @@ const StructuredProperty = ({
 
     return inheritedParts;
   };
+  // Single entry point for persisting the focused node's parts.
+  //  On failure it re-fetches and resets so the UI never keeps an unsaved change.
+  const saveParts = useCallback(
+    async (
+      newParts: ICollection[],
+      inheritedPartsDetails?: InheritedPartsDetail[] | null,
+    ) => {
+      const nodeId = currentVisibleNode?.id;
+      if (!nodeId) return;
+      setCurrentVisibleNode((prev: any) =>
+        prev && prev.id === nodeId
+          ? { ...prev, properties: { ...prev.properties, parts: newParts } }
+          : prev,
+      );
+      try {
+        await Post("/nodes/parts/update", {
+          nodeId,
+          parts: newParts,
+          ...(inheritedPartsDetails ? { inheritedPartsDetails } : {}),
+          ...(appName ? { appName } : {}),
+        });
+      } catch (error: any) {
+        const fresh = await fetchNode(nodeId);
+        setCurrentVisibleNode((prev: any) =>
+          prev?.id === nodeId && fresh ? fresh : prev,
+        );
+        const reason =
+          (typeof error === "string" ? error : error?.message) ||
+          "Please try again.";
+        setSnackbarMessage(`Failed to update parts: ${reason}`);
+      }
+    },
+    [
+      currentVisibleNode,
+      appName,
+      setCurrentVisibleNode,
+      fetchNode,
+      setSnackbarMessage,
+    ],
+  );
+
   const unlinkNodeRelation = async (
     currentNodeId: string,
     linkId: string,
@@ -728,16 +769,7 @@ const StructuredProperty = ({
         for (const c of newParts) {
           c.nodes = (c.nodes || []).filter((n: ILinkNode) => n.id !== linkId);
         }
-        setCurrentVisibleNode((prev: any) =>
-          prev && prev.id === currentNodeId
-            ? { ...prev, properties: { ...prev.properties, parts: newParts } }
-            : prev,
-        );
-        await Post("/nodes/parts/update", {
-          nodeId: currentNodeId,
-          parts: newParts,
-          ...(appName ? { appName } : {}),
-        });
+        await saveParts(newParts);
         return;
       }
       if (
@@ -963,17 +995,7 @@ const StructuredProperty = ({
         id: partId,
         title: relatedNodes[partId]?.title ?? "",
       });
-      // Instant UI, then persist through the endpoint (handles isPartOf + log).
-      setCurrentVisibleNode((prev: any) =>
-        prev && prev.id === currentNodeId
-          ? { ...prev, properties: { ...prev.properties, parts: newParts } }
-          : prev,
-      );
-      await Post("/nodes/parts/update", {
-        nodeId: currentNodeId,
-        parts: newParts,
-        ...(appName ? { appName } : {}),
-      });
+      await saveParts(newParts);
     } catch (error) {
       console.error(error);
     }
@@ -1013,19 +1035,7 @@ const StructuredProperty = ({
         updatedParts[0].nodes[elementIdx].title =
           relatedNodes[newPartId]?.title || "";
 
-        setCurrentVisibleNode((prev: any) =>
-          prev && prev.id === currentVisibleNode.id
-            ? { ...prev, properties: { ...prev.properties, parts: updatedParts } }
-            : prev,
-        );
-        await Post("/nodes/parts/update", {
-          nodeId: currentVisibleNode.id,
-          parts: updatedParts,
-          ...(updatedInheritedPartsDetails
-            ? { inheritedPartsDetails: updatedInheritedPartsDetails }
-            : {}),
-          ...(appName ? { appName } : {}),
-        });
+        await saveParts(updatedParts, updatedInheritedPartsDetails);
 
         recordLogs({
           action: "replace part",
@@ -1046,16 +1056,7 @@ const StructuredProperty = ({
         });
       }
     },
-    [
-      currentVisibleNode,
-      relatedNodes,
-      fetchNode,
-      db,
-      property,
-      user,
-      appName,
-      onInstantTreeUpdate,
-    ],
+    [currentVisibleNode, relatedNodes, property, user, saveParts],
   );
 
   if (
@@ -1467,6 +1468,7 @@ const StructuredProperty = ({
             addNodesToCache={addNodesToCache}
             linkNodeRelation={linkNodeRelation}
             unlinkNodeRelation={unlinkNodeRelation}
+            saveParts={saveParts}
             user={user}
             navigateToNode={navigateToNode}
             replaceWith={replaceWith}

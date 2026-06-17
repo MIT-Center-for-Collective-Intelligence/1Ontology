@@ -18,6 +18,10 @@ interface PartViewerProps {
   ) => void;
   linkNodeRelation: any;
   unlinkNodeRelation: any;
+  saveParts: (
+    newParts: any[],
+    inheritedPartsDetails?: InheritedPartsDetail[] | null,
+  ) => void;
   user: any;
   navigateToNode: any;
   replaceWith: any;
@@ -42,6 +46,7 @@ const PartViewer: React.FC<PartViewerProps> = ({
   addNodesToCache,
   linkNodeRelation,
   unlinkNodeRelation,
+  saveParts,
   user,
   navigateToNode,
   replaceWith,
@@ -109,6 +114,7 @@ const PartViewer: React.FC<PartViewerProps> = ({
           user={user}
           navigateToNode={navigateToNode}
           replaceWith={replaceWith}
+          saveParts={saveParts}
           appName={appName}
           inheritedPartsDetails={inheritedPartsDetails}
           loadingInheritedPartsDetails={loadingInheritedPartsDetails}

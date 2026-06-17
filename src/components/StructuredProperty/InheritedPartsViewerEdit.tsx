@@ -38,7 +38,6 @@ import GeneralizationTabs from "./GeneralizationTabs";
 
 import { Timestamp } from "firebase/firestore";
 import { recordLogs } from "@components/lib/utils/helpers";
-import { Post } from "@components/lib/utils/Post";
 
 interface GeneralizationNode {
   id: string;
@@ -69,6 +68,10 @@ interface InheritedPartsViewerProps {
   setDisplayDetails: any;
   enableEdit: boolean;
   replaceWith: any;
+  saveParts: (
+    newParts: ICollection[],
+    inheritedPartsDetails?: InheritedPartsDetail[] | null,
+  ) => void;
   user: any;
   appName?: string;
   navigateToNode?: any;
@@ -98,6 +101,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
   readOnly = false,
   enableEdit,
   replaceWith,
+  saveParts,
   currentVisibleNode,
   triggerSearch,
   addPart,
@@ -527,14 +531,9 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
         mutateData?.(updatedDetails);
       }
 
-      // Persist through the endpoint (stores parts + inheritedPartsDetails,
-      // maintains isPartOf, writes the change log).
-      await Post("/nodes/parts/update", {
-        nodeId: currentVisibleNode?.id,
-        parts: updatedParts,
-        ...(updatedDetails ? { inheritedPartsDetails: updatedDetails } : {}),
-        ...(appName ? { appName } : {}),
-      });
+      // Persist through the shared saveParts (stores parts + inheritedPartsDetails,
+      // maintains isPartOf, writes the change log, handles failure).
+      saveParts(updatedParts, updatedDetails);
 
       recordLogs({
         action: "switch to",
@@ -822,14 +821,9 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
         mutateData?.(updatedDetails);
       }
 
-      // Persist through the endpoint (stores parts + inheritedPartsDetails,
-      // maintains isPartOf, writes the change log).
-      await Post("/nodes/parts/update", {
-        nodeId: currentVisibleNode?.id,
-        parts: updatedParts,
-        ...(updatedDetails ? { inheritedPartsDetails: updatedDetails } : {}),
-        ...(appName ? { appName } : {}),
-      });
+      // Persist through the shared saveParts (stores parts + inheritedPartsDetails,
+      // maintains isPartOf, writes the change log, handles failure).
+      saveParts(updatedParts, updatedDetails);
 
       recordLogs({
         action: "toggle optional",
@@ -1840,12 +1834,8 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
             moveValue,
           );
         }
-        // Persist the reordered parts through the endpoint.
-        Post("/nodes/parts/update", {
-          nodeId: currentVisibleNode?.id,
-          parts: propertyValue,
-          ...(appName ? { appName } : {}),
-        });
+        // Persist the reordered parts through the shared saveParts.
+        saveParts(propertyValue);
 
         // Record a log of the sorting action
         recordLogs({
