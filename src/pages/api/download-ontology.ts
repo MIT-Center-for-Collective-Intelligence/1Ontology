@@ -222,7 +222,27 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       return res.status(400).json({ error: "appName parameter is required" });
     }
 
-    const jobRef = db.collection("ontologyExports").doc();
+    const jobRef = db.collection("ontologyExports").doc(appName);
+    const jobDoc = await jobRef.get();
+
+    if (jobDoc.exists) {
+      const data = jobDoc.data();
+      if (data?.status === "completed" && data?.completedAt) {
+        const completedAt = data.completedAt.toDate();
+        const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+        
+        if (completedAt > oneDayAgo) {
+          console.log(`Using cached export for app: ${appName}`);
+          return res.status(200).json({ status: "processing", jobId: appName });
+        }
+      }
+      
+      if (data?.status === "processing") {
+        console.log(`Export already in progress for app: ${appName}`);
+        return res.status(200).json({ status: "processing", jobId: appName });
+      }
+    }
+
     await jobRef.set({
       status: "processing",
       appName,
@@ -230,9 +250,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 
-    processExport(jobRef.id, appName);
+    processExport(appName, appName);
 
-    return res.status(200).json({ status: "processing", jobId: jobRef.id });
+    return res.status(200).json({ status: "processing", jobId: appName });
   } catch (error: any) {
     console.error("Error in download-ontology API:", error?.message);
     return res.status(500).json({
