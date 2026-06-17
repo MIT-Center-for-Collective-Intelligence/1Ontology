@@ -176,11 +176,15 @@ async function processExport(jobId: string, appName: string) {
     const storagePath = `ontologyExports/${jobId}.json`;
     const file = bucket.file(storagePath);
 
+    const rawAppName = appName || "ontology";
+    const sanitizedAppName = rawAppName.replace(/[\/\\?%*:|"<>]/g, "-");
+    const filename = `${sanitizedAppName}-${new Date().toISOString().slice(0, 10)}.json`;
+
     await file.save(payload, {
-      contentType: "application/json; charset=utf-8",
       metadata: {
+        contentType: "application/json; charset=utf-8",
         cacheControl: "no-store, no-cache",
-        contentDisposition: `attachment; filename="${appName}-ontology.json"`,
+        contentDisposition: `attachment; filename="${filename}"`,
       },
     });
 
