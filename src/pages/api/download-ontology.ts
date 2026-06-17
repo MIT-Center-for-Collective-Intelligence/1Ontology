@@ -1,8 +1,9 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { db } from "@components/lib/firestoreServer/admin";
+import { db, admin } from "@components/lib/firestoreServer/admin";
 import { NODES } from "@components/lib/firestoreClient/collections";
 import fbAuth from "@components/middlewares/fbAuth";
 import { INode } from "@components/types/INode";
+import { development } from "@components/lib/CONSTANTS";
 
 export const config = {
   api: {
@@ -13,10 +14,9 @@ export const config = {
 /** Only fields needed to build the download tree — smaller reads from Firestore. */
 const NODE_PROJECTION = [
   "title",
-  "category",
   "root",
-  "properties",
-  "inheritance",
+  "properties.description",
+  "inheritance.description",
   "specializations",
   "generalizations",
 ] as const;
@@ -39,13 +39,21 @@ const buildOntologyTree = (
       node.category || (typeof node.root === "boolean" && !!node.root),
   );
 
-  const buildTree = (_nodes: INode[]): Record<string, TreeExportNode> => {
+  const buildTree = (
+    _nodes: INode[],
+    visited = new Set<string>(),
+  ): Record<string, TreeExportNode> => {
     const newSpecializationsTree: Record<string, TreeExportNode> = {};
 
     if (_nodes.length === 0) return newSpecializationsTree;
 
     for (const node of _nodes) {
       if (!node) continue;
+
+      // Prevent infinite loops / massive blowups on cycles
+      if (visited.has(node.id)) continue;
+
+      const currentVisited = new Set(visited).add(node.id);
 
       const nodeTitle = titleById[node.id] ?? node.title.trim();
 
@@ -105,14 +113,14 @@ const buildOntologyTree = (
         if (collection.collectionName === "main") {
           Object.assign(
             entry.specializations as Record<string, unknown>,
-            buildTree(specializations),
+            buildTree(specializations, currentVisited),
           );
           entry.generalizations = generalizationsNames;
         } else {
           const bucketKey = `[${collection.collectionName}]`;
           (entry.specializations as Record<string, unknown>)[bucketKey] = {
             title: bucketKey,
-            specializations: buildTree(specializations),
+            specializations: buildTree(specializations, currentVisited),
             generalizations: generalizationsNames,
           };
         }
@@ -125,14 +133,9 @@ const buildOntologyTree = (
   return buildTree(mainCategories);
 };
 
-async function handler(req: NextApiRequest, res: NextApiResponse) {
+async function processExport(jobId: string, appName: string) {
   try {
-    const { appName } = req.body.data;
-    console.log("appName -->", appName);
-
-    if (!appName || typeof appName !== "string") {
-      return res.status(400).json({ error: "appName parameter is required" });
-    }
+    console.log(`Starting export job ${jobId} for app ${appName}`);
 
     const nodesSnapshot = await db
       .collection(NODES)
@@ -155,17 +158,81 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     const tree = buildOntologyTree(nodes, titleById);
     const payload = JSON.stringify(tree, null, 2);
 
-    res.setHeader("Content-Type", "application/json; charset=utf-8");
-    res.setHeader(
-      "Content-Disposition",
-      'attachment; filename="nodes-data.json"',
-    );
+    // Upload to Firebase Storage
+    const bucketName = development
+      ? process.env.NEXT_PUBLIC_DEV_STORAGE_BUCKET
+      : process.env.NEXT_PUBLIC_STORAGE_BUCKET;
 
-    return res.status(200).send(payload);
+    // Clean bucketName if it contains a URL
+    let cleanBucketName = bucketName;
+    if (bucketName && bucketName.startsWith("http")) {
+      const url = new URL(bucketName);
+      cleanBucketName = url.hostname;
+    }
+
+    const storage = admin.storage();
+    const bucket = storage.bucket(cleanBucketName);
+
+    const storagePath = `ontologyExports/${jobId}.json`;
+    const file = bucket.file(storagePath);
+
+    await file.save(payload, {
+      contentType: "application/json; charset=utf-8",
+      metadata: {
+        cacheControl: "no-store, no-cache",
+        contentDisposition: `attachment; filename="${appName}-ontology.json"`,
+      },
+    });
+
+    // Update Firestore status to completed
+    await db.collection("ontologyExports").doc(jobId).update({
+      status: "completed",
+      storagePath,
+      completedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    console.log(`Export job ${jobId} completed successfully.`);
+  } catch (error: any) {
+    console.error(`Export job ${jobId} failed:`, error);
+    await db
+      .collection("ontologyExports")
+      .doc(jobId)
+      .update({
+        status: "error",
+        error: error?.message || "Unknown error occurred",
+        completedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+  }
+}
+
+async function handler(req: NextApiRequest, res: NextApiResponse) {
+  try {
+    const payload = req.body.data || req.body;
+    const { appName } = payload;
+
+    const user = (req as any).user;
+
+    console.log("appName -->", appName);
+
+    if (!appName || typeof appName !== "string") {
+      return res.status(400).json({ error: "appName parameter is required" });
+    }
+
+    const jobRef = db.collection("ontologyExports").doc();
+    await jobRef.set({
+      status: "processing",
+      appName,
+      userId: user?.uid || "unknown",
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    processExport(jobRef.id, appName);
+
+    return res.status(200).json({ status: "processing", jobId: jobRef.id });
   } catch (error: any) {
     console.error("Error in download-ontology API:", error?.message);
     return res.status(500).json({
-      error: "Failed to generate download",
+      error: "Failed to start download job",
       message: error?.message || "Unknown error",
     });
   }

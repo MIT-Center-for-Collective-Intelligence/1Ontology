@@ -102,7 +102,11 @@ import NodeActivity from "../ActiveUsers/NodeActivity";
 import { User } from "@components/types/IAuth";
 import { INode, NodeChange } from "@components/types/INode";
 import Improvements from "../Improvements/Improvements";
-import { CHAT_DISCUSSION_TABS, development } from "@components/lib/CONSTANTS";
+import {
+  CHAT_DISCUSSION_TABS,
+  development,
+  ONTOLOGY_APPS,
+} from "@components/lib/CONSTANTS";
 
 import {
   compareImprovement,
@@ -299,8 +303,7 @@ const ToolbarSidebar = ({
   const handleDownloadOntologyJson = useCallback(async () => {
     if (isDownloading) return;
     setIsDownloading(true);
-    let url: string | undefined;
-    let link: HTMLAnchorElement | undefined;
+    let unsubscribe: (() => void) | undefined;
     try {
       if (!appName) {
         throw new Error("Missing ontology app name");
@@ -320,36 +323,62 @@ const ToolbarSidebar = ({
         let message = `Download failed (${downloadRes.status})`;
         try {
           const errJson = await downloadRes.json();
-          message =
-            (typeof errJson?.message === "string" && errJson.message) ||
-            (typeof errJson?.error === "string" && errJson.error) ||
-            message;
-        } catch {
-          /* ignore message */
-        }
+          message = errJson.message || errJson.error || message;
+        } catch {}
+        setIsDownloading(false);
         throw new Error(message);
       }
 
-      const blob = await downloadRes.blob();
-      url = URL.createObjectURL(blob);
-      link = document.createElement("a");
-      link.href = url;
-      link.download = "nodes-data.json";
-      document.body.appendChild(link);
-      link.click();
+      const { jobId, status } = await downloadRes.json();
+
+      if (!jobId) {
+        setIsDownloading(false);
+        throw new Error("Did not receive a job ID from the server");
+      }
+
+      // Listen to the job document
+      const storage = getStorage();
+      unsubscribe = onSnapshot(
+        doc(db, "ontologyExports", jobId),
+        async (snapshot) => {
+          if (!snapshot.exists()) return;
+          const data = snapshot.data();
+          if (data.status === "completed" && data.storagePath) {
+            try {
+              const storageRef = refStorage(storage, data.storagePath);
+              const downloadUrl = await getDownloadURL(storageRef);
+
+              // Using window.location.href avoids popup blockers for async downloads
+              window.location.href = downloadUrl;
+            } catch (err) {
+              console.error("Error downloading from storage:", err);
+              confirmIt("Failed to download the generated file.", "Ok");
+            } finally {
+              setIsDownloading(false);
+              if (unsubscribe) unsubscribe();
+            }
+          } else if (data.status === "error") {
+            setIsDownloading(false);
+            if (unsubscribe) unsubscribe();
+            confirmIt(
+              data.error || "There was an error generating the JSON!",
+              "Ok",
+            );
+          }
+        },
+        (error) => {
+          console.error("Snapshot error:", error);
+          setIsDownloading(false);
+          if (unsubscribe) unsubscribe();
+          confirmIt("Lost connection while waiting for download.", "Ok");
+        },
+      );
     } catch (error) {
       console.error("Download error:", error);
-      confirmIt("There was an error downloading the JSON!", "Ok");
-    } finally {
-      if (link?.parentNode) {
-        link.parentNode.removeChild(link);
-      }
-      if (url) {
-        URL.revokeObjectURL(url);
-      }
+      confirmIt("There was an error starting the download!", "Ok");
       setIsDownloading(false);
     }
-  }, [confirmIt, isDownloading, appName]);
+  }, [confirmIt, isDownloading, appName, db]);
 
   // useEffect(() => {
   //   if (!user) return;
