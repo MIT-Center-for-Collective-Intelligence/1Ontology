@@ -36,15 +36,9 @@ import CloseIcon from "@mui/icons-material/Close";
 import InheritedPartsLegend from "../Common/InheritedPartsLegend";
 import GeneralizationTabs from "./GeneralizationTabs";
 
-import {
-  collection,
-  getFirestore,
-  doc,
-  updateDoc,
-  Timestamp,
-} from "firebase/firestore";
-import { NODES } from "@components/lib/firestoreClient/collections";
-import { recordLogs, saveNewChangeLog } from "@components/lib/utils/helpers";
+import { Timestamp } from "firebase/firestore";
+import { recordLogs } from "@components/lib/utils/helpers";
+import { Post } from "@components/lib/utils/Post";
 
 interface GeneralizationNode {
   id: string;
@@ -122,7 +116,6 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
   cancelPendingPart,
   updatePendingPartTitle,
 }) => {
-  const db = getFirestore();
   const [activeTab, setActiveTab] = React.useState<string | null>(null);
   const generalizationsFromParent: GeneralizationNode[] =
     getAllGeneralizations();
@@ -534,31 +527,12 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
         mutateData?.(updatedDetails);
       }
 
-      // Firestore write for both fields
-      const nodeRef = doc(collection(db, NODES), currentVisibleNode?.id);
-      const updates: any = {
-        "properties.parts": updatedParts,
-      };
-      if (updatedDetails) {
-        updates.inheritedPartsDetails = updatedDetails;
-      }
-      await updateDoc(nodeRef, updates);
-
-      saveNewChangeLog(db, {
+      // Persist through the endpoint (stores parts + inheritedPartsDetails,
+      // maintains isPartOf, writes the change log).
+      await Post("/nodes/parts/update", {
         nodeId: currentVisibleNode?.id,
-        modifiedBy: user.uname,
-        modifiedProperty: "parts",
-        previousValue: previousParts,
-        newValue: updatedParts,
-        modifiedAt: new Date(),
-        changeType: "modify elements",
-        changeDetails: {
-          action: "switch to",
-          from: fromId,
-          oldTo,
-          newTo,
-        },
-        fullNode: currentVisibleNode,
+        parts: updatedParts,
+        ...(updatedDetails ? { inheritedPartsDetails: updatedDetails } : {}),
         ...(appName ? { appName } : {}),
       });
 
@@ -848,30 +822,12 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
         mutateData?.(updatedDetails);
       }
 
-      // Persist both fields in a single write so the node doc stays consistent and the cached inheritedPartsDetails isn't stale
-      const nodeRef = doc(collection(db, NODES), currentVisibleNode?.id);
-      const updates: any = {
-        "properties.parts": updatedParts,
-      };
-      if (updatedDetails) {
-        updates.inheritedPartsDetails = updatedDetails;
-      }
-      await updateDoc(nodeRef, updates);
-
-      saveNewChangeLog(db, {
+      // Persist through the endpoint (stores parts + inheritedPartsDetails,
+      // maintains isPartOf, writes the change log).
+      await Post("/nodes/parts/update", {
         nodeId: currentVisibleNode?.id,
-        modifiedBy: user.uname,
-        modifiedProperty: "parts",
-        previousValue: previousParts,
-        newValue: updatedParts,
-        modifiedAt: new Date(),
-        changeType: "modify elements",
-        changeDetails: {
-          action: "toggle optional",
-          partId,
-          optional: newOptional,
-        },
-        fullNode: currentVisibleNode,
+        parts: updatedParts,
+        ...(updatedDetails ? { inheritedPartsDetails: updatedDetails } : {}),
         ...(appName ? { appName } : {}),
       });
 
@@ -1884,34 +1840,17 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
             moveValue,
           );
         }
-        // Update the nodeData with the new property values
-        const nodeRef = doc(collection(db, NODES), currentVisibleNode?.id);
-        const property = "parts";
-        updateDoc(nodeRef, {
-          [`properties.${property}`]: propertyValue,
-        });
-
-        saveNewChangeLog(db, {
+        // Persist the reordered parts through the endpoint.
+        Post("/nodes/parts/update", {
           nodeId: currentVisibleNode?.id,
-          modifiedBy: user?.uname,
-          modifiedProperty: property,
-          previousValue,
-          newValue: propertyValue,
-          modifiedAt: new Date(),
-          changeType: "sort elements",
-          changeDetails: {
-            draggableNodeId: draggableId,
-            source,
-            destination,
-          },
-          fullNode: currentVisibleNode,
+          parts: propertyValue,
           ...(appName ? { appName } : {}),
         });
 
         // Record a log of the sorting action
         recordLogs({
           action: "sort elements",
-          field: property,
+          field: "parts",
           sourceCategory: "main",
           destinationCategory: "main",
           nodeId: currentVisibleNode?.id,

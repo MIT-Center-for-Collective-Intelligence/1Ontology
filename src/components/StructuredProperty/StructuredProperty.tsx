@@ -52,6 +52,7 @@ import VisualizeTheProperty from "./VisualizeTheProperty";
 import CollectionStructure from "./CollectionStructure";
 import PropertyContributors from "./PropertyContributors";
 import { NODES } from "@components/lib/firestoreClient/collections";
+import { Post } from "@components/lib/utils/Post";
 import InheritedPartsLegend from "../Common/InheritedPartsLegend";
 import EditProperty from "../AddPropertyForm/EditProperty";
 import StructuredPropertySelector from "./StructuredPropertySelector";
@@ -718,6 +719,27 @@ const StructuredProperty = ({
     fromModel: boolean = false,
   ) => {
     try {
+      // Parts: drop the id from the node's own parts and persist via endpoint.
+      if (property === "parts") {
+        const source = currentVisibleNode?.properties?.parts;
+        const newParts: ICollection[] = Array.isArray(source)
+          ? JSON.parse(JSON.stringify(source))
+          : [{ collectionName: "main", nodes: [] }];
+        for (const c of newParts) {
+          c.nodes = (c.nodes || []).filter((n: ILinkNode) => n.id !== linkId);
+        }
+        setCurrentVisibleNode((prev: any) =>
+          prev && prev.id === currentNodeId
+            ? { ...prev, properties: { ...prev.properties, parts: newParts } }
+            : prev,
+        );
+        await Post("/nodes/parts/update", {
+          nodeId: currentNodeId,
+          parts: newParts,
+          ...(appName ? { appName } : {}),
+        });
+        return;
+      }
       if (
         fromModel ||
         (await confirmIt(
@@ -931,97 +953,27 @@ const StructuredProperty = ({
     partId: string;
   }) => {
     try {
-      const nodeData = relatedNodes[currentNodeId];
-      if (!nodeData) {
-        console.error(
-          "linkNodeRelation: node not found in cache",
-          currentNodeId,
-        );
-        return;
-      }
-
-      let parts = nodeData.properties?.["parts"];
-
-      if (!parts || !Array.isArray(parts) || !parts[0]?.nodes) {
-        console.error("linkNodeRelation: parts structure is invalid");
-        return;
-      }
-
-      const previousPartsValue = JSON.parse(JSON.stringify(parts));
-      parts[0].nodes.push({
+      const source = currentVisibleNode?.properties?.parts;
+      const newParts: ICollection[] =
+        Array.isArray(source) && source.length
+          ? JSON.parse(JSON.stringify(source))
+          : [{ collectionName: "main", nodes: [] }];
+      if (newParts[0].nodes.some((n: ILinkNode) => n.id === partId)) return;
+      newParts[0].nodes.push({
         id: partId,
         title: relatedNodes[partId]?.title ?? "",
       });
-
-      const nodeRef = doc(collection(db, NODES), currentNodeId);
-      const linkRef = doc(collection(db, NODES), partId);
-      const linkData = relatedNodes[partId];
-
-      const previousIsPartOfValue = linkData?.properties?.["isPartOf"]
-        ? JSON.parse(JSON.stringify(linkData.properties["isPartOf"]))
-        : [{ collectionName: "main", nodes: [] }];
-
-      if (
-        linkData?.properties?.["isPartOf"] &&
-        Array.isArray(linkData.properties["isPartOf"]) &&
-        linkData.properties["isPartOf"][0]?.nodes
-      ) {
-        linkData.properties["isPartOf"][0].nodes.push({
-          id: currentNodeId,
-          title: nodeData.title ?? "",
-        });
-        await updateDoc(linkRef, {
-          "properties.isPartOf": linkData.properties["isPartOf"],
-        });
-      } else if (linkData) {
-        const newIsPartOf = [
-          {
-            collectionName: "main",
-            nodes: [{ id: currentNodeId, title: nodeData.title ?? "" }],
-          },
-        ];
-        await updateDoc(linkRef, {
-          "properties.isPartOf": newIsPartOf,
-        });
-      }
-
-      await updateDoc(nodeRef, {
-        "properties.parts": parts,
-      });
-
-      saveNewChangeLog(db, {
+      // Instant UI, then persist through the endpoint (handles isPartOf + log).
+      setCurrentVisibleNode((prev: any) =>
+        prev && prev.id === currentNodeId
+          ? { ...prev, properties: { ...prev.properties, parts: newParts } }
+          : prev,
+      );
+      await Post("/nodes/parts/update", {
         nodeId: currentNodeId,
-        modifiedBy: user?.uname || "",
-        modifiedProperty: property,
-        previousValue: previousPartsValue,
-        newValue: parts,
-        modifiedAt: new Date(),
-        changeType: "add element",
-        fullNode: currentVisibleNode,
+        parts: newParts,
         ...(appName ? { appName } : {}),
       });
-
-      saveNewChangeLog(db, {
-        nodeId: partId,
-        modifiedBy: user?.uname || "",
-        modifiedProperty: property,
-        previousValue: previousIsPartOfValue,
-        newValue: linkData?.properties?.["isPartOf"] || [],
-        modifiedAt: new Date(),
-        changeType: "add element",
-        fullNode: currentVisibleNode,
-        ...(appName ? { appName } : {}),
-      });
-
-      await updateInheritance({
-        nodeId: currentNodeId,
-        updatedProperties: ["parts"],
-        db,
-      });
-
-      if (onInstantTreeUpdate) {
-        onInstantTreeUpdate((tree) => [...tree]);
-      }
     } catch (error) {
       console.error(error);
     }
@@ -1043,136 +995,35 @@ const StructuredProperty = ({
 
         const sourceParts: ICollection[] | undefined =
           currentVisibleNode.properties?.parts;
-
-        if (
-          !sourceParts ||
-          !Array.isArray(sourceParts) ||
-          !sourceParts[0]?.nodes
-        ) {
-          return;
-        }
+        if (!Array.isArray(sourceParts) || !sourceParts[0]?.nodes) return;
 
         const updatedParts: ICollection[] = JSON.parse(
           JSON.stringify(sourceParts),
         );
-        const previousParts = JSON.parse(
-          JSON.stringify(currentVisibleNode.properties?.parts || []),
-        );
-
         const elementIdx = updatedParts[0].nodes.findIndex(
           (n: ILinkNode) => n.id === oldPartId,
         );
-        const existIdx = updatedParts[0].nodes.findIndex(
-          (n: ILinkNode) => n.id === newPartId,
-        );
-
         if (elementIdx === -1) return;
-        if (existIdx !== -1) return; // newPartId already in parts
+        if (updatedParts[0].nodes.some((n: ILinkNode) => n.id === newPartId)) {
+          return; // newPartId already in parts
+        }
 
-        // Replace .id and title at the same slot. preserves position and the slot's optional flag
+        // Replace id + title at the same slot (keeps position and optional flag).
         updatedParts[0].nodes[elementIdx].id = newPartId;
         updatedParts[0].nodes[elementIdx].title =
           relatedNodes[newPartId]?.title || "";
 
-        // Build isPartOf updates for old and new parts.
-        const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
-        const oldPartRef = doc(collection(db, NODES), oldPartId);
-        const newPartRef = doc(collection(db, NODES), newPartId);
-
-        let oldPartData: INode | null = relatedNodes[oldPartId] || null;
-        if (!oldPartData) oldPartData = await fetchNode(oldPartId);
-        let updatedOldIsPartOf: ICollection[] | null = null;
-        const oldIsPartOfRaw = oldPartData?.properties?.isPartOf;
-        if (Array.isArray(oldIsPartOfRaw)) {
-          updatedOldIsPartOf = JSON.parse(JSON.stringify(oldIsPartOfRaw));
-          for (const col of updatedOldIsPartOf!) {
-            col.nodes = col.nodes.filter(
-              (n: ILinkNode) => n.id !== currentVisibleNode.id,
-            );
-          }
-        }
-
-        let newPartData: INode | null = relatedNodes[newPartId] || null;
-        if (!newPartData) newPartData = await fetchNode(newPartId);
-        let updatedNewIsPartOf: ICollection[] | null = null;
-        const newIsPartOfRaw = newPartData?.properties?.isPartOf;
-        if (Array.isArray(newIsPartOfRaw)) {
-          updatedNewIsPartOf = JSON.parse(JSON.stringify(newIsPartOfRaw));
-          const alreadyHas = (updatedNewIsPartOf || []).some((col) =>
-            col.nodes.some((n: ILinkNode) => n.id === currentVisibleNode.id),
-          );
-          if (!alreadyHas) {
-            if (!updatedNewIsPartOf || updatedNewIsPartOf.length === 0) {
-              updatedNewIsPartOf = [{ collectionName: "main", nodes: [] }];
-            }
-            updatedNewIsPartOf[0].nodes.push({
-              id: currentVisibleNode.id,
-              title: currentVisibleNode.title ?? "",
-            });
-          }
-        } else if (newPartData) {
-          updatedNewIsPartOf = [
-            {
-              collectionName: "main",
-              nodes: [
-                {
-                  id: currentVisibleNode.id,
-                  title: currentVisibleNode.title ?? "",
-                },
-              ],
-            },
-          ];
-        }
-
-        // Write to db for current node first  then the two cross-node isPartOf writes in parallel.
-        const currentNodeUpdates: any = {
-          "properties.parts": updatedParts,
-        };
-        if (updatedInheritedPartsDetails) {
-          currentNodeUpdates.inheritedPartsDetails =
-            updatedInheritedPartsDetails;
-        }
-        await updateDoc(nodeRef, currentNodeUpdates);
-
-        const isPartOfWrites: Promise<any>[] = [];
-        if (updatedOldIsPartOf) {
-          isPartOfWrites.push(
-            updateDoc(oldPartRef, {
-              "properties.isPartOf": updatedOldIsPartOf,
-            }),
-          );
-        }
-        if (updatedNewIsPartOf) {
-          isPartOfWrites.push(
-            updateDoc(newPartRef, {
-              "properties.isPartOf": updatedNewIsPartOf,
-            }),
-          );
-        }
-        if (isPartOfWrites.length > 0) {
-          await Promise.all(isPartOfWrites);
-        }
-
-        await updateInheritance({
+        setCurrentVisibleNode((prev: any) =>
+          prev && prev.id === currentVisibleNode.id
+            ? { ...prev, properties: { ...prev.properties, parts: updatedParts } }
+            : prev,
+        );
+        await Post("/nodes/parts/update", {
           nodeId: currentVisibleNode.id,
-          updatedProperties: ["parts"],
-          db,
-        });
-
-        saveNewChangeLog(db, {
-          nodeId: currentVisibleNode.id,
-          modifiedBy: user.uname,
-          modifiedProperty: "parts",
-          previousValue: previousParts,
-          newValue: updatedParts,
-          modifiedAt: new Date(),
-          changeType: "modify elements",
-          changeDetails: {
-            action: "replace part",
-            oldPartId,
-            newPartId,
-          },
-          fullNode: currentVisibleNode,
+          parts: updatedParts,
+          ...(updatedInheritedPartsDetails
+            ? { inheritedPartsDetails: updatedInheritedPartsDetails }
+            : {}),
           ...(appName ? { appName } : {}),
         });
 
@@ -1183,10 +1034,6 @@ const StructuredProperty = ({
           newPartId,
           nodeId: currentVisibleNode.id,
         });
-
-        if (onInstantTreeUpdate) {
-          onInstantTreeUpdate((tree) => [...tree]);
-        }
       } catch (error: any) {
         console.error(error);
         recordLogs({
