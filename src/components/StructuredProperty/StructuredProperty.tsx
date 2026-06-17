@@ -53,6 +53,7 @@ import CollectionStructure from "./CollectionStructure";
 import PropertyContributors from "./PropertyContributors";
 import { NODES } from "@components/lib/firestoreClient/collections";
 import { Post } from "@components/lib/utils/Post";
+import { pendingWrites } from "@components/lib/utils/pendingWrites";
 import InheritedPartsLegend from "../Common/InheritedPartsLegend";
 import EditProperty from "../AddPropertyForm/EditProperty";
 import StructuredPropertySelector from "./StructuredPropertySelector";
@@ -711,8 +712,8 @@ const StructuredProperty = ({
 
     return inheritedParts;
   };
-  // Single entry point for persisting the focused node's parts.
-  //  On failure it re-fetches and resets so the UI never keeps an unsaved change.
+  // Single write point for the focused node's parts. 
+  // On failure it re-fetches so the UI never keeps an unsaved change.
   const saveParts = useCallback(
     async (
       newParts: ICollection[],
@@ -725,6 +726,7 @@ const StructuredProperty = ({
           ? { ...prev, properties: { ...prev.properties, parts: newParts } }
           : prev,
       );
+      pendingWrites.start(nodeId, "properties.parts");
       try {
         await Post("/nodes/parts/update", {
           nodeId,
@@ -741,6 +743,8 @@ const StructuredProperty = ({
           (typeof error === "string" ? error : error?.message) ||
           "Please try again.";
         setSnackbarMessage(`Failed to update parts: ${reason}`);
+      } finally {
+        pendingWrites.end(nodeId, "properties.parts");
       }
     },
     [
@@ -784,8 +788,7 @@ const StructuredProperty = ({
         if (nodeDoc.exists()) {
           const nodeData = nodeDoc.data() as any;
 
-          const inheritedRef =
-            property !== "parts" ? nodeData.inheritance?.[property]?.ref : null;
+          const inheritedRef = nodeData.inheritance?.[property]?.ref;
           if (inheritedRef) {
             let inheritedNode: INode | null =
               relatedNodes[inheritedRef] ?? null;
@@ -802,44 +805,12 @@ const StructuredProperty = ({
             JSON.stringify(nodeData.properties[property]),
           );
 
-          let removedFromInheritanceParts = false;
-
-          if (property === "parts") {
-            if (
-              linkIndex === -1 &&
-              Array.isArray(nodeData.properties?.[property]) &&
-              nodeData.properties[property][collectionIndex]?.nodes
-            ) {
-              linkIndex = nodeData.properties[property][
-                collectionIndex
-              ].nodes.findIndex((c: { id: string }) => c.id === linkId);
-            }
-            if (
-              nodeData.inheritanceParts &&
-              nodeData.inheritanceParts[linkId]
-            ) {
-              // Remove from inheritanceParts (broken inheritance scenario)
-              delete nodeData.inheritanceParts[linkId];
-              removedFromInheritanceParts = true;
-            } else if (
-              linkIndex !== -1 &&
-              Array.isArray(nodeData.properties[property]) &&
-              nodeData.propertyType[property] !== "string" &&
-              nodeData.propertyType[property] !== "string-array"
-            ) {
-              // Remove from direct parts (intact inheritance scenario)
-              nodeData.properties[property][collectionIndex].nodes.splice(
-                linkIndex,
-                1,
-              );
-            }
-          } else if (
+          if (
             linkIndex !== -1 &&
             Array.isArray(nodeData.properties[property]) &&
             nodeData.propertyType[property] !== "string" &&
             nodeData.propertyType[property] !== "string-array"
           ) {
-            // Remove from other properties (generalizations, specializations, etc.)
             nodeData.properties[property][collectionIndex].nodes.splice(
               linkIndex,
               1,
@@ -848,9 +819,7 @@ const StructuredProperty = ({
 
           let shouldBeRemovedFromParent = false;
 
-          if (property === "parts" && removedFromInheritanceParts) {
-            shouldBeRemovedFromParent = true;
-          } else if (Array.isArray(nodeData.properties[property])) {
+          if (Array.isArray(nodeData.properties[property])) {
             const stillExists = nodeData.properties[property].some(
               (col: any) =>
                 Array.isArray(col.nodes) &&
@@ -861,23 +830,13 @@ const StructuredProperty = ({
             shouldBeRemovedFromParent = true;
           }
 
-          // const childDoc = await getDoc(doc(collection(db, NODES), child.id));
-          // const childData = childDoc.data() as INode;
           if (shouldBeRemovedFromParent) {
             unlinkPropertyOf(db, property, currentVisibleNode?.id, linkId);
           }
 
-          let propertyUpdateObject: any = {};
-
-          // Update based on where the item was removed from
-          if (property === "parts" && removedFromInheritanceParts) {
-            // Update inheritanceParts for broken inheritance
-            propertyUpdateObject.inheritanceParts = nodeData.inheritanceParts;
-          } else {
-            // Update direct properties for intact inheritance or other properties
-            propertyUpdateObject[`properties.${property}`] =
-              nodeData.properties[property];
-          }
+          const propertyUpdateObject: any = {
+            [`properties.${property}`]: nodeData.properties[property],
+          };
 
           await updateDoc(nodeDoc.ref, propertyUpdateObject);
 

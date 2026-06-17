@@ -21,7 +21,6 @@ import {
   InheritedPartsDetail,
   ILinkNode,
   INode,
-  TransferInheritance,
 } from "@components/types/INode";
 import ArrowRightAltIcon from "@mui/icons-material/ArrowRightAlt";
 import RemoveIcon from "@mui/icons-material/Remove";
@@ -71,7 +70,7 @@ interface InheritedPartsViewerProps {
   saveParts: (
     newParts: ICollection[],
     inheritedPartsDetails?: InheritedPartsDetail[] | null,
-  ) => void;
+  ) => Promise<void>;
   user: any;
   appName?: string;
   navigateToNode?: any;
@@ -79,9 +78,6 @@ interface InheritedPartsViewerProps {
   addPart?: any;
   removePart?: any;
   inheritedPartsDetails?: InheritedPartsDetail[] | null;
-  loadingInheritedPartsDetails?: boolean;
-  mutateData?: (newData: InheritedPartsDetail[] | null) => void;
-  debouncedRefetch?: () => void;
   refetchNow?: () => void;
   clonedNodesQueue?: {
     [nodeId: string]: { title: string; id: string; property: string };
@@ -111,9 +107,6 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
   setDisplayDetails,
   appName,
   inheritedPartsDetails,
-  loadingInheritedPartsDetails,
-  mutateData,
-  debouncedRefetch,
   refetchNow,
   clonedNodesQueue,
   approvePendingPart,
@@ -157,48 +150,6 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
   const [highlightedPendingIds, setHighlightedPendingIds] = useState<Set<string>>(
     new Set(),
   );
-  // Parts whose inheritance symbol is being recomputed by the API after a
-  // local replace. While present, the row's symbol is replaced with a spinner.
-  const [calculatingPartIds, setCalculatingPartIds] = useState<Set<string>>(
-    new Set(),
-  );
-  // Parts the user just removed or replaced. Suppresses a false
-  // pending-recompute spinner until properties.parts catches up.
-  const [optimisticallyRemovedIds, setOptimisticallyRemovedIds] = useState<
-    Set<string>
-  >(new Set());
-  const prevLoadingInheritedRef = useRef<boolean | undefined>(
-    loadingInheritedPartsDetails,
-  );
-
-  // When loading transitions from true → false, the API response just landed,
-  // so the freshly recomputed symbols are now in inheritedPartsDetails: drop
-  // every spinner.
-  useEffect(() => {
-    if (prevLoadingInheritedRef.current && !loadingInheritedPartsDetails) {
-      setCalculatingPartIds((prev) => (prev.size > 0 ? new Set() : prev));
-    }
-    prevLoadingInheritedRef.current = loadingInheritedPartsDetails;
-  }, [loadingInheritedPartsDetails]);
-
-  // Drop ids once they're gone from properties.parts (snapshot landed).
-  useEffect(() => {
-    setOptimisticallyRemovedIds((prev) => {
-      if (prev.size === 0) return prev;
-      const stillInParts = new Set<string>(
-        currentVisibleNode.properties?.parts?.[0]?.nodes?.map(
-          (n: { id: string }) => n.id,
-        ) ?? [],
-      );
-      let changed = false;
-      const next = new Set<string>();
-      for (const id of prev) {
-        if (stillInParts.has(id)) next.add(id);
-        else changed = true;
-      }
-      return changed ? next : prev;
-    });
-  }, [currentVisibleNode.properties?.parts]);
 
   // Merge nodes from props with locally fetched nodes
   const allNodes = { ...nodes, ...fetchedNodes };
@@ -271,30 +222,6 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
     return null;
   }
 
-  const getPartOptionalStatus = (partId: string, nodeId: string): boolean => {
-    const node = allNodes[nodeId];
-    if (!node?.properties?.parts) return false;
-
-    for (const collection of node.properties.parts) {
-      const part = collection.nodes.find((n: any) => n.id === partId);
-      if (part) return !!part.optional;
-    }
-    return false;
-  };
-
-  const getCurrentPartOptionalStatus = (partId: string): boolean => {
-    const currentNodeInCache =
-      allNodes[currentVisibleNode.id] || currentVisibleNode;
-    const currentNodeParts = currentNodeInCache.properties?.["parts"];
-
-    if (!currentNodeParts) return false;
-
-    for (const collection of currentNodeParts) {
-      const part = collection.nodes.find((n: any) => n.id === partId);
-      if (part) return !!part.optional;
-    }
-    return false;
-  };
   const handleClick = (event: any, from: string) => {
     setAnchorEl(event.currentTarget);
     setPickingFor(from);
@@ -452,9 +379,6 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
       const updatedParts: ICollection[] = JSON.parse(
         JSON.stringify(sourceParts),
       );
-      const previousParts = JSON.parse(
-        JSON.stringify(currentVisibleNode.properties?.["parts"] || []),
-      );
       const partsCol = updatedParts[0];
       if (!partsCol) return;
       const oldIdx = partsCol.nodes.findIndex((n: any) => n.id === oldTo);
@@ -527,13 +451,12 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
             title: oldToTitle,
           });
         });
+       }
 
-        mutateData?.(updatedDetails);
-      }
-
-      // Persist through the shared saveParts (stores parts + inheritedPartsDetails,
-      // maintains isPartOf, writes the change log, handles failure).
-      saveParts(updatedParts, updatedDetails);
+      // Save parts + the userOverride (so the recompute keeps the pick), then
+      // refetch so the switched symbols render.
+      await saveParts(updatedParts, updatedDetails);
+      refetchNow?.();
 
       recordLogs({
         action: "switch to",
@@ -556,187 +479,26 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
     }
   };
 
-  // Helper to clone and optimistically update inheritedPartsDetails
-  const optimisticUpdate = (
-    updater: (details: InheritedPartsDetail[]) => InheritedPartsDetail[],
-  ) => {
-    if (!inheritedPartsDetails || !mutateData) return;
-    const updated = updater(JSON.parse(JSON.stringify(inheritedPartsDetails)));
-    mutateData(updated);
-  };
-
+  // onAddPart/onRemovePart/onReplacePart route through saveParts. Rows derive
+  // from properties.parts, so they update at once; a new part shows a pending
+  // spinner until the recompute fills its annotation.
   const onAddPart = (partId: string) => {
     addPart(partId);
-    optimisticUpdate((data) => {
-      for (const gen of data) {
-        let updatedExistingEntry = false;
-        const entry = gen.details.find(
-          (d) => d.from === partId && d.symbol === "x",
-        );
-        if (entry) {
-          entry.symbol = "=";
-          entry.to = partId;
-          entry.toTitle = entry.fromTitle;
-          entry.toOptional = entry.fromOptional;
-          entry.optionalChange = "none";
-          updatedExistingEntry = true;
-        }
-
-        // If this part doesn't exist in inherited comparison rows,
-        // optimistically render it as a newly added part.
-        const alreadyPresent = gen.details.some((d) => d.to === partId);
-        if (!updatedExistingEntry && !alreadyPresent) {
-          gen.details.push({
-            from: "",
-            to: partId,
-            symbol: "+",
-            fromTitle: "",
-            toTitle: allNodes[partId]?.title || "",
-            fromOptional: false,
-            toOptional: getCurrentPartOptionalStatus(partId),
-            optionalChange: "none",
-            hops: 0,
-          });
-        }
-      }
-      return data;
-    });
-    // Show a spinner in place of the symbol until the API recompute lands
-    setCalculatingPartIds((prev) => new Set(prev).add(partId));
   };
 
   const onRemovePart = (partId: string) => {
-    setOptimisticallyRemovedIds((prev) => new Set(prev).add(partId));
     removePart(partId);
-
-    // For parts with (= or > symbol), keep the row visible with a
-    // spinner in place of the symbol until the API recompute lands.
-    // For "+"" parts, filter the row out instantly.
-    let hasInheritanceSource = false;
-    if (inheritedPartsDetails) {
-      for (const gen of inheritedPartsDetails) {
-        const entry = gen.details.find((d) => d.to === partId);
-        if (entry?.from) {
-          hasInheritanceSource = true;
-          break;
-        }
-      }
-    }
-
-    if (hasInheritanceSource) {
-      setCalculatingPartIds((prev) => new Set(prev).add(partId));
-      debouncedRefetch?.();
-      return;
-    }
-
-    optimisticUpdate((data) => {
-      for (const gen of data) {
-        gen.details = gen.details.filter((d) => d.to !== partId);
-      }
-      return data;
-    });
   };
 
   const onReplacePart = async (oldPartId: string, newPartId: string) => {
     if (!oldPartId || !newPartId || oldPartId === newPartId) return;
-
-    setOptimisticallyRemovedIds((prev) => new Set(prev).add(oldPartId));
-
-    // Build updated inheritedPartsDetails locally for instant UI feedback on
-    // to/toTitle and to fold into replaceWith's single updateDoc. The symbol
-    // is intentionally left stale — the API recompute below will replace it
-    // with the correct value, and the row shows a spinner in the meantime.
-    let updatedDetails: InheritedPartsDetail[] | null = null;
-    if (inheritedPartsDetails) {
-      updatedDetails = JSON.parse(JSON.stringify(inheritedPartsDetails));
-      const newTitle = allNodes[newPartId]?.title || "";
-
-      updatedDetails!.forEach((gen, idx) => {
-        // Re-hydrate createdAt so the hook's freshness check survives.
-        const original: any = inheritedPartsDetails[idx]?.createdAt;
-        if (original && typeof original.toMillis === "function") {
-          gen.createdAt = original;
-        } else {
-          const seconds = original?._seconds ?? original?.seconds;
-          const nanos =
-            original?._nanoseconds ?? original?.nanoseconds ?? 0;
-          gen.createdAt =
-            typeof seconds === "number"
-              ? new Timestamp(seconds, nanos)
-              : Timestamp.now();
-        }
-
-        // Every row whose to === oldPartId now points at newPartId.
-        for (const entry of gen.details) {
-          if (entry.to === oldPartId) {
-            entry.to = newPartId;
-            entry.toTitle = newTitle;
-          }
-        }
-
-        // Rename oldPartId → newPartId wherever it appears in nonPickedOnes.
-        for (const fromKey of Object.keys(gen.nonPickedOnes)) {
-          gen.nonPickedOnes[fromKey] = gen.nonPickedOnes[fromKey].map(
-            (item) =>
-              item.id === oldPartId
-                ? { id: newPartId, title: newTitle }
-                : item,
-          );
-        }
-      });
-
-      mutateData?.(updatedDetails);
-    }
-
-    // Show spinner in place of the symbol for this part until the API returns.
-    setCalculatingPartIds((prev) => {
-      const next = new Set(prev);
-      next.add(newPartId);
-      return next;
-    });
-
-    try {
-      await replaceWith(oldPartId, newPartId, updatedDetails);
-      // Trigger an immediate API recompute so the symbol updates as soon as
-      // the parts changes are persisted. The loading→idle transition above
-      // clears the spinner.
-      refetchNow?.();
-    } catch (error) {
-      console.error(error);
-      setCalculatingPartIds((prev) => {
-        if (!prev.has(newPartId)) return prev;
-        const next = new Set(prev);
-        next.delete(newPartId);
-        return next;
-      });
-    }
+    // The new id shows a pending row until the recompute fills its symbol;
+    // refetch so it resolves promptly.
+    await replaceWith(oldPartId, newPartId);
+    refetchNow?.();
   };
 
   const onApprovePendingPart = async (queuedId: string, title: string) => {
-    // Optimistically show the approved part immediately in the list.
-    optimisticUpdate((data) => {
-      for (const gen of data) {
-        const alreadyExists = gen.details.some((entry) => entry.to === queuedId);
-        if (!alreadyExists) {
-          gen.details.push({
-            from: "",
-            to: queuedId,
-            symbol: "+",
-            fromTitle: "",
-            toTitle: title,
-            fromOptional: false,
-            toOptional: false,
-            optionalChange: "none",
-            hops: 0,
-          });
-        }
-      }
-      return data;
-    });
-
-    // Show a spinner in place of the symbol until the API recompute lands
-    setCalculatingPartIds((prev) => new Set(prev).add(queuedId));
-
     setApprovingPendingIds((prev) => {
       const updated = new Set(prev);
       updated.add(queuedId);
@@ -760,12 +522,10 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
         currentVisibleNode.properties?.["parts"];
       if (!sourceParts) return;
 
-      // Build the new properties.parts with optional flipped on the matching node
+      // Flip optional on the part. Rows read optional live from properties.parts,
+      // so the (o) badge updates as soon as saveParts runs.
       const updatedParts: ICollection[] = JSON.parse(
         JSON.stringify(sourceParts),
-      );
-      const previousParts = JSON.parse(
-        JSON.stringify(currentVisibleNode.properties?.["parts"] || []),
       );
 
       let newOptional = false;
@@ -781,49 +541,8 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
       }
       if (!found) return;
 
-      // Build the new inheritedPartsDetails with toOptional/optionalChange
-      //    updated for every entry that points at this part
-      const updatedDetails: InheritedPartsDetail[] | null = inheritedPartsDetails
-        ? JSON.parse(JSON.stringify(inheritedPartsDetails))
-        : null;
-      if (updatedDetails) {
-        updatedDetails.forEach((gen, idx) => {
-          // JSON.stringify strips the Timestamp class off createdAt. The hook's
-          // freshness check calls .toMillis(), so re-hydrate it: prefer the
-          // original instance (already a Timestamp), otherwise rebuild from
-          // {seconds,nanoseconds} (snapshot) or {_seconds,_nanoseconds} (API).
-          const original: any = inheritedPartsDetails![idx]?.createdAt;
-          if (original && typeof original.toMillis === "function") {
-            gen.createdAt = original;
-          } else {
-            const seconds = original?._seconds ?? original?.seconds;
-            const nanos =
-              original?._nanoseconds ?? original?.nanoseconds ?? 0;
-            gen.createdAt =
-              typeof seconds === "number"
-                ? new Timestamp(seconds, nanos)
-                : Timestamp.now();
-          }
-
-          for (const entry of gen.details) {
-            if (entry.to !== partId) continue;
-            entry.toOptional = newOptional;
-            entry.optionalChange = entry.from
-              ? entry.fromOptional === newOptional
-                ? "none"
-                : newOptional
-                  ? "added"
-                  : "removed"
-              : "none";
-          }
-        });
-        // Reflect the change in the React tree immediately.
-        mutateData?.(updatedDetails);
-      }
-
-      // Persist through the shared saveParts (stores parts + inheritedPartsDetails,
-      // maintains isPartOf, writes the change log, handles failure).
-      saveParts(updatedParts, updatedDetails);
+      // Save through saveParts (maintains isPartOf, logs, handles failure).
+      saveParts(updatedParts);
 
       recordLogs({
         action: "toggle optional",
@@ -1037,7 +756,41 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
       },
       {} as { [key: string]: string[] },
     );
-    const draggableItems = details.filter((entry: any) => entry.to);
+    // Rows come from the node's own parts, so edits show at once. details is
+    // just an annotation lookup (from/symbol/switch options); a part with no
+    // entry yet renders `pending`. optional/optionalChange are read live.
+    const detailByTo = new Map<string, any>();
+    for (const d of details) {
+      if (d.to) detailByTo.set(d.to, d);
+    }
+    const draggableItems = (
+      currentVisibleNode.properties?.parts?.[0]?.nodes ?? []
+    ).map((partNode: any) => {
+      const liveOptional = !!partNode.optional;
+      const entry = detailByTo.get(partNode.id);
+      if (entry) {
+        const optionalChange = entry.from
+          ? entry.fromOptional === liveOptional
+            ? "none"
+            : liveOptional
+              ? "added"
+              : "removed"
+          : "none";
+        return { ...entry, toOptional: liveOptional, optionalChange, pending: false };
+      }
+      return {
+        from: "",
+        to: partNode.id,
+        symbol: "",
+        fromTitle: "",
+        toTitle: allNodes[partNode.id]?.title || partNode.title || "",
+        fromOptional: false,
+        toOptional: liveOptional,
+        optionalChange: "none",
+        hops: 0,
+        pending: true,
+      };
+    });
 
     const partAlternativesLookup: {
       [partId: string]: {
@@ -1045,7 +798,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
         gens: { id: string; title: string }[];
       };
     } = {};
-    
+
     // Calculate available dropdown options per part
     for (const entry of draggableItems) {
       if (partAlternativesLookup[entry.to]) continue;
@@ -1066,26 +819,11 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
         }));
       partAlternativesLookup[entry.to] = { specs, gens };
     }
-    
+
     const nonDraggableItems = Object.keys(nonPickedOnes).filter((id) => {
       const index = details.findIndex((d) => d.from === id);
       return index === -1;
     });
-
-    // Parts that exist on the node but aren't yet reflected in the inheritedPartsDetails returned from endpoint
-    const currentPartIds: string[] =
-      currentVisibleNode.properties?.parts?.[0]?.nodes?.map(
-        (n: { id: string }) => n.id,
-      ) ?? [];
-    const idsAlreadyInDetails = new Set<string>();
-    for (const d of details) {
-      if (d.to) idsAlreadyInDetails.add(d.to);
-      if (d.from) idsAlreadyInDetails.add(d.from);
-    }
-    const pendingRecomputeIds = currentPartIds.filter(
-      (id) =>
-        !idsAlreadyInDetails.has(id) && !optimisticallyRemovedIds.has(id),
-    );
 
     return (
       <Box
@@ -1105,8 +843,8 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
             >
               {draggableItems.map((entry: any, index: number) => (
                 <Draggable
-                  key={`${entry.from}::${entry.to}`}
-                  draggableId={`${entry.from}::${entry.to}`}
+                  key={entry.to}
+                  draggableId={entry.to}
                   index={index}
                 >
                   {(providedDraggable) => (
@@ -1169,7 +907,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                       />
 
                       <ListItemIcon sx={{ minWidth: "auto" }}>
-                        {calculatingPartIds.has(entry.to) ? (
+                        {entry.pending ? (
                           <Tooltip
                             title="Calculating inheritance for this part"
                             placement="top"
@@ -1241,7 +979,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                         <Tooltip title={"Remove part"} placement="top">
                           <span
                             style={{
-                              cursor: calculatingPartIds.has(entry.to)
+                              cursor: entry.pending
                                 ? "not-allowed"
                                 : undefined,
                               display: "inline-flex",
@@ -1249,7 +987,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                           >
                             <IconButton
                               sx={{ p: 0.5 }}
-                              disabled={calculatingPartIds.has(entry.to)}
+                              disabled={entry.pending}
                               onClick={() => {
                                 onRemovePart(entry.to);
                               }}
@@ -1257,14 +995,14 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                               <RemoveIcon
                                 sx={{
                                   fontSize: 20,
-                                  color: calculatingPartIds.has(entry.to)
+                                  color: entry.pending
                                     ? "gray"
                                     : "red",
-                                  border: calculatingPartIds.has(entry.to)
+                                  border: entry.pending
                                     ? "1px solid gray"
                                     : "1px solid red",
                                   borderRadius: "50%",
-                                  opacity: calculatingPartIds.has(entry.to)
+                                  opacity: entry.pending
                                     ? 0.5
                                     : 1,
                                 }}
@@ -1315,7 +1053,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                 <Box
                                   component="button"
                                   type="button"
-                                  disabled={calculatingPartIds.has(entry.to)}
+                                  disabled={entry.pending}
                                   onMouseDown={(e: React.MouseEvent) => {
                                     e.stopPropagation();
                                   }}
@@ -1325,7 +1063,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                     toggleOptional(entry.to);
                                   }}
                                   sx={{
-                                    cursor: calculatingPartIds.has(entry.to)
+                                    cursor: entry.pending
                                       ? "not-allowed"
                                       : "pointer",
                                     "&:disabled": { opacity: 0.5 },
@@ -1389,7 +1127,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                               >
                                 <Select
                                   value={entry.to}
-                                  disabled={calculatingPartIds.has(entry.to)}
+                                  disabled={entry.pending}
                                   onChange={(e) => {
                                     const newPartId = e.target.value;
                                     onReplacePart(entry.to, newPartId);
@@ -1589,89 +1327,6 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
             </List>
           )}
         </Droppable>
-        {pendingRecomputeIds.length > 0 && (
-          <List sx={{ px: 1.8, py: 0, mt: -0.5 }}>
-            {pendingRecomputeIds.map((partId: string) => (
-              <ListItem
-                key={`pending-recompute-${partId}`}
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 1,
-                  px: 1,
-                  py: 0,
-                  backgroundImage:
-                    "repeating-linear-gradient(to right, gray 0, gray 1px, transparent 1px, transparent 6px)",
-                  backgroundPosition: "top",
-                  backgroundRepeat: "repeat-x",
-                  backgroundSize: "100% 1px",
-                }}
-              >
-                <ListItemText
-                  primary={null}
-                  sx={{ flex: 1, minWidth: 0.3 }}
-                />
-                {/* Hidden spaces to align buttons with above rows */}
-                <Box aria-hidden sx={{ width: 20, flexShrink: 0 }} />
-                <Box aria-hidden sx={{ width: 30, flexShrink: 0 }} />
-                <ListItemText
-                  primary={
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        minHeight: 40,
-                      }}
-                    >
-                      <Tooltip
-                        title="Calculating inheritance for this part"
-                        placement="top"
-                      >
-                        <Box
-                          sx={{
-                            width: 28,
-                            height: 28,
-                            flexShrink: 0,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                          }}
-                        >
-                          <CircularProgress
-                            size={18}
-                            sx={{ color: "orange" }}
-                          />
-                        </Box>
-                      </Tooltip>
-                      <Box
-                        sx={{
-                          flex: 1,
-                          minWidth: 0,
-                          display: "flex",
-                          alignItems: "center",
-                          pl: "22px",
-                          pr: "14px",
-                        }}
-                      >
-                        <Typography
-                          sx={{
-                            fontSize: "0.9rem",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          {allNodes[partId]?.title ?? ""}
-                        </Typography>
-                      </Box>
-                    </Box>
-                  }
-                  sx={{ flex: 1, minWidth: 0.3 }}
-                />
-              </ListItem>
-            ))}
-          </List>
-        )}
         <Popover
           id={id}
           open={open}
@@ -1788,15 +1443,14 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
   const activeGenTitle = activeGeneralization?.title;
   const handleSorting = (e: any) => {
     try {
-      // Destructure properties from the result object
-      let { source, destination, draggableId, type } = e;
-      const separatorIdx = draggableId.indexOf("::");
-      draggableId = separatorIdx !== -1
-        ? draggableId.substring(separatorIdx + 2)
-        : draggableId;
-      // If there is no destination, no sorting needed
-
-      if (!destination || !user?.uname) {
+      // draggableId === the part id (see the Draggable above).
+      const { source, destination, draggableId } = e;
+      // No destination, or dropped back in the same spot: nothing to persist.
+      if (
+        !destination ||
+        !user?.uname ||
+        destination.index === source?.index
+      ) {
         return;
       }
 
@@ -1804,65 +1458,36 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
       const sourceCollectionIndex = 0;
       const destinationCollectionIndex = 0;
 
-      const propertyValue: ICollection[] =
-        currentVisibleNode.properties?.["parts"];
+      const source_ = currentVisibleNode.properties?.["parts"];
+      if (!source_) return;
 
-      // Ensure defined source and destination categories
-      if (propertyValue) {
-        // Ensure nodeData exists
+      // Work on a clone so we never mutate the live node state in place.
+      const newParts: ICollection[] = JSON.parse(JSON.stringify(source_));
 
-        const previousValue = JSON.parse(JSON.stringify(propertyValue));
+      const nodeIdx = newParts[sourceCollectionIndex].nodes.findIndex(
+        (link: ILinkNode) => link.id === draggableId,
+      );
 
-        if (!propertyValue) return;
-        // Find the index of the draggable item in the source category
-
-        const nodeIdx = propertyValue[sourceCollectionIndex].nodes.findIndex(
-          (link: ILinkNode) => link.id === draggableId,
+      if (nodeIdx !== -1) {
+        const moveValue = newParts[sourceCollectionIndex].nodes[nodeIdx];
+        newParts[sourceCollectionIndex].nodes.splice(nodeIdx, 1);
+        newParts[destinationCollectionIndex].nodes.splice(
+          destination.index,
+          0,
+          moveValue,
         );
-
-        // If the draggable item is found in the source category
-        if (nodeIdx !== -1) {
-          const moveValue = propertyValue[sourceCollectionIndex].nodes[nodeIdx];
-
-          // Remove the item from the source category
-          propertyValue[sourceCollectionIndex].nodes.splice(nodeIdx, 1);
-
-          // Move the item to the destination category
-          propertyValue[destinationCollectionIndex].nodes.splice(
-            destination.index,
-            0,
-            moveValue,
-          );
-        }
-        // Persist the reordered parts through the shared saveParts.
-        saveParts(propertyValue);
-
-        // Record a log of the sorting action
-        recordLogs({
-          action: "sort elements",
-          field: "parts",
-          sourceCategory: "main",
-          destinationCategory: "main",
-          nodeId: currentVisibleNode?.id,
-        });
-
-        // Optimistic update: reorder details to match new parts order
-        optimisticUpdate((data) => {
-          const newPartsOrder =
-            propertyValue[0]?.nodes?.map((n: any) => n.id) || [];
-          for (const gen of data) {
-            gen.details.sort((a, b) => {
-              const aIdx = newPartsOrder.indexOf(a.to);
-              const bIdx = newPartsOrder.indexOf(b.to);
-              return (
-                (aIdx === -1 ? Infinity : aIdx) -
-                (bIdx === -1 ? Infinity : bIdx)
-              );
-            });
-          }
-          return data;
-        });
       }
+
+      // Persist the reordered parts through the shared saveParts.
+      saveParts(newParts);
+
+      recordLogs({
+        action: "sort elements",
+        field: "parts",
+        sourceCategory: "main",
+        destinationCategory: "main",
+        nodeId: currentVisibleNode?.id,
+      });
     } catch (error: any) {
       // Log any errors that occur during the sorting process
       console.error(error);

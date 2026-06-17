@@ -91,7 +91,13 @@ import {
   setDoc,
   updateDoc,
 } from "firebase/firestore";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import Text from "./Text";
 import useConfirmDialog from "@components/lib/hooks/useConfirmDialog";
 import {
@@ -135,6 +141,7 @@ import { getStorage } from "firebase/storage";
 import NodeActivityFlow from "../NodBody/NodeActivityFlow";
 import { development } from "@components/lib/CONSTANTS";
 import { Post } from "@components/lib/utils/Post";
+import { pendingWrites } from "@components/lib/utils/pendingWrites";
 import ChipsProperty from "../StructuredProperty/ChipsProperty";
 import {
   addLinkToNode,
@@ -1037,6 +1044,21 @@ const Node = ({
     }
   };
 
+  // Latest parts value are used as the write base so the writes build on each other
+  // and not on the snapshot. This prevents viewer edits to undo each other.
+  const latestPartsRef = useRef<{ id: string; parts: ICollection[] } | null>(
+    null,
+  );
+  useEffect(() => {
+    if (!currentVisibleNode?.id) return;
+    latestPartsRef.current = {
+      id: currentVisibleNode.id,
+      parts: JSON.parse(
+        JSON.stringify(currentVisibleNode.properties?.parts ?? []),
+      ),
+    };
+  }, [currentVisibleNode?.id, currentVisibleNode?.properties?.parts]);
+
   const handleSaveLinkChanges = useCallback(
     async (
       removedElements: string[],
@@ -1070,9 +1092,12 @@ const Node = ({
           id: l,
         }));
 
-        // Parts are saved through the dedicated parts endpoint
+        // Save parts through the parts endpoint.
         if (selectedProperty === "parts") {
-          const source = relatedNodes[nodeId]?.properties?.parts;
+          const source =
+            latestPartsRef.current?.id === nodeId
+              ? latestPartsRef.current.parts
+              : relatedNodes[nodeId]?.properties?.parts;
           const next: ICollection[] =
             Array.isArray(source) && source.length
               ? JSON.parse(JSON.stringify(source))
@@ -1089,17 +1114,25 @@ const Node = ({
           );
           next[i].nodes.push(...addedLinks.filter((l) => !existing.has(l.id)));
 
+          // Advance the ref now so adds in the same tick build on this result.
+          latestPartsRef.current = { id: nodeId, parts: next };
+
           setCurrentVisibleNode((prev: any) =>
             prev && prev.id === nodeId
               ? { ...prev, properties: { ...prev.properties, parts: next } }
               : prev,
           );
 
-          await Post("/nodes/parts/update", {
-            nodeId,
-            parts: next,
-            ...(appName ? { appName } : {}),
-          });
+          pendingWrites.start(nodeId, "properties.parts");
+          try {
+            await Post("/nodes/parts/update", {
+              nodeId,
+              parts: next,
+              ...(appName ? { appName } : {}),
+            });
+          } finally {
+            pendingWrites.end(nodeId, "properties.parts");
+          }
           return;
         }
 

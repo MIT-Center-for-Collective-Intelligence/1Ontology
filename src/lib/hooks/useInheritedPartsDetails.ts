@@ -120,8 +120,27 @@ export const useInheritedPartsDetails = (
       currentGenIds.length === cachedGenIds.length &&
       currentGenIds.every((id) => cachedGenIds.includes(id));
 
+    // If a current part has no annotation in the cached details, its row would
+    // stay stuck on the pending spinner, treat the cache as stale and recompute.
+    const currentPartIds: string[] =
+      currentVisibleNode.properties?.parts?.[0]?.nodes?.map(
+        (n: { id: string }) => n.id,
+      ) ?? [];
+    const annotatedToIds = new Set<string>();
+    if (Array.isArray(cachedData)) {
+      for (const calc of cachedData) {
+        for (const d of calc.details ?? []) {
+          if (d.to) annotatedToIds.add(d.to);
+        }
+      }
+    }
+    const cacheCoversAllParts = currentPartIds.every((id) =>
+      annotatedToIds.has(id),
+    );
+
     const isCacheFresh =
       generalizationsMatch &&
+      cacheCoversAllParts &&
       cachedData.every(
         (calc: any) =>
           calc.createdAt &&
