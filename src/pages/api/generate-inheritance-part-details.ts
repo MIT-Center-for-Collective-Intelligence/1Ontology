@@ -645,26 +645,66 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
           (d: any) => d.userOverride,
         );
         for (const override of overriddenEntries) {
-          // Check that both from and to still exist in the current parts/generalization parts
+          // Both endpoints of the override must still exist on the node.
           const fromStillExists = generalizationParts.includes(override.from);
           const toStillExists = currentParts.includes(override.to);
+          if (!fromStillExists || !toStillExists) continue;
 
-          if (fromStillExists && toStillExists) {
-            // Find the computed entry for the same "from" and replace it
-            const computedIdx = detailsWithTitles.findIndex(
-              (d: any) => d.from === override.from,
-            );
-            if (computedIdx !== -1) {
-              const computedTo = detailsWithTitles[computedIdx].to;
-              // Replace with user's override
-              detailsWithTitles[computedIdx] = {
-                ...detailsWithTitles[computedIdx],
-                to: override.to,
-                toTitle: relatedNodes[override.to]?.title || override.toTitle || "",
-                userOverride: true,
-              };
+          // Point the generalization-part's row at the user's pick.
+          const computedIdx = detailsWithTitles.findIndex(
+            (d: any) => d.from === override.from,
+          );
+          if (computedIdx === -1) continue;
+
+          const displacedTo = detailsWithTitles[computedIdx].to;
+          detailsWithTitles[computedIdx] = {
+            ...detailsWithTitles[computedIdx],
+            to: override.to,
+            toTitle: relatedNodes[override.to]?.title || override.toTitle || "",
+            userOverride: true,
+            symbol: override.from === override.to ? "=" : ">",
+          };
+
+          // Drop the row the picked part already had, so it isn't listed twice.
+          for (let i = detailsWithTitles.length - 1; i >= 0; i--) {
+            if (i !== computedIdx && detailsWithTitles[i].to === override.to) {
+              detailsWithTitles.splice(i, 1);
             }
           }
+
+          // Give the displaced part a "+" row so it doesn't lose its row.
+          if (
+            displacedTo &&
+            displacedTo !== override.to &&
+            !detailsWithTitles.some((d: any) => d.to === displacedTo)
+          ) {
+            detailsWithTitles.push({
+              from: "",
+              to: displacedTo,
+              symbol: "+",
+              fromTitle: "",
+              toTitle: relatedNodes[displacedTo]?.title || "",
+              fromOptional: false,
+              toOptional: getCurrentPartOptionalStatus(
+                displacedTo,
+                currentNode,
+                relatedNodes,
+              ),
+              optionalChange: "none",
+              hops: 0,
+            });
+          }
+        }
+
+        // Re-sort into parts order after the override reshuffle.
+        if (overriddenEntries.length > 0) {
+          detailsWithTitles.sort((a: any, b: any) => {
+            const ia = currentParts.indexOf(a.to);
+            const ib = currentParts.indexOf(b.to);
+            return (
+              (ia === -1 ? Infinity : ia) - (ib === -1 ? Infinity : ib)
+            );
+          });
         }
       }
 
