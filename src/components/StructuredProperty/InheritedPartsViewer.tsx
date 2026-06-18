@@ -327,7 +327,21 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
             borderRadius: "20px",
           }}
         >
-          {details.map((entry, index) => (
+          {details.map((entry, index) => {
+            // Read the part's optional state live from parts (details is just
+            // the reference), so the badge updates on toggle without a recompute.
+            const liveToOptional = entry.to
+              ? getCurrentPartOptionalStatus(entry.to)
+              : !!entry.toOptional;
+            const liveOptionalChange: "added" | "removed" | "none" =
+              entry.from && entry.to
+                ? entry.fromOptional === liveToOptional
+                  ? "none"
+                  : liveToOptional
+                    ? "added"
+                    : "removed"
+                : "none";
+            return (
             <ListItem
               key={`${entry.from}-${entry.to}`}
               sx={{
@@ -481,8 +495,8 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                     >
                       {formatPartTitle(
                         entry.toTitle,
-                        entry.toOptional || false,
-                        entry.optionalChange,
+                        liveToOptional,
+                        liveOptionalChange,
                       )}
                     </Link>
                   ) : null
@@ -490,7 +504,8 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                 sx={{ flex: 1, minWidth: 0.3 }}
               />
             </ListItem>
-          ))}
+            );
+          })}
         </List>
         <Popover
           id={id}
