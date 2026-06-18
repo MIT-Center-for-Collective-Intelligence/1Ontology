@@ -18,6 +18,10 @@ interface PartViewerProps {
   ) => void;
   linkNodeRelation: any;
   unlinkNodeRelation: any;
+  saveParts: (
+    newParts: any[],
+    inheritedPartsDetails?: InheritedPartsDetail[] | null,
+  ) => Promise<void>;
   user: any;
   navigateToNode: any;
   replaceWith: any;
@@ -42,6 +46,7 @@ const PartViewer: React.FC<PartViewerProps> = ({
   addNodesToCache,
   linkNodeRelation,
   unlinkNodeRelation,
+  saveParts,
   user,
   navigateToNode,
   replaceWith,
@@ -57,9 +62,8 @@ const PartViewer: React.FC<PartViewerProps> = ({
 
   const {
     data: inheritedPartsDetails,
-    loading: loadingInheritedPartsDetails,
-    mutateData,
-    debouncedRefetch,
+    loading: inheritedPartsLoading,
+    mutateData: mutateInheritedPartsDetails,
     refetchNow,
   } = useInheritedPartsDetails(currentVisibleNode);
 
@@ -109,11 +113,11 @@ const PartViewer: React.FC<PartViewerProps> = ({
           user={user}
           navigateToNode={navigateToNode}
           replaceWith={replaceWith}
+          saveParts={saveParts}
           appName={appName}
           inheritedPartsDetails={inheritedPartsDetails}
-          loadingInheritedPartsDetails={loadingInheritedPartsDetails}
-          mutateData={mutateData}
-          debouncedRefetch={debouncedRefetch}
+          inheritedPartsLoading={inheritedPartsLoading}
+          mutateInheritedPartsDetails={mutateInheritedPartsDetails}
           refetchNow={refetchNow}
           clonedNodesQueue={clonedNodesQueue}
           approvePendingPart={(queuedId: string) =>

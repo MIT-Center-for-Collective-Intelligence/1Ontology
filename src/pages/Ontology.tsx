@@ -131,6 +131,7 @@ import {
 import { getDatabase, onValue, ref } from "firebase/database";
 
 import { recordLogs } from "@components/lib/utils/helpers";
+import { pendingWrites } from "@components/lib/utils/pendingWrites";
 import { useHover } from "@components/lib/hooks/useHover";
 import { useInheritedPartsDetails } from "@components/lib/hooks/useInheritedPartsDetails";
 import { MemoizedToolbarSidebar } from "@components/components/Sidebar/ToolbarSidebar";
@@ -1198,10 +1199,25 @@ const Ontology = ({
   useEffect(() => {
     if (currentVisibleNode?.id) {
       setCurrentVisibleNode((prev) => {
-        if (relatedNodes[currentVisibleNode?.id]) {
-          return relatedNodes[currentVisibleNode?.id];
+        const snap = relatedNodes[currentVisibleNode?.id];
+        if (!snap) return prev;
+        if (prev?.id !== snap.id) return snap;
+        // While a write is pending, a stale snapshot can arrive.
+        // Keep the fields being written so the newly added nodes doesn't flicker out.
+        const pending = pendingWrites.fields(snap.id);
+        if (pending.length === 0) return snap;
+        const prevAny = prev as any;
+        const snapAny = snap as any;
+        const merged: any = { ...snap, properties: { ...snap.properties } };
+        for (const field of pending) {
+          if (field.startsWith("properties.")) {
+            const p = field.slice("properties.".length);
+            merged.properties[p] = prevAny.properties?.[p] ?? snapAny.properties?.[p];
+          } else {
+            merged[field] = prevAny[field] ?? snapAny[field];
+          }
         }
-        return prev;
+        return merged;
       });
     }
   }, [relatedNodes, appName]);

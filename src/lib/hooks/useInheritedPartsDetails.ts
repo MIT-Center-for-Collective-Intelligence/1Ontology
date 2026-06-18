@@ -120,8 +120,27 @@ export const useInheritedPartsDetails = (
       currentGenIds.length === cachedGenIds.length &&
       currentGenIds.every((id) => cachedGenIds.includes(id));
 
+    // If a current part has no annotation in the cached details, its row would
+    // stay stuck on the pending spinner, treat the cache as stale and recompute.
+    const currentPartIds: string[] =
+      currentVisibleNode.properties?.parts?.[0]?.nodes?.map(
+        (n: { id: string }) => n.id,
+      ) ?? [];
+    const annotatedToIds = new Set<string>();
+    if (Array.isArray(cachedData)) {
+      for (const calc of cachedData) {
+        for (const d of calc.details ?? []) {
+          if (d.to) annotatedToIds.add(d.to);
+        }
+      }
+    }
+    const cacheCoversAllParts = currentPartIds.every((id) =>
+      annotatedToIds.has(id),
+    );
+
     const isCacheFresh =
       generalizationsMatch &&
+      cacheCoversAllParts &&
       cachedData.every(
         (calc: any) =>
           calc.createdAt &&
@@ -160,11 +179,17 @@ export const useInheritedPartsDetails = (
     };
   }, [currentVisibleNode?.id, currentVisibleNode?.generalizations?.length]);
 
-  // Detect parts changes on the current node (e.g, adding new part)
-  // and trigger a debounced refetch without wiping the current data
-  const partsSignature = currentVisibleNode?.properties?.parts?.[0]?.nodes
-    ?.map((n: any) => n.id)
-    .join(",") ?? "";
+  // Refetch only when the set of parts changes (add/remove/replace), not on
+  // reorder or optional toggles. Sorted so order changes don't count.
+  const partsSignature = [
+    ...new Set(
+      currentVisibleNode?.properties?.parts?.[0]?.nodes?.map(
+        (n: any) => n.id,
+      ) ?? [],
+    ),
+  ]
+    .sort()
+    .join(",");
   const prevPartsSignatureRef = useRef(partsSignature);
 
   useEffect(() => {
