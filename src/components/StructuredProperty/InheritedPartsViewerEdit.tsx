@@ -148,6 +148,11 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
   const [approvingPendingIds, setApprovingPendingIds] = useState<Set<string>>(
     new Set(),
   );
+  // Titles of just-approved parts, used as a fallback while the cloned node
+  // hasn't loaded into relatedNodes yet (otherwise the new row shows blank).
+  const [approvedTitles, setApprovedTitles] = useState<{ [id: string]: string }>(
+    {},
+  );
   const [loadingSpecializations, setLoadingSpecializations] = useState<
     Set<string>
   >(new Set());
@@ -512,6 +517,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
       updated.add(queuedId);
       return updated;
     });
+    setApprovedTitles((prev) => ({ ...prev, [queuedId]: title }));
     try {
       await Promise.resolve(approvePendingPart?.(queuedId));
     } finally {
@@ -579,7 +585,13 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
 
     // Computed first so the nodes with no parts can render pending rows too
     const pendingQueuedParts = Object.entries(clonedNodesQueue || {})
-      .filter(([, queuedNode]) => queuedNode?.property === "parts")
+      // Hide a row the moment its checkmark is clicked: the approved part shows
+      // up as its own row, so keeping this one would briefly double it.
+      .filter(
+        ([queuedId, queuedNode]) =>
+          queuedNode?.property === "parts" &&
+          !approvingPendingIds.has(queuedId),
+      )
       .map(([queuedId, queuedNode]) => ({
         id: queuedId,
         title: queuedNode?.title || "",
@@ -596,6 +608,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                 key={`pending-${pendingPart.id}`}
                 sx={{
                   display: "flex",
+                  alignItems: "center",
                   gap: 1,
                   px: 1,
                   py: 0.2,
@@ -625,66 +638,74 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                 </ListItemIcon>
                 <ListItemText
                   primary={
-                    <TextField
-                      size="small"
-                      fullWidth
-                      value={pendingPart.title}
-                      onChange={(e) =>
-                        updatePendingPartTitle?.(pendingPart.id, e.target.value)
-                      }
-                      placeholder="New part title"
-                      sx={{
-                        "& .MuiInputBase-root": {
-                          borderRadius: "12px",
-                        },
-                      }}
-                    />
-                  }
-                  sx={{ flex: 1, minWidth: 0.3 }}
-                />
-                {!!approvePendingPart && (
-                  <Tooltip title={"Approve part"} placement="top">
-                    <IconButton
-                      sx={{ p: 0.5 }}
-                      disabled={approvingPendingIds.has(pendingPart.id)}
-                      onClick={() => {
-                        onApprovePendingPart(pendingPart.id, pendingPart.title);
-                      }}
+                    <Box
+                      sx={{ display: "flex", alignItems: "center", gap: 1 }}
                     >
-                      {approvingPendingIds.has(pendingPart.id) ? (
-                        <CircularProgress size={20} />
-                      ) : (
-                        <CheckIcon
-                          sx={{
-                            fontSize: 20,
-                            color: "green",
-                            border: "1px solid green",
-                            borderRadius: "50%",
-                          }}
-                        />
-                      )}
-                    </IconButton>
-                  </Tooltip>
-                )}
-                {!!cancelPendingPart && (
-                  <Tooltip title={"Cancel part"} placement="top">
-                    <IconButton
-                      sx={{ p: 0.5 }}
-                      onClick={() => {
-                        cancelPendingPart(pendingPart.id);
-                      }}
-                    >
-                      <CloseIcon
+                      <TextField
+                        size="small"
+                        value={pendingPart.title}
+                        onChange={(e) =>
+                          updatePendingPartTitle?.(
+                            pendingPart.id,
+                            e.target.value,
+                          )
+                        }
+                        placeholder="New part title"
                         sx={{
-                          fontSize: 20,
-                          color: "red",
-                          border: "1px solid red",
-                          borderRadius: "50%",
+                          flex: 1,
+                          "& .MuiInputBase-root": {
+                            borderRadius: "12px",
+                          },
                         }}
                       />
-                    </IconButton>
-                  </Tooltip>
-                )}
+                      {!!approvePendingPart && (
+                        <Tooltip title={"Approve part"} placement="top">
+                          <IconButton
+                            sx={{ p: 0.5 }}
+                            onClick={() => {
+                              onApprovePendingPart(
+                                pendingPart.id,
+                                pendingPart.title,
+                              );
+                            }}
+                          >
+                            <CheckIcon
+                              sx={{
+                                fontSize: 20,
+                                color: "green",
+                                border: "1px solid green",
+                                borderRadius: "50%",
+                              }}
+                            />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+                      {!!cancelPendingPart && (
+                        <Tooltip title={"Cancel part"} placement="top">
+                          <IconButton
+                            sx={{ p: 0.5 }}
+                            onClick={() => {
+                              cancelPendingPart(pendingPart.id);
+                            }}
+                          >
+                            <CloseIcon
+                              sx={{
+                                fontSize: 20,
+                                color: "red",
+                                border: "1px solid red",
+                                borderRadius: "50%",
+                              }}
+                            />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+                    </Box>
+                  }
+                  // flex-basis reserves the width of the action-button column
+                  // the rows above have, so the + stays aligned while the field
+                  // (not an invisible icon) fills that space.
+                  sx={{ flex: "1 1 36px", minWidth: 0.3 }}
+                />
               </ListItem>
             );
           })}
@@ -791,7 +812,11 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
         to: partNode.id,
         symbol: "",
         fromTitle: "",
-        toTitle: allNodes[partNode.id]?.title || partNode.title || "",
+        toTitle:
+          allNodes[partNode.id]?.title ||
+          partNode.title ||
+          approvedTitles[partNode.id] ||
+          "",
         fromOptional: false,
         toOptional: liveOptional,
         optionalChange: "none",
@@ -1450,6 +1475,12 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
   const activeGeneralization = generalizations.find((g) => g.id === activeTab);
   const activeGenId = activeGeneralization?.id;
   const activeGenTitle = activeGeneralization?.title;
+  // Only turn the arrow into a spinner when rows are actually showing. If the
+  // active gen has no details yet, the tab body shows its own "Loading…", so a
+  // second spinner here would be redundant.
+  const showRecomputeSpinner =
+    !!inheritedPartsLoading &&
+    !!inheritedPartsDetails?.some((c) => c.generalizationId === activeGenId);
   const handleSorting = (e: any) => {
     try {
       // draggableId === the part id (see the Draggable above).
@@ -1605,12 +1636,12 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                 justifyContent: "center",
                 gap: 1,
                 height: "50px",
-                width: inheritedPartsLoading ? "auto" : "50px",
+                width: showRecomputeSpinner ? "auto" : "50px",
                 whiteSpace: "nowrap",
               }}
             >
               {/* Spinner + label while the gen→node mapping recomputes. */}
-              {inheritedPartsLoading ? (
+              {showRecomputeSpinner ? (
                 <>
                   <CircularProgress size={20} sx={{ color: "orange" }} />
                   <Typography
