@@ -78,6 +78,10 @@ interface InheritedPartsViewerProps {
   addPart?: any;
   removePart?: any;
   inheritedPartsDetails?: InheritedPartsDetail[] | null;
+  inheritedPartsLoading?: boolean;
+  mutateInheritedPartsDetails?: (
+    newData: InheritedPartsDetail[] | null,
+  ) => void;
   refetchNow?: () => void;
   clonedNodesQueue?: {
     [nodeId: string]: { title: string; id: string; property: string };
@@ -107,6 +111,8 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
   setDisplayDetails,
   appName,
   inheritedPartsDetails,
+  inheritedPartsLoading,
+  mutateInheritedPartsDetails,
   refetchNow,
   clonedNodesQueue,
   approvePendingPart,
@@ -357,44 +363,45 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
     try {
       if (!user?.uname || !fromId || !option || !activeGenId) return;
 
-      // Identify the old pick (oldTo) by finding the row in the active gen
+      // The current pick (oldTo) for this generalization part.
       const activeGen = inheritedPartsDetails?.find(
         (g) => g.generalizationId === activeGenId,
       );
-      const xRow = activeGen?.details.find(
-        (d) => d.from === fromId && d.to,
-      );
+      const xRow = activeGen?.details.find((d) => d.from === fromId && d.to);
       if (!xRow) return;
 
       const oldTo = xRow.to;
       const newTo = option;
       if (!oldTo || oldTo === newTo) return;
-      const oldToTitle = xRow.toTitle || allNodes[oldTo]?.title || "";
       const newToTitle = allNodes[newTo]?.title || xRow.toTitle || "";
+      const oldToTitle = xRow.toTitle || allNodes[oldTo]?.title || "";
 
       const sourceParts: ICollection[] | undefined =
         currentVisibleNode.properties?.["parts"];
-      if (!sourceParts) return;
+      if (!sourceParts?.[0]) return;
 
+      // Swap the parts' positions so the picked part takes the old one's slot:
+      // the generalization row stays put and only its right column flips.
       const updatedParts: ICollection[] = JSON.parse(
         JSON.stringify(sourceParts),
       );
-      const partsCol = updatedParts[0];
-      if (!partsCol) return;
-      const oldIdx = partsCol.nodes.findIndex((n: any) => n.id === oldTo);
-      const newIdx = partsCol.nodes.findIndex((n: any) => n.id === newTo);
+      const partsNodes = updatedParts[0].nodes;
+      const oldIdx = partsNodes.findIndex((n: any) => n.id === oldTo);
+      const newIdx = partsNodes.findIndex((n: any) => n.id === newTo);
       if (oldIdx === -1 || newIdx === -1) return;
-      const tmp = partsCol.nodes[oldIdx];
-      partsCol.nodes[oldIdx] = partsCol.nodes[newIdx];
-      partsCol.nodes[newIdx] = tmp;
+      const tmp = partsNodes[oldIdx];
+      partsNodes[oldIdx] = partsNodes[newIdx];
+      partsNodes[newIdx] = tmp;
+      const newOrder: string[] = partsNodes.map((n: any) => n.id);
 
-      // Build updated inheritedPartsDetails. Only the active generalization's row + nonPickedOnes change
+      // Update details locally for an instant switch; refetchNow reconciles.
       const updatedDetails: InheritedPartsDetail[] | null =
         inheritedPartsDetails
           ? JSON.parse(JSON.stringify(inheritedPartsDetails))
           : null;
       if (updatedDetails) {
         updatedDetails.forEach((gen, idx) => {
+          // Keep createdAt a real Timestamp.
           const original: any = inheritedPartsDetails![idx]?.createdAt;
           if (original && typeof original.toMillis === "function") {
             gen.createdAt = original;
@@ -410,51 +417,52 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
 
           if (gen.generalizationId !== activeGenId) return;
 
-          // Resolve both rows before updating either, so we don't grab the
-          // wrong row after the generalization row's `to` flips to newTo.
-          const xRow = gen.details.find(
+          const row = gen.details.find(
             (d) => d.from === fromId && d.to === oldTo,
           );
-          const otherRow = gen.details.find(
-            (d) => d !== xRow && d.to === newTo,
-          );
-
-          // Swap the optional values
-          const xRowToOptionalBefore = xRow?.toOptional ?? false;
-          const otherRowToOptionalBefore = otherRow?.toOptional ?? false;
-
-          // change symbol of the two rows
-          if (xRow) {
-            xRow.to = newTo;
-            xRow.toTitle = newToTitle;
-            xRow.userOverride = true;
-            xRow.symbol = xRow.from === xRow.to ? "=" : ">";
-            if (otherRow) xRow.toOptional = otherRowToOptionalBefore;
+          if (row) {
+            row.to = newTo;
+            row.toTitle = newToTitle;
+            row.userOverride = true;
+            row.symbol = row.from === row.to ? "=" : ">";
           }
 
-          // Change new row and old row's "to" so that it does not appear in multiple places
-          if (otherRow) {
-            otherRow.to = oldTo;
-            otherRow.toTitle = oldToTitle;
-            if (xRow) otherRow.toOptional = xRowToOptionalBefore;
+          // Drop the row newTo already had, so it isn't listed twice.
+          gen.details = gen.details.filter((d) => d === row || d.to !== newTo);
+
+          // Give the displaced oldTo a "+" row so it keeps a row.
+          if (!gen.details.some((d) => d.to === oldTo)) {
+            gen.details.push({
+              from: "",
+              to: oldTo,
+              symbol: "+",
+              fromTitle: "",
+              toTitle: oldToTitle,
+              fromOptional: false,
+              toOptional: false,
+              optionalChange: "none",
+              hops: 0,
+            });
           }
 
-          // nonPickedOnes: drop newTo, push oldTo back as an alternative
-          if (!gen.nonPickedOnes[fromId]) {
-            gen.nonPickedOnes[fromId] = [];
-          }
+          // Order rows by the new parts order, like the server does.
+          gen.details.sort((a, b) => {
+            const ia = newOrder.indexOf(a.to);
+            const ib = newOrder.indexOf(b.to);
+            return (ia === -1 ? Infinity : ia) - (ib === -1 ? Infinity : ib);
+          });
+
+          // Switch alternatives: drop newTo, offer oldTo as the way back.
+          if (!gen.nonPickedOnes[fromId]) gen.nonPickedOnes[fromId] = [];
           gen.nonPickedOnes[fromId] = gen.nonPickedOnes[fromId].filter(
             (item) => item.id !== newTo,
           );
-          gen.nonPickedOnes[fromId].push({
-            id: oldTo,
-            title: oldToTitle,
-          });
+          gen.nonPickedOnes[fromId].push({ id: oldTo, title: oldToTitle });
         });
-       }
+      }
 
-      // Save parts + the userOverride (so the recompute keeps the pick), then
-      // refetch so the switched symbols render.
+      // Show it now, then persist and let the server decide.
+      mutateInheritedPartsDetails?.(updatedDetails);
       await saveParts(updatedParts, updatedDetails);
       refetchNow?.();
 
@@ -1332,6 +1340,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
           open={open}
           anchorEl={anchorEl}
           onClose={handleClose}
+          disableRestoreFocus
           anchorOrigin={{
             vertical: "center",
             horizontal: "right",
@@ -1591,9 +1600,33 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                 position: "absolute",
                 left: "50%",
                 transform: "translateX(-50%)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 1,
+                height: "50px",
+                width: inheritedPartsLoading ? "auto" : "50px",
+                whiteSpace: "nowrap",
               }}
             >
-              <ArrowRightAltIcon sx={{ color: "orange", fontSize: "50px" }} />
+              {/* Spinner + label while the gen→node mapping recomputes. */}
+              {inheritedPartsLoading ? (
+                <>
+                  <CircularProgress size={20} sx={{ color: "orange" }} />
+                  <Typography
+                    sx={{
+                      fontSize: "0.8rem",
+                      fontWeight: "bold",
+                      fontStyle: "italic",
+                      color: "orange",
+                    }}
+                  >
+                    Generating inheritance…
+                  </Typography>
+                </>
+              ) : (
+                <ArrowRightAltIcon sx={{ color: "orange", fontSize: "50px" }} />
+              )}
             </Box>
 
             <Box

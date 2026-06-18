@@ -179,11 +179,17 @@ export const useInheritedPartsDetails = (
     };
   }, [currentVisibleNode?.id, currentVisibleNode?.generalizations?.length]);
 
-  // Detect parts changes on the current node (e.g, adding new part)
-  // and trigger a debounced refetch without wiping the current data
-  const partsSignature = currentVisibleNode?.properties?.parts?.[0]?.nodes
-    ?.map((n: any) => n.id)
-    .join(",") ?? "";
+  // Refetch only when the set of parts changes (add/remove/replace), not on
+  // reorder or optional toggles. Sorted so order changes don't count.
+  const partsSignature = [
+    ...new Set(
+      currentVisibleNode?.properties?.parts?.[0]?.nodes?.map(
+        (n: any) => n.id,
+      ) ?? [],
+    ),
+  ]
+    .sort()
+    .join(",");
   const prevPartsSignatureRef = useRef(partsSignature);
 
   useEffect(() => {

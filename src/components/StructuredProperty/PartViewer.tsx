@@ -62,6 +62,8 @@ const PartViewer: React.FC<PartViewerProps> = ({
 
   const {
     data: inheritedPartsDetails,
+    loading: inheritedPartsLoading,
+    mutateData: mutateInheritedPartsDetails,
     refetchNow,
   } = useInheritedPartsDetails(currentVisibleNode);
 
@@ -114,6 +116,8 @@ const PartViewer: React.FC<PartViewerProps> = ({
           saveParts={saveParts}
           appName={appName}
           inheritedPartsDetails={inheritedPartsDetails}
+          inheritedPartsLoading={inheritedPartsLoading}
+          mutateInheritedPartsDetails={mutateInheritedPartsDetails}
           refetchNow={refetchNow}
           clonedNodesQueue={clonedNodesQueue}
           approvePendingPart={(queuedId: string) =>
