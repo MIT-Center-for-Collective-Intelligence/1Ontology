@@ -228,15 +228,10 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (jobDoc.exists) {
       const data = jobDoc.data();
       if (data?.status === "completed" && data?.completedAt) {
-        const completedAt = data.completedAt.toDate();
-        const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-        
-        if (completedAt > oneDayAgo) {
-          console.log(`Using cached export for app: ${appName}`);
-          return res.status(200).json({ status: "processing", jobId: appName });
-        }
+        console.log(`Using cached export for app: ${appName}`);
+        return res.status(200).json({ status: "processing", jobId: appName });
       }
-      
+
       if (data?.status === "processing") {
         console.log(`Export already in progress for app: ${appName}`);
         return res.status(200).json({ status: "processing", jobId: appName });
