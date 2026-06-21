@@ -31,6 +31,7 @@ interface MarkdownEditorProps {
     randomProminentColor: string;
   };
   setEditorContent: any;
+  pendingInheritanceMessage?: any;
   placeholder?: string;
 }
 
@@ -40,6 +41,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
   editor,
   collaborationData,
   setEditorContent,
+  pendingInheritanceMessage,
   placeholder,
 }) => {
   const theme = useTheme();
@@ -126,7 +128,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
                   : "rgba(0, 0, 0, 0.02)",
             }}
           >
-            {!mode.reference && mode.useWebsocket ? (
+            {mode.useWebsocket ? (
               <YjsEditor
                 fullname={collaborationData.fullName}
                 property={content.property}
@@ -139,6 +141,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
                 checkDuplicateTitle={editor.checkDuplicateTitle}
                 onEditorReady={handleEditorReady}
                 setEditorContent={setEditorContent}
+                pendingInheritanceMessage={pendingInheritanceMessage}
                 fallbackContent={content.text}
                 placeholder={placeholder}
               />

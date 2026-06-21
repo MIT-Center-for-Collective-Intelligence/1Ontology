@@ -44,6 +44,7 @@ const YjsEditorWrapper = ({
   cursorPosition,
   onEditorReady,
   setEditorContent,
+  pendingInheritanceMessage,
   fallbackContent,
   placeholder,
 }: {
@@ -58,6 +59,7 @@ const YjsEditorWrapper = ({
   cursorPosition: number | null;
   onEditorReady?: (editor: Quill) => void;
   setEditorContent: any;
+  pendingInheritanceMessage?: any;
   fallbackContent?: string;
   placeholder?: string;
 }) => {
@@ -68,6 +70,8 @@ const YjsEditorWrapper = ({
   const changeHistoryRef = useRef<any[]>([]);
   const [errorDuplicate, setErrorDuplicate] = useState(false);
   const [synced, setSynced] = useState(false);
+  const providerRef = useRef<WebsocketProvider | null>(null);
+  const docRef = useRef<Y.Doc | null>(null);
 
   const saveChangeLog = (changeHistory: any[]) => {
     try {
@@ -91,6 +95,7 @@ const YjsEditorWrapper = ({
       });
     }
   };
+
   const focus = (cursorPosition: number | null) => {
     if (editorRef.current && cursorPosition !== null) {
       editorRef.current.focus();
@@ -118,6 +123,11 @@ const YjsEditorWrapper = ({
         },
       },
     );
+
+    // Store provider references
+    providerRef.current = provider;
+    docRef.current = ydoc;
+
     provider.on("sync", (isSynced: boolean) => {
       if (isSynced) {
         setSynced(true);
@@ -131,6 +141,7 @@ const YjsEditorWrapper = ({
         }
       }
     });
+
     const yText = ydoc.getText("quill");
     yTextRef.current = yText;
 
@@ -250,10 +261,36 @@ const YjsEditorWrapper = ({
         editor.off("selection-change", handleSelectionChange);
         editor.off("text-change");
         window.removeEventListener("beforeunload", saveChanges);
+        
+        // Clear provider references
+        providerRef.current = null;
+        docRef.current = null;
       };
     }
     // Not adding checkDuplicateTitle to dependencies to prevent focus loss during typing
   }, [fullname, property, nodeId, structured]);
+
+  // Effect to send inheritance change message
+  useEffect(() => {
+    if (pendingInheritanceMessage && providerRef.current?.awareness) {
+      try {
+        // Send the inheritance change message via awareness
+        providerRef.current.awareness.setLocalStateField('inheritanceChange', pendingInheritanceMessage);
+        
+        // Clear the message after a short delay
+        setTimeout(() => {
+          if (providerRef.current?.awareness) {
+            providerRef.current.awareness.setLocalStateField('inheritanceChange', null);
+          }
+        }, 1000);
+        
+      } catch (error) {
+        console.error('[YjsEditor] Error sending inheritance message:', error);
+      }
+    } else if (pendingInheritanceMessage) {
+      console.error(`[YjsEditor] Cannot send inheritance message - provider not ready yet`);
+    }
+  }, [pendingInheritanceMessage]);
 
   useEffect(() => {
     if (synced && autoFocus && editorRef.current) {

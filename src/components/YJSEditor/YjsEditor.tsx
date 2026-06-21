@@ -17,6 +17,7 @@ const YjsEditor = ({
   cursorPosition,
   onEditorReady,
   setEditorContent,
+  pendingInheritanceMessage,
   fallbackContent,
   placeholder,
 }: {
@@ -31,6 +32,7 @@ const YjsEditor = ({
   cursorPosition: number | null;
   onEditorReady?: (editor: any) => void;
   setEditorContent: any;
+  pendingInheritanceMessage?: any;
   fallbackContent?: string;
   placeholder?: string;
 }) => {
@@ -47,6 +49,7 @@ const YjsEditor = ({
       cursorPosition={cursorPosition}
       onEditorReady={onEditorReady}
       setEditorContent={setEditorContent}
+      pendingInheritanceMessage={pendingInheritanceMessage}
       fallbackContent={fallbackContent}
       placeholder={placeholder}
     />
