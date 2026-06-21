@@ -9,6 +9,7 @@ import "quill/dist/quill.snow.css";
 import { recordLogs } from "@components/lib/utils/helpers";
 import { capitalizeFirstLetter } from "@components/lib/utils/string.utils";
 import { DISPLAY, WS_URL } from "@components/lib/CONSTANTS";
+import * as encoding from "lib0/encoding";
 
 Quill.register("modules/cursors", QuillCursors);
 
@@ -34,6 +35,7 @@ const applyDeltaToText = (text: string, delta: any) => {
 
 const YjsEditorWrapper = ({
   fullname,
+  username,
   property,
   nodeId,
   color,
@@ -49,6 +51,7 @@ const YjsEditorWrapper = ({
   placeholder,
 }: {
   fullname: string;
+  username: string;
   property: string;
   nodeId: string;
   color: string;
@@ -202,6 +205,7 @@ const YjsEditorWrapper = ({
 
       provider.awareness.setLocalStateField("user", {
         name: fullname,
+        uname: username,
         color: color,
       });
 
@@ -231,9 +235,34 @@ const YjsEditorWrapper = ({
       //   changeHistoryRef.current = [];
       // }, TIMEOUT);
 
-      const saveChanges = () => {
-        saveChangeLog(changeHistoryRef.current);
-        changeHistoryRef.current = [];
+      // Client-side function to save changes and reset the change history
+      // const saveChanges = () => {
+      //   saveChangeLog(changeHistoryRef.current);
+      //   changeHistoryRef.current = [];
+      // };
+
+      // Server-side function to save changes and reset the change history
+      const saveChangesYjs = () => {
+        if (!provider || !provider.ws) return;
+      
+        const encoder = encoding.createEncoder();
+      
+        encoding.writeVarUint(encoder, ydoc.clientID);
+      
+        const messageData = {
+          type: "saveChangeLog",
+          data: {
+            clientId: ydoc.clientID,
+          }
+        };
+      
+        const messageDataArray = new TextEncoder().encode(JSON.stringify(messageData));
+      
+        encoding.writeVarUint(encoder, messageDataArray.length);
+      
+        encoding.writeUint8Array(encoder, messageDataArray);
+      
+        provider.ws.send(encoding.toUint8Array(encoder));
       };
 
       const handleSelectionChange = (
@@ -241,26 +270,26 @@ const YjsEditorWrapper = ({
         oldRange: Range | null,
         source: string,
       ) => {
-        // On blur
+        // Save change logs on blur
         if (range === null && oldRange !== null) {
-          saveChanges();
+          saveChangesYjs();
         }
       };
 
       editor.on("selection-change", handleSelectionChange);
 
-      window.addEventListener("beforeunload", saveChanges);
+      window.addEventListener("beforeunload", saveChangesYjs);
 
       return () => {
-        saveChangeLog(changeHistoryRef.current);
+        // saveChangeLog(changeHistoryRef.current);
         provider.disconnect();
         provider.destroy();
         if (binding) {
           binding.destroy();
         }
-        editor.off("selection-change", handleSelectionChange);
-        editor.off("text-change");
-        window.removeEventListener("beforeunload", saveChanges);
+        editorRef.current?.off("selection-change", handleSelectionChange);
+        editorRef.current?.off("text-change");
+        window.removeEventListener("beforeunload", saveChangesYjs);
         
         // Clear provider references
         providerRef.current = null;

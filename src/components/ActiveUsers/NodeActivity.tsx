@@ -342,20 +342,36 @@ const NodeActivity = ({
           </Box>
         </Box>
       )}
-
       {logs.length > 0 && (
         <>
-          {grouped.items.map((log: NodeChange & { id: string }) => (
-            <ActivityDetails
-              key={log.id}
-              activity={log}
-              displayDiff={displayDiff}
-              modifiedByDetails={activeUsers[log.modifiedBy]}
-              selectedDiffNode={selectedDiffNode}
-              nodes={nodes}
-              childActivities={grouped.childrenByParent.get(log.id)}
-            />
-          ))}
+          {grouped.items.map((log: NodeChange & { id: string }) => {
+            let modifiedByDetails: any = null;
+            if (log.modifiedBy) {
+              modifiedByDetails = activeUsers[log.modifiedBy];
+              
+              if (log.collaborators && log.collaborators.length > 0) {
+                const collaboratorDetails = log.collaborators
+                  .map((uname: string) => activeUsers[uname])
+                  .filter(Boolean);
+                
+                if (collaboratorDetails.length > 0) {
+                  modifiedByDetails = [modifiedByDetails, ...collaboratorDetails].filter(Boolean);
+                }
+              }
+            }
+
+            return (
+              <ActivityDetails
+                key={log.id}
+                activity={log}
+                displayDiff={displayDiff}
+                modifiedByDetails={modifiedByDetails}
+                selectedDiffNode={selectedDiffNode}
+                nodes={nodes}
+                childActivities={grouped.childrenByParent.get(log.id)}
+              />
+            );
+          })}
 
           {hasMore && (
             <Box sx={{ display: "flex", justifyContent: "center", p: 2 }}>

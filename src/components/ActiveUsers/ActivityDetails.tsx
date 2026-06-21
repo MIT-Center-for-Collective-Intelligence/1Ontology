@@ -38,11 +38,16 @@ const ActivityDetails = ({
   childActivities?: (NodeChange & { id: string })[];
   nested?: boolean;
 }) => {
+  const userDetails = Array.isArray(modifiedByDetails)
+    ? modifiedByDetails
+    : (modifiedByDetails ? [modifiedByDetails] : []);
+  const primaryUser = userDetails.length > 0 ? userDetails[0] : null;
+
   const [isSelected, setIsSelected] = useState(false);
   const [childrenExpanded, setChildrenExpanded] = useState(false);
   const isHighlighted = isSelected || selectedDiffNode?.id === activity.id;
   const changeSummary = getChangeDescription(activity, "");
-  const nodeTitle = nodes[activity.nodeId]?.title || activity.fullNode?.title;
+  const nodeTitle = nodes && nodes[activity.nodeId] ? nodes[activity.nodeId]?.title : activity.fullNode?.title;
   const triggeredBy = activity.triggeredBy;
   const isChildLog = !!triggeredBy;
   const childCount = childActivities?.length ?? 0;
@@ -179,10 +184,10 @@ const ActivityDetails = ({
                 alignItems: "center",
               }}
             >
-              {(!modifiedByDetails || isChildLog) && (
+              {(!primaryUser || isChildLog) && (
                 <Box sx={{ py: 0.25 }}>{TimeLabel}</Box>
               )}
-              {modifiedByDetails && !isChildLog && (
+              {primaryUser && !isChildLog && (
                 <Stack
                   direction="row"
                   alignItems="center"
@@ -217,8 +222,8 @@ const ActivityDetails = ({
                     }}
                   >
                     <OptimizedAvatar
-                      alt={`${modifiedByDetails.fName} ${modifiedByDetails.lName}`}
-                      imageUrl={modifiedByDetails.imageUrl || ""}
+                      alt={`${primaryUser.fName} ${primaryUser.lName}`}
+                      imageUrl={primaryUser.imageUrl || ""}
                       size={40}
                       sx={{
                         m: 0,
@@ -240,9 +245,12 @@ const ActivityDetails = ({
                         fontSize: "0.9375rem",
                         lineHeight: 1.35,
                         color: "text.primary",
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
                       }}
                     >
-                      {modifiedByDetails.fName} {modifiedByDetails.lName}
+                      {userDetails.map((u: any) => `${u.fName} ${u.lName}`).join(", ")}
                     </Typography>
                     {TimeLabel}
                   </Stack>
@@ -378,6 +386,7 @@ const ActivityDetails = ({
                         "& .MuiTooltip-arrow": { color: "grey.900" },
                       },
                     },
+>>>>>>> 3705b7e312b5e25d7ad2aefa931aefd691252682
                   }}
                 >
                   <IconButton

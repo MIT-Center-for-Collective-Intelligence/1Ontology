@@ -160,6 +160,7 @@ export type NodeChange = {
   id?: string;
   nodeId: string;
   modifiedBy: string;
+  collaborators?: string[];
   modifiedProperty: string | null;
   previousValue: any;
   newValue: any;

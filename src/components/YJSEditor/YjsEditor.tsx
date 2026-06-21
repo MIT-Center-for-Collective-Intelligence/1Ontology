@@ -7,6 +7,7 @@ const YjsEditorWrapper = dynamic(() => import(".//YjsEditorWrapper"), {
 
 const YjsEditor = ({
   fullname,
+  username,
   property,
   nodeId,
   color,
@@ -22,6 +23,7 @@ const YjsEditor = ({
   placeholder,
 }: {
   fullname: string;
+  username: string;
   property: string;
   nodeId: string;
   color: string;
@@ -39,6 +41,7 @@ const YjsEditor = ({
   return (
     <YjsEditorWrapper
       fullname={fullname}
+      username={username}
       property={property}
       nodeId={nodeId}
       color={color}
