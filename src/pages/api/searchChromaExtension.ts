@@ -1,0 +1,198 @@
+import { NextApiRequest, NextApiResponse } from "next";
+import { ChromaClient, IncludeEnum, OpenAIEmbeddingFunction } from "chromadb";
+import Cors from "cors";
+import { embeddingFunctionDefault, openai } from "./openaiClient";
+import { db } from "@components/lib/firestoreServer/admin";
+import { LOGS } from "@components/lib/firestoreClient/collections";
+import { getDoerCreate } from "@components/lib/utils/helpers";
+
+const url = `${process.env.CHROMA_PROTOCOL}://${process.env.CHROMA_HOST}:${process.env.CHROMA_PORT}`;
+
+const sanitizeCollectionName = (title: string) => {
+  return (
+    title
+      .trim()
+      .replace(/\s+/g, "_")
+      .replace(/[^a-zA-Z0-9._-]/g, "")
+      .replace(/^[-_.]+/, "")
+      .replace(/[-_.]+$/, "")
+      .slice(0, 512) || "default_collection"
+  );
+};
+
+const cors = Cors({
+  origin: "*",
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  optionsSuccessStatus: 200,
+});
+
+const runMiddleware = (req: any, res: any, fn: any) => {
+  return new Promise((resolve, reject) => {
+    fn(req, res, (result: any) => {
+      if (result instanceof Error) {
+        return reject(result);
+      }
+      return resolve(result);
+    });
+  });
+};
+
+const cosineSimilarity = (vecA: any[], vecB: any[]) => {
+  if (vecA.length !== vecB.length) {
+    throw new Error("Embedding vectors must have the same length.");
+  }
+  const dot = vecA.reduce((acc, val, idx) => acc + val * vecB[idx], 0);
+  const normA = Math.sqrt(vecA.reduce((acc, val) => acc + val * val, 0));
+  const normB = Math.sqrt(vecB.reduce((acc, val) => acc + val * val, 0));
+  if (normA === 0 || normB === 0) {
+    throw new Error("Cannot compute similarity for zero-length embeddings.");
+  }
+  return dot / (normA * normB);
+};
+
+async function handler(req: NextApiRequest, res: NextApiResponse) {
+  try {
+    await runMiddleware(req, res, cors);
+    let { query, appName, user, nodeType, resultsNum, searchAll, oNetTask } =
+      req.body;
+
+    searchAll = false;
+    let collectionName = "";
+    if (appName) {
+      collectionName = `ontology-${sanitizeCollectionName(appName)}`;
+    } else {
+      collectionName = "ontology";
+    }
+
+    const client = new ChromaClient({ path: url });
+
+    const collection = await client.getOrCreateCollection({
+      name: collectionName,
+      embeddingFunction: embeddingFunctionDefault,
+    });
+    /*    if (searchAll) {
+      const allData = await collection.get({
+        include: [IncludeEnum.Embeddings, IncludeEnum.Metadatas],
+        ...(nodeType
+          ? {
+              where: {
+                nodeType,
+              },
+            }
+          : {}),
+      });
+      console.log("embeddings loaded");
+      const response = await openai.embeddings.create({
+        model: "text-embedding-3-large",
+        input: [query],
+      });
+      const embeddings = response.data?.map((item) => item.embedding) ?? [];
+      const queryEmbedding = embeddings[0];
+
+      const _data = [];
+      for (let nodeIdx = 0; nodeIdx < allData.metadatas.length; nodeIdx++) {
+        if (allData.metadatas[nodeIdx]?.nodeType === "activity") {
+          const similarity = cosineSimilarity(
+            queryEmbedding,
+            (allData.embeddings || [])[nodeIdx],
+          );
+
+          _data.push({
+            ...allData.metadatas[nodeIdx],
+            similarity,
+          });
+        }
+      }
+      _data.sort((a, b) => b.similarity - a.similarity);
+      const topResults = _data.slice(0, resultsNum);
+
+      const logRef = db.collection(LOGS).doc();
+      const uname = "ai-peer-extension";
+      const doerCreate = getDoerCreate(uname || "");
+      const logData = {
+        at: "searchChroma",
+        query,
+        results: topResults,
+        appName,
+      };
+
+      await logRef.set({
+        type: "info",
+        ...logData,
+        createdAt: new Date(),
+        doer: uname,
+        doerCreate,
+      });
+
+      return res.status(200).json({ results: topResults });
+    } */
+    console.log("query", query);
+    const embeddingResponse = await openai.embeddings.create({
+      model: "text-embedding-3-large", // must match your stored embeddings
+      input: query,
+    });
+
+    const queryEmbedding = embeddingResponse.data[0].embedding;
+    const whereFilter: Record<string, any> = {};
+
+    if (nodeType) {
+      whereFilter["nodeType"] = nodeType;
+    }
+
+    /*     if (oNetTask !== undefined && appName === "final-hierarchy-with-o*net") {
+      whereFilter["oNetTask"] = !!oNetTask;
+    } */
+
+    const results = await collection.query({
+      queryEmbeddings: [queryEmbedding],
+      include: [IncludeEnum.Embeddings, IncludeEnum.Metadatas],
+      nResults: resultsNum || 40,
+      where: Object.keys(whereFilter).length > 0 ? whereFilter : undefined,
+    });
+
+    const metaDatas: any = results.metadatas[0];
+    const embeddings: any = (results.embeddings || [])[0];
+    console.log(metaDatas);
+    const _data = [];
+    for (let nodeIdx = 0; nodeIdx < metaDatas.length; nodeIdx++) {
+      if (metaDatas[nodeIdx]?.nodeType === "activity") {
+        const similarity = cosineSimilarity(
+          queryEmbedding,
+          (embeddings || [])[nodeIdx],
+        );
+
+        _data.push({
+          ...metaDatas[nodeIdx],
+          similarity,
+        });
+      }
+    }
+    _data.sort((a, b) => b.similarity - a.similarity);
+    const topResults = _data.slice(0, resultsNum);
+
+    const logData = {
+      at: "searchChroma",
+      query,
+      results: topResults,
+      appName,
+    };
+    const logRef = db.collection(LOGS).doc();
+    const uname = "ai-peer-extension";
+    const doerCreate = getDoerCreate(uname || "");
+    await logRef.set({
+      type: "info",
+      ...logData,
+      createdAt: new Date(),
+      doer: uname,
+      doerCreate,
+    });
+    console.log("results sent");
+    return res.status(200).json({ results: topResults });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({});
+  }
+}
+
+export default handler;

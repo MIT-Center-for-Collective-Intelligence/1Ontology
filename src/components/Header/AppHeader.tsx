@@ -69,9 +69,9 @@ import React, {
 import mitLogo from "../../../public/CCI-logo.gif";
 import mitLogoDark from "../../../public/MIT-Logo-Dark.png";
 import { capitalizeString, timeAgo } from "../../lib/utils/string.utils";
-import useThemeChange from " @components/lib/hooks/useThemeChange";
-import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
-import ROUTES from " @components/lib/utils/routes";
+import useThemeChange from "@components/lib/hooks/useThemeChange";
+import { DESIGN_SYSTEM_COLORS } from "@components/lib/theme/colors";
+import ROUTES from "@components/lib/utils/routes";
 import { useAuth } from "../context/AuthContext";
 import {
   collection,
@@ -84,17 +84,17 @@ import {
   updateDoc,
   where,
 } from "firebase/firestore";
-import { NODES, USERS } from " @components/lib/firestoreClient/collections";
+import { NODES, USERS } from "@components/lib/firestoreClient/collections";
 import {
   getDownloadURL,
   getStorage,
   ref as refStorage,
   uploadBytesResumable,
 } from "firebase/storage";
-import { isValidHttpUrl } from " @components/lib/utils/utils";
-import { NO_IMAGE_USER } from " @components/lib/CONSTANTS";
-import { INode } from " @components/types/INode";
-import { INotification } from " @components/types/IChat";
+import { isValidHttpUrl } from "@components/lib/utils/utils";
+import { NO_IMAGE_USER } from "@components/lib/CONSTANTS";
+import { INode } from "@components/types/INode";
+import { INotification } from "@components/types/IChat";
 import OptimizedAvatar from "../Chat/OptimizedAvatar";
 export const HEADER_HEIGHT = 80;
 export const HEADER_HEIGHT_MOBILE = 72;
@@ -172,44 +172,48 @@ const AppHeader = forwardRef(
       await updateDoc(userDoc, { imageUrl });
     };
 
-    useEffect(() => {
-      const usersQuery = query(collection(db, "users"));
-      const unsubscribe = onSnapshot(usersQuery, (snapshot) => {
-        setUsersNodesViews((prevUsersNodesViews: any) => {
-          const updatedUsersData = { ...prevUsersNodesViews };
+    // Commented out since there is also same functionality in  ToolbarSidebar.tsx
+    // useEffect(() => {
+    //   const usersQuery = query(collection(db, "users"));
+    //   const unsubscribe = onSnapshot(usersQuery, (snapshot) => {
+    //     setUsersNodesViews((prevUsersNodesViews: any) => {
+    //       const updatedUsersData = { ...prevUsersNodesViews };
 
-          snapshot.docChanges().forEach((change) => {
-            const doc = change.doc;
-            const userId = doc.id;
-            const data = doc.data();
-            const currentNode = data.currentNode;
+    //       snapshot.docChanges().forEach((change) => {
+    //         const doc = change.doc;
+    //         const userId = doc.id;
+    //         const data = doc.data();
+    //         // currentNode is now an object keyed by appName, get the first available one
+    //         const currentNodeObj = data.currentNode;
+    //         const firstAppNode = currentNodeObj ? Object.values(currentNodeObj)[0] as { id?: string; title?: string } | undefined : undefined;
+    //         const currentNodeId = firstAppNode?.id;
 
-            if (
-              (change.type === "added" || change.type === "modified") &&
-              currentNode
-            ) {
-              updatedUsersData[userId] = {
-                node: {
-                  title: nodes[currentNode]?.title || "",
-                  id: currentNode,
-                },
-                imageUrl: data.imageUrl,
-                fName: data.fName,
-                lName: data.lName,
-                lastInteracted: data.lastInteracted,
-                uname: userId,
-              };
-            } else if (change.type === "removed") {
-              delete updatedUsersData[userId];
-            }
-          });
+    //         if (
+    //           (change.type === "added" || change.type === "modified") &&
+    //           currentNodeId
+    //         ) {
+    //           updatedUsersData[userId] = {
+    //             node: {
+    //               title: firstAppNode?.title || nodes[currentNodeId]?.title || "",
+    //               id: currentNodeId,
+    //             },
+    //             imageUrl: data.imageUrl,
+    //             fName: data.fName,
+    //             lName: data.lName,
+    //             lastInteracted: data.lastInteracted,
+    //             uname: userId,
+    //           };
+    //         } else if (change.type === "removed") {
+    //           delete updatedUsersData[userId];
+    //         }
+    //       });
 
-          return updatedUsersData;
-        });
-      });
+    //       return updatedUsersData;
+    //     });
+    //   });
 
-      return () => unsubscribe();
-    }, [nodes]);
+    //   return () => unsubscribe();
+    // }, [nodes]);
 
     const handleImageChange = useCallback(
       async (event: any) => {

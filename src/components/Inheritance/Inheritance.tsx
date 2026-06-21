@@ -9,10 +9,11 @@ import {
   Typography,
   Paper,
 } from "@mui/material";
-import { INode, InheritanceType } from " @components/types/INode";
-import { DISPLAY, SCROLL_BAR_STYLE } from " @components/lib/CONSTANTS";
-import { capitalizeFirstLetter } from " @components/lib/utils/string.utils";
-import { NODES } from " @components/lib/firestoreClient/collections";
+import { INode, InheritanceType } from "@components/types/INode";
+import { DISPLAY, SCROLL_BAR_STYLE } from "@components/lib/CONSTANTS";
+import { isOntologyEditClaimDenied } from "@components/lib/utils/helpers";
+import { capitalizeFirstLetter } from "@components/lib/utils/string.utils";
+import { NODES } from "@components/lib/firestoreClient/collections";
 import {
   collection,
   doc,
@@ -25,9 +26,10 @@ import { useAuth } from "../context/AuthContext";
 type InheritanceProps = {
   selectedNode: INode;
   nodes: { [id: string]: INode };
+  fetchNode: (nodeId: string) => Promise<INode | null>;
 };
 
-const Inheritance: React.FC<InheritanceProps> = ({ selectedNode, nodes }) => {
+const Inheritance: React.FC<InheritanceProps> = ({ selectedNode, nodes, fetchNode }) => {
   const [inheritanceState, setInheritanceState] = useState<{
     [key: string]: InheritanceType;
   }>(
@@ -60,7 +62,16 @@ const Inheritance: React.FC<InheritanceProps> = ({ selectedNode, nodes }) => {
     try {
       let newBatch = batch;
       for (let specialization of specializations) {
-        const specializationData = nodes[specialization.id];
+        // lookup specialization data
+        let specializationData: INode | null = nodes[specialization.id] || null;
+        if (!specializationData) {
+          specializationData = await fetchNode(specialization.id);
+          if (!specializationData) {
+            console.warn("[INHERITANCE] Could not fetch specialization:", specialization.id);
+            continue;
+          }
+        }
+
         const nodeRef = doc(collection(db, NODES), specialization.id);
         let objectUpdate: any = {
           [`inheritance.${property}.inheritanceType`]: newValue,
@@ -70,19 +81,30 @@ const Inheritance: React.FC<InheritanceProps> = ({ selectedNode, nodes }) => {
           objectUpdate = {
             ...objectUpdate,
             [`inheritance.${property}.ref`]: null,
+            [`inheritance.${property}.title`]: "",
           };
           if (referenceId && referenceId !== null) {
-            const referenceValue = nodes[referenceId].properties[property];
-            objectUpdate = {
-              ...objectUpdate,
-              [`properties.${property}`]: referenceValue,
-              [`inheritance.${property}.ref`]: null,
-            };
+            // lookup reference value
+            let referenceNode: INode | null = nodes[referenceId] || null;
+            if (!referenceNode) {
+              referenceNode = await fetchNode(referenceId);
+            }
+
+            if (referenceNode) {
+              const referenceValue = referenceNode.properties[property];
+              objectUpdate = {
+                ...objectUpdate,
+                [`properties.${property}`]: referenceValue,
+                [`inheritance.${property}.ref`]: null,
+                [`inheritance.${property}.title`]: "",
+              };
+            }
           }
         } else {
           objectUpdate = {
             ...objectUpdate,
             [`inheritance.${property}.ref`]: ref,
+            [`inheritance.${property}.title`]: selectedNode.title ?? "",
           };
         }
 
@@ -96,13 +118,21 @@ const Inheritance: React.FC<InheritanceProps> = ({ selectedNode, nodes }) => {
           newBatch = writeBatch(db);
         }
 
-        newBatch = await updateSpecializationsInheritance(
-          nodes[specialization.id].specializations.flatMap((n) => n.nodes),
-          newBatch,
-          property,
-          newValue,
-          ref
-        );
+        // lookup for specializations
+        let specializationNodeData: INode | null = nodes[specialization.id] || null;
+        if (!specializationNodeData) {
+          specializationNodeData = await fetchNode(specialization.id);
+        }
+
+        if (specializationNodeData) {
+          newBatch = await updateSpecializationsInheritance(
+            specializationNodeData.specializations.flatMap((n) => n.nodes),
+            newBatch,
+            property,
+            newValue,
+            ref
+          );
+        }
       }
       return newBatch;
     } catch (error) {
@@ -182,7 +212,13 @@ const Inheritance: React.FC<InheritanceProps> = ({ selectedNode, nodes }) => {
               </Typography>
             </Box>
             <Box sx={{ padding: 2 }}>
-              <FormControl component="fieldset" disabled={!user?.manageLock}>
+              <FormControl
+                component="fieldset"
+                disabled={
+                  !user?.manageLock ||
+                  isOntologyEditClaimDenied(user, selectedNode.appName)
+                }
+              >
                 <RadioGroup
                   value={inheritanceState[key]}
                   onChange={(e) => handleInheritanceChange(key, e)}

@@ -28,8 +28,8 @@ import { darcula } from "react-syntax-highlighter/dist/cjs/styles/prism";
 import rehypeKatex from "rehype-katex";
 import rehypeRaw from "rehype-raw";
 import remarkMath from "remark-math";
-import { containsHTMLTags } from " @components/lib/utils/utils";
-import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
+import { containsHTMLTags } from "@components/lib/utils/utils";
+import { DESIGN_SYSTEM_COLORS } from "@components/lib/theme/colors";
 
 type Props = {
   text: string;
@@ -55,7 +55,15 @@ const MarkdownRender: FC<Props> = ({
           <Typography
             lineHeight={"inherit"}
             {...props}
-            sx={{ p: "0px", wordBreak: "break-word", ...sx }}
+            sx={{
+              p: "0px",
+              wordBreak: "break-word",
+              mb: 1,
+              "&:last-child": {
+                mb: 0
+              },
+              ...sx
+            }}
           />
         ),
         a: ({ ...props }) => {
@@ -102,6 +110,36 @@ const MarkdownRender: FC<Props> = ({
             </Box>
           );
         },
+        blockquote: ({ ...props }) => (
+          <Box
+            component="blockquote"
+            sx={{
+              position: 'relative',
+              pl: 3,
+              marginInlineStart: '20px',
+              marginInlineEnd: '20px',
+              color: (theme) => theme.palette.mode === 'dark'
+                ? 'rgba(255, 255, 255, 0.7)'
+                : 'rgba(0, 0, 0, 0.7)',
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                left: '4px',
+                top: '-2px',
+                bottom: '-2px',
+                width: '4px',
+                borderRadius: '4px',
+                backgroundColor: (theme) => theme.palette.mode === 'dark'
+                  ? 'rgba(255, 255, 255, 0.12)'
+                  : 'rgba(0, 0, 0, 0.12)',
+              },
+              "&:last-child": {
+                mb: 0
+              }
+            }}
+            {...props}
+          />
+        )
       }}
     >
       {containsHTMLTags(text) ? text.replace(/\$\$|\$/g, "") : text}
@@ -109,4 +147,7 @@ const MarkdownRender: FC<Props> = ({
   );
 };
 
-export default MarkdownRender;
+export default React.memo(
+  MarkdownRender,
+  (prevProps, nextProps) => prevProps.text === nextProps.text,
+);

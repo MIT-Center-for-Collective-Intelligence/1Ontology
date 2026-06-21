@@ -16,6 +16,11 @@ const YjsEditor = ({
   checkDuplicateTitle,
   autoFocus,
   cursorPosition,
+  onEditorReady,
+  setEditorContent,
+  pendingInheritanceMessage,
+  fallbackContent,
+  placeholder,
 }: {
   fullname: string;
   username: string;
@@ -27,6 +32,11 @@ const YjsEditor = ({
   checkDuplicateTitle: Function;
   autoFocus: boolean;
   cursorPosition: number | null;
+  onEditorReady?: (editor: any) => void;
+  setEditorContent: any;
+  pendingInheritanceMessage?: any;
+  fallbackContent?: string;
+  placeholder?: string;
 }) => {
   return (
     <YjsEditorWrapper
@@ -40,6 +50,11 @@ const YjsEditor = ({
       checkDuplicateTitle={checkDuplicateTitle}
       autoFocus={autoFocus}
       cursorPosition={cursorPosition}
+      onEditorReady={onEditorReady}
+      setEditorContent={setEditorContent}
+      pendingInheritanceMessage={pendingInheritanceMessage}
+      fallbackContent={fallbackContent}
+      placeholder={placeholder}
     />
   );
 };

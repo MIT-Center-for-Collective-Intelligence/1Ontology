@@ -1,4 +1,4 @@
-import { ICollection, INode } from " @components/types/INode";
+import { ICollection, INode } from "@components/types/INode";
 import {
   collection,
   getDocs,
@@ -7,6 +7,7 @@ import {
   where,
 } from "firebase/firestore";
 import { NODES } from "../firestoreClient/collections";
+import { GEMINI_MODEL } from "../CONSTANTS";
 const db = getFirestore();
 type IComparePropertiesReturn = {
   modifiedProperty: string;
@@ -16,7 +17,7 @@ type IComparePropertiesReturn = {
 const compareProperties = async (
   nodeProps: any,
   proposalProps: any,
-  improvement: any
+  improvement: any,
 ): Promise<IComparePropertiesReturn[]> => {
   const detailsOfChange: IComparePropertiesReturn[] = [];
   Object.keys(nodeProps).forEach(async (propertyName) => {
@@ -47,10 +48,10 @@ const compareProperties = async (
 
         // Compare arrays
         const missingItems = nodePropertyIds.filter(
-          (item: any) => !proposalPropertyIds.includes(item)
+          (item: any) => !proposalPropertyIds.includes(item),
         );
         const extraItems = proposalPropertyIds.filter(
-          (item: any) => !nodePropertyIds.includes(item)
+          (item: any) => !nodePropertyIds.includes(item),
         );
 
         if (missingItems.length > 0) {
@@ -100,8 +101,8 @@ export const getNodeIdByTitle = async (title: string) => {
     query(
       collection(db, NODES),
       where("title", "==", title),
-      where("deleted", "==", false)
-    )
+      where("deleted", "==", false),
+    ),
   );
   if (docs.docs.length > 0) {
     const docData = docs.docs[0].data() as INode;
@@ -112,7 +113,7 @@ export const getNodeIdByTitle = async (title: string) => {
 
 export const getStructureForJSON = (
   data: INode,
-  nodes: Record<string, INode>
+  nodes: Record<string, INode>,
 ) => {
   const getTitlesWithCollections = (propertyValue: ICollection[]) => {
     const propertyWithTitles: { collectionName: string; nodes: string[] }[] =
@@ -136,13 +137,16 @@ export const getStructureForJSON = (
 
   const getTitles = (propertyValue: ICollection[]) => {
     const propertyWithTitles: string[] = [];
-    for (let collection of propertyValue) {
-      for (let node of collection.nodes) {
-        if (nodes[node.id]) {
-          propertyWithTitles.push(nodes[node.id].title);
+    if (Array.isArray(propertyValue)) {
+      for (let collection of propertyValue) {
+        for (let node of collection?.nodes || []) {
+          if (nodes[node.id]) {
+            propertyWithTitles.push(nodes[node.id].title);
+          }
         }
       }
     }
+
     return propertyWithTitles;
   };
 
@@ -153,10 +157,14 @@ export const getStructureForJSON = (
       delete properties[property];
     } else if (
       typeof properties[property] !== "string" &&
-      data.propertyType[property] !== "string-array"
+      data.propertyType[property] !== "string-array" &&
+      data.propertyType[property] !== "string-select"
     ) {
       properties[property] = getTitles(properties[property]);
     }
+  }
+  if (!properties.hasOwnProperty("parts")) {
+    properties["parts"] = [];
   }
   if (textValue && Object.keys(textValue).length > 0) {
     properties.comments = textValue;
@@ -173,12 +181,13 @@ export const getStructureForJSON = (
   };
 };
 
-export const getNodesInThreeLevels = (
+export const getNodesInLevels = (
   nodeData: INode,
   nodes: Record<string, INode>,
   visited: Set<string>,
   deepNumber: number,
-  level: number = 0
+  inputProperties: Set<string>,
+  level: number = 0,
 ): any[] => {
   const nodesArray: any[] = [];
 
@@ -186,18 +195,24 @@ export const getNodesInThreeLevels = (
     return nodesArray;
   }
   const specializations = nodeData.specializations.flatMap(
-    (c: ICollection) => c.nodes
+    (c: ICollection) => c.nodes,
   );
   const generalizations = nodeData.generalizations.flatMap(
-    (c: ICollection) => c.nodes
+    (c: ICollection) => c.nodes,
   );
   const items = [];
-  items.push(...specializations);
-  items.push(...generalizations);
+  if (inputProperties.has("specializations")) {
+    items.push(...specializations);
+  }
+  if (inputProperties.has("generalizations")) {
+    items.push(...generalizations);
+  }
+
   for (let property in nodeData.properties) {
     if (
       Array.isArray(nodeData.properties[property]) &&
-      nodeData.propertyType[property] !== "string-array"
+      nodeData.propertyType[property] !== "string-array" &&
+      inputProperties.has(property)
     ) {
       const propertyNodes = (
         nodeData.properties[property] as ICollection[]
@@ -211,12 +226,13 @@ export const getNodesInThreeLevels = (
       const nodeD = getStructureForJSON(itemData, nodes);
       nodesArray.push(nodeD);
       visited.add(itemData.title);
-      const p = getNodesInThreeLevels(
+      const p = getNodesInLevels(
         itemData,
         nodes,
         visited,
         deepNumber,
-        level + 1
+        inputProperties,
+        level + 1,
       );
       if (Array.isArray(p)) {
         nodesArray.push(...p);

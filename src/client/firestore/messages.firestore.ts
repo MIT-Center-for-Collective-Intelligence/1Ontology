@@ -1,5 +1,5 @@
-import { MESSAGES } from " @components/lib/firestoreClient/collections";
-import { IChatMessage } from " @components/types/IChat";
+import { MESSAGES } from "@components/lib/firestoreClient/collections";
+import { IChatMessage } from "@components/types/IChat";
 import {
   collection,
   Firestore,

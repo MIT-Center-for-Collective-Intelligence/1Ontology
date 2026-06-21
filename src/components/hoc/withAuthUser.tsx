@@ -22,7 +22,7 @@ import { useCallback, useEffect } from "react";
 // import FullPageLogoLoading from "@/components/FullPageLogoLoading";
 
 import { useAuth } from "../context/AuthContext";
-import ROUTES from " @components/lib/utils/routes";
+import ROUTES from "@components/lib/utils/routes";
 
 type Props = {
   shouldRedirectToLogin?: boolean;

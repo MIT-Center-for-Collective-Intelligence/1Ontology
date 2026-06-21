@@ -9,20 +9,25 @@ import {
   writeBatch,
   WriteBatch,
 } from "firebase/firestore";
-import { NODES } from " @components/lib/firestoreClient/collections";
-import { recordLogs } from " @components/lib/utils/helpers";
-import { getTitle } from " @components/lib/utils/string.utils";
-import { INode, ICollection, ILinkNode } from " @components/types/INode";
+import { NODES } from "@components/lib/firestoreClient/collections";
+import { recordLogs } from "@components/lib/utils/helpers";
+import { getTitle } from "@components/lib/utils/string.utils";
+import { INode, ICollection, ILinkNode } from "@components/types/INode";
 
 const SelectInheritance = ({
   currentVisibleNode,
   property,
   nodes,
+  enableEdit,
+  onInheritanceChange, // Callback to communicate with Text component
 }: {
   currentVisibleNode: INode;
   property: string;
   nodes: { [nodeId: string]: INode };
+  enableEdit: boolean;
+  onInheritanceChange?: (property: string, newInheritanceRef: string) => any;
 }) => {
+  const db = getFirestore();
   const [generalizations, setGeneralizations] = useState<
     { id: string; title: string }[]
   >([]);
@@ -31,30 +36,49 @@ const SelectInheritance = ({
     currentVisibleNode.inheritance?.[property]?.ref || "inheritance-overridden";
 
   useEffect(() => {
-    const _generalizations = [
+    let _generalizations: any = [
       ...currentVisibleNode.generalizations.flatMap(
-        (gen: ICollection) => gen.nodes
+        (gen: ICollection) => gen.nodes,
       ),
     ].map((node: ILinkNode) => ({
       id: node.id,
       title: getTitle(nodes, node.id),
     }));
-    const index = _generalizations.findIndex((g) => g.id === inheritanceRef);
+
+    _generalizations = _generalizations.filter((g: any) => {
+      return (
+        !nodes[g.id]?.inheritance?.[property]?.ref ||
+        nodes[g.id]?.inheritance?.[property]?.ref !== inheritanceRef
+      );
+    });
+    const index = _generalizations.findIndex(
+      (g: any) => g.id === inheritanceRef,
+    );
     if (index === -1) {
+      const title =
+        inheritanceRef === "inheritance-overridden"
+          ? "Inheritance Overridden"
+          : getTitle(nodes, inheritanceRef);
       _generalizations.push({
         id: inheritanceRef,
         title:
           inheritanceRef === "inheritance-overridden"
             ? "Inheritance Overridden"
             : getTitle(nodes, inheritanceRef),
+        fullTitle: title,
       });
     }
+
+    _generalizations.forEach((c: any) => {
+      const title = c?.title;
+      const truncatedTitle =
+        title.length > 25 ? title.slice(0, 22) + "..." : title;
+      c.title = truncatedTitle;
+    });
     setGeneralizations(_generalizations);
-  }, [currentVisibleNode.generalizations, inheritanceRef]);
+  }, [currentVisibleNode.generalizations, inheritanceRef, nodes]);
 
   // Map the generalizations to get the title and id
-
-  const db = getFirestore();
 
   const updateSpecializationsInheritance = async (
     specializations: ICollection[],
@@ -62,19 +86,23 @@ const SelectInheritance = ({
     property: string,
     ref: string,
     generalizationId: string,
-    modifiedInheritanceFor: string
+    modifiedInheritanceFor: string,
   ) => {
     let newBatch = batch;
     for (let { nodes: links } of specializations) {
       for (let link of links) {
         const nodeRef = doc(collection(db, NODES), link.id);
         if (
-          !nodes[link.id].inheritance.ref ||
-          generalizationId === nodes[link.id].inheritance[property].ref ||
-          modifiedInheritanceFor === nodes[link.id].inheritance[property].ref
+          nodes[link.id] &&
+          (!nodes[link.id].inheritance[property]?.ref ||
+            generalizationId === nodes[link.id].inheritance[property]?.ref ||
+            modifiedInheritanceFor ===
+              nodes[link.id].inheritance[property]?.ref)
         ) {
+          const refTitle = getTitle(nodes, ref);
           let objectUpdate = {
             [`inheritance.${property}.ref`]: ref,
+            [`inheritance.${property}.title`]: refTitle,
           };
           if (newBatch._committed) {
             newBatch = writeBatch(db);
@@ -87,53 +115,69 @@ const SelectInheritance = ({
           newBatch = writeBatch(db);
         }
 
-        newBatch = await updateSpecializationsInheritance(
-          nodes[link.id].specializations,
-          newBatch,
-          property,
-          ref,
-          link.id,
-          modifiedInheritanceFor
-        );
+        if (nodes[link.id]?.specializations) {
+          newBatch = await updateSpecializationsInheritance(
+            nodes[link.id].specializations,
+            newBatch,
+            property,
+            ref,
+            link.id,
+            modifiedInheritanceFor,
+          );
+        }
       }
     }
 
     return newBatch;
   };
-  const changeInheritance = (
+
+  const changeInheritance = async (
     event: React.ChangeEvent<HTMLInputElement>,
-    property: string
+    property: string,
   ) => {
     try {
       let newGeneralizationId = event.target.value;
 
       if (newGeneralizationId && newGeneralizationId !== inheritanceRef) {
-        const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
+        const nodeRef = doc(collection(db, NODES), currentVisibleNode?.id);
         const newGeneralization = nodes[newGeneralizationId];
-        if (newGeneralization.inheritance[property].ref) {
+        
+        if (newGeneralization?.inheritance?.[property]?.ref) {
           newGeneralizationId = newGeneralization.inheritance[property].ref;
         }
 
         updateDoc(nodeRef, {
           [`inheritance.${property}.ref`]: newGeneralizationId,
-        })
-          .then(async () => {
-            let batch = writeBatch(db);
-            batch = await updateSpecializationsInheritance(
-              nodes[currentVisibleNode.id].specializations,
-              batch,
-              property,
-              newGeneralizationId,
-              currentVisibleNode.id,
-              currentVisibleNode.id
-            );
-            await batch.commit();
-          })
-          .catch((error) => {
-            console.error("Failed to update inheritance:", error);
-          });
+          [`inheritance.${property}.title`]: getTitle(
+            nodes,
+            newGeneralizationId,
+          ),
+        });
+
+        // Notify parent component (Text) about the inheritance change
+        // This will trigger the Yjs awareness message via MarkdownEditor to YjsEditorWrapper
+        if (onInheritanceChange) {
+          onInheritanceChange(property, newGeneralizationId);
+        }
+
+        // Update specializations
+        try {
+          let batch = writeBatch(db);
+          batch = await updateSpecializationsInheritance(
+            nodes[currentVisibleNode?.id].specializations,
+            batch,
+            property,
+            newGeneralizationId,
+            currentVisibleNode?.id,
+            currentVisibleNode?.id,
+          );
+          await batch.commit();
+        } catch (error) {
+          console.error("Failed to update specializations:", error);
+        }
       }
     } catch (error: any) {
+      console.error("Failed to update inheritance:", error);
       recordLogs({
         type: "error",
         error: JSON.stringify({
@@ -145,6 +189,13 @@ const SelectInheritance = ({
       });
     }
   };
+  // Don't render if inheritanceType is neverInherit
+  if (
+    currentVisibleNode.inheritance[property]?.inheritanceType === "neverInherit"
+  ) {
+    return null;
+  }
+
   return (
     <Box sx={{ ml: "auto" }}>
       <TextField
@@ -152,24 +203,39 @@ const SelectInheritance = ({
         onChange={(e: any) => changeInheritance(e, property)}
         select
         label="Change Inheritance"
-        sx={{ minWidth: "200px" }}
-        InputProps={{
-          sx: {
-            height: "40px",
-            borderRadius: "18px",
-            color: inheritanceRef === "inheritance-overridden" ? "gray" : "",
+        sx={{
+          minWidth: "200px",
+          display: !enableEdit ? "none" : "flex",
+        }}
+        slotProps={{
+          input: {
+            sx: {
+              height: "40px",
+              borderRadius: "18px",
+              color: inheritanceRef === "inheritance-overridden" ? "gray" : "",
+            },
+          },
+          inputLabel: {
+            style: { color: "grey" },
           },
         }}
-        InputLabelProps={{
-          style: { color: "grey" },
-        }}
       >
+        <MenuItem
+          value="inheritance-overridden"
+          disabled
+          sx={{
+            display: "none",
+          }}
+        >
+          Inheritance Overridden
+        </MenuItem>
         <MenuItem
           value=""
           disabled
           sx={{
             backgroundColor: (theme) =>
               theme.palette.mode === "dark" ? "" : "white",
+            mx: "13px",
           }}
         >
           Select Inheritance
@@ -179,8 +245,16 @@ const SelectInheritance = ({
             key={generalization.id}
             value={generalization.id}
             sx={{
+              borderRadius: "25px",
+              mt: "3px",
+              border: "1px solid gray",
+              background:
+                "linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.02))",
+              fontSize: "15px",
+              fontWeight: "400",
               color:
                 generalization.id === "inheritance-overridden" ? "orange" : "",
+              mx: "6px",
             }}
           >
             {generalization.title}

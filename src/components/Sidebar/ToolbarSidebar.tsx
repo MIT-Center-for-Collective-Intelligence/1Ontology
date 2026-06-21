@@ -5,20 +5,39 @@ import React, {
   useRef,
   useState,
 } from "react";
+import CloseIcon from "@mui/icons-material/Close";
 import HistoryIcon from "@mui/icons-material/History";
 import CircularProgress from "@mui/material/CircularProgress";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import AutoStoriesIcon from "@mui/icons-material/AutoStories";
+import EditIcon from "@mui/icons-material/Edit";
+import DownloadIcon from "@mui/icons-material/Download";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import KeyboardArrowDownRoundedIcon from "@mui/icons-material/KeyboardArrowDownRounded";
+
 import {
+  Avatar,
   Button,
+  Divider,
   IconButton,
   LinearProgress,
   Menu,
   MenuItem,
   SvgIcon,
-  TextField, // Changed from IconButton to Button
+  TextField,
+  Tooltip,
   Typography,
   useTheme,
+  useMediaQuery,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  FormControlLabel,
+  Switch,
+  Paper,
+  styled,
 } from "@mui/material";
 
 import mitLogoLight from "../../../public/MIT-Logo-Small-Light.png";
@@ -31,26 +50,31 @@ import NotificationsIcon from "@mui/icons-material/Notifications";
 import OptimizedAvatar from "../Chat/OptimizedAvatar";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
 import LightModeIcon from "@mui/icons-material/LightMode";
-import useThemeChange from " @components/lib/hooks/useThemeChange";
-import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
+import useThemeChange from "@components/lib/hooks/useThemeChange";
 import ClearIcon from "@mui/icons-material/Clear";
-import { Notifications } from " @components/components/Chat/Notifications";
-import { chatChange } from " @components/client/firestore/messages.firestore";
-import { INotification } from " @components/types/IChat";
+import { Notifications } from "@components/components/Chat/Notifications";
+import { chatChange } from "@components/client/firestore/messages.firestore";
+import { INotification } from "@components/types/IChat";
 import {
   createNewNode,
+  diffCollections,
+  diffSortedCollections,
   generateInheritance,
   synchronizeStuff,
-} from " @components/lib/utils/helpers";
-import { getNotificationsSnapshot } from " @components/client/firestore/notifications.firestore";
+} from "@components/lib/utils/helpers";
+import { getNotificationsSnapshot } from "@components/client/firestore/notifications.firestore";
 import {
   collection,
   doc,
+  getDoc,
+  getDocs,
   getFirestore,
   onSnapshot,
   query,
+  setDoc,
   Timestamp,
   updateDoc,
+  where,
 } from "firebase/firestore";
 import SearchSideBar from "../SearchSideBar/SearchSideBar";
 import ActiveUsers from "../ActiveUsers/ActiveUsers";
@@ -59,44 +83,57 @@ import ChatSideBar from "../ChatSideBar/ChatSideBar";
 import Inheritance from "../Inheritance/Inheritance";
 import { SidebarButton } from "../SideBarButton/SidebarButton";
 import { Box, SxProps, Theme } from "@mui/material";
-import { capitalizeString } from " @components/lib/utils/string.utils";
+import { capitalizeString } from "@components/lib/utils/string.utils";
 import { getAuth } from "firebase/auth";
 import { useAuth } from "../context/AuthContext";
-import { isValidHttpUrl } from " @components/lib/utils/utils";
+import { isValidHttpUrl } from "@components/lib/utils/utils";
 import {
   getStorage,
   uploadBytesResumable,
   getDownloadURL,
   ref as refStorage,
 } from "firebase/storage";
-import { NODES, USERS } from " @components/lib/firestoreClient/collections";
+import { NODES, USERS } from "@components/lib/firestoreClient/collections";
 import { useRouter } from "next/router";
-import ROUTES from " @components/lib/utils/routes";
+import ROUTES from "@components/lib/utils/routes";
+import { userHasOntologyEditAccess } from "@components/lib/utils/helpers";
 
 import NodeActivity from "../ActiveUsers/NodeActivity";
-import { User } from " @components/types/IAuth";
-import { INode, NodeChange } from " @components/types/INode";
+import { User } from "@components/types/IAuth";
+import { INode, NodeChange } from "@components/types/INode";
 import Improvements from "../Improvements/Improvements";
-import { CHAT_DISCUSSION_TABS, development } from " @components/lib/CONSTANTS";
+import {
+  CHAT_DISCUSSION_TABS,
+  development,
+  ONTOLOGY_APPS,
+} from "@components/lib/CONSTANTS";
 
 import {
   compareImprovement,
   filterProposals,
-} from " @components/lib/utils/copilotHelpers";
-import useSelectDropdown from " @components/lib/hooks/useSelectDropdown";
+} from "@components/lib/utils/copilotHelpers";
+import useSelectDropdown from "@components/lib/hooks/useSelectDropdown";
 import {
+  copilotDeleteNode,
   copilotNewNode,
   Improvement,
   sendLLMRequest,
-} from " @components/lib/utils/copilotPrompts";
+  SystemPromptObjectiveDefinition,
+} from "@components/lib/utils/copilotPrompts";
 import OntologyHistory from "../ActiveUsers/OntologyHistory";
+import { handleDownload } from "@components/lib/utils/random";
+import { getIdToken } from "@components/lib/firestoreClient/auth";
+import { DESIGN_SYSTEM_COLORS } from "@components/lib/theme/colors";
+
+type CustomSmallBadgeProps = { value: number };
 
 type MainSidebarProps = {
   toolbarRef: any;
   user: User | null;
   openSearchedNode: Function;
   searchWithFuse: Function;
-  nodes: { [nodeId: string]: any };
+  relatedNodes: { [nodeId: string]: any };
+  fetchNode: (nodeId: string) => Promise<INode | null>;
   selectedDiffNode: any;
   setSelectedDiffNode: any;
   currentVisibleNode: any;
@@ -106,7 +143,6 @@ type MainSidebarProps = {
   setActiveSidebar: any;
   handleExpandSidebar: any;
   navigateToNode: any;
-  treeVisualization: any;
   expandedNodes: any;
   setExpandedNodes: any;
   onOpenNodesTree: any;
@@ -118,6 +154,10 @@ type MainSidebarProps = {
   updateLastSearches: Function;
   selectedChatTab: any;
   setSelectedChatTab: any;
+  signOut: any;
+  isExperimentalSearch: any;
+  setIsExperimentalSearch: any;
+  appName: string;
 };
 
 const ToolbarSidebar = ({
@@ -125,7 +165,8 @@ const ToolbarSidebar = ({
   user,
   openSearchedNode,
   searchWithFuse,
-  nodes,
+  relatedNodes,
+  fetchNode,
   selectedDiffNode,
   setSelectedDiffNode,
   currentVisibleNode,
@@ -135,7 +176,6 @@ const ToolbarSidebar = ({
   setActiveSidebar,
   handleExpandSidebar,
   navigateToNode,
-  treeVisualization,
   expandedNodes,
   setExpandedNodes,
   onOpenNodesTree,
@@ -147,12 +187,15 @@ const ToolbarSidebar = ({
   updateLastSearches,
   selectedChatTab,
   setSelectedChatTab,
+  signOut,
+  isExperimentalSearch,
+  setIsExperimentalSearch,
+  appName,
 }: MainSidebarProps) => {
   const theme = useTheme();
+  const isMobile = useMediaQuery("(max-width:599px)");
   const db = getFirestore();
-
   const [{ isAuthenticated }] = useAuth();
-  const router = useRouter();
   const [handleThemeSwitch] = useThemeChange();
   const [notifications, setNotifications] = useState<INotification[]>([]);
   const [openLogsFor, setOpenLogsFor] = useState<{
@@ -171,22 +214,67 @@ const ToolbarSidebar = ({
   const [previousNodeId, setPreviousNodeId] = useState("");
 
   const [isLoadingCopilot, setIsLoadingCopilot] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   const [nodesByTitle, setNodesByTitle] = useState<{
     [nodeTitle: string]: INode;
   }>({});
   const [improvements, setImprovements] = useState<any>([]);
   const [copilotMessage, setCopilotMessage] = useState("");
   const { selectIt, dropdownDialog } = useSelectDropdown();
+  const [oNetProgress, setONetProgress] = useState({ added: 0, remaining: 0 });
 
-  const signOut = async () => {
-    router.push(ROUTES.signIn);
-    getAuth().signOut();
-  };
+  const [openDialog, setOpenDialog] = useState(false);
+
+  const handleDialogOpen = () => setOpenDialog(true);
+  const handleDialogClose = () => setOpenDialog(false);
 
   const handleProfileMenuOpen = (event: any) => {
+    if (user?.uname === "1man" || user?.uname === "ouhrac") {
+      loadProgress();
+    }
     setProfileMenuOpen(event.currentTarget);
   };
   const [selectedUser, setSelectedUser] = useState("All");
+  const historyUserOptions = useMemo(
+    () => [
+      "All",
+      ...Object.keys(activeUsers)
+        .filter((u) => activeUsers[u]?.reputations > 0)
+        .sort((a, b) => {
+          const firstName = `${activeUsers[a]?.fName || ""} ${
+            activeUsers[a]?.lName || ""
+          }`;
+          const secondName = `${activeUsers[b]?.fName || ""} ${
+            activeUsers[b]?.lName || ""
+          }`;
+          return firstName.localeCompare(secondName);
+        }),
+    ],
+    [activeUsers],
+  );
+
+  const getHistoryUserName = useCallback(
+    (uname: string) =>
+      uname === "All"
+        ? "All Users"
+        : `${activeUsers[uname]?.fName || ""} ${
+            activeUsers[uname]?.lName || ""
+          }`.trim() || uname,
+    [activeUsers],
+  );
+
+  const StyledDialogPaper = styled(Paper)(({ theme }) => ({
+    borderRadius: "20px",
+    padding: theme.spacing(2),
+    backgroundColor:
+      theme.palette.mode === "light"
+        ? "#fafafa"
+        : theme.palette.background.paper,
+    boxShadow:
+      theme.palette.mode === "light"
+        ? "0px 8px 24px rgba(0,0,0,0.15)"
+        : "0px 8px 24px rgba(0,0,0,0.35)",
+  }));
 
   const inputEl = useRef<HTMLInputElement>(null);
 
@@ -195,10 +283,150 @@ const ToolbarSidebar = ({
   };
   const [currentIndex, setCurrentIndex] = useState(0);
 
+  const handleToggle = useCallback(() => {
+    if (!user?.uname) return;
+
+    setIsExperimentalSearch((prev: any) => {
+      const nextValue = !prev;
+
+      const userRef = doc(collection(db, "users"), user.uname);
+      updateDoc(userRef, {
+        searchIsExperimental: nextValue,
+      }).catch((error) => {
+        console.error("Error updating search mode:", error);
+      });
+
+      return nextValue;
+    });
+  }, [db, user?.uname]);
+
+  const handleDownloadOntologyJson = useCallback(async () => {
+    if (isDownloading) return;
+    setIsDownloading(true);
+    let unsubscribe: (() => void) | undefined;
+    try {
+      if (!appName) {
+        throw new Error("Missing ontology app name");
+      }
+
+      const token = await getIdToken();
+      const downloadRes = await fetch("/api/download-ontology", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ appName: appName }),
+      });
+
+      if (!downloadRes.ok) {
+        let message = `Download failed (${downloadRes.status})`;
+        try {
+          const errJson = await downloadRes.json();
+          message = errJson.message || errJson.error || message;
+        } catch {}
+        setIsDownloading(false);
+        throw new Error(message);
+      }
+
+      const { jobId, status } = await downloadRes.json();
+
+      if (!jobId) {
+        setIsDownloading(false);
+        throw new Error("Did not receive a job ID from the server");
+      }
+
+      // Listen to the job document
+      const storage = getStorage();
+      unsubscribe = onSnapshot(
+        doc(db, "ontologyExports", jobId),
+        async (snapshot) => {
+          if (!snapshot.exists()) return;
+          const data = snapshot.data();
+          if (data.status === "completed" && data.storagePath) {
+            try {
+              const storageRef = refStorage(storage, data.storagePath);
+              const downloadUrl = await getDownloadURL(storageRef);
+
+              // Using window.location.href avoids popup blockers for async downloads
+              window.location.href = downloadUrl;
+            } catch (err) {
+              console.error("Error downloading from storage:", err);
+              confirmIt("Failed to download the generated file.", "Ok");
+            } finally {
+              setIsDownloading(false);
+              if (unsubscribe) unsubscribe();
+            }
+          } else if (data.status === "error") {
+            setIsDownloading(false);
+            if (unsubscribe) unsubscribe();
+            confirmIt(
+              data.error || "There was an error generating the JSON!",
+              "Ok",
+            );
+          }
+        },
+        (error) => {
+          console.error("Snapshot error:", error);
+          setIsDownloading(false);
+          if (unsubscribe) unsubscribe();
+          confirmIt("Lost connection while waiting for download.", "Ok");
+        },
+      );
+    } catch (error) {
+      console.error("Download error:", error);
+      confirmIt("There was an error starting the download!", "Ok");
+      setIsDownloading(false);
+    }
+  }, [confirmIt, isDownloading, appName, db]);
+
+  // useEffect(() => {
+  //   if (!user) return;
+  //   setIsExperimentalSearch(!!user?.searchIsExperimental);
+  // }, [user]);
+
   const updateUserImage = async (imageUrl: string) => {
     const userDoc = doc(collection(db, USERS), user?.uname);
     await updateDoc(userDoc, { imageUrl });
   };
+
+  const loadProgress = async () => {
+    try {
+      const oNetProgressRef = doc(collection(db, "onetTasks"), "progress");
+      const oNetProgressDoc = await getDoc(oNetProgressRef);
+      if (oNetProgressDoc.exists()) {
+        const oNetProgressData = oNetProgressDoc.data();
+        setONetProgress({
+          added: oNetProgressData.added,
+          remaining: oNetProgressData.remaining,
+        });
+      }
+      const addedQuery = query(
+        collection(db, "onetTasks"),
+        where("added", "==", true),
+      );
+      const addedOnetDocsSnapshot = await getDocs(addedQuery);
+
+      const nonAddedQuery = query(
+        collection(db, "onetTasks"),
+        where("added", "==", false),
+      );
+      const remainingOnetDocsSnapshot = await getDocs(nonAddedQuery);
+      setONetProgress({
+        added: addedOnetDocsSnapshot.docs.length,
+        remaining: remainingOnetDocsSnapshot.docs.length,
+      });
+      setDoc(oNetProgressRef, {
+        added: addedOnetDocsSnapshot.docs.length,
+        remaining: remainingOnetDocsSnapshot.docs.length,
+        updatedAt: new Date(),
+        updatedBy: user?.uname ?? "",
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   const onNavigateToNode = useCallback(
     (nodeTitle: string) => {
       if (!nodeTitle) {
@@ -210,7 +438,7 @@ const ToolbarSidebar = ({
         navigateToNode(nodeId);
       }
     },
-    [nodesByTitle]
+    [nodesByTitle],
   );
 
   const handleImageChange = useCallback(
@@ -228,7 +456,7 @@ const ToolbarSidebar = ({
           confirmIt(
             "Oops! Something went wrong with the image upload. Please try uploading a different image.",
             "Ok",
-            ""
+            "",
           );
         } else if (
           image.type !== "image/jpg" &&
@@ -238,13 +466,13 @@ const ToolbarSidebar = ({
           confirmIt(
             "We only accept JPG, JPEG, or PNG images. Please upload another image.",
             "Ok",
-            ""
+            "",
           );
         } else if (image.size > 1024 * 1024) {
           confirmIt(
             "We only accept file sizes less than 1MB for profile images. Please upload another image.",
             "Ok",
-            ""
+            "",
           );
         } else {
           setIsUploading(true);
@@ -265,7 +493,7 @@ const ToolbarSidebar = ({
             userId + "/" + new Date().toUTCString() + "." + imageExtension;
           const storageRef = refStorage(
             storage,
-            picturesFolder + imageFileName
+            picturesFolder + imageFileName,
           );
           const task = uploadBytesResumable(storageRef, image);
           task.on(
@@ -273,8 +501,8 @@ const ToolbarSidebar = ({
             function progress(snapshot) {
               setPercentageUploaded(
                 Math.ceil(
-                  (100 * snapshot.bytesTransferred) / snapshot.totalBytes
-                )
+                  (100 * snapshot.bytesTransferred) / snapshot.totalBytes,
+                ),
               );
             },
             function error(err) {
@@ -282,7 +510,7 @@ const ToolbarSidebar = ({
               confirmIt(
                 "There is an error with uploading your picture. Please try again! If the problem persists, try another picture.",
                 "Ok",
-                ""
+                "",
               );
             },
             async function complete() {
@@ -296,7 +524,7 @@ const ToolbarSidebar = ({
               setIsUploading(false);
               setProfileMenuOpen(null);
               setPercentageUploaded(100);
-            }
+            },
           );
         }
       } catch (err) {
@@ -304,12 +532,11 @@ const ToolbarSidebar = ({
         setIsUploading(false);
       }
     },
-    [user]
+    [user],
   );
 
   const handleEditImage = useCallback(() => {
     if (!inputEl.current) return;
-    if (false) return;
     inputEl.current.click();
   }, [inputEl]);
 
@@ -319,24 +546,160 @@ const ToolbarSidebar = ({
       anchorEl={profileMenuOpen}
       open={isProfileMenuOpen}
       onClose={handleProfileMenuClose}
+      anchorOrigin={{
+        vertical: "bottom",
+        horizontal: "right",
+      }}
+      transformOrigin={{
+        vertical: "top",
+        horizontal: "right",
+      }}
+      PaperProps={{
+        sx: {
+          width: "280px",
+          padding: "8px 0",
+          borderRadius: "13px",
+          backgroundColor: (theme) =>
+            theme.palette.mode === "light" ? "#dfdfdf" : "",
+          border: "1px solid gray",
+        },
+      }}
     >
       {" "}
-      {isAuthenticated && user && (
-        <Typography sx={{ p: "6px 16px" }}>
-          {capitalizeString(`${user?.fName ?? ""} ${user?.lName ?? ""}`)}
-        </Typography>
-      )}
-      {isAuthenticated && user && (
-        <MenuItem sx={{ flexGrow: 3 }} onClick={handleEditImage}>
-          {isUploading ? (
-            <Box sx={{ mr: "15px" }}>
-              <LinearProgress sx={{ width: "18px" }} />
-            </Box>
-          ) : (
-            <CameraAltIcon sx={{ mr: "5px" }} />
-          )}
+      <IconButton
+        onClick={handleProfileMenuClose}
+        sx={{
+          position: "absolute",
+          right: 8,
+          top: 0.5,
+          color: "text.secondary",
+          zIndex: 1,
+          "&:hover": {
+            backgroundColor: (theme) =>
+              theme.palette.mode === "dark" ? "gray" : "#f4f4f4",
+          },
+          border: "1px solid gray",
+          borderRadius: "25px",
 
-          <span id="picture"> Change Photo</span>
+          p: 0.5,
+        }}
+      >
+        <CloseIcon fontSize="small" />
+      </IconButton>{" "}
+      {isAuthenticated && user && (
+        <Box sx={{ pl: 3, textAlign: "center" }}>
+          <Typography sx={{ color: "gray" }}>{user?.email}</Typography>
+        </Box>
+      )}{" "}
+      {isAuthenticated && user && (
+        <Box
+          sx={{
+            padding: "12px 16px",
+            position: "relative",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            cursor: "pointer",
+            textAlign: "center",
+            mt: "15px",
+          }}
+        >
+          <Tooltip
+            title={
+              <Box>
+                <Typography variant="subtitle2" sx={{ fontWeight: "bold" }}>
+                  Update Your Profile Picture
+                </Typography>
+                <Typography
+                  variant="caption"
+                  sx={{ fontStyle: "italic", color: "white" }}
+                >
+                  Supported formats: JPG, PNG or JPEG Maximum size 1MB
+                </Typography>
+              </Box>
+            }
+            placement="left"
+          >
+            <Box
+              sx={{
+                position: "relative",
+                width: 80,
+                height: 80,
+                borderRadius: "50%",
+                ":hover": {
+                  boxShadow: !isUploading
+                    ? "0 0 10px 5px rgba(55, 185, 43, 0.5)"
+                    : "none",
+                },
+                transition: "box-shadow 0.3s ease",
+              }}
+              onClick={handleEditImage}
+            >
+              {isUploading && (
+                <Box
+                  sx={{
+                    position: "absolute",
+                    top: -2,
+                    left: -2,
+                    right: -2,
+                    bottom: -2,
+                    borderRadius: "50%",
+                    background: `conic-gradient(orange ${percentageUploaded * 3.6}deg, transparent 0deg)`,
+                    zIndex: 1,
+                  }}
+                />
+              )}
+
+              <OptimizedAvatar
+                alt={`${user.fName} ${user.lName}`}
+                imageUrl={activeUsers[user?.uname]?.imageUrl || ""}
+                size={80}
+                sx={{
+                  width: "100%",
+                  height: "100%",
+                  borderRadius: "50%",
+                  objectFit: "cover",
+                  position: "relative",
+                  zIndex: 2,
+                }}
+              />
+
+              <Box
+                sx={{
+                  position: "absolute",
+                  bottom: 0,
+                  right: 0,
+                  bgcolor: isUploading ? "orange" : "gray",
+                  color: theme.palette.primary.contrastText,
+                  width: 28,
+                  height: 28,
+                  borderRadius: "50%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  border: `1px solid white`,
+                  cursor: "pointer",
+                  "&:hover": {
+                    bgcolor: isUploading
+                      ? "darkorange"
+                      : theme.palette.primary.dark,
+                  },
+                  zIndex: 3,
+                }}
+              >
+                {isUploading ? (
+                  <Typography
+                    variant="caption"
+                    sx={{ fontSize: "8px", fontWeight: "bold" }}
+                  >
+                    {percentageUploaded}%
+                  </Typography>
+                ) : (
+                  <CameraAltIcon sx={{ fontSize: "19px", color: "white" }} />
+                )}
+              </Box>
+            </Box>
+          </Tooltip>
           <input
             type="file"
             ref={inputEl}
@@ -344,16 +707,170 @@ const ToolbarSidebar = ({
             accept="image/png, image/jpg, image/jpeg"
             hidden
           />
-        </MenuItem>
+        </Box>
       )}
       {isAuthenticated && user && (
-        <MenuItem sx={{ flexGrow: 3 }} onClick={signOut}>
-          <LogoutIcon sx={{ mr: "5px" }} /> <span id="LogoutText">Logout</span>
-        </MenuItem>
+        <Box sx={{ pl: 3, textAlign: "center", mt: "20px" }}>
+          <Typography variant="h5" sx={{ fontWeight: 500 }}>
+            Hi, {user?.fName}!
+          </Typography>
+          <Button
+            variant="outlined"
+            onClick={handleDialogOpen}
+            sx={{
+              mt: "15px",
+              borderRadius: "25px",
+              "&:hover": {
+                backgroundColor:
+                  theme.palette.mode === "dark"
+                    ? "rgba(255, 255, 255, 0.08)"
+                    : "rgba(0, 0, 0, 0.04)",
+              },
+            }}
+          >
+            Advanced
+          </Button>
+          <Dialog
+            open={openDialog}
+            onClose={handleDialogClose}
+            PaperComponent={StyledDialogPaper}
+            maxWidth="xs"
+            fullWidth
+          >
+            <DialogTitle
+              sx={{
+                textAlign: "center",
+                fontWeight: 600,
+                fontSize: "1.4rem",
+                letterSpacing: "0.3px",
+              }}
+            >
+              Search Mode Settings
+            </DialogTitle>
+
+            <Divider sx={{ mb: 2 }} />
+
+            <DialogContent
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 2,
+                pb: 2,
+              }}
+            >
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={isExperimentalSearch}
+                    onChange={handleToggle}
+                    color="primary"
+                    sx={{
+                      transform: "scale(1.2)",
+                    }}
+                  />
+                }
+                label={
+                  <Typography sx={{ fontSize: "1rem", fontWeight: 500 }}>
+                    {isExperimentalSearch
+                      ? "Advanced Search"
+                      : "Classic Search"}
+                  </Typography>
+                }
+              />
+            </DialogContent>
+
+            <DialogActions
+              sx={{
+                justifyContent: "center",
+                pb: 2,
+              }}
+            >
+              <Button
+                onClick={handleDialogClose}
+                variant="contained"
+                sx={{
+                  borderRadius: "25px",
+                  textTransform: "none",
+                  px: 4,
+                  py: 1,
+                  fontWeight: 500,
+                }}
+              >
+                Done
+              </Button>
+            </DialogActions>
+          </Dialog>
+          {/* {(user.uname === "1man" || user.uname === "ouhrac") && (
+            <Box
+              sx={{
+                border: "1px solid gray",
+                borderRadius: "20px",
+                mr: "16px",
+                mt: "8px",
+                backgroundColor: (theme) =>
+                  theme.palette.mode === "light" ? "#fffdfd" : "#252525",
+                py: "8px",
+              }}
+            >
+              <Typography
+                variant="subtitle1"
+                sx={{ mt: 1, color: "text.secondary", fontWeight: "bold" }}
+              >
+                O*NET Progress
+              </Typography>
+              <Typography variant="body1" sx={{ mt: 0.5 }}>
+                <Box
+                  component="span"
+                  sx={{ fontWeight: 500, color: "success.main" }}
+                >
+                  {oNetProgress.added}
+                </Box>{" "}
+                added /{" "}
+                <Box
+                  component="span"
+                  sx={{ fontWeight: 500, color: "warning.main" }}
+                >
+                  {oNetProgress.remaining}
+                </Box>{" "}
+                remaining
+              </Typography>
+            </Box>
+          )} */}
+        </Box>
+      )}
+      {isAuthenticated && user && (
+        <Button
+          onClick={signOut}
+          sx={{
+            py: "6px",
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+            "&:hover": {
+              backgroundColor:
+                theme.palette.mode === "dark"
+                  ? "rgba(255, 255, 255, 0.08)"
+                  : "rgba(0, 0, 0, 0.04)",
+            },
+            borderRadius: "25px",
+            border: "1px solid gray",
+
+            cursor: "pointer",
+            width: "80%",
+            mt: "25px",
+            alignSelf: "center",
+            ml: "10%",
+          }}
+        >
+          <LogoutIcon fontSize="medium" sx={{ color: "gray" }} />
+          <Typography variant="body1" sx={{ fontWeight: "bold" }}>
+            Sign out
+          </Typography>
+        </Button>
       )}
     </Menu>
   );
-
   useEffect(() => {
     if (!user) return;
     setNotifications([]);
@@ -364,13 +881,13 @@ const ToolbarSidebar = ({
             new Date(b.createdAt.toDate()).getTime() -
             new Date(a.createdAt.toDate()).getTime()
           );
-        })
+        }),
       );
     };
     const killSnapshot = getNotificationsSnapshot(
       db,
       { uname: user.uname, lastVisible: null },
-      onSynchronize
+      onSynchronize,
     );
     return () => killSnapshot();
   }, [db, user]);
@@ -380,7 +897,7 @@ const ToolbarSidebar = ({
       notificationId: string,
       messageId: string,
       type: string,
-      nodeId?: string
+      nodeId?: string,
     ) => {
       const notificationRef = doc(db, "notifications", notificationId);
       updateDoc(notificationRef, {
@@ -412,7 +929,7 @@ const ToolbarSidebar = ({
         }
       }, 500);
     },
-    [db, user]
+    [db, user],
   );
 
   useEffect(() => {
@@ -425,16 +942,19 @@ const ToolbarSidebar = ({
           const doc = change.doc;
           const userId = doc.id;
           const data = doc.data();
-          const currentNode = data.currentNode;
+          const currentNodeInfo = data.currentNode?.[appName];
+          const currentNodeId = currentNodeInfo?.id;
 
-          if (
-            (change.type === "added" || change.type === "modified") &&
-            currentNode
-          ) {
+          if (change.type === "added" || change.type === "modified") {
             updatedUsersData[userId] = {
+              // Preserve existing data to prevent data mismatch
+              ...updatedUsersData[userId],
               node: {
-                title: nodes[currentNode]?.title || "",
-                id: currentNode,
+                title:
+                  currentNodeInfo?.title ||
+                  relatedNodes[currentNodeId]?.title ||
+                  "",
+                id: currentNodeId,
               },
               imageUrl: data.imageUrl,
               fName: data.fName,
@@ -454,7 +974,7 @@ const ToolbarSidebar = ({
     });
 
     return () => unsubscribe();
-  }, [nodes]);
+  }, [relatedNodes]);
 
   const displayUserLogs = useCallback(
     (user: {
@@ -471,42 +991,133 @@ const ToolbarSidebar = ({
       setSelectedDiffNode(null);
       setActiveSidebar("userActivity");
     },
-    [openLogsFor]
+    [openLogsFor],
   );
 
   const displayDiff = (data: NodeChange) => {
-    if (currentVisibleNode?.id !== data.nodeId) {
-      setCurrentVisibleNode(
-        nodes[data.nodeId] ? nodes[data.nodeId] : data.fullNode
-      );
+    if (data === null) {
+      setCurrentImprovement(null);
+      setSelectedDiffNode(null);
+      if (!relatedNodes[currentVisibleNode?.id]) {
+        navigateToNode(previousNodeId);
+      } else {
+        navigateToNode(currentVisibleNode?.id);
+      }
+      setPreviousNodeId("");
+      return;
     }
 
+    if (currentVisibleNode?.id !== data.nodeId) {
+      setCurrentVisibleNode(
+        relatedNodes[data.nodeId] ? relatedNodes[data.nodeId] : data.fullNode,
+      );
+    }
+    const modified_property_type = data.modifiedProperty
+      ? data.fullNode?.propertyType[data.modifiedProperty]
+      : "";
+
+    // Fast path: stored `diffValue` skips the UI-side diff entirely.
+    if (data.diffValue) {
+      data.detailsOfChange = {
+        comparison: data.diffValue,
+      };
+    } else if (
+      (modified_property_type ||
+        data.modifiedProperty === "isPartOf" ||
+        data.modifiedProperty === "parts" ||
+        data.modifiedProperty === "specializations" ||
+        data.modifiedProperty === "generalizations") &&
+      modified_property_type !== "string" &&
+      modified_property_type !== "string-array" &&
+      modified_property_type !== "string-select" &&
+      modified_property_type !== "numeric"
+    ) {
+      const diff =
+        data.changeType === "sort collections"
+          ? diffSortedCollections(data.previousValue, data.newValue)
+          : diffCollections(data.previousValue, data.newValue);
+
+      data.detailsOfChange = { comparison: diff };
+    }
     setTimeout(() => {
       setSelectedDiffNode(data);
     }, 500);
 
     if (!previousNodeId) {
-      setPreviousNodeId(currentVisibleNode.id);
+      setPreviousNodeId(currentVisibleNode?.id);
     }
+
+    setTimeout(() => {
+      const modifiedProperty = data.modifiedProperty;
+      const changedProperty = data.changeDetails?.addedProperty;
+      const targetProperty = modifiedProperty || changedProperty;
+
+      if (targetProperty) {
+        let firstChangedNodeId = null;
+
+        if (data.detailsOfChange?.comparison) {
+          for (const collection of data.detailsOfChange.comparison) {
+            const changedNode = collection.nodes.find(
+              (node: any) =>
+                node.change === "added" ||
+                node.change === "removed" ||
+                node.change === "modified" ||
+                node.changeType === "sort",
+            );
+            if (changedNode) {
+              firstChangedNodeId = changedNode.id;
+              break;
+            }
+          }
+        }
+
+        // Scroll to the specific changed element
+        if (firstChangedNodeId) {
+          const changedElement = document.getElementById(
+            `${firstChangedNodeId}-${targetProperty}`,
+          );
+          if (changedElement) {
+            changedElement.scrollIntoView({
+              behavior: "smooth",
+              block: "center",
+            });
+            return;
+          }
+        }
+
+        // Fallback: scroll to property container
+        const propertyElement = document.getElementById(
+          `property-${targetProperty}`,
+        );
+        if (propertyElement) {
+          propertyElement.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+          });
+        }
+      }
+    }, 1000);
   };
 
   useEffect(() => {
     if (!!user?.admin) {
       const nodesByT: { [nodeTitle: string]: INode } = {};
-      for (let nodeId in nodes) {
-        const nodeTitle = nodes[nodeId].title;
-        nodesByT[nodeTitle] = nodes[nodeId];
+      for (let nodeId in relatedNodes) {
+        const nodeTitle = relatedNodes[nodeId].title;
+        nodesByT[nodeTitle] = relatedNodes[nodeId];
       }
       setNodesByTitle(nodesByT);
     }
-  }, [nodes, user]);
-
+  }, [relatedNodes, user]);
   const getNewNodes = (newNodes: copilotNewNode[]): any => {
     try {
       if (!user?.uname) return;
       const _NODES = [];
 
       for (let node of newNodes) {
+        const addedNonExistentElements: {
+          [property: string]: { id: string; title: string }[];
+        } = {};
         if (!!nodesByTitle[node.title]) {
           continue;
         }
@@ -517,7 +1128,8 @@ const ToolbarSidebar = ({
         const newId = doc(collection(db, NODES)).id;
         const inheritance = generateInheritance(
           generalization.inheritance,
-          generalization.id
+          generalization.id,
+          generalization.title ?? "",
         );
 
         const newNode = createNewNode(
@@ -526,10 +1138,23 @@ const ToolbarSidebar = ({
           node.title,
           inheritance,
           generalization.id,
-          user?.uname
+          user?.uname,
+          appName,
         );
 
         for (let p in node) {
+          if (
+            !inheritance[p] &&
+            p !== "generalizations" &&
+            p !== "specializations" &&
+            p !== "title"
+          ) {
+            inheritance[p] = {
+              ref: null,
+              title: "",
+              inheritanceType: "inheritUnlessAlreadyOverRidden",
+            };
+          }
           const property:
             | "title"
             | "description"
@@ -570,6 +1195,7 @@ const ToolbarSidebar = ({
           if (newNode.properties.hasOwnProperty(property)) {
             if (inheritance[property]) {
               inheritance[property].ref = null;
+              inheritance[property].title = "";
             }
             if (
               Array.isArray(newNode.properties[property]) &&
@@ -577,8 +1203,28 @@ const ToolbarSidebar = ({
             ) {
               const value = [];
               for (let nodeT of propertyValue) {
+                const optional = nodeT
+                  .trim()
+                  .toLowerCase()
+                  .endsWith("(optional)");
+                const nodeTitle = nodeT.replace(/\(optional\)/i, "").trim();
                 if (nodesByTitle[nodeT]?.id) {
-                  value.push({ id: nodesByTitle[nodeT].id });
+                  value.push({ id: nodesByTitle[nodeT].id, optional });
+                } else {
+                  const newId = doc(collection(db, "nodes")).id;
+                  value.push({
+                    id: newId,
+                    title: nodeTitle,
+                    change: "added",
+                    optional,
+                  });
+                  if (!addedNonExistentElements[property]) {
+                    addedNonExistentElements[property] = [];
+                  }
+                  addedNonExistentElements[property].push({
+                    title: nodeTitle,
+                    id: newId,
+                  });
                 }
               }
               newNode.properties[property] = [
@@ -596,13 +1242,22 @@ const ToolbarSidebar = ({
           }
         }
         if (!!node?.description) {
+          if (!inheritance["description"]) {
+            inheritance["description"] = {
+              ref: null,
+              title: "",
+              inheritanceType: "inheritUnlessAlreadyOverRidden",
+            };
+          }
           inheritance.description.ref = null;
+          inheritance.description.title = "";
           newNode.properties.description = node.description;
         }
         _NODES.push({
           node: newNode,
           newNode: true,
           reasoning: node.reasoning,
+          addedNonExistentElements,
           generalizationId: generalization.id,
           first_generalization: first_generalization,
         });
@@ -612,6 +1267,30 @@ const ToolbarSidebar = ({
     } catch (error) {
       console.error(error);
     }
+  };
+  const getDeletedNode = (
+    deletedNodes: {
+      title: string;
+      reasoning: string;
+    }[],
+  ): {
+    title: string;
+    nodeId: string;
+    deleteNode: boolean;
+    reasoning: string;
+  }[] => {
+    const result = [];
+    for (let { title, reasoning } of deletedNodes) {
+      if (!!nodesByTitle[title]) {
+        result.push({
+          title,
+          nodeId: nodesByTitle[title].id,
+          deleteNode: true,
+          reasoning: reasoning,
+        });
+      }
+    }
+    return result;
   };
   const compareThisImprovement = (improvement: any) => {
     if (improvement?.diffChange) {
@@ -626,19 +1305,19 @@ const ToolbarSidebar = ({
       return;
     }
     const nodeId = nodesByTitle[improvement.title]?.id;
-    if (!nodes[nodeId]) {
+    if (!relatedNodes[nodeId]) {
       return;
     }
-    if (nodes[nodeId]) {
-      setCurrentVisibleNode(nodes[nodeId]);
+    if (relatedNodes[nodeId]) {
+      setCurrentVisibleNode(relatedNodes[nodeId]);
     }
-    const result = compareImprovement(improvement, nodesByTitle);
+    const result = compareImprovement(improvement, nodesByTitle, relatedNodes);
 
     setCurrentImprovement(result);
     setTimeout(() => {
       if (improvement.change.modified_property) {
         const element = document.getElementById(
-          `property-${improvement.change.modified_property}`
+          `property-${improvement.change.modified_property}`,
         );
         if (element) {
           element.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -648,12 +1327,24 @@ const ToolbarSidebar = ({
   };
 
   const handleImproveClick = async () => {
-    const options = (await selectIt(currentVisibleNode.title)) as {
+    if (!currentVisibleNode) return;
+
+    const options = (await selectIt(
+      currentVisibleNode.title,
+      currentVisibleNode.nodeType,
+      relatedNodes,
+      currentVisibleNode?.id,
+    )) as {
       model: string;
       userMessage: string;
       deepNumber: number;
       generateNewNodes: boolean;
       generateImprovement: boolean;
+      selectedProperties: Set<string>;
+      proposeDeleteNode: boolean;
+      inputProperties: Set<string>;
+      systemPromptObjectiveDefinition: SystemPromptObjectiveDefinition | null;
+      aiAssistantContext: any;
     };
 
     if (!options) return;
@@ -662,44 +1353,208 @@ const ToolbarSidebar = ({
       userMessage,
       deepNumber,
       generateNewNodes,
-      generateImprovement,
+      selectedProperties,
+      proposeDeleteNode,
+      inputProperties,
+      systemPromptObjectiveDefinition,
+      aiAssistantContext,
     } = options;
     setIsLoadingCopilot(true);
     setCurrentIndex(0);
     try {
-      const response = (await sendLLMRequest(
+      let response: any = (await sendLLMRequest(
         userMessage,
         model,
         deepNumber,
-        currentVisibleNode.id,
+        currentVisibleNode?.id,
         generateNewNodes,
-        generateImprovement
+        selectedProperties,
+        proposeDeleteNode,
+        inputProperties,
+        currentVisibleNode?.appName ?? "",
+        systemPromptObjectiveDefinition,
+        aiAssistantContext,
       )) as {
         improvements: Improvement[];
         new_nodes: copilotNewNode[];
+        deleted_nodes: copilotDeleteNode[];
         message: string;
+        inputProperties: Set<string>;
       };
+
       if (!response) {
         throw new Error("Missing response in handleImproveClick!");
       }
 
-      if (response.improvements.length <= 0 && response.new_nodes.length <= 0) {
+      if (
+        (response?.improvements || []).length <= 0 &&
+        (response?.new_nodes || []).length <= 0 &&
+        (response?.deleted_nodes || []).length <= 0
+      ) {
         confirmIt(
           <Box>
-            {`I've analyzed your sub-ontology graph and found no areas for improvement or new nodes to add.`}{" "}
-            <strong style={{ color: "orange" }}>
-              {currentVisibleNode.title}
-            </strong>
-            .
+            {`I've analyzed your sub-ontology graph around `}{" "}
+            <Tooltip title={currentVisibleNode.title} arrow placement="top">
+              <Box
+                component="strong"
+                sx={{
+                  color: "orange",
+                  display: "inline-block",
+                  maxWidth: "min(100%, 280px)",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                  verticalAlign: "bottom",
+                }}
+              >
+                {currentVisibleNode.title}
+              </Box>
+            </Tooltip>
+            {` and found no areas for improvement or new nodes to add.`}
           </Box>,
-          "Ok"
+          "Ok",
         );
         return;
       }
 
       setCopilotMessage(response.message);
+      const newImprovements: Improvement[] = [];
+      const rawImprovements = response?.improvements || [];
+
+      for (const improvement of rawImprovements) {
+        const nodeTitle = improvement.title;
+        const changes = improvement?.changes || [];
+        for (const change of changes) {
+          const reasoning = change.reasoning ?? "";
+
+          if (change?.modified_property && change?.new_value !== undefined) {
+            const normalized = { ...change } as any;
+            if (
+              normalized.modified_property === "parts" &&
+              normalized.new_value?.final_array
+            ) {
+              const optionalParts: string[] = [];
+              for (
+                let i = 0;
+                i < normalized.new_value.final_array.length;
+                i++
+              ) {
+                const partTitle = normalized.new_value.final_array[i];
+                const optional =
+                  typeof partTitle === "string" &&
+                  partTitle.trim().toLowerCase().endsWith("(optional)");
+                if (optional) {
+                  const cleaned = (partTitle as string)
+                    .replace(/\(optional\)/i, "")
+                    .trim();
+                  normalized.new_value.final_array[i] = cleaned;
+                  optionalParts.push(cleaned);
+                }
+              }
+              normalized.optionalParts = optionalParts;
+            }
+            newImprovements.push({ title: nodeTitle, change: normalized });
+            continue;
+          }
+
+          if (typeof change.title === "string") {
+            newImprovements.push({
+              title: nodeTitle,
+              change: {
+                modified_property: "title",
+                new_value: change.title,
+                reasoning,
+              },
+            });
+            continue;
+          }
+
+          if (typeof change.description === "string") {
+            newImprovements.push({
+              title: nodeTitle,
+              change: {
+                modified_property: "description",
+                new_value: change.description,
+                reasoning,
+              },
+            });
+            continue;
+          }
+
+          if (Array.isArray(change.generalizations)) {
+            const arr = change.generalizations;
+            newImprovements.push({
+              title: nodeTitle,
+              change: {
+                modified_property: "generalizations",
+                new_value: {
+                  final_array: arr,
+                  nodes_to_add: arr,
+                  nodes_to_delete: [],
+                },
+                reasoning,
+              },
+            });
+            continue;
+          }
+
+          if (Array.isArray(change.parts)) {
+            const optionalParts: string[] = [];
+            const final_array: string[] = [];
+            for (const p of change.parts) {
+              const title = typeof p === "string" ? p : (p?.title ?? "");
+              const optional =
+                typeof p === "object" && (p as any).optional === "true";
+              const cleaned = title.replace(/\(optional\)/i, "").trim();
+              final_array.push(cleaned);
+              if (optional) optionalParts.push(cleaned);
+            }
+            newImprovements.push({
+              title: nodeTitle,
+              change: {
+                modified_property: "parts",
+                new_value: {
+                  final_array,
+                  nodes_to_add: final_array,
+                  nodes_to_delete: [],
+                },
+                optionalParts,
+                reasoning,
+              } as any,
+            });
+            continue;
+          }
+
+          if (Array.isArray(change.specializations)) {
+            const reasoningLines = (change.specializations as any[])
+              .map((s) => s.reasoning)
+              .filter(Boolean);
+            const combinedReasoning = reasoningLines.length
+              ? reasoningLines.join("\n\n")
+              : reasoning;
+            const new_value = (change.specializations as any[]).map((s) => ({
+              collectionName: s.collectionName || "main",
+              changes: {
+                final_array: Array.isArray(s.nodes) ? s.nodes : [],
+                nodes_to_add: Array.isArray(s.nodes) ? s.nodes : [],
+                nodes_to_delete: [] as string[],
+              },
+            })) as any;
+            newImprovements.push({
+              title: nodeTitle,
+              change: {
+                modified_property: "specializations",
+                new_value,
+                reasoning: combinedReasoning,
+              },
+            });
+          }
+        }
+      }
+
       const improvements: Improvement[] =
-        filterProposals(response?.improvements || [], nodesByTitle) || [];
+        filterProposals(newImprovements || [], nodesByTitle, relatedNodes) ||
+        [];
 
       const newNodes: {
         title: string;
@@ -708,13 +1563,38 @@ const ToolbarSidebar = ({
         reasoning: string;
         newNode: boolean;
       }[] = getNewNodes(response?.new_nodes || []);
-      if (improvements.length > 0 || newNodes.length > 0) {
-        setImprovements([...newNodes, ...improvements]);
+
+      const deletedNodesRaw =
+        response?.deleted_nodes ?? response?.delete_nodes ?? [];
+      const deletedNodes: {
+        title: string;
+        nodeId: string;
+        reasoning: string;
+        deleteNode: boolean;
+      }[] = getDeletedNode(
+        Array.isArray(deletedNodesRaw)
+          ? deletedNodesRaw.map((d: any) =>
+              typeof d === "string"
+                ? { title: d, reasoning: "" }
+                : {
+                    title: d.title ?? d.nodeId ?? "",
+                    reasoning: d.reasoning ?? "",
+                  },
+            )
+          : [],
+      );
+
+      if (
+        improvements.length > 0 ||
+        newNodes.length > 0 ||
+        deletedNodes.length > 0
+      ) {
+        setImprovements([...newNodes, ...deletedNodes, ...improvements]);
       }
     } catch (error) {
       confirmIt(
         "Sorry! There was an error generating proposals, please try again!",
-        "Ok"
+        "Ok",
       );
       console.error("Error fetching improvements:", error);
     } finally {
@@ -739,6 +1619,8 @@ const ToolbarSidebar = ({
             searchWithFuse={searchWithFuse}
             lastSearches={lastSearches}
             updateLastSearches={updateLastSearches}
+            appName={appName}
+            isExperimentalSearch={isExperimentalSearch}
           />
         );
       case "userActivity":
@@ -747,6 +1629,8 @@ const ToolbarSidebar = ({
             openLogsFor={openLogsFor}
             displayDiff={displayDiff}
             selectedDiffNode={selectedDiffNode}
+            nodes={relatedNodes}
+            appName={appName}
           />
         );
       case "chat":
@@ -756,15 +1640,19 @@ const ToolbarSidebar = ({
             user={user}
             confirmIt={confirmIt}
             searchWithFuse={searchWithFuse}
-            treeVisualization={treeVisualization}
-            expandedNodes={expandedNodes}
-            setExpandedNodes={setExpandedNodes}
-            onOpenNodesTree={onOpenNodesTree}
             navigateToNode={navigateToNode}
-            chatTabs={[{ id: "node", title: "This node" }]}
+            chatTabs={[
+              {
+                id: "node",
+                title: "This node",
+                placeholder: "Share your thoughts...",
+              },
+            ]}
             selectedChatTab={selectedChatTab}
             setSelectedChatTab={setSelectedChatTab}
-            nodes={nodes}
+            nodes={relatedNodes}
+            fetchNode={fetchNode}
+            appName={appName}
           />
         );
       case "chat-discussion":
@@ -774,19 +1662,23 @@ const ToolbarSidebar = ({
             user={user}
             confirmIt={confirmIt}
             searchWithFuse={searchWithFuse}
-            treeVisualization={treeVisualization}
-            expandedNodes={expandedNodes}
-            setExpandedNodes={setExpandedNodes}
-            onOpenNodesTree={onOpenNodesTree}
             navigateToNode={navigateToNode}
             chatTabs={CHAT_DISCUSSION_TABS}
             selectedChatTab={selectedChatTab}
             setSelectedChatTab={setSelectedChatTab}
-            nodes={nodes}
+            nodes={relatedNodes}
+            fetchNode={fetchNode}
+            appName={appName}
           />
         );
       case "inheritanceSettings":
-        return <Inheritance selectedNode={currentVisibleNode} nodes={nodes} />;
+        return (
+          <Inheritance
+            selectedNode={currentVisibleNode}
+            nodes={relatedNodes}
+            fetchNode={fetchNode}
+          />
+        );
       case "nodeHistory":
         return (
           <NodeActivity
@@ -794,6 +1686,7 @@ const ToolbarSidebar = ({
             selectedDiffNode={selectedDiffNode}
             displayDiff={displayDiff}
             activeUsers={activeUsers}
+            nodes={relatedNodes}
           />
         );
       case "improvements":
@@ -802,7 +1695,8 @@ const ToolbarSidebar = ({
             currentImprovement={currentImprovement}
             setCurrentImprovement={setCurrentImprovement}
             currentVisibleNode={currentVisibleNode}
-            nodes={nodes}
+            relatedNodes={relatedNodes}
+            fetchNode={fetchNode}
             setCurrentVisibleNode={setCurrentVisibleNode}
             onNavigateToNode={onNavigateToNode}
             isLoadingCopilot={isLoadingCopilot}
@@ -815,6 +1709,8 @@ const ToolbarSidebar = ({
             currentIndex={currentIndex}
             setCurrentIndex={setCurrentIndex}
             displayDiff={displayDiff}
+            appName={appName}
+            nodesByTitle={nodesByTitle}
           />
         );
       case "history":
@@ -825,6 +1721,8 @@ const ToolbarSidebar = ({
             displayDiff={displayDiff}
             activeUsers={activeUsers}
             selectedUser={selectedUser}
+            appName={appName}
+            nodes={relatedNodes}
           />
         );
       default:
@@ -867,8 +1765,6 @@ const ToolbarSidebar = ({
     );
   };
 
-  type CustomSmallBadgeProps = { value: number };
-
   const CustomSmallBadge = ({ value }: CustomSmallBadgeProps) => {
     if (!value) return null;
     return (
@@ -883,7 +1779,7 @@ const ToolbarSidebar = ({
     );
   };
 
-  const getHeaderTitle = (activeSidebar: string) => {
+  const getHeaderTitle = useMemo(() => {
     switch (activeSidebar) {
       case "chat-discussion":
         return "Chatroom";
@@ -896,20 +1792,24 @@ const ToolbarSidebar = ({
       case "inheritanceSettings":
         return "Node's Inheritance Settings";
       case "improvements":
-        return "Copilot Improvements:";
+        return "AI Assistant Improvements";
       case "history":
-        return "Edit History:";
+        return "Edit History";
       default:
         return "";
     }
-  };
-
+  }, [activeSidebar]);
   return (
     <Box
       ref={toolbarRef}
       sx={{
-        width: !!activeSidebar ? "450px" : hovered ? "190px" : "70px",
-        // transition: "width 0.1s ease",
+        width: !!activeSidebar
+          ? isMobile
+            ? "100%"
+            : "450px"
+          : hovered
+            ? "190px"
+            : "70px",
         height: "100vh",
         background:
           theme.palette.mode === "dark"
@@ -919,28 +1819,49 @@ const ToolbarSidebar = ({
         display: "flex",
         flexDirection: "column",
         padding: activeSidebar !== "improvements" ? "9px" : "",
+        borderTopLeftRadius: "25px",
+        borderBottomLeftRadius: "25px",
+        p: activeSidebar ? 0 : 2,
       }}
       onMouseEnter={() => {
-        if (!activeSidebar) {
+        /*  if (!activeSidebar) {
           setHovered(true);
         } else {
           setHovered(false);
-        }
+        } */
       }}
-      onMouseLeave={() => setHovered(false)}
+      // onMouseLeave={() => setHovered(false)}
     >
       {!!activeSidebar ? (
-        <Box>
+        <Box
+          sx={{
+            flex: 1,
+            minHeight: 0,
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
           <Box
             sx={{
               display: "flex",
               justifyContent: "space-between",
+              alignItems: "center",
+              textAlign: "center",
               mb: 2,
+              px: "11px",
+              flexShrink: 0,
             }}
           >
             {openLogsFor && activeSidebar === "userActivity" && (
-              <Box sx={{ display: "flex", alignItems: "center", gap: "5px" }}>
-                <Box sx={{ position: "relative", display: "inline-block" }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "15px",
+                  mt: "14px",
+                }}
+              >
+                <Box>
                   <OptimizedAvatar
                     alt={openLogsFor.fullname}
                     imageUrl={openLogsFor.imageUrl || ""}
@@ -954,16 +1875,15 @@ const ToolbarSidebar = ({
                     }}
                   />
                 </Box>
-                <Box>
-                  <Typography>
-                    {openLogsFor.fName}
-                    {"'s Edit History"}
-                  </Typography>
-                </Box>
+
+                <Typography sx={{ fontWeight: "bold", fontSize: "20px" }}>
+                  {openLogsFor.fName}
+                  {"'s Edit History"}
+                </Typography>
               </Box>
             )}
 
-            {getHeaderTitle(activeSidebar) && (
+            {getHeaderTitle && (
               <Box
                 sx={{
                   display: "flex",
@@ -973,8 +1893,8 @@ const ToolbarSidebar = ({
                   pl: "5px",
                 }}
               >
-                <Typography sx={{ fontSize: "29px", fontWeight: "bold" }}>
-                  {getHeaderTitle(activeSidebar)}
+                <Typography sx={{ fontSize: "29px", color: "gray", pt: "7px" }}>
+                  {getHeaderTitle}
                 </Typography>
 
                 {activeSidebar === "history" && (
@@ -984,38 +1904,263 @@ const ToolbarSidebar = ({
                       setSelectedUser(e.target.value);
                     }}
                     select
-                    label="Select User"
-                    sx={{ ml: "15px", minWidth: "100px" }}
-                    InputProps={{
-                      sx: {
-                        height: "40px",
-                        borderRadius: "18px",
+                    label="Edited by"
+                    slotProps={{
+                      inputLabel: {
+                        shrink: true,
+                      },
+                      select: {
+                        displayEmpty: true,
+                        IconComponent: KeyboardArrowDownRoundedIcon,
+                        renderValue: (value: any) => {
+                          const uname = value as string;
+                          const isAllUsers = uname === "All";
+
+                          return (
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 1,
+                                minWidth: 0,
+                              }}
+                            >
+                              {isAllUsers ? (
+                                <Box
+                                  sx={{
+                                    width: 28,
+                                    height: 28,
+                                    borderRadius: "50%",
+                                    display: "grid",
+                                    placeItems: "center",
+                                    background:
+                                      "linear-gradient(135deg, rgba(255, 186, 116, 0.95), rgba(255, 116, 66, 0.75))",
+                                    boxShadow:
+                                      "0 0 18px rgba(255, 139, 76, 0.42)",
+                                  }}
+                                >
+                                  <HistoryIcon
+                                    sx={{ color: "white", fontSize: 16 }}
+                                  />
+                                </Box>
+                              ) : (
+                                <OptimizedAvatar
+                                  alt={getHistoryUserName(uname)}
+                                  imageUrl={activeUsers[uname]?.imageUrl || ""}
+                                  size={28}
+                                  sx={{
+                                    borderRadius: "50%",
+                                    border:
+                                      "1px solid rgba(255, 190, 140, 0.55)",
+                                    boxShadow:
+                                      "0 0 16px rgba(255, 139, 76, 0.28)",
+                                  }}
+                                />
+                              )}
+                              <Typography
+                                component="span"
+                                noWrap
+                                sx={{
+                                  maxWidth: 132,
+                                  fontWeight: 800,
+                                  letterSpacing: "-0.02em",
+                                  lineHeight: 1,
+                                }}
+                              >
+                                {getHistoryUserName(uname)}
+                              </Typography>
+                            </Box>
+                          );
+                        },
+                        MenuProps: {
+                          PaperProps: {
+                            sx: {
+                              mt: 1.25,
+                              minWidth: 240,
+                              borderRadius: "22px",
+                              overflow: "hidden",
+                              background: (theme) =>
+                                theme.palette.mode === "dark"
+                                  ? "linear-gradient(145deg, rgba(20, 18, 22, 0.96), rgba(11, 11, 14, 0.92))"
+                                  : "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(255, 242, 228, 0.94))",
+                              border: (theme) =>
+                                theme.palette.mode === "dark"
+                                  ? "1px solid rgba(255, 185, 125, 0.28)"
+                                  : "1px solid rgba(235, 132, 58, 0.2)",
+                              backdropFilter: "blur(24px) saturate(185%)",
+                              WebkitBackdropFilter: "blur(24px) saturate(185%)",
+                              boxShadow: (theme) =>
+                                theme.palette.mode === "dark"
+                                  ? "0 22px 60px rgba(0,0,0,0.58), 0 0 34px rgba(255, 127, 70, 0.16), inset 0 1px 0 rgba(255,255,255,0.1)"
+                                  : "0 22px 50px rgba(131, 78, 33, 0.18), 0 0 28px rgba(255, 140, 80, 0.15), inset 0 1px 0 rgba(255,255,255,0.85)",
+                            },
+                          },
+                          MenuListProps: {
+                            sx: {
+                              py: 0.75,
+                              "& .MuiMenuItem-root": {
+                                mx: 0.75,
+                                my: 0.35,
+                                minHeight: 46,
+                                borderRadius: "16px",
+                                gap: 1.25,
+                                fontWeight: 700,
+                                color: (theme) =>
+                                  theme.palette.mode === "dark"
+                                    ? "rgba(255,255,255,0.9)"
+                                    : "rgba(49, 31, 20, 0.9)",
+                                transition:
+                                  "background 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease",
+                                "&:hover": {
+                                  transform: "translateX(2px)",
+                                  background: (theme) =>
+                                    theme.palette.mode === "dark"
+                                      ? "rgba(255, 145, 82, 0.16)"
+                                      : "rgba(255, 166, 92, 0.16)",
+                                },
+                                "&.Mui-selected": {
+                                  background:
+                                    "linear-gradient(135deg, rgba(255, 183, 112, 0.32), rgba(255, 118, 65, 0.2))",
+                                  boxShadow:
+                                    "inset 0 0 0 1px rgba(255, 185, 125, 0.35)",
+                                },
+                                "&.Mui-selected:hover": {
+                                  background:
+                                    "linear-gradient(135deg, rgba(255, 183, 112, 0.42), rgba(255, 118, 65, 0.28))",
+                                },
+                              },
+                            },
+                          },
+                        },
                       },
                     }}
-                    InputLabelProps={{
-                      style: { color: "grey" },
+                    sx={{
+                      mt: "10px",
+                      ml: "15px",
+                      minWidth: 184,
+                      "& .MuiOutlinedInput-root": {
+                        height: 48,
+                        borderRadius: "999px",
+                        color: (theme) =>
+                          theme.palette.mode === "dark"
+                            ? "rgba(255,255,255,0.96)"
+                            : "rgba(28, 20, 16, 0.92)",
+                        background: (theme) =>
+                          theme.palette.mode === "dark"
+                            ? "linear-gradient(145deg, rgba(255, 255, 255, 0.12), rgba(255, 150, 83, 0.09) 52%, rgba(255, 255, 255, 0.07))"
+                            : "linear-gradient(145deg, rgba(255,255,255,0.92), rgba(255, 229, 202, 0.78))",
+                        backdropFilter: "blur(18px) saturate(180%)",
+                        WebkitBackdropFilter: "blur(18px) saturate(180%)",
+                        boxShadow: (theme) =>
+                          theme.palette.mode === "dark"
+                            ? "0 0 0 1px rgba(255, 172, 106, 0.42), 0 0 24px rgba(255, 128, 70, 0.22), inset 0 1px 0 rgba(255,255,255,0.12)"
+                            : "0 0 0 1px rgba(222, 117, 48, 0.32), 0 12px 28px rgba(180, 90, 38, 0.12), inset 0 1px 0 rgba(255,255,255,0.9)",
+                        transition:
+                          "transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease",
+                        "&:hover": {
+                          transform: "translateY(-1px)",
+                          boxShadow: (theme) =>
+                            theme.palette.mode === "dark"
+                              ? "0 0 0 1px rgba(255, 190, 132, 0.58), 0 0 30px rgba(255, 128, 70, 0.3), inset 0 1px 0 rgba(255,255,255,0.16)"
+                              : "0 0 0 1px rgba(222, 117, 48, 0.45), 0 16px 34px rgba(180, 90, 38, 0.16), inset 0 1px 0 rgba(255,255,255,0.95)",
+                        },
+                        "&.Mui-focused": {
+                          boxShadow:
+                            "0 0 0 2px rgba(255, 176, 109, 0.45), 0 0 34px rgba(255, 128, 70, 0.32)",
+                        },
+                      },
+                      "& .MuiOutlinedInput-notchedOutline": {
+                        border: "none",
+                      },
+                      "& .MuiSelect-select": {
+                        display: "flex",
+                        alignItems: "center",
+                        py: 0,
+                        pr: "40px !important",
+                        pl: 1.2,
+                      },
+                      "& .MuiSelect-icon": {
+                        right: 12,
+                        color: (theme) =>
+                          theme.palette.mode === "dark"
+                            ? "rgba(255, 195, 142, 0.95)"
+                            : "rgba(180, 83, 9, 0.85)",
+                        filter: "drop-shadow(0 0 8px rgba(255, 139, 76, 0.45))",
+                        transition: "transform 0.2s ease",
+                      },
+                      "& .Mui-focused .MuiSelect-icon": {
+                        transform: "rotate(180deg)",
+                      },
+                      "& .MuiInputLabel-root": {
+                        color: (theme) =>
+                          theme.palette.mode === "dark"
+                            ? "rgba(255, 207, 168, 0.75)"
+                            : "rgba(142, 72, 21, 0.78)",
+                        fontWeight: 800,
+                        letterSpacing: "0.02em",
+                      },
+                      "& .MuiInputLabel-root.Mui-focused": {
+                        color: "#ffb36f",
+                      },
                     }}
                   >
-                    <MenuItem
-                      value=""
-                      disabled
-                      sx={{
-                        backgroundColor: (theme) =>
-                          theme.palette.mode === "dark" ? "" : "white",
-                      }}
-                    >
-                      Select User
-                    </MenuItem>
-                    {[
-                      "All",
-                      ...Object.keys(activeUsers).filter(
-                        (u) => activeUsers[u]?.reputations > 0
-                      ),
-                    ].map((uname) => (
+                    {historyUserOptions.map((uname) => (
                       <MenuItem key={uname} value={uname}>
-                        {uname === "All"
-                          ? "All"
-                          : `${activeUsers[uname].fName} ${activeUsers[uname].lName}`}
+                        {uname === "All" ? (
+                          <Box
+                            sx={{
+                              width: 30,
+                              height: 30,
+                              borderRadius: "50%",
+                              display: "grid",
+                              placeItems: "center",
+                              background:
+                                "linear-gradient(135deg, rgba(255, 186, 116, 0.96), rgba(255, 116, 66, 0.78))",
+                            }}
+                          >
+                            <HistoryIcon
+                              sx={{ color: "white", fontSize: 17 }}
+                            />
+                          </Box>
+                        ) : (
+                          <OptimizedAvatar
+                            alt={getHistoryUserName(uname)}
+                            imageUrl={activeUsers[uname]?.imageUrl || ""}
+                            size={30}
+                            sx={{
+                              borderRadius: "50%",
+                              border: "1px solid rgba(255, 190, 140, 0.5)",
+                            }}
+                          />
+                        )}
+                        <Box sx={{ minWidth: 0 }}>
+                          <Typography
+                            noWrap
+                            sx={{
+                              maxWidth: 150,
+                              fontSize: "0.92rem",
+                              fontWeight: 800,
+                              lineHeight: 1.05,
+                            }}
+                          >
+                            {getHistoryUserName(uname)}
+                          </Typography>
+                          <Typography
+                            noWrap
+                            sx={{
+                              mt: 0.25,
+                              maxWidth: 150,
+                              fontSize: "0.72rem",
+                              fontWeight: 700,
+                              color: (theme) =>
+                                theme.palette.mode === "dark"
+                                  ? "rgba(255, 207, 168, 0.62)"
+                                  : "rgba(142, 72, 21, 0.58)",
+                            }}
+                          >
+                            {uname === "All" ? "Complete history" : `@${uname}`}
+                          </Typography>
+                        </Box>
                       </MenuItem>
                     ))}
                   </TextField>
@@ -1023,78 +2168,90 @@ const ToolbarSidebar = ({
               </Box>
             )}
             {user && (
-              <IconButton
-                onClick={() => {
-                  if (previousNodeId) {
-                    // Checks if the node is deleted (null or undefined)
-                    if (nodes[currentVisibleNode?.id] == null) {
-                      navigateToNode(previousNodeId);
-                    } else {
-                      navigateToNode(currentVisibleNode?.id);
+              <Tooltip title={`Close ${getHeaderTitle || "Sidebar"}`}>
+                <IconButton
+                  onClick={() => {
+                    setActiveSidebar(null);
+                    setOpenLogsFor(null);
+                    setCurrentImprovement(null);
+                    setSelectedDiffNode(null);
+                    if (previousNodeId) {
+                      // Checks if the node is deleted (null or undefined)
+                      if (relatedNodes[currentVisibleNode?.id] == null) {
+                        navigateToNode(previousNodeId);
+                      } else {
+                        navigateToNode(currentVisibleNode?.id);
+                      }
+                      setPreviousNodeId("");
                     }
-                    setPreviousNodeId("");
-                  }
-                  setActiveSidebar(null);
-                  setOpenLogsFor(null);
-                  setCurrentImprovement(null);
-                }}
-                sx={{
-                  ml: "auto",
-                  zIndex: 100,
-                  mt: "5px",
-                  mr: "5px",
-                  backgroundColor: "gray",
-                  width: "26px",
-                  height: "26px",
-                }}
-              >
-                <ClearIcon />
-              </IconButton>
+                  }}
+                  sx={{
+                    ml: "auto",
+                    zIndex: 100,
+                    mt: "5px",
+                    mr: "5px",
+                    backgroundColor: "gray",
+                    width: "26px",
+                    height: "26px",
+                    p: 3,
+                  }}
+                >
+                  <ClearIcon sx={{ fontSize: "18px" }} />
+                </IconButton>
+              </Tooltip>
             )}
           </Box>
           {renderContent(activeSidebar)}
         </Box>
       ) : (
         <>
-          <Box sx={{ mb: 2, mr: "10px" }}>
+          <Box sx={{ mb: 2, mr: "15px" }}>
             <img src={getLog} alt="mit logo" width={"auto"} height={"40px"} />
           </Box>
 
           {/* Button for Avatar and Full Name */}
-          <Box sx={{ display: "flex", alignItems: "center" }}>
-            <Button
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "flex-start",
-                padding: 0,
-                textTransform: "none",
-                minWidth: 0,
-              }}
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+            }}
+          >
+            <Box
               onClick={handleProfileMenuOpen}
+              sx={{
+                border: "2px solid #1ff81f",
+                borderRadius: "50%",
+                ml: "3px",
+              }}
             >
               {user && (
                 <OptimizedAvatar
                   alt={`${user?.fName} ${user?.lName}`}
                   imageUrl={activeUsers[user?.uname]?.imageUrl || ""}
-                  size={45}
+                  size={43}
                   sx={{
                     width: "100%",
                     height: "100%",
                     borderRadius: "50%",
                     objectFit: "cover",
                     transition: "transform 0.3s ease",
+                    ":hover": {
+                      boxShadow: !isUploading
+                        ? "0 0 10px 5px rgba(55, 185, 43, 0.5)"
+                        : "none",
+                    },
                   }}
                 />
               )}
-            </Button>
-
+            </Box>
             <Typography
               sx={{
                 ml: 2,
                 transition: "opacity 0.3s ease",
                 opacity: hovered ? 1 : 0,
                 minWidth: "120px",
+                fontWeight: "bold",
+                color: "#f4e2e2",
               }}
             >
               {`${user?.fName} ${user?.lName}`}
@@ -1125,21 +2282,22 @@ const ToolbarSidebar = ({
               text="Chatroom"
               toolbarIsOpen={hovered}
             />
-            {!!user?.manageLock && (
-              <SidebarButton
-                id="toolbar-help-button"
-                icon={<HistoryIcon />}
-                onClick={() => {
-                  handleExpandSidebar("history");
-                }}
-                text="Edit History"
-                toolbarIsOpen={hovered}
-              />
-            )}
+
+            <SidebarButton
+              id="toolbar-help-button"
+              icon={<HistoryIcon />}
+              onClick={() => {
+                handleExpandSidebar("history");
+              }}
+              text="Edit History"
+              toolbarIsOpen={hovered}
+            />
+
             {!!user?.admin &&
+              userHasOntologyEditAccess(user, appName) &&
               (window.location.origin.startsWith("http://localhost") ||
                 window.location.origin ===
-                  "https://ontology-app-163479774214.us-central1.run.app") && (
+                  "https://ontology-163479774214.us-central1.run.app") && (
                 <SidebarButton
                   id="toolbar-theme-button"
                   icon={
@@ -1162,7 +2320,10 @@ const ToolbarSidebar = ({
                       improvements.filter((i: any) => !i.implemented).length > 0
                     ) {
                       handleExpandSidebar("improvements");
-                      if (improvements[0]?.newNode) {
+                      if (
+                        improvements[0]?.newNode ||
+                        improvements[0]?.deleteNode
+                      ) {
                         setCurrentImprovement(improvements[0]);
                       } else {
                         compareThisImprovement(improvements[0]);
@@ -1171,7 +2332,7 @@ const ToolbarSidebar = ({
                       handleImproveClick();
                     }
                   }}
-                  text={"Copilot"}
+                  text={"AI Assistant"}
                   toolbarIsOpen={hovered}
                 />
               )}
@@ -1190,6 +2351,20 @@ const ToolbarSidebar = ({
               toolbarIsOpen={hovered}
               variant={displayGuidelines ? "fill" : undefined}
             />
+            <SidebarButton
+              id="toolbar-theme-button"
+              icon={
+                isDownloading ? (
+                  <CircularProgress size={20} sx={{ color: "inherit" }} />
+                ) : (
+                  <DownloadIcon />
+                )
+              }
+              onClick={handleDownloadOntologyJson}
+              text={"Download JSON"}
+              toolbarIsOpen={hovered}
+              disabled={isDownloading}
+            />
 
             <SidebarButton
               id="toolbar-theme-button"
@@ -1201,21 +2376,75 @@ const ToolbarSidebar = ({
                 )
               }
               onClick={handleThemeSwitch}
-              text={theme.palette.mode === "dark" ? "Light Mode" : "Dark Mode"}
+              text={
+                theme.palette.mode === "dark"
+                  ? "Turn on light"
+                  : "Turn off light"
+              }
               toolbarIsOpen={hovered}
             />
           </Box>
 
           <ActiveUsers
-            nodes={nodes}
+            nodes={relatedNodes}
             navigateToNode={navigateToNode}
             displayUserLogs={displayUserLogs}
             handleExpand={handleExpandSidebar}
             fullVersion={hovered}
             activeUsers={activeUsers}
+            currentUser={user}
           />
         </>
       )}
+      {!activeSidebar && (
+        <Box
+          sx={{
+            pt: "14px",
+            display: "flex",
+            justifyContent: "flex-start",
+            mt: "auto",
+          }}
+        >
+          {!isMobile && (
+            <Tooltip title={hovered ? "Collapse" : "Expand"} placement="left">
+              {hovered ? (
+                <ChevronRightIcon
+                  onClick={() => {
+                    setHovered((prev) => !prev);
+                  }}
+                  sx={{
+                    borderRadius: "50%",
+                    mt: "auto",
+                    p: "3px",
+                    cursor: "pointer",
+                    fontSize: "30px",
+                    ":hover": {
+                      backgroundColor: "orange",
+                    },
+                  }}
+                />
+              ) : (
+                <ChevronLeftIcon
+                  onClick={() => {
+                    setHovered((prev) => !prev);
+                  }}
+                  sx={{
+                    borderRadius: "50%",
+                    mt: "auto",
+                    p: "3px",
+                    cursor: "pointer",
+                    fontSize: "30px",
+                    ":hover": {
+                      backgroundColor: "orange",
+                    },
+                  }}
+                />
+              )}
+            </Tooltip>
+          )}
+        </Box>
+      )}
+
       {isAuthenticated && user && renderProfileMenu}
       {dropdownDialog}
     </Box>

@@ -1,4 +1,5 @@
 export const NODES = "nodes";
+export const NOTIFICATIONS = "notifications";
 export const LOGS = "logs";
 export const CLIENT_ERRORS = "clientErrors";
 export const USERS = "users";
@@ -8,3 +9,15 @@ export const NODES_LOGS = "nodeLogs";
 export const GUIDELINES = "guidelines";
 export const PROMPT_LOGS = "promptLogs";
 export const COPILOT_PROMPTS = "copilotPrompts";
+export const NODES_ONET = "oNetNodes";
+export const ALGORITHMS = "algorithms";
+export const TREE_QUEUES = "treeUpdateQueue"
+
+/* realtime database */
+export const UNREAD_COMMENTS = "unreadComments";
+
+/* consultant */
+export const GROUPS = "groups";
+export const LINKS = "links";
+export const DIAGRAMS = "diagrams";
+export const INHERITANCE_FOR_PARTS_COLLECTION_NAME = "inheritanceForParts";

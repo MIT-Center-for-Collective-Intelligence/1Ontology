@@ -1,4 +1,4 @@
-import { ICollection, ILinkNode, INode } from " @components/types/INode";
+import { ICollection, ILinkNode, INode } from "@components/types/INode";
 import { IChange, Improvement } from "./copilotPrompts";
 import { recordLogs } from "./helpers";
 
@@ -6,10 +6,12 @@ export const getChangeComparison = ({
   change,
   nodeData,
   nodesByTitle,
+  ontologyNodes,
 }: {
-  change: Partial<IChange>;
+  change: Partial<IChange> | any;
   nodeData: INode;
   nodesByTitle: { [title: string]: { id: string } };
+  ontologyNodes: { [nodeId: string]: any };
 }) => {
   try {
     const modifiedProperty: string = change.modified_property as string;
@@ -19,7 +21,9 @@ export const getChangeComparison = ({
     if (
       !propertyType &&
       modifiedProperty !== "specializations" &&
-      modifiedProperty !== "generalizations"
+      modifiedProperty !== "generalizations" &&
+      modifiedProperty !== "parts" &&
+      modifiedProperty !== "isPartOf"
     )
       return;
 
@@ -30,32 +34,38 @@ export const getChangeComparison = ({
       modifiedProperty === "specializations" &&
       Array.isArray(change.new_value)
     ) {
-      const addedCollections = [];
+      const addedCollections: string[] = [];
       const specializations = nodeData[modifiedProperty as "specializations"];
       const _collections = specializations.flatMap((c) => c.collectionName);
-      const previousState = specializations
-        .flatMap((c) => c.nodes)
-        .map((n) => n.id);
 
       const nodesToRemove = new Set();
       let modified = false;
+
       for (let collection of change.new_value) {
         if (!_collections.includes(collection.collectionName)) {
           addedCollections.push(collection.collectionName);
         }
+        const collectionIdx = specializations.findIndex(
+          (c) => c.collectionName === collection.collectionName,
+        );
+
+        const changes = collection.changes || collection.collection_changes || {};
+
+        const previousState =
+          collectionIdx === -1
+            ? []
+            : specializations[collectionIdx].nodes.map((n) => n.id);
 
         const nodes = [];
         const final_nodes = [];
-        for (let title of collection.collection_changes.final_array) {
+
+        for (let title of changes.final_array || []) {
           const nodeId = nodesByTitle[title]?.id;
           if (!nodeId) {
             addedNonExistentElements.push(title);
             continue;
           }
-          if (
-            collection.collection_changes.nodes_to_add.includes(title) &&
-            !previousState.includes(nodeId)
-          ) {
+          if (!previousState.includes(nodeId)) {
             nodes.push({ id: nodeId, change: "added" });
             modified = true;
           } else {
@@ -63,11 +73,14 @@ export const getChangeComparison = ({
           }
           final_nodes.push({ id: nodeId });
         }
-        for (let title of collection.collection_changes.nodes_to_delete) {
-          const nodeId = nodesByTitle[title]?.id;
-          if (nodeId && previousState.includes(nodeId)) {
-            nodes.push({ id: nodeId, change: "removed" });
-            nodesToRemove.add(nodeId);
+
+        const final_array_ids = (changes.final_array || [])
+          .map((c: string) => nodesByTitle[c]?.id)
+          .filter(Boolean);
+        for (let linkId of previousState) {
+          if (!final_array_ids.includes(linkId)) {
+            nodes.push({ id: linkId, change: "removed" });
+            nodesToRemove.add(linkId);
             modified = true;
           }
         }
@@ -76,14 +89,17 @@ export const getChangeComparison = ({
           collectionName: collection.collectionName,
           nodes: nodes,
         });
+
         final_result.push({
           collectionName: collection.collectionName,
           nodes: final_nodes,
         });
       }
+
       if (!modified) {
         return;
       }
+
       return {
         result,
         final_result,
@@ -91,6 +107,7 @@ export const getChangeComparison = ({
         addedCollections,
       };
     }
+
     /*  */
     if (
       change.modified_property !== "specializations" &&
@@ -98,19 +115,32 @@ export const getChangeComparison = ({
       propertyType !== "string" &&
       change.new_value
     ) {
+      //new value from the model response
       const newValue = change.new_value as {
         nodes_to_add: string[];
         nodes_to_delete: string[];
         final_array: string[];
       };
+      //creating the array of changes
       const nodes = [];
       const final_nodes = [];
-      const nodesToRemove = new Set();
-      const previousState = (
+      const nodesToRemove: Set<string> = new Set();
+
+      let propertyPreviousValue =
         modifiedProperty === "generalizations"
           ? nodeData[modifiedProperty as "generalizations"]
-          : nodeData.properties[modifiedProperty]
-      )
+          : nodeData.properties[modifiedProperty];
+      const inheritanceRef = nodeData.inheritance[modifiedProperty]?.ref ?? "";
+      if (
+        modifiedProperty !== "generalizations" &&
+        !!inheritanceRef &&
+        ontologyNodes[inheritanceRef]
+      ) {
+        propertyPreviousValue =
+          ontologyNodes[inheritanceRef].properties[modifiedProperty];
+      }
+
+      const previousState = propertyPreviousValue
         .flatMap((c: any) => c.nodes)
         .map((n: any) => n.id);
 
@@ -121,25 +151,37 @@ export const getChangeComparison = ({
           addedNonExistentElements.push(title);
           continue;
         }
-        if (
-          newValue.nodes_to_add.includes(title) &&
-          !previousState.includes(nodeId)
-        ) {
+        if (!previousState.includes(nodeId)) {
           modified = true;
-          nodes.push({ id: nodeId, change: "added" });
+          nodes.push({
+            id: nodeId,
+            change: "added",
+            ...(((change.optionalParts || []).includes(title) && {
+              optional: true,
+            }) ||
+              {}),
+          });
         } else {
-          nodes.push({ id: nodeId });
+          nodes.push({
+            id: nodeId,
+          });
         }
         final_nodes.push({
           id: nodeId,
+          ...(((change.optionalParts || []).includes(title) && {
+            optional: true,
+          }) ||
+            {}),
         });
       }
-      for (let title of newValue.nodes_to_delete) {
-        const nodeId = nodesByTitle[title]?.id;
-        if (nodeId && previousState.includes(nodeId)) {
+      const final_array_ids = final_nodes
+        .map((c: { id: string }) => c.id)
+        .filter(Boolean);
+      for (let linkId of previousState) {
+        if (!final_array_ids.includes(linkId)) {
           modified = true;
-          nodes.push({ id: nodeId, change: "removed" });
-          nodesToRemove.add(nodeId);
+          nodes.push({ id: linkId, change: "removed" });
+          nodesToRemove.add(linkId);
         }
       }
       result.push({
@@ -150,11 +192,29 @@ export const getChangeComparison = ({
         collectionName: "main",
         nodes: final_nodes,
       });
-      if (!modified) return null;
+      let ignoreChange = false;
+      if (modifiedProperty === "specializations") {
+        for (let removedSpecialization of nodesToRemove) {
+          const specializationData = ontologyNodes[removedSpecialization];
+          if (
+            specializationData.generalizations[0].nodes.length === 1 &&
+            !!ontologyNodes[specializationData.generalizations[0].nodes[0].id]
+              ?.unclassified
+          ) {
+            ignoreChange = true;
+          }
+        }
+      }
+      if (
+        ignoreChange ||
+        !modified ||
+        (final_nodes.length === 0 && modifiedProperty === "generalizations")
+      )
+        return null;
       return {
         result,
         final_result,
-        addedNonExistentElements: [],
+        addedNonExistentElements,
         addedCollections: [],
         nodesToRemove,
       };
@@ -206,21 +266,24 @@ export const getChangeComparison = ({
     return null;
   } catch (error: any) {
     console.error(error);
-    recordLogs({
-      type: "error",
-      error: JSON.stringify({
-        name: error.name,
-        message: error.message,
-        stack: error.stack,
-      }),
-      at: "getChangeComparison",
-    });
+    if (process.env.NODE_ENV !== "test") {
+      recordLogs({
+        type: "error",
+        error: JSON.stringify({
+          name: error.name,
+          message: error.message,
+          stack: error.stack,
+        }),
+        at: "getChangeComparison",
+      });
+    }
   }
 };
 
 export const compareImprovement = (
   improvement: any,
-  nodesByTitle: { [nodeTitle: string]: INode }
+  nodesByTitle: { [nodeTitle: string]: INode },
+  ontologyNodes: { [nodeId: string]: any },
 ) => {
   try {
     const _improvement = JSON.parse(JSON.stringify(improvement));
@@ -233,6 +296,7 @@ export const compareImprovement = (
         change,
         nodeData,
         nodesByTitle,
+        ontologyNodes: ontologyNodes || {},
       });
       let propertyValue: any = null;
       if (
@@ -266,28 +330,29 @@ export const compareImprovement = (
       }
       _improvement.nodeId = nodeData.id;
       _improvement.modifiedProperty = modifiedProperty;
-      if (modifiedProperty !== "specializations") {
-        _improvement.modiPropertyType = propertyType;
-      }
     }
+    _improvement.nodeType = nodeData.nodeType;
     return _improvement;
   } catch (error: any) {
     console.error(error);
-    recordLogs({
-      type: "error",
-      error: JSON.stringify({
-        name: error.name,
-        message: error.message,
-        stack: error.stack,
-      }),
-      at: "getChangeComparison",
-    });
+    if (process.env.NODE_ENV !== "test") {
+      recordLogs({
+        type: "error",
+        error: JSON.stringify({
+          name: error.name,
+          message: error.message,
+          stack: error.stack,
+        }),
+        at: "getChangeComparison",
+      });
+    }
   }
 };
 
 export const filterProposals = (
   improvements: Improvement[],
-  nodesByTitle: { [title: string]: INode }
+  nodesByTitle: { [title: string]: INode },
+  ontologyNodes: { [nodeId: string]: any },
 ) => {
   try {
     const _improvements = [];
@@ -301,9 +366,10 @@ export const filterProposals = (
           change,
           nodeData,
           nodesByTitle,
+          ontologyNodes,
         });
-
         if (!!response) {
+          impv.detailsOfChange = response;
           _improvements.push(impv);
         }
       }

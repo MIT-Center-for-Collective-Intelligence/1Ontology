@@ -2,8 +2,8 @@ import { useEffect, useRef } from "react";
 import Quill from "quill";
 import "quill/dist/quill.snow.css";
 import { Box } from "@mui/material";
-import { capitalizeFirstLetter } from " @components/lib/utils/string.utils";
-import { DISPLAY } from " @components/lib/CONSTANTS";
+import { capitalizeFirstLetter } from "@components/lib/utils/string.utils";
+import { DISPLAY } from "@components/lib/CONSTANTS";
 
 const QuillEditor = ({
   property,
@@ -11,12 +11,14 @@ const QuillEditor = ({
   breakInheritance,
   nodeId,
   setCursorPosition,
+  onEditorReady,
 }: {
   property: string;
   text: string;
   breakInheritance: (updatedText: string) => void;
   nodeId: string;
   setCursorPosition: Function;
+  onEditorReady?: (editor: Quill) => void;
 }) => {
   const editorContainerRef = useRef(null);
   const editorRef = useRef<Quill | null>(null);
@@ -59,7 +61,7 @@ const QuillEditor = ({
           },
         },
         placeholder: `${capitalizeFirstLetter(
-          DISPLAY[property] ? DISPLAY[property] : property
+          DISPLAY[property] ? DISPLAY[property] : property,
         )}...`,
         theme: "snow",
         formats: [],
@@ -68,6 +70,11 @@ const QuillEditor = ({
       editorRef.current = editor;
 
       editor.setText(text);
+
+      // Notify parent component that editor is ready
+      if (onEditorReady) {
+        onEditorReady(editor);
+      }
 
       editor.on("text-change", () => {
         const updatedText = editor.getText();
@@ -93,7 +100,7 @@ const QuillEditor = ({
         }
       };
     }
-  }, [nodeId]);
+  }, [nodeId, text]);
 
   return (
     <>

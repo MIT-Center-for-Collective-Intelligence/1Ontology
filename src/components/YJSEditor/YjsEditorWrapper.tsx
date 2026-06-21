@@ -6,9 +6,9 @@ import Quill from "quill";
 import QuillCursors from "quill-cursors";
 import { Box, Typography } from "@mui/material";
 import "quill/dist/quill.snow.css";
-import { recordLogs } from " @components/lib/utils/helpers";
-import { capitalizeFirstLetter } from " @components/lib/utils/string.utils";
-import { DISPLAY, WS_URL } from " @components/lib/CONSTANTS";
+import { recordLogs } from "@components/lib/utils/helpers";
+import { capitalizeFirstLetter } from "@components/lib/utils/string.utils";
+import { DISPLAY, WS_URL } from "@components/lib/CONSTANTS";
 import * as encoding from "lib0/encoding";
 
 Quill.register("modules/cursors", QuillCursors);
@@ -44,6 +44,11 @@ const YjsEditorWrapper = ({
   checkDuplicateTitle,
   autoFocus,
   cursorPosition,
+  onEditorReady,
+  setEditorContent,
+  pendingInheritanceMessage,
+  fallbackContent,
+  placeholder,
 }: {
   fullname: string;
   username: string;
@@ -55,6 +60,11 @@ const YjsEditorWrapper = ({
   checkDuplicateTitle: Function;
   autoFocus: boolean;
   cursorPosition: number | null;
+  onEditorReady?: (editor: Quill) => void;
+  setEditorContent: any;
+  pendingInheritanceMessage?: any;
+  fallbackContent?: string;
+  placeholder?: string;
 }) => {
   const editorContainerRef = useRef(null);
   const editorRef = useRef<Quill | null>(null);
@@ -63,6 +73,8 @@ const YjsEditorWrapper = ({
   const changeHistoryRef = useRef<any[]>([]);
   const [errorDuplicate, setErrorDuplicate] = useState(false);
   const [synced, setSynced] = useState(false);
+  const providerRef = useRef<WebsocketProvider | null>(null);
+  const docRef = useRef<Y.Doc | null>(null);
 
   const saveChangeLog = (changeHistory: any[]) => {
     try {
@@ -70,7 +82,7 @@ const YjsEditorWrapper = ({
         const previousValue = changeHistory[0].previousText;
         const newValue = changeHistory.at(-1).newText;
         if (previousValue !== newValue) {
-          saveChangeHistory(previousValue, newValue);
+          saveChangeHistory(previousValue, newValue, nodeId);
         }
       }
     } catch (error: any) {
@@ -86,17 +98,23 @@ const YjsEditorWrapper = ({
       });
     }
   };
+
   const focus = (cursorPosition: number | null) => {
     if (editorRef.current && cursorPosition !== null) {
       editorRef.current.focus();
       editorRef.current.setSelection(cursorPosition);
     }
   };
+
+  // Reset error when nodeId changes (switching nodes)
+  useEffect(() => {
+    setErrorDuplicate(false);
+  }, [nodeId]);
+
   useEffect(() => {
     if (!property || !fullname || !nodeId) return;
     // Create Yjs document and WebSocket provider
     const ydoc = new Y.Doc();
-
     const provider = new WebsocketProvider(
       WS_URL,
       `${nodeId}-${property}`,
@@ -106,18 +124,32 @@ const YjsEditorWrapper = ({
         params: {
           type: structured ? "structured" : "non-structured",
         },
-      }
+      },
     );
+
+    // Store provider references
+    providerRef.current = provider;
+    docRef.current = ydoc;
+
     provider.on("sync", (isSynced: boolean) => {
       if (isSynced) {
         setSynced(true);
+
+        // Initial check for duplicates when document first loads
+        if (property === "title") {
+          const initialText = ydoc.getText("quill").toString();
+          const isDuplicate = checkDuplicateTitle(initialText);
+
+          setErrorDuplicate(isDuplicate);
+        }
       }
     });
+
     const yText = ydoc.getText("quill");
     yTextRef.current = yText;
 
     if (editorContainerRef.current) {
-      editorRef.current = new Quill(editorContainerRef.current, {
+      const editor = new Quill(editorContainerRef.current, {
         modules: {
           cursors: true,
           toolbar: false,
@@ -125,23 +157,51 @@ const YjsEditorWrapper = ({
             userOnly: true,
           },
           clipboard: {
-            matchVisual: true,
+            matchVisual: false,
+            matchers: [
+              [
+                "span[style], div[style], p[style]",
+                (node: any, delta: any) => {
+                  const text = node.innerText;
+                  return {
+                    ops: [{ insert: text }],
+                  };
+                },
+              ],
+            ],
           },
         },
-        placeholder: `${capitalizeFirstLetter(
-          DISPLAY[property] ? DISPLAY[property] : property
-        )}...`,
+        placeholder: `${
+          placeholder ||
+          capitalizeFirstLetter(
+            DISPLAY[property] ? DISPLAY[property] : property,
+          )
+        }...`,
         theme: "snow",
         formats: [],
       });
-    }
 
-    if (editorRef.current) {
-      const binding = new QuillBinding(
-        yText,
-        editorRef.current,
-        provider.awareness
-      );
+      editorRef.current = editor;
+
+      // Show fallback content if yjs is not synced
+      if (!synced && fallbackContent) {
+        editor.setText(fallbackContent);
+      }
+
+      // Notify parent when editor is ready
+      if (onEditorReady) {
+        onEditorReady(editor);
+      }
+
+      let binding: QuillBinding;
+
+      // Since quill binding instantly overwrites the firestore
+      // Create binding only when WebSocket connects successfully
+      provider.on("status", (event) => {
+        if (event.status === "connected" && !binding) {
+          binding = new QuillBinding(yText, editor, provider.awareness);
+        }
+      });
 
       provider.awareness.setLocalStateField("user", {
         name: fullname,
@@ -149,7 +209,7 @@ const YjsEditorWrapper = ({
         color: color,
       });
 
-      editorRef.current.on("text-change", (delta, oldDelta, source) => {
+      editor.on("text-change", (delta, oldDelta, source) => {
         if (source === "user") {
           const previousText = (oldDelta.ops[0].insert || "") as string;
           const newText = applyDeltaToText(previousText, delta);
@@ -166,11 +226,11 @@ const YjsEditorWrapper = ({
           if (property === "title") {
             setErrorDuplicate(checkDuplicateTitle(newText));
           }
+          setEditorContent(newText);
         }
       });
 
       // const intervalId = setInterval(() => {
-      //   console.log('timeout working', TIMEOUT);
       //   saveChangeLog(changeHistoryRef.current);
       //   changeHistoryRef.current = [];
       // }, TIMEOUT);
@@ -208,7 +268,7 @@ const YjsEditorWrapper = ({
       const handleSelectionChange = (
         range: Range | null,
         oldRange: Range | null,
-        source: string
+        source: string,
       ) => {
         // Save change logs on blur
         if (range === null && oldRange !== null) {
@@ -216,7 +276,7 @@ const YjsEditorWrapper = ({
         }
       };
 
-      editorRef.current.on("selection-change", handleSelectionChange);
+      editor.on("selection-change", handleSelectionChange);
 
       window.addEventListener("beforeunload", saveChangesYjs);
 
@@ -224,13 +284,43 @@ const YjsEditorWrapper = ({
         // saveChangeLog(changeHistoryRef.current);
         provider.disconnect();
         provider.destroy();
-        binding.destroy();
+        if (binding) {
+          binding.destroy();
+        }
         editorRef.current?.off("selection-change", handleSelectionChange);
         editorRef.current?.off("text-change");
         window.removeEventListener("beforeunload", saveChangesYjs);
+        
+        // Clear provider references
+        providerRef.current = null;
+        docRef.current = null;
       };
     }
+    // Not adding checkDuplicateTitle to dependencies to prevent focus loss during typing
   }, [fullname, property, nodeId, structured]);
+
+  // Effect to send inheritance change message
+  useEffect(() => {
+    if (pendingInheritanceMessage && providerRef.current?.awareness) {
+      try {
+        // Send the inheritance change message via awareness
+        providerRef.current.awareness.setLocalStateField('inheritanceChange', pendingInheritanceMessage);
+        
+        // Clear the message after a short delay
+        setTimeout(() => {
+          if (providerRef.current?.awareness) {
+            providerRef.current.awareness.setLocalStateField('inheritanceChange', null);
+          }
+        }, 1000);
+        
+      } catch (error) {
+        console.error('[YjsEditor] Error sending inheritance message:', error);
+      }
+    } else if (pendingInheritanceMessage) {
+      console.error(`[YjsEditor] Cannot send inheritance message - provider not ready yet`);
+    }
+  }, [pendingInheritanceMessage]);
+
   useEffect(() => {
     if (synced && autoFocus && editorRef.current) {
       setTimeout(() => {
@@ -238,9 +328,10 @@ const YjsEditorWrapper = ({
       }, 1000);
     }
   }, [synced, autoFocus, cursorPosition]);
+
   return (
     <>
-      {errorDuplicate && (
+      {property === "title" && errorDuplicate && (
         <Typography color="red" sx={{ ml: "15px" }}>
           There is already a node with this title! Please try to create a unique
           title.

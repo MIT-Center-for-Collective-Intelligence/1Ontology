@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Box, TextField, Tooltip, IconButton } from "@mui/material";
 import DoneIcon from "@mui/icons-material/Done";
-import { NODES } from " @components/lib/firestoreClient/collections";
+import { NODES } from "@components/lib/firestoreClient/collections";
 import { doc, collection, updateDoc, getFirestore } from "firebase/firestore";
 import { link } from "fs";
 import { useAuth } from "../context/AuthContext";
@@ -48,10 +48,12 @@ const LinkEditor: React.FC<LinkEditorProps> = ({
   const handleChanges = (e: any) => {
     setEditorContent(e.target.value);
     setClonedNodesQueue(
-      (prev: { [nodeId: string]: { title: string; id: string } }) => {
+      (prev: {
+        [nodeId: string]: { title: string; id: string; property: string };
+      }) => {
         prev[reviewId].title = e.target.value;
         return prev;
-      }
+      },
     );
   };
   useEffect(() => {
@@ -111,21 +113,22 @@ const LinkEditor: React.FC<LinkEditorProps> = ({
   //   }
   // };
   return (
-    <Box sx={{ display: "flex", alignItems: "center" }}>
+    <Box sx={{ display: "flex", alignItems: "center", width: "100%" }}>
       <TextField
         inputRef={textFieldRef}
         value={editorContent}
         onChange={handleChanges}
-        sx={{ width: "300px" }}
+        fullWidth
+        placeholder="Node title..."
         onKeyDown={(e) => {
           if (e.key === "Enter") {
             saveNodeTitle();
           }
         }}
-        InputProps={{
-          inputProps: {
-            style: {
-              padding: 10,
+        slotProps={{
+          input: {
+            sx: {
+              p: 0,
             },
           },
         }}

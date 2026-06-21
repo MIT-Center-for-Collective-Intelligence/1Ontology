@@ -1,7 +1,5 @@
-import { INodeTypes } from " @components/types/INode";
 import { DESIGN_SYSTEM_COLORS } from "./theme/colors";
-
-// TO-DO: Consider storing this data in the database to identify node types in the project
+export const development = process.env.NODE_ENV === "development";
 
 // Defining an object to hold initial values for various node types
 
@@ -28,6 +26,13 @@ export const DISPLAY: {
   parts: "Parts",
   isPartOf: "Is Part of",
   actor: "Actors",
+  objectsActedOn: "Objects Acted On",
+  ONetID: "O*Net ID",
+  generalizations: 'Generalizations ("Parents")',
+  specializations: 'Specializations ("Children")',
+  most_efficiently_performed_by: "Most Efficiently Performed By",
+  reason_for_most_efficiently_performed_by:
+    "Reason for Most Efficiently Performed By",
 };
 
 export const NO_IMAGE_USER =
@@ -101,16 +106,138 @@ export const UNCLASSIFIED: any = {
   incentive: "Unclassified incentives",
   reward: "Unclassified rewards",
 };
-export const development = process.env.NODE_ENV === "development";
+
 export const WS_URL = development
   ? `ws://${process.env.NEXT_PUBLIC_DEV_WS_SERVER}/ws`
   : `wss://${process.env.NEXT_PUBLIC_WS_SERVER}/ws`;
 
 export const CHAT_DISCUSSION_TABS = [
-  { id: "discussion", title: "Discussion" },
-  { id: "bug_report", title: "Bug Reports" },
-  { id: "feature_request", title: "Feature Requests" },
-  { id: "help", title: "Help" },
+  {
+    id: "discussion",
+    title: "Discussion",
+    placeholder: "Share your thoughts or start a discussion...",
+  },
+  {
+    id: "bug_report",
+    title: "Bug Reports",
+    placeholder: "Describe the bug you encountered...",
+  },
+  {
+    id: "feature_request",
+    title: "Feature Requests",
+    placeholder: "Suggest a new feature or improvement...",
+  },
+  { id: "help", title: "Help", placeholder: "Ask for help or guidance..." },
 ];
 
+export const PROPERTIES_TO_IMPROVE: { [nodeType: string]: string[] } | any = {
+  allTypes: [
+    "title",
+    "description",
+    "specializations",
+    "generalizations",
+    "parts",
+    "isPartOf",
+  ],
+  actor: ["abilities", "typeOfActor"],
+  activity: [
+    // "actor",
+    // "objectsActedOn",
+    // "evaluationDimension",
+    // "PreConditions",
+    // "postConditions",
+  ],
+  object: ["lifeSpan", "modifiability", "perceivableProperties"],
+  evaluationDEmention: [
+    "criteriaForAcceptability",
+    "directionOfDesirability",
+    "evaluationType",
+    "measurementUnits",
+  ],
+  reward: [
+    "units",
+    "capabilitiesRequired",
+    "rewardFunction",
+    "evaluationDimension",
+    "reward",
+  ],
+};
 
+export const MODEL = "o3";
+export const GEMINI_MODEL = "gemini-3.1-pro-preview";
+
+export const ONTOLOGY_APPS = development
+  ? [
+      {
+        id: "final-hierarchy-with-o*net",
+        name: "Final Hierarchy with O*Net",
+      },
+      {
+        id: "ontology-development-version",
+        name: "Ontology - Development Version",
+        type: "other",
+      },
+
+      {
+        id: "final-hierarchy-with-o*net-parts",
+        name: "Final Hierarchy with Parts",
+        type: "other",
+      },
+    ]
+  : [
+      {
+        id: "final-hierarchy-with-o*net",
+        name: "Final Hierarchy with O*Net",
+      },
+      { id: "sandbox", name: "Sandbox", type: "other", editAccess: true },
+      /*  {
+        id: "sandbox-5",
+        name: "AI-Peer Result",
+        type: "other",
+        adminAccess: true,
+      }, */
+      /* {
+        id: "ontology-demo-version",
+        name: "Ontology - Demo Version",
+        type: "other",
+      }, */
+      {
+        id: "ontology-development-version",
+        name: "Ontology - Development Version",
+        type: "other",
+      },
+      /*   {
+        id: "final-hierarchy-with-o*net-parts",
+        name: "Final Hierarchy with Parts",
+        type: "other",
+      }, */
+      { id: "noun-ontology", name: "Noun Ontology", type: "other" },
+      {
+        id: "onet-ontology",
+        name: "O*NET Ontology Including Tasks",
+        type: "other",
+      },
+      {
+        id: "onet-ontology-no-tasks",
+        name: "O*NET Ontology Excluding Tasks",
+        type: "other",
+      },
+    ];
+
+export const SANDBOX_ONTOLOGY_APP_ID = "sandbox";
+
+/** Max nodes visited when walking the specialization graph (cycle check, BFS). */
+export const MAX_DERIVED_PATH_OP_VISITS = 100_000;
+
+/** Max nodes collected in the affected specialization subtree for one derived-path run. */
+export const MAX_DERIVED_PATH_BFS_NODES = 20_000;
+
+/** Max Firestore writes in a single derived-path maintenance run. */
+export const MAX_DERIVED_PATH_WRITES = 10_000;
+
+export const performerColors: Record<string, string> = {
+  "A single human": "#1976d2",
+  "Collaboration of humans": "#9c27b0",
+  "Collaboration of humans and AI": "#734946",
+  AI: "#4caf50",
+};

@@ -1,35 +1,138 @@
-import { INode } from " @components/types/INode";
+import { INode } from "@components/types/INode";
 import { query, collection, where, getDocs } from "firebase/firestore";
 import { NODES } from "../firestoreClient/collections";
+import { recordLogs } from "./helpers";
 
-export const handleDownload = async ({ user, db }: { user: any; db: any }) => {
-  // try {
-  const nodesCollection = query(
-    collection(db, NODES),
-    where("deleted", "==", false),
-    where("root", "==", "hn9pGQNxmQe9Xod5MuKK")
-  );
-  const querySnapshot = await getDocs(nodesCollection);
-  let i = 0;
-  const data = querySnapshot.docs.map((doc) =>
-    getStructureForJSON({
-      ...doc.data(),
-    } as INode)
-  );
+export const handleDownload = async ({
+  nodes,
+  appName,
+}: {
+  nodes: any;
+  appName: string;
+}) => {
+  try {
+    const spreadNodes: any = Object.values(nodes);
+    const mainCategories = spreadNodes.filter(
+      (node: INode) =>
+        node.category || (typeof node.root === "boolean" && !!node.root),
+    );
 
-  const blob = new Blob([JSON.stringify(data, null, 2)], {
-    type: "application/json",
-  });
+    mainCategories.sort((nodeA: any, nodeB: any) => {
+      const order = [
+        "WHAT: Activities and Objects",
+        "WHO: Actors",
+        "WHY: Evaluation",
+        "Where: Context",
+        "ONet",
+      ];
+      const nodeATitle = nodeA.title;
+      const nodeBTitle = nodeB.title;
+      return order.indexOf(nodeATitle) - order.indexOf(nodeBTitle);
+    });
 
-  const link = document.createElement("a");
-  link.href = URL.createObjectURL(blob);
-  link.download = "nodes-data.json";
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  // } catch (error) {
-  //   console.error("Error downloading JSON: ", error);
-  // }
+    const buildTree = (
+      _nodes: INode[],
+      path: string[],
+      visited: Set<string> = new Set(),
+    ) => {
+      let newSpecializationsTree: any = {};
+
+      if (_nodes.length === 0) return {};
+
+      for (let node of _nodes) {
+        if (!node) {
+          continue;
+        }
+        visited.add(node.id);
+        const nodeTitle = node.title.trim();
+
+        let parts = node.properties.parts;
+        parts = Array.isArray(parts)
+          ? parts
+              .flatMap((c) => c.nodes)
+              .filter((c) => !!nodes[c.id])
+              .map((c) => nodes[c.id].title.trim())
+          : [];
+        const inheritanceDescriptionRef = node.inheritance["description"].ref;
+        const description = inheritanceDescriptionRef
+          ? nodes[inheritanceDescriptionRef].properties["description"] || ""
+          : node.properties["description"];
+
+        newSpecializationsTree[nodeTitle] = {
+          title: nodeTitle,
+          description,
+          parts,
+          specializations: {},
+          generalizations: {},
+          ...(node.synsets ? { synsets: node.synsets } : {}),
+        };
+
+        for (let collection of node.specializations) {
+          const specializations: INode[] = [];
+          collection.nodes.forEach((nodeLink: { id: string }) => {
+            specializations.push(nodes[nodeLink.id]);
+          });
+          const generalizationsNames = node.generalizations[0].nodes
+            .filter((c) => !!nodes[c.id])
+            .map((c: { id: string }) => nodes[c.id].title.trim());
+
+          if (collection.collectionName === "main") {
+            newSpecializationsTree[nodeTitle].specializations = {
+              ...(newSpecializationsTree[nodeTitle]?.specializations || {}),
+              ...buildTree(specializations, [...path, node.id], visited),
+            };
+            newSpecializationsTree[nodeTitle].generalizations =
+              generalizationsNames;
+          } else {
+            newSpecializationsTree[nodeTitle].specializations[
+              `[${collection.collectionName}]`
+            ] = {
+              title: `[${collection.collectionName}]`,
+              specializations: buildTree(
+                specializations,
+                [...path, node.id],
+                visited,
+              ),
+              generalizations: generalizationsNames,
+            };
+          }
+        }
+      }
+
+      return newSpecializationsTree;
+    };
+
+    let treeOfSpecializations = buildTree(mainCategories, []);
+
+    const blob = new Blob([JSON.stringify(treeOfSpecializations, null, 2)], {
+      type: "application/json",
+    });
+
+    const link = document.createElement("a");
+
+    link.href = URL.createObjectURL(blob);
+    console.log(blob, "blob");
+
+    link.download = `${appName}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    await recordLogs({
+      action: "download json",
+      appName,
+    });
+  } catch (error: any) {
+    recordLogs({
+      type: "error",
+      at: "func:handleDownload",
+      error: JSON.stringify({
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
+      }),
+    });
+  }
 };
 
 const getStructureForJSON = (data: INode) => {

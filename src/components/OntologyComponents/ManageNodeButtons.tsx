@@ -1,19 +1,35 @@
 import {
+  Badge,
   Box,
+  Button,
   IconButton,
   Link,
+  Switch,
   Theme,
+  ToggleButton,
   Tooltip,
   Typography,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
-import React from "react";
+import EditIcon from "@mui/icons-material/Edit";
+import EditOffIcon from "@mui/icons-material/EditOff";
+import React, { useState } from "react";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 import LockIcon from "@mui/icons-material/Lock";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import ChatIcon from "@mui/icons-material/Chat";
 import AccountTreeIcon from "@mui/icons-material/AccountTree";
 import DeleteIcon from "@mui/icons-material/Delete";
 import HistoryIcon from "@mui/icons-material/History";
-import { getTooltipHelper } from " @components/lib/utils/string.utils";
+import { getTooltipHelper } from "@components/lib/utils/string.utils";
+import { userHasOntologyEditAccess } from "@components/lib/utils/helpers";
+import { collection, doc, getFirestore, updateDoc } from "firebase/firestore";
+import { db } from "@components/lib/firestoreServer/admin-exp";
 
 const ManageNodeButtons = ({
   locked,
@@ -27,6 +43,13 @@ const ManageNodeButtons = ({
   displaySidebar,
   activeSidebar,
   unclassified,
+  enableEdit,
+  setEnableEdit,
+  user,
+  handleCloseAddLinksModel,
+  aiPeer,
+  hasComments,
+  appName,
 }: {
   locked: boolean;
   lockedInductor: boolean;
@@ -39,23 +62,188 @@ const ManageNodeButtons = ({
   displaySidebar: Function;
   activeSidebar: string;
   unclassified: boolean;
+  enableEdit: any;
+  setEnableEdit: any;
+  user: any;
+  handleCloseAddLinksModel: any;
+  aiPeer: { on: boolean; waiting: boolean };
+  hasComments: boolean;
+  appName?: string;
 }) => {
+  const canEditOntology = userHasOntologyEditAccess(user, appName);
+  const db = getFirestore();
   const displayNodeChat = () => displaySidebar("chat");
   const displayNodeHistory = () => displaySidebar("nodeHistory");
   const displayInheritanceSettings = () =>
     displaySidebar("inheritanceSettings");
 
+  const nextCall = () => {
+    const userRef = doc(collection(db, "aiPeerLogs"), "1man");
+    updateDoc(userRef, { waitingAIPeer: false });
+  };
+
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const openMenu = Boolean(anchorEl);
+
+  const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const renderSecondaryActions = () => {
+    if (isMobile) {
+      return (
+        <>
+          <IconButton onClick={handleMenuClick}>
+            <MoreVertIcon />
+          </IconButton>
+          <Menu
+            anchorEl={anchorEl}
+            open={openMenu}
+            onClose={handleMenuClose}
+            onClick={handleMenuClose}
+            PaperProps={{
+              elevation: 0,
+              sx: {
+                overflow: "visible",
+                filter: "drop-shadow(0px 2px 8px rgba(0,0,0,0.32))",
+                mt: 1.5,
+                "& .MuiAvatar-root": {
+                  width: 32,
+                  height: 32,
+                  ml: -0.5,
+                  mr: 1,
+                },
+                "&:before": {
+                  content: '""',
+                  display: "block",
+                  position: "absolute",
+                  top: 0,
+                  right: 14,
+                  width: 10,
+                  height: 10,
+                  bgcolor: "background.paper",
+                  transform: "translateY(-50%) rotate(45deg)",
+                  zIndex: 0,
+                },
+              },
+            }}
+            transformOrigin={{ horizontal: "right", vertical: "top" }}
+            anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
+          >
+            {!locked && (
+              <MenuItem onClick={displayInheritanceSettings}>
+                <ListItemIcon>
+                  <AccountTreeIcon
+                    fontSize="small"
+                    color={
+                      activeSidebar === "inheritanceSettings"
+                        ? "primary"
+                        : "inherit"
+                    }
+                  />
+                </ListItemIcon>
+                <ListItemText>Manage Inheritance</ListItemText>
+              </MenuItem>
+            )}
+            <MenuItem onClick={displayNodeChat}>
+              <ListItemIcon>
+                <ChatIcon
+                  fontSize="small"
+                  color={activeSidebar === "chat" ? "primary" : "inherit"}
+                />
+              </ListItemIcon>
+              <ListItemText>Node Comments</ListItemText>
+            </MenuItem>
+            <MenuItem onClick={displayNodeHistory}>
+              <ListItemIcon>
+                <HistoryIcon
+                  fontSize="small"
+                  color={
+                    activeSidebar === "nodeHistory" ? "primary" : "inherit"
+                  }
+                />
+              </ListItemIcon>
+              <ListItemText>Node History</ListItemText>
+            </MenuItem>
+            {!locked && !unclassified && (
+              <MenuItem onClick={() => deleteNode()}>
+                <ListItemIcon>
+                  <DeleteIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>Delete Node</ListItemText>
+              </MenuItem>
+            )}
+          </Menu>
+        </>
+      );
+    }
+
+    return (
+      <>
+        {!locked && (
+          <Tooltip title="Manage Inheritance">
+            <IconButton onClick={displayInheritanceSettings}>
+              <AccountTreeIcon
+                color={
+                  activeSidebar === "inheritanceSettings"
+                    ? "primary"
+                    : "inherit"
+                }
+              />
+            </IconButton>
+          </Tooltip>
+        )}
+        <Tooltip title="Open Node Comments">
+          <IconButton onClick={displayNodeChat}>
+            <Badge
+              variant="dot"
+              invisible={!hasComments}
+              sx={{
+                "& .MuiBadge-dot": {
+                  backgroundColor: "#E34848",
+                },
+              }}
+            >
+              <ChatIcon
+                color={activeSidebar === "chat" ? "primary" : "inherit"}
+              />
+            </Badge>
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="View Node's History">
+          <IconButton onClick={displayNodeHistory}>
+            <HistoryIcon
+              color={activeSidebar === "nodeHistory" ? "primary" : "inherit"}
+            />
+          </IconButton>
+        </Tooltip>
+        {!locked && !unclassified && canEditOntology && (
+          <Tooltip title="Delete Node">
+            <IconButton onClick={() => deleteNode()}>
+              <DeleteIcon />
+            </IconButton>
+          </Tooltip>
+        )}
+      </>
+    );
+  };
   return (
-    <Box sx={{ ml: "auto" }}>
+    <Box>
       <Box
         sx={{
           display: "flex",
-          ml: "auto",
+          flexWrap: "wrap",
           alignItems: "center",
           gap: "5px",
         }}
       >
-        <Box
+        {/* <Box
           sx={{
             display: "flex",
             px: "19px",
@@ -97,8 +285,72 @@ const ManageNodeButtons = ({
               </Link>
             </Box>
           )}
-        </Box>
-        {(locked || manageLock) && (
+        </Box> */}{" "}
+        {aiPeer.on && (
+          <>
+            <Tooltip
+              title="The previous proposals has been implemented. Would you like to
+              continue?"
+            >
+              <Button
+                variant="outlined"
+                disabled={!aiPeer.waiting}
+                sx={{ borderRadius: "25px" }}
+                onClick={nextCall}
+              >
+                Continue AI-Peer
+              </Button>
+            </Tooltip>
+          </>
+        )}
+        {canEditOntology && (
+          <ToggleButton
+            value="edit"
+            selected={enableEdit}
+            onChange={() => {
+              setEnableEdit((prev: boolean) => !prev);
+              handleCloseAddLinksModel();
+            }}
+            aria-label="Toggle edit mode"
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              borderRadius: "25px",
+              px: { xs: 1.5, sm: 2.5 },
+              py: 0.2,
+              fontWeight: 500,
+              fontSize: { xs: "0.8rem", sm: "0.95rem" },
+              textTransform: "none",
+              whiteSpace: "nowrap",
+              border: "1.5px solid orange",
+              transition: "all 0.2s ease-in-out",
+              bgcolor: (theme) =>
+                theme.palette.mode === "dark" ? "#2b2b2b" : "#f5f5f5",
+              color: (theme) =>
+                theme.palette.mode === "dark" ? "#f5f5f5" : "#222",
+              "&:hover": {
+                bgcolor: (theme) =>
+                  theme.palette.mode === "dark" ? "#3a3a3a" : "#f0e6e6",
+              },
+              "&.Mui-selected": {
+                bgcolor: "orange",
+                color: "#fff",
+                "&:hover": {
+                  bgcolor: "#d17b00",
+                },
+              },
+            }}
+          >
+            {enableEdit ? (
+              <EditIcon fontSize="small" />
+            ) : (
+              <EditOffIcon fontSize="small" />
+            )}
+            Edit Node {enableEdit ? "On" : "Off"}
+          </ToggleButton>
+        )}
+        {(locked || manageLock) && canEditOntology && (
           <Tooltip
             title={
               !manageLock
@@ -141,41 +393,7 @@ const ManageNodeButtons = ({
             )}
           </Tooltip>
         )}
-        {!locked && (
-          <Tooltip title="Manage Inheritance">
-            <IconButton onClick={displayInheritanceSettings}>
-              <AccountTreeIcon
-                color={
-                  activeSidebar === "inheritanceSettings"
-                    ? "primary"
-                    : "inherit"
-                }
-              />
-            </IconButton>
-          </Tooltip>
-        )}
-        <Tooltip title="Open Node Comments">
-          <IconButton onClick={displayNodeChat}>
-            <ChatIcon
-              color={activeSidebar === "chat" ? "primary" : "inherit"}
-            />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="View Node's History">
-          <IconButton onClick={displayNodeHistory}>
-            <HistoryIcon
-              color={activeSidebar === "nodeHistory" ? "primary" : "inherit"}
-            />
-          </IconButton>
-        </Tooltip>
-
-        {!locked && !unclassified && (
-          <Tooltip title="Delete Node">
-            <IconButton onClick={() => deleteNode()}>
-              <DeleteIcon />
-            </IconButton>
-          </Tooltip>
-        )}
+        {renderSecondaryActions()}
       </Box>
     </Box>
   );

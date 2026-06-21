@@ -1,42 +1,50 @@
-import { INode } from " @components/types/INode";
+import { INode } from "@components/types/INode";
 import React, { useEffect, useMemo, useState } from "react";
 import ChipInput from "../ChipInput/ChipInput";
 import {
   capitalizeFirstLetter,
   getPropertyValue,
   getTooltipHelper,
-} from " @components/lib/utils/string.utils";
+} from "@components/lib/utils/string.utils";
 import { Box, Paper, Tooltip, Typography } from "@mui/material";
-import { DISPLAY } from " @components/lib/CONSTANTS";
+import { DISPLAY } from "@components/lib/CONSTANTS";
 import SelectInheritance from "../SelectInheritance/SelectInheritance";
-import {
-  saveNewChangeLog,
-  updateInheritance,
-} from " @components/lib/utils/helpers";
-import { collection, doc, getFirestore, updateDoc } from "firebase/firestore";
-import { NODES } from " @components/lib/firestoreClient/collections";
+import PropertyContributors from "./PropertyContributors";
+import InheritanceDetailsPanel from "./InheritanceDetailsPanel";
+import { Post } from "@components/lib/utils/Post";
 
 const ChipsProperty = ({
   currentVisibleNode,
   property,
-  nodes,
+  relatedNodes,
+  fetchNode,
   selectedDiffNode,
   locked,
   currentImprovement,
   user,
+  enableEdit,
+  appName,
 }: {
   currentVisibleNode: INode;
   property: string;
-  nodes: { [id: string]: INode };
+  relatedNodes: { [id: string]: INode };
+  fetchNode: (nodeId: string) => Promise<INode | null>;
   selectedDiffNode: any;
   locked: boolean;
   currentImprovement: any;
   user: any;
+  enableEdit: boolean;
+  appName?: string;
 }) => {
-  const db = getFirestore();
-  const [value, setValue] = useState<string[]>([]);
+  const [value, setValue] = useState<
+    { title: string; added?: boolean; removed?: boolean }[]
+  >([]);
 
-  const propertyValue: string[] = useMemo(() => {
+  const propertyValue: {
+    title: string;
+    added?: boolean;
+    removed?: boolean;
+  }[] = useMemo(() => {
     if (
       currentImprovement &&
       currentImprovement.modifiedProperty === property
@@ -47,36 +55,40 @@ const ChipsProperty = ({
       ];
     }
     if (selectedDiffNode && selectedDiffNode.modifiedProperty === property) {
-      if (
-        selectedDiffNode.changeDetails &&
-        selectedDiffNode.changeDetails.addedElements.length > 0
-      ) {
-        return selectedDiffNode.newValue;
-      } else if (
-        selectedDiffNode.changeDetails &&
-        selectedDiffNode.changeDetails.removedElements.length > 0
-      ) {
-        return selectedDiffNode.previousValue;
-      }
+      const previousValue: string[] = selectedDiffNode.previousValue;
+      const newValue: string[] = selectedDiffNode.newValue;
+
+      const allTitles = Array.from(new Set([...previousValue, ...newValue]));
+
+      const result = allTitles.map((title) => ({
+        title,
+        added: !previousValue.includes(title) && newValue.includes(title),
+        removed: previousValue.includes(title) && !newValue.includes(title),
+      }));
+      return result;
     }
     const result = currentVisibleNode.inheritance[property]?.ref
       ? getPropertyValue(
-          nodes,
+          relatedNodes,
           currentVisibleNode.inheritance[property]?.ref,
-          property
+          property,
         )
       : currentVisibleNode.properties[property];
 
     return Array.isArray(result) &&
       result.every((item) => typeof item === "string")
-      ? result
+      ? result.map((alt) => {
+          return {
+            title: alt,
+          };
+        })
       : [];
   }, [
     property,
     currentVisibleNode,
     selectedDiffNode,
     currentImprovement,
-    nodes,
+    relatedNodes,
   ]);
 
   useEffect(() => {
@@ -84,9 +96,9 @@ const ChipsProperty = ({
   }, [propertyValue]);
 
   const updateValue = async (
-    newValue: string[],
-    added: string[],
-    removed: string[]
+    newValue: { title: string }[],
+    added: { title: string }[],
+    removed: { title: string }[],
   ) => {
     try {
       if (
@@ -96,54 +108,19 @@ const ChipsProperty = ({
       )
         return;
 
-      setValue(newValue);
+      setValue(newValue); // shown instantly; the server write confirms via snapshot
 
-      const previousValue: string[] = currentVisibleNode.properties[
-        property
-      ] as string[];
-
-      const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
-
-      await updateDoc(nodeRef, {
-        [`properties.${property}`]: newValue,
-        [`inheritance.${property}.ref`]: null,
-      });
-      if (!!currentVisibleNode.inheritance[property]?.ref) {
-        await updateInheritance({
-          nodeId: currentVisibleNode.id,
-          updatedProperties: [property],
-          db,
-        });
-      }
-      let changeMessage: "add element" | "remove element" | "modify elements" =
-        "add element";
-
-      if (added.length === 1) {
-        changeMessage = "add element";
-      }
-      if (removed.length === 1) {
-        changeMessage = "remove element";
-      }
-      if (added.length > 1 || removed.length > 1) {
-        changeMessage = "modify elements";
-      }
-
-      saveNewChangeLog(db, {
-        nodeId: currentVisibleNode.id,
-        modifiedBy: user?.uname,
-        modifiedProperty: property,
-        previousValue,
-        newValue,
-        modifiedAt: new Date(),
-        changeType: changeMessage,
-        fullNode: currentVisibleNode,
-        changeDetails: {
-          addedElements: added,
-          removedElements: removed,
-        },
+      await Post("/nodes/properties/update", {
+        action: "change",
+        nodeId: currentVisibleNode?.id,
+        propertyName: property,
+        value: newValue.map((c) => c.title),
+        ...(appName ? { appName } : {}),
       });
     } catch (error) {
-      console.log(error);
+      console.error(error);
+      // The write failed — revert the chips to the node's stored value.
+      setValue(propertyValue);
     }
   };
 
@@ -155,15 +132,18 @@ const ChipsProperty = ({
         borderRadius: property !== "context" ? "30px" : "",
         borderBottomRightRadius: "18px",
         borderBottomLeftRadius: "18px",
-        minWidth: "500px",
         width: "100%",
-        minHeight: "150px",
         maxHeight: "100%",
         overflow: "auto",
         position: "relative",
         display: "flex",
         flexDirection: "column",
         overflowX: "hidden",
+        pb: "10px",
+        border:
+          selectedDiffNode?.modifiedProperty === property
+            ? "1.5px solid orange"
+            : "",
       }}
     >
       {" "}
@@ -192,43 +172,48 @@ const ChipsProperty = ({
             }}
           >
             {capitalizeFirstLetter(
-              DISPLAY[property] ? DISPLAY[property] : property
+              DISPLAY[property] ? DISPLAY[property] : property,
             )}
           </Typography>
         </Tooltip>
 
-        {!currentImprovement && !currentVisibleNode.unclassified && (
-          <SelectInheritance
+        <Box sx={{ display: "flex", ml: "auto", gap: "14px" }}>
+          <PropertyContributors
             currentVisibleNode={currentVisibleNode}
             property={property}
-            nodes={nodes}
           />
-        )}
+          {!currentImprovement && !currentVisibleNode.unclassified && (
+            <SelectInheritance
+              currentVisibleNode={currentVisibleNode}
+              property={property}
+              nodes={relatedNodes}
+              enableEdit={enableEdit}
+            />
+          )}
+        </Box>
       </Box>
       <ChipInput
         tags={value}
         selectedTags={() => {}}
         updateTags={updateValue}
-        placeholder={`Type a new ${property} and click enter ↵ to add it..`}
-        added={
-          currentImprovement?.modifiedProperty === property
-            ? currentImprovement.detailsOfChange.addedElements || []
-            : selectedDiffNode?.modifiedProperty === property
-            ? selectedDiffNode?.changeDetails?.addedElements || []
-            : []
-        }
-        removed={
-          currentImprovement?.modifiedProperty === property
-            ? currentImprovement.detailsOfChange.removedElements || []
-            : selectedDiffNode?.modifiedProperty === property
-            ? selectedDiffNode?.changeDetails?.removedElements || []
-            : []
+        placeholder={
+          enableEdit
+            ? `Type a new ${property} and click enter ↵ to add it..`
+            : ""
         }
         readOnly={
           !!selectedDiffNode ||
           !!currentVisibleNode.unclassified ||
-          !!currentImprovement
+          !!currentImprovement ||
+          !enableEdit
         }
+        fontSize="19px"
+      />
+      <InheritanceDetailsPanel
+        property={property}
+        currentVisibleNode={currentVisibleNode}
+        relatedNodes={relatedNodes}
+        fetchNode={fetchNode}
       />
     </Paper>
   );

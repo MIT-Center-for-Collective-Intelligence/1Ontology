@@ -1,8 +1,8 @@
-import { getAuth } from "firebase-admin/auth";
 import { Timestamp } from "firebase-admin/firestore";
 import { NextApiHandler, NextApiRequest, NextApiResponse } from "next";
 
 import { admin, db } from "../lib/firestoreServer/admin";
+import Cors from "cors";
 
 export interface IRequestLog {
   uname: string;
@@ -15,17 +15,16 @@ export interface IRequestLog {
 const retrieveAuthenticatedUser = async ({
   uname,
   uid,
+  claims,
 }: {
   uname: string | null;
   uid: string;
+  claims?: Record<string, unknown>;
 }) => {
   try {
     let userData: any = {};
     let query: any;
     let errorMessage = "";
-
-    const auth = getAuth();
-    await auth.getUser(uid);
 
     if (uname) {
       query = db.doc(`/users/${uname}`);
@@ -40,6 +39,7 @@ const retrieveAuthenticatedUser = async ({
       } else if (uid) {
         userData = userDoc.docs[0].data();
       }
+      userData.claims = claims || {};
     } else {
       errorMessage = "The user does not exist!";
       console.error(errorMessage);
@@ -56,10 +56,30 @@ const retrieveAuthenticatedUser = async ({
 export type CustomNextApiRequest = NextApiRequest & {
   user: any;
 };
+const cors = Cors({
+  origin: "*",
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  optionsSuccessStatus: 200,
+});
 
-const fbAuth = (handler: NextApiHandler) => {
+const runMiddleware = (req: any, res: any, fn: any) => {
+  return new Promise((resolve, reject) => {
+    fn(req, res, (result: any) => {
+      if (result instanceof Error) {
+        return reject(result);
+      }
+      return resolve(result);
+    });
+  });
+};
+
+const fbAuth = (handler: NextApiHandler, addCors: boolean = false) => {
   return async (req: CustomNextApiRequest, res: NextApiResponse) => {
     try {
+      if (addCors) {
+        await runMiddleware(req, res, cors);
+      }
       let token = (req.headers.authorization ||
         req.headers.Authorization ||
         "") as string;
@@ -72,6 +92,7 @@ const fbAuth = (handler: NextApiHandler) => {
       const { status, data } = await retrieveAuthenticatedUser({
         uname: null,
         uid: user.uid,
+        claims: user,
       });
       if (status !== 200) return res.status(status).send({ error: data });
       //authenticated

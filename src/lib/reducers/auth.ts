@@ -8,7 +8,7 @@ import {
   AuthState,
   DispatchAuthActions,
   UserTheme,
-} from " @components/types/IAuth";
+} from "@components/types/IAuth";
 
 // Initial state for the authentication reducer
 export const INITIAL_STATE: AuthState = {

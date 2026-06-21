@@ -54,15 +54,16 @@ import {
   useReducer,
 } from "react";
 
-import { retrieveAuthenticatedUser } from " @components/lib/firestoreClient/auth";
-import authReducer, { INITIAL_STATE } from " @components/lib/reducers/auth";
+import { retrieveAuthenticatedUser } from "@components/lib/firestoreClient/auth";
+import authReducer, { INITIAL_STATE } from "@components/lib/reducers/auth";
 import {
   AuthActions,
   AuthState,
   ErrorOptions,
   UserRole,
-} from " @components/types/IAuth";
+} from "@components/types/IAuth";
 import { getFirestore } from "firebase/firestore";
+import { development } from "@components/lib/CONSTANTS";
 
 const AuthStateContext = createContext<AuthState | undefined>(undefined);
 const AuthDispatchContext = createContext<AuthActions | undefined>(undefined);
@@ -81,28 +82,33 @@ const AuthProvider: FC<Props> = ({ children, store }) => {
       //TODO: setup error reporting in google cloud
       if (showErrorToast) {
         const errorString = typeof error === "string" ? error : "";
-        enqueueSnackbar(
-          errorMessage && errorMessage.length > 0 ? errorMessage : errorString,
-          {
-            variant: "error",
-            autoHideDuration: 10000,
-          }
-        );
+        console.error(errorString);
+        if (development) {
+          /*     enqueueSnackbar(
+            errorMessage && errorMessage.length > 0
+              ? errorMessage
+              : errorString,
+            {
+              variant: "error",
+              autoHideDuration: 10000,
+            },
+          ); */
+        }
       }
     },
-    [enqueueSnackbar]
+    [enqueueSnackbar],
   );
 
   const loadUser = useCallback(
     async (
       userId: string,
       claims: { [key: string]: boolean },
-      emailVerified: boolean
+      emailVerified: boolean,
     ) => {
       try {
         const { user, theme } = await retrieveAuthenticatedUser(userId, claims);
         if (!user) {
-          handleError({ error: "Cant find user" });
+          handleError({ error: "Can't find user" });
           return;
         }
         if (user) {
@@ -121,7 +127,7 @@ const AuthProvider: FC<Props> = ({ children, store }) => {
         dispatch({ type: "logoutSuccess" });
       }
     },
-    [handleError]
+    [handleError],
   );
 
   useEffect(() => {

@@ -44,21 +44,15 @@ import { useEffect, useState } from "react";
 import { Hydrate, QueryClient, QueryClientProvider } from "react-query";
 import { ReactQueryDevtools } from "react-query/devtools";
 
-import ErrorBoundary from " @components/components/ErrorBoundary";
-import { AppPropsWithLayout } from " @components/types/IAuth";
-import { AuthProvider } from " @components/components/context/AuthContext";
-import { ThemeProvider } from " @components/components/context/ThemeContext";
-import { createEmotionCache } from " @components/lib/theme/createEmotionCache";
-import { initializeFirestore } from " @components/lib/firestoreClient/firestoreClient.config";
-import { LastDeploymentProvider } from " @components/components/context/LastDeploymentContext";
-import {
-  collection,
-  getFirestore,
-  onSnapshot,
-  query,
-  where,
-} from "firebase/firestore";
-import { LOGS } from " @components/lib/firestoreClient/collections";
+import ErrorBoundary from "@components/components/ErrorBoundary";
+import { AppPropsWithLayout } from "@components/types/IAuth";
+import { AuthProvider } from "@components/components/context/AuthContext";
+import { ThemeProvider } from "@components/components/context/ThemeContext";
+import { createEmotionCache } from "@components/lib/theme/createEmotionCache";
+import { initializeFirestore } from "@components/lib/firestoreClient/firestoreClient.config";
+import { LastDeploymentProvider } from "@components/components/context/LastDeploymentContext";
+import { getFirestore, onSnapshot, doc } from "firebase/firestore";
+import { LOGS } from "@components/lib/firestoreClient/collections";
 
 const clientSideEmotionCache = createEmotionCache();
 
@@ -76,22 +70,48 @@ const App = (props: AppPropsWithLayout) => {
             retry: false,
           },
         },
-      })
+      }),
   );
   useEffect(() => {
-    const userQuery = query(
-      collection(db, LOGS),
-      where("__name__", "==", "00EWFECw1PnBRPy4wZVt")
-    );
+    const reloadDocRef = doc(db, LOGS, "00EWFECw1PnBRPy4wZVt");
 
-    const unsubscribeUser = onSnapshot(userQuery, (snapshot) => {
-      if (
-        snapshot.docChanges().length > 0 &&
-        snapshot.docChanges()[0].type !== "added"
-      ) {
-        window.location.reload();
+    const SESSION_KEY = "force-reload:lastDocHash";
+    const COOLDOWN_KEY = "force-reload:lastReloadAt";
+    const COOLDOWN_MS = 15_000;
+
+    const safeJsonStringify = (value: unknown) => {
+      try {
+        return JSON.stringify(value);
+      } catch {
+        return "";
       }
-    });
+    };
+
+    const now = () => Date.now();
+    const cooldownOk = () => {
+      const last = Number(sessionStorage.getItem(COOLDOWN_KEY) || "0");
+      return now() - last > COOLDOWN_MS;
+    };
+
+    const unsubscribeUser = onSnapshot(
+      reloadDocRef,
+      (snap) => {
+        const hash = safeJsonStringify(snap.exists() ? snap.data() : null);
+        const prevHash = sessionStorage.getItem(SESSION_KEY);
+
+        if (!prevHash) {
+          sessionStorage.setItem(SESSION_KEY, hash);
+          return;
+        }
+
+        if (hash && prevHash !== hash && cooldownOk()) {
+          sessionStorage.setItem(SESSION_KEY, hash);
+          sessionStorage.setItem(COOLDOWN_KEY, String(now()));
+          window.location.reload();
+        }
+      },
+      () => {},
+    );
 
     return () => unsubscribeUser();
   }, [db]);

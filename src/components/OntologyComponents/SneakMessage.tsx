@@ -55,6 +55,7 @@ The component returns the Material-UI `Snackbar` component with the following pr
 - `onClose`: Set to the `close` function.
 - `message`: The current message to be displayed, controlled by the component's `message` state
  */
+import { Alert } from "@mui/material";
 import Snackbar from "@mui/material/Snackbar";
 import React, { useEffect, useState } from "react";
 
@@ -85,9 +86,11 @@ const SneakMessage = (props: ISneakMessageProps) => {
   return (
     <Snackbar
       open={open}
-      autoHideDuration={4000}
+      autoHideDuration={3000}
       onClose={close}
-      message={message}
+      message={<span style={{ fontSize: "16px", padding: 0 }}>{message}</span>}
+      sx={{ margin: 0 }}
+      anchorOrigin={{ vertical: "top", horizontal: "center" }}
     />
   );
 };

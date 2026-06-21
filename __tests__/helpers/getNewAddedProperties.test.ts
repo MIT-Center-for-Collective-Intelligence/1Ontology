@@ -1,5 +1,5 @@
-import { getNewAddedProperties } from " @components/lib/utils/helpers";
-import { INode } from " @components/types/INode";
+import { getNewAddedProperties } from "@components/lib/utils/helpers";
+import { INode } from "@components/types/INode";
 
 describe("getNewAddedProperties", () => {
   const mockNodes: any = {

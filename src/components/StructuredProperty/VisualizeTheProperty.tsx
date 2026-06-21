@@ -1,12 +1,17 @@
-import { DISPLAY } from " @components/lib/CONSTANTS";
+import { DISPLAY } from "@components/lib/CONSTANTS";
 import {
   capitalizeFirstLetter,
   getTooltipHelper,
-} from " @components/lib/utils/string.utils";
+} from "@components/lib/utils/string.utils";
 import { Paper, Typography, Box, Tooltip, List, ListItem } from "@mui/material";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
-import { useState } from "react";
-import { ICollection } from " @components/types/INode";
+import { ICollection } from "@components/types/INode";
+import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
+import AddIcon from "@mui/icons-material/Add";
+import RemoveIcon from "@mui/icons-material/Remove";
+import FiberManualRecordIcon from "@mui/icons-material/FiberManualRecord";
+import ToggleOnIcon from "@mui/icons-material/ToggleOn";
+import ToggleOffIcon from "@mui/icons-material/ToggleOff";
 
 type CollectionListProps = {
   currentImprovement: any;
@@ -21,83 +26,6 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
   getTitle,
   nodes,
 }) => {
-  const [addedLinks, setAddLinks] = useState(new Set());
-  const [removedLinks, setRemovedLinks] = useState(new Set());
-
-  // useEffect(() => {
-  //   if (!currentImprovement?.detailsOfChange) {
-  //     setMergedValue([]);
-  //     return;
-  //   }
-  //   const propertyIdx = currentImprovement.detailsOfChange.findIndex(
-  //     (c: any) => c.modifiedProperty === property
-  //   );
-  //   if (!currentImprovement?.detailsOfChange[propertyIdx]) {
-  //     return;
-  //   }
-  //   const newValue = JSON.parse(
-  //     JSON.stringify(currentImprovement.detailsOfChange[propertyIdx].newValue)
-  //   );
-
-  //   setAddLinks(
-  //     new Set(currentImprovement.detailsOfChange[propertyIdx].addedLinks)
-  //   );
-  //   setRemovedLinks(
-  //     new Set(currentImprovement.detailsOfChange[propertyIdx].removedLinks)
-  //   );
-  //   const previousValue = JSON.parse(
-  //     JSON.stringify(
-  //       currentImprovement.detailsOfChange[propertyIdx].previousValue
-  //     )
-  //   );
-
-  //   for (let collection of newValue) {
-  //     const collectionIdx = previousValue.findIndex(
-  //       (c: ICollection) => c.collectionName === collection.collectionName
-  //     );
-  //     if (collectionIdx === -1) {
-  //       collection.change = "added";
-  //       for (let node of collection.nodes) {
-  //         node.change = "added";
-  //       }
-  //     } else {
-  //       const _previousNodes = previousValue[collectionIdx].nodes.map(
-  //         (n: { id: string }) => n.id
-  //       );
-  //       const previousNodes = new Set(_previousNodes);
-  //       for (let node of [...collection.nodes]) {
-  //         if (!previousNodes.has(node.id)) {
-  //           node = { ...node, change: "added" };
-  //         }
-  //       }
-  //     }
-  //   }
-  //   for (let collection of previousValue) {
-  //     const collectionIdx = newValue.findIndex(
-  //       (c: ICollection) => c.collectionName === collection.collectionName
-  //     );
-  //     if (collectionIdx === -1) {
-  //       newValue.push(collection);
-  //       collection.change = "removed";
-  //       for (let node of collection.nodes) {
-  //         node = { ...node, change: "removed" };
-  //       }
-  //     } else {
-  //       const _newNodes = newValue[collectionIdx].nodes.map(
-  //         (n: { id: string }) => n.id
-  //       );
-  //       const newNodes = new Set(_newNodes);
-  //       for (let node of [...collection.nodes]) {
-  //         if (!newNodes.has(node.id)) {
-  //           newValue[collectionIdx].nodes.push({ ...node, change: "removed" });
-  //         }
-  //       }
-  //     }
-  //   }
-
-  //   setMergedValue(newValue);
-  // }, [currentImprovement]);
-
   const renderValue = (value: ICollection[]) => {
     return (
       <Box sx={{ display: "flex", flexDirection: "column" }}>
@@ -120,9 +48,19 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
                 borderTopRightRadius: "20px",
                 m: 0,
                 p: 2,
+                backgroundColor:
+                  collection.change === "added"
+                    ? "green"
+                    : collection.change === "removed"
+                      ? "red"
+                      : "",
+
                 // gap: "10px",
               }}
             >
+              {collection.changeType === "sort" && (
+                <SwapHorizIcon sx={{ mr: "6px" }} />
+              )}
               <Typography
                 sx={{
                   fontSize: "20px",
@@ -130,13 +68,16 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
                   fontFamily: "Roboto, sans-serif",
                   minHeight: "5px",
                   textDecoration:
-                    collection.change === "removed" ? "line-through" : "",
-                  color:
+                    collection.change === "removed" &&
+                    collection.changeType !== "sort"
+                      ? "line-through"
+                      : "",
+                  /*    color:
                     collection.change === "removed"
                       ? "red"
                       : collection.change === "added"
-                      ? "green"
-                      : "",
+                        ? "green"
+                        : "", */
                 }}
               >
                 {collection.collectionName !== "main"
@@ -163,59 +104,142 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
                 </Tooltip>
               )} */}
             </Box>
-            <List>
+            <List sx={{ pl: 2 }}>
               {collection.nodes.map((node: any) => (
-                <ListItem key={node.id}>
-                  <DragIndicatorIcon
-                    sx={{
-                      color:
-                        addedLinks.has(node.id) || node.change === "added"
-                          ? "green"
-                          : removedLinks.has(node.id) ||
-                            node.change === "removed"
-                          ? "red"
-                          : "",
-                    }}
-                  />
+                <ListItem
+                  key={node.id}
+                  id={node.change ? `${node.id}-${property}` : undefined}
+                  sx={{ p: 1 }}
+                >
+                  {node.changeType === "sort" ? (
+                    <SwapHorizIcon
+                      sx={{
+                        color:
+                          node.change === "added"
+                            ? "green"
+                            : node.change === "removed"
+                              ? "red"
+                              : "",
+
+                        mr: "3px",
+                        fontSize: "27px",
+                      }}
+                    />
+                  ) : node.change === "added" ? (
+                    <AddIcon
+                      sx={{
+                        color: "green",
+                        mr: "3px",
+                        fontSize: "27px",
+                      }}
+                    />
+                  ) : node.change === "removed" ? (
+                    <RemoveIcon
+                      sx={{
+                        color: "red",
+                        mr: "3px",
+                        fontSize: "27px",
+                      }}
+                    />
+                  ) : node.optionalChange === "added" ? (
+                    <ToggleOnIcon
+                      sx={{ color: "green", mr: "3px", fontSize: "27px" }}
+                    />
+                  ) : node.optionalChange === "removed" ? (
+                    <ToggleOffIcon
+                      sx={{ color: "red", mr: "3px", fontSize: "27px" }}
+                    />
+                  ) : (
+                    <FiberManualRecordIcon
+                      sx={{
+                        color:
+                          node.change === "added"
+                            ? "green"
+                            : node.change === "removed"
+                              ? "red"
+                              : "",
+                        fontSize: "15px",
+                        mr: "10px",
+                        pl: "4px",
+                      }}
+                    />
+                  )}
                   <Typography
                     variant="body1"
                     sx={{
                       textDecoration:
                         node.change === "removed" ? "line-through" : "",
                       color:
-                        addedLinks.has(node.id) || node.change === "added"
+                        node.change === "added"
                           ? "green"
-                          : removedLinks.has(node.id) ||
-                            node.change === "removed"
-                          ? "red"
-                          : "",
+                          : node.change === "removed"
+                            ? "red"
+                            : "",
                     }}
                   >
-                    {getTitle(nodes, node.id)}
+                    {node.title || getTitle(nodes, node.id)}
                   </Typography>
-                  {/*  {((!removedLinks.has(node.id) && node.change === "removed") ||
-                    (!addedLinks.has(node.id) && node.change === "added")) && (
-                    <SwapHorizIcon
-                      sx={{
-                        color: node.change === "removed" ? "red" : "green",
-                        pl: "5px",
-                      }}
-                    />
-                  )} */}
-                  {/* {(node.change === "removed" || node.change === "added") && (
-                    <Button
-                      sx={{
-                        borderRadius: "25px",
-                        fontSize: "11px",
-                        ml: "15px",
-                      }}
-                      onClick={() => {}}
+
+                  {(node.optional || node.optionalChange === "removed") && (
+                    <Tooltip
+                      title={
+                        node.optionalChange === "added"
+                          ? "marked optional"
+                          : node.optionalChange === "removed"
+                            ? "no longer optional"
+                            : "optional"
+                      }
+                      placement="top"
                     >
-                      Implement
-                    </Button>
-                  )} */}
+                      <Typography
+                        sx={{
+                          color:
+                            node.optionalChange === "added"
+                              ? "green"
+                              : node.optionalChange === "removed"
+                                ? "red"
+                                : "orange",
+                          textDecoration:
+                            node.optionalChange === "removed"
+                              ? "line-through"
+                              : "",
+                          marginLeft: "9px",
+                        }}
+                      >{`(O)`}</Typography>
+                    </Tooltip>
+                  )}
                 </ListItem>
-              ))}
+              ))}{" "}
+              {collection.collectionName === "main" &&
+                currentImprovement.detailsOfChange.addedNonExistentElements
+                  ?.length > 0 && (
+                  <Box>
+                    {currentImprovement.detailsOfChange.addedNonExistentElements.map(
+                      (item: string, index: number) => (
+                        <ListItem key={item}>
+                          <Typography
+                            key={index}
+                            variant="body1"
+                            sx={{ color: "green" }}
+                          >
+                            {item}
+                          </Typography>
+                          {(currentImprovement.change?.optionalParts || [])
+                            .length > 0 &&
+                            currentImprovement.change.optionalParts.includes(
+                              item,
+                            ) && (
+                              <Tooltip title={"optional"}>
+                                <Typography
+                                  sx={{ color: "orange", marginLeft: "9px" }}
+                                >{`(O)`}</Typography>
+                              </Tooltip>
+                            )}
+                        </ListItem>
+                      ),
+                    )}{" "}
+                  </Box>
+                )}
             </List>
           </Paper>
         ))}
@@ -223,50 +247,33 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
     );
   };
   return (
-    <Paper
-      elevation={9}
-      sx={{
-        borderRadius: "30px",
-        borderBottomRightRadius: "18px",
-        borderBottomLeftRadius: "18px",
-        minWidth: "500px",
-        width: "100%",
-        minHeight: "150px",
-        maxHeight: "100%",
-        overflow: "auto",
-        position: "relative",
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
-      <Box gap={2}>
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            background: (theme: any) =>
-              theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
-            p: 3,
-          }}
-        >
-          <Tooltip title={getTooltipHelper(property)}>
-            <Typography
-              sx={{
-                fontSize: "20px",
-                fontWeight: 500,
-                fontFamily: "Roboto, sans-serif",
-                color: "orange",
-              }}
-            >
-              {capitalizeFirstLetter(
-                DISPLAY[property] ? DISPLAY[property] : property
-              )}
-            </Typography>
-          </Tooltip>
-        </Box>
-        {renderValue(currentImprovement.detailsOfChange.comparison)}
+    <Box gap={2}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          background: (theme: any) =>
+            theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
+          p: 3,
+        }}
+      >
+        <Tooltip title={getTooltipHelper(property)}>
+          <Typography
+            sx={{
+              fontSize: "20px",
+              fontWeight: 500,
+              fontFamily: "Roboto, sans-serif",
+              color: "orange",
+            }}
+          >
+            {capitalizeFirstLetter(
+              DISPLAY[property] ? DISPLAY[property] : property,
+            )}
+          </Typography>
+        </Tooltip>
       </Box>
-    </Paper>
+      {renderValue(currentImprovement.detailsOfChange?.comparison || [])}
+    </Box>
   );
 };
 
