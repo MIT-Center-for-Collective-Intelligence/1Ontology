@@ -40,14 +40,19 @@ const ActivityDetails = ({
 }) => {
   const userDetails = Array.isArray(modifiedByDetails)
     ? modifiedByDetails
-    : (modifiedByDetails ? [modifiedByDetails] : []);
+    : modifiedByDetails
+      ? [modifiedByDetails]
+      : [];
   const primaryUser = userDetails.length > 0 ? userDetails[0] : null;
 
   const [isSelected, setIsSelected] = useState(false);
   const [childrenExpanded, setChildrenExpanded] = useState(false);
   const isHighlighted = isSelected || selectedDiffNode?.id === activity.id;
   const changeSummary = getChangeDescription(activity, "");
-  const nodeTitle = nodes && nodes[activity.nodeId] ? nodes[activity.nodeId]?.title : activity.fullNode?.title;
+  const nodeTitle =
+    nodes && nodes[activity.nodeId]
+      ? nodes[activity.nodeId]?.title
+      : activity.fullNode?.title;
   const triggeredBy = activity.triggeredBy;
   const isChildLog = !!triggeredBy;
   const childCount = childActivities?.length ?? 0;
@@ -250,7 +255,9 @@ const ActivityDetails = ({
                         textOverflow: "ellipsis",
                       }}
                     >
-                      {userDetails.map((u: any) => `${u.fName} ${u.lName}`).join(", ")}
+                      {userDetails
+                        .map((u: any) => `${u.fName} ${u.lName}`)
+                        .join(", ")}
                     </Typography>
                     {TimeLabel}
                   </Stack>
@@ -386,7 +393,6 @@ const ActivityDetails = ({
                         "& .MuiTooltip-arrow": { color: "grey.900" },
                       },
                     },
->>>>>>> 3705b7e312b5e25d7ad2aefa931aefd691252682
                   }}
                 >
                   <IconButton
