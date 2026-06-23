@@ -1262,6 +1262,115 @@ const Node = ({
           return;
         }
 
+        // Specializations/generalizations are saved through the hierarchy API.
+        if (
+          selectedProperty === "specializations" ||
+          selectedProperty === "generalizations"
+        ) {
+          const baseNode =
+            currentVisibleNode?.id === nodeId
+              ? currentVisibleNode
+              : relatedNodes[nodeId];
+          const source = (baseNode as any)?.[selectedProperty];
+          const next: ICollection[] =
+            Array.isArray(source) && source.length
+              ? JSON.parse(JSON.stringify(source))
+              : [{ collectionName: "main", nodes: [] }];
+          for (const c of next) {
+            c.nodes = (c.nodes || []).filter(
+              (n: { id: string }) => !removedElements.includes(n.id),
+            );
+          }
+          let i = next.findIndex((c) => c.collectionName === selectedCollection);
+          if (i === -1) i = 0;
+          const existing = new Set(
+            next.flatMap((c) => c.nodes.map((n: { id: string }) => n.id)),
+          );
+          next[i].nodes.push(...addedLinks.filter((l) => !existing.has(l.id)));
+
+          if (
+            selectedProperty === "generalizations" &&
+            next.flatMap((c) => c.nodes).length === 0
+          ) {
+            await confirmIt(
+              "You cannot remove all the generalizations for this node. Make sure it links to at least one generalization.",
+              "OK",
+              "",
+            );
+            return;
+          }
+
+          setCurrentVisibleNode((prev: any) =>
+            prev && prev.id === nodeId
+              ? { ...prev, [selectedProperty]: next }
+              : prev,
+          );
+
+          pendingWrites.start(nodeId, selectedProperty);
+          try {
+            await Post("/nodes/hierarchy/update", {
+              nodeId,
+              side: selectedProperty,
+              value: next,
+              ...(appName ? { appName } : {}),
+            });
+
+            if (onInstantTreeUpdate) {
+              let collectionIdx = next.findIndex(
+                (c) => c.collectionName === selectedCollection,
+              );
+              if (collectionIdx === -1) collectionIdx = 0;
+              onInstantTreeUpdate((tree) => {
+                let updatedTree = tree;
+                for (const removedId of removedElements) {
+                  updatedTree = removeLinkFromNode(
+                    updatedTree,
+                    nodeId,
+                    removedId,
+                    selectedProperty,
+                    collectionIdx,
+                  );
+                }
+                for (const addedId of addedElements) {
+                  updatedTree = addLinkToNode(
+                    updatedTree,
+                    nodeId,
+                    addedId,
+                    selectedProperty,
+                    selectedCollection || "main",
+                    relatedNodes,
+                    relatedNodes[addedId]?.title,
+                  );
+                }
+                return updatedTree;
+              });
+            }
+          } catch (error: any) {
+            const fresh = await fetchNode(nodeId);
+            setCurrentVisibleNode((prev: any) =>
+              prev?.id === nodeId && fresh ? fresh : prev,
+            );
+            const reason =
+              (typeof error === "string" ? error : error?.message) ||
+              "Please try again.";
+            setSnackbarMessage(
+              `Failed to update "${selectedProperty}": ${reason}`,
+            );
+            recordLogs({
+              type: "error",
+              error: JSON.stringify({
+                name: error?.name,
+                message: typeof error === "string" ? error : error?.message,
+                stack: error?.stack,
+              }),
+              at: "handleSaveLinkChanges",
+            });
+          } finally {
+            pendingWrites.end(nodeId, selectedProperty);
+          }
+          return;
+        }
+
         // Close the modal or perform any other necessary actions
         // Get the node document from the database
         const nodeDoc = await getDoc(doc(collection(db, NODES), nodeId));

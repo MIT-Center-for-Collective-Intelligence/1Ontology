@@ -178,6 +178,7 @@ const Inheritance: React.FC<InheritanceProps> = ({ selectedNode, nodes, fetchNod
       }}
     >
       {Object.entries(selectedNode.inheritance)
+        .filter(([key]) => key !== "parts" && key !== "isPartOf")
         .sort()
         .map(([key, inheritance]) => (
           <Paper
