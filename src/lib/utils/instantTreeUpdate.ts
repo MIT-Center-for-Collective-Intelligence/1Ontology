@@ -479,6 +479,27 @@ export const removeLinkFromNode = (
     });
   }
 
+  // For generalizations: the tree parent is the generalization (linkId), so
+  // remove this node (nodeId) from under it — the inverse of specializations.
+  if (property === 'generalizations') {
+    return treeData.map(node => {
+      if (node.nodeId === linkId) {
+        return {
+          ...node,
+          children: (node.children || []).filter(child => child.nodeId !== nodeId)
+        };
+      }
+
+      if (node.children) {
+        return {
+          ...node,
+          children: removeLinkFromNode(node.children, nodeId, linkId, property, collectionIndex)
+        };
+      }
+      return node;
+    });
+  }
+
   // For other properties (parts, etc.), just trigger refresh
   return [...treeData];
 };

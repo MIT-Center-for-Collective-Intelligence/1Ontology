@@ -65,20 +65,16 @@ In this example, `ChildNode` is used to display a child node with the given prop
 - Error handling is implemented in the `deleteSubOntologyEditable` function, but it is important to ensure that proper error handling is in place throughout the application.
 - The component does not directly mutate the state but uses provided functions to handle state changes, ensuring a unidirectional data flow.
  */
-import { NODES, NODES_LOGS } from "@components/lib/firestoreClient/collections";
+import { NODES } from "@components/lib/firestoreClient/collections";
 import useConfirmDialog from "@components/lib/hooks/useConfirmDialog";
 import SwapVertIcon from "@mui/icons-material/SwapVert";
 import AddIcon from "@mui/icons-material/Add";
 import {
   recordLogs,
-  saveNewChangeLog,
   unlinkPropertyOf,
   updateInheritance,
   updatePartsAndPartsOf,
   updatePropertyOf,
-  updateInheritanceWhenUnlinkAGeneralization,
-  updateLinksForInheritance,
-  updateLinksForInheritanceSpecializations,
 } from "@components/lib/utils/helpers";
 import { breakInheritanceAndCopyParts } from "@components/lib/utils/partsHelper";
 import {
@@ -86,7 +82,6 @@ import {
   INodePath,
   ILinkNode,
   ICollection,
-  NodeChange,
 } from "@components/types/INode";
 import {
   Box,
@@ -102,16 +97,7 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
-import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  getFirestore,
-  query,
-  updateDoc,
-  where,
-} from "firebase/firestore";
+import { collection, doc, getFirestore, updateDoc } from "firebase/firestore";
 
 import CloseIcon from "@mui/icons-material/Close";
 import CheckIcon from "@mui/icons-material/Check";
@@ -124,8 +110,21 @@ import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import LinkNodeTitle from "./LinkNodeTitle";
 import { Post } from "@components/lib/utils/Post";
 import { LoadingButton } from "@mui/lab";
-import { removeLinkFromNode } from "@components/lib/utils/instantTreeUpdate";
-import { triggerUpdateDerivedPaths } from "@components/lib/utils/triggerUpdateDerivedPaths";
+import {
+  addLinkToNode,
+  removeLinkFromNode,
+} from "@components/lib/utils/instantTreeUpdate";
+import { pendingWrites } from "@components/lib/utils/pendingWrites";
+
+// Orphaned nodes are reparented under their type's root in this collection.
+const UNCLASSIFIED_COLLECTION = "unclassified";
+
+const isInUnclassified = (rootNode: INode | undefined, childId: string) =>
+  !!rootNode?.specializations?.some(
+    (c) =>
+      c.collectionName === UNCLASSIFIED_COLLECTION &&
+      c.nodes.some((n) => n.id === childId),
+  );
 
 const glowGreen = keyframes`
   0% {
@@ -180,6 +179,7 @@ const LinkNode = ({
   property,
   currentVisibleNode,
   setCurrentVisibleNode,
+  setSnackbarMessage,
   navigateToNode,
   title,
   relatedNodes,
@@ -242,57 +242,6 @@ const LinkNode = ({
     [navigateToNode, link.id],
   );
 
-  const removeNodeLink = async (
-    type: "specializations" | "generalizations",
-    removeNodeId: string,
-    removeIdFrom: string,
-    parentLog?: {
-      logId: string;
-      nodeId: string;
-      nodeTitle: string;
-      changeType: NodeChange["changeType"];
-    },
-    uname?: string,
-    childAppName?: string,
-  ) => {
-    const specOrGenDoc = await getDoc(doc(collection(db, NODES), removeIdFrom));
-    let removeFrom: "specializations" | "generalizations" = "specializations";
-
-    if (type === "specializations") {
-      removeFrom = "generalizations";
-    }
-    if (specOrGenDoc.exists()) {
-      const specOrGenData = specOrGenDoc.data() as INode;
-      const previousValue = JSON.parse(
-        JSON.stringify(specOrGenData[removeFrom]),
-      );
-      for (let collection of specOrGenData[removeFrom]) {
-        collection.nodes = collection.nodes.filter(
-          (c: { id: string }) => c.id !== removeNodeId,
-        );
-      }
-
-      await updateDoc(specOrGenDoc.ref, {
-        [`${removeFrom}`]: specOrGenData[removeFrom],
-      });
-
-      if (parentLog && uname) {
-        saveNewChangeLog(db, {
-          nodeId: removeIdFrom,
-          modifiedBy: uname,
-          modifiedProperty: removeFrom,
-          previousValue,
-          newValue: specOrGenData[removeFrom],
-          modifiedAt: new Date(),
-          changeType: "remove element",
-          fullNode: specOrGenData,
-          triggeredBy: parentLog,
-          ...(childAppName ? { appName: childAppName } : {}),
-        });
-      }
-    }
-  };
-
   const makeLinkOptional = useCallback(async () => {
     const nodeCopy = { ...currentVisibleNode };
 
@@ -333,7 +282,7 @@ const LinkNode = ({
     fromModel: boolean = false,
   ) => {
     try {
-      // Fetch linkId if missing
+      // Fetch linkId if missing (used for the dialog text and orphan checks).
       let linkNode: INode | null | undefined = relatedNodes[linkId];
       if (!linkNode) {
         linkNode = await fetchNode(linkId);
@@ -342,18 +291,25 @@ const LinkNode = ({
         }
       }
 
+      // The node whose generalizations matter: this node for a generalizations
+      // unlink, the child being removed for a specializations unlink. Read this
+      // node from `currentVisibleNode` (updated instantly) so a rapid second
+      // unlink sees the reduced count; `relatedNodes` lags until the snapshot.
       const nodeD =
-        property === "generalizations" ? relatedNodes[currentNodeId] : linkNode;
+        property === "generalizations" ? currentVisibleNode : linkNode;
       const linksLength = nodeD.generalizations.flatMap((c) => c.nodes).length;
       const firstGen = nodeD.generalizations[0]?.nodes[0]?.id || "";
-      if (
-        linksLength <= 1 &&
-        ((property === "specializations" &&
-          relatedNodes[currentNodeId]?.title.trim().toLowerCase() ===
-            "unclassified") ||
-          (property === "generalizations" &&
-            relatedNodes[firstGen]?.title === "unclassified"))
-      ) {
+
+      // Already orphaned (lone child under its root's unclassified collection):
+      // unlinking would only re-add it there, so block it.
+      const alreadyUnclassified =
+        property === "generalizations"
+          ? !!relatedNodes[firstGen]?.root &&
+            isInUnclassified(relatedNodes[firstGen], currentNodeId)
+          : !!relatedNodes[currentNodeId]?.root &&
+            collectionName === UNCLASSIFIED_COLLECTION;
+
+      if (linksLength <= 1 && alreadyUnclassified) {
         await confirmIt(
           <Box>
             <Box
@@ -416,208 +372,92 @@ const LinkNode = ({
           "Keep",
         ))
       ) {
-        const nodeDoc = await getDoc(
-          doc(collection(db, NODES), currentVisibleNode?.id),
-        );
-        if (nodeDoc.exists()) {
-          const nodeData = nodeDoc.data() as INode;
-          const parentLogId = doc(collection(db, NODES_LOGS)).id;
-          const parentLog = {
-            logId: parentLogId,
-            nodeId: currentVisibleNode?.id,
-            nodeTitle: nodeData.title ?? "",
-            changeType: "remove element" as const,
-          };
-          const previousValue = JSON.parse(
-            JSON.stringify(
-              nodeData[property as "specializations" | "generalizations"],
-            ),
-          );
-          if (linkIndex !== -1) {
-            nodeData[property as "specializations" | "generalizations"][
-              collectionIndex
-            ].nodes.splice(linkIndex, 1);
-          }
-          //check if this link is includes in other collections of the node or not
-          //to be able to remove it
-          const shouldBeRemovedFromParent = !nodeData[
+        const nodeId = currentVisibleNode?.id;
+        // Build this side minus the unlinked chip; the server handles
+        // reciprocity, inheritance, derived paths, logs, and orphan reparenting.
+        const source =
+          currentVisibleNode?.[
             property as "specializations" | "generalizations"
-          ].some((c: { nodes: ILinkNode[] }) => {
-            const cIndex = c.nodes.findIndex((p) => p.id === linkId);
-            return cIndex !== -1;
+          ] || [];
+        const value: ICollection[] = JSON.parse(JSON.stringify(source));
+        if (linkIndex !== -1 && value[collectionIndex]) {
+          value[collectionIndex].nodes.splice(linkIndex, 1);
+        } else {
+          for (const c of value) {
+            c.nodes = c.nodes.filter((n: { id: string }) => n.id !== linkId);
+          }
+        }
+
+        setCurrentVisibleNode((prev: any) =>
+          prev && prev.id === nodeId ? { ...prev, [property]: value } : prev,
+        );
+
+        pendingWrites.start(nodeId, property);
+        try {
+          await Post("/nodes/hierarchy/update", {
+            nodeId,
+            side: property,
+            value,
+            ...(appName ? { appName } : {}),
           });
-          await updateDoc(nodeDoc.ref, nodeData);
-          if (shouldBeRemovedFromParent) {
-            await removeNodeLink(
-              property as "specializations" | "generalizations",
-              currentVisibleNode?.id,
-              linkId,
-              parentLog,
-              user?.uname,
-              appName,
+
+          if (onInstantTreeUpdate) {
+            onInstantTreeUpdate((tree) =>
+              removeLinkFromNode(tree, nodeId, linkId, property, collectionIndex),
             );
           }
-          if (shouldBeRemovedFromParent && linkNode && !linkNode.nodeType) {
-            const nodeType = linkNode.nodeType;
-            const unclassifiedNodeDocs = await getDocs(
-              query(
-                collection(db, NODES),
-                where("unclassified", "==", true),
-                where("nodeType", "==", nodeType),
-              ),
+
+          // Orphaned: the server reparented this node under its root. The local
+          // generalizations are momentarily empty, so pull the reparented value
+          // to show the new root (the snapshot can be dropped while pending).
+          const becameOrphan =
+            property === "generalizations" &&
+            value.flatMap((c) => c.nodes).length === 0;
+          if (becameOrphan) {
+            const fresh = await fetchNode(nodeId);
+            setCurrentVisibleNode((prev: any) =>
+              prev?.id === nodeId && fresh ? fresh : prev,
             );
-
-            if (unclassifiedNodeDocs.docs.length > 0 && previousValue) {
-              const unclassifiedNodeDoc = unclassifiedNodeDocs.docs[0];
-              let unclassifiedNode: INode | null =
-                relatedNodes[unclassifiedNodeDoc.id] || null;
-              if (!unclassifiedNode) {
-                const fetchedNode = await fetchNode(unclassifiedNodeDoc.id);
-                if (!fetchedNode) {
-                  return;
-                }
-                unclassifiedNode = fetchedNode;
-              }
-
-              if (property === "specializations") {
-                const nodeRef = doc(collection(db, NODES), linkId);
-                const generalizations = linkNode.generalizations;
-                const generalizationsLength = generalizations.flatMap(
-                  (c) => c.nodes,
-                ).length;
-
-                let mCollectionIdx = generalizations.findIndex(
-                  (c) => c.collectionName === "main",
-                );
-                if (mCollectionIdx === -1) {
-                  generalizations.unshift({
-                    collectionName: "main",
-                    nodes: [],
-                  });
-                  mCollectionIdx = 0;
-                }
-                if (mCollectionIdx !== -1) {
-                  generalizations[mCollectionIdx].nodes = generalizations[
-                    mCollectionIdx
-                  ].nodes.filter((g) => g.id !== nodeDoc.id);
-                  if (generalizationsLength === 1) {
-                    generalizations[0].nodes.push({
-                      id: unclassifiedNodeDoc.id,
-                      title: unclassifiedNode?.title ?? "",
-                    });
-                  }
-
-                  updateDoc(nodeRef, {
-                    generalizations,
-                  });
-                }
-                if (generalizationsLength === 1) {
-                  const specializations = unclassifiedNode.specializations;
-
-                  const mainCollectionIdx = specializations.findIndex(
-                    (c) => c.collectionName === "main",
-                  );
-                  if (mainCollectionIdx !== -1) {
-                    specializations[mainCollectionIdx].nodes.push({
-                      id: linkId,
-                      title:
-                        relatedNodes[linkId]?.title ?? linkNode?.title ?? "",
-                    });
-                    updateDoc(unclassifiedNodeDoc.ref, {
-                      specializations,
-                    });
-                  }
-                }
-              }
-
-              if (property === "generalizations") {
-                const nodesLength = previousValue.flatMap(
-                  (c: ICollection) => c.nodes,
-                ).length;
-
-                const generalizations = nodeData.generalizations;
-                if (nodesLength === 1) {
-                  generalizations[0].nodes.push({
-                    id: unclassifiedNodeDoc.id,
-                    title: unclassifiedNode?.title ?? "",
-                  });
-
-                  const specializations = unclassifiedNode.specializations;
-
-                  const mainCollectionIdx = specializations.findIndex(
-                    (c) => c.collectionName === "main",
-                  );
-
-                  specializations[mainCollectionIdx].nodes.push({
-                    id: nodeDoc.id,
-                    title: nodeData.title ?? "",
-                  });
-
-                  updateDoc(unclassifiedNodeDoc.ref, {
-                    specializations,
-                  });
-                }
-              }
+            // The server linked this node under its root; show it there in the
+            // tree (it was just removed from the old parent above).
+            const newRootId = fresh?.generalizations?.flatMap(
+              (c) => c.nodes,
+            )[0]?.id;
+            if (newRootId && onInstantTreeUpdate) {
+              onInstantTreeUpdate((tree) =>
+                addLinkToNode(
+                  tree,
+                  newRootId,
+                  nodeId,
+                  "specializations",
+                  UNCLASSIFIED_COLLECTION,
+                  relatedNodes,
+                  fresh?.title,
+                  fresh?.nodeType,
+                ),
+              );
             }
           }
-
-          saveNewChangeLog(
-            db,
-            {
-              nodeId: currentVisibleNode?.id,
-              modifiedBy: user?.uname,
-              modifiedProperty: property,
-              previousValue,
-              newValue:
-                nodeData[property as "specializations" | "generalizations"],
-              modifiedAt: new Date(),
-              changeType: "remove element",
-              fullNode: currentVisibleNode,
-              ...(appName ? { appName } : {}),
-            },
-            parentLogId,
+        } catch (error: any) {
+          const fresh = await fetchNode(nodeId);
+          setCurrentVisibleNode((prev: any) =>
+            prev?.id === nodeId && fresh ? fresh : prev,
           );
-
-          // Instant tree update for local user
-          if (onInstantTreeUpdate) {
-            onInstantTreeUpdate((tree) => {
-              return removeLinkFromNode(
-                tree,
-                currentVisibleNode?.id,
-                linkId,
-                property,
-                collectionIndex,
-              );
-            });
-          }
-
-          if (property === "generalizations") {
-            const currentNewLinks = nodeData["generalizations"][0].nodes;
-            updateLinksForInheritance(
-              db,
-              currentNodeId,
-              [],
-              currentNewLinks,
-              nodeData,
-              relatedNodes,
-            );
-          }
-          if (property === "specializations") {
-            updateLinksForInheritanceSpecializations(
-              db,
-              nodeDoc.id,
-              [],
-              [{ id: linkId }],
-              nodeData,
-              relatedNodes,
-            );
-          }
-          if (
-            property === "specializations" ||
-            property === "generalizations"
-          ) {
-            await triggerUpdateDerivedPaths([currentVisibleNode.id, linkId]);
-          }
+          const reason =
+            (typeof error === "string" ? error : error?.message) ||
+            "Please try again.";
+          setSnackbarMessage(`Failed to unlink "${property}": ${reason}`);
+          recordLogs({
+            type: "error",
+            error: JSON.stringify({
+              name: error?.name,
+              message: typeof error === "string" ? error : error?.message,
+              stack: error?.stack,
+            }),
+            at: "unlinkSpecializationOrGeneralization",
+          });
+        } finally {
+          pendingWrites.end(nodeId, property);
         }
       }
     } catch (error: any) {
@@ -629,7 +469,7 @@ const LinkNode = ({
           message: error.message,
           stack: error.stack,
         }),
-        at: "updateInheritance",
+        at: "unlinkSpecializationOrGeneralization",
       });
     }
   };

@@ -10,6 +10,7 @@ import {
   useMediaQuery,
   IconButton,
   Slide,
+  CircularProgress,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import {
@@ -294,6 +295,14 @@ const StructuredProperty = ({
       if (property === "specializations" || property === "generalizations") {
         result =
           currentVisibleNode[property as "specializations" | "generalizations"];
+        if (property === "specializations" && Array.isArray(result)) {
+          // Orphans live under the root's `unclassified` collection; hide it
+          // here (they stay visible in the tree).
+          result = result.filter(
+            (c: { collectionName: string }) =>
+              c.collectionName !== "unclassified",
+          );
+        }
       } else {
         // Parts always reflect this node's `properties.parts` only; do not
         // substitute the collection from `inheritance.parts.ref` (the UI
@@ -1327,6 +1336,30 @@ const StructuredProperty = ({
               </Box>
             )}
         </Box>
+        {property === "generalizations" &&
+          !(
+            typeof currentVisibleNode.root === "boolean" &&
+            currentVisibleNode.root
+          ) &&
+          (currentVisibleNode.generalizations || []).flatMap((c) => c.nodes)
+            .length === 0 && (
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                pl: "16px",
+                py: "12px",
+              }}
+            >
+              <CircularProgress size={16} />
+              <Typography
+                sx={{ fontSize: "14px", color: "gray", fontStyle: "italic" }}
+              >
+                Moving under Unclassified…
+              </Typography>
+            </Box>
+          )}
         {(property !== "parts" || !enableEdit) &&
           currentVisibleNode.propertyType[property] !== "string-array" && (
             <CollectionStructure

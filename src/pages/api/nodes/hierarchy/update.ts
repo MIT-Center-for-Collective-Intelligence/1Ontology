@@ -30,6 +30,9 @@ type Side = "specializations" | "generalizations";
 
 const PARTS_EDGES = new Set(["parts", "isPartOf"]);
 
+// Orphaned nodes are reparented under their type's root in this collection.
+const UNCLASSIFIED_COLLECTION = "unclassified";
+
 class HttpError extends Error {
   status: number;
   constructor(status: number, message: string) {
@@ -93,6 +96,22 @@ function addToMain(
   }
   if (main.nodes.some((n) => n.id === linkNode.id)) return false;
   main.nodes.push(linkNode);
+  return true;
+}
+
+/** Adds a node to a named collection (created at the end); false if present. */
+function addToCollection(
+  collections: ICollection[],
+  collectionName: string,
+  linkNode: { id: string; title?: string },
+): boolean {
+  let target = collections.find((c) => c.collectionName === collectionName);
+  if (!target) {
+    target = { collectionName, nodes: [] };
+    collections.push(target);
+  }
+  if (target.nodes.some((n) => n.id === linkNode.id)) return false;
+  target.nodes.push(linkNode);
   return true;
 }
 
@@ -224,6 +243,19 @@ async function getNode(id: string, cache: NodeCache): Promise<INode | undefined>
     | undefined;
   cache.set(id, data);
   return data;
+}
+
+/** Finds the root node for a node's type (one root per app + nodeType). */
+async function findRootId(node: INode): Promise<string | undefined> {
+  if (!node.nodeType) return undefined;
+  let q = db
+    .collection(NODES)
+    .where("root", "==", true)
+    .where("nodeType", "==", node.nodeType)
+    .where("deleted", "==", false);
+  if (node.appName) q = q.where("appName", "==", node.appName);
+  const snap = await q.limit(1).get();
+  return snap.empty ? undefined : snap.docs[0].id;
 }
 
 /**
@@ -371,6 +403,73 @@ async function recomputeInheritance(
   }
 }
 
+/**
+ * Reparents an orphaned node under its type's root: the orphan gains the root
+ * as a generalization (`main`), and the root gains the orphan as a
+ * specialization in its `unclassified` collection. Both sides emit an
+ * "add element" child log. The orphan is re-read fresh because the caller just
+ * wrote its side / its reciprocal generalizations.
+ */
+async function reparentToUnclassified(
+  orphanId: string,
+  rootId: string,
+  cache: NodeCache,
+  parentLog: NodeChange["triggeredBy"],
+  uname: string | undefined,
+  appName: string | undefined,
+  childLogs: NodeChange[],
+): Promise<void> {
+  cache.delete(orphanId);
+  const orphan = await getNode(orphanId, cache);
+  const root = await getNode(rootId, cache);
+  if (!orphan || !root) return;
+
+  const orphanGens = asCollections(orphan.generalizations);
+  if (addToMain(orphanGens, { id: rootId, title: root.title ?? "" })) {
+    await db.collection(NODES).doc(orphanId).update({ generalizations: orphanGens });
+    if (uname) {
+      childLogs.push({
+        nodeId: orphanId,
+        modifiedBy: uname,
+        modifiedProperty: "generalizations",
+        previousValue: asCollections(orphan.generalizations),
+        newValue: orphanGens,
+        modifiedAt: new Date(),
+        changeType: "add element",
+        fullNode: orphan,
+        triggeredBy: parentLog,
+        ...(appName ? { appName } : {}),
+      } as NodeChange);
+    }
+    cache.set(orphanId, { ...orphan, generalizations: orphanGens });
+  }
+
+  const rootSpecs = asCollections(root.specializations);
+  if (
+    addToCollection(rootSpecs, UNCLASSIFIED_COLLECTION, {
+      id: orphanId,
+      title: orphan.title ?? "",
+    })
+  ) {
+    await db.collection(NODES).doc(rootId).update({ specializations: rootSpecs });
+    if (uname) {
+      childLogs.push({
+        nodeId: rootId,
+        modifiedBy: uname,
+        modifiedProperty: "specializations",
+        previousValue: asCollections(root.specializations),
+        newValue: rootSpecs,
+        modifiedAt: new Date(),
+        changeType: "add element",
+        fullNode: root,
+        triggeredBy: parentLog,
+        ...(appName ? { appName } : {}),
+      } as NodeChange);
+    }
+    cache.set(rootId, { ...root, specializations: rootSpecs });
+  }
+}
+
 type ChangeCtx = {
   nodeId: string;
   nodeData: INode;
@@ -392,14 +491,17 @@ async function changeHierarchy(ctx: ChangeCtx): Promise<{ ok: true }> {
   const removed = [...prevIds].filter((id) => !newIds.has(id));
   if (added.length === 0 && removed.length === 0) return { ok: true };
 
-  // Every node must keep at least one generalization. On a generalizations
-  // edit that means this node; on a specializations edit, a removed child must
-  // not be left with this node as its only generalization.
+  // A node left with no generalization is reparented under its type's root
+  // (the `unclassified` collection), never rejected. Resolve the roots up
+  // front so a missing root aborts before any write. gen-side: this node
+  // empties; spec-side: a removed child is left with no other generalization.
+  const reparents: { orphanId: string; rootId: string }[] = [];
   if (side === "generalizations" && newIds.size === 0) {
-    throw new HttpError(
-      400,
-      "A node must link to at least one generalization.",
-    );
+    const rootId = await findRootId(nodeData);
+    if (!rootId) {
+      throw new HttpError(400, "No root node found to reparent this node under.");
+    }
+    reparents.push({ orphanId: nodeId, rootId });
   }
   if (side === "specializations") {
     for (const id of removed) {
@@ -407,10 +509,14 @@ async function changeHierarchy(ctx: ChangeCtx): Promise<{ ok: true }> {
       if (!spec) continue;
       const remainingGens = generalizationIds(spec).filter((g) => g !== nodeId);
       if (remainingGens.length === 0) {
-        throw new HttpError(
-          400,
-          `"${spec.title ?? id}" would be left with no generalization. Give it another generalization before removing this one.`,
-        );
+        const rootId = await findRootId(spec);
+        if (!rootId) {
+          throw new HttpError(
+            400,
+            `No root node found to reparent "${spec.title ?? id}" under.`,
+          );
+        }
+        reparents.push({ orphanId: id, rootId });
       }
     }
   }
@@ -493,6 +599,20 @@ async function changeHierarchy(ctx: ChangeCtx): Promise<{ ok: true }> {
     }
   }
 
+  // Reparent orphans under their root before recompute, so recompute sees the
+  // root as the new generalization.
+  for (const { orphanId, rootId } of reparents) {
+    await reparentToUnclassified(
+      orphanId,
+      rootId,
+      cache,
+      parentLog,
+      uname,
+      appName,
+      childLogs,
+    );
+  }
+
   // Recompute inheritance: a generalizations edit re-resolves this node; a
   // specializations edit re-resolves each child whose generalizations changed.
   if (side === "generalizations") {
@@ -507,7 +627,9 @@ async function changeHierarchy(ctx: ChangeCtx): Promise<{ ok: true }> {
 
   await updateDerivedPaths({
     db,
-    changedNodeIds: [...new Set([nodeId, ...added, ...removed])],
+    changedNodeIds: [
+      ...new Set([nodeId, ...added, ...removed, ...reparents.map((r) => r.rootId)]),
+    ],
   });
 
   if (uname) {
