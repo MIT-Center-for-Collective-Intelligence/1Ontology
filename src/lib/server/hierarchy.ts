@@ -663,6 +663,96 @@ export async function reparentToUnclassified(
   }
 }
 
+/**
+ * The opposite of `reparentToUnclassified`: when a node in a root's
+ * `unclassified` collection gains a real generalization, drop the root link and
+ * its entry in that collection (each logged as "remove element"), unless the
+ * root is its only generalization. Returns the removed root's id, or null.
+ */
+export async function removeFromUnclassified(
+  nodeId: string,
+  cache: NodeCache,
+  parentLog: NodeChange["triggeredBy"],
+  uname: string | undefined,
+  appName: string | undefined,
+  childLogs: NodeChange[],
+): Promise<string | null> {
+  cache.delete(nodeId);
+  const node = await getNode(nodeId, cache);
+  if (!node) return null;
+  const genIds = generalizationIds(node);
+
+  let parkedRootId: string | undefined;
+  for (const gid of genIds) {
+    const root = await getNode(gid, cache);
+    if (!root?.root) continue;
+    const parked = (root.specializations || []).some(
+      (c) =>
+        c.collectionName === UNCLASSIFIED_COLLECTION &&
+        (c.nodes || []).some((n) => n.id === nodeId),
+    );
+    if (parked) {
+      parkedRootId = gid;
+      break;
+    }
+  }
+  if (!parkedRootId) return null;
+  if (genIds.filter((id) => id !== parkedRootId).length === 0) return null;
+
+  const root = await getNode(parkedRootId, cache);
+  if (!root) return null;
+
+  const beforeGens = asCollections(node.generalizations);
+  const afterGens: ICollection[] = beforeGens.map((c) => ({
+    ...c,
+    nodes: (c.nodes || []).filter((n) => n.id !== parkedRootId),
+  }));
+  await db.collection(NODES).doc(nodeId).update({ generalizations: afterGens });
+  cache.set(nodeId, { ...node, generalizations: afterGens });
+  if (uname) {
+    childLogs.push({
+      nodeId,
+      modifiedBy: uname,
+      modifiedProperty: "generalizations",
+      previousValue: beforeGens,
+      newValue: afterGens,
+      modifiedAt: new Date(),
+      changeType: "remove element",
+      fullNode: node,
+      triggeredBy: parentLog,
+      ...(appName ? { appName } : {}),
+    } as NodeChange);
+  }
+
+  const beforeSpecs = asCollections(root.specializations);
+  const afterSpecs: ICollection[] = beforeSpecs.map((c) =>
+    c.collectionName === UNCLASSIFIED_COLLECTION
+      ? { ...c, nodes: (c.nodes || []).filter((n) => n.id !== nodeId) }
+      : c,
+  );
+  await db
+    .collection(NODES)
+    .doc(parkedRootId)
+    .update({ specializations: afterSpecs });
+  cache.set(parkedRootId, { ...root, specializations: afterSpecs });
+  if (uname) {
+    childLogs.push({
+      nodeId: parkedRootId,
+      modifiedBy: uname,
+      modifiedProperty: "specializations",
+      previousValue: beforeSpecs,
+      newValue: afterSpecs,
+      modifiedAt: new Date(),
+      changeType: "remove element",
+      fullNode: root,
+      triggeredBy: parentLog,
+      ...(appName ? { appName } : {}),
+    } as NodeChange);
+  }
+
+  return parkedRootId;
+}
+
 // ──────── Endpoint context type ────────
 
 export type ChangeCtx = {

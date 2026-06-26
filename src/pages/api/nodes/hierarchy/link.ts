@@ -18,6 +18,7 @@ import {
   applyReciprocityAdd,
   applyReciprocityRemove,
   reparentToUnclassified,
+  removeFromUnclassified,
   recomputeInheritance,
   writeChangeLog,
   recordLogs,
@@ -94,6 +95,32 @@ async function applyLink(ctx: ChangeCtx): Promise<{ ok: true }> {
       appName,
       childLogs,
     );
+  }
+
+  // The inverse of reparenting: a node that just gained a real generalization
+  // leaves its root's unclassified collection.
+  if (side === "generalizations") {
+    if (added.length > 0) {
+      await removeFromUnclassified(
+        nodeId,
+        cache,
+        parentLog,
+        uname,
+        appName,
+        childLogs,
+      );
+    }
+  } else {
+    for (const id of added) {
+      await removeFromUnclassified(
+        id,
+        cache,
+        parentLog,
+        uname,
+        appName,
+        childLogs,
+      );
+    }
   }
 
   // Editing generalizations recomputes this node; editing specializations

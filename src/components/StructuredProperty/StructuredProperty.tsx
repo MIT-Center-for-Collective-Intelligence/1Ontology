@@ -10,6 +10,7 @@ import {
   useMediaQuery,
   IconButton,
   Slide,
+  CircularProgress,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import {
@@ -30,7 +31,7 @@ import {
   InheritedPartsDetail,
   INode,
 } from "@components/types/INode";
-import { DISPLAY } from "@components/lib/CONSTANTS";
+import { DISPLAY, UNCLASSIFIED } from "@components/lib/CONSTANTS";
 import {
   collection,
   doc,
@@ -427,6 +428,21 @@ const StructuredProperty = ({
     processCollectionData,
     db,
   ]);
+
+  const isReparenting =
+    property === "generalizations" &&
+    !(typeof currentVisibleNode?.root === "boolean" && currentVisibleNode.root) &&
+    (currentVisibleNode?.generalizations || []).flatMap(
+      (c: ICollection) => c.nodes,
+    ).length === 0;
+
+  const reparentRootName = useMemo(() => {
+    const nt = currentVisibleNode?.nodeType;
+    const root = Object.values(relatedNodes).find(
+      (n: any) => n?.root && n?.nodeType === nt && !n?.deleted,
+    ) as INode | undefined;
+    return root?.title || UNCLASSIFIED[nt] || "Unclassified";
+  }, [relatedNodes, currentVisibleNode?.nodeType]);
 
   useEffect(() => {
     if (property === "parts") {
@@ -1327,7 +1343,29 @@ const StructuredProperty = ({
               </Box>
             )}
         </Box>
-        {(property !== "parts" || !enableEdit) &&
+        {isReparenting && (
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+              p: "12px",
+            }}
+          >
+            <CircularProgress size={18} />
+            <Typography
+              sx={{
+                fontSize: "14px",
+                fontStyle: "italic",
+                color: "text.secondary",
+              }}
+            >
+              {`Moving under "${reparentRootName}"…`}
+            </Typography>
+          </Box>
+        )}
+        {!isReparenting &&
+          (property !== "parts" || !enableEdit) &&
           currentVisibleNode.propertyType[property] !== "string-array" && (
             <CollectionStructure
               locked={locked}

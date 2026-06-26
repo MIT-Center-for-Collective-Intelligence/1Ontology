@@ -159,7 +159,7 @@ type ILinkNodeProps = {
   navigateToNode: (nodeID: string) => void;
   title: string;
   relatedNodes: { [nodeId: string]: INode };
-  fetchNode: (nodeId: string) => Promise<INode | null>;
+  fetchNode: (nodeId: string, force?: boolean) => Promise<INode | null>;
   linkLocked: any;
   locked: boolean;
   user: any;
@@ -447,6 +447,8 @@ const LinkNode = ({
             c.nodes = c.nodes.filter((n: { id: string }) => n.id !== linkId);
           }
         }
+        
+        onInstantTreeUpdate?.((tree) => tree);
 
         setCurrentVisibleNode((prev: any) =>
           prev && prev.id === nodeId ? { ...prev, [property]: value } : prev,
@@ -479,7 +481,7 @@ const LinkNode = ({
             property === "generalizations" &&
             value.flatMap((c) => c.nodes).length === 0;
           if (becameOrphan) {
-            const fresh = await fetchNode(nodeId);
+            const fresh = await fetchNode(nodeId, true);
             setCurrentVisibleNode((prev: any) =>
               prev?.id === nodeId && fresh ? fresh : prev,
             );
@@ -511,7 +513,7 @@ const LinkNode = ({
               .flatMap((c) => c.nodes)
               .filter((g) => g.id !== nodeId).length === 0;
           if (childOrphaned) {
-            const freshChild = await fetchNode(linkId);
+            const freshChild = await fetchNode(linkId, true);
             const childRootId = freshChild?.generalizations?.flatMap(
               (c) => c.nodes,
             )[0]?.id;

@@ -495,13 +495,21 @@ export const removeLinkFromNode = (
   collectionIndex: number
 ): TreeData[] => {
 
-  // For specializations: remove child from the parent node
+  // For specializations: remove child from the parent node. The child can be a
+  // direct child (main collection) or nested under a category node (a named
+  // collection), so strip it from both.
   if (property === 'specializations') {
     return treeData.map(node => {
       if (node.nodeId === nodeId) {
         return {
           ...node,
-          children: (node.children || []).filter(child => child.nodeId !== linkId)
+          children: (node.children || [])
+            .filter(child => child.nodeId !== linkId)
+            .map(child =>
+              child.category && child.children
+                ? { ...child, children: child.children.filter(c => c.nodeId !== linkId) }
+                : child
+            )
         };
       }
 
@@ -516,13 +524,20 @@ export const removeLinkFromNode = (
   }
 
   // Generalizations are the opposite of specializations: the tree parent is the
-  // generalization (linkId), and nodeId is removed from under it.
+  // generalization (linkId), and nodeId is removed from under it — direct child
+  // or nested under a category node (named collection).
   if (property === 'generalizations') {
     return treeData.map(node => {
       if (node.nodeId === linkId) {
         return {
           ...node,
-          children: (node.children || []).filter(child => child.nodeId !== nodeId)
+          children: (node.children || [])
+            .filter(child => child.nodeId !== nodeId)
+            .map(child =>
+              child.category && child.children
+                ? { ...child, children: child.children.filter(c => c.nodeId !== nodeId) }
+                : child
+            )
         };
       }
 

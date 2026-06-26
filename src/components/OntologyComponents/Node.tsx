@@ -158,7 +158,7 @@ type INodeProps = {
   user: User;
   mainSpecializations: MainSpecializations;
   relatedNodes: { [id: string]: INode };
-  fetchNode: (nodeId: string) => Promise<INode | null>;
+  fetchNode: (nodeId: string, force?: boolean) => Promise<INode | null>;
   addNodesToCache: (
     nodes: { [id: string]: INode },
     parentNodeId?: string,
@@ -1359,7 +1359,7 @@ const Node = ({
                   .flatMap((c: ICollection) => c.nodes)
                   .filter((g: { id: string }) => g.id !== nodeId);
                 if (childGensAfter.length > 0) continue;
-                const freshChild = await fetchNode(removedId);
+                const freshChild = await fetchNode(removedId, true);
                 const childRootId = freshChild?.generalizations?.flatMap(
                   (c) => c.nodes,
                 )[0]?.id;
