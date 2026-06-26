@@ -753,6 +753,79 @@ export async function removeFromUnclassified(
   return parkedRootId;
 }
 
+/**
+ * Builds a new node that is a child of `source` and inherits its properties.
+ * Only returns the object; the caller writes it to the database.
+ */
+export function buildSpecializationNode(
+  source: INode,
+  newNodeId: string,
+  title: string,
+  uname: string,
+  appName?: string,
+): INode {
+  const inheritance: any = JSON.parse(JSON.stringify(source.inheritance || {}));
+  for (const property in inheritance) {
+    if (inheritance[property].title === undefined) inheritance[property].title = "";
+    if (!inheritance[property].ref && property !== "isPartOf") {
+      inheritance[property].ref = source.id;
+      inheritance[property].title = source.title ?? "";
+    }
+  }
+
+  const properties: any = {};
+  for (const property in source.properties || {}) {
+    if (source.inheritance?.[property]?.inheritanceType === "neverInherit") {
+      properties[property] = defaultValueForProperty(
+        (source.propertyType as any)?.[property],
+      );
+      if (inheritance[property]) {
+        inheritance[property].ref = null;
+        inheritance[property].title = "";
+      }
+    } else {
+      properties[property] = source.properties[property];
+    }
+  }
+
+  const newNode: any = {
+    ...source,
+    id: newNodeId,
+    title,
+    createdBy: uname,
+    contributors: [],
+    contributorsByProperty: {},
+    textValue: {},
+    unclassified: false,
+    deleted: false,
+    locked: false,
+    inheritance,
+    specializations: [{ collectionName: "main", nodes: [] }],
+    generalizations: [
+      {
+        collectionName: "main",
+        nodes: [{ id: source.id, title: source.title ?? "" }],
+      },
+    ],
+    propertyOf: {},
+    numberOfGeneralizations: (source.numberOfGeneralizations || 0) + 1,
+    properties: { ...properties, isPartOf: [{ collectionName: "main", nodes: [] }] },
+    propertyType: { ...(source.propertyType || {}) },
+    nodeType: source.nodeType,
+    ...(appName ? { appName } : {}),
+    createdAt: new Date(),
+  };
+  delete newNode.root;
+  delete newNode.oNetTask;
+  if (newNode?.textValue?.specializations) delete newNode.textValue.specializations;
+  if (newNode?.textValue?.generalizations) delete newNode.textValue.generalizations;
+  if (newNode.properties?.["ONetID"]) {
+    delete newNode.properties["ONetID"];
+    delete newNode.propertyType?.["ONetID"];
+  }
+  return newNode as INode;
+}
+
 // ──────── Endpoint context type ────────
 
 export type ChangeCtx = {
