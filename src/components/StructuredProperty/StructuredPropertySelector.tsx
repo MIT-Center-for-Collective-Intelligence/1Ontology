@@ -667,9 +667,8 @@ const StructuredPropertySelector = ({
           currentVisibleNode?.id,
           selectedCollection,
         );
-
-        // Refresh editableProperty after database update
-        setTimeout(() => refreshEditableProperty(), 100);
+        // editableProperty re-syncs from currentVisibleNode in the refresh
+        // effect once the instant update or snapshot lands.
       } catch (error) {
         console.error("Error saving link changes:", error);
       }
@@ -895,6 +894,7 @@ const StructuredPropertySelector = ({
           getNumOfGeneralizations={getNumOfGeneralizations}
           selectedProperty={selectedProperty}
           currentVisibleNode={currentVisibleNode}
+          loadingIds={loadingIds}
         />
       )
     );

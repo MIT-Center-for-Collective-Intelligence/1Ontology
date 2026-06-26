@@ -446,6 +446,42 @@ export const addLinkToNode = (
     });
   }
 
+  // Generalizations are the opposite of specializations: the tree parent is the
+  // generalization (linkId), and nodeId is added under it as the child.
+  if (property === 'generalizations') {
+    return treeData.map(node => {
+      if (node.nodeId === linkId) {
+        const childExists = node.children?.some(child =>
+          child.nodeId === nodeId || child.id === nodeId
+        );
+        if (childExists) {
+          return node;
+        }
+
+        const linkedNode = relatedNodes?.[nodeId];
+        const newChild: TreeData = {
+          id: nodeId,
+          nodeId: nodeId,
+          name: linkedNode?.title || nodeId,
+          nodeType: linkedNode?.nodeType || '',
+          children: []
+        };
+        return {
+          ...node,
+          children: [...(node.children || []), newChild]
+        };
+      }
+
+      if (node.children) {
+        return {
+          ...node,
+          children: addLinkToNode(node.children, nodeId, linkId, property, collectionName, relatedNodes, nodeTitle, nodeType)
+        };
+      }
+      return node;
+    });
+  }
+
   // For other properties (parts, etc.), just trigger refresh
   return [...treeData];
 };
@@ -466,6 +502,27 @@ export const removeLinkFromNode = (
         return {
           ...node,
           children: (node.children || []).filter(child => child.nodeId !== linkId)
+        };
+      }
+
+      if (node.children) {
+        return {
+          ...node,
+          children: removeLinkFromNode(node.children, nodeId, linkId, property, collectionIndex)
+        };
+      }
+      return node;
+    });
+  }
+
+  // Generalizations are the opposite of specializations: the tree parent is the
+  // generalization (linkId), and nodeId is removed from under it.
+  if (property === 'generalizations') {
+    return treeData.map(node => {
+      if (node.nodeId === linkId) {
+        return {
+          ...node,
+          children: (node.children || []).filter(child => child.nodeId !== nodeId)
         };
       }
 
