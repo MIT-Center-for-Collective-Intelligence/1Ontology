@@ -134,7 +134,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (update) {
       const descriptionRef = nodeData.inheritance?.description?.ref;
       const rawDescription = nodeData.properties?.description || "";
-      const pageContent = `${nodeData.title}\n${!descriptionRef ? `Description:\n${rawDescription.trim()}` : ""}`;
+      const pageContent = `${nodeData.title.toLowerCase()}${!descriptionRef && rawDescription.trim() ? `\ndescription::\n${rawDescription.trim().toLowerCase()}` : ""}`;
 
       const embeddingsResponse = await openai.embeddings.create({
         model: "text-embedding-3-large",

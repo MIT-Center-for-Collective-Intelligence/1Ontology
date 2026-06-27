@@ -185,6 +185,19 @@ export const searchChromaCore = async ({
 
   if (resultsWithIds.length === 0) return [];
 
+  const lowerQuery = query.toLowerCase().trim();
+  resultsWithIds.sort((a, b) => {
+    const aTitle = (a.title || "").toLowerCase().trim();
+    const bTitle = (b.title || "").toLowerCase().trim();
+
+    const aExact = aTitle === lowerQuery;
+    const bExact = bTitle === lowerQuery;
+
+    if (aExact && !bExact) return -1;
+    if (!aExact && bExact) return 1;
+    return 0;
+  });
+
   return resultsWithIds;
 };
 
