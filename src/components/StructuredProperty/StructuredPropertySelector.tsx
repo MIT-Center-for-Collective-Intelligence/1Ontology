@@ -381,10 +381,18 @@ const StructuredPropertySelector = ({
   ]);
 
   useEffect(() => {
-    if (selectedProperty && currentVisibleNode) {
-      refreshEditableProperty();
-    }
-  }, [selectedProperty, currentVisibleNode?.id, refreshEditableProperty]);
+    if (!selectedProperty || !currentVisibleNode) return;
+    const hasPendingClone = Object.values(clonedNodesQueue || {}).some(
+      (e: any) => e?.property === selectedProperty,
+    );
+    if (hasPendingClone) return;
+    refreshEditableProperty();
+  }, [
+    selectedProperty,
+    currentVisibleNode?.id,
+    refreshEditableProperty,
+    clonedNodesQueue,
+  ]);
 
   const getSelectingModelTitle = (
     property: string,

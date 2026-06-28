@@ -560,99 +560,103 @@ const StructuredProperty = ({
       const queued = clonedNodesQueue[nId];
       const property = queued.property;
 
-      // Spec/gen go through the cloning endpoint: it creates the new node as a
-      // specialization of the searched node and links it into this node's side.
-      if (property === "specializations" || property === "generalizations") {
-        const targetId = currentVisibleNode?.id;
-        setCurrentVisibleNode((prev: any) => {
-          if (!prev || prev.id !== targetId) return prev;
-          const next: ICollection[] = JSON.parse(
-            JSON.stringify(
-              Array.isArray(prev[property]) && prev[property].length
-                ? prev[property]
-                : [{ collectionName: "main", nodes: [] }],
-            ),
-          );
-          let i = next.findIndex((c) => c.collectionName === collectionName);
-          if (i === -1) i = 0;
-          if (!next.flatMap((c) => c.nodes).some((n) => n.id === nId)) {
-            next[i].nodes.push({ id: nId, title: queued.title });
-          }
-          return { ...prev, [property]: next };
-        });
+      // All "Add Specialization" goes through the cloning endpoint: it creates
+      // the new node as a specialization of the searched node and links it into
+      // this node's section (spec/gen top-level, parts/generic under properties).
+      const targetId = currentVisibleNode?.id;
+      const isHierarchy =
+        property === "specializations" || property === "generalizations";
+      const fieldKey = isHierarchy ? property : `properties.${property}`;
 
-        pendingWrites.start(targetId, property);
-        try {
-          await Post("/nodes/hierarchy/cloning", {
-            newNodeId: nId,
-            title: queued.title,
-            generalizationId: queued.id,
-            targetNodeId: targetId,
-            targetProperty: property,
-            collectionName,
-            ...(appName ? { appName } : {}),
-          });
-          await Post("/triggerChroma", { nodeId: nId, update: true });
-          const fresh = await fetchNode(targetId, true);
-          setCurrentVisibleNode((prev: any) =>
-            prev?.id === targetId && fresh ? fresh : prev,
-          );
-          await fetchNode(nId, true);
-        } catch (error: any) {
-          const fresh = await fetchNode(targetId, true);
-          setCurrentVisibleNode((prev: any) =>
-            prev?.id === targetId && fresh ? fresh : prev,
-          );
-          const reason =
-            (typeof error === "string" ? error : error?.message) ||
-            "Please try again.";
-          setSnackbarMessage(`Failed to add specialization: ${reason}`);
-          recordLogs({
-            type: "error",
-            error: JSON.stringify({
-              name: error?.name,
-              message: typeof error === "string" ? error : error?.message,
-              stack: error?.stack,
-            }),
-            at: "saveNewSpecialization",
-          });
-        } finally {
-          pendingWrites.end(targetId, property);
+      setCurrentVisibleNode((prev: any) => {
+        if (!prev || prev.id !== targetId) return prev;
+        let base: any;
+        if (isHierarchy) {
+          base = prev[property];
+        } else if (property === "parts") {
+          base = prev.properties?.parts;
+        } else {
+          const ref = prev.inheritance?.[property]?.ref;
+          base =
+            ref && relatedNodes[ref]
+              ? relatedNodes[ref].properties?.[property]
+              : prev.properties?.[property];
         }
-        setLoadingIds((prev: Set<string>) => {
-          const _prev = new Set(prev);
-          _prev.delete(nId);
-          return _prev;
-        });
-        setClonedNodesQueue((prev: any) => {
-          const _prev = { ...prev };
-          delete _prev[nId];
-          return _prev;
-        });
-        return;
-      }
+        const next: ICollection[] = JSON.parse(
+          JSON.stringify(
+            Array.isArray(base) && base.length
+              ? base
+              : [{ collectionName: "main", nodes: [] }],
+          ),
+        );
+        let i = next.findIndex((c) => c.collectionName === collectionName);
+        if (i === -1) i = 0;
+        if (!next.flatMap((c) => c.nodes).some((n) => n.id === nId)) {
+          next[i].nodes.push({ id: nId, title: queued.title });
+        }
+        if (isHierarchy) return { ...prev, [property]: next };
+        const updated: any = {
+          ...prev,
+          properties: { ...prev.properties, [property]: next },
+        };
+        // A generic link edit overrides the inherited value on this node.
+        if (property !== "parts" && prev.inheritance?.[property]) {
+          updated.inheritance = {
+            ...prev.inheritance,
+            [property]: { ...prev.inheritance[property], ref: null, title: "" },
+          };
+        }
+        return updated;
+      });
 
-      const addedElements: string[] = [nId];
-      await handleSaveLinkChanges(
-        [],
-        addedElements,
-        property,
-        currentVisibleNode?.id,
-        collectionName,
-      );
+      pendingWrites.start(targetId, fieldKey);
+      try {
+        await Post("/nodes/hierarchy/cloning", {
+          newNodeId: nId,
+          title: queued.title,
+          generalizationId: queued.id,
+          targetNodeId: targetId,
+          targetProperty: property,
+          collectionName,
+          ...(appName ? { appName } : {}),
+        });
+        await Post("/triggerChroma", { nodeId: nId, update: true });
+        const fresh = await fetchNode(targetId, true);
+        setCurrentVisibleNode((prev: any) =>
+          prev?.id === targetId && fresh ? fresh : prev,
+        );
+        await fetchNode(nId, true);
+      } catch (error: any) {
+        const fresh = await fetchNode(targetId, true);
+        setCurrentVisibleNode((prev: any) =>
+          prev?.id === targetId && fresh ? fresh : prev,
+        );
+        const reason =
+          (typeof error === "string" ? error : error?.message) ||
+          "Please try again.";
+        setSnackbarMessage(`Failed to add specialization: ${reason}`);
+        recordLogs({
+          type: "error",
+          error: JSON.stringify({
+            name: error?.name,
+            message: typeof error === "string" ? error : error?.message,
+            stack: error?.stack,
+          }),
+          at: "saveNewSpecialization",
+        });
+      } finally {
+        pendingWrites.end(targetId, fieldKey);
+      }
       setLoadingIds((prev: Set<string>) => {
         const _prev = new Set(prev);
         _prev.delete(nId);
         return _prev;
       });
-      const id = queued.id;
-      const title = queued.title;
       setClonedNodesQueue((prev: any) => {
         const _prev = { ...prev };
         delete _prev[nId];
         return _prev;
       });
-      await handleCloning({ id }, title, nId, collectionName, property);
     } catch (error) {
       console.error(error);
     }
