@@ -28,22 +28,14 @@ import AddIcon from "@mui/icons-material/Add";
 import NewCollection from "../Collection/NewCollection";
 import LinkNode from "../LinkNode/LinkNode";
 import { useAuth } from "../context/AuthContext";
-import {
-  recordLogs,
-  saveNewChangeLog,
-  unlinkPropertyOf,
-  updateLinksForInheritance,
-} from "@components/lib/utils/helpers";
+import { recordLogs } from "@components/lib/utils/helpers";
 import {
   collection,
   doc,
   getFirestore,
   updateDoc,
 } from "firebase/firestore";
-import {
-  NODES,
-  NODES_LOGS,
-} from "@components/lib/firestoreClient/collections";
+import { NODES } from "@components/lib/firestoreClient/collections";
 import { Post } from "@components/lib/utils/Post";
 import { pendingWrites } from "@components/lib/utils/pendingWrites";
 import {
@@ -789,46 +781,9 @@ const CollectionStructure = ({
 
         const currentNodeId = currentVisibleNode.id;
 
-        // Remove nodeBId from currentVisibleNode's specializations
-        await unlinkPropertyOf(db, "generalizations", nodeBId, currentNodeId);
-
-        setSnackbarMessage(
-          `"${getTitle(nodes, nodeBId)}" has been moved under "${getTitle(nodes, nodeAId)}"`,
-        );
-
-        // Update nodeB's generalizations: remove currentNodeId, add nodeAId
-        const nodeBGeneralizations: ICollection[] = JSON.parse(
-          JSON.stringify(nodeBData.generalizations),
-        );
-        for (const col of nodeBGeneralizations) {
-          col.nodes = col.nodes.filter(
-            (n: { id: string }) => n.id !== currentNodeId,
-          );
-        }
-        nodeBGeneralizations[0].nodes.push({
-          id: nodeAId,
-          title: getTitle(nodes, nodeAId) ?? "",
-        });
-        await updateDoc(doc(collection(db, NODES), nodeBId), {
-          generalizations: nodeBGeneralizations,
-        });
-
-        // Add nodeBId to nodeA's specializations in main collection
-        const nodeASpecs: ICollection[] = JSON.parse(
-          JSON.stringify(nodeAData.specializations),
-        );
-        const mainIdx = nodeASpecs.findIndex(
-          (c) => c.collectionName === "main",
-        );
-        nodeASpecs[mainIdx !== -1 ? mainIdx : 0].nodes.push({
-          id: nodeBId,
-          title: getTitle(nodes, nodeBId) ?? "",
-        });
-        await updateDoc(doc(collection(db, NODES), nodeAId), {
-          specializations: nodeASpecs,
-        });
-
-        // Remove nodeBId from the visible list
+        // Instant: drop nodeB from the current node's specializations and the
+        // visible list, and move it under nodeA in the tree. The snapshot is
+        // gated by pendingWrites until the server write lands.
         setEditableProperty((prev: ICollection[]) => {
           const next: ICollection[] = JSON.parse(JSON.stringify(prev));
           if (next[sourceCollectionIndex]) {
@@ -838,83 +793,63 @@ const CollectionStructure = ({
           }
           return next;
         });
-
-        // Snapshot specializations before/after nodeBId removal — `unlinkPropertyOf`
-        // above mutated Firestore but not `currentVisibleNode` locally.
-        const previousSpecializations: ICollection[] =
-          currentVisibleNode.specializations || [];
-        const newSpecializations: ICollection[] = previousSpecializations.map(
-          (col) => ({
-            ...col,
-            nodes: col.nodes.filter((n: ILinkNode) => n.id !== nodeBId),
-          }),
+        setCurrentVisibleNode((prev: any) =>
+          prev && prev.id === currentNodeId
+            ? {
+                ...prev,
+                specializations: (prev.specializations || []).map(
+                  (col: ICollection) => ({
+                    ...col,
+                    nodes: col.nodes.filter((n: ILinkNode) => n.id !== nodeBId),
+                  }),
+                ),
+              }
+            : prev,
         );
-
-        // Reserve a parent-log id so the child log on nodeB can reference it via
-        // `triggeredBy.logId`. Not passed to `unlinkPropertyOf` above because that
-        // call is itself part of the parent mutation.
-        const parentLogId = doc(collection(db, NODES_LOGS)).id;
-        const parentLog = {
-          logId: parentLogId,
-          nodeId: currentNodeId,
-          nodeTitle: currentVisibleNode.title ?? "",
-          changeType: "modify elements" as const,
-        };
-
-        saveNewChangeLog(
-          db,
-          {
-            nodeId: currentNodeId,
-            modifiedBy: user.uname,
-            modifiedProperty: "specializations",
-            previousValue: previousSpecializations,
-            newValue: newSpecializations,
-            modifiedAt: new Date(),
-            changeType: "modify elements",
-            changeDetails: {
-              action: "nest-specialization",
-              movedNode: nodeBId,
-              newParent: nodeAId,
-            },
-            fullNode: currentVisibleNode,
-            ...(appName ? { appName } : {}),
-          },
-          parentLogId,
-        );
-        saveNewChangeLog(db, {
-          nodeId: nodeBId,
-          modifiedBy: user.uname,
-          modifiedProperty: "generalizations",
-          previousValue: nodeBData.generalizations,
-          newValue: nodeBGeneralizations,
-          modifiedAt: new Date(),
-          changeType: "modify elements",
-          changeDetails: {
-            action: "nest-specialization",
-            removedParent: currentNodeId,
-            newParent: nodeAId,
-          },
-          fullNode: nodeBData,
-          ...(appName ? { appName } : {}),
-          triggeredBy: parentLog,
-        });
-
-        // Instant tree update: move nodeBId from currentNode's subtree to nodeA's subtree
         if (onInstantTreeUpdate) {
           onInstantTreeUpdate((tree) =>
             moveNodeInTree(tree, nodeBId, currentNodeId, nodeAId, 0),
           );
         }
-
-        // Inheritance update
-        await updateLinksForInheritance(
-          db,
-          nodeBId,
-          [{ id: nodeAId }],
-          nodeBGeneralizations[0].nodes,
-          nodeBData,
-          nodes,
+        setSnackbarMessage(
+          `"${getTitle(nodes, nodeBId)}" has been moved under "${getTitle(nodes, nodeAId)}"`,
         );
+
+        pendingWrites.start(currentNodeId, "specializations");
+        try {
+          await Post("/nodes/hierarchy/move", {
+            nodeId: nodeBId,
+            fromParentId: currentNodeId,
+            toParentId: nodeAId,
+            toCollectionName: "main",
+            ...(appName ? { appName } : {}),
+          });
+        } catch (error: any) {
+          const fresh = await fetchNode(currentNodeId);
+          if (fresh) {
+            setCurrentVisibleNode((prev: any) =>
+              prev?.id === fresh.id ? fresh : prev,
+            );
+            setEditableProperty((fresh as any).specializations ?? []);
+          }
+          setSnackbarMessage(
+            `Failed to move "${getTitle(nodes, nodeBId)}": ${
+              (typeof error === "string" ? error : error?.message) ||
+              "Please try again."
+            }`,
+          );
+          recordLogs({
+            type: "error",
+            error: JSON.stringify({
+              name: error?.name,
+              message: typeof error === "string" ? error : error?.message,
+              stack: error?.stack,
+            }),
+            at: "handleSpecializationLink",
+          });
+        } finally {
+          pendingWrites.end(currentNodeId, "specializations");
+        }
       } catch (error: any) {
         console.error(error);
         recordLogs({
@@ -929,13 +864,14 @@ const CollectionStructure = ({
     },
     [
       currentVisibleNode,
-      db,
       nodes,
       user,
-      propertyValue,
       appName,
+      fetchNode,
       setEditableProperty,
+      setCurrentVisibleNode,
       onInstantTreeUpdate,
+      setSnackbarMessage,
     ],
   );
 

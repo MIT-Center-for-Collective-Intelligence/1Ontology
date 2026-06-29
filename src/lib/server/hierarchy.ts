@@ -418,7 +418,11 @@ export async function applyReciprocityRemove(
   }
 }
 
-/** Adds `nodeId` to the opposite side's `main` of each added link; logs each. */
+/**
+ * Adds `nodeId` to the opposite side of each added link; logs each. Lands in
+ * `main` by default, or in `collectionName` when given (e.g. move's target
+ * collection on the new parent).
+ */
 export async function applyReciprocityAdd(
   nodeId: string,
   nodeTitle: string,
@@ -429,13 +433,18 @@ export async function applyReciprocityAdd(
   uname: string | undefined,
   appName: string | undefined,
   childLogs: NodeChange[],
+  collectionName?: string,
 ): Promise<void> {
   for (const id of addedIds) {
     const linked = await getNode(id, cache);
     if (!linked) continue;
     const before = asCollections(linked[opposite]);
     const after: ICollection[] = JSON.parse(JSON.stringify(before));
-    if (!addToMain(after, { id: nodeId, title: nodeTitle })) continue;
+    const added =
+      collectionName && collectionName !== "main"
+        ? addToCollection(after, collectionName, { id: nodeId, title: nodeTitle })
+        : addToMain(after, { id: nodeId, title: nodeTitle });
+    if (!added) continue;
     await db
       .collection(NODES)
       .doc(id)
