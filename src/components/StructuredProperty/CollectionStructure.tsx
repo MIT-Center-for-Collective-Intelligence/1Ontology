@@ -461,7 +461,6 @@ const CollectionStructure = ({
           const newArray = [...propertyValue];
           const [movedElement] = newArray.splice(sourceIndex, 1);
           newArray.splice(destinationIndex, 0, movedElement);
-          const nodeRef = doc(collection(db, NODES), currentVisibleNode?.id);
 
           if (
             property === "specializations" ||
@@ -532,23 +531,9 @@ const CollectionStructure = ({
             } finally {
               pendingWrites.end(currentVisibleNode.id, property);
             }
-          } else {
-            if (nodeData.inheritance) {
-              nodeData.inheritance[property].ref = null;
-              nodeData.inheritance[property].title = "";
-            }
-            updateDoc(nodeRef, {
-              [`properties.${property}`]: newArray,
-              [`inheritance.${property}.ref`]: null,
-              [`inheritance.${property}.title`]: "",
-            });
-
-            updateInheritance({
-              nodeId: currentVisibleNode?.id,
-              updatedProperties: [property],
-              db,
-            });
           }
+          // No generic branch: generic properties have a single collection, and
+          // collection dragging is gated to specializations.
         }
       } catch (error: any) {
         console.error(error);
@@ -699,43 +684,66 @@ const CollectionStructure = ({
               pendingWrites.end(currentVisibleNode.id, property);
             }
           } else {
-            const nodeRef = doc(collection(db, NODES), currentVisibleNode?.id);
-            updateDoc(nodeRef, {
-              [`properties.${property}`]: propertyValue,
-              [`inheritance.${property}.ref`]: null,
-              [`inheritance.${property}.title`]: "",
-            });
-            updateInheritance({
-              nodeId: currentVisibleNode?.id,
-              updatedProperties: [property],
-              db,
-            });
+            // Instant update; reordering an inherited value overrides it, so
+            // null the ref locally too. The snapshot is gated by pendingWrites.
+            setCurrentVisibleNode((prev: any) =>
+              prev && prev.id === currentVisibleNode?.id
+                ? {
+                    ...prev,
+                    properties: { ...prev.properties, [property]: propertyValue },
+                    inheritance: {
+                      ...prev.inheritance,
+                      [property]: {
+                        ...(prev.inheritance?.[property] || {}),
+                        ref: null,
+                        title: "",
+                      },
+                    },
+                  }
+                : prev,
+            );
 
-            saveNewChangeLog(db, {
-              nodeId: currentVisibleNode?.id,
-              modifiedBy: user?.uname || "",
-              modifiedProperty: property,
-              previousValue,
-              newValue: propertyValue,
-              modifiedAt: new Date(),
-              changeType: "sort elements",
-              changeDetails: {
-                draggableNodeId: draggableId,
-                sourceCollectionIndex,
-                destinationCollectionIndex,
-                destinationIndex,
-              },
-              fullNode: currentVisibleNode,
-              ...(appName ? { appName } : {}),
-            });
-
-            recordLogs({
-              action: "sort elements",
-              field: property,
-              sourceCategory: sourceCollectionIndex,
-              destinationCategory: destinationCollectionIndex,
-              nodeId: currentVisibleNode?.id,
-            });
+            pendingWrites.start(currentVisibleNode.id, `properties.${property}`);
+            try {
+              await Post("/nodes/properties/update", {
+                action: "sort-links",
+                nodeId: currentVisibleNode.id,
+                propertyName: property,
+                value: propertyValue,
+                changeDetails: {
+                  draggableNodeId: draggableId,
+                  sourceCollectionIndex,
+                  destinationCollectionIndex,
+                  destinationIndex,
+                },
+                ...(appName ? { appName } : {}),
+              });
+            } catch (error: any) {
+              const fresh = await fetchNode(currentVisibleNode.id);
+              if (fresh) {
+                setCurrentVisibleNode((prev: any) =>
+                  prev?.id === fresh.id ? fresh : prev,
+                );
+                setEditableProperty((fresh as any).properties?.[property] ?? []);
+              }
+              setSnackbarMessage(
+                `Failed to reorder "${property}": ${
+                  (typeof error === "string" ? error : error?.message) ||
+                  "Please try again."
+                }`,
+              );
+              recordLogs({
+                type: "error",
+                error: JSON.stringify({
+                  name: error?.name,
+                  message: typeof error === "string" ? error : error?.message,
+                  stack: error?.stack,
+                }),
+                at: "handleSorting",
+              });
+            } finally {
+              pendingWrites.end(currentVisibleNode.id, `properties.${property}`);
+            }
           }
 
         }

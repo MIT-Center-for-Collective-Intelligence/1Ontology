@@ -17,10 +17,17 @@ import { ICollection, INode, NodeChange } from "@components/types/INode";
 
 /**
  * Single endpoint for generic node-property operations — add / delete /
- * rename / change / change-links — selected by `action` in the request body.
+ * rename / change / change-links / sort-links — selected by `action` in the
+ * request body.
  */
 
-type PropertyAction = "add" | "delete" | "rename" | "change" | "change-links";
+type PropertyAction =
+  | "add"
+  | "delete"
+  | "rename"
+  | "change"
+  | "change-links"
+  | "sort-links";
 
 type OperationContext = {
   nodeId: string;
@@ -736,12 +743,154 @@ async function changeLinks(
   return { ok: true, changedProperty: cleanName };
 }
 
+/** Validates incoming collections; returns null if malformed. */
+function sanitizeLinkCollections(
+  value: any,
+  selfId: string,
+): ICollection[] | null {
+  if (!Array.isArray(value)) return null;
+  const seen = new Set<string>();
+  const out: ICollection[] = [];
+  for (const c of value) {
+    if (!c || typeof c.collectionName !== "string" || !Array.isArray(c.nodes)) {
+      return null;
+    }
+    const nodes = [];
+    for (const n of c.nodes) {
+      if (!n || typeof n.id !== "string") return null;
+      if (n.id === selfId || seen.has(n.id)) continue; // skip self-links and dupes
+      seen.add(n.id);
+      nodes.push({
+        id: n.id,
+        title: typeof n.title === "string" ? n.title : "",
+      });
+    }
+    out.push({ collectionName: c.collectionName, nodes });
+  }
+  return out;
+}
+
+/** Every node id across all collections. */
+function idsOf(collections: ICollection[]): Set<string> {
+  return new Set(collections.flatMap((c) => c.nodes.map((n) => n.id)));
+}
+
+/** Builds a string of the current order, used to skip when nothing changed. */
+function orderSignature(collections: ICollection[]): string {
+  return collections
+    .map((c) => `${c.collectionName}:${c.nodes.map((n) => n.id).join(",")}`)
+    .join("|");
+}
+
+/**
+ * Reorders the nodes of a link-typed property. The same nodes stay linked, so
+ * back-links are untouched. If the value was inherited, reordering it becomes an
+ * override (a child can't reorder a value stored on its parent), so the ref is
+ * broken and inheriting descendants re-point here.
+ */
+async function sortLinks(
+  ctx: OperationContext,
+): Promise<{ ok: true; changedProperty: string }> {
+  const { nodeId, nodeData, data, uname, appName } = ctx;
+
+  const nameError = validatePropertyName(data?.propertyName);
+  if (nameError) throw new HttpError(400, nameError);
+  const cleanName = (data.propertyName as string).trim();
+
+  if (!hasOwn(nodeData.properties, cleanName)) {
+    throw new HttpError(404, `Property "${cleanName}" not found on this node`);
+  }
+  const propertyType = (nodeData.propertyType as any)?.[cleanName];
+  if (propertyType === "string" || CHANGE_TYPES.has(propertyType)) {
+    throw new HttpError(
+      400,
+      `Property "${cleanName}" (type "${propertyType ?? "unknown"}") is not link-typed`,
+    );
+  }
+
+  // Reorder the value the user saw: while inheriting, that lives on the
+  // referenced node, not this node's own (stale) copy.
+  const inheritedRef = nodeData.inheritance?.[cleanName]?.ref;
+  let refData: INode | undefined;
+  if (inheritedRef) {
+    refData = (await db.collection(NODES).doc(inheritedRef).get()).data() as
+      | INode
+      | undefined;
+  }
+  let baseRaw: any =
+    refData && hasOwn(refData.properties, cleanName)
+      ? refData.properties[cleanName]
+      : nodeData.properties[cleanName];
+  if (!Array.isArray(baseRaw) || baseRaw.length === 0) {
+    baseRaw = [{ collectionName: "main", nodes: [] }];
+  }
+  const previousValue: ICollection[] = JSON.parse(JSON.stringify(baseRaw));
+
+  const value = sanitizeLinkCollections(data.value, nodeId);
+  if (!value) throw new HttpError(400, "value must be an array of collections");
+
+  // A sort may only reorder; it must not add or remove links.
+  const prevIds = idsOf(previousValue);
+  const nextIds = idsOf(value);
+  const sameMembership =
+    prevIds.size === nextIds.size && [...prevIds].every((id) => nextIds.has(id));
+  if (!sameMembership) {
+    throw new HttpError(400, "Sort can only reorder links, not add or remove them");
+  }
+  if (orderSignature(previousValue) === orderSignature(value)) {
+    return { ok: true, changedProperty: cleanName };
+  }
+
+  const wasInheriting = !!inheritedRef;
+  const nodeUpdates: Record<string, any> = {
+    [`properties.${cleanName}`]: value,
+  };
+  if (wasInheriting) {
+    nodeUpdates[`inheritance.${cleanName}.ref`] = null;
+    nodeUpdates[`inheritance.${cleanName}.title`] = "";
+    if (refData?.textValue && hasOwn(refData.textValue, cleanName)) {
+      nodeUpdates[`textValue.${cleanName}`] = refData.textValue[cleanName];
+    }
+  }
+  if (uname && uname !== "ouhrac") {
+    nodeUpdates.contributors = FieldValue.arrayUnion(uname);
+    nodeUpdates[`contributorsByProperty.${cleanName}`] =
+      FieldValue.arrayUnion(uname);
+  }
+  await db.collection(NODES).doc(nodeId).update(nodeUpdates);
+
+  // When newly overriding, re-point inheriting descendants at this node.
+  if (wasInheriting) {
+    await rewireInheritingDescendants(nodeId, nodeData.title ?? "", cleanName);
+  }
+
+  if (uname) {
+    await writeChangeLog({
+      nodeId,
+      modifiedBy: uname,
+      modifiedProperty: cleanName,
+      previousValue,
+      newValue: value,
+      modifiedAt: new Date(),
+      changeType: "sort elements",
+      ...(data.changeDetails && typeof data.changeDetails === "object"
+        ? { changeDetails: data.changeDetails }
+        : {}),
+      fullNode: nodeData,
+      ...(appName ? { appName } : {}),
+    } as NodeChange);
+  }
+
+  return { ok: true, changedProperty: cleanName };
+}
+
 const ACTIONS: PropertyAction[] = [
   "add",
   "delete",
   "rename",
   "change",
   "change-links",
+  "sort-links",
 ];
 
 function fail(res: NextApiResponse, status: number, msg: string) {
@@ -794,6 +943,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         break;
       case "change-links":
         result = await changeLinks(ctx);
+        break;
+      case "sort-links":
+        result = await sortLinks(ctx);
         break;
     }
 
