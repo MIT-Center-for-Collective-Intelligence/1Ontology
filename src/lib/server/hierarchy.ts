@@ -149,6 +149,27 @@ export function diffSides(
   return { added, removed, newIds };
 }
 
+/** True when `next` has the same nodes as `previous`, just in a different order. */
+export function isSameMembership(
+  previous: ICollection[],
+  next: ICollection[],
+): boolean {
+  const a = idsOf(previous);
+  const b = idsOf(next);
+  if (a.size !== b.size) return false;
+  for (const id of a) if (!b.has(id)) return false;
+  return true;
+}
+
+/** Saves a new order for one side's collections, without changing their nodes. */
+export async function writeSideOrder(
+  nodeId: string,
+  side: Side,
+  value: ICollection[],
+): Promise<void> {
+  await db.collection(NODES).doc(nodeId).update({ [side]: value });
+}
+
 // ──────── Subtree traversal ────────
 
 /**

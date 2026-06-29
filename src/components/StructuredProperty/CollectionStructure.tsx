@@ -46,6 +46,8 @@ import {
   NODES,
   NODES_LOGS,
 } from "@components/lib/firestoreClient/collections";
+import { Post } from "@components/lib/utils/Post";
+import { pendingWrites } from "@components/lib/utils/pendingWrites";
 import {
   DndContext,
   DragOverlay,
@@ -483,9 +485,53 @@ const CollectionStructure = ({
               });
             }
 
-            updateDoc(nodeRef, {
-              [property]: newArray,
-            });
+            // Instant update; the snapshot for this side is gated by
+            // pendingWrites until the server write lands.
+            setCurrentVisibleNode((prev: any) =>
+              prev && prev.id === currentVisibleNode?.id
+                ? { ...prev, [property]: newArray }
+                : prev,
+            );
+
+            pendingWrites.start(currentVisibleNode.id, property);
+            try {
+              await Post("/nodes/hierarchy/sort", {
+                nodeId: currentVisibleNode.id,
+                side: property,
+                value: newArray,
+                sortType: "collections",
+                changeDetails: {
+                  sourceCollectionIndex: sourceIndex,
+                  destinationCollectionIndex: destinationIndex,
+                },
+                ...(appName ? { appName } : {}),
+              });
+            } catch (error: any) {
+              const fresh = await fetchNode(currentVisibleNode.id);
+              if (fresh) {
+                setCurrentVisibleNode((prev: any) =>
+                  prev?.id === fresh.id ? fresh : prev,
+                );
+                setEditableProperty((fresh as any)[property] ?? []);
+              }
+              setSnackbarMessage(
+                `Failed to reorder collections: ${
+                  (typeof error === "string" ? error : error?.message) ||
+                  "Please try again."
+                }`,
+              );
+              recordLogs({
+                type: "error",
+                error: JSON.stringify({
+                  name: error?.name,
+                  message: typeof error === "string" ? error : error?.message,
+                  stack: error?.stack,
+                }),
+                at: "handleCollectionSorting",
+              });
+            } finally {
+              pendingWrites.end(currentVisibleNode.id, property);
+            }
           } else {
             if (nodeData.inheritance) {
               nodeData.inheritance[property].ref = null;
@@ -517,7 +563,7 @@ const CollectionStructure = ({
         });
       }
     },
-    [property, currentVisibleNode],
+    [property, currentVisibleNode, appName, fetchNode],
   );
 
   const handleSorting = useCallback(
@@ -578,15 +624,82 @@ const CollectionStructure = ({
             );
           }
 
-          const nodeRef = doc(collection(db, NODES), currentVisibleNode?.id);
           if (
             property === "specializations" ||
             property === "generalizations"
           ) {
-            updateDoc(nodeRef, {
-              [property]: propertyValue,
-            });
+            if (property === "specializations" && onInstantTreeUpdate) {
+              const fromCollectionName =
+                propertyValue[sourceCollectionIndex]?.collectionName;
+              const toCollectionName =
+                propertyValue[destinationCollectionIndex]?.collectionName;
+
+              onInstantTreeUpdate((tree) =>
+                reorderChildInTree(
+                  tree,
+                  currentVisibleNode.id,
+                  draggableId,
+                  sourceCollectionIndex,
+                  destinationCollectionIndex,
+                  nodeIdx,
+                  destinationIndex,
+                  fromCollectionName,
+                  toCollectionName,
+                ),
+              );
+            }
+
+            // Instant update; the snapshot for this side is gated by
+            // pendingWrites until the server write lands.
+            setCurrentVisibleNode((prev: any) =>
+              prev && prev.id === currentVisibleNode?.id
+                ? { ...prev, [property]: propertyValue }
+                : prev,
+            );
+
+            pendingWrites.start(currentVisibleNode.id, property);
+            try {
+              await Post("/nodes/hierarchy/sort", {
+                nodeId: currentVisibleNode.id,
+                side: property,
+                value: propertyValue,
+                sortType: "elements",
+                changeDetails: {
+                  draggableNodeId: draggableId,
+                  sourceCollectionIndex,
+                  destinationCollectionIndex,
+                  destinationIndex,
+                },
+                ...(appName ? { appName } : {}),
+              });
+            } catch (error: any) {
+              const fresh = await fetchNode(currentVisibleNode.id);
+              if (fresh) {
+                setCurrentVisibleNode((prev: any) =>
+                  prev?.id === fresh.id ? fresh : prev,
+                );
+                setEditableProperty((fresh as any)[property] ?? []);
+              }
+              setSnackbarMessage(
+                `Failed to reorder "${property}": ${
+                  (typeof error === "string" ? error : error?.message) ||
+                  "Please try again."
+                }`,
+              );
+              recordLogs({
+                type: "error",
+                error: JSON.stringify({
+                  name: error?.name,
+                  message: typeof error === "string" ? error : error?.message,
+                  stack: error?.stack,
+                }),
+                at: "handleSorting",
+              });
+            } finally {
+              pendingWrites.end(currentVisibleNode.id, property);
+            }
           } else {
+            const nodeRef = doc(collection(db, NODES), currentVisibleNode?.id);
             updateDoc(nodeRef, {
               [`properties.${property}`]: propertyValue,
               [`inheritance.${property}.ref`]: null,
@@ -597,226 +710,34 @@ const CollectionStructure = ({
               updatedProperties: [property],
               db,
             });
-          }
 
-          saveNewChangeLog(db, {
-            nodeId: currentVisibleNode?.id,
-            modifiedBy: user?.uname || "",
-            modifiedProperty: property,
-            previousValue,
-            newValue: propertyValue,
-            modifiedAt: new Date(),
-            changeType: "sort elements",
-            changeDetails: {
-              draggableNodeId: draggableId,
-              sourceCollectionIndex,
-              destinationCollectionIndex,
-              destinationIndex,
-            },
-            fullNode: currentVisibleNode,
-            ...(appName ? { appName } : {}),
-          });
-
-          if (property === "specializations" && onInstantTreeUpdate) {
-
-            // Get collection names from propertyValue array
-            const fromCollectionName = propertyValue[sourceCollectionIndex]?.collectionName;
-            const toCollectionName = propertyValue[destinationCollectionIndex]?.collectionName;
-
-            onInstantTreeUpdate((tree) => {
-              return reorderChildInTree(
-                tree,
-                currentVisibleNode.id,
-                draggableId,
+            saveNewChangeLog(db, {
+              nodeId: currentVisibleNode?.id,
+              modifiedBy: user?.uname || "",
+              modifiedProperty: property,
+              previousValue,
+              newValue: propertyValue,
+              modifiedAt: new Date(),
+              changeType: "sort elements",
+              changeDetails: {
+                draggableNodeId: draggableId,
                 sourceCollectionIndex,
                 destinationCollectionIndex,
-                nodeIdx,
                 destinationIndex,
-                fromCollectionName,
-                toCollectionName
-              );
+              },
+              fullNode: currentVisibleNode,
+              ...(appName ? { appName } : {}),
+            });
+
+            recordLogs({
+              action: "sort elements",
+              field: property,
+              sourceCategory: sourceCollectionIndex,
+              destinationCategory: destinationCollectionIndex,
+              nodeId: currentVisibleNode?.id,
             });
           }
 
-          // Queue tree update after sorting elements
-          if (currentVisibleNode?.id) {
-            // Instant update: Reorder children in tree to reflect collection changes
-            if (onInstantTreeUpdate) {
-              // onInstantTreeUpdate((tree) => {
-              //   // Helper to find and update the current node's children in the tree
-              //   const updateTreeNode = (nodes: any[]): any[] => {
-              //     return nodes.map((node) => {
-              //       // Find the current visible node in the tree
-              //       if (node.nodeId === currentVisibleNode.id) {
-              //         if (!node.children) return node;
-              //         // Get source and destination collection names
-              //         const sourceCollName =
-              //           propertyValue[sourceCollectionIndex]?.collectionName;
-              //         const destCollName =
-              //           propertyValue[destinationCollectionIndex]
-              //             ?.collectionName;
-              //         if (!sourceCollName || !destCollName) return node;
-              //         // Case 1: Same collection - just reorder
-              //         if (
-              //           sourceCollectionIndex === destinationCollectionIndex
-              //         ) {
-              //           // Find the collection in the tree
-              //           if (sourceCollName === "main") {
-              //             // Main collection children are direct children
-              //             const childIndex = node.children.findIndex(
-              //               (c: any) => c.nodeId === draggableId,
-              //             );
-              //             if (childIndex !== -1) {
-              //               const newChildren = [...node.children];
-              //               const [movedChild] = newChildren.splice(
-              //                 childIndex,
-              //                 1,
-              //               );
-              //               newChildren.splice(
-              //                 destination.index,
-              //                 0,
-              //                 movedChild,
-              //               );
-              //               return { ...node, children: newChildren };
-              //             }
-              //           } else {
-              //             // Find collection node like "[collectionName]"
-              //             const collectionNode = node.children.find(
-              //               (c: any) => c.name === `[${sourceCollName}]`,
-              //             );
-              //             if (collectionNode && collectionNode.children) {
-              //               const childIndex =
-              //                 collectionNode.children.findIndex(
-              //                   (c: any) => c.nodeId === draggableId,
-              //                 );
-              //               if (childIndex !== -1) {
-              //                 const newCollChildren = [
-              //                   ...collectionNode.children,
-              //                 ];
-              //                 const [movedChild] = newCollChildren.splice(
-              //                   childIndex,
-              //                   1,
-              //                 );
-              //                 newCollChildren.splice(
-              //                   destination.index,
-              //                   0,
-              //                   movedChild,
-              //                 );
-              //                 const updatedCollNode = {
-              //                   ...collectionNode,
-              //                   children: newCollChildren,
-              //                 };
-              //                 const newChildren = node.children.map((c: any) =>
-              //                   c.name === `[${sourceCollName}]`
-              //                     ? updatedCollNode
-              //                     : c,
-              //                 );
-              //                 return { ...node, children: newChildren };
-              //               }
-              //             }
-              //           }
-              //         } else {
-              //           // Case 2: Different collections - move between them
-              //           let movedChild: any = null;
-              //           let newChildren = [...node.children];
-              //           // Remove from source
-              //           if (sourceCollName === "main") {
-              //             const childIndex = newChildren.findIndex(
-              //               (c: any) => c.nodeId === draggableId,
-              //             );
-              //             if (childIndex !== -1) {
-              //               [movedChild] = newChildren.splice(childIndex, 1);
-              //             }
-              //           } else {
-              //             const sourceCollNode = newChildren.find(
-              //               (c: any) => c.name === `[${sourceCollName}]`,
-              //             );
-              //             if (sourceCollNode && sourceCollNode.children) {
-              //               const childIndex =
-              //                 sourceCollNode.children.findIndex(
-              //                   (c: any) => c.nodeId === draggableId,
-              //                 );
-              //               if (childIndex !== -1) {
-              //                 [movedChild] = sourceCollNode.children.splice(
-              //                   childIndex,
-              //                   1,
-              //                 );
-              //                 newChildren = newChildren.map((c: any) =>
-              //                   c.name === `[${sourceCollName}]`
-              //                     ? { ...sourceCollNode }
-              //                     : c,
-              //                 );
-              //               }
-              //             }
-              //           }
-              //           // Add to destination
-              //           if (movedChild) {
-              //             if (destCollName === "main") {
-              //               newChildren.splice(
-              //                 destination.index,
-              //                 0,
-              //                 movedChild,
-              //               );
-              //             } else {
-              //               let destCollNode = newChildren.find(
-              //                 (c: any) => c.name === `[${destCollName}]`,
-              //               );
-              //               if (!destCollNode) {
-              //                 // Create collection node if it doesn't exist
-              //                 destCollNode = {
-              //                   id: `${node.id}-${destCollName}`,
-              //                   nodeId: node.nodeId,
-              //                   name: `[${destCollName}]`,
-              //                   category: true,
-              //                   children: [],
-              //                 };
-              //                 newChildren.push(destCollNode);
-              //               }
-              //               const destChildren = [
-              //                 ...(destCollNode.children || []),
-              //               ];
-              //               destChildren.splice(
-              //                 destination.index,
-              //                 0,
-              //                 movedChild,
-              //               );
-              //               newChildren = newChildren.map((c: any) =>
-              //                 c.name === `[${destCollName}]`
-              //                   ? { ...c, children: destChildren }
-              //                   : c,
-              //               );
-              //             }
-              //           }
-              //           return { ...node, children: newChildren };
-              //         }
-              //       }
-              //       // Recursively process children
-              //       if (node.children) {
-              //         return {
-              //           ...node,
-              //           children: updateTreeNode(node.children),
-              //         };
-              //       }
-              //       return node;
-              //     });
-              //   };
-              //   const updatedTree = updateTreeNode(tree);
-              //     "[INSTANT UPDATE] Reordered children in tree after collection sorting",
-              //   );
-              //   return updatedTree;
-              // });
-            }
-
-          }
-
-          // Record a log of the sorting action
-          recordLogs({
-            action: "sort elements",
-            field: property,
-            sourceCategory: sourceCollectionIndex,
-            destinationCategory: destinationCollectionIndex,
-            nodeId: currentVisibleNode?.id,
-          });
         }
       } catch (error: any) {
         // Log any errors that occur during the sorting process
@@ -831,7 +752,7 @@ const CollectionStructure = ({
         });
       }
     },
-    [currentVisibleNode, db, nodes, recordLogs, property],
+    [currentVisibleNode, db, nodes, recordLogs, property, appName, fetchNode],
   );
 
   const handleSpecializationLink = useCallback(
