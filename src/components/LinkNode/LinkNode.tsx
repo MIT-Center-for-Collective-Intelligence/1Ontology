@@ -611,6 +611,20 @@ const LinkNode = ({
   const queueEntry = clonedNodesQueue[link.id];
   const isQueuedClone = queueEntry?.property === property;
   const queuedTitle = queueEntry?.title;
+  // Editable title for a pending clone
+  const updateQueuedTitle = (value: string) => {
+    setClonedNodesQueue((prev: any) => ({
+      ...prev,
+      [link.id]: { ...prev[link.id], title: value },
+    }));
+  };
+  const isEditableClone =
+    isQueuedClone &&
+    property !== "parts" &&
+    enableEdit &&
+    !selectedDiffNode &&
+    !currentImprovement &&
+    !loadingIds.has(link.id);
   return (
     <Box
       id={`${link.id}-${property}`}
@@ -654,15 +668,34 @@ const LinkNode = ({
             }}
           />
         </ListItemIcon>
-        <LinkNodeTitle
-          title={isQueuedClone ? queuedTitle : title}
-          link={link}
-          relatedNodes={relatedNodes}
-          property={property}
-          selectedProperty={selectedProperty}
-          onNavigate={handleNavigateToNode}
-          linkColor={getLinkColor(link.change)}
-        />
+        {isEditableClone ? (
+          <TextField
+            size="small"
+            autoFocus
+            value={queuedTitle ?? ""}
+            onChange={(e) => updateQueuedTitle(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && (queuedTitle ?? "").trim()) {
+                saveNewSpecialization(link.id, collectionName);
+              }
+            }}
+            placeholder="New node title"
+            sx={{
+              flex: 1,
+              "& .MuiInputBase-root": { borderRadius: "12px" },
+            }}
+          />
+        ) : (
+          <LinkNodeTitle
+            title={isQueuedClone ? queuedTitle : title}
+            link={link}
+            relatedNodes={relatedNodes}
+            property={property}
+            selectedProperty={selectedProperty}
+            onNavigate={handleNavigateToNode}
+            linkColor={getLinkColor(link.change)}
+          />
+        )}
 
         <Box sx={{ display: "flex", alignItems: "center", ml: "auto" }}>
           {link.changeType === "sort" && (
@@ -685,14 +718,21 @@ const LinkNode = ({
             ) : (
               <Box sx={{ display: "flex" }}>
                 <Tooltip title="Save new specialization">
-                  <IconButton
-                    sx={{ ml: "8px", borderRadius: "18px", p: 0.2 }}
-                    onClick={() =>
-                      saveNewSpecialization(link.id, collectionName)
-                    }
-                  >
-                    <CheckIcon sx={{ color: "green" }} />
-                  </IconButton>
+                  <span>
+                    <IconButton
+                      sx={{ ml: "8px", borderRadius: "18px", p: 0.2 }}
+                      disabled={!(queuedTitle ?? "").trim()}
+                      onClick={() =>
+                        saveNewSpecialization(link.id, collectionName)
+                      }
+                    >
+                      <CheckIcon
+                        sx={{
+                          color: (queuedTitle ?? "").trim() ? "green" : "gray",
+                        }}
+                      />
+                    </IconButton>
+                  </span>
                 </Tooltip>
                 <Tooltip title="Discard">
                   <IconButton
