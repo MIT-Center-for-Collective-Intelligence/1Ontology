@@ -139,7 +139,6 @@ function fail(res: NextApiResponse, status: number, msg: string) {
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   if (req.method !== "POST") return fail(res, 405, "Method not allowed");
-  console.log("MOVE STARTED");
   const data = req.body.data;
   const { nodeId, fromParentId, toParentId, toCollectionName, appName, user } =
     data as {
@@ -181,7 +180,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       uname,
       appName,
     });
-    console.log("FINISHED MOVE");
     return res.status(200).json(result);
   } catch (error: any) {
     if (error instanceof HttpError) return fail(res, error.status, error.message);

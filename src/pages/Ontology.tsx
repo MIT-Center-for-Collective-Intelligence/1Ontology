@@ -2345,6 +2345,8 @@ const Ontology = ({
                     setSnackbarMessage={setSnackbarMessage}
                     treeRef={treeRef}
                     currentVisibleNode={currentVisibleNode}
+                    setCurrentVisibleNode={setCurrentVisibleNode}
+                    fetchNode={fetchNode}
                     nodes={relatedNodes}
                     onOpenNodesTree={(nodeId: string) => {
                       onOpenNodesTree(nodeId);
@@ -2775,6 +2777,8 @@ const Ontology = ({
                       setSnackbarMessage={setSnackbarMessage}
                       treeRef={treeRef}
                       currentVisibleNode={currentVisibleNode}
+                      setCurrentVisibleNode={setCurrentVisibleNode}
+                      fetchNode={fetchNode}
                       nodes={relatedNodes}
                       onOpenNodesTree={onOpenNodesTree}
                       appName={appName}
