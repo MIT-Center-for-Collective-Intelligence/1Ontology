@@ -695,7 +695,6 @@ const Ontology = ({
     setNewOnes(new Set());
     setCheckedItems(new Set());
     setClonedNodesQueue({});
-    setLoadingIds(new Set());
     setEditableProperty([]);
   };
 

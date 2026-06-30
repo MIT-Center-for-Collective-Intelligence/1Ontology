@@ -38,6 +38,7 @@ import {
 import { NODES } from "@components/lib/firestoreClient/collections";
 import { Post } from "@components/lib/utils/Post";
 import { pendingWrites } from "@components/lib/utils/pendingWrites";
+import SyncedSpinner from "@components/components/SyncedSpinner";
 import {
   DndContext,
   DragOverlay,
@@ -385,21 +386,7 @@ const CollectionStructure = ({
             }}
           >
             {isLoading ? (
-              <Box
-                sx={{
-                  width: "16px",
-                  height: "16px",
-                  border: "2px solid rgba(255, 165, 0, 0.3)",
-                  borderTop: "2px solid rgba(255, 165, 0, 0.8)",
-                  borderRadius: "50%",
-                  animation: "spin 1s linear infinite",
-                  marginRight: "8px",
-                  "@keyframes spin": {
-                    "0%": { transform: "rotate(0deg)" },
-                    "100%": { transform: "rotate(360deg)" },
-                  },
-                }}
-              />
+              <SyncedSpinner size={16} color="rgba(255, 165, 0, 0.8)" />
             ) : (
               <>•••</>
             )}

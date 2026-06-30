@@ -5,13 +5,13 @@ import {
   Button,
   IconButton,
   Tooltip,
-  CircularProgress,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import LockIcon from "@mui/icons-material/Lock";
 import { INode } from "@components/types/INode";
+import SyncedSpinner from "@components/components/SyncedSpinner";
 import InsertLinkIcon from "@mui/icons-material/InsertLink";
 import LinkOffIcon from "@mui/icons-material/LinkOff";
 import React, { useEffect, useState } from "react";
@@ -273,7 +273,7 @@ const NodeLabel = ({
           }
         >
           {isLoading ? (
-            <CircularProgress size={18} sx={{ color: "orange" }} />
+            <SyncedSpinner size={18} />
           ) : (
             <Tooltip title={isChecked ? "Unlink" : "Link"} placement="left">
               {isChecked ? (

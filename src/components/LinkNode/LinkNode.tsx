@@ -89,7 +89,6 @@ import {
 import {
   Box,
   Button,
-  CircularProgress,
   IconButton,
   keyframes,
   Link,
@@ -130,6 +129,7 @@ import {
   removeLinkFromNode,
 } from "@components/lib/utils/instantTreeUpdate";
 import { pendingWrites } from "@components/lib/utils/pendingWrites";
+import SyncedSpinner from "@components/components/SyncedSpinner";
 
 const isInUnclassified = (rootNode: INode | undefined, childId: string) =>
   !!rootNode?.specializations?.some(
@@ -678,7 +678,7 @@ const LinkNode = ({
             (loadingIds.has(link.id) ? (
               <LoadingButton
                 loading
-                loadingIndicator={<CircularProgress size={20} />}
+                loadingIndicator={<SyncedSpinner size={20} />}
                 sx={{ borderRadius: "16px", p: "3px", minWidth: "40px" }}
                 disabled
               />
@@ -735,7 +735,7 @@ const LinkNode = ({
                 {loadingIds.has(link.id) ? (
                   <LoadingButton
                     loading
-                    loadingIndicator={<CircularProgress size={20} />}
+                    loadingIndicator={<SyncedSpinner size={20} />}
                     sx={{
                       borderRadius: "16px",
                       padding: "3px",

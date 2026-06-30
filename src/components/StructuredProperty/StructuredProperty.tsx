@@ -10,9 +10,9 @@ import {
   useMediaQuery,
   IconButton,
   Slide,
-  CircularProgress,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+import SyncedSpinner from "@components/components/SyncedSpinner";
 import {
   capitalizeFirstLetter,
   getPropertyValue,
@@ -1428,7 +1428,7 @@ const StructuredProperty = ({
               p: "12px",
             }}
           >
-            <CircularProgress size={18} />
+            <SyncedSpinner size={18} />
             <Typography
               sx={{
                 fontSize: "14px",
