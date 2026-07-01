@@ -112,12 +112,14 @@ async function applyClone(ctx: {
     appName,
   );
   if (targetProperty === "generalizations") {
-    newNode.specializations[0].nodes.push({
+    // when the clone source is the current node, buildSpecializationNode
+    // already seeded the opposite side with it.
+    addToMain(newNode.specializations, {
       id: currentNodeId,
       title: currentNode.title ?? "",
     });
   } else if (targetProperty === "specializations") {
-    newNode.generalizations[0].nodes.push({
+    addToMain(newNode.generalizations, {
       id: currentNodeId,
       title: currentNode.title ?? "",
     });
