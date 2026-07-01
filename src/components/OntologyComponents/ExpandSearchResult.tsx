@@ -11,6 +11,7 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import LockIcon from "@mui/icons-material/Lock";
 import { INode } from "@components/types/INode";
+import SyncedSpinner from "@components/components/SyncedSpinner";
 import InsertLinkIcon from "@mui/icons-material/InsertLink";
 import LinkOffIcon from "@mui/icons-material/LinkOff";
 import React, { useEffect, useState } from "react";
@@ -29,6 +30,7 @@ const ExpandSearchResult = ({
   selectedProperty,
   addACloneNodeQueue,
   currentVisibleNode,
+  loadingIds,
 }: {
   searchResultsForSelection: any;
   markItemAsChecked: any;
@@ -43,6 +45,7 @@ const ExpandSearchResult = ({
   selectedProperty: any;
   addACloneNodeQueue: any;
   currentVisibleNode: any;
+  loadingIds?: Set<string>;
 }) => {
   const [expanded, setExpanded] = useState<string[]>([]);
   const [optimisticLinkedIds, setOptimisticLinkedIds] = useState<Set<string>>(
@@ -90,6 +93,7 @@ const ExpandSearchResult = ({
           currentVisibleNode={currentVisibleNode}
           optimisticLinkedIds={optimisticLinkedIds}
           setOptimisticLinkedIds={setOptimisticLinkedIds}
+          loadingIds={loadingIds}
         />
       }
     />
@@ -130,6 +134,7 @@ const ExpandSearchResult = ({
               currentVisibleNode={currentVisibleNode}
               optimisticLinkedIds={optimisticLinkedIds}
               setOptimisticLinkedIds={setOptimisticLinkedIds}
+              loadingIds={loadingIds}
             />
           }
           sx={{
@@ -189,6 +194,7 @@ const NodeLabel = ({
   currentVisibleNode,
   optimisticLinkedIds,
   setOptimisticLinkedIds,
+  loadingIds,
 }: {
   node: any;
   markItemAsChecked: any;
@@ -204,10 +210,12 @@ const NodeLabel = ({
   currentVisibleNode: any;
   optimisticLinkedIds: Set<string>;
   setOptimisticLinkedIds: React.Dispatch<React.SetStateAction<Set<string>>>;
+  loadingIds?: Set<string>;
 }) => {
   const isChecked =
     checkedItems.has(node.id) || optimisticLinkedIds.has(node.id);
   const isLocked = !user?.manageLock && node.locked;
+  const isLoading = loadingIds?.has(node.id);
 
   return (
     <ListItem
@@ -234,6 +242,7 @@ const NodeLabel = ({
         <IconButton
           onClick={(e) => {
             e.stopPropagation();
+            if (isLoading) return;
             if (isChecked) {
               setOptimisticLinkedIds((prev) => {
                 const updated = new Set(prev);
@@ -256,19 +265,24 @@ const NodeLabel = ({
           /*           variant={isChecked ? "contained" : "outlined"} */
           sx={{ borderRadius: "25px", ml: "auto", fontSize: "0.8rem" }}
           disabled={
-            isChecked &&
-            (disabledAddButton ||
-              (selectedProperty === "specializations" &&
-                getNumOfGeneralizations(node.id)))
+            isLoading ||
+            (isChecked &&
+              (disabledAddButton ||
+                (selectedProperty === "specializations" &&
+                  getNumOfGeneralizations(node.id))))
           }
         >
-          <Tooltip title={isChecked ? "Unlink" : "Link"} placement="left">
-            {isChecked ? (
-              <LinkOffIcon sx={{ color: isChecked ? "orange" : "" }} />
-            ) : (
-              <InsertLinkIcon />
-            )}
-          </Tooltip>
+          {isLoading ? (
+            <SyncedSpinner size={18} />
+          ) : (
+            <Tooltip title={isChecked ? "Unlink" : "Link"} placement="left">
+              {isChecked ? (
+                <LinkOffIcon sx={{ color: isChecked ? "orange" : "" }} />
+              ) : (
+                <InsertLinkIcon />
+              )}
+            </Tooltip>
+          )}
         </IconButton>
       ) : (
         <LockIcon sx={{ color: "orange", mx: "15px" }} />

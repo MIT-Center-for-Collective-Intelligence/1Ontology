@@ -13,7 +13,6 @@ import {
   Link,
   Popover,
   Button,
-  CircularProgress,
 } from "@mui/material";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import ArrowRightAltIcon from "@mui/icons-material/ArrowRightAlt";
@@ -43,6 +42,7 @@ import {
 } from "firebase/firestore";
 
 import { INHERITANCE_FOR_PARTS_COLLECTION_NAME } from "@components/lib/firestoreClient/collections";
+import SyncedSpinner from "@components/components/SyncedSpinner";
 
 interface GeneralizationNode {
   id: string;
@@ -273,7 +273,7 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
             py: 2,
           }}
         >
-          <CircularProgress size={16} />
+          <SyncedSpinner size={16} />
           <Typography
             variant="body2"
             sx={{

@@ -10,23 +10,19 @@ import EditOffIcon from "@mui/icons-material/EditOff";
 import ChatIcon from "@mui/icons-material/Chat";
 import { buildOneLevelFromSpecializations } from "@components/lib/utils/loadOutlineFromPathIds";
 
-import {
-  saveNewChangeLog,
-  unlinkPropertyOf,
-  updateLinksForInheritance,
-} from "@components/lib/utils/helpers";
+import { recordLogs } from "@components/lib/utils/helpers";
 import {
   collection,
   doc,
   getDoc,
   getFirestore,
-  updateDoc,
 } from "firebase/firestore";
 import { ICollection, TreeData } from "@components/types/INode";
 import { NODES } from "@components/lib/firestoreClient/collections";
+import { Post } from "@components/lib/utils/Post";
+import { pendingWrites } from "@components/lib/utils/pendingWrites";
 import { useAuth } from "../context/AuthContext";
 import { FillFlexParent } from "./fill-flex-parent";
-import { triggerUpdateDerivedPaths } from "@components/lib/utils/triggerUpdateDerivedPaths";
 import { findNode, removeNode } from "./treeUtils";
 import { userHasOntologyEditAccess } from "@components/lib/utils/helpers";
 
@@ -52,6 +48,8 @@ function DraggableTree({
   setSnackbarMessage,
   nodes,
   currentVisibleNode,
+  setCurrentVisibleNode,
+  fetchNode,
   onOpenNodesTree,
   treeRef,
   treeType,
@@ -67,6 +65,8 @@ function DraggableTree({
   setSnackbarMessage: any;
   nodes: any;
   currentVisibleNode: any;
+  setCurrentVisibleNode?: (node: any | ((prev: any) => any)) => void;
+  fetchNode?: (nodeId: string, force?: boolean) => Promise<any>;
   onOpenNodesTree: any;
   treeRef: any;
   treeType?: string;
@@ -621,25 +621,6 @@ function DraggableTree({
     }
   }, [treeRef, treeData, firstLoad]);
 
-  const moveElement = (
-    arr: ICollection[],
-    fromIndex: number,
-    toIndex: number,
-  ) => {
-    if (
-      fromIndex < 0 ||
-      fromIndex >= arr.length ||
-      toIndex < 0 ||
-      toIndex >= arr.length
-    ) {
-      throw new Error("Invalid indices");
-    }
-
-    const element = arr.splice(fromIndex, 1)[0];
-    arr.splice(toIndex, 0, element);
-
-    return arr;
-  };
   const handleMove = async (args: {
     dragIds: string[];
     dragNodes: NodeApi<PaginatedTreeData>[];
@@ -691,16 +672,71 @@ function DraggableTree({
         return;
       }
 
+      // A collection can't be nested inside another collection — reject before
+      // the instant edit so the tree doesn't briefly show the nesting.
+      if (draggedNodes[0].category && toParent.category) {
+        setSnackbarMessage(
+          "Collections can't be placed inside another collection.",
+        );
+        return;
+      }
+
+      // Drop pagination/loading fields and keep lazy flags so chevrons persist after edits
+      const cleanTreeData = (data: PaginatedTreeData[]): TreeData[] => {
+        return data
+          .filter((node) => !node.isLoadMore && !node.isLoadingPlaceholder)
+          .map((node) => {
+            const {
+              isLoadMore,
+              isLoadingPlaceholder,
+              parentId,
+              totalChildren,
+              loadedChildren,
+              allChildren,
+              isTopLoader,
+              isBottomLoader,
+              loadDirection,
+              children,
+              ...rest
+            } = node;
+            return {
+              ...rest,
+              children: children
+                ? cleanTreeData(children as PaginatedTreeData[])
+                : undefined,
+            } as TreeData;
+          });
+      };
+
+      // Snapshot the tree (deep — the instant edit splices shared nested
+      // children arrays) and the viewed node, so a rejected write rolls back.
+      const prevTreeData: PaginatedTreeData[] = JSON.parse(
+        JSON.stringify(treeData),
+      );
+      const prevVisible = currentVisibleNode;
+      const revert = () => {
+        setTreeData(prevTreeData);
+        if (onInstantTreeUpdate) {
+          onInstantTreeUpdate(() => cleanTreeData(prevTreeData));
+        }
+        if (prevVisible && setCurrentVisibleNode) {
+          setCurrentVisibleNode((cur: any) =>
+            cur && cur.id === prevVisible.id ? prevVisible : cur,
+          );
+        }
+      };
+
       // Local update for immediate visual feedback
       const newData = [...treeData];
 
-      // Find dragged node's current visual position before removing it
+      // Find dragged node's current visual position before removing it.
+      // Match by tree `id` (unique): category rows all share the owning node's
+      // `nodeId`, so matching on nodeId would resolve the wrong row.
       let draggedNodeVisualIndex = -1;
       if (args.parentNode?.children && args.dragNodes[0]) {
         for (let i = 0; i < args.parentNode.children.length; i++) {
           if (
-            args.parentNode.children[i].data.nodeId ===
-            args.dragNodes[0].data.nodeId
+            args.parentNode.children[i].data.id === args.dragNodes[0].data.id
           ) {
             draggedNodeVisualIndex = i;
             break;
@@ -737,87 +773,102 @@ function DraggableTree({
       });
       setTreeData(newData);
 
-      // Update shared tree state with local update to prevent glitch when treeViewData updates
       if (onInstantTreeUpdate) {
-        // Drop pagination/loading fields and keep lazy flags so chevrons persist after edits
-        const cleanTreeData = (data: PaginatedTreeData[]): TreeData[] => {
-          return data
-            .filter((node) => !node.isLoadMore && !node.isLoadingPlaceholder)
-            .map((node) => {
-              const {
-                isLoadMore,
-                isLoadingPlaceholder,
-                parentId,
-                totalChildren,
-                loadedChildren,
-                allChildren,
-                isTopLoader,
-                isBottomLoader,
-                loadDirection,
-                children,
-                ...rest
-              } = node;
-              return {
-                ...rest,
-                children: children
-                  ? cleanTreeData(children as PaginatedTreeData[])
-                  : undefined,
-              } as TreeData;
-            });
-        };
-
         onInstantTreeUpdate(() => cleanTreeData(newData));
       }
 
+      // Collection reorder: sort endpoint
       if (draggedNodes[0].category) {
-        const parentId = args.parentId;
-        if (parentId) {
-          const nodeRef = doc(collection(db, NODES), parentId);
-          const nodeData = await ensureNodeDoc(parentId);
-          if (!nodeData) {
-            setSnackbarMessage(
-              "Could not load parent node; reorder not saved.",
-            );
-            return;
+        // The owning node — args.parentId is a tree id, not the Firestore id.
+        const parentNodeId = args.parentNode?.data?.nodeId;
+        if (!parentNodeId) return;
+        const nodeData = await ensureNodeDoc(parentNodeId);
+        if (!nodeData) {
+          revert();
+          setSnackbarMessage("Could not load parent node; reorder not saved.");
+          return;
+        }
+        const specializations: ICollection[] = JSON.parse(
+          JSON.stringify(nodeData.specializations),
+        );
+
+        // Put the stored collections in the new visual order of the category
+        // rows, keeping each collection's nodes as-is. "main" goes where its
+        // direct children appear; any collection without a row is added at the
+        // end so none are lost.
+        const owningChildren = (targetParent?.children ||
+          []) as PaginatedTreeData[];
+        const order: string[] = [];
+        let mainPlaced = false;
+        for (const child of owningChildren) {
+          if (child.category) {
+            order.push((child.name || "").replace(/^\[|\]$/g, ""));
+          } else if (!child.isLoadMore && !mainPlaced) {
+            order.push("main");
+            mainPlaced = true;
           }
-          const specializations = nodeData.specializations;
-          const previousValue = JSON.parse(JSON.stringify(specializations));
-          const draggedElement = args.dragIds[0];
-          const index = draggedElement.indexOf("-");
-          const draggedCollection = draggedElement.substring(index + 1);
-          const fromIndex = specializations.findIndex(
-            (c: ICollection) => c.collectionName === draggedCollection,
+        }
+        const byName = new Map(
+          specializations.map((c) => [c.collectionName, c]),
+        );
+        const newSpecializations: ICollection[] = [];
+        for (const name of order) {
+          const c = byName.get(name);
+          if (c) {
+            newSpecializations.push(c);
+            byName.delete(name);
+          }
+        }
+        for (const c of byName.values()) newSpecializations.push(c);
+
+        if (setCurrentVisibleNode && currentVisibleNode?.id === parentNodeId) {
+          setCurrentVisibleNode((prev: any) =>
+            prev && prev.id === parentNodeId
+              ? { ...prev, specializations: newSpecializations }
+              : prev,
           );
-          const newSpecializations = moveElement(
-            specializations,
-            fromIndex,
-            args.index,
-          );
-          await updateDoc(nodeRef, { specializations: newSpecializations });
-          saveNewChangeLog(db, {
-            nodeId: parentId,
-            modifiedBy: user?.uname,
-            modifiedProperty: "specializations",
-            previousValue,
-            newValue: newSpecializations,
-            modifiedAt: new Date(),
-            changeType: "sort collections",
-            fullNode: nodeData,
+        }
+
+        pendingWrites.start(parentNodeId, "specializations");
+        try {
+          await Post("/nodes/hierarchy/sort", {
+            nodeId: parentNodeId,
+            side: "specializations",
+            value: newSpecializations,
+            sortType: "collections",
             ...(appName ? { appName } : {}),
           });
+        } catch (error: any) {
+          revert();
+          setSnackbarMessage(
+            `Failed to reorder collections: ${
+              (typeof error === "string" ? error : error?.message) ||
+              "Please try again."
+            }`,
+          );
+          recordLogs({
+            type: "error",
+            error: JSON.stringify({
+              name: error?.name,
+              message: typeof error === "string" ? error : error?.message,
+              stack: error?.stack,
+            }),
+            at: "handleMove/sort-collections",
+          });
+        } finally {
+          pendingWrites.end(parentNodeId, "specializations");
         }
         return;
       }
 
       if (toParent.nodeId === fromParents[0].nodeId) {
-        const nodeRef = doc(collection(db, NODES), toParent.nodeId);
         const nodeData = await ensureNodeDoc(toParent.nodeId);
         if (!nodeData) {
+          revert();
           setSnackbarMessage("Could not load parent node; reorder not saved.");
           return;
         }
 
-        // Determine source and target collection names
         let from = "main";
         if (fromParents[0].category) {
           from = fromParents[0].name.replace(/^\[|\]$/g, "");
@@ -827,18 +878,17 @@ function DraggableTree({
           to = toParent.name.replace(/^\[|\]$/g, "");
         }
 
-        const specializations = nodeData.specializations;
-        const previousValue = JSON.parse(JSON.stringify(specializations));
-
-        // Find collection indices
+        const specializations: ICollection[] = JSON.parse(
+          JSON.stringify(nodeData.specializations),
+        );
         const fromCollectionIdx = specializations.findIndex(
-          (s: ICollection) => s.collectionName === from,
+          (s) => s.collectionName === from,
         );
         const toCollectionIdx = specializations.findIndex(
-          (s: ICollection) => s.collectionName === to,
+          (s) => s.collectionName === to,
         );
-
         if (fromCollectionIdx === -1 || toCollectionIdx === -1) {
+          revert();
           return;
         }
 
@@ -846,38 +896,29 @@ function DraggableTree({
           // SAME COLLECTION REORDERING
           const currentIndex = specializations[
             fromCollectionIdx
-          ].nodes.findIndex(
-            (n: { id: string }) => n.id === draggedNodes[0].nodeId,
-          );
-
+          ].nodes.findIndex((n) => n.id === draggedNodes[0].nodeId);
           if (currentIndex === -1) {
-            console.error(
-              "[HANDLE MOVE] Node not found in collection:",
-              draggedNodes[0].nodeId,
-            );
+            revert();
             return;
           }
-
           const [movedNode] = specializations[fromCollectionIdx].nodes.splice(
             currentIndex,
             1,
           );
 
-          // Find dragged node's position for adjustment
-          let draggedNodeVisualIndex = -1;
+          let visualIndex = -1;
           if (args.parentNode?.children) {
             for (let i = 0; i < args.parentNode.children.length; i++) {
               if (
                 args.parentNode.children[i].data.nodeId ===
                 draggedNodes[0].nodeId
               ) {
-                draggedNodeVisualIndex = i;
+                visualIndex = i;
                 break;
               }
             }
           }
 
-          // Count category/load-more nodes before args.index
           let categoryCount = 0;
           if (args.parentNode?.children) {
             for (
@@ -892,60 +933,21 @@ function DraggableTree({
             }
           }
 
-          // Calculate target index for Firestore array
-          let firestoreTargetIndex = args.index - categoryCount;
-
-          // Dragging down operation needs to be adjusted
-          let firestoreSpliceIndex = firestoreTargetIndex;
-          if (
-            draggedNodeVisualIndex >= 0 &&
-            draggedNodeVisualIndex < args.index
-          ) {
-            firestoreSpliceIndex--; // Dragging down - adjust for shifted array
+          let firestoreSpliceIndex = args.index - categoryCount;
+          if (visualIndex >= 0 && visualIndex < args.index) {
+            firestoreSpliceIndex--; // dragging down is adjusted for shifted array
           }
-
-          // Insert at calculated position
           specializations[fromCollectionIdx].nodes.splice(
             firestoreSpliceIndex,
             0,
             movedNode,
           );
-
-          await updateDoc(nodeRef, { specializations });
-
-          saveNewChangeLog(db, {
-            nodeId: toParent.nodeId,
-            modifiedBy: user?.uname,
-            modifiedProperty: "specializations",
-            previousValue,
-            newValue: specializations,
-            modifiedAt: new Date(),
-            changeType: "sort elements",
-            fullNode: nodeData,
-            ...(appName ? { appName } : {}),
-          });
-          return;
         } else {
-          // CROSS COLLECTION MOVE
+          // CROSS COLLECTION
+          specializations[fromCollectionIdx].nodes = specializations[
+            fromCollectionIdx
+          ].nodes.filter((n) => n.id !== draggedNodes[0].nodeId);
 
-          // Find current index in SOURCE collection
-          let originalFromIndex = 0;
-          if (fromCollectionIdx !== -1) {
-            originalFromIndex = specializations[
-              fromCollectionIdx
-            ].nodes.findIndex(
-              (n: { id: string }) => n.id === draggedNodes[0].nodeId,
-            );
-
-            // Remove from source collection
-            specializations[fromCollectionIdx].nodes = specializations[
-              fromCollectionIdx
-            ].nodes.filter(
-              (n: { id: string }) => n.id !== draggedNodes[0].nodeId,
-            );
-          }
-
-          // Count category/load-more nodes before args.index in target collection
           let categoryCount = 0;
           if (args.parentNode?.children) {
             for (
@@ -959,171 +961,109 @@ function DraggableTree({
               }
             }
           }
-
-          // Calculate target index
-          let toFirestoreIndex = args.index - categoryCount;
-
-          // Insert into target collection
+          const toFirestoreIndex = args.index - categoryCount;
           specializations[toCollectionIdx].nodes.splice(toFirestoreIndex, 0, {
             id: draggedNodes[0].nodeId,
             title: nodes[draggedNodes[0].nodeId]?.title ?? "",
           });
+        }
 
-          await updateDoc(nodeRef, { specializations });
+        if (setCurrentVisibleNode && currentVisibleNode?.id === toParent.nodeId) {
+          setCurrentVisibleNode((prev: any) =>
+            prev && prev.id === toParent.nodeId
+              ? { ...prev, specializations }
+              : prev,
+          );
+        }
 
-          saveNewChangeLog(db, {
+        pendingWrites.start(toParent.nodeId, "specializations");
+        try {
+          await Post("/nodes/hierarchy/sort", {
             nodeId: toParent.nodeId,
-            modifiedBy: user?.uname,
-            modifiedProperty: "specializations",
-            previousValue,
-            newValue: specializations,
-            modifiedAt: new Date(),
-            changeType: "sort elements",
-            fullNode: nodeData,
+            side: "specializations",
+            value: specializations,
+            sortType: "elements",
             ...(appName ? { appName } : {}),
           });
-          return;
+        } catch (error: any) {
+          revert();
+          setSnackbarMessage(
+            `Failed to reorder: ${
+              (typeof error === "string" ? error : error?.message) ||
+              "Please try again."
+            }`,
+          );
+          recordLogs({
+            type: "error",
+            error: JSON.stringify({
+              name: error?.name,
+              message: typeof error === "string" ? error : error?.message,
+              stack: error?.stack,
+            }),
+            at: "handleMove/sort-elements",
+          });
+        } finally {
+          pendingWrites.end(toParent.nodeId, "specializations");
         }
+        return;
       }
 
-      setSnackbarMessage(
-        `Node${draggedNodes.length > 1 ? "s" : ""} has been moved to ${toParent.name}`,
-      );
-      // if (draggedNodes[0].category) {
-      //   return;
-      //   /*  updateLinksForInheritance(
-      //   db,
-      //   specializationId,
-      //   addedLinks,
-      //   removedLinks,
-      //   specializationData,
-      //   newLinks,
-      //   nodes,
-      // ); */
-      // } else {
+      // ── Cross-parent relocation → move endpoint ──
       const generalizationId = fromParents[0].nodeId;
-      const addedLinks = [toParent.nodeId];
-      const removedLinks = [generalizationId];
       const specializationId = draggedNodes[0].nodeId;
-      const specializationData = await ensureNodeDoc(specializationId);
-      if (!specializationData) {
-        setSnackbarMessage("Could not load dragged node; move not saved.");
-        return;
-      }
-      const newLinks = [toParent.nodeId];
+      const toCollectionName = toParent.category
+        ? toParent.name.replace(/^\[|\]$/g, "")
+        : "main";
 
-      const newGeneralizations = specializationData.generalizations;
-      const previousValue = JSON.parse(JSON.stringify(newGeneralizations));
-
-      newGeneralizations[0].nodes = newGeneralizations[0].nodes.filter(
-        (n: { id: string }) => n.id !== generalizationId,
-      );
-
-      newGeneralizations[0].nodes.push({
-        id: toParent.nodeId,
-        title: nodes[toParent.nodeId]?.title ?? "",
-      });
-
-      const docRef = doc(collection(db, NODES), specializationId);
-
-      await updateDoc(docRef, {
-        generalizations: newGeneralizations,
-      });
-
-      for (let linkId of removedLinks) {
-        await unlinkPropertyOf(db, "generalizations", specializationId, linkId);
-      }
-
-      const newGeneralizationData = await ensureNodeDoc(toParent.nodeId);
-      if (!newGeneralizationData) {
-        setSnackbarMessage("Could not load target node; move not saved.");
-        return;
-      }
-      const specializations = newGeneralizationData.specializations;
-      const previousSValue = JSON.parse(JSON.stringify(specializations));
-
-      const alreadyExist = newGeneralizationData.specializations
-        .flatMap((c: ICollection) => c.nodes)
-        .map((n: { id: string }) => n.id);
-
-      if (!alreadyExist.includes(specializationId)) {
-        let targetCollectionIndex = 0;
-
-        if (toParent.category) {
-          targetCollectionIndex = specializations.findIndex(
-            (s: ICollection) => s.collectionName === toParent.name,
-          );
-        } else {
-          const mainCollectionIndex = specializations.findIndex(
-            (s: ICollection) => s.collectionName === "main",
-          );
-
-          if (mainCollectionIndex !== -1) {
-            targetCollectionIndex = mainCollectionIndex;
+      pendingWrites.start(specializationId, "generalizations");
+      try {
+        await Post("/nodes/hierarchy/move", {
+          nodeId: specializationId,
+          fromParentId: generalizationId,
+          toParentId: toParent.nodeId,
+          toCollectionName,
+          ...(appName ? { appName } : {}),
+        });
+        setSnackbarMessage(
+          `Node${draggedNodes.length > 1 ? "s" : ""} has been moved to ${toParent.name}`,
+        );
+        // If the detail panel shows one of the affected nodes, refresh it —
+        // the move changed its generalizations or specializations server-side.
+        const viewedId = currentVisibleNode?.id;
+        if (
+          fetchNode &&
+          setCurrentVisibleNode &&
+          (viewedId === specializationId ||
+            viewedId === generalizationId ||
+            viewedId === toParent.nodeId)
+        ) {
+          const fresh = await fetchNode(viewedId, true);
+          if (fresh) {
+            setCurrentVisibleNode((cur: any) =>
+              cur?.id === fresh.id ? fresh : cur,
+            );
           }
         }
-
-        if (targetCollectionIndex === -1) {
-          targetCollectionIndex = 0;
-        }
-
-        specializations[targetCollectionIndex].nodes.splice(args.index, 0, {
-          id: specializationId,
-          title: nodes[specializationId]?.title ?? "",
+      } catch (error: any) {
+        revert();
+        setSnackbarMessage(
+          `Failed to move "${nodes[specializationId]?.title ?? "node"}": ${
+            (typeof error === "string" ? error : error?.message) ||
+            "Please try again."
+          }`,
+        );
+        recordLogs({
+          type: "error",
+          error: JSON.stringify({
+            name: error?.name,
+            message: typeof error === "string" ? error : error?.message,
+            stack: error?.stack,
+          }),
+          at: "handleMove/move",
         });
-
-        await updateDoc(doc(collection(db, NODES), toParent.nodeId), {
-          specializations,
-        });
+      } finally {
+        pendingWrites.end(specializationId, "generalizations");
       }
-      /* Specialization Change Log */
-      saveNewChangeLog(db, {
-        nodeId: specializationId,
-        modifiedBy: user?.uname,
-        modifiedProperty: "generalizations",
-        previousValue,
-        newValue: newGeneralizations,
-        modifiedAt: new Date(),
-        changeType: "modify elements",
-        fullNode: specializationData,
-        ...(appName ? { appName } : {}),
-      });
-
-      saveNewChangeLog(db, {
-        nodeId: toParent.nodeId,
-        modifiedBy: user?.uname,
-        modifiedProperty: "specializations",
-        previousValue: previousSValue,
-        newValue: specializations,
-        modifiedAt: new Date(),
-        changeType: "modify elements",
-        fullNode: newGeneralizationData,
-        ...(appName ? { appName } : {}),
-      });
-
-      // await updateLinks(
-      //   newLinks,
-      //   { id: specializationId },
-      //   "specializations",
-      //   nodes,
-      //   db,
-      // );
-      const currentNewLinks = newGeneralizations[0].nodes;
-      await updateLinksForInheritance(
-        db,
-        specializationId,
-        addedLinks.map((id) => {
-          return { id };
-        }),
-        currentNewLinks,
-        specializationData,
-        nodes,
-      );
-      await triggerUpdateDerivedPaths([
-        specializationId,
-        toParent.nodeId,
-        generalizationId,
-      ]);
     } catch (error) {
       console.error(error);
     }

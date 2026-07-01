@@ -12,7 +12,6 @@ import {
   MenuItem,
   ListSubheader,
   Popover,
-  CircularProgress,
   TextField,
 } from "@mui/material";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
@@ -37,6 +36,7 @@ import GeneralizationTabs from "./GeneralizationTabs";
 
 import { Timestamp } from "firebase/firestore";
 import { recordLogs } from "@components/lib/utils/helpers";
+import SyncedSpinner from "@components/components/SyncedSpinner";
 
 interface GeneralizationNode {
   id: string;
@@ -757,7 +757,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
               py: 2,
             }}
           >
-            <CircularProgress size={16} />
+            <SyncedSpinner size={16} />
             <Typography
               variant="body2"
               sx={{
@@ -945,10 +945,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                             title="Calculating inheritance for this part"
                             placement="top"
                           >
-                            <CircularProgress
-                              size={18}
-                              sx={{ color: "orange" }}
-                            />
+                            <SyncedSpinner size={18} />
                           </Tooltip>
                         ) : entry.symbol === "x" ? (
                           <CloseIcon sx={{ fontSize: 20, color: "orange" }} />
@@ -1226,7 +1223,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                           gap: 1,
                                         }}
                                       >
-                                        <CircularProgress size={16} />
+                                        <SyncedSpinner size={16} />
                                         <Typography
                                           sx={{
                                             fontStyle: "italic",
@@ -1643,7 +1640,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
               {/* Spinner + label while the gen→node mapping recomputes. */}
               {showRecomputeSpinner ? (
                 <>
-                  <CircularProgress size={20} sx={{ color: "orange" }} />
+                  <SyncedSpinner size={20} />
                   <Typography
                     sx={{
                       fontSize: "0.8rem",

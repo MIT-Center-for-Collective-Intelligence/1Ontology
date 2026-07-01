@@ -12,6 +12,7 @@ import {
   Slide,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+import SyncedSpinner from "@components/components/SyncedSpinner";
 import {
   capitalizeFirstLetter,
   getPropertyValue,
@@ -30,7 +31,7 @@ import {
   InheritedPartsDetail,
   INode,
 } from "@components/types/INode";
-import { DISPLAY } from "@components/lib/CONSTANTS";
+import { DISPLAY, UNCLASSIFIED } from "@components/lib/CONSTANTS";
 import {
   collection,
   doc,
@@ -84,7 +85,7 @@ type IStructuredPropertyProps = {
   setCurrentVisibleNode: any;
   property: string;
   relatedNodes: { [id: string]: INode };
-  fetchNode: (nodeId: string) => Promise<INode | null>;
+  fetchNode: (nodeId: string, force?: boolean) => Promise<INode | null>;
   addNodesToCache?: (
     nodes: { [id: string]: INode },
     parentNodeId?: string,
@@ -428,6 +429,21 @@ const StructuredProperty = ({
     db,
   ]);
 
+  const isReparenting =
+    property === "generalizations" &&
+    !(typeof currentVisibleNode?.root === "boolean" && currentVisibleNode.root) &&
+    (currentVisibleNode?.generalizations || []).flatMap(
+      (c: ICollection) => c.nodes,
+    ).length === 0;
+
+  const reparentRootName = useMemo(() => {
+    const nt = currentVisibleNode?.nodeType;
+    const root = Object.values(relatedNodes).find(
+      (n: any) => n?.root && n?.nodeType === nt && !n?.deleted,
+    ) as INode | undefined;
+    return root?.title || UNCLASSIFIED[nt] || "Unclassified";
+  }, [relatedNodes, currentVisibleNode?.nodeType]);
+
   useEffect(() => {
     if (property === "parts") {
       const someAreOptional = (propertyValue[0]?.nodes || [])?.some(
@@ -543,28 +559,104 @@ const StructuredProperty = ({
       });
       const queued = clonedNodesQueue[nId];
       const property = queued.property;
-      const addedElements: string[] = [nId];
 
-      await handleSaveLinkChanges(
-        [],
-        addedElements,
-        property,
-        currentVisibleNode?.id,
-        collectionName,
-      );
+      // All "Add Specialization" goes through the cloning endpoint: it creates
+      // the new node as a specialization of the searched node and links it into
+      // this node's section (spec/gen top-level, parts/generic under properties).
+      const targetId = currentVisibleNode?.id;
+      const isHierarchy =
+        property === "specializations" || property === "generalizations";
+      const fieldKey = isHierarchy ? property : `properties.${property}`;
+
+      setCurrentVisibleNode((prev: any) => {
+        if (!prev || prev.id !== targetId) return prev;
+        let base: any;
+        if (isHierarchy) {
+          base = prev[property];
+        } else if (property === "parts") {
+          base = prev.properties?.parts;
+        } else {
+          const ref = prev.inheritance?.[property]?.ref;
+          base =
+            ref && relatedNodes[ref]
+              ? relatedNodes[ref].properties?.[property]
+              : prev.properties?.[property];
+        }
+        const next: ICollection[] = JSON.parse(
+          JSON.stringify(
+            Array.isArray(base) && base.length
+              ? base
+              : [{ collectionName: "main", nodes: [] }],
+          ),
+        );
+        let i = next.findIndex((c) => c.collectionName === collectionName);
+        if (i === -1) i = 0;
+        if (!next.flatMap((c) => c.nodes).some((n) => n.id === nId)) {
+          next[i].nodes.push({ id: nId, title: queued.title });
+        }
+        if (isHierarchy) return { ...prev, [property]: next };
+        const updated: any = {
+          ...prev,
+          properties: { ...prev.properties, [property]: next },
+        };
+        // A generic link edit overrides the inherited value on this node.
+        if (property !== "parts" && prev.inheritance?.[property]) {
+          updated.inheritance = {
+            ...prev.inheritance,
+            [property]: { ...prev.inheritance[property], ref: null, title: "" },
+          };
+        }
+        return updated;
+      });
+
+      pendingWrites.start(targetId, fieldKey);
+      try {
+        await Post("/nodes/hierarchy/cloning", {
+          newNodeId: nId,
+          title: queued.title,
+          generalizationId: queued.id,
+          targetNodeId: targetId,
+          targetProperty: property,
+          collectionName,
+          ...(appName ? { appName } : {}),
+        });
+        await Post("/triggerChroma", { nodeId: nId, update: true });
+        const fresh = await fetchNode(targetId, true);
+        setCurrentVisibleNode((prev: any) =>
+          prev?.id === targetId && fresh ? fresh : prev,
+        );
+        await fetchNode(nId, true);
+      } catch (error: any) {
+        const fresh = await fetchNode(targetId, true);
+        setCurrentVisibleNode((prev: any) =>
+          prev?.id === targetId && fresh ? fresh : prev,
+        );
+        const reason =
+          (typeof error === "string" ? error : error?.message) ||
+          "Please try again.";
+        setSnackbarMessage(`Failed to add specialization: ${reason}`);
+        recordLogs({
+          type: "error",
+          error: JSON.stringify({
+            name: error?.name,
+            message: typeof error === "string" ? error : error?.message,
+            stack: error?.stack,
+          }),
+          at: "saveNewSpecialization",
+        });
+      } finally {
+        pendingWrites.end(targetId, fieldKey);
+      }
       setLoadingIds((prev: Set<string>) => {
         const _prev = new Set(prev);
         _prev.delete(nId);
         return _prev;
       });
-      const id = queued.id;
-      const title = queued.title;
       setClonedNodesQueue((prev: any) => {
         const _prev = { ...prev };
         delete _prev[nId];
         return _prev;
       });
-      await handleCloning({ id }, title, nId, collectionName, property);
     } catch (error) {
       console.error(error);
     }
@@ -1327,7 +1419,29 @@ const StructuredProperty = ({
               </Box>
             )}
         </Box>
-        {(property !== "parts" || !enableEdit) &&
+        {isReparenting && (
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+              p: "12px",
+            }}
+          >
+            <SyncedSpinner size={18} />
+            <Typography
+              sx={{
+                fontSize: "14px",
+                fontStyle: "italic",
+                color: "text.secondary",
+              }}
+            >
+              {`Moving under "${reparentRootName}"…`}
+            </Typography>
+          </Box>
+        )}
+        {!isReparenting &&
+          (property !== "parts" || !enableEdit) &&
           currentVisibleNode.propertyType[property] !== "string-array" && (
             <CollectionStructure
               locked={locked}

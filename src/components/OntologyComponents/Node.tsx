@@ -158,7 +158,7 @@ type INodeProps = {
   user: User;
   mainSpecializations: MainSpecializations;
   relatedNodes: { [id: string]: INode };
-  fetchNode: (nodeId: string) => Promise<INode | null>;
+  fetchNode: (nodeId: string, force?: boolean) => Promise<INode | null>;
   addNodesToCache: (
     nodes: { [id: string]: INode },
     parentNodeId?: string,
@@ -1237,8 +1237,8 @@ const Node = ({
               });
             }
           } catch (error: any) {
-            // Nothing was saved, so the screen won't correct itself —
-            // re-fetch the node and reset (only if the user is still on it).
+            // The save failed, so re-fetch the node and reset the view
+            // (only if the user is still looking at it).
             const fresh = await fetchNode(nodeId);
             setCurrentVisibleNode((prev: any) =>
               prev?.id === nodeId && fresh ? fresh : prev,
@@ -1258,6 +1258,151 @@ const Node = ({
               }),
               at: "handleSaveLinkChanges",
             });
+          }
+          return;
+        }
+
+        // Specializations/generalizations go through the hierarchy API. The
+        // client sends the full new value; the server handles the rest (reverse
+        // links, inheritance, derived paths, moving orphans under their root).
+        if (
+          selectedProperty === "specializations" ||
+          selectedProperty === "generalizations"
+        ) {
+          const baseNode =
+            currentVisibleNode?.id === nodeId
+              ? currentVisibleNode
+              : relatedNodes[nodeId];
+          const source = (baseNode as any)?.[selectedProperty];
+          const next: ICollection[] =
+            Array.isArray(source) && source.length
+              ? JSON.parse(JSON.stringify(source))
+              : [{ collectionName: "main", nodes: [] }];
+          for (const c of next) {
+            c.nodes = (c.nodes || []).filter(
+              (n: { id: string }) => !removedElements.includes(n.id),
+            );
+          }
+          let i = next.findIndex((c) => c.collectionName === selectedCollection);
+          if (i === -1) i = 0;
+          const existing = new Set(
+            next.flatMap((c) => c.nodes.map((n: { id: string }) => n.id)),
+          );
+          next[i].nodes.push(...addedLinks.filter((l) => !existing.has(l.id)));
+
+          if (
+            selectedProperty === "generalizations" &&
+            next.flatMap((c) => c.nodes).length === 0
+          ) {
+            await confirmIt(
+              "You cannot remove all the generalizations for this node. Make sure it links to at least one generalization.",
+              "OK",
+              "",
+            );
+            return;
+          }
+
+          setCurrentVisibleNode((prev: any) =>
+            prev && prev.id === nodeId
+              ? { ...prev, [selectedProperty]: next }
+              : prev,
+          );
+
+          pendingWrites.start(nodeId, selectedProperty);
+          try {
+            await Post("/nodes/hierarchy/link", {
+              nodeId,
+              side: selectedProperty,
+              value: next,
+              ...(appName ? { appName } : {}),
+            });
+
+            if (onInstantTreeUpdate) {
+              let collectionIdx = next.findIndex(
+                (c) => c.collectionName === selectedCollection,
+              );
+              if (collectionIdx === -1) collectionIdx = 0;
+              onInstantTreeUpdate((tree) => {
+                let updatedTree = tree;
+                for (const removedId of removedElements) {
+                  updatedTree = removeLinkFromNode(
+                    updatedTree,
+                    nodeId,
+                    removedId,
+                    selectedProperty,
+                    collectionIdx,
+                  );
+                }
+                for (const addedId of addedElements) {
+                  updatedTree = addLinkToNode(
+                    updatedTree,
+                    nodeId,
+                    addedId,
+                    selectedProperty,
+                    selectedCollection || "main",
+                    relatedNodes,
+                    relatedNodes[addedId]?.title,
+                  );
+                }
+                return updatedTree;
+              });
+            }
+
+            // If a removed child lost its last generalization, the server moved
+            // it under its root. Show it there so it doesn't disappear until the
+            // snapshot lands.
+            if (selectedProperty === "specializations" && onInstantTreeUpdate) {
+              for (const removedId of removedElements) {
+                const childGensAfter = (
+                  relatedNodes[removedId]?.generalizations || []
+                )
+                  .flatMap((c: ICollection) => c.nodes)
+                  .filter((g: { id: string }) => g.id !== nodeId);
+                if (childGensAfter.length > 0) continue;
+                const freshChild = await fetchNode(removedId, true);
+                const childRootId = freshChild?.generalizations?.flatMap(
+                  (c) => c.nodes,
+                )[0]?.id;
+                if (childRootId) {
+                  onInstantTreeUpdate((tree) =>
+                    addLinkToNode(
+                      tree,
+                      childRootId,
+                      removedId,
+                      "specializations",
+                      "unclassified",
+                      relatedNodes,
+                      freshChild?.title,
+                      freshChild?.nodeType,
+                    ),
+                  );
+                }
+              }
+            }
+          } catch (error: any) {
+            // The save failed, so re-fetch the node and reset the view
+            // (only if the user is still looking at it).
+            const fresh = await fetchNode(nodeId);
+            setCurrentVisibleNode((prev: any) =>
+              prev?.id === nodeId && fresh ? fresh : prev,
+            );
+            const reason =
+              (typeof error === "string" ? error : error?.message) ||
+              "Please try again.";
+            setSnackbarMessage(
+              `Failed to update "${selectedProperty}": ${reason}`,
+            );
+            recordLogs({
+              type: "error",
+              error: JSON.stringify({
+                name: error?.name,
+                message: typeof error === "string" ? error : error?.message,
+                stack: error?.stack,
+              }),
+              at: "handleSaveLinkChanges",
+            });
+          } finally {
+            pendingWrites.end(nodeId, selectedProperty);
           }
           return;
         }
@@ -1612,6 +1757,8 @@ const Node = ({
       setCurrentVisibleNode,
       setSnackbarMessage,
       fetchNode,
+      currentVisibleNode,
+      confirmIt,
     ],
   );
 
@@ -1859,8 +2006,8 @@ const Node = ({
         ...(appName ? { appName } : {}),
       });
     } catch (error: any) {
-      // Nothing was saved, so the screen won't correct itself —
-      // re-fetch the node and reset (only if the user is still on it).
+      // The save failed, so re-fetch the node and reset the view
+      // (only if the user is still looking at it).
       const fresh = await fetchNode(targetNodeId);
       setCurrentVisibleNode((prev: any) =>
         prev?.id === targetNodeId && fresh ? fresh : prev,

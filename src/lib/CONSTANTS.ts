@@ -98,6 +98,9 @@ export const PROPERTIES_ORDER: any = {
   ],
 };
 
+// A node left with no generalization is moved under its type's root, into this collection
+export const UNCLASSIFIED_COLLECTION = "unclassified";
+
 export const UNCLASSIFIED: any = {
   activity: "Unclassified",
   object: "Unclassified Objects",

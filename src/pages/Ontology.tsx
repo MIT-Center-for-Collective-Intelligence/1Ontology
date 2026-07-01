@@ -380,17 +380,17 @@ const Ontology = ({
 
   // Memoized fetchNode helper to fetch nodes not in cache and add to relatedNodes
   const fetchNode = useCallback(
-    async (nodeId: string): Promise<INode | null> => {
-      // Skip if already in cache
-      if (relatedNodes[nodeId]) {
+    async (nodeId: string, force = false): Promise<INode | null> => {
+      // Use the cache unless a fresh read is forced
+      if (!force && relatedNodes[nodeId]) {
         return relatedNodes[nodeId];
       }
       const node = await fetchSingleNode(db, nodeId);
       if (node) {
-        setRelatedNodes((prev) => {
-          if (prev[nodeId]) return prev;
-          return { ...prev, [nodeId]: node };
-        });
+        // On a forced read, overwrite the cache
+        setRelatedNodes((prev) =>
+          !force && prev[nodeId] ? prev : { ...prev, [nodeId]: node },
+        );
       }
       return node;
     },
@@ -474,6 +474,10 @@ const Ontology = ({
           } as TreeData;
         });
 
+      // An instant tree update may have landed while we were fetching
+      if (hasInstantUpdateRef.current) {
+        return;
+      }
       const tree = [...pathTree, ...otherRoots];
       const filtered = filterTreeForTargetNode(tree, focused.id);
       setCurrentNodeTreeData((prev) => mergePreservedSubtrees(filtered, prev));
@@ -691,7 +695,6 @@ const Ontology = ({
     setNewOnes(new Set());
     setCheckedItems(new Set());
     setClonedNodesQueue({});
-    setLoadingIds(new Set());
     setEditableProperty([]);
   };
 
@@ -2341,6 +2344,8 @@ const Ontology = ({
                     setSnackbarMessage={setSnackbarMessage}
                     treeRef={treeRef}
                     currentVisibleNode={currentVisibleNode}
+                    setCurrentVisibleNode={setCurrentVisibleNode}
+                    fetchNode={fetchNode}
                     nodes={relatedNodes}
                     onOpenNodesTree={(nodeId: string) => {
                       onOpenNodesTree(nodeId);
@@ -2771,6 +2776,8 @@ const Ontology = ({
                       setSnackbarMessage={setSnackbarMessage}
                       treeRef={treeRef}
                       currentVisibleNode={currentVisibleNode}
+                      setCurrentVisibleNode={setCurrentVisibleNode}
+                      fetchNode={fetchNode}
                       nodes={relatedNodes}
                       onOpenNodesTree={onOpenNodesTree}
                       appName={appName}

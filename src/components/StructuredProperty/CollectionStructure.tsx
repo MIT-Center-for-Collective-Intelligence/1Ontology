@@ -28,24 +28,17 @@ import AddIcon from "@mui/icons-material/Add";
 import NewCollection from "../Collection/NewCollection";
 import LinkNode from "../LinkNode/LinkNode";
 import { useAuth } from "../context/AuthContext";
-import {
-  recordLogs,
-  saveNewChangeLog,
-  updateInheritance,
-  unlinkPropertyOf,
-  updateLinksForInheritance,
-} from "@components/lib/utils/helpers";
+import { recordLogs } from "@components/lib/utils/helpers";
 import {
   collection,
   doc,
-  getDoc,
   getFirestore,
   updateDoc,
 } from "firebase/firestore";
-import {
-  NODES,
-  NODES_LOGS,
-} from "@components/lib/firestoreClient/collections";
+import { NODES } from "@components/lib/firestoreClient/collections";
+import { Post } from "@components/lib/utils/Post";
+import { pendingWrites } from "@components/lib/utils/pendingWrites";
+import SyncedSpinner from "@components/components/SyncedSpinner";
 import {
   DndContext,
   DragOverlay,
@@ -393,21 +386,7 @@ const CollectionStructure = ({
             }}
           >
             {isLoading ? (
-              <Box
-                sx={{
-                  width: "16px",
-                  height: "16px",
-                  border: "2px solid rgba(255, 165, 0, 0.3)",
-                  borderTop: "2px solid rgba(255, 165, 0, 0.8)",
-                  borderRadius: "50%",
-                  animation: "spin 1s linear infinite",
-                  marginRight: "8px",
-                  "@keyframes spin": {
-                    "0%": { transform: "rotate(0deg)" },
-                    "100%": { transform: "rotate(360deg)" },
-                  },
-                }}
-              />
+              <SyncedSpinner size={16} color="rgba(255, 165, 0, 0.8)" />
             ) : (
               <>•••</>
             )}
@@ -459,7 +438,6 @@ const CollectionStructure = ({
           const newArray = [...propertyValue];
           const [movedElement] = newArray.splice(sourceIndex, 1);
           newArray.splice(destinationIndex, 0, movedElement);
-          const nodeRef = doc(collection(db, NODES), currentVisibleNode?.id);
 
           if (
             property === "specializations" ||
@@ -483,26 +461,56 @@ const CollectionStructure = ({
               });
             }
 
-            updateDoc(nodeRef, {
-              [property]: newArray,
-            });
-          } else {
-            if (nodeData.inheritance) {
-              nodeData.inheritance[property].ref = null;
-              nodeData.inheritance[property].title = "";
-            }
-            updateDoc(nodeRef, {
-              [`properties.${property}`]: newArray,
-              [`inheritance.${property}.ref`]: null,
-              [`inheritance.${property}.title`]: "",
-            });
+            // Instant update; the snapshot for this side is gated by
+            // pendingWrites until the server write lands.
+            setCurrentVisibleNode((prev: any) =>
+              prev && prev.id === currentVisibleNode?.id
+                ? { ...prev, [property]: newArray }
+                : prev,
+            );
 
-            updateInheritance({
-              nodeId: currentVisibleNode?.id,
-              updatedProperties: [property],
-              db,
-            });
+            pendingWrites.start(currentVisibleNode.id, property);
+            try {
+              await Post("/nodes/hierarchy/sort", {
+                nodeId: currentVisibleNode.id,
+                side: property,
+                value: newArray,
+                sortType: "collections",
+                changeDetails: {
+                  sourceCollectionIndex: sourceIndex,
+                  destinationCollectionIndex: destinationIndex,
+                },
+                ...(appName ? { appName } : {}),
+              });
+            } catch (error: any) {
+              const fresh = await fetchNode(currentVisibleNode.id);
+              if (fresh) {
+                setCurrentVisibleNode((prev: any) =>
+                  prev?.id === fresh.id ? fresh : prev,
+                );
+                setEditableProperty((fresh as any)[property] ?? []);
+              }
+              setSnackbarMessage(
+                `Failed to reorder collections: ${
+                  (typeof error === "string" ? error : error?.message) ||
+                  "Please try again."
+                }`,
+              );
+              recordLogs({
+                type: "error",
+                error: JSON.stringify({
+                  name: error?.name,
+                  message: typeof error === "string" ? error : error?.message,
+                  stack: error?.stack,
+                }),
+                at: "handleCollectionSorting",
+              });
+            } finally {
+              pendingWrites.end(currentVisibleNode.id, property);
+            }
           }
+          // No generic branch: generic properties have a single collection, and
+          // collection dragging is gated to specializations.
         }
       } catch (error: any) {
         console.error(error);
@@ -517,7 +525,7 @@ const CollectionStructure = ({
         });
       }
     },
-    [property, currentVisibleNode],
+    [property, currentVisibleNode, appName, fetchNode],
   );
 
   const handleSorting = useCallback(
@@ -578,245 +586,143 @@ const CollectionStructure = ({
             );
           }
 
-          const nodeRef = doc(collection(db, NODES), currentVisibleNode?.id);
           if (
             property === "specializations" ||
             property === "generalizations"
           ) {
-            updateDoc(nodeRef, {
-              [property]: propertyValue,
-            });
-          } else {
-            updateDoc(nodeRef, {
-              [`properties.${property}`]: propertyValue,
-              [`inheritance.${property}.ref`]: null,
-              [`inheritance.${property}.title`]: "",
-            });
-            updateInheritance({
-              nodeId: currentVisibleNode?.id,
-              updatedProperties: [property],
-              db,
-            });
-          }
+            if (property === "specializations" && onInstantTreeUpdate) {
+              const fromCollectionName =
+                propertyValue[sourceCollectionIndex]?.collectionName;
+              const toCollectionName =
+                propertyValue[destinationCollectionIndex]?.collectionName;
 
-          saveNewChangeLog(db, {
-            nodeId: currentVisibleNode?.id,
-            modifiedBy: user?.uname || "",
-            modifiedProperty: property,
-            previousValue,
-            newValue: propertyValue,
-            modifiedAt: new Date(),
-            changeType: "sort elements",
-            changeDetails: {
-              draggableNodeId: draggableId,
-              sourceCollectionIndex,
-              destinationCollectionIndex,
-              destinationIndex,
-            },
-            fullNode: currentVisibleNode,
-            ...(appName ? { appName } : {}),
-          });
-
-          if (property === "specializations" && onInstantTreeUpdate) {
-
-            // Get collection names from propertyValue array
-            const fromCollectionName = propertyValue[sourceCollectionIndex]?.collectionName;
-            const toCollectionName = propertyValue[destinationCollectionIndex]?.collectionName;
-
-            onInstantTreeUpdate((tree) => {
-              return reorderChildInTree(
-                tree,
-                currentVisibleNode.id,
-                draggableId,
-                sourceCollectionIndex,
-                destinationCollectionIndex,
-                nodeIdx,
-                destinationIndex,
-                fromCollectionName,
-                toCollectionName
+              onInstantTreeUpdate((tree) =>
+                reorderChildInTree(
+                  tree,
+                  currentVisibleNode.id,
+                  draggableId,
+                  sourceCollectionIndex,
+                  destinationCollectionIndex,
+                  nodeIdx,
+                  destinationIndex,
+                  fromCollectionName,
+                  toCollectionName,
+                ),
               );
-            });
-          }
-
-          // Queue tree update after sorting elements
-          if (currentVisibleNode?.id) {
-            // Instant update: Reorder children in tree to reflect collection changes
-            if (onInstantTreeUpdate) {
-              // onInstantTreeUpdate((tree) => {
-              //   // Helper to find and update the current node's children in the tree
-              //   const updateTreeNode = (nodes: any[]): any[] => {
-              //     return nodes.map((node) => {
-              //       // Find the current visible node in the tree
-              //       if (node.nodeId === currentVisibleNode.id) {
-              //         if (!node.children) return node;
-              //         // Get source and destination collection names
-              //         const sourceCollName =
-              //           propertyValue[sourceCollectionIndex]?.collectionName;
-              //         const destCollName =
-              //           propertyValue[destinationCollectionIndex]
-              //             ?.collectionName;
-              //         if (!sourceCollName || !destCollName) return node;
-              //         // Case 1: Same collection - just reorder
-              //         if (
-              //           sourceCollectionIndex === destinationCollectionIndex
-              //         ) {
-              //           // Find the collection in the tree
-              //           if (sourceCollName === "main") {
-              //             // Main collection children are direct children
-              //             const childIndex = node.children.findIndex(
-              //               (c: any) => c.nodeId === draggableId,
-              //             );
-              //             if (childIndex !== -1) {
-              //               const newChildren = [...node.children];
-              //               const [movedChild] = newChildren.splice(
-              //                 childIndex,
-              //                 1,
-              //               );
-              //               newChildren.splice(
-              //                 destination.index,
-              //                 0,
-              //                 movedChild,
-              //               );
-              //               return { ...node, children: newChildren };
-              //             }
-              //           } else {
-              //             // Find collection node like "[collectionName]"
-              //             const collectionNode = node.children.find(
-              //               (c: any) => c.name === `[${sourceCollName}]`,
-              //             );
-              //             if (collectionNode && collectionNode.children) {
-              //               const childIndex =
-              //                 collectionNode.children.findIndex(
-              //                   (c: any) => c.nodeId === draggableId,
-              //                 );
-              //               if (childIndex !== -1) {
-              //                 const newCollChildren = [
-              //                   ...collectionNode.children,
-              //                 ];
-              //                 const [movedChild] = newCollChildren.splice(
-              //                   childIndex,
-              //                   1,
-              //                 );
-              //                 newCollChildren.splice(
-              //                   destination.index,
-              //                   0,
-              //                   movedChild,
-              //                 );
-              //                 const updatedCollNode = {
-              //                   ...collectionNode,
-              //                   children: newCollChildren,
-              //                 };
-              //                 const newChildren = node.children.map((c: any) =>
-              //                   c.name === `[${sourceCollName}]`
-              //                     ? updatedCollNode
-              //                     : c,
-              //                 );
-              //                 return { ...node, children: newChildren };
-              //               }
-              //             }
-              //           }
-              //         } else {
-              //           // Case 2: Different collections - move between them
-              //           let movedChild: any = null;
-              //           let newChildren = [...node.children];
-              //           // Remove from source
-              //           if (sourceCollName === "main") {
-              //             const childIndex = newChildren.findIndex(
-              //               (c: any) => c.nodeId === draggableId,
-              //             );
-              //             if (childIndex !== -1) {
-              //               [movedChild] = newChildren.splice(childIndex, 1);
-              //             }
-              //           } else {
-              //             const sourceCollNode = newChildren.find(
-              //               (c: any) => c.name === `[${sourceCollName}]`,
-              //             );
-              //             if (sourceCollNode && sourceCollNode.children) {
-              //               const childIndex =
-              //                 sourceCollNode.children.findIndex(
-              //                   (c: any) => c.nodeId === draggableId,
-              //                 );
-              //               if (childIndex !== -1) {
-              //                 [movedChild] = sourceCollNode.children.splice(
-              //                   childIndex,
-              //                   1,
-              //                 );
-              //                 newChildren = newChildren.map((c: any) =>
-              //                   c.name === `[${sourceCollName}]`
-              //                     ? { ...sourceCollNode }
-              //                     : c,
-              //                 );
-              //               }
-              //             }
-              //           }
-              //           // Add to destination
-              //           if (movedChild) {
-              //             if (destCollName === "main") {
-              //               newChildren.splice(
-              //                 destination.index,
-              //                 0,
-              //                 movedChild,
-              //               );
-              //             } else {
-              //               let destCollNode = newChildren.find(
-              //                 (c: any) => c.name === `[${destCollName}]`,
-              //               );
-              //               if (!destCollNode) {
-              //                 // Create collection node if it doesn't exist
-              //                 destCollNode = {
-              //                   id: `${node.id}-${destCollName}`,
-              //                   nodeId: node.nodeId,
-              //                   name: `[${destCollName}]`,
-              //                   category: true,
-              //                   children: [],
-              //                 };
-              //                 newChildren.push(destCollNode);
-              //               }
-              //               const destChildren = [
-              //                 ...(destCollNode.children || []),
-              //               ];
-              //               destChildren.splice(
-              //                 destination.index,
-              //                 0,
-              //                 movedChild,
-              //               );
-              //               newChildren = newChildren.map((c: any) =>
-              //                 c.name === `[${destCollName}]`
-              //                   ? { ...c, children: destChildren }
-              //                   : c,
-              //               );
-              //             }
-              //           }
-              //           return { ...node, children: newChildren };
-              //         }
-              //       }
-              //       // Recursively process children
-              //       if (node.children) {
-              //         return {
-              //           ...node,
-              //           children: updateTreeNode(node.children),
-              //         };
-              //       }
-              //       return node;
-              //     });
-              //   };
-              //   const updatedTree = updateTreeNode(tree);
-              //     "[INSTANT UPDATE] Reordered children in tree after collection sorting",
-              //   );
-              //   return updatedTree;
-              // });
             }
 
+            // Instant update; the snapshot for this side is gated by
+            // pendingWrites until the server write lands.
+            setCurrentVisibleNode((prev: any) =>
+              prev && prev.id === currentVisibleNode?.id
+                ? { ...prev, [property]: propertyValue }
+                : prev,
+            );
+
+            pendingWrites.start(currentVisibleNode.id, property);
+            try {
+              await Post("/nodes/hierarchy/sort", {
+                nodeId: currentVisibleNode.id,
+                side: property,
+                value: propertyValue,
+                sortType: "elements",
+                changeDetails: {
+                  draggableNodeId: draggableId,
+                  sourceCollectionIndex,
+                  destinationCollectionIndex,
+                  destinationIndex,
+                },
+                ...(appName ? { appName } : {}),
+              });
+            } catch (error: any) {
+              const fresh = await fetchNode(currentVisibleNode.id);
+              if (fresh) {
+                setCurrentVisibleNode((prev: any) =>
+                  prev?.id === fresh.id ? fresh : prev,
+                );
+                setEditableProperty((fresh as any)[property] ?? []);
+              }
+              setSnackbarMessage(
+                `Failed to reorder "${property}": ${
+                  (typeof error === "string" ? error : error?.message) ||
+                  "Please try again."
+                }`,
+              );
+              recordLogs({
+                type: "error",
+                error: JSON.stringify({
+                  name: error?.name,
+                  message: typeof error === "string" ? error : error?.message,
+                  stack: error?.stack,
+                }),
+                at: "handleSorting",
+              });
+            } finally {
+              pendingWrites.end(currentVisibleNode.id, property);
+            }
+          } else {
+            // Instant update; reordering an inherited value overrides it, so
+            // null the ref locally too. The snapshot is gated by pendingWrites.
+            setCurrentVisibleNode((prev: any) =>
+              prev && prev.id === currentVisibleNode?.id
+                ? {
+                    ...prev,
+                    properties: { ...prev.properties, [property]: propertyValue },
+                    inheritance: {
+                      ...prev.inheritance,
+                      [property]: {
+                        ...(prev.inheritance?.[property] || {}),
+                        ref: null,
+                        title: "",
+                      },
+                    },
+                  }
+                : prev,
+            );
+
+            pendingWrites.start(currentVisibleNode.id, `properties.${property}`);
+            try {
+              await Post("/nodes/properties/update", {
+                action: "sort-links",
+                nodeId: currentVisibleNode.id,
+                propertyName: property,
+                value: propertyValue,
+                changeDetails: {
+                  draggableNodeId: draggableId,
+                  sourceCollectionIndex,
+                  destinationCollectionIndex,
+                  destinationIndex,
+                },
+                ...(appName ? { appName } : {}),
+              });
+            } catch (error: any) {
+              const fresh = await fetchNode(currentVisibleNode.id);
+              if (fresh) {
+                setCurrentVisibleNode((prev: any) =>
+                  prev?.id === fresh.id ? fresh : prev,
+                );
+                setEditableProperty((fresh as any).properties?.[property] ?? []);
+              }
+              setSnackbarMessage(
+                `Failed to reorder "${property}": ${
+                  (typeof error === "string" ? error : error?.message) ||
+                  "Please try again."
+                }`,
+              );
+              recordLogs({
+                type: "error",
+                error: JSON.stringify({
+                  name: error?.name,
+                  message: typeof error === "string" ? error : error?.message,
+                  stack: error?.stack,
+                }),
+                at: "handleSorting",
+              });
+            } finally {
+              pendingWrites.end(currentVisibleNode.id, `properties.${property}`);
+            }
           }
 
-          // Record a log of the sorting action
-          recordLogs({
-            action: "sort elements",
-            field: property,
-            sourceCategory: sourceCollectionIndex,
-            destinationCategory: destinationCollectionIndex,
-            nodeId: currentVisibleNode?.id,
-          });
         }
       } catch (error: any) {
         // Log any errors that occur during the sorting process
@@ -831,7 +737,7 @@ const CollectionStructure = ({
         });
       }
     },
-    [currentVisibleNode, db, nodes, recordLogs, property],
+    [currentVisibleNode, db, nodes, recordLogs, property, appName, fetchNode],
   );
 
   const handleSpecializationLink = useCallback(
@@ -862,46 +768,9 @@ const CollectionStructure = ({
 
         const currentNodeId = currentVisibleNode.id;
 
-        // Remove nodeBId from currentVisibleNode's specializations
-        await unlinkPropertyOf(db, "generalizations", nodeBId, currentNodeId);
-
-        setSnackbarMessage(
-          `"${getTitle(nodes, nodeBId)}" has been moved under "${getTitle(nodes, nodeAId)}"`,
-        );
-
-        // Update nodeB's generalizations: remove currentNodeId, add nodeAId
-        const nodeBGeneralizations: ICollection[] = JSON.parse(
-          JSON.stringify(nodeBData.generalizations),
-        );
-        for (const col of nodeBGeneralizations) {
-          col.nodes = col.nodes.filter(
-            (n: { id: string }) => n.id !== currentNodeId,
-          );
-        }
-        nodeBGeneralizations[0].nodes.push({
-          id: nodeAId,
-          title: getTitle(nodes, nodeAId) ?? "",
-        });
-        await updateDoc(doc(collection(db, NODES), nodeBId), {
-          generalizations: nodeBGeneralizations,
-        });
-
-        // Add nodeBId to nodeA's specializations in main collection
-        const nodeASpecs: ICollection[] = JSON.parse(
-          JSON.stringify(nodeAData.specializations),
-        );
-        const mainIdx = nodeASpecs.findIndex(
-          (c) => c.collectionName === "main",
-        );
-        nodeASpecs[mainIdx !== -1 ? mainIdx : 0].nodes.push({
-          id: nodeBId,
-          title: getTitle(nodes, nodeBId) ?? "",
-        });
-        await updateDoc(doc(collection(db, NODES), nodeAId), {
-          specializations: nodeASpecs,
-        });
-
-        // Remove nodeBId from the visible list
+        // Instant: drop nodeB from the current node's specializations and the
+        // visible list, and move it under nodeA in the tree. The snapshot is
+        // gated by pendingWrites until the server write lands.
         setEditableProperty((prev: ICollection[]) => {
           const next: ICollection[] = JSON.parse(JSON.stringify(prev));
           if (next[sourceCollectionIndex]) {
@@ -911,83 +780,63 @@ const CollectionStructure = ({
           }
           return next;
         });
-
-        // Snapshot specializations before/after nodeBId removal — `unlinkPropertyOf`
-        // above mutated Firestore but not `currentVisibleNode` locally.
-        const previousSpecializations: ICollection[] =
-          currentVisibleNode.specializations || [];
-        const newSpecializations: ICollection[] = previousSpecializations.map(
-          (col) => ({
-            ...col,
-            nodes: col.nodes.filter((n: ILinkNode) => n.id !== nodeBId),
-          }),
+        setCurrentVisibleNode((prev: any) =>
+          prev && prev.id === currentNodeId
+            ? {
+                ...prev,
+                specializations: (prev.specializations || []).map(
+                  (col: ICollection) => ({
+                    ...col,
+                    nodes: col.nodes.filter((n: ILinkNode) => n.id !== nodeBId),
+                  }),
+                ),
+              }
+            : prev,
         );
-
-        // Reserve a parent-log id so the child log on nodeB can reference it via
-        // `triggeredBy.logId`. Not passed to `unlinkPropertyOf` above because that
-        // call is itself part of the parent mutation.
-        const parentLogId = doc(collection(db, NODES_LOGS)).id;
-        const parentLog = {
-          logId: parentLogId,
-          nodeId: currentNodeId,
-          nodeTitle: currentVisibleNode.title ?? "",
-          changeType: "modify elements" as const,
-        };
-
-        saveNewChangeLog(
-          db,
-          {
-            nodeId: currentNodeId,
-            modifiedBy: user.uname,
-            modifiedProperty: "specializations",
-            previousValue: previousSpecializations,
-            newValue: newSpecializations,
-            modifiedAt: new Date(),
-            changeType: "modify elements",
-            changeDetails: {
-              action: "nest-specialization",
-              movedNode: nodeBId,
-              newParent: nodeAId,
-            },
-            fullNode: currentVisibleNode,
-            ...(appName ? { appName } : {}),
-          },
-          parentLogId,
-        );
-        saveNewChangeLog(db, {
-          nodeId: nodeBId,
-          modifiedBy: user.uname,
-          modifiedProperty: "generalizations",
-          previousValue: nodeBData.generalizations,
-          newValue: nodeBGeneralizations,
-          modifiedAt: new Date(),
-          changeType: "modify elements",
-          changeDetails: {
-            action: "nest-specialization",
-            removedParent: currentNodeId,
-            newParent: nodeAId,
-          },
-          fullNode: nodeBData,
-          ...(appName ? { appName } : {}),
-          triggeredBy: parentLog,
-        });
-
-        // Instant tree update: move nodeBId from currentNode's subtree to nodeA's subtree
         if (onInstantTreeUpdate) {
           onInstantTreeUpdate((tree) =>
             moveNodeInTree(tree, nodeBId, currentNodeId, nodeAId, 0),
           );
         }
-
-        // Inheritance update
-        await updateLinksForInheritance(
-          db,
-          nodeBId,
-          [{ id: nodeAId }],
-          nodeBGeneralizations[0].nodes,
-          nodeBData,
-          nodes,
+        setSnackbarMessage(
+          `"${getTitle(nodes, nodeBId)}" has been moved under "${getTitle(nodes, nodeAId)}"`,
         );
+
+        pendingWrites.start(currentNodeId, "specializations");
+        try {
+          await Post("/nodes/hierarchy/move", {
+            nodeId: nodeBId,
+            fromParentId: currentNodeId,
+            toParentId: nodeAId,
+            toCollectionName: "main",
+            ...(appName ? { appName } : {}),
+          });
+        } catch (error: any) {
+          const fresh = await fetchNode(currentNodeId);
+          if (fresh) {
+            setCurrentVisibleNode((prev: any) =>
+              prev?.id === fresh.id ? fresh : prev,
+            );
+            setEditableProperty((fresh as any).specializations ?? []);
+          }
+          setSnackbarMessage(
+            `Failed to move "${getTitle(nodes, nodeBId)}": ${
+              (typeof error === "string" ? error : error?.message) ||
+              "Please try again."
+            }`,
+          );
+          recordLogs({
+            type: "error",
+            error: JSON.stringify({
+              name: error?.name,
+              message: typeof error === "string" ? error : error?.message,
+              stack: error?.stack,
+            }),
+            at: "handleSpecializationLink",
+          });
+        } finally {
+          pendingWrites.end(currentNodeId, "specializations");
+        }
       } catch (error: any) {
         console.error(error);
         recordLogs({
@@ -1002,13 +851,14 @@ const CollectionStructure = ({
     },
     [
       currentVisibleNode,
-      db,
       nodes,
       user,
-      propertyValue,
       appName,
+      fetchNode,
       setEditableProperty,
+      setCurrentVisibleNode,
       onInstantTreeUpdate,
+      setSnackbarMessage,
     ],
   );
 
@@ -1026,151 +876,106 @@ const CollectionStructure = ({
 
         setOpenAddCollection(false);
 
-        const nodeDoc = await getDoc(
-          doc(collection(db, NODES), currentVisibleNode?.id),
-        );
-        if (!nodeDoc.exists()) return;
-
-        const nodeData = nodeDoc.data();
-        const isSpecialization =
-          property === "specializations" || property === "generalizations";
-
-        const propertyPath = isSpecialization
-          ? property
-          : `properties.${property}`;
-
-        const existIndex = nodeData[propertyPath].findIndex(
-          (c: ICollection) => c.collectionName === newCollection,
-        );
-        // Check if the collection already exists
-        if (existIndex !== -1) {
+        // Only specializations expose collection editing.
+        const current = [...(currentVisibleNode?.[property] || [])];
+        if (
+          current.some((c: ICollection) => c.collectionName === newCollection)
+        ) {
           confirmIt(`This collection already exists!`, "Ok", "");
           return;
         }
+        const newArray = [{ collectionName: newCollection, nodes: [] }, ...current];
 
-        // Create a deep copy of the previous value for logs
-        let previousValue = JSON.parse(
-          JSON.stringify(
-            isSpecialization
-              ? nodeData[propertyPath] || {}
-              : nodeData.properties[property] || {},
-          ),
+        // Instant update; the snapshot for this side is gated by pendingWrites.
+        setCurrentVisibleNode((prev: any) =>
+          prev && prev.id === currentVisibleNode?.id
+            ? { ...prev, [property]: newArray }
+            : prev,
         );
+        if (selectedProperty === property) setEditableProperty(newArray);
 
-        // Add new collection
-        if (isSpecialization) {
-          nodeData[propertyPath].unshift({
-            collectionName: newCollection,
-            nodes: [],
-          });
-        } else {
-          nodeData.properties[property].unshift({
-            collectionName: newCollection,
-            nodes: [],
+        if (onInstantTreeUpdate) {
+          onInstantTreeUpdate((tree) => {
+            const updateTreeNode = (nodes: any[]): any[] => {
+              return nodes.map((node) => {
+                if (node.nodeId === currentVisibleNode.id) {
+                  const collectionExists = node.children?.some(
+                    (child: any) =>
+                      child.name === `[${newCollection}]` && child.category,
+                  );
+                  if (collectionExists) return node;
+                  const newCollectionNode = {
+                    id: `${node.id}-${newCollection}`,
+                    nodeId: node.nodeId,
+                    name: `[${newCollection}]`,
+                    category: true,
+                    children: [],
+                  };
+                  return {
+                    ...node,
+                    children: [newCollectionNode, ...(node.children || [])],
+                  };
+                }
+                if (node.children) {
+                  return { ...node, children: updateTreeNode(node.children) };
+                }
+                return node;
+              });
+            };
+            return updateTreeNode(tree);
           });
         }
-        debugger;
-        // Log the new collection addition
-        logChange("add collection", null, newCollection, nodeDoc, property);
 
-        // Update inheritance if necessary
-        if (!isSpecialization) {
-          updateInheritance({
-            nodeId: nodeDoc.id,
-            updatedProperties: [property],
-            db,
+        pendingWrites.start(currentVisibleNode.id, property);
+        try {
+          await Post("/nodes/hierarchy/collection", {
+            nodeId: currentVisibleNode.id,
+            side: property,
+            action: "add",
+            collectionName: newCollection,
+            ...(appName ? { appName } : {}),
           });
-        }
-
-        // Update the node document with the new collection
-        const updateData = {
-          [propertyPath]: isSpecialization
-            ? nodeData[propertyPath]
-            : nodeData.properties[property],
-        };
-        await updateDoc(nodeDoc.ref, updateData);
-
-        // Save the change log
-        saveNewChangeLog(db, {
-          nodeId: currentVisibleNode?.id,
-          modifiedBy: user?.uname,
-          modifiedProperty: property,
-          previousValue,
-          newValue: nodeData[propertyPath] || nodeData.properties[property],
-          modifiedAt: new Date(),
-          changeType: "add collection",
-          fullNode: currentVisibleNode,
-          changeDetails: {
-            addedCollection: newCollection || "",
-          },
-          ...(appName ? { appName } : {}),
-        });
-
-        // Queue tree update after adding collection
-        if (currentVisibleNode?.id && newCollection) {
-          // Instant update: Add new collection node to tree
-          if (onInstantTreeUpdate) {
-            onInstantTreeUpdate((tree) => {
-              const updateTreeNode = (nodes: any[]): any[] => {
-                return nodes.map((node) => {
-                  if (node.nodeId === currentVisibleNode.id) {
-                    // Check if collection already exists
-                    const collectionExists = node.children?.some(
-                      (child: any) => child.name === `[${newCollection}]` && child.category
-                    );
-
-                    if (collectionExists) {
-                      return node;
-                    }
-
-                    // Add new collection node (empty) to children
-                    const newCollectionNode = {
-                      id: `${node.id}-${newCollection}`,
-                      nodeId: node.nodeId,
-                      name: `[${newCollection}]`,
-                      category: true,
-                      children: [],
-                    };
-                    const newChildren = [
-                      newCollectionNode,
-                      ...(node.children || []),
-                    ];
-                    return { ...node, children: newChildren };
-                  }
-                  if (node.children) {
-                    return { ...node, children: updateTreeNode(node.children) };
-                  }
-                  return node;
-                });
-              };
-              const updatedTree = updateTreeNode(tree);
-              return updatedTree;
-            });
+        } catch (error: any) {
+          const fresh = await fetchNode(currentVisibleNode.id);
+          if (fresh) {
+            setCurrentVisibleNode((prev: any) =>
+              prev?.id === fresh.id ? fresh : prev,
+            );
+            if (selectedProperty === property)
+              setEditableProperty((fresh as any)[property] ?? []);
           }
-
+          setSnackbarMessage(
+            `Failed to add collection: ${
+              (typeof error === "string" ? error : error?.message) ||
+              "Please try again."
+            }`,
+          );
+          recordLogs({
+            type: "error",
+            error: JSON.stringify({
+              name: error?.name,
+              message: typeof error === "string" ? error : error?.message,
+              stack: error?.stack,
+            }),
+            at: "addCollection",
+          });
+        } finally {
+          pendingWrites.end(currentVisibleNode.id, property);
         }
       } catch (error: any) {
-        console.error({
-          type: "error",
-          error: JSON.stringify({
-            name: error.name,
-            message: error.message,
-            stack: error.stack,
-          }),
-          at: "addCollection",
-        });
-        // recordLogs({
-        //   type: "error",
-        //   error: JSON.stringify({
-        //     name: error.name,
-        //     message: error.message,
-        //     stack: error.stack,
-        //   }),
-        //   at: "addCollection",
-        // });
+        console.error(error);
       }
     },
-    [user?.uname, db, currentVisibleNode?.id, property],
+    [
+      user?.uname,
+      currentVisibleNode,
+      property,
+      appName,
+      fetchNode,
+      selectedProperty,
+      onInstantTreeUpdate,
+      confirmIt,
+    ],
   );
   const saveNewAndSwapIt = (newPartTitle: string, partId: string) => {
     try {
@@ -1235,134 +1040,87 @@ const CollectionStructure = ({
         if (!newCollection || !user?.uname || newCollection === editCollection)
           return;
 
-        const nodeDoc = await getDoc(
-          doc(collection(db, NODES), currentVisibleNode?.id),
-        );
-        if (!nodeDoc.exists()) return;
-
-        const nodeData = nodeDoc.data();
-        const isSpecialization =
-          property === "specializations" || property === "generalizations";
-
-        const propertyPath = isSpecialization
-          ? property
-          : `properties.${property}`;
-
-        // Create a deep copy of the previous value for logs
-        let previousValue = JSON.parse(
-          JSON.stringify(
-            isSpecialization
-              ? nodeData[propertyPath]
-              : nodeData.properties[property] || {},
-          ),
+        const renamed = [...(currentVisibleNode?.[property] || [])].map(
+          (c: ICollection) =>
+            c.collectionName === editCollection
+              ? { ...c, collectionName: newCollection }
+              : c,
         );
 
-        // Find the collection to be edited
-        if (isSpecialization) {
-          const collection = nodeData[propertyPath].find(
-            (c: ICollection) => c.collectionName === editCollection,
-          );
-          if (collection) {
-            collection.collectionName = newCollection;
-          }
-        } else {
-          const collection = nodeData.properties[property].find(
-            (c: ICollection) => c.collectionName === editCollection,
-          );
-          if (collection) {
-            collection.collectionName = newCollection;
-          }
-        }
-
-        // Log the edited category
-        logChange(
-          "Edited a category",
-          editCollection,
-          newCollection,
-          nodeDoc,
-          property,
+        // Instant update; the snapshot for this side is gated by pendingWrites.
+        setCurrentVisibleNode((prev: any) =>
+          prev && prev.id === currentVisibleNode?.id
+            ? { ...prev, [property]: renamed }
+            : prev,
         );
+        if (selectedProperty === property) setEditableProperty(renamed);
 
-        // Update inheritance if necessary
-        if (!isSpecialization) {
-          updateInheritance({
-            nodeId: nodeDoc.id,
-            updatedProperties: [property],
-            db,
+        if (onInstantTreeUpdate && editCollection && newCollection) {
+          onInstantTreeUpdate((tree) => {
+            const updateTreeNode = (nodes: any[]): any[] => {
+              return nodes.map((node) => {
+                if (node.nodeId === currentVisibleNode.id && node.children) {
+                  const newChildren = node.children.map((child: any) => {
+                    if (child.name === `[${editCollection}]`) {
+                      return {
+                        ...child,
+                        name: `[${newCollection}]`,
+                        id: child.id.replace(
+                          `-${editCollection}`,
+                          `-${newCollection}`,
+                        ),
+                      };
+                    }
+                    return child;
+                  });
+                  return { ...node, children: newChildren };
+                }
+                if (node.children) {
+                  return { ...node, children: updateTreeNode(node.children) };
+                }
+                return node;
+              });
+            };
+            return updateTreeNode(tree);
           });
         }
 
-        // Update the node document with the edited collection
-        const updateData = {
-          [propertyPath]: isSpecialization
-            ? nodeData[propertyPath]
-            : nodeData.properties[property],
-        };
-
-        setEditableProperty((prev: ICollection[]) => {
-          const _prev = [...prev];
-          const collection = _prev.find(
-            (c: ICollection) => c.collectionName === editCollection,
+        pendingWrites.start(currentVisibleNode.id, property);
+        try {
+          await Post("/nodes/hierarchy/collection", {
+            nodeId: currentVisibleNode.id,
+            side: property,
+            action: "rename",
+            collectionName: editCollection,
+            newName: newCollection,
+            ...(appName ? { appName } : {}),
+          });
+        } catch (error: any) {
+          const fresh = await fetchNode(currentVisibleNode.id);
+          if (fresh) {
+            setCurrentVisibleNode((prev: any) =>
+              prev?.id === fresh.id ? fresh : prev,
+            );
+            if (selectedProperty === property)
+              setEditableProperty((fresh as any)[property] ?? []);
+          }
+          setSnackbarMessage(
+            `Failed to rename collection: ${
+              (typeof error === "string" ? error : error?.message) ||
+              "Please try again."
+            }`,
           );
-          if (collection) {
-            collection.collectionName = newCollection;
-          }
-          return _prev;
-        });
-        await updateDoc(nodeDoc.ref, updateData);
-
-        // Save the change log
-        saveNewChangeLog(db, {
-          nodeId: currentVisibleNode?.id,
-          modifiedBy: user?.uname,
-          modifiedProperty: property,
-          previousValue,
-          newValue: nodeData[propertyPath] || nodeData.properties[property],
-          modifiedAt: new Date(),
-          changeType: "edit collection",
-          fullNode: currentVisibleNode,
-          changeDetails: {
-            modifiedCollection: editCollection || "",
-            newValue: newCollection,
-          },
-          ...(appName ? { appName } : {}),
-        });
-
-        // Queue tree update after editing collection name
-        if (currentVisibleNode?.id) {
-          // Instant update: Rename collection node in tree
-          if (onInstantTreeUpdate && editCollection && newCollection) {
-            onInstantTreeUpdate((tree) => {
-              const updateTreeNode = (nodes: any[]): any[] => {
-                return nodes.map((node) => {
-                  if (node.nodeId === currentVisibleNode.id && node.children) {
-                    // Find and rename the collection node
-                    const newChildren = node.children.map((child: any) => {
-                      if (child.name === `[${editCollection}]`) {
-                        return {
-                          ...child,
-                          name: `[${newCollection}]`,
-                          id: child.id.replace(
-                            `-${editCollection}`,
-                            `-${newCollection}`,
-                          ),
-                        };
-                      }
-                      return child;
-                    });
-                    return { ...node, children: newChildren };
-                  }
-                  if (node.children) {
-                    return { ...node, children: updateTreeNode(node.children) };
-                  }
-                  return node;
-                });
-              };
-              const updatedTree = updateTreeNode(tree);
-              return updatedTree;
-            });
-          }
-
+          recordLogs({
+            type: "error",
+            error: JSON.stringify({
+              name: error?.name,
+              message: typeof error === "string" ? error : error?.message,
+              stack: error?.stack,
+            }),
+            at: "saveEditCollection",
+          });
+        } finally {
+          pendingWrites.end(currentVisibleNode.id, property);
         }
       } catch (error: any) {
         console.error(error);
@@ -1378,7 +1136,16 @@ const CollectionStructure = ({
       }
       setEditCollection(null);
     },
-    [property, editCollection, user?.uname],
+    [
+      property,
+      editCollection,
+      user?.uname,
+      currentVisibleNode,
+      appName,
+      fetchNode,
+      selectedProperty,
+      onInstantTreeUpdate,
+    ],
   );
   const deleteCollection = useCallback(
     async (property: string, collectionIdx: number, collectionName: string) => {
@@ -1401,141 +1168,99 @@ const CollectionStructure = ({
         ))
       ) {
         try {
-          const nodeDoc = await getDoc(
-            doc(collection(db, NODES), currentVisibleNode?.id),
+          const current = [...(currentVisibleNode?.[property] || [])];
+          const target = current.find(
+            (c: ICollection) => c.collectionName === collectionName,
           );
-          if (nodeDoc.exists()) {
-            let previousValue = null;
-            const nodeData = nodeDoc.data();
-            const isSpecialization =
-              property === "specializations" || property === "generalizations";
+          if (!target) return;
 
-            const propertyPath = isSpecialization
-              ? property
-              : `properties.${property}`;
+          // Merge the deleted collection's nodes into "main", then drop it.
+          const newArray: ICollection[] = JSON.parse(JSON.stringify(current));
+          let main = newArray.find((c) => c.collectionName === "main");
+          if (!main) {
+            main = { collectionName: "main", nodes: [] };
+            newArray.push(main);
+          }
+          const existing = new Set(main.nodes.map((n: ILinkNode) => n.id));
+          for (const node of target.nodes) {
+            if (existing.has(node.id)) continue;
+            main.nodes.push(node);
+            existing.add(node.id);
+          }
+          newArray.splice(
+            newArray.findIndex((c) => c.collectionName === collectionName),
+            1,
+          );
 
-            // Handle collection deletion for both 'specializations' and other properties
-            previousValue = JSON.parse(
-              JSON.stringify(
-                isSpecialization
-                  ? nodeData[propertyPath]
-                  : nodeData.properties[property],
-              ),
-            );
+          // Instant update; the snapshot for this side is gated by pendingWrites.
+          setCurrentVisibleNode((prev: any) =>
+            prev && prev.id === currentVisibleNode?.id
+              ? { ...prev, [property]: newArray }
+              : prev,
+          );
+          if (selectedProperty === property) setEditableProperty(newArray);
 
-            // Merge the category into "main" and delete the category
-            if (isSpecialization) {
-              let mainCollectionIdx = nodeData[propertyPath].findIndex(
-                (c: { collectionName: string }) => c.collectionName === "main",
-              );
-
-              if (mainCollectionIdx === -1) {
-                nodeData[propertyPath].push({
-                  collectionName: "main",
-                  nodes: [],
+          if (onInstantTreeUpdate && collectionName) {
+            onInstantTreeUpdate((tree) => {
+              const updateTreeNode = (nodes: any[]): any[] => {
+                return nodes.map((node) => {
+                  if (node.nodeId === currentVisibleNode.id && node.children) {
+                    const deletedCollNode = node.children.find(
+                      (c: any) => c.name === `[${collectionName}]`,
+                    );
+                    if (deletedCollNode) {
+                      const childrenToMove = deletedCollNode.children || [];
+                      const newChildren = node.children
+                        .filter((c: any) => c.name !== `[${collectionName}]`)
+                        .concat(childrenToMove);
+                      return { ...node, children: newChildren };
+                    }
+                  }
+                  if (node.children) {
+                    return { ...node, children: updateTreeNode(node.children) };
+                  }
+                  return node;
                 });
-                mainCollectionIdx = nodeData[propertyPath].length - 1;
-              }
-
-              nodeData[propertyPath][mainCollectionIdx].nodes = [
-                ...(nodeData[propertyPath][mainCollectionIdx].nodes || []),
-                ...nodeData[propertyPath][collectionIdx].nodes,
-              ];
-              nodeData[propertyPath].splice(collectionIdx, 1);
-            } else {
-              let mainCollectionIdx = nodeData.properties[property].findIndex(
-                (c: { collectionName: string }) => c.collectionName === "main",
-              );
-              if (mainCollectionIdx === -1) {
-                nodeData.properties[property].push({
-                  collectionName: "main",
-                  nodes: [],
-                });
-                mainCollectionIdx = nodeData.properties[property].length - 1;
-              }
-              nodeData.properties[property][mainCollectionIdx] = [
-                ...(nodeData.properties[property][mainCollectionIdx].nodes ||
-                  []),
-                ...nodeData.properties[property][collectionIdx].nodes,
-              ];
-              nodeData.properties[property].splice(collectionIdx, 1);
-            }
-
-            // Prepare the updated document data
-            const updateData = {
-              [propertyPath]: isSpecialization
-                ? nodeData[propertyPath]
-                : nodeData.properties[property],
-            };
-
-            // Update the node document
-            await updateDoc(nodeDoc.ref, updateData);
-
-            recordLogs({
-              action: "Deleted a collection",
-              category: collectionIdx,
-              node: nodeDoc.id,
+              };
+              return updateTreeNode(tree);
             });
+          }
 
-            // Log the changes
-            saveNewChangeLog(db, {
-              nodeId: currentVisibleNode?.id,
-              modifiedBy: user?.uname,
-              modifiedProperty: property,
-              previousValue,
-              newValue: isSpecialization
-                ? nodeData[propertyPath]
-                : nodeData.properties[property],
-              modifiedAt: new Date(),
-              changeType: "delete collection",
-              fullNode: currentVisibleNode,
-              changeDetails: {
-                deletedCollection: collectionName || "",
-              },
+          pendingWrites.start(currentVisibleNode.id, property);
+          try {
+            await Post("/nodes/hierarchy/collection", {
+              nodeId: currentVisibleNode.id,
+              side: property,
+              action: "delete",
+              collectionName,
               ...(appName ? { appName } : {}),
             });
-
-            // Queue tree update after deleting collection
-            if (currentVisibleNode?.id) {
-              // Instant update: Remove collection node and merge children to main
-              if (onInstantTreeUpdate && collectionName) {
-                onInstantTreeUpdate((tree) => {
-                  const updateTreeNode = (nodes: any[]): any[] => {
-                    return nodes.map((node) => {
-                      if (
-                        node.nodeId === currentVisibleNode.id &&
-                        node.children
-                      ) {
-                        // Find the collection node being deleted
-                        const deletedCollNode = node.children.find(
-                          (c: any) => c.name === `[${collectionName}]`,
-                        );
-                        if (deletedCollNode) {
-                          // Remove the collection node and move its children to main (direct children)
-                          const childrenToMove = deletedCollNode.children || [];
-                          const newChildren = node.children
-                            .filter(
-                              (c: any) => c.name !== `[${collectionName}]`,
-                            )
-                            .concat(childrenToMove);
-                          return { ...node, children: newChildren };
-                        }
-                      }
-                      if (node.children) {
-                        return {
-                          ...node,
-                          children: updateTreeNode(node.children),
-                        };
-                      }
-                      return node;
-                    });
-                  };
-                  const updatedTree = updateTreeNode(tree);
-                  return updatedTree;
-                });
-              }
-
+          } catch (error: any) {
+            const fresh = await fetchNode(currentVisibleNode.id);
+            if (fresh) {
+              setCurrentVisibleNode((prev: any) =>
+                prev?.id === fresh.id ? fresh : prev,
+              );
+              if (selectedProperty === property)
+                setEditableProperty((fresh as any)[property] ?? []);
             }
+            setSnackbarMessage(
+              `Failed to delete collection: ${
+                (typeof error === "string" ? error : error?.message) ||
+                "Please try again."
+              }`,
+            );
+            recordLogs({
+              type: "error",
+              error: JSON.stringify({
+                name: error?.name,
+                message: typeof error === "string" ? error : error?.message,
+                stack: error?.stack,
+              }),
+              at: "deleteCollection",
+            });
+          } finally {
+            pendingWrites.end(currentVisibleNode.id, property);
           }
         } catch (error: any) {
           console.error("error", error);
@@ -1551,7 +1276,15 @@ const CollectionStructure = ({
         }
       }
     },
-    [confirmIt, currentVisibleNode, db, user?.uname],
+    [
+      confirmIt,
+      currentVisibleNode,
+      user?.uname,
+      appName,
+      fetchNode,
+      selectedProperty,
+      onInstantTreeUpdate,
+    ],
   );
   const handleEditCollection = (collectionName: string) => {
     setEditCollection(collectionName);
