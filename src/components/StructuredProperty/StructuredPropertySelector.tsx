@@ -22,7 +22,7 @@ import Text from "../OntologyComponents/Text";
 import {
   SCROLL_BAR_STYLE,
   DISPLAY,
-  UNCLASSIFIED,
+  UNCLASSIFIED_COLLECTION,
   development,
 } from "@components/lib/CONSTANTS";
 import { capitalizeFirstLetter } from "@components/lib/utils/string.utils";
@@ -122,10 +122,16 @@ const StructuredPropertySelector = ({
   addACloneNodeQueue: (
     nodeId: string,
     title?: string,
+    sourceCollection?: string,
   ) => Promise<string | null>;
   setClonedNodesQueue: Function;
   clonedNodesQueue: {
-    [nodeId: string]: { title: string; id: string; property: string };
+    [nodeId: string]: {
+      title: string;
+      id: string;
+      property: string;
+      sourceCollection?: string;
+    };
   };
   newOnes: any;
   setNewOnes: any;
@@ -492,23 +498,6 @@ const StructuredPropertySelector = ({
     );
   };
 
-  const getCreateNewButtonText = useMemo(() => {
-    let nodeType = currentVisibleNode.propertyType[selectedProperty];
-    if (
-      selectedProperty === "specializations" ||
-      selectedProperty === "generalizations" ||
-      selectedProperty === "parts" ||
-      selectedProperty === "isPartOf"
-    ) {
-      nodeType = currentVisibleNode.nodeType;
-    }
-    return UNCLASSIFIED[nodeType];
-  }, [
-    currentVisibleNode.nodeType,
-    currentVisibleNode.propertyType,
-    selectedProperty,
-  ]);
-
   const getNumOfGeneralizations = (id: string) => {
     if (!relatedNodes[id] || newOnes.has(id)) {
       return false;
@@ -740,8 +729,12 @@ const StructuredPropertySelector = ({
   //   selectedDiffNode,
   // ]) as ICollection[];
 
-  const _add = async (nodeId: string, title?: string) => {
-    const id = await addACloneNodeQueue(nodeId, title);
+  const _add = async (
+    nodeId: string,
+    title?: string,
+    sourceCollection?: string,
+  ) => {
+    const id = await addACloneNodeQueue(nodeId, title, sourceCollection);
     if (!id) {
       return null;
     }
@@ -803,20 +796,26 @@ const StructuredPropertySelector = ({
     ) {
       nodeType = currentVisibleNode.nodeType;
     }
-    const unclassifiedNodeDocs = await getDocs(
-      query(
-        collection(db, NODES),
-        where("unclassified", "==", true),
-        where("nodeType", "==", nodeType),
-      ),
-    );
-    // Pick the first non-deleted candidate.
-    const candidate = unclassifiedNodeDocs.docs.find(
-      (d) => (d.data() as any).deleted !== true,
-    );
-    if (candidate) {
-      await _add(candidate.id, searchValue);
+    // A new node with no natural parent goes under the type root's
+    // "unclassified" collection (created on the root if missing), not under a
+    // dedicated unclassified node.
+    const constraints: any[] = [
+      where("root", "==", true),
+      where("nodeType", "==", nodeType),
+      where("deleted", "==", false),
+    ];
+    if (appName) constraints.push(where("appName", "==", appName));
+    const rootDocs = await getDocs(query(collection(db, NODES), ...constraints));
+    const rootId = rootDocs.docs[0]?.id;
+    if (!rootId) {
+      confirmIt(
+        "No root node was found to place the new node under.",
+        "Ok",
+        "",
+      );
+      return;
     }
+    await _add(rootId, searchValue, UNCLASSIFIED_COLLECTION);
   };
 
   const approveQueuedCloneFromSource = (sourceNodeId: string) => {
@@ -1015,11 +1014,11 @@ const StructuredPropertySelector = ({
                 />
               </Box>
               <Tooltip
-                title={`Create as a new Specialization ${
-                  selectedProperty !== "specializations"
-                    ? `Under ${getCreateNewButtonText}`
-                    : ""
-                } Node`}
+                title={
+                  selectedProperty === "specializations"
+                    ? "Create a new specialization of this node"
+                    : `Create a new node under the "Unclassified" collection`
+                }
               >
                 <Button
                   onClick={async () => {

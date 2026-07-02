@@ -618,6 +618,7 @@ const StructuredProperty = ({
           targetNodeId: targetId,
           targetProperty: property,
           collectionName,
+          sourceCollectionName: (queued as any).sourceCollection || "main",
           ...(appName ? { appName } : {}),
         });
         await Post("/triggerChroma", { nodeId: nId, update: true });

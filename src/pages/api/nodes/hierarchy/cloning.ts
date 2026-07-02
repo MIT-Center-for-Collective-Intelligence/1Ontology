@@ -82,6 +82,7 @@ async function applyClone(ctx: {
   currentNode: INode;
   targetProperty: string;
   collectionName: string;
+  sourceCollectionName: string;
   uname?: string;
   appName?: string;
 }): Promise<{ ok: true; nodeId: string }> {
@@ -92,6 +93,7 @@ async function applyClone(ctx: {
     currentNode,
     targetProperty,
     collectionName,
+    sourceCollectionName,
     uname,
     appName,
   } = ctx;
@@ -163,7 +165,9 @@ async function applyClone(ctx: {
   const sourceSpecs: ICollection[] = JSON.parse(
     JSON.stringify(sourceSpecsBefore),
   );
-  addToMain(sourceSpecs, { id: newNodeId, title });
+  // When the node has no parent when created from properties other than "specializations",
+  // adds it to "unclassified" collection of the root 
+  addToSide(sourceSpecs, sourceCollectionName, { id: newNodeId, title });
   await db
     .collection(NODES)
     .doc(sourceId)
@@ -329,6 +333,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     targetNodeId,
     targetProperty,
     collectionName,
+    sourceCollectionName,
     appName,
     user,
   } = data as {
@@ -338,6 +343,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     targetNodeId?: string;
     targetProperty?: string;
     collectionName?: string;
+    sourceCollectionName?: string;
     appName?: string;
     user?: any;
   };
@@ -400,6 +406,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       currentNode: { ...currentNode, id: targetNodeId },
       targetProperty,
       collectionName: collectionName || "main",
+      sourceCollectionName: sourceCollectionName || "main",
       uname,
       appName,
     });
