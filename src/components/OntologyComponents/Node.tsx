@@ -572,7 +572,11 @@ const Node = ({
     return [];
   }, [searchValue, selectedProperty, currentVisibleNode, searchWithFuse]);
 
-  const addACloneNodeQueue = async (nodeId: string, title?: string) => {
+  const addACloneNodeQueue = async (
+    nodeId: string,
+    title?: string,
+    sourceCollection?: string,
+  ) => {
     let node: INode | null = relatedNodes[nodeId] || null;
     if (!node) {
       const fetchedNode = await fetchNode(nodeId);
@@ -586,10 +590,20 @@ const Node = ({
     const newTitle = title ? title : `New ${node.title}`;
     setClonedNodesQueue(
       (prev: {
-        [nodeId: string]: { title: string; id: string; property: string };
+        [nodeId: string]: {
+          title: string;
+          id: string;
+          property: string;
+          sourceCollection?: string;
+        };
       }) => ({
         ...prev,
-        [newId]: { title: newTitle, id: nodeId, property: selectedProperty },
+        [newId]: {
+          title: newTitle,
+          id: nodeId,
+          property: selectedProperty,
+          ...(sourceCollection ? { sourceCollection } : {}),
+        },
       }),
     );
     setNewOnes((newOnes: any) => {
