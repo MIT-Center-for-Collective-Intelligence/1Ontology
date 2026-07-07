@@ -20,9 +20,6 @@ import { materializeAgainstGen } from "./partsModel";
  * from, or null when the node owns its parts.
  */
 
-/** Anchor sentinel: own parts that precede every inherited part sit at the front. */
-export const FRONT = "__front__";
-
 /** Parts live in a single "main" collection; read its node list. */
 export function partsNodes(parts?: ICollection[] | null): ILinkNode[] {
   if (!Array.isArray(parts) || parts.length === 0) return [];
@@ -58,137 +55,12 @@ export function idsOf(nodes: ILinkNode[]): string[] {
   return nodes.map((n) => n.id);
 }
 
-/** Is every id of `sub` present in `full` in the same relative order? */
-export function isSubsequence(sub: string[], full: string[]): boolean {
-  if (sub.length === 0) return false; // an empty source means "nothing to inherit"
-  let i = 0;
-  for (const id of full) {
-    if (id === sub[i]) {
-      i += 1;
-      if (i === sub.length) return true;
-    }
-  }
-  return false;
-}
-
-/** The node's own (non-inherited) part ids: node ids minus the source's ids. */
-export function ownPartIds(
-  nodeParts: ILinkNode[],
-  sourceParts: ILinkNode[],
-): string[] {
-  const inherited = new Set(sourceParts.map((n) => n.id));
-  return nodeParts.map((n) => n.id).filter((id) => !inherited.has(id));
-}
-
-/**
- * Rebuilds a descendant's parts when its source changes: own parts stay anchored
- * to the inherited part before them (falling back to the nearest earlier
- * survivor, else front), and the source's add/remove/reorder is spliced into the
- * inherited slots. Inherited parts keep the node's own `optional` override, else
- * take the source's.
- */
-export function anchoredSplice(
-  nodeParts: ILinkNode[],
-  oldSource: ILinkNode[],
-  newSource: ILinkNode[],
-): ILinkNode[] {
-  const inheritedIds = new Set(oldSource.map((n) => n.id));
-  const newSourceIds = new Set(newSource.map((n) => n.id));
-
-  // Classify: track each own part's preceding inherited ids (for anchor fallback)
-  // and remember any per-node optional override on inherited parts.
-  const optionalOverride = new Map<string, boolean>();
-  const own: { part: ILinkNode; preceding: string[] }[] = [];
-  const preceding: string[] = [];
-  for (const n of nodeParts) {
-    if (inheritedIds.has(n.id)) {
-      preceding.push(n.id);
-      if (typeof n.optional === "boolean") optionalOverride.set(n.id, n.optional);
-    } else {
-      own.push({ part: n, preceding: [...preceding] });
-    }
-  }
-
-  // Bucket own parts by their surviving anchor.
-  const ownByAnchor = new Map<string, ILinkNode[]>();
-  for (const { part, preceding: prec } of own) {
-    let anchor = FRONT;
-    for (let i = prec.length - 1; i >= 0; i--) {
-      if (newSourceIds.has(prec[i])) {
-        anchor = prec[i];
-        break;
-      }
-    }
-    if (!ownByAnchor.has(anchor)) ownByAnchor.set(anchor, []);
-    ownByAnchor.get(anchor)!.push(part);
-  }
-
-  const result: ILinkNode[] = [];
-  for (const p of ownByAnchor.get(FRONT) ?? []) result.push(p);
-  for (const s of newSource) {
-    const node: ILinkNode = { id: s.id, title: s.title ?? "" };
-    const optional = optionalOverride.has(s.id)
-      ? optionalOverride.get(s.id)!
-      : !!s.optional;
-    if (optional) node.optional = true;
-    result.push(node);
-    for (const p of ownByAnchor.get(s.id) ?? []) result.push(p);
-  }
-  return result;
-}
-
 export type GenForAttach = {
   id: string;
   parts: ILinkNode[];
-  /** The generalization's own parts.ref (so we can resolve to the ultimate owner). */
+  /** The generalization's own parts.ref (used to resolve part owners). */
   ref: string | null;
 };
-
-/**
- * Picks the generalization the node is attached to for parts. `ref` = that
- * DIRECT generalization (the nearest gen whose parts the node fully inherits),
- * not the ultimate owner — the chain is walked transitively. Keeps the current
- * gen if it still matches, else the first generalization whose parts are an
- * ordered subsequence of the node's. `ref: null` = the node owns its parts.
- */
-export function detectAttachment(
-  nodeParts: ILinkNode[],
-  generalizations: GenForAttach[],
-  currentRef: string | null,
-): { ref: string | null; sourceGenId: string | null } {
-  const nodeIds = idsOf(nodeParts);
-  const matches = generalizations.filter((g) =>
-    isSubsequence(idsOf(g.parts), nodeIds),
-  );
-  if (matches.length === 0) return { ref: null, sourceGenId: null };
-
-  if (currentRef) {
-    const keep = matches.find((g) => g.id === currentRef);
-    if (keep) return { ref: keep.id, sourceGenId: keep.id };
-  }
-  const first = matches[0];
-  return { ref: first.id, sourceGenId: first.id };
-}
-
-/**
- * Refresh/backfill variant of {@link detectAttachment} that picks a source even
- * when the node's parts don't currently match, to bootstrap legacy nodes. Keeps
- * the current owner if a gen resolves to it, else the first gen with parts;
- * `ref: null` when no generalization has parts.
- */
-export function chooseRefreshSource(
-  gens: GenForAttach[],
-  currentRef: string | null,
-): { ref: string | null; sourceGenId: string | null } {
-  const withParts = gens.filter((g) => g.parts.length > 0);
-  if (withParts.length === 0) return { ref: null, sourceGenId: null };
-  if (currentRef) {
-    const keep = withParts.find((g) => g.id === currentRef);
-    if (keep) return { ref: keep.id, sourceGenId: keep.id };
-  }
-  const first = withParts[0];
-  return { ref: first.id, sourceGenId: first.id };
-}
 
 /** Reads a stored parts value, defaulting to an empty `main` collection. */
 export function asPartsCollections(value: any): ICollection[] {
