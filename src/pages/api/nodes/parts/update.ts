@@ -11,23 +11,25 @@ import {
   writeChangeLog,
 } from "@components/lib/server/hierarchy";
 import {
-  GenForAttach,
   applyIsPartOfOwnerOnly,
   asPartsCollections,
   buildGensForAttach,
   cascadeParts,
-  detectAttachment,
-  ownPartIds,
   partsInheritanceEntry,
   partsNodes,
   sanitizeParts,
+  toParts,
 } from "@components/lib/server/parts";
+import {
+  derivePartsAndRef,
+  isOwnedPart,
+} from "@components/lib/server/partsModel";
 
 /**
- * Saves a node's `parts` under the "overall" inheritance model. The client sends
- * the full new value; the server attaches/breaks `inheritance.parts.ref` (ordered-
- * subsequence rule), materializes the change down the attached subtree, maintains
- * owner-only `isPartOf`, and logs it.
+ * Saves a node's `parts`. The client sends the full new list; the server
+ * re-derives each part's owner (`inheritedFrom`) and the overall
+ * `inheritance.parts.ref` from the node's generalizations, materializes the
+ * change down the attached subtree, updates owner-only `isPartOf`, and logs it.
  */
 async function applyParts(ctx: {
   nodeId: string;
@@ -42,24 +44,17 @@ async function applyParts(ctx: {
 
   const oldPartsCol = asPartsCollections(nodeData.properties?.parts);
   const oldParts = partsNodes(oldPartsCol);
-  const newParts = partsNodes(parts);
-  const oldRef = nodeData.inheritance?.parts?.ref ?? null;
+  const clientParts = partsNodes(parts);
 
-  // 1. Attachment: pick the generalization this node now inherits parts from.
+  // 1. Re-derive each part's owner (inheritedFrom) + the overall ref from this
+  //    node's generalizations, preserving the user's order.
   const gens = await buildGensForAttach(nodeData, cache);
-  const { ref: newRef, sourceGenId } = detectAttachment(newParts, gens, oldRef);
-  const ownerOf = (g: GenForAttach) => g.ref ?? g.id;
-  const oldSourceParts = oldRef
-    ? gens.find((g) => ownerOf(g) === oldRef)?.parts ?? []
-    : [];
-  const newSourceParts = sourceGenId
-    ? gens.find((g) => g.id === sourceGenId)?.parts ?? []
-    : [];
+  const { parts: newParts, ref: newRef } = derivePartsAndRef(clientParts, gens);
   const ownerTitle = newRef ? (await getNode(newRef, cache))?.title ?? "" : "";
 
   // 2. Write the edited node's parts + attachment ref.
   const nodeUpdates: Record<string, any> = {
-    "properties.parts": parts,
+    "properties.parts": toParts(newParts),
     "inheritance.parts": partsInheritanceEntry(
       newRef,
       ownerTitle,
@@ -85,9 +80,10 @@ async function applyParts(ctx: {
   };
   const childLogs: NodeChange[] = [];
 
-  // 3. Owner-only isPartOf reciprocity, driven by the change in OWN parts.
-  const oldOwn = ownPartIds(oldParts, oldSourceParts);
-  const newOwn = ownPartIds(newParts, newSourceParts);
+  // 3. Owner-only isPartOf: a node lists a part iff it OWNS it (the part
+  //    carries no inheritedFrom).
+  const oldOwn = oldParts.filter(isOwnedPart).map((p) => p.id);
+  const newOwn = newParts.filter(isOwnedPart).map((p) => p.id);
   const oldOwnSet = new Set(oldOwn);
   const newOwnSet = new Set(newOwn);
   const addedOwn = newOwn.filter((id) => !oldOwnSet.has(id));
@@ -104,14 +100,12 @@ async function applyParts(ctx: {
     childLogs,
   );
 
-  // 4. Materialize the change down the attached subtree (+ repoint their ref).
+  // 4. Materialize the change down the attached subtree (each descendant keeps
+  //    ref = its direct parent).
   await cascadeParts({
     startId: nodeId,
     startOldParts: oldParts,
     startNewParts: newParts,
-    oldOwner: oldRef ?? nodeId,
-    newOwner: newRef ?? nodeId,
-    newOwnerTitle: newRef ? ownerTitle : nodeData.title ?? "",
     cache,
   });
 
@@ -123,7 +117,7 @@ async function applyParts(ctx: {
         modifiedBy: uname,
         modifiedProperty: "parts",
         previousValue: oldPartsCol,
-        newValue: parts,
+        newValue: toParts(newParts),
         modifiedAt: new Date(),
         changeType: "modify elements",
         fullNode: nodeData,

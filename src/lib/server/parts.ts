@@ -11,13 +11,13 @@ import {
   NodeChange,
 } from "@components/types/INode";
 import { NodeCache, getNode, specializationIds } from "./hierarchy";
+import { materializeAgainstGen } from "./partsModel";
 
 /**
- * Pure engine for "overall" parts inheritance. `properties.parts` is the full
- * list; `inheritance.parts.ref` names the ultimate owner (null when the node
- * owns its parts). A node is attached to generalization G iff G's part ids are
- * an ordered subsequence of the node's — so adding own parts keeps attachment,
- * while reorder/remove/replace of an inherited part breaks it.
+ * Server-side (Firestore) helpers for parts inheritance, over the pure per-part
+ * model in `./partsModel`. A part's `inheritedFrom` names the node that owns it;
+ * `inheritance.parts.ref` names the generalization a node draws its arrangement
+ * from, or null when the node owns its parts.
  */
 
 /** Anchor sentinel: own parts that precede every inherited part sit at the front. */
@@ -145,9 +145,11 @@ export type GenForAttach = {
 };
 
 /**
- * Picks the generalization the node is attached to and the ultimate owner id.
- * Keeps the current owner if it still matches, else the first generalization
- * whose parts are an ordered subsequence of the node's. `ref: null` = owned.
+ * Picks the generalization the node is attached to for parts. `ref` = that
+ * DIRECT generalization (the nearest gen whose parts the node fully inherits),
+ * not the ultimate owner — the chain is walked transitively. Keeps the current
+ * gen if it still matches, else the first generalization whose parts are an
+ * ordered subsequence of the node's. `ref: null` = the node owns its parts.
  */
 export function detectAttachment(
   nodeParts: ILinkNode[],
@@ -155,18 +157,17 @@ export function detectAttachment(
   currentRef: string | null,
 ): { ref: string | null; sourceGenId: string | null } {
   const nodeIds = idsOf(nodeParts);
-  const ownerOf = (g: GenForAttach) => g.ref ?? g.id;
   const matches = generalizations.filter((g) =>
     isSubsequence(idsOf(g.parts), nodeIds),
   );
   if (matches.length === 0) return { ref: null, sourceGenId: null };
 
   if (currentRef) {
-    const keep = matches.find((g) => ownerOf(g) === currentRef);
-    if (keep) return { ref: currentRef, sourceGenId: keep.id };
+    const keep = matches.find((g) => g.id === currentRef);
+    if (keep) return { ref: keep.id, sourceGenId: keep.id };
   }
   const first = matches[0];
-  return { ref: ownerOf(first), sourceGenId: first.id };
+  return { ref: first.id, sourceGenId: first.id };
 }
 
 /**
@@ -179,15 +180,14 @@ export function chooseRefreshSource(
   gens: GenForAttach[],
   currentRef: string | null,
 ): { ref: string | null; sourceGenId: string | null } {
-  const ownerOf = (g: GenForAttach) => g.ref ?? g.id;
   const withParts = gens.filter((g) => g.parts.length > 0);
   if (withParts.length === 0) return { ref: null, sourceGenId: null };
   if (currentRef) {
-    const keep = withParts.find((g) => ownerOf(g) === currentRef);
-    if (keep) return { ref: currentRef, sourceGenId: keep.id };
+    const keep = withParts.find((g) => g.id === currentRef);
+    if (keep) return { ref: keep.id, sourceGenId: keep.id };
   }
   const first = withParts[0];
-  return { ref: ownerOf(first), sourceGenId: first.id };
+  return { ref: first.id, sourceGenId: first.id };
 }
 
 /** Reads a stored parts value, defaulting to an empty `main` collection. */
@@ -199,8 +199,9 @@ export function asPartsCollections(value: any): ICollection[] {
 }
 
 /**
- * Validates incoming parts collections, keeping the `optional` flag (the
- * hierarchy sanitizer drops it). Drops self-links and duplicates; null if malformed.
+ * Validates incoming parts collections, keeping the `optional` and
+ * `inheritedFrom` flags (the hierarchy sanitizer drops them). Drops self-links
+ * and duplicates; null if malformed.
  */
 export function sanitizeParts(value: any, selfId: string): ICollection[] | null {
   if (!Array.isArray(value)) return null;
@@ -220,6 +221,7 @@ export function sanitizeParts(value: any, selfId: string): ICollection[] | null 
         title: typeof n.title === "string" ? n.title : "",
       };
       if (n.optional === true) node.optional = true;
+      if (typeof n.inheritedFrom === "string") node.inheritedFrom = n.inheritedFrom;
       nodes.push(node);
     }
     out.push({ collectionName: c.collectionName, nodes });
@@ -249,9 +251,9 @@ export async function buildGensForAttach(
 }
 
 /**
- * Owner-only isPartOf reciprocity: `addedOwn` parts gain `nodeId`, `removedOwn`
- * lose it. Inheriting descendants never touch a part's isPartOf, so the cascade
- * skips this.
+ * Owner-only isPartOf: `addedOwn` parts gain `nodeId` in their isPartOf list,
+ * `removedOwn` lose it. Inheriting descendants never list a part they inherit,
+ * so the cascade skips this.
  */
 export async function applyIsPartOfOwnerOnly(
   nodeId: string,
@@ -335,30 +337,20 @@ export async function applyIsPartOfOwnerOnly(
 }
 
 /**
- * Propagates a parts change down the attached subtree. A descendant counts as
- * attached "through" the edited chain when it points at the same owner and still
- * carries the source's old parts as a subsequence; those get re-spliced against
- * the new source and repointed to the new owner. Others are skipped, shielding
- * their subtree.
+ * Propagates a parts change down the subtree. A descendant is attached to its
+ * parent when it carries all of the parent's OLD parts (so it was inheriting
+ * them); it then re-materializes against the parent's new parts — each inherited
+ * part tagged with its owner and its overall ref recomputed (skipping the parent
+ * when it's a pure pass-through). A descendant missing a parent part is skipped,
+ * shielding its subtree.
  */
 export async function cascadeParts(params: {
   startId: string;
   startOldParts: ILinkNode[];
   startNewParts: ILinkNode[];
-  oldOwner: string;
-  newOwner: string;
-  newOwnerTitle: string;
   cache: NodeCache;
 }): Promise<void> {
-  const {
-    startId,
-    startOldParts,
-    startNewParts,
-    oldOwner,
-    newOwner,
-    newOwnerTitle,
-    cache,
-  } = params;
+  const { startId, startOldParts, startNewParts, cache } = params;
 
   const queue: { parentId: string; oldParts: ILinkNode[]; newParts: ILinkNode[] }[] =
     [{ parentId: startId, oldParts: startOldParts, newParts: startNewParts }];
@@ -370,6 +362,8 @@ export async function cascadeParts(params: {
     const { parentId, oldParts, newParts } = queue.shift()!;
     const parent = await getNode(parentId, cache);
     if (!parent) continue;
+    const parentRef = parent.inheritance?.parts?.ref ?? null;
+    const oldIds = idsOf(oldParts);
 
     for (const childId of specializationIds(parent)) {
       if (visited.has(childId)) continue;
@@ -377,17 +371,21 @@ export async function cascadeParts(params: {
       const child = await getNode(childId, cache);
       if (!child || child.deleted) continue;
 
-      const childRef = child.inheritance?.parts?.ref ?? null;
       const childParts = partsNodes(child.properties?.parts);
-      const attachedThrough =
-        childRef === oldOwner &&
-        isSubsequence(idsOf(oldParts), idsOf(childParts));
-      if (!attachedThrough) continue; // owns / attaches elsewhere → shields subtree
+      const attached =
+        oldIds.length > 0 &&
+        oldIds.every((id) => childParts.some((c) => c.id === id));
+      if (!attached) continue; // diverged / unrelated → shields subtree
 
-      const childNew = anchoredSplice(childParts, oldParts, newParts);
+      const { parts: childNew, ref: childRef } = materializeAgainstGen(childParts, {
+        id: parentId,
+        ref: parentRef,
+        parts: newParts,
+      });
+      const ownerTitle = (await getNode(childRef, cache))?.title ?? "";
       const childPartsEntry = partsInheritanceEntry(
-        newOwner,
-        newOwnerTitle,
+        childRef,
+        ownerTitle,
         child.inheritance?.parts?.inheritanceType,
       );
       batch.update(db.collection(NODES).doc(childId), {

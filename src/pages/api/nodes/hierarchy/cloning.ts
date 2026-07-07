@@ -7,6 +7,7 @@ import { updateDerivedPaths } from "@components/lib/server/updateDerivedPaths";
 import {
   HttpError,
   NodeCache,
+  getNode,
   hasOwn,
   asCollections,
   addToMain,
@@ -18,6 +19,14 @@ import {
   writeChangeLog,
   recordLogs,
 } from "@components/lib/server/hierarchy";
+import {
+  buildGensForAttach,
+  cascadeParts,
+  partsInheritanceEntry,
+  partsNodes,
+  toParts,
+} from "@components/lib/server/parts";
+import { derivePartsAndRef } from "@components/lib/server/partsModel";
 
 const SCALAR_TYPES = new Set([
   "string",
@@ -165,8 +174,8 @@ async function applyClone(ctx: {
   const sourceSpecs: ICollection[] = JSON.parse(
     JSON.stringify(sourceSpecsBefore),
   );
-  // When the node has no parent when created from properties other than "specializations",
-  // adds it to "unclassified" collection of the root 
+  // A node cloned from a property other than "specializations" has no natural
+  // parent, so it lands in the root's "unclassified" collection.
   addToSide(sourceSpecs, sourceCollectionName, { id: newNodeId, title });
   await db
     .collection(NODES)
@@ -204,18 +213,38 @@ async function applyClone(ctx: {
       [targetProperty]: side,
     } as INode);
   } else if (isParts) {
-    // Parts are a plain own value; inheritance is recomputed by a separate
-    // endpoint, so this just stores the value and the reciprocal isPartOf.
+    // Add the clone as an own part, then run the per-part inheritance model:
+    // re-derive each part's owner (inheritedFrom) + the overall ref, and cascade
+    // the new part into the attached subtree. The new node's isPartOf already
+    // lists the current node (owner-only), so inheriting descendants don't.
     sideBefore = asCollections(currentNode.properties?.parts);
-    side = JSON.parse(JSON.stringify(sideBefore));
-    addToSide(side, collectionName, { id: newNodeId, title });
+    const withClone: ICollection[] = JSON.parse(JSON.stringify(sideBefore));
+    addToSide(withClone, collectionName, { id: newNodeId, title });
+
+    const oldParts = partsNodes(sideBefore);
+    const gens = await buildGensForAttach(currentNode, cache);
+    const { parts: newParts, ref } = derivePartsAndRef(partsNodes(withClone), gens);
+    const ownerTitle = ref ? (await getNode(ref, cache))?.title ?? "" : "";
+    const partsEntry = partsInheritanceEntry(
+      ref,
+      ownerTitle,
+      currentNode.inheritance?.parts?.inheritanceType,
+    );
+    side = toParts(newParts);
     await db
       .collection(NODES)
       .doc(currentNodeId)
-      .update({ [`properties.parts`]: side });
+      .update({ "properties.parts": side, "inheritance.parts": partsEntry });
     cache.set(currentNodeId, {
       ...currentNode,
       properties: { ...currentNode.properties, parts: side },
+      inheritance: { ...currentNode.inheritance, parts: partsEntry },
+    } as INode);
+    await cascadeParts({
+      startId: currentNodeId,
+      startOldParts: oldParts,
+      startNewParts: newParts,
+      cache,
     });
   } else {
     // Generic link property: resolve the value the user saw (through the
