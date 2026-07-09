@@ -22,6 +22,7 @@ import {
 import {
   buildGensForAttach,
   cascadeParts,
+  overallSourceOf,
   partsInheritanceEntry,
   partsNodes,
   toParts,
@@ -223,7 +224,11 @@ async function applyClone(ctx: {
 
     const oldParts = partsNodes(sideBefore);
     const gens = await buildGensForAttach(currentNode, cache);
-    const { parts: newParts, ref } = derivePartsAndRef(partsNodes(withClone), gens);
+    const { parts: newParts, sourceId, ref } = derivePartsAndRef(
+      partsNodes(withClone),
+      gens,
+      { oldParts, sourceId: overallSourceOf(currentNode) },
+    );
     const ownerTitle = ref ? (await getNode(ref, cache))?.title ?? "" : "";
     const partsEntry = partsInheritanceEntry(
       ref,
@@ -231,14 +236,16 @@ async function applyClone(ctx: {
       currentNode.inheritance?.parts?.inheritanceType,
     );
     side = toParts(newParts);
-    await db
-      .collection(NODES)
-      .doc(currentNodeId)
-      .update({ "properties.parts": side, "inheritance.parts": partsEntry });
+    await db.collection(NODES).doc(currentNodeId).update({
+      "properties.parts": side,
+      "inheritance.parts": partsEntry,
+      partsOverallSource: sourceId,
+    });
     cache.set(currentNodeId, {
       ...currentNode,
       properties: { ...currentNode.properties, parts: side },
       inheritance: { ...currentNode.inheritance, parts: partsEntry },
+      partsOverallSource: sourceId,
     } as INode);
     await cascadeParts({
       startId: currentNodeId,

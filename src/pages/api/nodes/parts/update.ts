@@ -15,6 +15,7 @@ import {
   asPartsCollections,
   buildGensForAttach,
   cascadeParts,
+  overallSourceOf,
   partsInheritanceEntry,
   partsNodes,
   sanitizeParts,
@@ -46,13 +47,21 @@ async function applyParts(ctx: {
   const oldParts = partsNodes(oldPartsCol);
   const clientParts = partsNodes(parts);
 
-  // 1. Re-derive each part's owner (inheritedFrom) + the overall ref from this
-  //    node's generalizations, preserving the user's order.
+  // 1. Re-derive each part's owner (inheritedFrom) from this node's
+  //    generalizations, preserving the user's order, and re-check the stored
+  //    overall source — the edit may have broken it, and it never reattaches.
   const gens = await buildGensForAttach(nodeData, cache);
-  const { parts: newParts, ref: newRef } = derivePartsAndRef(clientParts, gens);
+  const {
+    parts: newParts,
+    sourceId: newSource,
+    ref: newRef,
+  } = derivePartsAndRef(clientParts, gens, {
+    oldParts,
+    sourceId: overallSourceOf(nodeData),
+  });
   const ownerTitle = newRef ? (await getNode(newRef, cache))?.title ?? "" : "";
 
-  // 2. Write the edited node's parts + attachment ref.
+  // 2. Write the edited node's parts + attachment.
   const nodeUpdates: Record<string, any> = {
     "properties.parts": toParts(newParts),
     "inheritance.parts": partsInheritanceEntry(
@@ -60,6 +69,7 @@ async function applyParts(ctx: {
       ownerTitle,
       nodeData.inheritance?.parts?.inheritanceType,
     ),
+    partsOverallSource: newSource,
   };
   // Reorder/optional/switch edits ship pre-patched details to store as-is;
   // otherwise the annotation table is recomputed by the client hook.
@@ -79,6 +89,7 @@ async function applyParts(ctx: {
       ...nodeData.inheritance,
       parts: nodeUpdates["inheritance.parts"],
     },
+    partsOverallSource: newSource,
   } as INode);
 
   const parentLogId = db.collection(NODES_LOGS).doc().id;

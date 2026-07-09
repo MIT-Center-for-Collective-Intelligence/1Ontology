@@ -208,6 +208,11 @@ export async function applyIsPartOfOwnerOnly(
   }
 }
 
+/** The generalization a node draws its parts arrangement from (a stored choice). */
+export function overallSourceOf(node: INode): string | null {
+  return node.partsOverallSource ?? null;
+}
+
 /** Did a descendant's parts actually change (ids, order, source or optional)? */
 function samePartsList(a: ILinkNode[], b: ILinkNode[]): boolean {
   if (a.length !== b.length) return false;
@@ -260,21 +265,25 @@ export async function cascadeParts(params: {
       if (!child || child.deleted) continue;
 
       const childParts = partsNodes(child.properties?.parts);
-      const childRef = child.inheritance?.parts?.ref ?? null;
+      const childSourceId = overallSourceOf(child);
       // The descendant's own generalizations, so its stored source choices are
-      // honored and its ref is recomputed against all of them.
+      // honored and its attachment is re-checked against all of them.
       const childGens = await buildGensForAttach(child, cache);
 
-      const { parts: childNew, ref: childNewRef } = cascadeIntoDescendant({
+      const {
+        parts: childNew,
+        sourceId: childNewSource,
+        ref: childNewRef,
+      } = cascadeIntoDescendant({
         childParts,
-        childRef,
+        childSourceId,
         childGens,
         parent: parentGen,
         parentOldParts: oldParts,
       });
 
       // Unchanged descendant → its own subtree can't be affected either.
-      if (samePartsList(childParts, childNew) && childRef === childNewRef) {
+      if (samePartsList(childParts, childNew) && childSourceId === childNewSource) {
         continue;
       }
 
@@ -289,11 +298,13 @@ export async function cascadeParts(params: {
       batch.update(db.collection(NODES).doc(childId), {
         "properties.parts": toParts(childNew),
         "inheritance.parts": childPartsEntry,
+        partsOverallSource: childNewSource,
       });
       cache.set(childId, {
         ...child,
         properties: { ...child.properties, parts: toParts(childNew) },
         inheritance: { ...child.inheritance, parts: childPartsEntry },
+        partsOverallSource: childNewSource,
       } as INode);
       pending += 1;
       if (pending >= MAX_TRANSACTION_WRITES) {
