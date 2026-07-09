@@ -70,6 +70,16 @@ async function applyParts(ctx: {
     }));
   }
   await db.collection(NODES).doc(nodeId).update(nodeUpdates);
+  // Keep the cache fresh: the cascade re-reads this node as a generalization of
+  // its descendants, so it must see the new parts + ref, not the stored ones.
+  cache.set(nodeId, {
+    ...nodeData,
+    properties: { ...nodeData.properties, parts: toParts(newParts) },
+    inheritance: {
+      ...nodeData.inheritance,
+      parts: nodeUpdates["inheritance.parts"],
+    },
+  } as INode);
 
   const parentLogId = db.collection(NODES_LOGS).doc().id;
   const parentLog = {

@@ -29,26 +29,6 @@ export function childSourceOf(parentPart: ILinkNode, parentId: string): string {
 }
 
 /**
- * Produce a child's copy of the parent's parts, each part's `inheritedFrom`
- * rewritten to its owner as seen from the child (via {@link childSourceOf}).
- * Preserves title + optional. This is the content a pure relay inherits.
- */
-export function inheritFrom(
-  parentParts: ILinkNode[],
-  parentId: string,
-): ILinkNode[] {
-  return parentParts.map((p) => {
-    const child: ILinkNode = {
-      id: p.id,
-      inheritedFrom: childSourceOf(p, parentId),
-    };
-    if (p.title !== undefined) child.title = p.title;
-    if (p.optional) child.optional = true;
-    return child;
-  });
-}
-
-/**
  * Overall `ref` for a node that draws its whole arrangement from a single direct
  * generalization `gen`. Skip `gen` only when it's a PURE pass-through — it has a
  * clean overall ref of its own AND owns none of its parts; otherwise the node
@@ -65,80 +45,137 @@ export function overallRefThroughGen(gen: {
 
 /**
  * Re-derive a node's parts + overall `ref` from an EDITED list (the user's own
- * order preserved). Each part provided by a generalization is tagged with that
- * owner (first declared gen wins — the default specific source); a part no gen
- * provides is own. `ref` = the single gen the inherited parts come from (via
- * {@link overallRefThroughGen}); `null` when they span more than one gen (a
- * mixer/break) or the node owns everything.
+ * order preserved). Each part provided by a generalization is tagged with its
+ * owner — honoring an existing source choice when a provider still resolves to
+ * it, else the first declared provider; a part no gen provides is own. `ref` =
+ * the first generalization whose parts are ALL still present (via
+ * {@link overallRefThroughGen}), so reordering or switching a source never breaks
+ * it while removing an inherited part does; `null` when none matches.
  */
 export function derivePartsAndRef(
   nodeParts: ILinkNode[],
   gens: { id: string; ref: string | null; parts: ILinkNode[] }[],
 ): { parts: ILinkNode[]; ref: string | null } {
-  const sourceGenIds = new Set<string>();
+  // The owner a part would have if tracked through gen `g` (skips a pass-through).
+  const ownerThroughGen = (
+    g: { id: string; parts: ILinkNode[] },
+    partId: string,
+  ): string | null => {
+    const gp = g.parts.find((x) => x.id === partId);
+    return gp ? childSourceOf(gp, g.id) : null;
+  };
   const parts = nodeParts.map((p) => {
-    const providing = gens.find((g) => g.parts.some((gp) => gp.id === p.id));
+    const providers = gens.filter((g) => g.parts.some((gp) => gp.id === p.id));
     const node: ILinkNode = { id: p.id };
     if (p.title !== undefined) node.title = p.title;
     if (p.optional) node.optional = true;
-    if (providing) {
-      const genPart = providing.parts.find((gp) => gp.id === p.id)!;
-      node.inheritedFrom = childSourceOf(genPart, providing.id);
-      sourceGenIds.add(providing.id);
+    if (providers.length > 0) {
+      // Honor an existing source choice when a provider still resolves to it
+      // (a user switch), else fall back to the first declared provider.
+      const chosen = p.inheritedFrom
+        ? providers.find((g) => ownerThroughGen(g, p.id) === p.inheritedFrom)
+        : undefined;
+      const source = chosen ?? providers[0];
+      node.inheritedFrom = ownerThroughGen(source, p.id) ?? source.id;
     }
     return node;
   });
-  let ref: string | null = null;
-  if (sourceGenIds.size === 1) {
-    const g = gens.find((gen) => gen.id === [...sourceGenIds][0])!;
-    ref = overallRefThroughGen(g);
-  }
+
+  // Overall attachment is a LIST relationship, independent of the per-part
+  // sources above: the node attaches to the first generalization (with parts)
+  // whose parts are ALL still present on the node. So switching a part's source
+  // or reordering never breaks it; removing an inherited part does.
+  const nodeIds = new Set(nodeParts.map((p) => p.id));
+  const attached = gens.find(
+    (g) => g.parts.length > 0 && g.parts.every((gp) => nodeIds.has(gp.id)),
+  );
+  const ref = attached ? overallRefThroughGen(attached) : null;
   return { parts, ref };
 }
 
 const FRONT = "__front__";
 
-/**
- * Re-materialize a node's parts against a single source generalization `gen`:
- * emit `gen`'s parts in order (each tagged with its owner via {@link childSourceOf}),
- * keep the node's OWN parts (ids not in `gen`) anchored to the inherited part
- * that precedes them, and carry the node's own `optional` override on inherited
- * parts. Returns the new parts + the node's overall `ref`.
- */
-export function materializeAgainstGen(
-  currentParts: ILinkNode[],
-  gen: { id: string; ref: string | null; parts: ILinkNode[] },
-): { parts: ILinkNode[]; ref: string } {
-  const genIds = new Set(gen.parts.map((p) => p.id));
+type Gen = { id: string; ref: string | null; parts: ILinkNode[] };
 
-  // Bucket the node's own parts under the inherited part that precedes them.
-  const ownByAnchor = new Map<string, ILinkNode[]>();
+/**
+ * Merge the parent's parts into the child's list: emit the parent's parts in the
+ * PARENT's order, keeping the child's other parts (own, or sourced from another
+ * generalization) anchored to the part that preceded them. Existing child entries
+ * are reused as-is, so their `optional` and `inheritedFrom` survive; a part the
+ * child gains is added bare (its source is assigned by {@link derivePartsAndRef}).
+ */
+function mergeAgainstParentOrder(
+  childList: ILinkNode[],
+  parentParts: ILinkNode[],
+): ILinkNode[] {
+  const parentIds = new Set(parentParts.map((p) => p.id));
+  const otherByAnchor = new Map<string, ILinkNode[]>();
   let anchor = FRONT;
-  for (const p of currentParts) {
-    if (genIds.has(p.id)) {
-      anchor = p.id;
+  for (const c of childList) {
+    if (parentIds.has(c.id)) {
+      anchor = c.id;
       continue;
     }
-    const own: ILinkNode = { id: p.id };
-    if (p.title !== undefined) own.title = p.title;
-    if (p.optional) own.optional = true;
-    if (!ownByAnchor.has(anchor)) ownByAnchor.set(anchor, []);
-    ownByAnchor.get(anchor)!.push(own);
+    if (!otherByAnchor.has(anchor)) otherByAnchor.set(anchor, []);
+    otherByAnchor.get(anchor)!.push(c);
   }
-
+  const byId = new Map(childList.map((c) => [c.id, c]));
   const result: ILinkNode[] = [];
-  for (const p of ownByAnchor.get(FRONT) ?? []) result.push(p);
-  for (const g of gen.parts) {
-    const node: ILinkNode = { id: g.id, inheritedFrom: childSourceOf(g, gen.id) };
-    if (g.title !== undefined) node.title = g.title;
-    const override = currentParts.find((c) => c.id === g.id);
-    const optional =
-      override && typeof override.optional === "boolean"
-        ? override.optional
-        : !!g.optional;
-    if (optional) node.optional = true;
-    result.push(node);
-    for (const p of ownByAnchor.get(g.id) ?? []) result.push(p);
+  for (const p of otherByAnchor.get(FRONT) ?? []) result.push(p);
+  for (const g of parentParts) {
+    const existing = byId.get(g.id);
+    if (existing) {
+      result.push(existing);
+    } else {
+      const gained: ILinkNode = { id: g.id };
+      if (g.title !== undefined) gained.title = g.title;
+      if (g.optional) gained.optional = true;
+      result.push(gained);
+    }
+    for (const p of otherByAnchor.get(g.id) ?? []) result.push(p);
   }
-  return { parts: result, ref: overallRefThroughGen(gen) };
+  return result;
 }
+
+/**
+ * Propagate a parent's parts change into one descendant, as TWO layers:
+ *
+ * 1. SPECIFIC — a part removed from the parent is dropped from the child only if
+ *    the child tracks that part THROUGH this parent. A part the child sources
+ *    from another generalization survives. This runs even when the child is not
+ *    overall-attached, so removals keep cascading after an overall break.
+ * 2. OVERALL — only when the child is overall-attached to this parent: adopt the
+ *    parent's order and gain its new parts.
+ *
+ * Then {@link derivePartsAndRef} re-derives each part's source (honoring the
+ * child's stored choices) and recomputes the child's overall `ref`.
+ * A parent "replace" needs no special case: it is a specific-remove of the old
+ * part plus an overall-add of the new one.
+ */
+export function cascadeIntoDescendant(params: {
+  childParts: ILinkNode[];
+  childRef: string | null;
+  childGens: Gen[];
+  parent: Gen; // the parent, carrying its NEW parts
+  parentOldParts: ILinkNode[];
+}): { parts: ILinkNode[]; ref: string | null } {
+  const { childParts, childRef, childGens, parent, parentOldParts } = params;
+
+  // 1. Specific pass: drop parts the parent removed, but only where the child
+  //    tracked them through this parent.
+  const parentNewIds = new Set(parent.parts.map((p) => p.id));
+  const removedByParent = parentOldParts.filter((p) => !parentNewIds.has(p.id));
+  let list = childParts.filter((cp) => {
+    const removed = removedByParent.find((r) => r.id === cp.id);
+    if (!removed) return true;
+    return cp.inheritedFrom !== childSourceOf(removed, parent.id);
+  });
+
+  // 2. Overall pass: order + additions only flow to an attached child.
+  const attached = childRef !== null && childRef === overallRefThroughGen(parent);
+  if (attached) list = mergeAgainstParentOrder(list, parent.parts);
+
+  // 3. Re-derive sources (honors the child's switches) + the child's ref.
+  return derivePartsAndRef(list, childGens);
+}
+

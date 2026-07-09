@@ -11,7 +11,7 @@ import {
   NodeChange,
 } from "@components/types/INode";
 import { NodeCache, getNode, specializationIds } from "./hierarchy";
-import { materializeAgainstGen } from "./partsModel";
+import { cascadeIntoDescendant } from "./partsModel";
 
 /**
  * Server-side (Firestore) helpers for parts inheritance, over the pure per-part
@@ -208,13 +208,26 @@ export async function applyIsPartOfOwnerOnly(
   }
 }
 
+/** Did a descendant's parts actually change (ids, order, source or optional)? */
+function samePartsList(a: ILinkNode[], b: ILinkNode[]): boolean {
+  if (a.length !== b.length) return false;
+  return a.every((x, i) => {
+    const y = b[i];
+    return (
+      x.id === y.id &&
+      (x.inheritedFrom ?? null) === (y.inheritedFrom ?? null) &&
+      !!x.optional === !!y.optional
+    );
+  });
+}
+
 /**
- * Propagates a parts change down the subtree. A descendant is attached to its
- * parent when it carries all of the parent's OLD parts (so it was inheriting
- * them); it then re-materializes against the parent's new parts — each inherited
- * part tagged with its owner and its overall ref recomputed (skipping the parent
- * when it's a pure pass-through). A descendant missing a parent part is skipped,
- * shielding its subtree.
+ * Propagates a parts change down the subtree in TWO layers (see
+ * {@link cascadeIntoDescendant}): a part removed from the parent is dropped only
+ * from descendants that track it THROUGH this parent, while order and new parts
+ * flow only to descendants still overall-attached. The walk therefore does NOT
+ * shield unattached descendants — removals must keep reaching them after an
+ * overall break — but it prunes wherever a descendant came out unchanged.
  */
 export async function cascadeParts(params: {
   startId: string;
@@ -234,8 +247,11 @@ export async function cascadeParts(params: {
     const { parentId, oldParts, newParts } = queue.shift()!;
     const parent = await getNode(parentId, cache);
     if (!parent) continue;
-    const parentRef = parent.inheritance?.parts?.ref ?? null;
-    const oldIds = idsOf(oldParts);
+    const parentGen: GenForAttach = {
+      id: parentId,
+      ref: parent.inheritance?.parts?.ref ?? null,
+      parts: newParts,
+    };
 
     for (const childId of specializationIds(parent)) {
       if (visited.has(childId)) continue;
@@ -244,19 +260,29 @@ export async function cascadeParts(params: {
       if (!child || child.deleted) continue;
 
       const childParts = partsNodes(child.properties?.parts);
-      const attached =
-        oldIds.length > 0 &&
-        oldIds.every((id) => childParts.some((c) => c.id === id));
-      if (!attached) continue; // diverged / unrelated → shields subtree
+      const childRef = child.inheritance?.parts?.ref ?? null;
+      // The descendant's own generalizations, so its stored source choices are
+      // honored and its ref is recomputed against all of them.
+      const childGens = await buildGensForAttach(child, cache);
 
-      const { parts: childNew, ref: childRef } = materializeAgainstGen(childParts, {
-        id: parentId,
-        ref: parentRef,
-        parts: newParts,
-      });
-      const ownerTitle = (await getNode(childRef, cache))?.title ?? "";
-      const childPartsEntry = partsInheritanceEntry(
+      const { parts: childNew, ref: childNewRef } = cascadeIntoDescendant({
+        childParts,
         childRef,
+        childGens,
+        parent: parentGen,
+        parentOldParts: oldParts,
+      });
+
+      // Unchanged descendant → its own subtree can't be affected either.
+      if (samePartsList(childParts, childNew) && childRef === childNewRef) {
+        continue;
+      }
+
+      const ownerTitle = childNewRef
+        ? (await getNode(childNewRef, cache))?.title ?? ""
+        : "";
+      const childPartsEntry = partsInheritanceEntry(
+        childNewRef,
         ownerTitle,
         child.inheritance?.parts?.inheritanceType,
       );
