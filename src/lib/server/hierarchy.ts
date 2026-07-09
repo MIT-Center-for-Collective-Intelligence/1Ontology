@@ -11,8 +11,9 @@ import {
 import { getDoerCreate } from "@components/lib/utils/helpers";
 import { computeDiffValue } from "@components/lib/utils/diffValue";
 import { FieldValue } from "firebase-admin/firestore";
-import { ICollection, INode, NodeChange } from "@components/types/INode";
+import { ICollection, ILinkNode, INode, NodeChange } from "@components/types/INode";
 import { isReachableAlongSpecializations } from "@components/lib/server/updateDerivedPaths";
+import { childSourceOf, overallRefThroughGen } from "./partsModel";
 import { UNCLASSIFIED_COLLECTION } from "../CONSTANTS";
 
 /**
@@ -26,6 +27,12 @@ import { UNCLASSIFIED_COLLECTION } from "../CONSTANTS";
 export type Side = "specializations" | "generalizations";
 
 export const PARTS_EDGES = new Set(["parts", "isPartOf"]);
+
+/** Parts live in a single "main" collection; read its node list. */
+function partsNodesOf(parts?: ICollection[] | null): ILinkNode[] {
+  if (!Array.isArray(parts) || parts.length === 0) return [];
+  return parts[0]?.nodes ?? [];
+}
 
 export class HttpError extends Error {
   status: number;
@@ -475,7 +482,8 @@ export async function applyReciprocityAdd(
  * each inherited property: keep it if a generalization still provides it, move
  * it to one that owns it, or drop it if none do. Properties the generalizations
  * have but the node lacks get added.
- * `parts`/`isPartOf` are skipped — they inherit separately via `inheritanceParts`.
+ * `parts`/`isPartOf` are skipped — they inherit through their own model
+ * (`partsOverallSource` + the parts cascade), not by inheritance ref.
  */
 export async function recomputeInheritance(
   nodeId: string,
@@ -818,10 +826,38 @@ export function buildSpecializationNode(
     }
   }
 
+  // Parts don't inherit by ref: the child stores its own list, each part tagged
+  // with the node that OWNS it, and attaches to `source` as its overall source.
+  const sourceParts = partsNodesOf(source.properties?.parts);
+  properties.parts = [
+    {
+      collectionName: "main",
+      nodes: sourceParts.map((p) => ({
+        ...p,
+        inheritedFrom: childSourceOf(p, source.id),
+      })),
+    },
+  ];
+  const partsRef = overallRefThroughGen({
+    id: source.id,
+    ref: source.inheritance?.parts?.ref ?? null,
+    parts: sourceParts,
+  });
+  inheritance.parts = {
+    ref: partsRef,
+    title:
+      partsRef === source.id
+        ? source.title ?? ""
+        : source.inheritance?.parts?.title ?? "",
+    inheritanceType:
+      source.inheritance?.parts?.inheritanceType ?? "inheritUnlessAlreadyOverRidden",
+  };
+
   const newNode: any = {
     ...source,
     id: newNodeId,
     title,
+    partsOverallSource: source.id,
     createdBy: uname,
     contributors: [],
     contributorsByProperty: {},
