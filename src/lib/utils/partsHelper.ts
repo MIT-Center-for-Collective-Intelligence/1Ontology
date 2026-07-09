@@ -439,6 +439,33 @@ export const getGeneralizationParts = (
 };
 
 /**
+ * Which generalizations provide a given part — i.e. have `partId` in their own
+ * parts list. Order follows the generalizations array, so index 0 is the default
+ * source. When 2+ generalizations contain the part, the UI shows a source
+ * dropdown; the CURRENT selection is read from the part's persisted
+ * `inheritedFrom`, this just supplies the options.
+ */
+export const getPartGeneralizationSources = (
+  partId: string,
+  generalizations: { id: string; title: string }[],
+  nodes: { [id: string]: INode },
+): { generalizationId: string; generalizationTitle: string }[] => {
+  if (!partId || !Array.isArray(generalizations)) return [];
+  const sources: { generalizationId: string; generalizationTitle: string }[] = [];
+  for (const gen of generalizations) {
+    const genNode = nodes[gen.id];
+    const genParts = genNode?.properties?.parts?.[0]?.nodes || [];
+    if (genParts.some((p: any) => p.id === partId)) {
+      sources.push({
+        generalizationId: gen.id,
+        generalizationTitle: gen.title || genNode?.title || "",
+      });
+    }
+  }
+  return sources;
+};
+
+/**
  * Get all generalizations for a node
  */
 export const getAllGeneralizations = (

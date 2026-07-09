@@ -42,6 +42,7 @@ import {
 } from "firebase/firestore";
 
 import { INHERITANCE_FOR_PARTS_COLLECTION_NAME } from "@components/lib/firestoreClient/collections";
+import { getPartGeneralizationSources } from "@components/lib/utils/partsHelper";
 import SyncedSpinner from "@components/components/SyncedSpinner";
 
 interface GeneralizationNode {
@@ -471,38 +472,84 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                 ) : null}
               </ListItemIcon>
 
-              <ListItemText
-                primary={
-                  entry.to ? (
-                    <Link
-                      underline={!!navigateToNode ? "hover" : "none"}
-                      onClick={(e) => {
-                        if (!navigateToNode) return;
+              <Box
+                sx={{
+                  flex: 1,
+                  minWidth: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1,
+                }}
+              >
+                <ListItemText
+                  primary={
+                    entry.to ? (
+                      <Link
+                        underline={!!navigateToNode ? "hover" : "none"}
+                        onClick={(e) => {
+                          if (!navigateToNode) return;
 
-                        if (e.metaKey || e.ctrlKey) {
-                          const url = `${window.location.origin}${window.location.pathname}#${entry.to}`;
-                          window.open(url, "_blank");
-                        } else {
-                          navigateToNode(entry.to);
-                        }
-                      }}
+                          if (e.metaKey || e.ctrlKey) {
+                            const url = `${window.location.origin}${window.location.pathname}#${entry.to}`;
+                            window.open(url, "_blank");
+                          } else {
+                            navigateToNode(entry.to);
+                          }
+                        }}
+                        sx={{
+                          cursor: !!navigateToNode ? "pointer" : "",
+                          color: (them) =>
+                            them.palette.mode === "dark" ? "white" : "black",
+                          fontSize: "0.9rem",
+                        }}
+                      >
+                        {formatPartTitle(
+                          entry.toTitle,
+                          liveToOptional,
+                          liveOptionalChange,
+                        )}
+                      </Link>
+                    ) : null
+                  }
+                  sx={{ flex: 1, minWidth: 0.3 }}
+                />
+
+                {/* Per-part source, read-only text (no switching in the viewer).
+                    Only when 2+ generalizations provide the part, and only when
+                    the source title resolves (no blank labels). */}
+                {(() => {
+                  const sources = entry.to
+                    ? getPartGeneralizationSources(entry.to, generalizations, nodes)
+                    : [];
+                  if (sources.length < 2) return null;
+                  const partNode = (
+                    currentVisibleNode.properties?.parts?.[0]?.nodes || []
+                  ).find((n: any) => n.id === entry.to);
+                  const inheritedFrom = partNode?.inheritedFrom;
+                  const matched = sources.find(
+                    (s) => s.generalizationId === inheritedFrom,
+                  );
+                  const title =
+                    matched?.generalizationTitle ||
+                    nodes[inheritedFrom]?.title ||
+                    sources[0]?.generalizationTitle ||
+                    "";
+                  if (!title) return null;
+                  return (
+                    <Typography
                       sx={{
-                        cursor: !!navigateToNode ? "pointer" : "",
-                        color: (them) =>
-                          them.palette.mode === "dark" ? "white" : "black",
-                        fontSize: "0.9rem",
+                        flexShrink: 0,
+                        fontSize: 12,
+                        fontStyle: "italic",
+                        color: "gray",
+                        whiteSpace: "nowrap",
                       }}
                     >
-                      {formatPartTitle(
-                        entry.toTitle,
-                        liveToOptional,
-                        liveOptionalChange,
-                      )}
-                    </Link>
-                  ) : null
-                }
-                sx={{ flex: 1, minWidth: 0.3 }}
-              />
+                      {`(inherited from "${title}")`}
+                    </Typography>
+                  );
+                })()}
+              </Box>
             </ListItem>
             );
           })}

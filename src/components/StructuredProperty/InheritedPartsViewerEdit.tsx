@@ -36,6 +36,7 @@ import GeneralizationTabs from "./GeneralizationTabs";
 
 import { Timestamp } from "firebase/firestore";
 import { recordLogs } from "@components/lib/utils/helpers";
+import { getPartGeneralizationSources } from "@components/lib/utils/partsHelper";
 import SyncedSpinner from "@components/components/SyncedSpinner";
 
 interface GeneralizationNode {
@@ -578,6 +579,51 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
     }
   };
 
+  // Switch which generalization a part is inherited from: point the part's
+  // `inheritedFrom` at that gen's owner and persist. The server honors the
+  // choice, recomputes the overall ref (two sources => break) and cascades.
+  const switchPartSource = (partId: string, genId: string) => {
+    try {
+      if (!partId || !genId) return;
+      const genParts = allNodes[genId]?.properties?.parts?.[0]?.nodes || [];
+      const genPart = genParts.find((n: any) => n.id === partId);
+      if (!genPart) return;
+      // Same rule as the server's childSourceOf.
+      const owner = genPart.inheritedFrom || genId;
+
+      const sourceParts: ICollection[] | undefined =
+        currentVisibleNode.properties?.["parts"];
+      if (!sourceParts?.[0]?.nodes) return;
+      const updatedParts: ICollection[] = JSON.parse(
+        JSON.stringify(sourceParts),
+      );
+      const target = updatedParts[0].nodes.find((n: any) => n.id === partId);
+      if (!target || target.inheritedFrom === owner) return;
+      target.inheritedFrom = owner;
+
+      saveParts(updatedParts);
+
+      recordLogs({
+        action: "switch part source",
+        field: "parts",
+        partId,
+        genId,
+        owner,
+        nodeId: currentVisibleNode?.id,
+      });
+    } catch (error: any) {
+      console.error(error);
+      recordLogs({
+        type: "error",
+        error: JSON.stringify({
+          name: error?.name,
+          message: error?.message,
+          stack: error?.stack,
+        }),
+      });
+    }
+  };
+
   const getTabContent = (generalizationId: string): JSX.Element => {
     // Check if node has any parts at all
     const hasParts =
@@ -805,7 +851,13 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
               ? "added"
               : "removed"
           : "none";
-        return { ...entry, toOptional: liveOptional, optionalChange, pending: false };
+        return {
+          ...entry,
+          toOptional: liveOptional,
+          optionalChange,
+          pending: false,
+          inheritedFrom: partNode.inheritedFrom,
+        };
       }
       return {
         from: "",
@@ -822,6 +874,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
         optionalChange: "none",
         hops: 0,
         pending: true,
+        inheritedFrom: partNode.inheritedFrom,
       };
     });
 
@@ -857,6 +910,14 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
       const index = details.findIndex((d) => d.from === id);
       return index === -1;
     });
+    // Generalization parts the node hasn't inherited/added yet (annotation "x").
+    // Surfaced as addable rows: no replace dropdown, a + button (no remove).
+    const missingParts = details
+      .filter((d) => d.symbol === "x" && d.from)
+      .map((d) => d.from);
+    const addableParts = Array.from(
+      new Set<string>([...missingParts, ...nonDraggableItems]),
+    );
 
     return (
       <Box
@@ -1062,6 +1123,15 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                         </Tooltip>
                       )}
 
+                      <Box
+                        sx={{
+                          flex: 1,
+                          minWidth: 0,
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 1,
+                        }}
+                      >
                       <ListItemText
                         primary={
                           entry.to ? (
@@ -1349,6 +1419,66 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                         }
                         sx={{ flex: 1, minWidth: 0.3 }}
                       />
+
+                      {/* Source switch — lives inside the `to` half so the middle
+                          symbol never moves; only shows when 2+ gens provide the
+                          part. Persists via saveParts (the server honors it). */}
+                      {(() => {
+                        const sources = getPartGeneralizationSources(
+                          entry.to,
+                          generalizations,
+                          allNodes,
+                        );
+                        if (sources.length < 2) return null;
+                        // Mirrors the server's childSourceOf: the owner this part
+                        // gets when tracked through `genId`.
+                        const ownerVia = (genId: string) => {
+                          const gp = (
+                            allNodes[genId]?.properties?.parts?.[0]?.nodes || []
+                          ).find((n: any) => n.id === entry.to);
+                          return gp?.inheritedFrom || genId;
+                        };
+                        const current =
+                          sources.find(
+                            (s) =>
+                              ownerVia(s.generalizationId) ===
+                              entry.inheritedFrom,
+                          )?.generalizationId ?? sources[0]?.generalizationId;
+                        return (
+                          <Tooltip title="Inherited from" placement="top">
+                            <Select
+                              size="small"
+                              value={current}
+                              onMouseDown={(e) => e.stopPropagation()}
+                              onChange={(e) =>
+                                switchPartSource(
+                                  entry.to,
+                                  e.target.value as string,
+                                )
+                              }
+                              sx={{
+                                flexShrink: 0,
+                                minWidth: 120,
+                                maxWidth: 150,
+                                height: 30,
+                                fontSize: 12,
+                                borderRadius: "12px",
+                              }}
+                            >
+                              {sources.map((s) => (
+                                <MenuItem
+                                  key={s.generalizationId}
+                                  value={s.generalizationId}
+                                  sx={{ fontSize: 12 }}
+                                >
+                                  {s.generalizationTitle}
+                                </MenuItem>
+                              ))}
+                            </Select>
+                          </Tooltip>
+                        );
+                      })()}
+                      </Box>
                     </ListItem>
                   )}
                 </Draggable>
@@ -1407,9 +1537,9 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
             ))}
           </List>
         </Popover>
-        {nonDraggableItems.length > 0 && (
+        {addableParts.length > 0 && (
           <List sx={{ px: 1.8, py: 1, mt: -0.5 }}>
-            {nonDraggableItems.map((entryFrom: string, index: number) => (
+            {addableParts.map((entryFrom: string, index: number) => (
               <ListItem
                 key={`non-draggable-${entryFrom || index}`}
                 sx={{
