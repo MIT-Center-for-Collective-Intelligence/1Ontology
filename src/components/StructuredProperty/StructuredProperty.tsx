@@ -849,6 +849,88 @@ const StructuredProperty = ({
     ],
   );
 
+  /**
+   * Attaches this node's overall parts inheritance to `sourceId` — repairing a
+   * break, or moving to another generalization. The server hard-resets the list
+   * (only owned parts survive) and refetch on success.
+   */
+  const reattachOverall = useCallback(
+    async (sourceId: string) => {
+      const nodeId = currentVisibleNode?.id;
+      if (!nodeId || !sourceId) return;
+      if (sourceId === (currentVisibleNode.partsOverallSource ?? "")) return;
+
+      const genPartIds = new Set(
+        (relatedNodes[sourceId]?.properties?.parts?.[0]?.nodes ?? []).map(
+          (n: ILinkNode) => n.id,
+        ),
+      );
+      const current: ILinkNode[] =
+        currentVisibleNode.properties?.parts?.[0]?.nodes ?? [];
+      // A never-modeled node carries no tags; mirror the server and treat a
+      // part any generalization provides as inherited (it won't survive).
+      const modeled =
+        currentVisibleNode.partsOverallSource !== undefined ||
+        current.some((p) => !!p.inheritedFrom);
+      const providedByAnyGen = new Set(
+        (currentVisibleNode.generalizations ?? [])
+          .flatMap((c: ICollection) => c.nodes ?? [])
+          .flatMap(
+            (g: ILinkNode) =>
+              relatedNodes[g.id]?.properties?.parts?.[0]?.nodes ?? [],
+          )
+          .map((n: ILinkNode) => n.id),
+      );
+      const discarded = current
+        .filter((p) =>
+          modeled ? !!p.inheritedFrom : providedByAnyGen.has(p.id),
+        )
+        .filter((p) => !genPartIds.has(p.id))
+        .map((p) => p.title || relatedNodes[p.id]?.title || p.id);
+
+      const sourceTitle =
+        relatedNodes[sourceId]?.title || "this generalization";
+      const willDiscard = discarded.length
+        ? `\n\nThese parts will be removed: ${discarded.join(", ")}.`
+        : "";
+      const ok = await confirmIt(
+        `Inherit parts from "${sourceTitle}"? Its parts replace this node's, in its order. Only parts this node owns are kept.${willDiscard}`,
+        "Inherit",
+        "Cancel",
+      );
+      if (!ok) return;
+
+      pendingWrites.start(nodeId, "properties.parts");
+      try {
+        await Post("/nodes/parts/reattach", {
+          nodeId,
+          sourceId,
+          ...(appName ? { appName } : {}),
+        });
+        const fresh = await fetchNode(nodeId, true);
+        setCurrentVisibleNode((prev: any) =>
+          prev?.id === nodeId && fresh ? fresh : prev,
+        );
+      } catch (error: any) {
+        const reason =
+          (typeof error === "string" ? error : error?.message) ||
+          "Please try again.";
+        setSnackbarMessage(`Failed to inherit parts: ${reason}`);
+      } finally {
+        pendingWrites.end(nodeId, "properties.parts");
+      }
+    },
+    [
+      currentVisibleNode,
+      relatedNodes,
+      appName,
+      confirmIt,
+      setCurrentVisibleNode,
+      fetchNode,
+      setSnackbarMessage,
+    ],
+  );
+
   const unlinkNodeRelation = async (
     currentNodeId: string,
     linkId: string,
@@ -1395,17 +1477,23 @@ const StructuredProperty = ({
                 {property !== "generalizations" &&
                   property !== "specializations" &&
                   property !== "isPartOf" &&
-                  property !== "parts" &&
                   !currentVisibleNode.unclassified && (
                     <SelectInheritance
                       currentVisibleNode={currentVisibleNode}
                       property={property}
                       nodes={relatedNodes}
                       enableEdit={enableEdit}
+                      {...(property === "parts"
+                        ? {
+                            value: currentVisibleNode.partsOverallSource ?? "",
+                            onChange: reattachOverall,
+                          }
+                        : {})}
                     />
                   )}
-                {property !== "parts" &&
-                  currentVisibleNode.inheritance[property]?.ref &&
+                {currentVisibleNode.inheritance[property]?.ref &&
+                  (property !== "parts" ||
+                    !!currentVisibleNode.partsOverallSource) &&
                   !enableEdit && (
                     <Typography
                       sx={{ fontSize: "14px", ml: "9px", color: "gray" }}
@@ -1413,7 +1501,9 @@ const StructuredProperty = ({
                       {'(Inherited from "'}
                       {relatedNodes[
                         currentVisibleNode.inheritance[property].ref
-                      ]?.title || ""}
+                      ]?.title ||
+                        currentVisibleNode.inheritance[property].title ||
+                        ""}
                       {'")'}
                     </Typography>
                   )}

@@ -40,6 +40,7 @@ export type ILinkNode = {
   change?: any;
   changeType?: string;
   randomId?: string;
+  /** For a part: the node that OWNS it (empty ⇒ owned here). Drives parts inheritance. */
   inheritedFrom?: string;
   optional?: boolean;
 };
@@ -79,6 +80,13 @@ export type INode = {
     } | null;
   };
   inheritedPartsDetails: InheritedPartsDetail[];
+  /**
+   * The generalization this node draws its parts ARRANGEMENT from, or null when
+   * it owns it. A stored CHOICE: it is set at creation and by an explicit user
+   * reattach, cleared when the node breaks, and never re-derived.
+   * `inheritance.parts.ref` (the owner) is derived from it.
+   */
+  partsOverallSource?: string | null;
   specializations: ICollection[];
   generalizations: ICollection[];
   root: string;
