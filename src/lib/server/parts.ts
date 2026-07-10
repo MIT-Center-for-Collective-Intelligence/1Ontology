@@ -1,10 +1,18 @@
+import { db } from "@components/lib/firestoreServer/admin";
+import { NODES } from "@components/lib/firestoreClient/collections";
 import {
   ICollection,
   IInheritance,
   ILinkNode,
   INode,
+  NodeChange,
 } from "@components/types/INode";
 import { NodeCache, getNode } from "./hierarchy";
+import {
+  derivePartsAndRef,
+  matchesSource,
+  overallRefThroughGen,
+} from "./partsModel";
 
 /**
  * Server-side helpers for parts inheritance.
@@ -48,6 +56,115 @@ export function partsInheritanceEntry(
       (existingType as IInheritance[string]["inheritanceType"]) ??
       "inheritUnlessAlreadyOverRidden",
   };
+}
+
+/**
+ * A node's tagged parts + its stored overall source. For an old node it
+ * fills the gaps once: tags come from the generalizations, the source from
+ * the old `inheritance.parts.ref` (a null ref stays null).
+ */
+export function taggedPartsAndSource(
+  node: INode,
+  gens: GenForAttach[],
+): { tagged: ILinkNode[]; stored: string | null } {
+  const parts = partsNodes(node.properties?.parts);
+  if (node.partsOverallSource !== undefined) {
+    return { tagged: parts, stored: node.partsOverallSource };
+  }
+  const legacyRef = node.inheritance?.parts?.ref ?? null;
+  const stored =
+    legacyRef === null
+      ? null
+      : (gens.find(
+          (g) =>
+            overallRefThroughGen(g) === legacyRef && matchesSource(parts, g),
+        )?.id ?? null);
+  const tagged = parts.some((p) => !!p.inheritedFrom)
+    ? parts
+    : derivePartsAndRef(parts, gens, { oldParts: [], sourceId: stored }).parts;
+  return { tagged, stored };
+}
+
+/**
+ * Owner-only isPartOf: `addedOwn` parts gain `nodeId` in their isPartOf,
+ * `removed` parts lose it (even inherited ones, to clean up legacy data).
+ */
+export async function applyIsPartOfOwnerOnly(
+  nodeId: string,
+  nodeTitle: string,
+  addedOwn: string[],
+  removed: string[],
+  cache: NodeCache,
+  parentLog: NodeChange["triggeredBy"],
+  uname: string | undefined,
+  appName: string | undefined,
+  childLogs: NodeChange[],
+): Promise<void> {
+  for (const id of addedOwn) {
+    const linked = await getNode(id, cache);
+    if (!linked || linked.deleted) continue;
+    const before = asPartsCollections(linked.properties?.isPartOf);
+    const after: ICollection[] = JSON.parse(JSON.stringify(before));
+    let main = after.find((c) => c.collectionName === "main");
+    if (!main) {
+      main = { collectionName: "main", nodes: [] };
+      after.unshift(main);
+    }
+    if (main.nodes.some((n) => n.id === nodeId)) continue;
+    main.nodes.push({ id: nodeId, title: nodeTitle });
+    await db.collection(NODES).doc(id).update({ "properties.isPartOf": after });
+    cache.set(id, {
+      ...linked,
+      properties: { ...linked.properties, isPartOf: after },
+    } as INode);
+    if (uname) {
+      childLogs.push({
+        nodeId: id,
+        modifiedBy: uname,
+        modifiedProperty: "isPartOf",
+        previousValue: before,
+        newValue: after,
+        modifiedAt: new Date(),
+        changeType: "add element",
+        fullNode: linked,
+        triggeredBy: parentLog,
+        ...(appName ? { appName } : {}),
+      } as NodeChange);
+    }
+  }
+  for (const id of removed) {
+    const linked = await getNode(id, cache);
+    if (!linked) continue;
+    const raw = linked.properties?.isPartOf;
+    if (!Array.isArray(raw)) continue;
+    const before: ICollection[] = JSON.parse(JSON.stringify(raw));
+    if (!before.some((c) => (c.nodes || []).some((n) => n.id === nodeId))) {
+      continue;
+    }
+    const after: ICollection[] = JSON.parse(JSON.stringify(raw));
+    for (const c of after) {
+      c.nodes = (c.nodes || []).filter((n) => n.id !== nodeId);
+    }
+    await db.collection(NODES).doc(id).update({ "properties.isPartOf": after });
+    cache.set(id, {
+      ...linked,
+      properties: { ...linked.properties, isPartOf: after },
+    } as INode);
+    if (uname) {
+      childLogs.push({
+        nodeId: id,
+        modifiedBy: uname,
+        modifiedProperty: "isPartOf",
+        previousValue: before,
+        newValue: after,
+        modifiedAt: new Date(),
+        changeType: "remove element",
+        fullNode: linked,
+        triggeredBy: parentLog,
+        ...(appName ? { appName } : {}),
+      } as NodeChange);
+    }
+  }
 }
 
 export type GenForAttach = {

@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import fbAuth from "@components/middlewares/fbAuth";
 import { db } from "@components/lib/firestoreServer/admin";
-import { NODES } from "@components/lib/firestoreClient/collections";
+import { NODES, NODES_LOGS } from "@components/lib/firestoreClient/collections";
 import { ICollection, INode, NodeChange } from "@components/types/INode";
 import {
   HttpError,
@@ -11,57 +11,48 @@ import {
   writeChangeLog,
 } from "@components/lib/server/hierarchy";
 import {
+  applyIsPartOfOwnerOnly,
   asPartsCollections,
   buildGensForAttach,
   partsInheritanceEntry,
-  partsNodes,
   taggedPartsAndSource,
   toParts,
 } from "@components/lib/server/parts";
-import {
-  derivePartsAndRef,
-  resetOntoSource,
-} from "@components/lib/server/partsModel";
+import { derivePartsAndRef } from "@components/lib/server/partsModel";
 
 /**
- * Attaches a node's overall parts inheritance to one of its generalizations —
- * repairing a break, or moving a healthy node to a different source. Both are the
- * same HARD RESET: the node keeps only the parts it OWNS, adopts the source's
- * parts in the source's order, and re-points them at the source. Parts it drew
- * from another generalization are discarded, so this is destructive: the client
- * confirms first. Descendants are not touched yet (cascade comes later).
+ * Removes parts from a node. Removing a part the node inherits from its overall
+ * source BREAKS the overall inheritance. 
+ * The removed parts lose this node from their isPartOf.
+ * Descendants are not touched yet (cascade comes later).
  */
-async function applyReattach(ctx: {
+async function applyRemove(ctx: {
   nodeId: string;
   nodeData: INode;
-  sourceId: string;
+  removeIds: string[];
   uname?: string;
   appName?: string;
 }): Promise<{ ok: true; ref: string | null; parts: ICollection[] }> {
-  const { nodeId, nodeData, sourceId, uname, appName } = ctx;
+  const { nodeId, nodeData, removeIds, uname, appName } = ctx;
   const cache: NodeCache = new Map([[nodeId, nodeData]]);
 
   const oldPartsCol = asPartsCollections(nodeData.properties?.parts);
-  const oldParts = partsNodes(oldPartsCol);
-
   const gens = await buildGensForAttach(nodeData, cache);
-  const source = gens.find((g) => g.id === sourceId);
-  if (!source) {
-    throw new HttpError(400, "sourceId is not a generalization of this node");
+  const { tagged, stored } = taggedPartsAndSource(nodeData, gens);
+
+  const toRemove = new Set(removeIds);
+  const present = tagged.filter((p) => toRemove.has(p.id)).map((p) => p.id);
+  if (present.length === 0) {
+    throw new HttpError(400, "none of the parts are on this node");
   }
+  const presentSet = new Set(present);
+  const remaining = tagged.filter((p) => !presentSet.has(p.id));
 
-  // Bridge a node the model has not written yet (establish ownership tags),
-  // so untagged parts don't all read as owned and survive the reset.
-  const { tagged } = taggedPartsAndSource(nodeData, gens);
-
-  // Reset onto the source, then re-derive: the reset list always matches, so the
-  // node comes back attached with `sourceId` recorded as its stored choice.
-  const reset = resetOntoSource(tagged, source);
   const {
     parts: newParts,
     sourceId: newSource,
     ref,
-  } = derivePartsAndRef(reset, gens, { oldParts: tagged, sourceId });
+  } = derivePartsAndRef(remaining, gens, { oldParts: tagged, sourceId: stored });
   const ownerTitle = ref ? ((await getNode(ref, cache))?.title ?? "") : "";
   const partsEntry = partsInheritanceEntry(
     ref,
@@ -75,19 +66,44 @@ async function applyReattach(ctx: {
     partsOverallSource: newSource,
   });
 
+  const parentLogId = db.collection(NODES_LOGS).doc().id;
+  const parentLog = {
+    logId: parentLogId,
+    nodeId,
+    nodeTitle: nodeData.title ?? "",
+    changeType: "modify elements" as const,
+  };
+  const childLogs: NodeChange[] = [];
+
+  await applyIsPartOfOwnerOnly(
+    nodeId,
+    nodeData.title ?? "",
+    [],
+    present,
+    cache,
+    parentLog,
+    uname,
+    appName,
+    childLogs,
+  );
+
   if (uname) {
-    await writeChangeLog({
-      nodeId,
-      modifiedBy: uname,
-      modifiedProperty: "parts",
-      previousValue: oldPartsCol,
-      newValue: toParts(newParts),
-      modifiedAt: new Date(),
-      changeType: "modify elements",
-      fullNode: nodeData,
-      ...(appName ? { appName } : {}),
-    } as NodeChange);
+    await writeChangeLog(
+      {
+        nodeId,
+        modifiedBy: uname,
+        modifiedProperty: "parts",
+        previousValue: oldPartsCol,
+        newValue: toParts(newParts),
+        modifiedAt: new Date(),
+        changeType: "modify elements",
+        fullNode: nodeData,
+        ...(appName ? { appName } : {}),
+      } as NodeChange,
+      parentLogId,
+    );
   }
+  for (const log of childLogs) await writeChangeLog(log);
 
   return { ok: true, ref, parts: toParts(newParts) };
 }
@@ -99,9 +115,9 @@ function fail(res: NextApiResponse, status: number, msg: string) {
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") return fail(res, 405, "Method not allowed");
   const data = req.body.data;
-  const { nodeId, sourceId, appName, user } = data as {
+  const { nodeId, removeIds, appName, user } = data as {
     nodeId?: string;
-    sourceId?: string;
+    removeIds?: string[];
     appName?: string;
     user?: any;
   };
@@ -110,8 +126,12 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!nodeId || typeof nodeId !== "string") {
     return fail(res, 400, "nodeId is required");
   }
-  if (!sourceId || typeof sourceId !== "string") {
-    return fail(res, 400, "sourceId is required");
+  if (
+    !Array.isArray(removeIds) ||
+    removeIds.length === 0 ||
+    removeIds.some((id) => typeof id !== "string")
+  ) {
+    return fail(res, 400, "removeIds must be a non-empty array of part ids");
   }
 
   try {
@@ -123,10 +143,10 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       return fail(res, 403, "Node does not belong to this app");
     }
 
-    const result = await applyReattach({
+    const result = await applyRemove({
       nodeId,
       nodeData,
-      sourceId,
+      removeIds,
       uname,
       appName,
     });
@@ -134,7 +154,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   } catch (error: any) {
     if (error instanceof HttpError)
       return fail(res, error.status, error.message);
-    console.error("nodes/parts/reattach error", error);
+    console.error("nodes/parts/remove error", error);
     recordLogs(
       {
         type: "error",
@@ -143,7 +163,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
           message: error.message,
           stack: error.stack,
         }),
-        at: "nodes/parts/reattach",
+        at: "nodes/parts/remove",
       },
       uname,
     );

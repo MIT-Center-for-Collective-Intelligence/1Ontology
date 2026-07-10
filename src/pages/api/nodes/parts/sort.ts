@@ -14,54 +14,45 @@ import {
   asPartsCollections,
   buildGensForAttach,
   partsInheritanceEntry,
-  partsNodes,
   taggedPartsAndSource,
   toParts,
 } from "@components/lib/server/parts";
-import {
-  derivePartsAndRef,
-  resetOntoSource,
-} from "@components/lib/server/partsModel";
+import { derivePartsAndRef } from "@components/lib/server/partsModel";
 
 /**
- * Attaches a node's overall parts inheritance to one of its generalizations —
- * repairing a break, or moving a healthy node to a different source. Both are the
- * same HARD RESET: the node keeps only the parts it OWNS, adopts the source's
- * parts in the source's order, and re-points them at the source. Parts it drew
- * from another generalization are discarded, so this is destructive: the client
- * confirms first. Descendants are not touched yet (cascade comes later).
+ * Reorders a node's parts. Ordering inherited parts out of the overall source's
+ * relative order BREAKS the overall inheritance but moving own parts around never does. 
+ * Pure reorder, there is no isPartOf changes, and descendants are not touched yet.
  */
-async function applyReattach(ctx: {
+async function applySort(ctx: {
   nodeId: string;
   nodeData: INode;
-  sourceId: string;
+  orderedIds: string[];
   uname?: string;
   appName?: string;
 }): Promise<{ ok: true; ref: string | null; parts: ICollection[] }> {
-  const { nodeId, nodeData, sourceId, uname, appName } = ctx;
+  const { nodeId, nodeData, orderedIds, uname, appName } = ctx;
   const cache: NodeCache = new Map([[nodeId, nodeData]]);
 
   const oldPartsCol = asPartsCollections(nodeData.properties?.parts);
-  const oldParts = partsNodes(oldPartsCol);
-
   const gens = await buildGensForAttach(nodeData, cache);
-  const source = gens.find((g) => g.id === sourceId);
-  if (!source) {
-    throw new HttpError(400, "sourceId is not a generalization of this node");
+  const { tagged, stored } = taggedPartsAndSource(nodeData, gens);
+
+  const byId = new Map(tagged.map((p) => [p.id, p]));
+  const sameMembership =
+    orderedIds.length === tagged.length &&
+    orderedIds.every((id) => byId.has(id)) &&
+    new Set(orderedIds).size === orderedIds.length;
+  if (!sameMembership) {
+    throw new HttpError(400, "orderedIds must be a permutation of the parts");
   }
+  const reordered = orderedIds.map((id) => byId.get(id)!);
 
-  // Bridge a node the model has not written yet (establish ownership tags),
-  // so untagged parts don't all read as owned and survive the reset.
-  const { tagged } = taggedPartsAndSource(nodeData, gens);
-
-  // Reset onto the source, then re-derive: the reset list always matches, so the
-  // node comes back attached with `sourceId` recorded as its stored choice.
-  const reset = resetOntoSource(tagged, source);
   const {
     parts: newParts,
     sourceId: newSource,
     ref,
-  } = derivePartsAndRef(reset, gens, { oldParts: tagged, sourceId });
+  } = derivePartsAndRef(reordered, gens, { oldParts: tagged, sourceId: stored });
   const ownerTitle = ref ? ((await getNode(ref, cache))?.title ?? "") : "";
   const partsEntry = partsInheritanceEntry(
     ref,
@@ -83,7 +74,7 @@ async function applyReattach(ctx: {
       previousValue: oldPartsCol,
       newValue: toParts(newParts),
       modifiedAt: new Date(),
-      changeType: "modify elements",
+      changeType: "sort elements",
       fullNode: nodeData,
       ...(appName ? { appName } : {}),
     } as NodeChange);
@@ -99,9 +90,9 @@ function fail(res: NextApiResponse, status: number, msg: string) {
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") return fail(res, 405, "Method not allowed");
   const data = req.body.data;
-  const { nodeId, sourceId, appName, user } = data as {
+  const { nodeId, orderedIds, appName, user } = data as {
     nodeId?: string;
-    sourceId?: string;
+    orderedIds?: string[];
     appName?: string;
     user?: any;
   };
@@ -110,8 +101,12 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!nodeId || typeof nodeId !== "string") {
     return fail(res, 400, "nodeId is required");
   }
-  if (!sourceId || typeof sourceId !== "string") {
-    return fail(res, 400, "sourceId is required");
+  if (
+    !Array.isArray(orderedIds) ||
+    orderedIds.length === 0 ||
+    orderedIds.some((id) => typeof id !== "string")
+  ) {
+    return fail(res, 400, "orderedIds must be a non-empty array of part ids");
   }
 
   try {
@@ -123,10 +118,10 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       return fail(res, 403, "Node does not belong to this app");
     }
 
-    const result = await applyReattach({
+    const result = await applySort({
       nodeId,
       nodeData,
-      sourceId,
+      orderedIds,
       uname,
       appName,
     });
@@ -134,7 +129,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   } catch (error: any) {
     if (error instanceof HttpError)
       return fail(res, error.status, error.message);
-    console.error("nodes/parts/reattach error", error);
+    console.error("nodes/parts/sort error", error);
     recordLogs(
       {
         type: "error",
@@ -143,7 +138,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
           message: error.message,
           stack: error.stack,
         }),
-        at: "nodes/parts/reattach",
+        at: "nodes/parts/sort",
       },
       uname,
     );

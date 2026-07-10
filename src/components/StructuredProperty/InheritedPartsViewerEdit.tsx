@@ -71,6 +71,7 @@ interface InheritedPartsViewerProps {
     newParts: ICollection[],
     inheritedPartsDetails?: InheritedPartsDetail[] | null,
   ) => Promise<void>;
+  sortParts: (newParts: ICollection[]) => Promise<void>;
   user: any;
   appName?: string;
   navigateToNode?: any;
@@ -102,6 +103,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
   enableEdit,
   replaceWith,
   saveParts,
+  sortParts,
   currentVisibleNode,
   triggerSearch,
   addPart,
@@ -1515,8 +1517,8 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
         );
       }
 
-      // Persist the reordered parts through the shared saveParts.
-      saveParts(newParts);
+      // Persist the reorder through the sort endpoint (may break overall).
+      sortParts(newParts);
 
       recordLogs({
         action: "sort elements",

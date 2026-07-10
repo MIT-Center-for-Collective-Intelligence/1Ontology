@@ -849,6 +849,59 @@ const StructuredProperty = ({
     ],
   );
 
+  // Delta edits on parts (remove/replace/sort): instant local list + the
+  // matching endpoint. On failure it re-fetches so the UI never keeps an
+  // unsaved change.
+  const savePartsDelta = useCallback(
+    async (
+      endpoint: string,
+      payload: Record<string, any>,
+      instantParts: ICollection[],
+    ) => {
+      const nodeId = currentVisibleNode?.id;
+      if (!nodeId) return;
+      setCurrentVisibleNode((prev: any) =>
+        prev && prev.id === nodeId
+          ? { ...prev, properties: { ...prev.properties, parts: instantParts } }
+          : prev,
+      );
+      pendingWrites.start(nodeId, "properties.parts");
+      try {
+        await Post(endpoint, {
+          nodeId,
+          ...payload,
+          ...(appName ? { appName } : {}),
+        });
+      } catch (error: any) {
+        const fresh = await fetchNode(nodeId, true);
+        setCurrentVisibleNode((prev: any) =>
+          prev?.id === nodeId && fresh ? fresh : prev,
+        );
+        const reason =
+          (typeof error === "string" ? error : error?.message) ||
+          "Please try again.";
+        setSnackbarMessage(`Failed to update parts: ${reason}`);
+      } finally {
+        pendingWrites.end(nodeId, "properties.parts");
+      }
+    },
+    [
+      currentVisibleNode,
+      appName,
+      setCurrentVisibleNode,
+      fetchNode,
+      setSnackbarMessage,
+    ],
+  );
+
+  const sortParts = useCallback(
+    async (newParts: ICollection[]) => {
+      const orderedIds = (newParts[0]?.nodes ?? []).map((n: ILinkNode) => n.id);
+      await savePartsDelta("/nodes/parts/sort", { orderedIds }, newParts);
+    },
+    [savePartsDelta],
+  );
+
   /**
    * Attaches this node's overall parts inheritance to `sourceId` — repairing a
    * break, or moving to another generalization. The server hard-resets the list
@@ -948,7 +1001,11 @@ const StructuredProperty = ({
         for (const c of newParts) {
           c.nodes = (c.nodes || []).filter((n: ILinkNode) => n.id !== linkId);
         }
-        await saveParts(newParts);
+        await savePartsDelta(
+          "/nodes/parts/remove",
+          { removeIds: [linkId] },
+          newParts,
+        );
         return;
       }
       if (
@@ -1135,11 +1192,7 @@ const StructuredProperty = ({
     }
   };
   const replaceWith = useCallback(
-    async (
-      oldPartId: string,
-      newPartId: string,
-      updatedInheritedPartsDetails?: InheritedPartsDetail[] | null,
-    ) => {
+    async (oldPartId: string, newPartId: string) => {
       try {
         if (property !== "parts") return;
         if (!currentVisibleNode?.id || !user?.uname) return;
@@ -1168,8 +1221,13 @@ const StructuredProperty = ({
         updatedParts[0].nodes[elementIdx].id = newPartId;
         updatedParts[0].nodes[elementIdx].title =
           relatedNodes[newPartId]?.title || "";
+        delete updatedParts[0].nodes[elementIdx].inheritedFrom;
 
-        await saveParts(updatedParts, updatedInheritedPartsDetails);
+        await savePartsDelta(
+          "/nodes/parts/replace",
+          { fromId: oldPartId, toId: newPartId },
+          updatedParts,
+        );
 
         recordLogs({
           action: "replace part",
@@ -1190,7 +1248,7 @@ const StructuredProperty = ({
         });
       }
     },
-    [currentVisibleNode, relatedNodes, property, user, saveParts],
+    [currentVisibleNode, relatedNodes, property, user, savePartsDelta],
   );
 
   if (
@@ -1633,6 +1691,7 @@ const StructuredProperty = ({
             linkNodeRelation={linkNodeRelation}
             unlinkNodeRelation={unlinkNodeRelation}
             saveParts={saveParts}
+            sortParts={sortParts}
             user={user}
             navigateToNode={navigateToNode}
             replaceWith={replaceWith}

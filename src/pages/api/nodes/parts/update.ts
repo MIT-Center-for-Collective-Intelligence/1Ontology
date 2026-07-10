@@ -36,6 +36,11 @@ function sanitizeCollections(value: any, selfId: string): ICollection[] | null {
         title: typeof n.title === "string" ? n.title : "",
       };
       if (n.optional === true) node.optional = true;
+      // Ownership tags belong to the new parts model; wiping them here would
+      // mis-classify inherited parts as owned on the next model write.
+      if (typeof n.inheritedFrom === "string") {
+        node.inheritedFrom = n.inheritedFrom;
+      }
       nodes.push(node);
     }
     out.push({ collectionName: c.collectionName, nodes });
