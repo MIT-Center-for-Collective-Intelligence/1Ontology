@@ -32,7 +32,6 @@ import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import DragHandleIcon from "@mui/icons-material/DragHandle";
 import CloseIcon from "@mui/icons-material/Close";
 import InheritedPartsLegend from "../Common/InheritedPartsLegend";
-import GeneralizationTabs from "./GeneralizationTabs";
 
 import { Timestamp } from "firebase/firestore";
 import { recordLogs } from "@components/lib/utils/helpers";
@@ -226,10 +225,6 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
     }
   }, [currentVisibleNode.id]);
 
-
-  const handleTabChange = (event: React.SyntheticEvent, newValue: string) => {
-    setActiveTab(newValue);
-  };
 
   if (selectedProperty !== "parts" || generalizations.length <= 0) {
     return null;
@@ -860,6 +855,10 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
       return index === -1;
     });
 
+    // Parts the generalization has but this node did not inherit.
+    // They have no own-part row, so the draggable list above skips them
+    const notInheritedItems = details.filter((d: any) => d.symbol === "x");
+
     return (
       <Box
         sx={{
@@ -1216,6 +1215,33 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                     },
                                   }}
                                 >
+                                  {/* SPECIFIC-INHERITANCE SWITCH GOES HERE.
+                                      This section (subheader + the empty Box
+                                      below) is the placeholder for the
+                                      specific-inheritance picker: it will let
+                                      the user choose which generalization this
+                                      part is specifically inherited from. The
+                                      Box is intentionally empty until that
+                                      control is built. */}
+                                  <ListSubheader
+                                    sx={{
+                                      color: (theme) =>
+                                        theme.palette.mode === "dark"
+                                          ? "white"
+                                          : "black",
+                                      fontSize: "16px",
+                                      backgroundColor: (theme) =>
+                                        theme.palette.mode === "dark"
+                                          ? "#000000"
+                                          : "#d0d5dd",
+                                      borderBottomLeftRadius: "15px",
+                                      borderBottomRightRadius: "15px",
+                                    }}
+                                  >
+                                    This part is specifically inherited from:
+                                  </ListSubheader>
+                                  <Box sx={{ minHeight: 40 }} />
+
                                   {loadingSpecializations.has(entry.to) && (
                                     <MenuItem disabled>
                                       <Box
@@ -1359,6 +1385,81 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
             </List>
           )}
         </Droppable>
+        {notInheritedItems.length > 0 && (
+          <List sx={{ px: 1.8, py: 0 }}>
+            {notInheritedItems.map((entry: any, index: number) => (
+              <ListItem
+                key={`not-inherited-${entry.from || index}`}
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1,
+                  px: 1,
+                  py: 0,
+                  backgroundImage:
+                    "repeating-linear-gradient(to right, gray 0, gray 1px, transparent 1px, transparent 6px)",
+                  backgroundPosition: "top",
+                  backgroundRepeat: "repeat-x",
+                  backgroundSize: "100% 1px",
+                }}
+              >
+                <ListItemText
+                  primary={
+                    <Typography>
+                      {formatPartTitle(
+                        entry.from,
+                        entry.fromOptional || false,
+                        "none",
+                        entry.fromTitle,
+                      )}
+                    </Typography>
+                  }
+                  sx={{ flex: 1, minWidth: 0.3 }}
+                />
+
+                <ListItemIcon sx={{ minWidth: "auto" }}>
+                  <CloseIcon sx={{ fontSize: 20, color: "orange" }} />
+                </ListItemIcon>
+
+                {/* NOTE (for next session): this green "+" is a placeholder
+                    for a NEW (or consolidated) endpoint that inherits this part
+                    specifically from the CURRENTLY SELECTED generalization — the
+                    one the part comes from (activeGenId / entry.from's owner).
+                    This is DISTINCT from onAddPart below, which makes the
+                    currentVisibleNode *own* the part. Here we want to *inherit*
+                    it instead of owning it, and the operation must NOT
+                    recalculate or affect "overall inheritance". onAddPart is
+                    wired temporarily until that endpoint exists. */}
+                {!!addPart && (
+                  <Tooltip
+                    title={"Inherit this part"}
+                    placement="top"
+                  >
+                    <IconButton
+                      sx={{ p: 0.5 }}
+                      onClick={() => {
+                        onAddPart(entry.from);
+                      }}
+                    >
+                      <AddIcon
+                        sx={{
+                          fontSize: 20,
+                          color: "green",
+                          border: "1px solid green",
+                          borderRadius: "50%",
+                        }}
+                      />
+                    </IconButton>
+                  </Tooltip>
+                )}
+
+                {/* Not inherited: right column intentionally blank — no switch
+                    dropdown, since the part isn't on this node. */}
+                <ListItemText primary={null} sx={{ flex: 1, minWidth: 0.3 }} />
+              </ListItem>
+            ))}
+          </List>
+        )}
         <Popover
           id={id}
           open={open}
@@ -1585,12 +1686,6 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
         </Box>
       </Box>
 
-      <GeneralizationTabs
-        generalizations={generalizations}
-        activeTab={activeTab}
-        onChange={handleTabChange}
-      />
-
       {activeGeneralization && activeGenId && activeGenTitle && (
         <Box key={activeGenId}>
           <Box
@@ -1600,6 +1695,8 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
               height: 40,
               position: "relative",
               mx: 2,
+              mt: 2,
+              mb: 2.5,
             }}
           >
             {/* Left Text */}
@@ -1607,22 +1704,88 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
               sx={{
                 flex: 1,
                 minWidth: 0,
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
                 pr: "30px", // space to avoid overlap with center icon
               }}
             >
-              <Tooltip title={activeGenTitle}>
-                <Typography
-                  sx={{
-                    color: "orange",
-                    fontWeight: "bold",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
+              {generalizations.length > 1 ? (
+                <TextField
+                  value={activeGenId}
+                  onChange={(e) => setActiveTab(e.target.value)}
+                  select
+                  label="Generalizations"
+                  sx={{ flex: 1, minWidth: 0 }}
+                  slotProps={{
+                    input: {
+                      sx: {
+                        height: "40px",
+                        borderRadius: "18px",
+                        color: "orange",
+                        fontWeight: "bold",
+                        backgroundColor: (theme) =>
+                          theme.palette.background.paper,
+                      },
+                    },
+                    inputLabel: { style: { color: "grey" } },
+                    select: {
+                      MenuProps: {
+                        PaperProps: {
+                          sx: {
+                            border: "2px solid orange",
+                            borderRadius: "12px",
+                            "&::-webkit-scrollbar": { display: "none" },
+                          },
+                        },
+                        MenuListProps: {
+                          sx: { paddingTop: 0, paddingBottom: 0 },
+                        },
+                      },
+                      renderValue: () => (
+                        <Box
+                          sx={{
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {activeGenTitle}
+                        </Box>
+                      ),
+                    },
                   }}
                 >
-                  {activeGenTitle}
-                </Typography>
-              </Tooltip>
+                  {generalizations.map((gen) => (
+                    <MenuItem
+                      key={gen.id}
+                      value={gen.id}
+                      sx={{
+                        border: "1px solid gray",
+                        borderRadius: "25px",
+                        my: "4px",
+                        mx: "8px",
+                      }}
+                    >
+                      <Typography>{gen.title}</Typography>
+                    </MenuItem>
+                  ))}
+                </TextField>
+              ) : (
+                <Tooltip title={activeGenTitle}>
+                  <Typography
+                    sx={{
+                      color: "orange",
+                      fontWeight: "bold",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {activeGenTitle}
+                  </Typography>
+                </Tooltip>
+              )}
             </Box>
 
             <Box
@@ -1635,29 +1798,37 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                 justifyContent: "center",
                 gap: 1,
                 height: "50px",
-                width: showRecomputeSpinner ? "auto" : "50px",
+                width: "50px",
                 whiteSpace: "nowrap",
               }}
             >
               {/* Spinner + label while the gen→node mapping recomputes. */}
               {showRecomputeSpinner ? (
-                <>
-                  <SyncedSpinner size={20} />
-                  <Typography
-                    sx={{
-                      fontSize: "0.8rem",
-                      fontWeight: "bold",
-                      fontStyle: "italic",
-                      color: "orange",
-                    }}
-                  >
-                    Generating inheritance…
-                  </Typography>
-                </>
+                <SyncedSpinner size={20} />
               ) : (
                 <ArrowRightAltIcon sx={{ color: "orange", fontSize: "50px" }} />
               )}
             </Box>
+
+            {showRecomputeSpinner && (
+              <Typography
+                sx={{
+                  position: "absolute",
+                  top: "100%",
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  mt: "1px",
+                  fontSize: "0.75rem",
+                  fontWeight: "bold",
+                  fontStyle: "italic",
+                  color: "orange",
+                  whiteSpace: "nowrap",
+                  pointerEvents: "none",
+                }}
+              >
+                Generating inheritance…
+              </Typography>
+            )}
 
             <Box
               sx={{

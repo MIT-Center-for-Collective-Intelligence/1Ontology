@@ -13,6 +13,7 @@ import {
   Link,
   Popover,
   Button,
+  TextField,
 } from "@mui/material";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import ArrowRightAltIcon from "@mui/icons-material/ArrowRightAlt";
@@ -24,7 +25,6 @@ import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import DragHandleIcon from "@mui/icons-material/DragHandle";
 import CloseIcon from "@mui/icons-material/Close";
 import InheritedPartsLegend from "../Common/InheritedPartsLegend";
-import GeneralizationTabs from "./GeneralizationTabs";
 import {
   ICollection,
   INode,
@@ -145,10 +145,6 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
       setActiveTab(null);
     }
   }, [currentVisibleNode.id]); // Use node ID to avoid infinite loop
-
-  const handleTabChange = (event: React.SyntheticEvent, newValue: string) => {
-    setActiveTab(newValue);
-  };
 
   if (selectedProperty !== "parts") return null;
 
@@ -632,12 +628,6 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
             )}
           </Box>
 
-          <GeneralizationTabs
-            generalizations={generalizations}
-            activeTab={activeTab}
-            onChange={handleTabChange}
-          />
-
           {activeGenId && activeGenTitle && (
             <Box key={activeGenId} sx={{ px: "10px" }}>
               <Box
@@ -647,6 +637,8 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                   height: 40,
                   position: "relative",
                   mx: 2,
+                  mt: 2,
+                  mb: 2.5,
                 }}
               >
                 {/* Left Text */}
@@ -654,22 +646,88 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                   sx={{
                     flex: 1,
                     minWidth: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
                     pr: "30px", // space to avoid overlap with center icon
                   }}
                 >
-                  <Tooltip title={activeGenTitle}>
-                    <Typography
-                      sx={{
-                        color: "orange",
-                        fontWeight: "bold",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
+                  {generalizations.length > 1 ? (
+                    <TextField
+                      value={activeGenId}
+                      onChange={(e) => setActiveTab(e.target.value)}
+                      select
+                      label="Generalizations"
+                      sx={{ flex: 1, minWidth: 0 }}
+                      slotProps={{
+                        input: {
+                          sx: {
+                            height: "40px",
+                            borderRadius: "18px",
+                            color: "orange",
+                            fontWeight: "bold",
+                            backgroundColor: (theme) =>
+                              theme.palette.background.paper,
+                          },
+                        },
+                        inputLabel: { style: { color: "grey" } },
+                        select: {
+                          MenuProps: {
+                            PaperProps: {
+                              sx: {
+                                border: "2px solid orange",
+                                borderRadius: "12px",
+                                "&::-webkit-scrollbar": { display: "none" },
+                              },
+                            },
+                            MenuListProps: {
+                              sx: { paddingTop: 0, paddingBottom: 0 },
+                            },
+                          },
+                          renderValue: () => (
+                            <Box
+                              sx={{
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              {activeGenTitle}
+                            </Box>
+                          ),
+                        },
                       }}
                     >
-                      {activeGenTitle}
-                    </Typography>
-                  </Tooltip>
+                      {generalizations.map((gen) => (
+                        <MenuItem
+                          key={gen.id}
+                          value={gen.id}
+                          sx={{
+                            border: "1px solid gray",
+                            borderRadius: "25px",
+                            my: "4px",
+                            mx: "8px",
+                          }}
+                        >
+                          <Typography>{gen.title}</Typography>
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  ) : (
+                    <Tooltip title={activeGenTitle}>
+                      <Typography
+                        sx={{
+                          color: "orange",
+                          fontWeight: "bold",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {activeGenTitle}
+                      </Typography>
+                    </Tooltip>
+                  )}
                 </Box>
 
                 <Box
