@@ -657,13 +657,30 @@ const StructuredPropertySelector = ({
 
       // Persist changes and refresh state
       try {
-        await handleSaveLinkChanges(
-          removedElements,
-          addedElements,
-          selectedProperty,
-          currentVisibleNode?.id,
-          selectedCollection,
-        );
+        if (selectedProperty === "parts") {
+          if (isRemoving) {
+            await unlinkNodeRelation(
+              currentVisibleNode?.id,
+              checkedId,
+              -1,
+              0,
+              true,
+            );
+          } else {
+            await linkNodeRelation({
+              currentNodeId: currentVisibleNode?.id,
+              partId: checkedId,
+            });
+          }
+        } else {
+          await handleSaveLinkChanges(
+            removedElements,
+            addedElements,
+            selectedProperty,
+            currentVisibleNode?.id,
+            selectedCollection,
+          );
+        }
         // editableProperty re-syncs from currentVisibleNode in the refresh
         // effect once the instant update or snapshot lands.
       } catch (error) {
