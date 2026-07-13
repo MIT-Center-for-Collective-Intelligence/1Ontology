@@ -23,6 +23,7 @@ interface PartViewerProps {
     inheritedPartsDetails?: InheritedPartsDetail[] | null,
   ) => Promise<void>;
   sortParts: (newParts: any[]) => Promise<void>;
+  switchPartSource: (partId: string, genId: string) => Promise<void>;
   user: any;
   navigateToNode: any;
   replaceWith: any;
@@ -49,6 +50,7 @@ const PartViewer: React.FC<PartViewerProps> = ({
   unlinkNodeRelation,
   saveParts,
   sortParts,
+  switchPartSource,
   user,
   navigateToNode,
   replaceWith,
@@ -117,6 +119,7 @@ const PartViewer: React.FC<PartViewerProps> = ({
           replaceWith={replaceWith}
           saveParts={saveParts}
           sortParts={sortParts}
+          switchPartSource={switchPartSource}
           appName={appName}
           inheritedPartsDetails={inheritedPartsDetails}
           inheritedPartsLoading={inheritedPartsLoading}

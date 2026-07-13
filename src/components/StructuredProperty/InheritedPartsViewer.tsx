@@ -43,6 +43,7 @@ import {
 
 import { INHERITANCE_FOR_PARTS_COLLECTION_NAME } from "@components/lib/firestoreClient/collections";
 import SyncedSpinner from "@components/components/SyncedSpinner";
+import { getPartGeneralizationSources } from "@components/lib/utils/partsHelper";
 
 interface GeneralizationNode {
   id: string;
@@ -176,6 +177,29 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
       if (part) return !!part.optional;
     }
     return false;
+  };
+
+  // The generalization title a part is specifically inherited from.
+  const getPartSpecificSourceTitle = (partId: string): string | null => {
+    const part = currentVisibleNode.properties?.parts?.[0]?.nodes?.find(
+      (n: any) => n.id === partId,
+    );
+    if (!part?.inheritedFrom) return null;
+    const providers = getPartGeneralizationSources(
+      partId,
+      generalizations,
+      nodes,
+    );
+    if (providers.length < 2) return null;
+    const current = providers.find((p) => {
+      const genPart = nodes[p.generalizationId]?.properties?.parts?.[0]?.nodes?.find(
+        (n: any) => n.id === partId,
+      );
+      return (genPart?.inheritedFrom || p.generalizationId) === part.inheritedFrom;
+    });
+    return (
+      current?.generalizationTitle ?? nodes[part.inheritedFrom]?.title ?? null
+    );
   };
 
   const formatPartTitle = (
@@ -470,31 +494,54 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
               <ListItemText
                 primary={
                   entry.to ? (
-                    <Link
-                      underline={!!navigateToNode ? "hover" : "none"}
-                      onClick={(e) => {
-                        if (!navigateToNode) return;
-
-                        if (e.metaKey || e.ctrlKey) {
-                          const url = `${window.location.origin}${window.location.pathname}#${entry.to}`;
-                          window.open(url, "_blank");
-                        } else {
-                          navigateToNode(entry.to);
-                        }
-                      }}
-                      sx={{
-                        cursor: !!navigateToNode ? "pointer" : "",
-                        color: (them) =>
-                          them.palette.mode === "dark" ? "white" : "black",
-                        fontSize: "0.9rem",
-                      }}
+                    <Box
+                      sx={{ display: "flex", alignItems: "center", gap: 1 }}
                     >
-                      {formatPartTitle(
-                        entry.toTitle,
-                        liveToOptional,
-                        liveOptionalChange,
-                      )}
-                    </Link>
+                      <Link
+                        underline={!!navigateToNode ? "hover" : "none"}
+                        onClick={(e) => {
+                          if (!navigateToNode) return;
+
+                          if (e.metaKey || e.ctrlKey) {
+                            const url = `${window.location.origin}${window.location.pathname}#${entry.to}`;
+                            window.open(url, "_blank");
+                          } else {
+                            navigateToNode(entry.to);
+                          }
+                        }}
+                        sx={{
+                          cursor: !!navigateToNode ? "pointer" : "",
+                          color: (them) =>
+                            them.palette.mode === "dark" ? "white" : "black",
+                          fontSize: "0.9rem",
+                        }}
+                      >
+                        {formatPartTitle(
+                          entry.toTitle,
+                          liveToOptional,
+                          liveOptionalChange,
+                        )}
+                      </Link>
+                      {(() => {
+                        const sourceTitle = getPartSpecificSourceTitle(
+                          entry.to,
+                        );
+                        return sourceTitle ? (
+                          <Typography
+                            sx={{
+                              ml: "auto",
+                              flexShrink: 0,
+                              fontSize: "0.72rem",
+                              fontStyle: "italic",
+                              color: "gray",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {`(Inherited from "${sourceTitle}")`}
+                          </Typography>
+                        ) : null;
+                      })()}
+                    </Box>
                   ) : null
                 }
                 sx={{ flex: 1, minWidth: 0.3 }}

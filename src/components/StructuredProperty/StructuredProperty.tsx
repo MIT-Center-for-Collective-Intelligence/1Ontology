@@ -902,6 +902,30 @@ const StructuredProperty = ({
     [savePartsDelta],
   );
 
+  // Switch which generalization a part is specifically inherited from. The
+  // instant tag mirrors the server: the owner resolved through the picked gen.
+  const switchPartSource = useCallback(
+    async (partId: string, genId: string) => {
+      const source = currentVisibleNode?.properties?.parts;
+      if (!Array.isArray(source)) return;
+      const newParts: ICollection[] = JSON.parse(JSON.stringify(source));
+      const part = newParts[0]?.nodes?.find(
+        (n: ILinkNode) => n.id === partId,
+      );
+      if (!part) return;
+      const genPart = (
+        relatedNodes[genId]?.properties?.parts?.[0]?.nodes ?? []
+      ).find((n: ILinkNode) => n.id === partId);
+      part.inheritedFrom = genPart?.inheritedFrom || genId;
+      await savePartsDelta(
+        "/nodes/parts/switch-source",
+        { partId, genId },
+        newParts,
+      );
+    },
+    [currentVisibleNode, relatedNodes, savePartsDelta],
+  );
+
   /**
    * Attaches this node's overall parts inheritance to `sourceId` — repairing a
    * break, or moving to another generalization. The server hard-resets the list
@@ -1692,6 +1716,7 @@ const StructuredProperty = ({
             unlinkNodeRelation={unlinkNodeRelation}
             saveParts={saveParts}
             sortParts={sortParts}
+            switchPartSource={switchPartSource}
             user={user}
             navigateToNode={navigateToNode}
             replaceWith={replaceWith}

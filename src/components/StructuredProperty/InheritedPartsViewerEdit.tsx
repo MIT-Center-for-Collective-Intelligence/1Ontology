@@ -35,6 +35,7 @@ import InheritedPartsLegend from "../Common/InheritedPartsLegend";
 
 import { Timestamp } from "firebase/firestore";
 import { recordLogs } from "@components/lib/utils/helpers";
+import { getPartGeneralizationSources } from "@components/lib/utils/partsHelper";
 import SyncedSpinner from "@components/components/SyncedSpinner";
 
 interface GeneralizationNode {
@@ -71,6 +72,7 @@ interface InheritedPartsViewerProps {
     inheritedPartsDetails?: InheritedPartsDetail[] | null,
   ) => Promise<void>;
   sortParts: (newParts: ICollection[]) => Promise<void>;
+  switchPartSource: (partId: string, genId: string) => Promise<void>;
   user: any;
   appName?: string;
   navigateToNode?: any;
@@ -103,6 +105,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
   replaceWith,
   saveParts,
   sortParts,
+  switchPartSource,
   currentVisibleNode,
   triggerSearch,
   addPart,
@@ -802,7 +805,13 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
               ? "added"
               : "removed"
           : "none";
-        return { ...entry, toOptional: liveOptional, optionalChange, pending: false };
+        return {
+          ...entry,
+          toOptional: liveOptional,
+          optionalChange,
+          pending: false,
+          inheritedFrom: partNode.inheritedFrom,
+        };
       }
       return {
         from: "",
@@ -819,6 +828,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
         optionalChange: "none",
         hops: 0,
         pending: true,
+        inheritedFrom: partNode.inheritedFrom,
       };
     });
 
@@ -848,6 +858,29 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
           title: allNodes[n.id]?.title,
         }));
       partAlternativesLookup[entry.to] = { specs, gens };
+    }
+
+    // Per part: the generalizations it can be specifically inherited from,
+    // each resolved to the owner it would record (skips a pass-through gen).
+    const partSourcesLookup: {
+      [partId: string]: { genId: string; title: string; owner: string }[];
+    } = {};
+    for (const entry of draggableItems) {
+      if (partSourcesLookup[entry.to]) continue;
+      partSourcesLookup[entry.to] = getPartGeneralizationSources(
+        entry.to,
+        generalizations,
+        allNodes,
+      ).map((s) => {
+        const genPart = (
+          allNodes[s.generalizationId]?.properties?.parts?.[0]?.nodes ?? []
+        ).find((n: { id: string }) => n.id === entry.to);
+        return {
+          genId: s.generalizationId,
+          title: s.generalizationTitle,
+          owner: genPart?.inheritedFrom || s.generalizationId,
+        };
+      });
     }
 
     const nonDraggableItems = Object.keys(nonPickedOnes).filter((id) => {
@@ -1215,32 +1248,72 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                     },
                                   }}
                                 >
-                                  {/* SPECIFIC-INHERITANCE SWITCH GOES HERE.
-                                      This section (subheader + the empty Box
-                                      below) is the placeholder for the
-                                      specific-inheritance picker: it will let
-                                      the user choose which generalization this
-                                      part is specifically inherited from. The
-                                      Box is intentionally empty until that
-                                      control is built. */}
-                                  <ListSubheader
-                                    sx={{
-                                      color: (theme) =>
-                                        theme.palette.mode === "dark"
-                                          ? "white"
-                                          : "black",
-                                      fontSize: "16px",
-                                      backgroundColor: (theme) =>
-                                        theme.palette.mode === "dark"
-                                          ? "#000000"
-                                          : "#d0d5dd",
-                                      borderBottomLeftRadius: "15px",
-                                      borderBottomRightRadius: "15px",
-                                    }}
-                                  >
-                                    This part is specifically inherited from:
-                                  </ListSubheader>
-                                  <Box sx={{ minHeight: 40 }} />
+                                  {!!entry.inheritedFrom &&
+                                    (partSourcesLookup[entry.to] ?? [])
+                                      .length >= 2 && (
+                                      <ListSubheader
+                                        sx={{
+                                          color: (theme) =>
+                                            theme.palette.mode === "dark"
+                                              ? "white"
+                                              : "black",
+                                          fontSize: "16px",
+                                          backgroundColor: (theme) =>
+                                            theme.palette.mode === "dark"
+                                              ? "#000000"
+                                              : "#d0d5dd",
+                                          borderBottomLeftRadius: "15px",
+                                          borderBottomRightRadius: "15px",
+                                        }}
+                                      >
+                                        This part is specifically inherited
+                                        from:
+                                      </ListSubheader>
+                                    )}
+                                  {!!entry.inheritedFrom &&
+                                    (partSourcesLookup[entry.to] ?? [])
+                                      .length >= 2 &&
+                                    (partSourcesLookup[entry.to] ?? []).map(
+                                      (source) => {
+                                        const isCurrent =
+                                          source.owner === entry.inheritedFrom;
+                                        return (
+                                          <MenuItem
+                                            key={`source-${source.genId}`}
+                                            onClick={() => {
+                                              if (isCurrent || entry.pending) {
+                                                return;
+                                              }
+                                              switchPartSource(
+                                                entry.to,
+                                                source.genId,
+                                              );
+                                            }}
+                                            sx={{
+                                              display: "flex",
+                                              gap: "10px",
+                                              border: "1px solid gray",
+                                              borderRadius: "25px",
+                                              my: "4px",
+                                              mx: "8px",
+                                            }}
+                                          >
+                                            <CheckIcon
+                                              sx={{
+                                                fontSize: 20,
+                                                color: "orange",
+                                                visibility: isCurrent
+                                                  ? "visible"
+                                                  : "hidden",
+                                              }}
+                                            />
+                                            <Typography>
+                                              {source.title}
+                                            </Typography>
+                                          </MenuItem>
+                                        );
+                                      },
+                                    )}
 
                                   {loadingSpecializations.has(entry.to) && (
                                     <MenuItem disabled>

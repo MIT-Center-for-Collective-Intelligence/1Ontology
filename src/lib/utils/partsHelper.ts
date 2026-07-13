@@ -439,6 +439,32 @@ export const getGeneralizationParts = (
 };
 
 /**
+ * Which generalizations provide a given part — i.e. have `partId` in their own
+ * parts list. Supplies the options for the specific-inheritance picker; the
+ * CURRENT selection is read from the part's persisted `inheritedFrom`.
+ */
+export const getPartGeneralizationSources = (
+  partId: string,
+  generalizations: { id: string; title: string }[],
+  nodes: { [id: string]: INode },
+): { generalizationId: string; generalizationTitle: string }[] => {
+  if (!partId || !Array.isArray(generalizations)) return [];
+  const sources: { generalizationId: string; generalizationTitle: string }[] =
+    [];
+  for (const gen of generalizations) {
+    const genNode = nodes[gen.id];
+    const genParts = genNode?.properties?.parts?.[0]?.nodes || [];
+    if (genParts.some((p: any) => p.id === partId)) {
+      sources.push({
+        generalizationId: gen.id,
+        generalizationTitle: gen.title || genNode?.title || "",
+      });
+    }
+  }
+  return sources;
+};
+
+/**
  * Get all generalizations for a node
  */
 export const getAllGeneralizations = (
