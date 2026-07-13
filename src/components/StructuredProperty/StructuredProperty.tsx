@@ -1192,13 +1192,9 @@ const StructuredProperty = ({
     }
   };
 
-  const linkNodeRelation = async ({
-    currentNodeId,
-    partId,
-  }: {
-    currentNodeId: string;
-    partId: string;
-  }) => {
+  // Appends a part. With `genId` it is inherited specifically through that
+  // generalization otherwise the server decides inherited or owned.
+  const addParts = async (partId: string, genId?: string) => {
     try {
       const source = currentVisibleNode?.properties?.parts;
       const newParts: ICollection[] =
@@ -1206,14 +1202,37 @@ const StructuredProperty = ({
           ? JSON.parse(JSON.stringify(source))
           : [{ collectionName: "main", nodes: [] }];
       if (newParts[0].nodes.some((n: ILinkNode) => n.id === partId)) return;
-      newParts[0].nodes.push({
+      const node: ILinkNode = {
         id: partId,
         title: relatedNodes[partId]?.title ?? "",
-      });
-      await saveParts(newParts);
+      };
+      if (genId) {
+        const genPart = (
+          relatedNodes[genId]?.properties?.parts?.[0]?.nodes ?? []
+        ).find((n: ILinkNode) => n.id === partId);
+        node.inheritedFrom = genPart?.inheritedFrom || genId;
+        // The part node itself may not be loaded; the gen's entry has a title.
+        if (!node.title) node.title = genPart?.title ?? "";
+      }
+      newParts[0].nodes.push(node);
+      await savePartsDelta(
+        "/nodes/parts/add",
+        { partIds: [partId], ...(genId ? { genId } : {}) },
+        newParts,
+      );
     } catch (error) {
       console.error(error);
     }
+  };
+
+  const linkNodeRelation = async ({
+    currentNodeId,
+    partId,
+  }: {
+    currentNodeId: string;
+    partId: string;
+  }) => {
+    await addParts(partId);
   };
   const replaceWith = useCallback(
     async (oldPartId: string, newPartId: string) => {
@@ -1717,6 +1736,7 @@ const StructuredProperty = ({
             saveParts={saveParts}
             sortParts={sortParts}
             switchPartSource={switchPartSource}
+            addPartFromGen={addParts}
             user={user}
             navigateToNode={navigateToNode}
             replaceWith={replaceWith}

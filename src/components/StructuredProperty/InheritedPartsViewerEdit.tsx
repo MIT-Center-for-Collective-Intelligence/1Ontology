@@ -73,6 +73,7 @@ interface InheritedPartsViewerProps {
   ) => Promise<void>;
   sortParts: (newParts: ICollection[]) => Promise<void>;
   switchPartSource: (partId: string, genId: string) => Promise<void>;
+  addPartFromGen: (partId: string, genId?: string) => Promise<void>;
   user: any;
   appName?: string;
   navigateToNode?: any;
@@ -106,6 +107,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
   saveParts,
   sortParts,
   switchPartSource,
+  addPartFromGen,
   currentVisibleNode,
   triggerSearch,
   addPart,
@@ -890,7 +892,9 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
 
     // Parts the generalization has but this node did not inherit.
     // They have no own-part row, so the draggable list above skips them
-    const notInheritedItems = details.filter((d: any) => d.symbol === "x");
+    const notInheritedItems = details.filter(
+      (d: any) => d.symbol === "x" && !currentNodePartIdsSet.has(d.from),
+    );
 
     return (
       <Box
@@ -1494,24 +1498,19 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                   <CloseIcon sx={{ fontSize: 20, color: "orange" }} />
                 </ListItemIcon>
 
-                {/* NOTE (for next session): this green "+" is a placeholder
-                    for a NEW (or consolidated) endpoint that inherits this part
-                    specifically from the CURRENTLY SELECTED generalization — the
-                    one the part comes from (activeGenId / entry.from's owner).
-                    This is DISTINCT from onAddPart below, which makes the
-                    currentVisibleNode *own* the part. Here we want to *inherit*
-                    it instead of owning it, and the operation must NOT
-                    recalculate or affect "overall inheritance". onAddPart is
-                    wired temporarily until that endpoint exists. */}
-                {!!addPart && (
+                {/* Inherits the part specifically through this tab's
+                    generalization. Unlike a plain add, it never becomes
+                    owned and overall inheritance is untouched. */}
+                {!!addPartFromGen && (
                   <Tooltip
                     title={"Inherit this part"}
                     placement="top"
                   >
                     <IconButton
                       sx={{ p: 0.5 }}
-                      onClick={() => {
-                        onAddPart(entry.from);
+                      onClick={async () => {
+                        await addPartFromGen(entry.from, generalizationId);
+                        refetchNow?.();
                       }}
                     >
                       <AddIcon
