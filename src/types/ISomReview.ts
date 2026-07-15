@@ -5,6 +5,24 @@ export type SomIssueType =
   | "placement"
   | "structural-overlap";
 
+export type SomReviewDecision = "agree" | "disagree";
+
+export type SomReviewerRole = "steward" | "researcher" | "contributor";
+
+export type SomDeliberationRecommendation =
+  | "awaiting-core-review"
+  | "ready-to-accept"
+  | "ready-to-reject"
+  | "needs-deliberation";
+
+export type SomDeliberationResolutionDecision = "accept" | "reject" | "defer";
+
+export type SomDeliberationCommentStance =
+  | "support"
+  | "oppose"
+  | "question"
+  | "synthesis";
+
 export type SomReviewContext =
   | {
       type: "title-comparison";
@@ -93,6 +111,7 @@ export interface SomSessionResponse {
 export interface SomOverviewResponse {
   datasetVersion: string;
   issueTypes: SomIssueTypeOption[];
+  canDeliberate: boolean;
 }
 
 export interface SomRespondResult {
@@ -104,4 +123,100 @@ export interface SomRespondResult {
 export interface SomUndoResult {
   ok: boolean;
   cursor: number;
+}
+
+export interface SomDeliberationRoleSummary {
+  role: SomReviewerRole;
+  label: string;
+  weight: number;
+  responses: number;
+  agree: number;
+  disagree: number;
+}
+
+export interface SomDeliberationAggregate {
+  recommendation: SomDeliberationRecommendation;
+  quorumMet: boolean;
+  totalResponses: number;
+  coreResponses: number;
+  allWeightedSupport: number | null;
+  coreWeightedSupport: number | null;
+  stewardSplit: boolean;
+  stewardDissent: boolean;
+  roleSummaries: SomDeliberationRoleSummary[];
+}
+
+export interface SomDeliberationResolution {
+  decision: SomDeliberationResolutionDecision;
+  rationale: string;
+  resolvedBy: string;
+  resolvedByName: string;
+  resolvedAt: string;
+}
+
+export interface SomDeliberationProposalSummary {
+  proposalId: string;
+  issueType: SomIssueType;
+  question: string;
+  currentState: string;
+  proposedState: string;
+  aggregate: SomDeliberationAggregate;
+  commentCount: number;
+  resolution?: SomDeliberationResolution;
+}
+
+export interface SomDeliberationAccess {
+  role: SomReviewerRole;
+  roleLabel: string;
+  canFinalize: boolean;
+}
+
+export interface SomDeliberationOverviewResponse {
+  datasetVersion: string;
+  access: SomDeliberationAccess;
+  remainingIndependentReviews: number;
+  roleWeights: Array<{
+    role: SomReviewerRole;
+    label: string;
+    weight: number;
+  }>;
+  proposals: SomDeliberationProposalSummary[];
+}
+
+export interface SomDeliberationParticipant {
+  reviewerId: string;
+  displayName: string;
+  role: SomReviewerRole;
+  roleLabel: string;
+  weight: number;
+  originalDecision: SomReviewDecision;
+  effectiveDecision: SomReviewDecision;
+  revised: boolean;
+  rationale: string;
+  reviewedAt: string;
+}
+
+export interface SomDeliberationComment {
+  id: string;
+  authorId: string;
+  authorName: string;
+  stance: SomDeliberationCommentStance;
+  body: string;
+  createdAt: string;
+}
+
+export interface SomDeliberationProposalResponse {
+  datasetVersion: string;
+  access: SomDeliberationAccess;
+  card: SomReviewCard;
+  aggregate: SomDeliberationAggregate;
+  participants: SomDeliberationParticipant[];
+  comments: SomDeliberationComment[];
+  resolution?: SomDeliberationResolution;
+  myOriginalDecision?: SomReviewDecision;
+  myEffectiveDecision?: SomReviewDecision;
+}
+
+export interface SomDeliberationMutationResult {
+  ok: boolean;
 }

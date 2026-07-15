@@ -13,6 +13,7 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import UndoIcon from "@mui/icons-material/Undo";
 import Head from "next/head";
+import { useRouter } from "next/router";
 
 import withAuthUser from "@components/components/hoc/withAuthUser";
 import { useAuth } from "@components/components/context/AuthContext";
@@ -35,6 +36,7 @@ type Phase = "loading" | "select" | "session" | "complete" | "empty";
 
 export const ReviewPage = () => {
   const [{ user }] = useAuth();
+  const router = useRouter();
   const [phase, setPhase] = useState<Phase>("loading");
   const [issueTypes, setIssueTypes] = useState<SomIssueTypeOption[]>([]);
   const [issueType, setIssueType] = useState<SomIssueType | null>(null);
@@ -43,6 +45,7 @@ export const ReviewPage = () => {
   const [cursor, setCursor] = useState(0);
   const [loadError, setLoadError] = useState("");
   const [undoing, setUndoing] = useState(false);
+  const [canDeliberate, setCanDeliberate] = useState(false);
 
   const loadOverview = useCallback(async () => {
     setPhase("loading");
@@ -50,6 +53,7 @@ export const ReviewPage = () => {
     try {
       const overview = await Post<SomOverviewResponse>("/som-review/overview");
       setIssueTypes(overview.issueTypes);
+      setCanDeliberate(overview.canDeliberate);
       setPhase("select");
     } catch {
       setLoadError("The review queues could not be loaded. Please try again.");
@@ -83,7 +87,9 @@ export const ReviewPage = () => {
         result.session.cursor >= result.cards.length ? "complete" : "session",
       );
     } catch {
-      setLoadError("The review session could not be started. Please try again.");
+      setLoadError(
+        "The review session could not be started. Please try again.",
+      );
       setPhase("select");
     }
   }, []);
@@ -131,7 +137,9 @@ export const ReviewPage = () => {
       setCursor(result.cursor);
       setPhase("session");
     } catch {
-      setLoadError("The previous answer could not be undone. Please try again.");
+      setLoadError(
+        "The previous answer could not be undone. Please try again.",
+      );
     } finally {
       setUndoing(false);
     }
@@ -190,6 +198,8 @@ export const ReviewPage = () => {
             <ReviewQueueSelector
               issueTypes={issueTypes}
               onStart={startSession}
+              canDeliberate={canDeliberate}
+              onOpenDeliberation={() => router.push("/review/admin")}
             />
           )}
 
@@ -264,7 +274,10 @@ export const ReviewPage = () => {
           )}
 
           {phase === "session" && (!currentCard || !user?.userId) && (
-            <Alert severity="error" action={<Button onClick={exitToSelector}>Exit</Button>}>
+            <Alert
+              severity="error"
+              action={<Button onClick={exitToSelector}>Exit</Button>}
+            >
               The current review item is unavailable.
             </Alert>
           )}
@@ -285,7 +298,8 @@ export const ReviewPage = () => {
                   Review set complete
                 </Typography>
                 <Typography sx={{ mt: 0.75, color: "text.secondary" }}>
-                  {cards.length} {cards.length === 1 ? "item" : "items"} reviewed
+                  {cards.length} {cards.length === 1 ? "item" : "items"}{" "}
+                  reviewed
                 </Typography>
               </Box>
               <Stack
@@ -331,11 +345,7 @@ export const ReviewPage = () => {
               sx={{ py: 12, textAlign: "center" }}
             >
               <CheckCircleOutlineIcon color="success" sx={{ fontSize: 56 }} />
-              <Typography
-                variant="h5"
-                component="h1"
-                sx={{ fontWeight: 800 }}
-              >
+              <Typography variant="h5" component="h1" sx={{ fontWeight: 800 }}>
                 Nothing left in this review type
               </Typography>
               <Button

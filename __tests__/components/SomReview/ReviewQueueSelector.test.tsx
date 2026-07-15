@@ -73,4 +73,25 @@ describe("Society of Mind review queue selector", () => {
       }),
     ).toBeDisabled();
   });
+
+  it("shows the deliberation entry only for authorized reviewers", () => {
+    const { rerender } = render(
+      <ReviewQueueSelector issueTypes={issues} onStart={jest.fn()} />,
+    );
+    expect(
+      screen.queryByRole("button", { name: "Group deliberation" }),
+    ).not.toBeInTheDocument();
+
+    const onOpenDeliberation = jest.fn();
+    rerender(
+      <ReviewQueueSelector
+        issueTypes={issues}
+        onStart={jest.fn()}
+        canDeliberate
+        onOpenDeliberation={onOpenDeliberation}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Group deliberation" }));
+    expect(onOpenDeliberation).toHaveBeenCalledTimes(1);
+  });
 });

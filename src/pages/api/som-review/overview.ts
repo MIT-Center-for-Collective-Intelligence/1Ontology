@@ -7,6 +7,7 @@ import {
   pendingCount,
 } from "../../../lib/somReview/store";
 import { SomIssueType, SomOverviewResponse } from "../../../types/ISomReview";
+import { reviewAccessForToken } from "../../../lib/somReview/access";
 
 const handler = async (request: NextApiRequest, res: NextApiResponse) => {
   const req = request as CustomNextApiRequest;
@@ -45,6 +46,7 @@ const handler = async (request: NextApiRequest, res: NextApiResponse) => {
     const body: SomOverviewResponse = {
       datasetVersion: dataset.datasetVersion,
       issueTypes,
+      canDeliberate: reviewAccessForToken(req.user).canDeliberate,
     };
     return res.status(200).json(body);
   } catch (error: any) {

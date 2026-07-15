@@ -2,6 +2,7 @@ import React from "react";
 import {
   Alert,
   Box,
+  Button,
   Card,
   CardActionArea,
   Chip,
@@ -15,6 +16,7 @@ import ContentCopyOutlinedIcon from "@mui/icons-material/ContentCopyOutlined";
 import DriveFileRenameOutlineIcon from "@mui/icons-material/DriveFileRenameOutline";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import HubOutlinedIcon from "@mui/icons-material/HubOutlined";
+import GroupsOutlinedIcon from "@mui/icons-material/GroupsOutlined";
 
 import { SomIssueType, SomIssueTypeOption } from "../../types/ISomReview";
 
@@ -22,8 +24,7 @@ const ISSUE_DESCRIPTIONS: Record<SomIssueType, string> = {
   "title-clarity": "Judge whether an activity title is clear and precise.",
   "sibling-grouping":
     "Judge whether related activities belong under a proposed group.",
-  "duplicate-synonym":
-    "Judge whether two titles describe the same activity.",
+  "duplicate-synonym": "Judge whether two titles describe the same activity.",
   placement: "Judge whether an activity is under the wrong parent.",
   "structural-overlap":
     "Flag concepts that may be repeated across nearby collections.",
@@ -79,9 +80,13 @@ const QueueStatus = ({ issue }: { issue: SomIssueTypeOption }) => {
 const ReviewQueueSelector = ({
   issueTypes,
   onStart,
+  canDeliberate = false,
+  onOpenDeliberation,
 }: {
   issueTypes: SomIssueTypeOption[];
   onStart: (issueType: SomIssueType) => void;
+  canDeliberate?: boolean;
+  onOpenDeliberation?: () => void;
 }) => (
   <Box>
     <Stack
@@ -97,7 +102,19 @@ const ReviewQueueSelector = ({
       >
         Proposal review
       </Typography>
-      <Chip label="Sell ontology" variant="outlined" />
+      <Stack direction="row" alignItems="center" flexWrap="wrap" gap={1}>
+        <Chip label="Sell ontology" variant="outlined" />
+        {canDeliberate && onOpenDeliberation && (
+          <Button
+            variant="outlined"
+            startIcon={<GroupsOutlinedIcon />}
+            onClick={onOpenDeliberation}
+            sx={{ minHeight: 46, fontWeight: 750 }}
+          >
+            Group deliberation
+          </Button>
+        )}
+      </Stack>
     </Stack>
     <Typography sx={{ mb: 3.5, color: "text.secondary", lineHeight: 1.55 }}>
       Reviews are recorded separately from ontology changes. Choose one type of
