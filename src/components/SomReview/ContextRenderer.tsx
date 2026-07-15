@@ -332,10 +332,6 @@ const DuplicateComparison = ({
         />
       </Box>
     </Stack>
-    <BoundaryNote>
-      This decision only records whether the titles name the same activity. It
-      does not merge or delete anything.
-    </BoundaryNote>
   </Box>
 );
 

@@ -60,12 +60,27 @@ const placementReviewerText = (
   };
 };
 
+const duplicateReviewerText = (
+  context: Extract<SomReviewContext, { type: "duplicate-comparison" }>,
+) => ({
+  proposedState:
+    'Record "' +
+    context.candidateSynonymTitle +
+    '" as a synonym of "' +
+    context.canonicalTitle +
+    '".',
+});
+
 export const toReviewerCard = (record: any): SomReviewCard => {
   const view = record.reviewerView;
   const context = sanitizeContext(view.context);
   const placementText =
     context.type === "placement-comparison"
       ? placementReviewerText(context)
+      : null;
+  const duplicateText =
+    context.type === "duplicate-comparison"
+      ? duplicateReviewerText(context)
       : null;
   return {
     proposalId: record.proposalId,
@@ -75,7 +90,9 @@ export const toReviewerCard = (record: any): SomReviewCard => {
       question: reviewerQuestion(context),
       currentState: placementText?.currentState || cleanText(view.currentState),
       proposedState:
-        placementText?.proposedState || cleanText(view.proposedState),
+        placementText?.proposedState ||
+        duplicateText?.proposedState ||
+        cleanText(view.proposedState),
       reasoning: sanitizeReasoning(view.reasoning),
       context,
       agreeLabel:

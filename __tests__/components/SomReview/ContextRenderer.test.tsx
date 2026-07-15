@@ -81,7 +81,7 @@ describe("Society of Mind context renderers", () => {
     expect(screen.getByText("Sell Policies")).toBeInTheDocument();
   });
 
-  it("renders duplicate judgments without authorizing a merge", () => {
+  it("renders duplicate judgments without an unnecessary process note", () => {
     render(
       <ContextRenderer
         context={{
@@ -94,7 +94,9 @@ describe("Society of Mind context renderers", () => {
     );
     expect(screen.getByText("Sell Products")).toBeInTheDocument();
     expect(screen.getByText("Sell Merchandise")).toBeInTheDocument();
-    expect(screen.getByText(/does not merge or delete/i)).toBeInTheDocument();
+    expect(
+      screen.queryByText(/merge|delete|downstream/i),
+    ).not.toBeInTheDocument();
   });
 
   it("does not repeat placement details below the decision panels", () => {

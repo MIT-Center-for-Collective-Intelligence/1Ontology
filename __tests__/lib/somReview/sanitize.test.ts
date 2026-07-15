@@ -46,7 +46,8 @@ describe("Society of Mind reviewer card blinding", () => {
       issueType: "duplicate-synonym",
       reviewerView: {
         currentState: "Two nodes exist.",
-        proposedState: "Record a synonym judgment.",
+        proposedState:
+          "Record a synonym judgment. Any merge is a separate downstream task.",
         reasoning: "The titles have the same meaning.",
         context: {
           type: "duplicate-comparison",
@@ -60,6 +61,12 @@ describe("Society of Mind reviewer card blinding", () => {
       'Do "Sell products" and "Sell merchandise" name the same activity?',
     );
     expect(card.reviewerView.question).not.toMatch(/merge|delete/i);
+    expect(card.reviewerView.proposedState).toBe(
+      'Record "Sell merchandise" as a synonym of "Sell products".',
+    );
+    expect(card.reviewerView.proposedState).not.toMatch(
+      /merge|delete|downstream/i,
+    );
   });
 
   it("states the complete grouping change in the reviewer question", () => {

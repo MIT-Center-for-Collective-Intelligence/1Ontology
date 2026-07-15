@@ -425,6 +425,30 @@ function clarifyReviewerView(record) {
       },
     };
   }
+  if (context?.type === "duplicate-comparison") {
+    const canonicalTitle = String(context.canonicalTitle || "").trim();
+    const candidateSynonymTitle = String(
+      context.candidateSynonymTitle || "",
+    ).trim();
+    return {
+      ...record,
+      reviewerView: {
+        ...record.reviewerView,
+        question:
+          'Do "' +
+          canonicalTitle +
+          '" and "' +
+          candidateSynonymTitle +
+          '" name the same activity?',
+        proposedState:
+          'Record "' +
+          candidateSynonymTitle +
+          '" as a synonym of "' +
+          canonicalTitle +
+          '".',
+      },
+    };
+  }
   if (context?.type !== "placement-comparison") return record;
 
   const nodeTitle = String(context.nodeTitle || "").trim();
