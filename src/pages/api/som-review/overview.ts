@@ -2,7 +2,10 @@ import { NextApiRequest, NextApiResponse } from "next";
 
 import fbAuth, { CustomNextApiRequest } from "../../../middlewares/fbAuth";
 import { getDataset, isIssueTypeEnabled } from "../../../lib/somReview/dataset";
-import { pendingCount } from "../../../lib/somReview/store";
+import {
+  activeSessionProgress,
+  pendingCount,
+} from "../../../lib/somReview/store";
 import { SomIssueType, SomOverviewResponse } from "../../../types/ISomReview";
 
 const handler = async (request: NextApiRequest, res: NextApiResponse) => {
@@ -14,14 +17,29 @@ const handler = async (request: NextApiRequest, res: NextApiResponse) => {
     const reviewerId = req.user.uid;
 
     const issueTypes = await Promise.all(
-      (dataset.manifest.issueTypes || []).map(async (issue: any) => ({
-        id: issue.id as SomIssueType,
-        label: issue.label,
-        enabled: isIssueTypeEnabled(issue.id),
-        pending: isIssueTypeEnabled(issue.id)
-          ? await pendingCount(dataset, issue.id, reviewerId)
-          : 0,
-      })),
+      (dataset.manifest.issueTypes || []).map(async (issue: any) => {
+        const issueType = issue.id as SomIssueType;
+        const enabled = isIssueTypeEnabled(issueType);
+        const total = (dataset.orderedIdsByIssue.get(issueType) || []).length;
+        const [pending, activeSession] = enabled
+          ? await Promise.all([
+              pendingCount(dataset, issueType, reviewerId),
+              activeSessionProgress(
+                dataset.datasetVersion,
+                issueType,
+                reviewerId,
+              ),
+            ])
+          : [0, null];
+        return {
+          id: issueType,
+          label: issue.label,
+          enabled,
+          total,
+          pending,
+          ...(activeSession ? { activeSession } : {}),
+        };
+      }),
     );
 
     const body: SomOverviewResponse = {

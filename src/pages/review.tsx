@@ -3,22 +3,16 @@ import {
   Alert,
   Box,
   Button,
-  Card,
-  CardActionArea,
-  Chip,
   CircularProgress,
   Container,
-  Fade,
-  IconButton,
   LinearProgress,
   Stack,
-  Tooltip,
   Typography,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
-import UndoIcon from "@mui/icons-material/Undo";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import UndoIcon from "@mui/icons-material/Undo";
+import Head from "next/head";
 
 import withAuthUser from "@components/components/hoc/withAuthUser";
 import { useAuth } from "@components/components/context/AuthContext";
@@ -26,6 +20,7 @@ import { Post } from "@components/lib/utils/Post";
 import ReviewCard, {
   ReviewSubmission,
 } from "@components/components/SomReview/ReviewCard";
+import ReviewQueueSelector from "@components/components/SomReview/ReviewQueueSelector";
 import {
   SomIssueType,
   SomIssueTypeOption,
@@ -38,22 +33,12 @@ import {
 
 type Phase = "loading" | "select" | "session" | "complete" | "empty";
 
-const ISSUE_DESCRIPTIONS: Partial<Record<SomIssueType, string>> = {
-  "title-clarity":
-    "Is the proposed activity title clearer than the current one?",
-  "sibling-grouping":
-    "Does the proposed grouping of sibling activities make sense?",
-  "duplicate-synonym": "Do two titles name the same activity?",
-  placement: "Is an activity sitting in the wrong place?",
-  "structural-overlap": "Could two activities overlap?",
-};
-
-const ReviewPage = () => {
+export const ReviewPage = () => {
   const [{ user }] = useAuth();
-
   const [phase, setPhase] = useState<Phase>("loading");
   const [issueTypes, setIssueTypes] = useState<SomIssueTypeOption[]>([]);
   const [issueType, setIssueType] = useState<SomIssueType | null>(null);
+  const [sessionId, setSessionId] = useState("");
   const [cards, setCards] = useState<SomReviewCard[]>([]);
   const [cursor, setCursor] = useState(0);
   const [loadError, setLoadError] = useState("");
@@ -64,10 +49,10 @@ const ReviewPage = () => {
     setLoadError("");
     try {
       const overview = await Post<SomOverviewResponse>("/som-review/overview");
-      setIssueTypes(overview.issueTypes.filter((issue) => issue.enabled));
+      setIssueTypes(overview.issueTypes);
       setPhase("select");
     } catch {
-      setLoadError("The review queue could not be loaded.");
+      setLoadError("The review queues could not be loaded. Please try again.");
       setPhase("select");
     }
   }, []);
@@ -83,19 +68,22 @@ const ReviewPage = () => {
       const result = await Post<SomSessionResponse>("/som-review/session", {
         issueType: issue,
       });
+      setIssueType(issue);
       if (result.done || !result.session || !result.cards?.length) {
-        setIssueType(issue);
+        setSessionId("");
+        setCards([]);
+        setCursor(0);
         setPhase("empty");
         return;
       }
-      setIssueType(issue);
+      setSessionId(result.session.id);
       setCards(result.cards);
       setCursor(result.session.cursor);
       setPhase(
         result.session.cursor >= result.cards.length ? "complete" : "session",
       );
     } catch {
-      setLoadError("The session could not be started. Please try again.");
+      setLoadError("The review session could not be started. Please try again.");
       setPhase("select");
     }
   }, []);
@@ -103,14 +91,18 @@ const ReviewPage = () => {
   const submitResponse = useCallback(
     async (submission: ReviewSubmission) => {
       const card = cards[cursor];
+      if (!card || !sessionId || !user?.userId) {
+        throw new Error("The active review session is unavailable");
+      }
       const result = await Post<SomRespondResult>(
         "/som-review/respond",
         {
+          sessionId,
           response: {
             schemaVersion: "som-review-v1",
             datasetVersion: card.datasetVersion,
             proposalId: card.proposalId,
-            reviewerId: user?.userId,
+            reviewerId: user.userId,
             decision: submission.decision,
             disagreementReason: submission.disagreementReason,
             suggestedCorrection: submission.suggestedCorrection,
@@ -123,255 +115,242 @@ const ReviewPage = () => {
       setCursor(result.cursor);
       if (result.completed) setPhase("complete");
     },
-    [cards, cursor, user?.userId],
+    [cards, cursor, sessionId, user?.userId],
   );
 
   const undoPrevious = useCallback(async () => {
-    if (!issueType || cursor === 0) return;
+    if (!issueType || !sessionId || cursor === 0) return;
     setUndoing(true);
+    setLoadError("");
     try {
       const result = await Post<SomUndoResult>(
         "/som-review/undo",
-        { issueType },
+        { issueType, sessionId },
         false,
       );
       setCursor(result.cursor);
       setPhase("session");
     } catch {
-      setLoadError("Undo failed. Please try again.");
+      setLoadError("The previous answer could not be undone. Please try again.");
     } finally {
       setUndoing(false);
     }
-  }, [issueType, cursor]);
+  }, [issueType, sessionId, cursor]);
 
   const exitToSelector = useCallback(() => {
     setIssueType(null);
+    setSessionId("");
     setCards([]);
     setCursor(0);
     loadOverview();
   }, [loadOverview]);
 
   const currentCard = cards[cursor];
-  const issueLabel = issueTypes.find((issue) => issue.id === issueType)?.label;
+  const selectedIssue = issueTypes.find((issue) => issue.id === issueType);
+  const issueLabel = selectedIssue?.label || "Proposal review";
 
   return (
-    <Box
-      sx={{
-        minHeight: "100vh",
-        backgroundColor: "background.default",
-        py: { xs: 3, sm: 5 },
-      }}
-    >
-      <Container maxWidth="sm" sx={{ maxWidth: { sm: "720px !important" } }}>
-        {loadError && (
-          <Alert
-            severity="error"
-            sx={{ mb: 2 }}
-            onClose={() => setLoadError("")}
-          >
-            {loadError}
-          </Alert>
-        )}
-
-        {phase === "loading" && (
-          <Stack alignItems="center" sx={{ py: 12 }}>
-            <CircularProgress size={28} />
-          </Stack>
-        )}
-
-        {phase === "select" && (
-          <Box>
-            <Typography
-              variant="h5"
-              component="h1"
-              sx={{ fontWeight: 700, mb: 0.5 }}
+    <>
+      <Head>
+        <title>Proposal review | 1Ontology</title>
+      </Head>
+      <Box
+        component="main"
+        sx={{
+          minHeight: "100dvh",
+          backgroundColor: "background.default",
+          py: { xs: 2, sm: 3 },
+        }}
+      >
+        <Container maxWidth="md">
+          {loadError && (
+            <Alert
+              severity="error"
+              sx={{ mb: 2 }}
+              onClose={() => setLoadError("")}
+              action={
+                phase === "select" ? (
+                  <Button color="inherit" onClick={loadOverview}>
+                    Retry
+                  </Button>
+                ) : undefined
+              }
             >
-              Proposal review
-            </Typography>
-            <Typography sx={{ color: "text.secondary", mb: 4 }}>
-              Your answers record judgments only — nothing changes the ontology.
-            </Typography>
-            <Stack spacing={1.5}>
-              {issueTypes.map((issue) => (
-                <Card
-                  key={issue.id}
-                  variant="outlined"
-                  sx={{
-                    borderRadius: "12px",
-                    opacity: issue.pending === 0 ? 0.6 : 1,
-                  }}
-                >
-                  <CardActionArea
-                    disabled={issue.pending === 0}
-                    onClick={() => startSession(issue.id)}
-                    sx={{ p: 2.25 }}
-                  >
-                    <Stack direction="row" alignItems="center" spacing={2}>
-                      <Box sx={{ flex: 1, minWidth: 0 }}>
-                        <Typography sx={{ fontWeight: 600 }}>
-                          {issue.label}
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          sx={{ color: "text.secondary" }}
-                        >
-                          {ISSUE_DESCRIPTIONS[issue.id] || ""}
-                        </Typography>
-                      </Box>
-                      {issue.pending === 0 ? (
-                        <Chip
-                          icon={<CheckCircleOutlineIcon />}
-                          label="Done"
-                          size="small"
-                          variant="outlined"
-                        />
-                      ) : (
-                        <Chip
-                          label={`${issue.pending} left`}
-                          size="small"
-                          color="primary"
-                        />
-                      )}
-                      {issue.pending > 0 && (
-                        <ArrowForwardIcon
-                          fontSize="small"
-                          sx={{ color: "text.disabled" }}
-                        />
-                      )}
-                    </Stack>
-                  </CardActionArea>
-                </Card>
-              ))}
-              {issueTypes.length === 0 && !loadError && (
-                <Typography sx={{ color: "text.secondary" }}>
-                  No review queues are available right now.
-                </Typography>
-              )}
+              {loadError}
+            </Alert>
+          )}
+
+          {phase === "loading" && (
+            <Stack alignItems="center" justifyContent="center" sx={{ py: 18 }}>
+              <CircularProgress size={36} aria-label="Loading review queue" />
             </Stack>
-          </Box>
-        )}
+          )}
 
-        {phase === "session" && currentCard && (
-          <Box>
-            <Stack
-              direction="row"
-              alignItems="center"
-              spacing={1}
-              sx={{ mb: 1 }}
-            >
-              <Tooltip title="Save and exit">
-                <IconButton
-                  onClick={exitToSelector}
-                  size="small"
-                  aria-label="Save and exit"
+          {phase === "select" && (
+            <ReviewQueueSelector
+              issueTypes={issueTypes}
+              onStart={startSession}
+            />
+          )}
+
+          {phase === "session" && currentCard && user?.userId && (
+            <Box>
+              <Stack spacing={1.25} sx={{ mb: 2 }}>
+                <Stack
+                  direction="row"
+                  alignItems="center"
+                  justifyContent="space-between"
+                  spacing={1}
                 >
-                  <ArrowBackIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-              <Typography
-                variant="body2"
-                sx={{ color: "text.secondary", flex: 1 }}
-                noWrap
-              >
-                {issueLabel}
-              </Typography>
-              <Typography
-                variant="body2"
-                sx={{ fontWeight: 600, color: "text.secondary" }}
-              >
-                {cursor + 1} of {cards.length}
-              </Typography>
-              <Tooltip title="Undo previous answer">
-                <span>
-                  <IconButton
-                    size="small"
+                  <Button
+                    variant="outlined"
+                    color="inherit"
+                    startIcon={<ArrowBackIcon />}
+                    onClick={exitToSelector}
+                    sx={{ minHeight: 46, fontWeight: 700 }}
+                  >
+                    Save and exit
+                  </Button>
+                  <Button
+                    variant="text"
+                    color="inherit"
+                    startIcon={
+                      undoing ? <CircularProgress size={18} /> : <UndoIcon />
+                    }
                     disabled={cursor === 0 || undoing}
                     onClick={undoPrevious}
-                    aria-label="Undo previous answer"
+                    sx={{ minHeight: 46, fontWeight: 700 }}
                   >
-                    {undoing ? (
-                      <CircularProgress size={16} />
-                    ) : (
-                      <UndoIcon fontSize="small" />
-                    )}
-                  </IconButton>
-                </span>
-              </Tooltip>
-            </Stack>
-            <LinearProgress
-              variant="determinate"
-              value={(cursor / cards.length) * 100}
-              sx={{ mb: 2, borderRadius: 1, height: 4 }}
-            />
-            <Fade in key={currentCard.proposalId} timeout={250}>
-              <Box>
-                <ReviewCard card={currentCard} onSubmit={submitResponse} />
-              </Box>
-            </Fade>
-          </Box>
-        )}
-
-        {phase === "complete" && (
-          <Stack
-            alignItems="center"
-            spacing={2.5}
-            sx={{ py: 10, textAlign: "center" }}
-          >
-            <CheckCircleOutlineIcon color="success" sx={{ fontSize: 52 }} />
-            <Box>
-              <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                Session complete
-              </Typography>
-              <Typography sx={{ color: "text.secondary" }}>
-                You reviewed {cards.length}{" "}
-                {cards.length === 1 ? "proposal" : "proposals"}.
-              </Typography>
+                    Undo last answer
+                  </Button>
+                </Stack>
+                <Stack
+                  direction="row"
+                  alignItems="baseline"
+                  justifyContent="space-between"
+                  spacing={2}
+                >
+                  <Typography
+                    component="h1"
+                    sx={{ fontSize: "1rem", fontWeight: 750 }}
+                  >
+                    {issueLabel}
+                  </Typography>
+                  <Typography
+                    aria-live="polite"
+                    sx={{
+                      flex: "0 0 auto",
+                      color: "text.secondary",
+                      fontWeight: 700,
+                    }}
+                  >
+                    Item {cursor + 1} of {cards.length}
+                  </Typography>
+                </Stack>
+                <LinearProgress
+                  variant="determinate"
+                  value={(cursor / cards.length) * 100}
+                  aria-label={`${cursor} of ${cards.length} items completed`}
+                  sx={{ height: 8, borderRadius: 1 }}
+                />
+              </Stack>
+              <ReviewCard
+                key={currentCard.proposalId}
+                card={currentCard}
+                reviewerId={user.userId}
+                onSubmit={submitResponse}
+              />
             </Box>
-            <Stack direction="row" spacing={1.5}>
+          )}
+
+          {phase === "session" && (!currentCard || !user?.userId) && (
+            <Alert severity="error" action={<Button onClick={exitToSelector}>Exit</Button>}>
+              The current review item is unavailable.
+            </Alert>
+          )}
+
+          {phase === "complete" && (
+            <Stack
+              alignItems="center"
+              spacing={2.5}
+              sx={{ py: 12, textAlign: "center" }}
+            >
+              <CheckCircleOutlineIcon color="success" sx={{ fontSize: 56 }} />
+              <Box>
+                <Typography
+                  variant="h5"
+                  component="h1"
+                  sx={{ fontWeight: 800 }}
+                >
+                  Review set complete
+                </Typography>
+                <Typography sx={{ mt: 0.75, color: "text.secondary" }}>
+                  {cards.length} {cards.length === 1 ? "item" : "items"} reviewed
+                </Typography>
+              </Box>
+              <Stack
+                direction={{ xs: "column", sm: "row" }}
+                spacing={1.5}
+                sx={{ width: { xs: "100%", sm: "auto" } }}
+              >
+                <Button
+                  variant="outlined"
+                  color="inherit"
+                  startIcon={<UndoIcon />}
+                  disabled={!sessionId || cursor === 0 || undoing}
+                  onClick={undoPrevious}
+                  sx={{ minHeight: 50, fontWeight: 700 }}
+                >
+                  Undo last answer
+                </Button>
+                <Button
+                  variant="outlined"
+                  startIcon={<ArrowBackIcon />}
+                  onClick={exitToSelector}
+                  sx={{ minHeight: 50, fontWeight: 700 }}
+                >
+                  All review types
+                </Button>
+                {issueType && (
+                  <Button
+                    variant="contained"
+                    onClick={() => startSession(issueType)}
+                    sx={{ minHeight: 50, fontWeight: 750 }}
+                  >
+                    Review another set
+                  </Button>
+                )}
+              </Stack>
+            </Stack>
+          )}
+
+          {phase === "empty" && (
+            <Stack
+              alignItems="center"
+              spacing={2.5}
+              sx={{ py: 12, textAlign: "center" }}
+            >
+              <CheckCircleOutlineIcon color="success" sx={{ fontSize: 56 }} />
+              <Typography
+                variant="h5"
+                component="h1"
+                sx={{ fontWeight: 800 }}
+              >
+                Nothing left in this review type
+              </Typography>
               <Button
                 variant="outlined"
                 startIcon={<ArrowBackIcon />}
                 onClick={exitToSelector}
-                sx={{ textTransform: "none", borderRadius: "10px" }}
+                sx={{ minHeight: 50, fontWeight: 700 }}
               >
-                All queues
+                All review types
               </Button>
-              {issueType && (
-                <Button
-                  variant="contained"
-                  disableElevation
-                  onClick={() => startSession(issueType)}
-                  sx={{ textTransform: "none", borderRadius: "10px" }}
-                >
-                  Review more
-                </Button>
-              )}
             </Stack>
-          </Stack>
-        )}
-
-        {phase === "empty" && (
-          <Stack
-            alignItems="center"
-            spacing={2.5}
-            sx={{ py: 10, textAlign: "center" }}
-          >
-            <CheckCircleOutlineIcon color="success" sx={{ fontSize: 52 }} />
-            <Typography variant="h6" sx={{ fontWeight: 700 }}>
-              Nothing left to review in this queue.
-            </Typography>
-            <Button
-              variant="outlined"
-              startIcon={<ArrowBackIcon />}
-              onClick={exitToSelector}
-              sx={{ textTransform: "none", borderRadius: "10px" }}
-            >
-              All queues
-            </Button>
-          </Stack>
-        )}
-      </Container>
-    </Box>
+          )}
+        </Container>
+      </Box>
+    </>
   );
 };
 

@@ -4,27 +4,56 @@ import {
   SomReviewContext,
 } from "../../types/ISomReview";
 
+const cleanText = (value: unknown): string =>
+  typeof value === "string" ? value.trim() : "";
 
-const CONTROL_QUESTION_PATTERN = /^The agent judged .* proposed no change\./;
+/**
+ * Some source reasoning ends with internal critic output such as "H6: other"
+ * or "H2 not run". The reviewer must never see those control identities.
+ */
+export const sanitizeReasoning = (value: unknown): string => {
+  const reasoning = cleanText(value);
+  const internalMarker = reasoning.search(/(?:^|\s)H\d+\s*(?::|not\s+run\b)/i);
+  return (internalMarker >= 0 ? reasoning.slice(0, internalMarker) : reasoning)
+    .trim()
+    .replace(/\s+/g, " ");
+};
 
-const dropQuestion = (view: any): boolean =>
-  CONTROL_QUESTION_PATTERN.test(view.question) ||
-  view.context?.type === "grouping-outline";
+export const reviewerQuestion = (context: SomReviewContext): string => {
+  switch (context.type) {
+    case "title-comparison":
+      return context.proposedTitle &&
+        context.proposedTitle !== context.currentTitle
+        ? `Is "${context.proposedTitle}" clearer than "${context.currentTitle}"?`
+        : `Is "${context.currentTitle}" clear enough as the title of this activity?`;
+    case "grouping-outline":
+      return `Should "${context.proposedGroupTitle}" group the highlighted activities under "${context.parentTitle}"?`;
+    case "flat-list":
+      return `Is it reasonable to leave these activities directly under "${context.parentTitle}"?`;
+    case "duplicate-comparison":
+      return `Do "${context.canonicalTitle}" and "${context.candidateSynonymTitle}" name the same activity?`;
+    case "placement-comparison":
+      return `Is "${context.nodeTitle}" misplaced under "${context.currentParentTitle}"?`;
+    case "overlap-comparison":
+      return `Could "${context.firstTitle}" and "${context.secondTitle}" represent the same concept?`;
+  }
+};
 
 export const toReviewerCard = (record: any): SomReviewCard => {
   const view = record.reviewerView;
+  const context = sanitizeContext(view.context);
   return {
     proposalId: record.proposalId,
     datasetVersion: record.datasetVersion,
     issueType: record.issueType as SomIssueType,
     reviewerView: {
-      question: dropQuestion(view) ? "" : view.question,
-      currentState: view.currentState,
-      proposedState: view.proposedState,
-      reasoning: view.reasoning,
-      context: sanitizeContext(view.context),
-      agreeLabel: view.agreeLabel || "Agree",
-      disagreeLabel: view.disagreeLabel || "Disagree",
+      question: reviewerQuestion(context),
+      currentState: cleanText(view.currentState),
+      proposedState: cleanText(view.proposedState),
+      reasoning: sanitizeReasoning(view.reasoning),
+      context,
+      agreeLabel: cleanText(view.agreeLabel) || "Agree",
+      disagreeLabel: cleanText(view.disagreeLabel) || "Disagree",
     },
   };
 };

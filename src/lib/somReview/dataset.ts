@@ -8,9 +8,12 @@ import { SomIssueType } from "../../types/ISomReview";
 
 const EXPECTED_SCHEMA_VERSION = "som-review-v1";
 
-const PROTOTYPE_ISSUE_TYPES: SomIssueType[] = [
+export const SUPPORTED_ISSUE_TYPES: SomIssueType[] = [
   "title-clarity",
   "sibling-grouping",
+  "duplicate-synonym",
+  "placement",
+  "structural-overlap",
 ];
 
 export const DEFAULT_SESSION_SIZE = 10;
@@ -33,12 +36,12 @@ const datasetDir = (): string =>
   );
 
 export const isIssueTypeEnabled = (issueType: SomIssueType): boolean => {
-  if (PROTOTYPE_ISSUE_TYPES.includes(issueType)) return true;
-  const flagged = (process.env.SOM_REVIEW_EXPERIMENTAL_ISSUE_TYPES || "")
+  if (!SUPPORTED_ISSUE_TYPES.includes(issueType)) return false;
+  const disabled = (process.env.SOM_REVIEW_DISABLED_ISSUE_TYPES || "")
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean);
-  return flagged.includes(issueType);
+  return !disabled.includes(issueType);
 };
 
 const readJsonl = (filePath: string): any[] =>

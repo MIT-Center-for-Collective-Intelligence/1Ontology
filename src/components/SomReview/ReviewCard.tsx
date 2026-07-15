@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
   Box,
@@ -10,6 +10,7 @@ import {
   Typography,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 
@@ -39,29 +40,28 @@ const StatePanel = ({
     sx={{
       flex: 1,
       minWidth: 0,
-      p: 1.75,
-      borderRadius: "10px",
+      p: 2,
+      borderRadius: 1.5,
       border: (theme) =>
-        `1px solid ${
+        `2px solid ${
           accent === "primary"
-            ? alpha(theme.palette.primary.main, 0.4)
+            ? alpha(theme.palette.primary.main, 0.55)
             : theme.palette.divider
         }`,
       backgroundColor: (theme) =>
         accent === "primary"
-          ? alpha(theme.palette.primary.main, 0.05)
-          : "transparent",
+          ? alpha(theme.palette.primary.main, 0.06)
+          : "background.paper",
     }}
   >
     <Typography
-      variant="caption"
       component="div"
       sx={{
-        mb: 0.5,
-        fontWeight: 700,
-        letterSpacing: "0.08em",
-        textTransform: "uppercase",
+        mb: 0.75,
         color: accent === "primary" ? "primary.main" : "text.secondary",
+        fontSize: "0.875rem",
+        fontWeight: 750,
+        letterSpacing: 0,
       }}
     >
       {label}
@@ -72,9 +72,11 @@ const StatePanel = ({
 
 const ReviewCard = ({
   card,
+  reviewerId,
   onSubmit,
 }: {
   card: SomReviewCard;
+  reviewerId: string;
   onSubmit: (submission: ReviewSubmission) => Promise<void>;
 }) => {
   const [disagreeing, setDisagreeing] = useState(false);
@@ -82,39 +84,68 @@ const ReviewCard = ({
   const [correction, setCorrection] = useState("");
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(false);
+  const headingRef = useRef<HTMLHeadingElement | null>(null);
   const shownAtRef = useRef<number>(Date.now());
-  const draftKey = `som-review-draft-${card.datasetVersion}-${card.proposalId}`;
+  const draftKey = useMemo(
+    () =>
+      `som-review-draft-${reviewerId}-${card.datasetVersion}-${card.proposalId}`,
+    [card.datasetVersion, card.proposalId, reviewerId],
+  );
 
   useEffect(() => {
     shownAtRef.current = Date.now();
+    setDisagreeing(false);
+    setReason("");
+    setCorrection("");
+    setSaveError(false);
 
     try {
       const draft = window.sessionStorage.getItem(draftKey);
       if (draft) {
         const parsed = JSON.parse(draft);
-        setDisagreeing(true);
-        setReason(parsed.reason || "");
-        setCorrection(parsed.correction || "");
+        setDisagreeing(Boolean(parsed.open));
+        setReason(typeof parsed.reason === "string" ? parsed.reason : "");
+        setCorrection(
+          typeof parsed.correction === "string" ? parsed.correction : "",
+        );
       }
-    } catch {}
-  }, [card.proposalId]);
+    } catch {
+      // A malformed local draft should never block the review queue.
+    }
 
-  const persistDraft = (nextReason: string, nextCorrection: string) => {
+    const focusTimer = window.setTimeout(() => headingRef.current?.focus(), 0);
+    return () => window.clearTimeout(focusTimer);
+  }, [draftKey]);
+
+  const persistDraft = (
+    open: boolean,
+    nextReason: string,
+    nextCorrection: string,
+  ) => {
     try {
       window.sessionStorage.setItem(
         draftKey,
-        JSON.stringify({ reason: nextReason, correction: nextCorrection }),
+        JSON.stringify({
+          open,
+          reason: nextReason,
+          correction: nextCorrection,
+        }),
       );
-    } catch {}
+    } catch {
+      // Storage can be unavailable in private browsing; server progress remains.
+    }
   };
 
   const clearDraft = () => {
     try {
       window.sessionStorage.removeItem(draftKey);
-    } catch {}
+    } catch {
+      // The saved response is authoritative even if local cleanup fails.
+    }
   };
 
   const submit = async (decision: "agree" | "disagree") => {
+    if (saving || (decision === "disagree" && !reason.trim())) return;
     setSaving(true);
     setSaveError(false);
     try {
@@ -134,9 +165,6 @@ const ReviewCard = ({
 
   const view = card.reviewerView;
   const reasonValid = reason.trim().length > 0;
-
-  // For title changes, show the diffed titles inside the state panels instead
-  // of repeating the same titles twice.
   const titleDiff =
     view.context.type === "title-comparison" &&
     typeof view.context.proposedTitle === "string" &&
@@ -147,40 +175,58 @@ const ReviewCard = ({
           proposed: view.context.proposedTitle,
         }
       : null;
-
-
   const showStatePanels = view.context.type !== "grouping-outline";
 
   return (
     <Paper
       elevation={0}
+      aria-busy={saving}
       sx={{
         width: "100%",
-        minHeight: 420,
-        maxHeight: "80vh",
+        height: {
+          xs: "calc(100dvh - 170px)",
+          sm: "min(680px, calc(100dvh - 185px))",
+        },
+        minHeight: { xs: 560, sm: 540 },
+        maxHeight: 720,
         display: "flex",
         flexDirection: "column",
-        borderRadius: "14px",
+        borderRadius: 2,
         border: (theme) => `1px solid ${theme.palette.divider}`,
         overflow: "hidden",
       }}
     >
-      <Box sx={{ flex: 1, overflowY: "auto", p: { xs: 2.5, sm: 3.5 }, pb: 2 }}>
-        {view.question && (
-          <Typography
-            variant="h6"
-            component="h2"
-            sx={{ mb: 2.5, fontWeight: 600, lineHeight: 1.4 }}
-          >
-            {view.question}
-          </Typography>
-        )}
+      <Box
+        sx={{
+          flex: 1,
+          minHeight: 0,
+          overflowY: "auto",
+          p: { xs: 2.5, sm: 4 },
+          pb: 2.5,
+        }}
+      >
+        <Typography
+          ref={headingRef}
+          tabIndex={-1}
+          variant="h5"
+          component="h2"
+          sx={{
+            mb: 3,
+            fontSize: { xs: "1.25rem", sm: "1.4rem" },
+            fontWeight: 750,
+            lineHeight: 1.4,
+            letterSpacing: 0,
+            "&:focus": { outline: "none" },
+          }}
+        >
+          {view.question}
+        </Typography>
 
         {showStatePanels && (
           <Stack
-            direction={{ xs: "column", sm: "row" }}
-            spacing={1.5}
-            sx={{ mb: 2 }}
+            direction={{ xs: "column", md: "row" }}
+            spacing={2}
+            sx={{ mb: 3 }}
           >
             <StatePanel label="Current" accent="neutral">
               {titleDiff ? (
@@ -190,7 +236,9 @@ const ReviewCard = ({
                   changedColor="error.main"
                 />
               ) : (
-                <Typography>{stripStatePrefix(view.currentState)}</Typography>
+                <Typography sx={{ fontSize: "1.05rem", lineHeight: 1.5 }}>
+                  {stripStatePrefix(view.currentState)}
+                </Typography>
               )}
             </StatePanel>
             <StatePanel label="Proposed" accent="primary">
@@ -201,33 +249,28 @@ const ReviewCard = ({
                   changedColor="success.main"
                 />
               ) : (
-                <Typography>{stripStatePrefix(view.proposedState)}</Typography>
+                <Typography sx={{ fontSize: "1.05rem", lineHeight: 1.5 }}>
+                  {stripStatePrefix(view.proposedState)}
+                </Typography>
               )}
             </StatePanel>
           </Stack>
         )}
 
-        <Box
-          sx={{
-            mb: 2,
-            pl: 1.75,
-            borderLeft: (theme) => `3px solid ${theme.palette.divider}`,
-          }}
-        >
+        <Box sx={{ mb: 3 }}>
           <Typography
-            variant="caption"
-            component="div"
+            component="h3"
             sx={{
-              fontWeight: 700,
-              letterSpacing: "0.08em",
-              textTransform: "uppercase",
+              mb: 0.75,
               color: "text.secondary",
-              mb: 0.25,
+              fontSize: "0.875rem",
+              fontWeight: 750,
+              letterSpacing: 0,
             }}
           >
-            Reasoning
+            Why this recommendation was made
           </Typography>
-          <Typography sx={{ color: "text.primary" }}>
+          <Typography sx={{ fontSize: "1rem", lineHeight: 1.6 }}>
             {view.reasoning}
           </Typography>
         </Box>
@@ -237,10 +280,11 @@ const ReviewCard = ({
 
       <Box
         sx={{
-          px: { xs: 2.5, sm: 3.5 },
-          py: 2,
+          flex: "0 0 auto",
+          px: { xs: 2.5, sm: 4 },
+          py: 2.5,
           borderTop: (theme) => `1px solid ${theme.palette.divider}`,
-          backgroundColor: (theme) => alpha(theme.palette.action.hover, 0.03),
+          backgroundColor: "background.paper",
         }}
       >
         {saveError && (
@@ -250,28 +294,31 @@ const ReviewCard = ({
             action={
               <Button
                 color="inherit"
-                size="small"
                 disabled={saving}
                 onClick={() => submit(disagreeing ? "disagree" : "agree")}
+                sx={{ minHeight: 44, fontWeight: 700 }}
               >
                 Retry
               </Button>
             }
           >
-            Your response could not be saved. Nothing was lost — please retry.
+            Your answer was not saved. This item is still open.
           </Alert>
         )}
 
         {!disagreeing ? (
-          <Stack direction="row" spacing={2} justifyContent="center">
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            spacing={1.5}
+            justifyContent="center"
+          >
             <Button
               variant="contained"
               color="success"
               size="large"
-              disableElevation
               startIcon={
                 saving ? (
-                  <CircularProgress size={18} color="inherit" />
+                  <CircularProgress size={20} color="inherit" />
                 ) : (
                   <CheckIcon />
                 )
@@ -279,10 +326,12 @@ const ReviewCard = ({
               disabled={saving}
               onClick={() => submit("agree")}
               sx={{
-                minWidth: 150,
-                textTransform: "none",
-                borderRadius: "10px",
-                fontWeight: 600,
+                width: { xs: "100%", sm: "auto" },
+                minWidth: 180,
+                minHeight: 52,
+                borderRadius: 1.5,
+                fontSize: "1rem",
+                fontWeight: 750,
               }}
             >
               {view.agreeLabel}
@@ -293,12 +342,18 @@ const ReviewCard = ({
               size="large"
               startIcon={<CloseIcon />}
               disabled={saving}
-              onClick={() => setDisagreeing(true)}
+              onClick={() => {
+                setDisagreeing(true);
+                persistDraft(true, reason, correction);
+              }}
               sx={{
-                minWidth: 150,
-                textTransform: "none",
-                borderRadius: "10px",
-                color: "text.secondary",
+                width: { xs: "100%", sm: "auto" },
+                minWidth: 180,
+                minHeight: 52,
+                borderRadius: 1.5,
+                color: "text.primary",
+                fontSize: "1rem",
+                fontWeight: 700,
               }}
             >
               {view.disagreeLabel}
@@ -312,33 +367,36 @@ const ReviewCard = ({
               multiline
               minRows={2}
               maxRows={4}
-              size="small"
               value={reason}
               autoFocus
               onChange={(event) => {
                 setReason(event.target.value);
-                persistDraft(event.target.value, correction);
+                persistDraft(true, event.target.value, correction);
               }}
               error={reason.length > 0 && !reasonValid}
               helperText={
                 reason.length > 0 && !reasonValid
-                  ? "The explanation cannot be blank."
-                  : " "
+                  ? "Enter at least one non-space character."
+                  : "Required"
               }
             />
             <TextField
               label="Suggested correction (optional)"
               multiline
               maxRows={3}
-              size="small"
               value={correction}
               onChange={(event) => {
                 setCorrection(event.target.value);
-                persistDraft(reason, event.target.value);
+                persistDraft(true, reason, event.target.value);
               }}
             />
-            <Stack direction="row" spacing={1.5} justifyContent="flex-end">
+            <Stack
+              direction={{ xs: "column-reverse", sm: "row" }}
+              spacing={1.5}
+              justifyContent="flex-end"
+            >
               <Button
+                startIcon={<ArrowBackIcon />}
                 disabled={saving}
                 onClick={() => {
                   setDisagreeing(false);
@@ -347,30 +405,31 @@ const ReviewCard = ({
                   setCorrection("");
                   clearDraft();
                 }}
-                sx={{ textTransform: "none", color: "text.secondary" }}
+                sx={{ minHeight: 48, color: "text.primary", fontWeight: 650 }}
               >
-                Back
+                Back to choices
               </Button>
               <Button
                 variant="contained"
                 color="error"
-                disableElevation
                 disabled={!reasonValid || saving}
                 startIcon={
                   saving ? (
-                    <CircularProgress size={18} color="inherit" />
+                    <CircularProgress size={20} color="inherit" />
                   ) : (
                     <CloseIcon />
                   )
                 }
                 onClick={() => submit("disagree")}
                 sx={{
-                  minWidth: 190,
-                  textTransform: "none",
-                  borderRadius: "10px",
+                  minWidth: 210,
+                  minHeight: 52,
+                  borderRadius: 1.5,
+                  fontSize: "1rem",
+                  fontWeight: 750,
                 }}
               >
-                Submit disagreement
+                Save disagreement
               </Button>
             </Stack>
           </Stack>

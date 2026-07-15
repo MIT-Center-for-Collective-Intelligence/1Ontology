@@ -68,10 +68,16 @@ export interface SomIssueTypeOption {
   id: SomIssueType;
   label: string;
   pending: number;
+  total: number;
   enabled: boolean;
+  activeSession?: {
+    cursor: number;
+    total: number;
+  };
 }
 
 export interface SomSessionState {
+  id: string;
   issueType: SomIssueType;
   datasetVersion: string;
   cursor: number;
