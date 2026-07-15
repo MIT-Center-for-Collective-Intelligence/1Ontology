@@ -11,8 +11,14 @@ import {
 import { getDoerCreate } from "@components/lib/utils/helpers";
 import { computeDiffValue } from "@components/lib/utils/diffValue";
 import { FieldValue } from "firebase-admin/firestore";
-import { ICollection, INode, NodeChange } from "@components/types/INode";
+import {
+  ICollection,
+  ILinkNode,
+  INode,
+  NodeChange,
+} from "@components/types/INode";
 import { isReachableAlongSpecializations } from "@components/lib/server/updateDerivedPaths";
+import { childSourceOf, overallRefThroughGen } from "./partsModel";
 import { UNCLASSIFIED_COLLECTION } from "../CONSTANTS";
 
 /**
@@ -818,10 +824,43 @@ export function buildSpecializationNode(
     }
   }
 
+  // Parts don't inherit by ref: the child stores its own list, each part
+  // tagged with the node that OWNS it, and attaches to `source` as its
+  // overall source.
+  const sourceParts: ILinkNode[] =
+    (Array.isArray(source.properties?.parts) &&
+      source.properties.parts[0]?.nodes) ||
+    [];
+  properties.parts = [
+    {
+      collectionName: "main",
+      nodes: sourceParts.map((p) => ({
+        ...p,
+        inheritedFrom: childSourceOf(p, source.id),
+      })),
+    },
+  ];
+  const partsRef = overallRefThroughGen({
+    id: source.id,
+    ref: source.inheritance?.parts?.ref ?? null,
+    parts: sourceParts,
+  });
+  inheritance.parts = {
+    ref: partsRef,
+    title:
+      partsRef === source.id
+        ? (source.title ?? "")
+        : (source.inheritance?.parts?.title ?? ""),
+    inheritanceType:
+      source.inheritance?.parts?.inheritanceType ??
+      "inheritUnlessAlreadyOverRidden",
+  };
+
   const newNode: any = {
     ...source,
     id: newNodeId,
     title,
+    partsOverallSource: source.id,
     createdBy: uname,
     contributors: [],
     contributorsByProperty: {},

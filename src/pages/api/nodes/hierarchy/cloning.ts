@@ -11,6 +11,7 @@ import {
   asCollections,
   addToMain,
   addToCollection,
+  getNode,
   walkSpecializations,
   buildSpecializationNode,
   removeFromUnclassified,
@@ -18,6 +19,13 @@ import {
   writeChangeLog,
   recordLogs,
 } from "@components/lib/server/hierarchy";
+import {
+  buildGensForAttach,
+  partsInheritanceEntry,
+  taggedPartsAndSource,
+  toParts,
+} from "@components/lib/server/parts";
+import { derivePartsAndRef } from "@components/lib/server/partsModel";
 
 const SCALAR_TYPES = new Set([
   "string",
@@ -204,19 +212,37 @@ async function applyClone(ctx: {
       [targetProperty]: side,
     } as INode);
   } else if (isParts) {
-    // Parts are a plain own value; inheritance is recomputed by a separate
-    // endpoint, so this just stores the value and the reciprocal isPartOf.
+    // The new clone is a part no generalization provides, so it is owned by the node
+    // its isPartOf backlink was seeded on the new node above.
     sideBefore = asCollections(currentNode.properties?.parts);
-    side = JSON.parse(JSON.stringify(sideBefore));
-    addToSide(side, collectionName, { id: newNodeId, title });
-    await db
-      .collection(NODES)
-      .doc(currentNodeId)
-      .update({ [`properties.parts`]: side });
+    const gens = await buildGensForAttach(currentNode, cache);
+    const { tagged, stored } = taggedPartsAndSource(currentNode, gens);
+    const {
+      parts: newParts,
+      sourceId: newSource,
+      ref,
+    } = derivePartsAndRef([...tagged, { id: newNodeId, title }], gens, {
+      oldParts: tagged,
+      sourceId: stored,
+    });
+    side = toParts(newParts);
+    const ownerTitle = ref ? ((await getNode(ref, cache))?.title ?? "") : "";
+    const partsEntry = partsInheritanceEntry(
+      ref,
+      ownerTitle,
+      currentNode.inheritance?.parts?.inheritanceType,
+    );
+    await db.collection(NODES).doc(currentNodeId).update({
+      "properties.parts": side,
+      "inheritance.parts": partsEntry,
+      partsOverallSource: newSource,
+    });
     cache.set(currentNodeId, {
       ...currentNode,
       properties: { ...currentNode.properties, parts: side },
-    });
+      inheritance: { ...currentNode.inheritance, parts: partsEntry },
+      partsOverallSource: newSource,
+    } as INode);
   } else {
     // Generic link property: resolve the value the user saw (through the
     // inheritance ref while inheriting), add the new node, and override if it was
