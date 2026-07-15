@@ -13,6 +13,7 @@ import { useRouter } from "next/router";
 
 import DeliberationDashboard from "@components/components/SomReview/DeliberationDashboard";
 import DeliberationDialog from "@components/components/SomReview/DeliberationDialog";
+import ThemeModeToggle from "@components/components/SomReview/ThemeModeToggle";
 import { useAuth } from "@components/components/context/AuthContext";
 import withAuthUser from "@components/components/hoc/withAuthUser";
 import { Post } from "@components/lib/utils/Post";
@@ -128,14 +129,23 @@ export const DeliberationAdminPage = () => {
         }}
       >
         <Container maxWidth="lg">
-          <Button
-            color="inherit"
-            startIcon={<ArrowBackIcon />}
-            onClick={() => router.push("/review")}
-            sx={{ mb: 2, minHeight: 46, fontWeight: 700 }}
+          <Stack
+            direction="row"
+            alignItems="center"
+            justifyContent="space-between"
+            spacing={2}
+            sx={{ mb: 2 }}
           >
-            Individual review
-          </Button>
+            <Button
+              color="inherit"
+              startIcon={<ArrowBackIcon />}
+              onClick={() => router.push("/review")}
+              sx={{ minHeight: 46, fontWeight: 700 }}
+            >
+              Individual review
+            </Button>
+            <ThemeModeToggle />
+          </Stack>
           {loadingOverview && (
             <Stack alignItems="center" sx={{ py: 18 }}>
               <CircularProgress aria-label="Loading group deliberation" />

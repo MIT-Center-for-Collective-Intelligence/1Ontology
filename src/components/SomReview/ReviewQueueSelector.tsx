@@ -82,11 +82,13 @@ const ReviewQueueSelector = ({
   onStart,
   canDeliberate = false,
   onOpenDeliberation,
+  headerAction,
 }: {
   issueTypes: SomIssueTypeOption[];
   onStart: (issueType: SomIssueType) => void;
   canDeliberate?: boolean;
   onOpenDeliberation?: () => void;
+  headerAction?: React.ReactNode;
 }) => (
   <Box>
     <Stack
@@ -103,7 +105,7 @@ const ReviewQueueSelector = ({
         Proposal review
       </Typography>
       <Stack direction="row" alignItems="center" flexWrap="wrap" gap={1}>
-        <Chip label="Sell ontology" variant="outlined" />
+        <Chip label="Final Hierarchy with O*Net" variant="outlined" />
         {canDeliberate && onOpenDeliberation && (
           <Button
             variant="outlined"
@@ -114,6 +116,7 @@ const ReviewQueueSelector = ({
             Group deliberation
           </Button>
         )}
+        {headerAction}
       </Stack>
     </Stack>
     <Typography sx={{ mb: 3.5, color: "text.secondary", lineHeight: 1.55 }}>

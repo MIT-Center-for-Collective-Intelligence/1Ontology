@@ -5,6 +5,10 @@ import Ajv, { ValidateFunction } from "ajv";
 import addFormats from "ajv-formats";
 
 import { SomIssueType } from "../../types/ISomReview";
+import {
+  loadOntologySnapshot,
+  validateProposalAgainstSnapshot,
+} from "./ontologySnapshot";
 
 const EXPECTED_SCHEMA_VERSION = "som-review-v1";
 
@@ -31,7 +35,7 @@ const datasetDir = (): string =>
   process.env.SOM_REVIEW_DATASET_DIR ||
   path.join(
     process.cwd(),
-    "Sell_Society_of_Mind_Review_UI_Handoff_2026-07-14",
+    "Sell_Society_of_Mind_Review_UI_Handoff_2026-07-15",
     "review-datasets",
   );
 
@@ -103,6 +107,7 @@ export const loadDataset = (dir?: string): SomDataset => {
   }
 
   const validate = compileProposalValidator(root);
+  const ontologySource = loadOntologySnapshot(root, manifest);
 
   const records = [
     ...readJsonl(path.join(root, "all_proposals.jsonl")),
@@ -127,6 +132,19 @@ export const loadDataset = (dir?: string): SomDataset => {
     }
     if (recordsById.has(record.proposalId)) {
       throw new Error(`Duplicate proposalId in dataset: ${record.proposalId}`);
+    }
+    try {
+      validateProposalAgainstSnapshot(
+        record,
+        ontologySource.index,
+        ontologySource.sha256,
+      );
+    } catch (error) {
+      throw new Error(
+        `Proposal ${record.proposalId} is not valid for ${ontologySource.snapshot.ontologyName}: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
     }
     recordsById.set(record.proposalId, Object.freeze(record));
   }

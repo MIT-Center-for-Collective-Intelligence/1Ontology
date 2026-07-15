@@ -5,6 +5,11 @@ positions, identities, roles, weights, comments, or aggregate results. The
 deliberation data is available only through `/review/admin` and the
 `/api/som-review/admin/*` endpoints, all of which enforce access server-side.
 
+All individual and deliberation records share the validated production
+Firestore source boundary described in `FIRESTORE_SOURCE.md`. Deliberation can
+record judgments and resolutions, but it cannot bypass source validation or
+write ontology changes.
+
 ## Reviewer tiers
 
 The server resolves roles in this order:

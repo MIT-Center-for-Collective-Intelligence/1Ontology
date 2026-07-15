@@ -22,6 +22,7 @@ import ReviewCard, {
   ReviewSubmission,
 } from "@components/components/SomReview/ReviewCard";
 import ReviewQueueSelector from "@components/components/SomReview/ReviewQueueSelector";
+import ThemeModeToggle from "@components/components/SomReview/ThemeModeToggle";
 import {
   SomIssueType,
   SomIssueTypeOption,
@@ -200,6 +201,7 @@ export const ReviewPage = () => {
               onStart={startSession}
               canDeliberate={canDeliberate}
               onOpenDeliberation={() => router.push("/review/admin")}
+              headerAction={<ThemeModeToggle />}
             />
           )}
 
@@ -221,18 +223,21 @@ export const ReviewPage = () => {
                   >
                     Save and exit
                   </Button>
-                  <Button
-                    variant="text"
-                    color="inherit"
-                    startIcon={
-                      undoing ? <CircularProgress size={18} /> : <UndoIcon />
-                    }
-                    disabled={cursor === 0 || undoing}
-                    onClick={undoPrevious}
-                    sx={{ minHeight: 46, fontWeight: 700 }}
-                  >
-                    Undo last answer
-                  </Button>
+                  <Stack direction="row" alignItems="center" spacing={1}>
+                    <Button
+                      variant="text"
+                      color="inherit"
+                      startIcon={
+                        undoing ? <CircularProgress size={18} /> : <UndoIcon />
+                      }
+                      disabled={cursor === 0 || undoing}
+                      onClick={undoPrevious}
+                      sx={{ minHeight: 46, fontWeight: 700 }}
+                    >
+                      Undo last answer
+                    </Button>
+                    <ThemeModeToggle />
+                  </Stack>
                 </Stack>
                 <Stack
                   direction="row"
@@ -283,40 +288,84 @@ export const ReviewPage = () => {
           )}
 
           {phase === "complete" && (
-            <Stack
-              alignItems="center"
-              spacing={2.5}
-              sx={{ py: 12, textAlign: "center" }}
-            >
-              <CheckCircleOutlineIcon color="success" sx={{ fontSize: 56 }} />
-              <Box>
+            <Stack sx={{ py: 2 }}>
+              <Stack direction="row" justifyContent="flex-end">
+                <ThemeModeToggle />
+              </Stack>
+              <Stack
+                alignItems="center"
+                spacing={2.5}
+                sx={{ py: 10, textAlign: "center" }}
+              >
+                <CheckCircleOutlineIcon color="success" sx={{ fontSize: 56 }} />
+                <Box>
+                  <Typography
+                    variant="h5"
+                    component="h1"
+                    sx={{ fontWeight: 800 }}
+                  >
+                    Review set complete
+                  </Typography>
+                  <Typography sx={{ mt: 0.75, color: "text.secondary" }}>
+                    {cards.length} {cards.length === 1 ? "item" : "items"}{" "}
+                    reviewed
+                  </Typography>
+                </Box>
+                <Stack
+                  direction={{ xs: "column", sm: "row" }}
+                  spacing={1.5}
+                  sx={{ width: { xs: "100%", sm: "auto" } }}
+                >
+                  <Button
+                    variant="outlined"
+                    color="inherit"
+                    startIcon={<UndoIcon />}
+                    disabled={!sessionId || cursor === 0 || undoing}
+                    onClick={undoPrevious}
+                    sx={{ minHeight: 50, fontWeight: 700 }}
+                  >
+                    Undo last answer
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    startIcon={<ArrowBackIcon />}
+                    onClick={exitToSelector}
+                    sx={{ minHeight: 50, fontWeight: 700 }}
+                  >
+                    All review types
+                  </Button>
+                  {issueType && (
+                    <Button
+                      variant="contained"
+                      onClick={() => startSession(issueType)}
+                      sx={{ minHeight: 50, fontWeight: 750 }}
+                    >
+                      Review another set
+                    </Button>
+                  )}
+                </Stack>
+              </Stack>
+            </Stack>
+          )}
+
+          {phase === "empty" && (
+            <Stack sx={{ py: 2 }}>
+              <Stack direction="row" justifyContent="flex-end">
+                <ThemeModeToggle />
+              </Stack>
+              <Stack
+                alignItems="center"
+                spacing={2.5}
+                sx={{ py: 10, textAlign: "center" }}
+              >
+                <CheckCircleOutlineIcon color="success" sx={{ fontSize: 56 }} />
                 <Typography
                   variant="h5"
                   component="h1"
                   sx={{ fontWeight: 800 }}
                 >
-                  Review set complete
+                  Nothing left in this review type
                 </Typography>
-                <Typography sx={{ mt: 0.75, color: "text.secondary" }}>
-                  {cards.length} {cards.length === 1 ? "item" : "items"}{" "}
-                  reviewed
-                </Typography>
-              </Box>
-              <Stack
-                direction={{ xs: "column", sm: "row" }}
-                spacing={1.5}
-                sx={{ width: { xs: "100%", sm: "auto" } }}
-              >
-                <Button
-                  variant="outlined"
-                  color="inherit"
-                  startIcon={<UndoIcon />}
-                  disabled={!sessionId || cursor === 0 || undoing}
-                  onClick={undoPrevious}
-                  sx={{ minHeight: 50, fontWeight: 700 }}
-                >
-                  Undo last answer
-                </Button>
                 <Button
                   variant="outlined"
                   startIcon={<ArrowBackIcon />}
@@ -325,37 +374,7 @@ export const ReviewPage = () => {
                 >
                   All review types
                 </Button>
-                {issueType && (
-                  <Button
-                    variant="contained"
-                    onClick={() => startSession(issueType)}
-                    sx={{ minHeight: 50, fontWeight: 750 }}
-                  >
-                    Review another set
-                  </Button>
-                )}
               </Stack>
-            </Stack>
-          )}
-
-          {phase === "empty" && (
-            <Stack
-              alignItems="center"
-              spacing={2.5}
-              sx={{ py: 12, textAlign: "center" }}
-            >
-              <CheckCircleOutlineIcon color="success" sx={{ fontSize: 56 }} />
-              <Typography variant="h5" component="h1" sx={{ fontWeight: 800 }}>
-                Nothing left in this review type
-              </Typography>
-              <Button
-                variant="outlined"
-                startIcon={<ArrowBackIcon />}
-                onClick={exitToSelector}
-                sx={{ minHeight: 50, fontWeight: 700 }}
-              >
-                All review types
-              </Button>
             </Stack>
           )}
         </Container>

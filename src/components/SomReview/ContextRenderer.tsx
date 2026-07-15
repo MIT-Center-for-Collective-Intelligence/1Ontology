@@ -14,6 +14,7 @@ import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import SubdirectoryArrowRightIcon from "@mui/icons-material/SubdirectoryArrowRight";
 import { diffWords } from "diff";
+import { alpha } from "@mui/material/styles";
 
 import { SomReviewContext } from "../../types/ISomReview";
 
@@ -151,10 +152,12 @@ const OutlineItem = ({
   title,
   highlighted,
   indent = 0,
+  statusLabel,
 }: {
   title: string;
   highlighted?: boolean;
   indent?: number;
+  statusLabel?: string;
 }) => (
   <Stack
     direction="row"
@@ -165,17 +168,44 @@ const OutlineItem = ({
       my: 0.5,
       p: highlighted ? 0.75 : 0,
       borderRadius: 1,
-      backgroundColor: highlighted ? "warning.light" : "transparent",
-      color: highlighted ? "warning.contrastText" : "text.primary",
+      border: (theme) =>
+        highlighted
+          ? `1px solid ${alpha(theme.palette.primary.main, 0.7)}`
+          : "1px solid transparent",
+      backgroundColor: (theme) =>
+        highlighted
+          ? alpha(
+              theme.palette.primary.main,
+              theme.palette.mode === "dark" ? 0.2 : 0.1,
+            )
+          : "transparent",
+      color: "text.primary",
     }}
   >
     <SubdirectoryArrowRightIcon
       aria-hidden="true"
       sx={{ mt: 0.35, flex: "0 0 auto", fontSize: 18, color: "text.secondary" }}
     />
-    <Typography sx={{ fontWeight: highlighted ? 700 : 500, lineHeight: 1.45 }}>
-      {title}
-    </Typography>
+    <Box sx={{ minWidth: 0 }}>
+      <Typography
+        sx={{ fontWeight: highlighted ? 700 : 500, lineHeight: 1.45 }}
+      >
+        {title}
+      </Typography>
+      {statusLabel && (
+        <Typography
+          sx={{
+            mt: 0.25,
+            color: "text.secondary",
+            fontSize: "0.8rem",
+            fontWeight: 700,
+            lineHeight: 1.35,
+          }}
+        >
+          {statusLabel}
+        </Typography>
+      )}
+    </Box>
   </Stack>
 );
 
@@ -202,7 +232,12 @@ const GroupingOutline = ({
           <Typography sx={{ mt: 1, fontWeight: 750 }}>
             {context.parentTitle}
           </Typography>
-          <OutlineItem title={context.proposedGroupTitle} indent={1} />
+          <OutlineItem
+            title={context.proposedGroupTitle}
+            highlighted
+            indent={1}
+            statusLabel="Proposed new group (not currently in the ontology)"
+          />
           {context.proposedChildren.map((child) => (
             <OutlineItem key={child} title={child} highlighted indent={2} />
           ))}
@@ -239,7 +274,9 @@ const FlatList = ({
 }) => (
   <Box sx={comparisonPanelSx}>
     <Typography sx={sectionLabelSx}>Current direct children</Typography>
-    <Typography sx={{ mt: 1, fontWeight: 750 }}>{context.parentTitle}</Typography>
+    <Typography sx={{ mt: 1, fontWeight: 750 }}>
+      {context.parentTitle}
+    </Typography>
     {context.currentChildren.map((child) => (
       <OutlineItem key={child} title={child} indent={1} />
     ))}
@@ -308,11 +345,17 @@ const PlacementComparison = ({
       <Divider sx={{ my: 1.5 }} />
       <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
         <Box sx={{ flex: 1 }}>
-          <LabeledValue label="Current parent" value={context.currentParentTitle} />
+          <LabeledValue
+            label="Current parent"
+            value={context.currentParentTitle}
+          />
         </Box>
         {context.currentBucket && (
           <Box sx={{ flex: 1 }}>
-            <LabeledValue label="Current collection" value={context.currentBucket} />
+            <LabeledValue
+              label="Current object category"
+              value={context.currentBucket}
+            />
           </Box>
         )}
       </Stack>
@@ -343,10 +386,16 @@ const OverlapComparison = ({
     </Typography>
     <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
       <Box sx={comparisonPanelSx}>
-        <LabeledValue label={context.firstCollection} value={context.firstTitle} />
+        <LabeledValue
+          label={context.firstCollection}
+          value={context.firstTitle}
+        />
       </Box>
       <Box sx={comparisonPanelSx}>
-        <LabeledValue label={context.secondCollection} value={context.secondTitle} />
+        <LabeledValue
+          label={context.secondCollection}
+          value={context.secondTitle}
+        />
       </Box>
     </Stack>
     <BoundaryNote>

@@ -43,6 +43,9 @@ describe("Society of Mind context renderers", () => {
     );
     expect(screen.getByText("Before")).toBeInTheDocument();
     expect(screen.getByText("After")).toBeInTheDocument();
+    expect(
+      screen.getByText("Proposed new group (not currently in the ontology)"),
+    ).toBeInTheDocument();
     expect(screen.queryByText("Sell Bicycle")).not.toBeInTheDocument();
     fireEvent.click(
       screen.getByRole("button", {
@@ -97,6 +100,7 @@ describe("Society of Mind context renderers", () => {
     );
     expect(screen.getByText("Lease out")).toBeInTheDocument();
     expect(screen.getByText("Current parent")).toBeInTheDocument();
+    expect(screen.getByText("Current object category")).toBeInTheDocument();
     expect(screen.getByText(/does not move the activity/i)).toBeInTheDocument();
   });
 
@@ -115,6 +119,8 @@ describe("Society of Mind context renderers", () => {
     );
     expect(screen.getByText("Sell Physical Object")).toBeInTheDocument();
     expect(screen.getByText("Sell physical objects")).toBeInTheDocument();
-    expect(screen.getByText(/does not merge either activity/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/does not merge either activity/i),
+    ).toBeInTheDocument();
   });
 });
