@@ -148,6 +148,9 @@ const ReviewCard = ({
         }
       : null;
 
+
+  const showStatePanels = view.context.type !== "grouping-outline";
+
   return (
     <Paper
       elevation={0}
@@ -163,42 +166,46 @@ const ReviewCard = ({
       }}
     >
       <Box sx={{ flex: 1, overflowY: "auto", p: { xs: 2.5, sm: 3.5 }, pb: 2 }}>
-        <Typography
-          variant="h6"
-          component="h2"
-          sx={{ mb: 2.5, fontWeight: 600, lineHeight: 1.4 }}
-        >
-          {view.question}
-        </Typography>
+        {view.question && (
+          <Typography
+            variant="h6"
+            component="h2"
+            sx={{ mb: 2.5, fontWeight: 600, lineHeight: 1.4 }}
+          >
+            {view.question}
+          </Typography>
+        )}
 
-        <Stack
-          direction={{ xs: "column", sm: "row" }}
-          spacing={1.5}
-          sx={{ mb: 2 }}
-        >
-          <StatePanel label="Current" accent="neutral">
-            {titleDiff ? (
-              <DiffedTitle
-                title={titleDiff.current}
-                other={titleDiff.proposed}
-                changedColor="error.main"
-              />
-            ) : (
-              <Typography>{stripStatePrefix(view.currentState)}</Typography>
-            )}
-          </StatePanel>
-          <StatePanel label="Proposed" accent="primary">
-            {titleDiff ? (
-              <DiffedTitle
-                title={titleDiff.proposed}
-                other={titleDiff.current}
-                changedColor="success.main"
-              />
-            ) : (
-              <Typography>{stripStatePrefix(view.proposedState)}</Typography>
-            )}
-          </StatePanel>
-        </Stack>
+        {showStatePanels && (
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            spacing={1.5}
+            sx={{ mb: 2 }}
+          >
+            <StatePanel label="Current" accent="neutral">
+              {titleDiff ? (
+                <DiffedTitle
+                  title={titleDiff.current}
+                  other={titleDiff.proposed}
+                  changedColor="error.main"
+                />
+              ) : (
+                <Typography>{stripStatePrefix(view.currentState)}</Typography>
+              )}
+            </StatePanel>
+            <StatePanel label="Proposed" accent="primary">
+              {titleDiff ? (
+                <DiffedTitle
+                  title={titleDiff.proposed}
+                  other={titleDiff.current}
+                  changedColor="success.main"
+                />
+              ) : (
+                <Typography>{stripStatePrefix(view.proposedState)}</Typography>
+              )}
+            </StatePanel>
+          </Stack>
+        )}
 
         <Box
           sx={{

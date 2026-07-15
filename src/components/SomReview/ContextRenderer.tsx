@@ -1,17 +1,13 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   Box,
-  Button,
   Chip,
-  Collapse,
   List,
   ListItem,
   ListItemText,
   Stack,
   Typography,
 } from "@mui/material";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import SubdirectoryArrowRightIcon from "@mui/icons-material/SubdirectoryArrowRight";
 import { diffWords } from "diff";
 
@@ -81,60 +77,31 @@ const TitleComparison = ({
 }: {
   context: Extract<SomReviewContext, { type: "title-comparison" }>;
 }) => {
-  const [tasksOpen, setTasksOpen] = useState(false);
   const tasks = context.linkedTasks || [];
   if (tasks.length === 0) return null;
 
   return (
     <Box>
-      <Button
-        size="small"
-        onClick={() => setTasksOpen((open) => !open)}
-        startIcon={tasksOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-        sx={{ textTransform: "none", color: "text.secondary" }}
-        aria-expanded={tasksOpen}
+      <Typography
+        variant="caption"
+        component="div"
+        sx={{
+          fontWeight: 700,
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+          color: "text.secondary",
+          mb: 0.25,
+        }}
       >
-        {tasksOpen ? "Hide source tasks" : "Show source tasks"}
-      </Button>
-      <Collapse in={tasksOpen}>
-        <List dense sx={{ pl: 1 }}>
-          {tasks.map((task) => (
-            <ListItem key={task} sx={{ py: 0.25 }}>
-              <ListItemText primary={task} />
-            </ListItem>
-          ))}
-        </List>
-      </Collapse>
-    </Box>
-  );
-};
-
-const CollapsedSiblings = ({ titles }: { titles: string[] }) => {
-  const [open, setOpen] = useState(false);
-  if (titles.length === 0) return null;
-  return (
-    <Box sx={{ mt: 0.5 }}>
-      <Button
-        size="small"
-        onClick={() => setOpen((o) => !o)}
-        startIcon={open ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-        sx={{ textTransform: "none", color: "text.secondary" }}
-        aria-expanded={open}
-      >
-        {titles.length} other {titles.length === 1 ? "child" : "children"}
-      </Button>
-      <Collapse in={open}>
-        <List dense sx={{ pl: 2, py: 0 }}>
-          {titles.map((title) => (
-            <ListItem key={title} sx={{ py: 0 }}>
-              <ListItemText
-                primary={title}
-                primaryTypographyProps={{ color: "text.secondary" }}
-              />
-            </ListItem>
-          ))}
-        </List>
-      </Collapse>
+        {tasks.length === 1 ? "O*NET Task:" : "O*NET Tasks:"}
+      </Typography>
+      <List dense disablePadding>
+        {tasks.map((task) => (
+          <ListItem key={task} disableGutters sx={{ py: 0.25 }}>
+            <ListItemText primary={task} sx={{ my: 0 }} />
+          </ListItem>
+        ))}
+      </List>
     </Box>
   );
 };
@@ -142,10 +109,12 @@ const CollapsedSiblings = ({ titles }: { titles: string[] }) => {
 const OutlineItem = ({
   title,
   highlighted,
+  dimmed,
   indent = 0,
 }: {
   title: string;
   highlighted?: boolean;
+  dimmed?: boolean;
   indent?: number;
 }) => (
   <Stack
@@ -155,7 +124,16 @@ const OutlineItem = ({
     sx={{ pl: indent * 3, py: 0.25 }}
   >
     <SubdirectoryArrowRightIcon sx={{ fontSize: 14, color: "text.disabled" }} />
-    <Typography component="span" sx={highlighted ? highlightSx : undefined}>
+    <Typography
+      component="span"
+      sx={
+        highlighted
+          ? highlightSx
+          : dimmed
+            ? { color: "text.secondary" }
+            : undefined
+      }
+    >
       {title}
     </Typography>
   </Stack>
@@ -175,7 +153,9 @@ const GroupingOutline = ({
         {context.proposedChildren.map((child) => (
           <OutlineItem key={child} title={child} highlighted indent={1} />
         ))}
-        <CollapsedSiblings titles={unaffected} />
+        {unaffected.map((child) => (
+          <OutlineItem key={child} title={child} dimmed indent={1} />
+        ))}
       </Box>
       <Box sx={{ flex: 1, minWidth: 0 }}>
         <Chip label="After" size="small" color="primary" sx={{ mb: 1 }} />
@@ -184,7 +164,9 @@ const GroupingOutline = ({
         {context.proposedChildren.map((child) => (
           <OutlineItem key={child} title={child} highlighted indent={2} />
         ))}
-        <CollapsedSiblings titles={unaffected} />
+        {unaffected.map((child) => (
+          <OutlineItem key={child} title={child} dimmed indent={1} />
+        ))}
       </Box>
     </Stack>
   );

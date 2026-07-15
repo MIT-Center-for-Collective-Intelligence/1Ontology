@@ -4,6 +4,13 @@ import {
   SomReviewContext,
 } from "../../types/ISomReview";
 
+
+const CONTROL_QUESTION_PATTERN = /^The agent judged .* proposed no change\./;
+
+const dropQuestion = (view: any): boolean =>
+  CONTROL_QUESTION_PATTERN.test(view.question) ||
+  view.context?.type === "grouping-outline";
+
 export const toReviewerCard = (record: any): SomReviewCard => {
   const view = record.reviewerView;
   return {
@@ -11,7 +18,7 @@ export const toReviewerCard = (record: any): SomReviewCard => {
     datasetVersion: record.datasetVersion,
     issueType: record.issueType as SomIssueType,
     reviewerView: {
-      question: view.question,
+      question: dropQuestion(view) ? "" : view.question,
       currentState: view.currentState,
       proposedState: view.proposedState,
       reasoning: view.reasoning,
