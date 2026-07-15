@@ -115,8 +115,12 @@ const fbAuth = (handler: NextApiHandler, addCors: boolean = false) => {
       req.body.data.user.userData = data;
       req.user = user;
       await handler(req, res);
-    } catch (error) {
-      return res.status(500).json({ error });
+    } catch (error: any) {
+      if (typeof error?.code === "string" && error.code.startsWith("auth/")) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      console.error(error);
+      return res.status(500).json({ error: "Internal server error" });
     }
   };
 };
