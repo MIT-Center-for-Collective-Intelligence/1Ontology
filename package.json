@@ -28,6 +28,8 @@
     "@mui/x-tree-view": "^8.22.0",
     "@types/dagre-d3": "^0.6.6",
     "@xyflow/react": "^12.3.6",
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
     "axios": "^1.7.7",
     "chromadb": "^2.4.6",
     "cors": "^2.8.5",

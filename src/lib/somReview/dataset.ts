@@ -1,0 +1,156 @@
+import fs from "fs";
+import path from "path";
+import crypto from "crypto";
+import Ajv, { ValidateFunction } from "ajv";
+import addFormats from "ajv-formats";
+
+import { SomIssueType } from "../../types/ISomReview";
+
+const EXPECTED_SCHEMA_VERSION = "som-review-v1";
+
+const PROTOTYPE_ISSUE_TYPES: SomIssueType[] = [
+  "title-clarity",
+  "sibling-grouping",
+];
+
+export const DEFAULT_SESSION_SIZE = 10;
+export const MAX_SESSION_SIZE = 15;
+
+export interface SomDataset {
+  datasetVersion: string;
+  manifest: any;
+  recordsById: Map<string, any>;
+  orderedIdsByIssue: Map<SomIssueType, string[]>;
+  issueLabels: Map<SomIssueType, string>;
+}
+
+const datasetDir = (): string =>
+  process.env.SOM_REVIEW_DATASET_DIR ||
+  path.join(
+    process.cwd(),
+    "Sell_Society_of_Mind_Review_UI_Handoff_2026-07-14",
+    "review-datasets",
+  );
+
+export const isIssueTypeEnabled = (issueType: SomIssueType): boolean => {
+  if (PROTOTYPE_ISSUE_TYPES.includes(issueType)) return true;
+  const flagged = (process.env.SOM_REVIEW_EXPERIMENTAL_ISSUE_TYPES || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return flagged.includes(issueType);
+};
+
+const readJsonl = (filePath: string): any[] =>
+  fs
+    .readFileSync(filePath, "utf8")
+    .split("\n")
+    .filter((line) => line.trim().length > 0)
+    .map((line, index) => {
+      try {
+        return JSON.parse(line);
+      } catch (err) {
+        throw new Error(`Invalid JSON on line ${index + 1} of ${filePath}`);
+      }
+    });
+
+export const compileProposalValidator = (
+  dir?: string,
+): ValidateFunction<any> => {
+  const schemaPath = path.join(
+    dir || datasetDir(),
+    "schema",
+    "review-proposal.schema.json",
+  );
+  const ajv = new Ajv({ allErrors: true });
+  addFormats(ajv);
+  return ajv.compile<any>(JSON.parse(fs.readFileSync(schemaPath, "utf8")));
+};
+
+export const compileResponseValidator = (dir?: string): ValidateFunction => {
+  const schemaPath = path.join(
+    dir || datasetDir(),
+    "schema",
+    "review-response.schema.json",
+  );
+  const ajv = new Ajv({ allErrors: true });
+  addFormats(ajv);
+  return ajv.compile(JSON.parse(fs.readFileSync(schemaPath, "utf8")));
+};
+
+const orderKey = (record: any): string =>
+  crypto
+    .createHash("sha256")
+    .update(`${record.datasetVersion}|${record.issueType}|${record.proposalId}`)
+    .digest("hex");
+
+export const loadDataset = (dir?: string): SomDataset => {
+  const root = dir || datasetDir();
+  const manifest = JSON.parse(
+    fs.readFileSync(path.join(root, "manifest.json"), "utf8"),
+  );
+
+  if (manifest.schemaVersion !== EXPECTED_SCHEMA_VERSION) {
+    throw new Error(
+      `Unexpected dataset schemaVersion: ${manifest.schemaVersion}`,
+    );
+  }
+  if (!manifest.datasetVersion) {
+    throw new Error("Dataset manifest is missing datasetVersion");
+  }
+
+  const validate = compileProposalValidator(root);
+
+  const records = [
+    ...readJsonl(path.join(root, "all_proposals.jsonl")),
+    ...readJsonl(path.join(root, "all_controls.jsonl")),
+    ...readJsonl(path.join(root, "manual_checks.jsonl")),
+  ];
+
+  const recordsById = new Map<string, any>();
+  for (const record of records) {
+    const recordId = record?.proposalId || "<unknown>";
+    if (!validate(record)) {
+      throw new Error(
+        `Proposal ${recordId} failed schema validation: ` +
+          JSON.stringify(validate.errors),
+      );
+    }
+    if (record.datasetVersion !== manifest.datasetVersion) {
+      throw new Error(
+        `Proposal ${record.proposalId} has datasetVersion ${record.datasetVersion}, ` +
+          `expected ${manifest.datasetVersion}`,
+      );
+    }
+    if (recordsById.has(record.proposalId)) {
+      throw new Error(`Duplicate proposalId in dataset: ${record.proposalId}`);
+    }
+    recordsById.set(record.proposalId, Object.freeze(record));
+  }
+
+  const orderedIdsByIssue = new Map<SomIssueType, string[]>();
+  const issueLabels = new Map<SomIssueType, string>();
+  for (const issue of manifest.issueTypes || []) {
+    issueLabels.set(issue.id, issue.label);
+    const ids = [...recordsById.values()]
+      .filter((r) => r.issueType === issue.id)
+      .sort((a, b) => orderKey(a).localeCompare(orderKey(b)))
+      .map((r) => r.proposalId);
+    orderedIdsByIssue.set(issue.id, ids);
+  }
+
+  return {
+    datasetVersion: manifest.datasetVersion,
+    manifest,
+    recordsById,
+    orderedIdsByIssue,
+    issueLabels,
+  };
+};
+
+let cached: SomDataset | null = null;
+
+export const getDataset = (): SomDataset => {
+  if (!cached) cached = loadDataset();
+  return cached;
+};

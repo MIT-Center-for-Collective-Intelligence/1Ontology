@@ -1,0 +1,89 @@
+{
+  "schemaVersion": "som-review-v1",
+  "datasetVersion": "sell-review-2026-07-14-v1",
+  "branch": "Sell",
+  "generatedAt": "2026-07-14T17:19:43.253Z",
+  "sourceOntology": "/Users/oneman/Downloads/final-hierarchy-restructured-v18-2026-07-07.json",
+  "sourceOntologySha256": "d2ac7b4ac724cce8328a9219a699c38eed0e3d87f8aed53a756c540e4e753712",
+  "safety": {
+    "reviewOnly": true,
+    "mutatesOntology": false,
+    "approvalAuthorizesAutomaticWrite": false,
+    "modelConfidenceVisibleToReviewer": false
+  },
+  "uiContract": {
+    "issueHomogeneousSessions": true,
+    "defaultSessionSize": 10,
+    "maximumSessionSize": 15,
+    "oneAtomicItemAtATime": true,
+    "agreeAutoAdvancesWithoutPageReload": true,
+    "disagreeRequiresReason": true,
+    "optionalContextCollapsedByDefault": true,
+    "allowSaveAndExit": true
+  },
+  "issueTypes": [
+    {
+      "id": "title-clarity",
+      "label": "Title clarity",
+      "rolloutStatus": "prototype",
+      "view": "title-comparison",
+      "proposals": 20,
+      "controls": 27
+    },
+    {
+      "id": "sibling-grouping",
+      "label": "Sibling grouping",
+      "rolloutStatus": "prototype",
+      "view": "grouping-outline",
+      "proposals": 1,
+      "controls": 1
+    },
+    {
+      "id": "duplicate-synonym",
+      "label": "Duplicate or synonym",
+      "rolloutStatus": "experimental",
+      "view": "duplicate-comparison",
+      "proposals": 0,
+      "controls": 0
+    },
+    {
+      "id": "placement",
+      "label": "Placement",
+      "rolloutStatus": "experimental",
+      "view": "placement-comparison",
+      "proposals": 16,
+      "controls": 0
+    },
+    {
+      "id": "structural-overlap",
+      "label": "Structural overlap",
+      "rolloutStatus": "experimental",
+      "view": "overlap-comparison",
+      "proposals": 2,
+      "controls": 0
+    }
+  ],
+  "files": {
+    "allProposals": "all_proposals.jsonl",
+    "allControls": "all_controls.jsonl",
+    "manualChecks": "manual_checks.jsonl",
+    "proposalsByIssue": "proposals/<issue-type>.jsonl",
+    "controlsByIssue": "controls/<issue-type>.jsonl",
+    "rejectedAgentCandidates": "diagnostics/rejected_agent_candidates.jsonl",
+    "proposalSchema": "schema/review-proposal.schema.json",
+    "responseSchema": "schema/review-response.schema.json",
+    "schemaSource": "src/agents/review-proposal-contract.ts"
+  },
+  "counts": {
+    "proposals": 39,
+    "controls": 28,
+    "manualChecks": 1,
+    "rejectedAgentCandidates": 3
+  },
+  "limitations": [
+    "The first reviewer round should use title-clarity and sibling-grouping only; the other issue types exercise the common shell but remain experimental.",
+    "The ontology snapshot has no structured synonyms field, so formal-synonym auditing cannot be generated reliably from this file.",
+    "A placement approval marks a misfit and records an advisory candidate home; destination selection and movement are separate tasks.",
+    "A duplicate approval records a synonym judgment; structural merging and child re-parenting are separate tasks."
+  ]
+}

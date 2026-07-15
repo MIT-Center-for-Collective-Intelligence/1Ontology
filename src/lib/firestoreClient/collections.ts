@@ -13,6 +13,11 @@ export const NODES_ONET = "oNetNodes";
 export const ALGORITHMS = "algorithms";
 export const TREE_QUEUES = "treeUpdateQueue"
 
+/* Society of Mind review (server/API access only; judgments, never ontology writes) */
+export const SOM_REVIEW_RESPONSES = "somReviewResponses";
+export const SOM_REVIEW_RESPONSE_REVISIONS = "somReviewResponseRevisions";
+export const SOM_REVIEW_SESSIONS = "somReviewSessions";
+
 /* realtime database */
 export const UNREAD_COMMENTS = "unreadComments";
 
