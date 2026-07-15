@@ -12,6 +12,7 @@ import {
   derivePartsAndRef,
   matchesSource,
   overallRefThroughGen,
+  partsAfterGenChange,
 } from "./partsModel";
 
 /**
@@ -83,6 +84,104 @@ export function taggedPartsAndSource(
     ? parts
     : derivePartsAndRef(parts, gens, { oldParts: [], sourceId: stored }).parts;
   return { tagged, stored };
+}
+
+/**
+ * Applies a generalization change to `nodeId`'s parts: parts tracked through a
+ * removed gen are dropped (kept when a remaining gen still provides them), and
+ * losing the attached source re-attaches to the first remaining gen by merge.
+ */
+export async function applyPartsForGenChange(
+  nodeId: string,
+  removedGenIds: string[],
+  cache: NodeCache,
+  parentLog: NodeChange["triggeredBy"],
+  uname: string | undefined,
+  appName: string | undefined,
+  childLogs: NodeChange[],
+): Promise<void> {
+  cache.delete(nodeId);
+  const node = await getNode(nodeId, cache);
+  if (!node || node.deleted) return;
+
+  const remainingGens = await buildGensForAttach(node, cache);
+  const removedGens: GenForAttach[] = [];
+  for (const id of removedGenIds) {
+    const g = await getNode(id, cache);
+    if (!g) continue;
+    removedGens.push({
+      id,
+      parts: partsNodes(g.properties?.parts),
+      ref: g.inheritance?.parts?.ref ?? null,
+    });
+  }
+
+  const { tagged, stored } = taggedPartsAndSource(node, remainingGens);
+  const {
+    parts: newParts,
+    sourceId: newSource,
+    ref,
+  } = partsAfterGenChange({ tagged, stored, removedGens, remainingGens });
+
+  const before = partsNodes(node.properties?.parts);
+  const unchanged =
+    node.partsOverallSource !== undefined &&
+    newSource === node.partsOverallSource &&
+    newParts.length === before.length &&
+    newParts.every(
+      (p, i) =>
+        before[i]?.id === p.id &&
+        (before[i]?.inheritedFrom ?? null) === (p.inheritedFrom ?? null),
+    );
+  if (unchanged) return;
+
+  const beforeCol = asPartsCollections(node.properties?.parts);
+  const ownerTitle = ref ? ((await getNode(ref, cache))?.title ?? "") : "";
+  const partsEntry = partsInheritanceEntry(
+    ref,
+    ownerTitle,
+    node.inheritance?.parts?.inheritanceType,
+  );
+  await db.collection(NODES).doc(nodeId).update({
+    "properties.parts": toParts(newParts),
+    "inheritance.parts": partsEntry,
+    partsOverallSource: newSource,
+  });
+  cache.set(nodeId, {
+    ...node,
+    properties: { ...node.properties, parts: toParts(newParts) },
+    inheritance: { ...node.inheritance, parts: partsEntry },
+    partsOverallSource: newSource,
+  } as INode);
+
+  const keptIds = new Set(newParts.map((p) => p.id));
+  const dropped = before.map((p) => p.id).filter((id) => !keptIds.has(id));
+  await applyIsPartOfOwnerOnly(
+    nodeId,
+    node.title ?? "",
+    [],
+    dropped,
+    cache,
+    parentLog,
+    uname,
+    appName,
+    childLogs,
+  );
+
+  if (uname) {
+    childLogs.push({
+      nodeId,
+      modifiedBy: uname,
+      modifiedProperty: "parts",
+      previousValue: beforeCol,
+      newValue: toParts(newParts),
+      modifiedAt: new Date(),
+      changeType: "modify elements",
+      fullNode: node,
+      triggeredBy: parentLog,
+      ...(appName ? { appName } : {}),
+    } as NodeChange);
+  }
 }
 
 /**

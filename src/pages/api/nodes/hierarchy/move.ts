@@ -17,6 +17,7 @@ import {
   writeChangeLog,
   recordLogs,
 } from "@components/lib/server/hierarchy";
+import { applyPartsForGenChange } from "@components/lib/server/parts";
 
 /**
  * Relocates a node to a new parent: drops `fromParentId` from its
@@ -108,6 +109,15 @@ async function applyMove(ctx: {
 
   cache.delete(nodeId); // re-read so recompute sees the new generalizations
   await recomputeInheritance(nodeId, cache);
+  await applyPartsForGenChange(
+    nodeId,
+    [fromParentId],
+    cache,
+    parentLog,
+    uname,
+    appName,
+    childLogs,
+  );
 
   await updateDerivedPaths({ db, changedNodeIds: [nodeId] });
 

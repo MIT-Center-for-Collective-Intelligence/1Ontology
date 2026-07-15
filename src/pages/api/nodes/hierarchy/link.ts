@@ -23,6 +23,7 @@ import {
   writeChangeLog,
   recordLogs,
 } from "@components/lib/server/hierarchy";
+import { applyPartsForGenChange } from "@components/lib/server/parts";
 
 /**
  * Saves a node's specializations or generalizations. This is the full editor:
@@ -128,10 +129,28 @@ async function applyLink(ctx: ChangeCtx): Promise<{ ok: true }> {
   if (side === "generalizations") {
     cache.delete(nodeId); // re-read so we see the generalizations we just saved
     await recomputeInheritance(nodeId, cache);
+    await applyPartsForGenChange(
+      nodeId,
+      removed,
+      cache,
+      parentLog,
+      uname,
+      appName,
+      childLogs,
+    );
   } else {
     for (const id of [...added, ...removed]) {
       cache.delete(id);
       await recomputeInheritance(id, cache);
+      await applyPartsForGenChange(
+        id,
+        removed.includes(id) ? [nodeId] : [],
+        cache,
+        parentLog,
+        uname,
+        appName,
+        childLogs,
+      );
     }
   }
 

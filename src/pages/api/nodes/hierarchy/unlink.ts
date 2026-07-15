@@ -18,6 +18,7 @@ import {
   writeChangeLog,
   recordLogs,
 } from "@components/lib/server/hierarchy";
+import { applyPartsForGenChange } from "@components/lib/server/parts";
 
 /**
  * Removes one or more specialization/generalization links. The client sends
@@ -105,10 +106,28 @@ async function applyUnlink(ctx: {
   if (side === "generalizations") {
     cache.delete(nodeId);
     await recomputeInheritance(nodeId, cache);
+    await applyPartsForGenChange(
+      nodeId,
+      removed,
+      cache,
+      parentLog,
+      uname,
+      appName,
+      childLogs,
+    );
   } else {
     for (const id of removed) {
       cache.delete(id);
       await recomputeInheritance(id, cache);
+      await applyPartsForGenChange(
+        id,
+        [nodeId],
+        cache,
+        parentLog,
+        uname,
+        appName,
+        childLogs,
+      );
     }
   }
 

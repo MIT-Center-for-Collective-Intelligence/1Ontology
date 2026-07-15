@@ -131,6 +131,93 @@ export function derivePartsAndRef(
   };
 }
 
+const FRONT = "__front__";
+
+/**
+ * Put the parent's parts first, in the parent's order. The child's extra parts
+ * (its own, or inherited from another gen) go back under the same part they sat
+ * under before — or the nearest earlier parent part if that one is gone, else the
+ * top. Parts the child already has are reused (keeping optional/inheritedFrom); a
+ * part new from the parent is added plain.
+ */
+export function mergeAgainstParentOrder(
+  childList: ILinkNode[],
+  parentParts: ILinkNode[],
+): ILinkNode[] {
+  const parentIds = new Set(parentParts.map((p) => p.id));
+  const otherByAnchor = new Map<string, ILinkNode[]>();
+  let anchor = FRONT;
+  for (const c of childList) {
+    if (parentIds.has(c.id)) {
+      anchor = c.id;
+      continue;
+    }
+    if (!otherByAnchor.has(anchor)) otherByAnchor.set(anchor, []);
+    otherByAnchor.get(anchor)!.push(c);
+  }
+  const byId = new Map(childList.map((c) => [c.id, c]));
+  const result: ILinkNode[] = [];
+  for (const p of otherByAnchor.get(FRONT) ?? []) result.push(p);
+  for (const g of parentParts) {
+    const existing = byId.get(g.id);
+    if (existing) {
+      result.push(existing);
+    } else {
+      const gained: ILinkNode = { id: g.id };
+      if (g.title !== undefined) gained.title = g.title;
+      if (g.optional) gained.optional = true;
+      result.push(gained);
+    }
+    for (const p of otherByAnchor.get(g.id) ?? []) result.push(p);
+  }
+  return result;
+}
+
+/**
+ * Update a node's parts when its generalizations change. A part inherited through
+ * a removed gen is dropped, unless another remaining gen still provides it. 
+ * If the gen the node was attached to is the one removed, 
+ * the node re-attaches to the first remaining gen with its  parts merged in;
+ * this is the only time attachment happens on its own, and an already-broken node
+ * stays broken. Adding a gen only re-derives, nothing else.
+ */
+export function partsAfterGenChange(params: {
+  tagged: ILinkNode[];
+  stored: string | null;
+  removedGens: Gen[];
+  remainingGens: Gen[];
+}): { parts: ILinkNode[]; sourceId: string | null; ref: string | null } {
+  const { tagged, stored, removedGens, remainingGens } = params;
+
+  const providedByRemaining = (partId: string) =>
+    remainingGens.some((g) => g.parts.some((p) => p.id === partId));
+  let list = tagged.filter((p) => {
+    if (isOwnedPart(p)) return true;
+    const trackedThroughRemoved = removedGens.some((g) => {
+      const gp = g.parts.find((x) => x.id === p.id);
+      return gp ? childSourceOf(gp, g.id) === p.inheritedFrom : false;
+    });
+    return !trackedThroughRemoved || providedByRemaining(p.id);
+  });
+
+  let sourceId = stored;
+  const sourceRemains = !!stored && remainingGens.some((g) => g.id === stored);
+  if (stored && !sourceRemains) {
+    const next = remainingGens[0];
+    if (next) {
+      list = mergeAgainstParentOrder(list, next.parts);
+      sourceId = next.id;
+    } else {
+      sourceId = null;
+    }
+  }
+
+  return derivePartsAndRef(list, remainingGens, {
+    oldParts: tagged,
+    sourceId,
+  });
+}
+
 /**
  * Reattach a node to generalization `source`: a HARD RESET of everything the node
  * does not OWN. Parts sourced from any other generalization are discarded, and
