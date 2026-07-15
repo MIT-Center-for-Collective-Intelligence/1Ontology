@@ -160,6 +160,8 @@ const OutlineItem = ({
   statusLabel?: string;
 }) => (
   <Stack
+    data-outline-item={title}
+    data-highlighted={highlighted ? "true" : "false"}
     direction="row"
     alignItems="flex-start"
     spacing={0.75}
@@ -214,11 +216,20 @@ const GroupingOutline = ({
 }: {
   context: Extract<SomReviewContext, { type: "grouping-outline" }>;
 }) => {
-  const unaffected = context.unaffectedChildren || [];
-  const unchangedChildren = unaffected.length > 0 && (
+  const sortTitles = (titles: string[]) =>
+    [...titles].sort((left, right) => left.localeCompare(right, "en"));
+  const proposedChildren = sortTitles(context.proposedChildren);
+  const unaffected = sortTitles(context.unaffectedChildren || []);
+  const proposedTitles = new Set(context.proposedChildren);
+  const currentChildren = sortTitles([
+    ...new Set([...context.proposedChildren, ...unaffected]),
+  ]);
+  const remainingChildren = unaffected.length > 0 && (
     <Box sx={{ mt: 1.5 }}>
       <Divider sx={{ mb: 1.25 }} />
-      <Typography sx={sectionLabelSx}>Unchanged direct children</Typography>
+      <Typography sx={sectionLabelSx}>
+        Children not included in the new grouping
+      </Typography>
       {unaffected.map((title) => (
         <OutlineItem key={title} title={title} indent={1} />
       ))}
@@ -232,10 +243,14 @@ const GroupingOutline = ({
         <Typography sx={{ mt: 1, fontWeight: 750 }}>
           {context.parentTitle}
         </Typography>
-        {context.proposedChildren.map((child) => (
-          <OutlineItem key={child} title={child} highlighted indent={1} />
+        {currentChildren.map((child) => (
+          <OutlineItem
+            key={child}
+            title={child}
+            highlighted={proposedTitles.has(child)}
+            indent={1}
+          />
         ))}
-        {unchangedChildren}
       </Box>
       <Box sx={comparisonPanelSx} aria-label="Proposed grouping">
         <Typography sx={sectionLabelSx}>After</Typography>
@@ -248,10 +263,10 @@ const GroupingOutline = ({
           indent={1}
           statusLabel="Proposed new group (not currently in the ontology)"
         />
-        {context.proposedChildren.map((child) => (
+        {proposedChildren.map((child) => (
           <OutlineItem key={child} title={child} highlighted indent={2} />
         ))}
-        {unchangedChildren}
+        {remainingChildren}
       </Box>
     </Stack>
   );

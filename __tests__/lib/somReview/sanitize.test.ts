@@ -1,5 +1,6 @@
 import { loadDataset } from "../../../src/lib/somReview/dataset";
 import {
+  reviewerQuestion,
   sanitizeReasoning,
   toReviewerCard,
 } from "../../../src/lib/somReview/sanitize";
@@ -59,6 +60,21 @@ describe("Society of Mind reviewer card blinding", () => {
       'Do "Sell products" and "Sell merchandise" name the same activity?',
     );
     expect(card.reviewerView.question).not.toMatch(/merge|delete/i);
+  });
+
+  it("states the complete grouping change in the reviewer question", () => {
+    expect(
+      reviewerQuestion({
+        type: "grouping-outline",
+        parentTitle: "Sell (Physical Object)",
+        structure: "intermediate",
+        proposedGroupTitle: "Sell Apparel and Adornment",
+        proposedChildren: ["Sell Accessory", "Sell Clothing", "Sell Jewelry"],
+        unaffectedChildren: ["Sell Beverage"],
+      }),
+    ).toBe(
+      'Should the new grouping "Sell Apparel and Adornment" be created under "Sell (Physical Object)" with the highlighted children under it?',
+    );
   });
 
   it("replaces ambiguous placement copy with a clear current-parent decision", () => {

@@ -414,8 +414,17 @@ function canonicalizeKnownTitleAnnotations(record, index) {
   return { record: rewrite(record), aliases: [...aliases.entries()] };
 }
 
-function clarifyPlacementReviewerView(record) {
+function clarifyReviewerView(record) {
   const context = record?.reviewerView?.context;
+  if (context?.type === "grouping-outline") {
+    return {
+      ...record,
+      reviewerView: {
+        ...record.reviewerView,
+        question: `Should the new grouping "${context.proposedGroupTitle}" be created under "${context.parentTitle}" with the highlighted children under it?`,
+      },
+    };
+  }
   if (context?.type !== "placement-comparison") return record;
 
   const nodeTitle = String(context.nodeTitle || "").trim();
@@ -507,7 +516,7 @@ async function main() {
   const canonicalizedAliases = [];
   const transform = (record) => {
     const canonicalized = canonicalizeKnownTitleAnnotations(record, index);
-    record = clarifyPlacementReviewerView(canonicalized.record);
+    record = clarifyReviewerView(canonicalized.record);
     canonicalizedAliases.push(...canonicalized.aliases);
     let refs;
     try {

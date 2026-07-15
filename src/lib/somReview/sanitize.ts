@@ -27,7 +27,7 @@ export const reviewerQuestion = (context: SomReviewContext): string => {
         ? `Is "${context.proposedTitle}" clearer than "${context.currentTitle}"?`
         : `Is "${context.currentTitle}" clear enough as the title of this activity?`;
     case "grouping-outline":
-      return `Should "${context.proposedGroupTitle}" group the highlighted activities under "${context.parentTitle}"?`;
+      return `Should the new grouping "${context.proposedGroupTitle}" be created under "${context.parentTitle}" with the highlighted children under it?`;
     case "flat-list":
       return `Is it reasonable to leave these activities directly under "${context.parentTitle}"?`;
     case "duplicate-comparison":

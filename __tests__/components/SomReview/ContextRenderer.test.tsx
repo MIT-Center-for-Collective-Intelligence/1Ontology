@@ -28,7 +28,7 @@ describe("Society of Mind context renderers", () => {
     ).toBeInTheDocument();
   });
 
-  it("shows unchanged direct children in both grouping panels", () => {
+  it("keeps the current children alphabetized and labels only the after split", () => {
     render(
       <ContextRenderer
         context={{
@@ -46,9 +46,22 @@ describe("Society of Mind context renderers", () => {
     expect(
       screen.getByText("Proposed new group (not currently in the ontology)"),
     ).toBeInTheDocument();
-    expect(screen.getAllByText("Unchanged direct children")).toHaveLength(2);
-    expect(screen.getAllByText("Sell Bicycle")).toHaveLength(2);
-    expect(screen.getAllByText("Sell Equipment")).toHaveLength(2);
+    const currentPanel = screen.getByLabelText("Current grouping");
+    const currentRows = Array.from(
+      currentPanel.querySelectorAll("[data-outline-item]"),
+    );
+    expect(
+      currentRows.map((row) => row.getAttribute("data-outline-item")),
+    ).toEqual(["Sell Bicycle", "Sell Equipment", "Sell Food", "Sell Tobacco"]);
+    expect(
+      currentRows.map((row) => row.getAttribute("data-highlighted")),
+    ).toEqual(["false", "false", "true", "true"]);
+    expect(
+      screen.getByText("Children not included in the new grouping"),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText("Unchanged direct children"),
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: /unchanged/i }),
     ).not.toBeInTheDocument();
