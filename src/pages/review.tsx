@@ -3,22 +3,16 @@ import {
   Alert,
   Box,
   Button,
-  Card,
-  CardActionArea,
-  Chip,
   CircularProgress,
   Container,
-  Fade,
-  IconButton,
   LinearProgress,
   Stack,
-  Tooltip,
   Typography,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
-import UndoIcon from "@mui/icons-material/Undo";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import Head from "next/head";
+import { useRouter } from "next/router";
 
 import withAuthUser from "@components/components/hoc/withAuthUser";
 import { useAuth } from "@components/components/context/AuthContext";
@@ -26,48 +20,46 @@ import { Post } from "@components/lib/utils/Post";
 import ReviewCard, {
   ReviewSubmission,
 } from "@components/components/SomReview/ReviewCard";
+import ReviewHistorySelect from "@components/components/SomReview/ReviewHistorySelect";
+import ReviewQueueSelector from "@components/components/SomReview/ReviewQueueSelector";
+import ThemeModeToggle from "@components/components/SomReview/ThemeModeToggle";
 import {
   SomIssueType,
   SomIssueTypeOption,
   SomOverviewResponse,
   SomRespondResult,
   SomReviewCard,
+  SomReviewHistoryItem,
+  SomReviseResult,
   SomSessionResponse,
-  SomUndoResult,
 } from "@components/types/ISomReview";
 
 type Phase = "loading" | "select" | "session" | "complete" | "empty";
 
-const ISSUE_DESCRIPTIONS: Partial<Record<SomIssueType, string>> = {
-  "title-clarity":
-    "Is the proposed activity title clearer than the current one?",
-  "sibling-grouping":
-    "Does the proposed grouping of sibling activities make sense?",
-  "duplicate-synonym": "Do two titles name the same activity?",
-  placement: "Is an activity sitting in the wrong place?",
-  "structural-overlap": "Could two activities overlap?",
-};
-
-const ReviewPage = () => {
+export const ReviewPage = () => {
   const [{ user }] = useAuth();
-
+  const router = useRouter();
   const [phase, setPhase] = useState<Phase>("loading");
   const [issueTypes, setIssueTypes] = useState<SomIssueTypeOption[]>([]);
   const [issueType, setIssueType] = useState<SomIssueType | null>(null);
+  const [sessionId, setSessionId] = useState("");
   const [cards, setCards] = useState<SomReviewCard[]>([]);
   const [cursor, setCursor] = useState(0);
+  const [history, setHistory] = useState<SomReviewHistoryItem[]>([]);
+  const [revisionProposalId, setRevisionProposalId] = useState("");
   const [loadError, setLoadError] = useState("");
-  const [undoing, setUndoing] = useState(false);
+  const [canDeliberate, setCanDeliberate] = useState(false);
 
   const loadOverview = useCallback(async () => {
     setPhase("loading");
     setLoadError("");
     try {
       const overview = await Post<SomOverviewResponse>("/som-review/overview");
-      setIssueTypes(overview.issueTypes.filter((issue) => issue.enabled));
+      setIssueTypes(overview.issueTypes);
+      setCanDeliberate(overview.canDeliberate);
       setPhase("select");
     } catch {
-      setLoadError("The review queue could not be loaded.");
+      setLoadError("The review queues could not be loaded. Please try again.");
       setPhase("select");
     }
   }, []);
@@ -83,19 +75,28 @@ const ReviewPage = () => {
       const result = await Post<SomSessionResponse>("/som-review/session", {
         issueType: issue,
       });
+      setIssueType(issue);
       if (result.done || !result.session || !result.cards?.length) {
-        setIssueType(issue);
+        setSessionId("");
+        setCards([]);
+        setCursor(0);
+        setHistory([]);
+        setRevisionProposalId("");
         setPhase("empty");
         return;
       }
-      setIssueType(issue);
+      setSessionId(result.session.id);
       setCards(result.cards);
       setCursor(result.session.cursor);
+      setHistory(result.history || []);
+      setRevisionProposalId("");
       setPhase(
         result.session.cursor >= result.cards.length ? "complete" : "session",
       );
     } catch {
-      setLoadError("The session could not be started. Please try again.");
+      setLoadError(
+        "The review session could not be started. Please try again.",
+      );
       setPhase("select");
     }
   }, []);
@@ -103,275 +104,410 @@ const ReviewPage = () => {
   const submitResponse = useCallback(
     async (submission: ReviewSubmission) => {
       const card = cards[cursor];
+      if (!card || !sessionId || !user?.userId) {
+        throw new Error("The active review session is unavailable");
+      }
+      const reviewedAt = new Date().toISOString();
       const result = await Post<SomRespondResult>(
         "/som-review/respond",
         {
+          sessionId,
           response: {
             schemaVersion: "som-review-v1",
             datasetVersion: card.datasetVersion,
             proposalId: card.proposalId,
-            reviewerId: user?.userId,
+            reviewerId: user.userId,
             decision: submission.decision,
             disagreementReason: submission.disagreementReason,
             suggestedCorrection: submission.suggestedCorrection,
-            reviewedAt: new Date().toISOString(),
+            reviewedAt,
             elapsedMs: Math.max(0, Math.round(submission.elapsedMs)),
           },
         },
         false,
       );
+      setHistory((currentHistory) =>
+        [
+          ...currentHistory.filter(
+            (item) => item.proposalId !== card.proposalId,
+          ),
+          {
+            proposalId: card.proposalId,
+            proposalIndex: cards.findIndex(
+              (candidate) => candidate.proposalId === card.proposalId,
+            ),
+            question: card.reviewerView.question,
+            decision: submission.decision,
+            disagreementReason: submission.disagreementReason,
+            suggestedCorrection: submission.suggestedCorrection,
+            reviewedAt,
+          },
+        ].sort((left, right) => left.proposalIndex - right.proposalIndex),
+      );
       setCursor(result.cursor);
       if (result.completed) setPhase("complete");
     },
-    [cards, cursor, user?.userId],
+    [cards, cursor, sessionId, user?.userId],
   );
 
-  const undoPrevious = useCallback(async () => {
-    if (!issueType || cursor === 0) return;
-    setUndoing(true);
-    try {
-      const result = await Post<SomUndoResult>(
-        "/som-review/undo",
-        { issueType },
+  const revisionItem = history.find(
+    (item) => item.proposalId === revisionProposalId,
+  );
+  const revisionCard = revisionItem
+    ? cards.find((card) => card.proposalId === revisionItem.proposalId)
+    : undefined;
+
+  const submitRevision = useCallback(
+    async (submission: ReviewSubmission) => {
+      const item = history.find(
+        (candidate) => candidate.proposalId === revisionProposalId,
+      );
+      const card = item
+        ? cards.find((candidate) => candidate.proposalId === item.proposalId)
+        : undefined;
+      if (!item || !card || !sessionId || !user?.userId) {
+        throw new Error("The earlier review is unavailable");
+      }
+
+      const reviewedAt = new Date().toISOString();
+      const result = await Post<SomReviseResult>(
+        "/som-review/revise",
+        {
+          sessionId,
+          response: {
+            schemaVersion: "som-review-v1",
+            datasetVersion: card.datasetVersion,
+            proposalId: card.proposalId,
+            reviewerId: user.userId,
+            decision: submission.decision,
+            disagreementReason: submission.disagreementReason,
+            suggestedCorrection: submission.suggestedCorrection,
+            reviewedAt,
+            elapsedMs: Math.max(0, Math.round(submission.elapsedMs)),
+          },
+        },
         false,
       );
-      setCursor(result.cursor);
+
+      if (result.changed) {
+        setHistory((currentHistory) =>
+          currentHistory.map((historyItem) =>
+            historyItem.proposalId === item.proposalId
+              ? {
+                  ...historyItem,
+                  decision: submission.decision,
+                  disagreementReason: submission.disagreementReason,
+                  suggestedCorrection: submission.suggestedCorrection,
+                  reviewedAt,
+                }
+              : historyItem,
+          ),
+        );
+      }
+      setRevisionProposalId("");
+      setPhase(cursor >= cards.length ? "complete" : "session");
+    },
+    [cards, cursor, history, revisionProposalId, sessionId, user?.userId],
+  );
+
+  const selectRevision = useCallback(
+    (proposalId: string) => {
+      if (!history.some((item) => item.proposalId === proposalId)) return;
+      setLoadError("");
+      setRevisionProposalId(proposalId);
       setPhase("session");
-    } catch {
-      setLoadError("Undo failed. Please try again.");
-    } finally {
-      setUndoing(false);
-    }
-  }, [issueType, cursor]);
+    },
+    [history],
+  );
+
+  const cancelRevision = useCallback(() => {
+    setRevisionProposalId("");
+    setPhase(cursor >= cards.length ? "complete" : "session");
+  }, [cards.length, cursor]);
 
   const exitToSelector = useCallback(() => {
     setIssueType(null);
+    setSessionId("");
     setCards([]);
     setCursor(0);
+    setHistory([]);
+    setRevisionProposalId("");
     loadOverview();
   }, [loadOverview]);
 
   const currentCard = cards[cursor];
-  const issueLabel = issueTypes.find((issue) => issue.id === issueType)?.label;
+  const activeCard = revisionCard || currentCard;
+  const selectedIssue = issueTypes.find((issue) => issue.id === issueType);
+  const issueLabel = selectedIssue?.label || "Proposal review";
 
   return (
-    <Box
-      sx={{
-        minHeight: "100vh",
-        backgroundColor: "background.default",
-        py: { xs: 3, sm: 5 },
-      }}
-    >
-      <Container maxWidth="sm" sx={{ maxWidth: { sm: "720px !important" } }}>
-        {loadError && (
-          <Alert
-            severity="error"
-            sx={{ mb: 2 }}
-            onClose={() => setLoadError("")}
-          >
-            {loadError}
-          </Alert>
-        )}
-
-        {phase === "loading" && (
-          <Stack alignItems="center" sx={{ py: 12 }}>
-            <CircularProgress size={28} />
-          </Stack>
-        )}
-
-        {phase === "select" && (
-          <Box>
-            <Typography
-              variant="h5"
-              component="h1"
-              sx={{ fontWeight: 700, mb: 0.5 }}
+    <>
+      <Head>
+        <title>Proposal review | 1Ontology</title>
+      </Head>
+      <Box
+        component="main"
+        sx={{
+          minHeight: "100dvh",
+          backgroundColor: "background.default",
+          py: { xs: 2, sm: 3 },
+        }}
+      >
+        <Container maxWidth="md">
+          {loadError && (
+            <Alert
+              severity="error"
+              sx={{ mb: 2 }}
+              onClose={() => setLoadError("")}
+              action={
+                phase === "select" ? (
+                  <Button color="inherit" onClick={loadOverview}>
+                    Retry
+                  </Button>
+                ) : undefined
+              }
             >
-              Proposal review
-            </Typography>
-            <Typography sx={{ color: "text.secondary", mb: 4 }}>
-              Your answers record judgments only — nothing changes the ontology.
-            </Typography>
-            <Stack spacing={1.5}>
-              {issueTypes.map((issue) => (
-                <Card
-                  key={issue.id}
-                  variant="outlined"
-                  sx={{
-                    borderRadius: "12px",
-                    opacity: issue.pending === 0 ? 0.6 : 1,
-                  }}
-                >
-                  <CardActionArea
-                    disabled={issue.pending === 0}
-                    onClick={() => startSession(issue.id)}
-                    sx={{ p: 2.25 }}
-                  >
-                    <Stack direction="row" alignItems="center" spacing={2}>
-                      <Box sx={{ flex: 1, minWidth: 0 }}>
-                        <Typography sx={{ fontWeight: 600 }}>
-                          {issue.label}
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          sx={{ color: "text.secondary" }}
-                        >
-                          {ISSUE_DESCRIPTIONS[issue.id] || ""}
-                        </Typography>
-                      </Box>
-                      {issue.pending === 0 ? (
-                        <Chip
-                          icon={<CheckCircleOutlineIcon />}
-                          label="Done"
-                          size="small"
-                          variant="outlined"
-                        />
-                      ) : (
-                        <Chip
-                          label={`${issue.pending} left`}
-                          size="small"
-                          color="primary"
-                        />
-                      )}
-                      {issue.pending > 0 && (
-                        <ArrowForwardIcon
-                          fontSize="small"
-                          sx={{ color: "text.disabled" }}
-                        />
-                      )}
-                    </Stack>
-                  </CardActionArea>
-                </Card>
-              ))}
-              {issueTypes.length === 0 && !loadError && (
-                <Typography sx={{ color: "text.secondary" }}>
-                  No review queues are available right now.
-                </Typography>
-              )}
-            </Stack>
-          </Box>
-        )}
+              {loadError}
+            </Alert>
+          )}
 
-        {phase === "session" && currentCard && (
-          <Box>
-            <Stack
-              direction="row"
-              alignItems="center"
-              spacing={1}
-              sx={{ mb: 1 }}
-            >
-              <Tooltip title="Save and exit">
-                <IconButton
-                  onClick={exitToSelector}
-                  size="small"
-                  aria-label="Save and exit"
-                >
-                  <ArrowBackIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-              <Typography
-                variant="body2"
-                sx={{ color: "text.secondary", flex: 1 }}
-                noWrap
-              >
-                {issueLabel}
-              </Typography>
-              <Typography
-                variant="body2"
-                sx={{ fontWeight: 600, color: "text.secondary" }}
-              >
-                {cursor + 1} of {cards.length}
-              </Typography>
-              <Tooltip title="Undo previous answer">
-                <span>
-                  <IconButton
-                    size="small"
-                    disabled={cursor === 0 || undoing}
-                    onClick={undoPrevious}
-                    aria-label="Undo previous answer"
-                  >
-                    {undoing ? (
-                      <CircularProgress size={16} />
-                    ) : (
-                      <UndoIcon fontSize="small" />
-                    )}
-                  </IconButton>
-                </span>
-              </Tooltip>
+          {phase === "loading" && (
+            <Stack alignItems="center" justifyContent="center" sx={{ py: 18 }}>
+              <CircularProgress size={36} aria-label="Loading review queue" />
             </Stack>
-            <LinearProgress
-              variant="determinate"
-              value={(cursor / cards.length) * 100}
-              sx={{ mb: 2, borderRadius: 1, height: 4 }}
+          )}
+
+          {phase === "select" && (
+            <ReviewQueueSelector
+              issueTypes={issueTypes}
+              onStart={startSession}
+              canDeliberate={canDeliberate}
+              onOpenDeliberation={() => router.push("/review/admin")}
+              headerAction={<ThemeModeToggle />}
             />
-            <Fade in key={currentCard.proposalId} timeout={250}>
-              <Box>
-                <ReviewCard card={currentCard} onSubmit={submitResponse} />
-              </Box>
-            </Fade>
-          </Box>
-        )}
+          )}
 
-        {phase === "complete" && (
-          <Stack
-            alignItems="center"
-            spacing={2.5}
-            sx={{ py: 10, textAlign: "center" }}
-          >
-            <CheckCircleOutlineIcon color="success" sx={{ fontSize: 52 }} />
+          {phase === "session" && activeCard && user?.userId && (
             <Box>
-              <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                Session complete
-              </Typography>
-              <Typography sx={{ color: "text.secondary" }}>
-                You reviewed {cards.length}{" "}
-                {cards.length === 1 ? "proposal" : "proposals"}.
-              </Typography>
-            </Box>
-            <Stack direction="row" spacing={1.5}>
-              <Button
-                variant="outlined"
-                startIcon={<ArrowBackIcon />}
-                onClick={exitToSelector}
-                sx={{ textTransform: "none", borderRadius: "10px" }}
-              >
-                All queues
-              </Button>
-              {issueType && (
-                <Button
-                  variant="contained"
-                  disableElevation
-                  onClick={() => startSession(issueType)}
-                  sx={{ textTransform: "none", borderRadius: "10px" }}
+              <Stack spacing={1.25} sx={{ mb: 2 }}>
+                <Stack
+                  direction={{ xs: "column", sm: "row" }}
+                  alignItems={{ xs: "stretch", sm: "center" }}
+                  justifyContent="space-between"
+                  spacing={1}
                 >
-                  Review more
-                </Button>
+                  <Button
+                    variant="outlined"
+                    color="inherit"
+                    startIcon={<ArrowBackIcon />}
+                    onClick={exitToSelector}
+                    sx={{
+                      minHeight: 48,
+                      fontWeight: 700,
+                      width: { xs: "100%", sm: "auto" },
+                    }}
+                  >
+                    Save and exit
+                  </Button>
+                  <Stack
+                    direction="row"
+                    alignItems="center"
+                    justifyContent="flex-end"
+                    spacing={1}
+                    sx={{ width: { xs: "100%", sm: "auto" } }}
+                  >
+                    <ReviewHistorySelect
+                      history={history}
+                      selectedProposalId={revisionProposalId}
+                      onSelect={selectRevision}
+                    />
+                    <ThemeModeToggle />
+                  </Stack>
+                </Stack>
+                <Stack
+                  direction="row"
+                  alignItems="baseline"
+                  justifyContent="space-between"
+                  spacing={2}
+                >
+                  <Typography
+                    component="h1"
+                    sx={{ fontSize: "1rem", fontWeight: 750 }}
+                  >
+                    {issueLabel}
+                  </Typography>
+                  <Typography
+                    aria-live="polite"
+                    sx={{
+                      flex: "0 0 auto",
+                      color: "text.secondary",
+                      fontWeight: 700,
+                    }}
+                  >
+                    {revisionItem ? (
+                      <>
+                        Revising item {revisionItem.proposalIndex + 1} of{" "}
+                        {cards.length}
+                      </>
+                    ) : (
+                      <>
+                        Item {cursor + 1} of {cards.length}
+                      </>
+                    )}
+                  </Typography>
+                </Stack>
+                <LinearProgress
+                  variant="determinate"
+                  value={(cursor / cards.length) * 100}
+                  aria-label={`${cursor} of ${cards.length} items completed`}
+                  sx={{ height: 8, borderRadius: 1 }}
+                />
+              </Stack>
+              {revisionItem && (
+                <Alert
+                  severity="info"
+                  sx={{ mb: 2 }}
+                  action={
+                    <Button
+                      color="inherit"
+                      onClick={cancelRevision}
+                      sx={{ minHeight: 40, fontWeight: 700 }}
+                    >
+                      Cancel revision
+                    </Button>
+                  }
+                >
+                  You are revising item {revisionItem.proposalIndex + 1}.
+                  Previous answer:{" "}
+                  <strong>
+                    {revisionItem.decision === "agree" ? "Agreed" : "Disagreed"}
+                  </strong>
+                  . Your progress remains at {cursor} of {cards.length} items
+                  completed.
+                </Alert>
               )}
-            </Stack>
-          </Stack>
-        )}
+              <ReviewCard
+                key={
+                  activeCard.proposalId +
+                  "-" +
+                  (revisionItem?.reviewedAt || "new")
+                }
+                card={activeCard}
+                reviewerId={user.userId}
+                mode={revisionItem ? "revise" : "review"}
+                initialResponse={
+                  revisionItem
+                    ? {
+                        decision: revisionItem.decision,
+                        disagreementReason:
+                          revisionItem.disagreementReason || "",
+                        suggestedCorrection:
+                          revisionItem.suggestedCorrection || "",
+                      }
+                    : undefined
+                }
+                onSubmit={revisionItem ? submitRevision : submitResponse}
+              />
+            </Box>
+          )}
 
-        {phase === "empty" && (
-          <Stack
-            alignItems="center"
-            spacing={2.5}
-            sx={{ py: 10, textAlign: "center" }}
-          >
-            <CheckCircleOutlineIcon color="success" sx={{ fontSize: 52 }} />
-            <Typography variant="h6" sx={{ fontWeight: 700 }}>
-              Nothing left to review in this queue.
-            </Typography>
-            <Button
-              variant="outlined"
-              startIcon={<ArrowBackIcon />}
-              onClick={exitToSelector}
-              sx={{ textTransform: "none", borderRadius: "10px" }}
+          {phase === "session" && (!activeCard || !user?.userId) && (
+            <Alert
+              severity="error"
+              action={<Button onClick={exitToSelector}>Exit</Button>}
             >
-              All queues
-            </Button>
-          </Stack>
-        )}
-      </Container>
-    </Box>
+              The current review item is unavailable.
+            </Alert>
+          )}
+
+          {phase === "complete" && (
+            <Stack sx={{ py: 2 }}>
+              <Stack direction="row" justifyContent="flex-end">
+                <ThemeModeToggle />
+              </Stack>
+              <Stack
+                alignItems="center"
+                spacing={2.5}
+                sx={{ py: 10, textAlign: "center" }}
+              >
+                <CheckCircleOutlineIcon color="success" sx={{ fontSize: 56 }} />
+                <Box>
+                  <Typography
+                    variant="h5"
+                    component="h1"
+                    sx={{ fontWeight: 800 }}
+                  >
+                    Review set complete
+                  </Typography>
+                  <Typography sx={{ mt: 0.75, color: "text.secondary" }}>
+                    {cards.length} {cards.length === 1 ? "item" : "items"}{" "}
+                    reviewed
+                  </Typography>
+                </Box>
+                <ReviewHistorySelect
+                  history={history}
+                  selectedProposalId={revisionProposalId}
+                  onSelect={selectRevision}
+                />
+                <Stack
+                  direction={{ xs: "column", sm: "row" }}
+                  spacing={1.5}
+                  sx={{ width: { xs: "100%", sm: "auto" } }}
+                >
+                  <Button
+                    variant="outlined"
+                    startIcon={<ArrowBackIcon />}
+                    onClick={exitToSelector}
+                    sx={{ minHeight: 50, fontWeight: 700 }}
+                  >
+                    All review types
+                  </Button>
+                  {issueType && (
+                    <Button
+                      variant="contained"
+                      onClick={() => startSession(issueType)}
+                      sx={{ minHeight: 50, fontWeight: 750 }}
+                    >
+                      Review another set
+                    </Button>
+                  )}
+                </Stack>
+              </Stack>
+            </Stack>
+          )}
+
+          {phase === "empty" && (
+            <Stack sx={{ py: 2 }}>
+              <Stack direction="row" justifyContent="flex-end">
+                <ThemeModeToggle />
+              </Stack>
+              <Stack
+                alignItems="center"
+                spacing={2.5}
+                sx={{ py: 10, textAlign: "center" }}
+              >
+                <CheckCircleOutlineIcon color="success" sx={{ fontSize: 56 }} />
+                <Typography
+                  variant="h5"
+                  component="h1"
+                  sx={{ fontWeight: 800 }}
+                >
+                  Nothing left in this review type
+                </Typography>
+                <Button
+                  variant="outlined"
+                  startIcon={<ArrowBackIcon />}
+                  onClick={exitToSelector}
+                  sx={{ minHeight: 50, fontWeight: 700 }}
+                >
+                  All review types
+                </Button>
+              </Stack>
+            </Stack>
+          )}
+        </Container>
+      </Box>
+    </>
   );
 };
 

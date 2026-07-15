@@ -378,12 +378,40 @@
             "sourceRecord": {
               "type": "string",
               "default": ""
+            },
+            "sourceOntologyAppId": {
+              "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+            },
+            "sourceOntologyName": {
+              "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+            },
+            "sourceSnapshotSha256": {
+              "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+            },
+            "subjectNodeId": {
+              "type": "string"
+            },
+            "parentNodeId": {
+              "type": "string"
+            },
+            "referencedNodeIds": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+              },
+              "uniqueItems": true
             }
           },
           "required": [
             "sourceOntology",
             "sourceOntologySha256",
-            "sourceArtifact"
+            "sourceArtifact",
+            "sourceOntologyAppId",
+            "sourceOntologyName",
+            "sourceSnapshotSha256",
+            "subjectNodeId",
+            "parentNodeId",
+            "referencedNodeIds"
           ],
           "additionalProperties": false
         },

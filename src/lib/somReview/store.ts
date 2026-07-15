@@ -8,6 +8,12 @@ import {
 } from "../firestoreClient/collections";
 import { SomIssueType } from "../../types/ISomReview";
 import { DEFAULT_SESSION_SIZE, MAX_SESSION_SIZE, SomDataset } from "./dataset";
+import {
+  isResumableSession,
+  planResponseTransition,
+  planUndoTransition,
+  reviewedProposalIndex,
+} from "./sessionState";
 
 export interface SessionDoc {
   datasetVersion: string;
@@ -18,6 +24,10 @@ export interface SessionDoc {
   status: "active" | "completed";
   createdAt: Timestamp;
   updatedAt: Timestamp;
+}
+
+export interface StoredSession extends SessionDoc {
+  id: string;
 }
 
 /** The reviewer's current (non-retracted) response for one proposal. */
@@ -76,6 +86,22 @@ export const pendingCount = async (
   return all.filter((id) => !answered.has(id)).length;
 };
 
+export const activeSessionProgress = async (
+  datasetVersion: string,
+  issueType: SomIssueType,
+  reviewerId: string,
+): Promise<{ cursor: number; total: number } | null> => {
+  const snapshot = await activeSessionQuery(
+    datasetVersion,
+    issueType,
+    reviewerId,
+  ).get();
+  if (snapshot.empty) return null;
+  const session = snapshot.docs[0].data() as SessionDoc;
+  if (!isResumableSession(session)) return null;
+  return { cursor: session.cursor, total: session.proposalIds.length };
+};
+
 /**
  * Returns the reviewer's unfinished session for this issue type, or builds a
  * new one of up to DEFAULT_SESSION_SIZE unanswered records (hard cap 15,
@@ -86,15 +112,24 @@ export const getOrCreateSession = async (
   dataset: SomDataset,
   issueType: SomIssueType,
   reviewerId: string,
-): Promise<SessionDoc | null> => {
+): Promise<StoredSession | null> => {
   const existing = await activeSessionQuery(
     dataset.datasetVersion,
     issueType,
     reviewerId,
   ).get();
   if (!existing.empty) {
-    const session = existing.docs[0].data() as SessionDoc;
-    if (session.cursor < session.proposalIds.length) return session;
+    const existingDoc = existing.docs[0];
+    const session = existingDoc.data() as SessionDoc;
+    if (isResumableSession(session)) {
+      return { ...session, id: existingDoc.id };
+    }
+    if (session.status === "active") {
+      await existingDoc.ref.update({
+        status: "completed",
+        updatedAt: Timestamp.now(),
+      });
+    }
   }
 
   const all = dataset.orderedIdsByIssue.get(issueType) || [];
@@ -122,8 +157,9 @@ export const getOrCreateSession = async (
     createdAt: now,
     updatedAt: now,
   };
-  await db.collection(SOM_REVIEW_SESSIONS).add(session);
-  return session;
+  const sessionRef = db.collection(SOM_REVIEW_SESSIONS).doc();
+  await sessionRef.set(session);
+  return { ...session, id: sessionRef.id };
 };
 
 export interface ResponsePayload {
@@ -136,6 +172,17 @@ export interface ResponsePayload {
   suggestedCorrection?: string;
   reviewedAt: string;
   elapsedMs?: number;
+}
+
+interface StoredResponseDoc {
+  datasetVersion: string;
+  issueType: SomIssueType;
+  proposalId: string;
+  reviewerId: string;
+  status: "current" | "retracted";
+  response: ResponsePayload;
+  revisionCount: number;
+  updatedAt: Timestamp;
 }
 
 /** Common fields identifying a response revision's logical subject. */
@@ -155,10 +202,12 @@ const revisionIdentity = (payload: {
  * - Editing an existing response appends an audited revision.
  */
 export const saveResponse = async (
+  sessionId: string,
   issueType: SomIssueType,
   payload: ResponsePayload,
 ): Promise<{ cursor: number; completed: boolean }> => {
   return db.runTransaction(async (transaction) => {
+    const sessionRef = db.collection(SOM_REVIEW_SESSIONS).doc(sessionId);
     const [responseSnap, sessionSnap] = await Promise.all([
       transaction.get(
         currentResponseQuery(
@@ -167,20 +216,16 @@ export const saveResponse = async (
           payload.reviewerId,
         ),
       ),
-      transaction.get(
-        activeSessionQuery(
-          payload.datasetVersion,
-          issueType,
-          payload.reviewerId,
-        ),
-      ),
+      transaction.get(sessionRef),
     ]);
-    if (sessionSnap.empty)
-      throw new Error("No active session for this issue type");
-    const sessionRef = sessionSnap.docs[0].ref;
-    const session = sessionSnap.docs[0].data() as SessionDoc;
-    if (!session.proposalIds.includes(payload.proposalId)) {
-      throw new Error("Proposal is not part of the current session");
+    if (!sessionSnap.exists) throw new Error("Review session was not found");
+    const session = sessionSnap.data() as SessionDoc;
+    if (
+      session.datasetVersion !== payload.datasetVersion ||
+      session.issueType !== issueType ||
+      session.reviewerId !== payload.reviewerId
+    ) {
+      throw new Error("Review session does not match this response");
     }
 
     const now = Timestamp.now();
@@ -193,8 +238,13 @@ export const saveResponse = async (
         (payload.disagreementReason || "") &&
       (existing.response.suggestedCorrection || "") ===
         (payload.suggestedCorrection || "");
+    const transition = planResponseTransition(
+      session,
+      payload.proposalId,
+      Boolean(identicalRetry),
+    );
 
-    if (!identicalRetry) {
+    if (transition.shouldPersist) {
       const responseRef = existingDoc
         ? existingDoc.ref
         : db.collection(SOM_REVIEW_RESPONSES).doc();
@@ -218,15 +268,104 @@ export const saveResponse = async (
       });
     }
 
-    let cursor = session.cursor;
-    if (session.proposalIds[cursor] === payload.proposalId) cursor += 1;
-    const completed = cursor >= session.proposalIds.length;
     transaction.update(sessionRef, {
-      cursor,
-      status: completed ? "completed" : "active",
+      cursor: transition.cursor,
+      status: transition.completed ? "completed" : "active",
       updatedAt: now,
     });
-    return { cursor, completed };
+    return {
+      cursor: transition.cursor,
+      completed: transition.completed,
+    };
+  });
+};
+
+/** Returns current responses for proposals in this session, keyed by ID. */
+export const sessionResponses = async (
+  session: StoredSession,
+): Promise<Map<string, ResponsePayload>> => {
+  const proposalIds = new Set(session.proposalIds);
+  const snapshot = await db
+    .collection(SOM_REVIEW_RESPONSES)
+    .where("datasetVersion", "==", session.datasetVersion)
+    .where("issueType", "==", session.issueType)
+    .where("reviewerId", "==", session.reviewerId)
+    .where("status", "==", "current")
+    .get();
+  return new Map(
+    snapshot.docs
+      .map((doc) => doc.data() as StoredResponseDoc)
+      .filter(
+        (record) =>
+          proposalIds.has(record.proposalId) && Boolean(record.response),
+      )
+      .map((record) => [record.proposalId, record.response]),
+  );
+};
+
+/**
+ * Replaces one prior answer in place, appends an audit revision, and leaves
+ * the reviewer's current queue position unchanged.
+ */
+export const reviseResponse = async (
+  sessionId: string,
+  issueType: SomIssueType,
+  payload: ResponsePayload,
+): Promise<{ changed: boolean }> => {
+  return db.runTransaction(async (transaction) => {
+    const sessionRef = db.collection(SOM_REVIEW_SESSIONS).doc(sessionId);
+    const [responseSnap, sessionSnap] = await Promise.all([
+      transaction.get(
+        currentResponseQuery(
+          payload.datasetVersion,
+          payload.proposalId,
+          payload.reviewerId,
+        ),
+      ),
+      transaction.get(sessionRef),
+    ]);
+    if (!sessionSnap.exists) throw new Error("Review session was not found");
+    const session = sessionSnap.data() as SessionDoc;
+    if (
+      session.datasetVersion !== payload.datasetVersion ||
+      session.issueType !== issueType ||
+      session.reviewerId !== payload.reviewerId
+    ) {
+      throw new Error("Review session does not match this response");
+    }
+    reviewedProposalIndex(session, payload.proposalId);
+    if (responseSnap.empty) {
+      throw new Error("The prior response could not be found");
+    }
+
+    const responseDoc = responseSnap.docs[0];
+    const existing = responseDoc.data() as StoredResponseDoc;
+    const identical =
+      existing.response.decision === payload.decision &&
+      (existing.response.disagreementReason || "") ===
+        (payload.disagreementReason || "") &&
+      (existing.response.suggestedCorrection || "") ===
+        (payload.suggestedCorrection || "");
+    if (identical) return { changed: false };
+
+    const now = Timestamp.now();
+    const revisionIndex = (existing.revisionCount || 0) + 1;
+    transaction.update(responseDoc.ref, {
+      response: payload,
+      revisionCount: revisionIndex,
+      updatedAt: now,
+    });
+    transaction.set(db.collection(SOM_REVIEW_RESPONSE_REVISIONS).doc(), {
+      ...revisionIdentity(payload),
+      issueType,
+      responseDocId: responseDoc.id,
+      revisionIndex,
+      action: "edit",
+      response: payload,
+      createdAt: now,
+    });
+    transaction.update(sessionRef, { updatedAt: now });
+    return { changed: true };
   });
 };
 
@@ -235,20 +374,26 @@ export const saveResponse = async (
  * appends an audited "undo" revision, and steps the session cursor back.
  */
 export const undoPrevious = async (
+  sessionId: string,
   datasetVersion: string,
   issueType: SomIssueType,
   reviewerId: string,
 ): Promise<{ cursor: number }> => {
   return db.runTransaction(async (transaction) => {
-    const sessionSnap = await transaction.get(
-      activeSessionQuery(datasetVersion, issueType, reviewerId),
-    );
-    if (sessionSnap.empty) throw new Error("No session to undo in");
-    const sessionRef = sessionSnap.docs[0].ref;
-    const session = sessionSnap.docs[0].data() as SessionDoc;
-    if (session.cursor === 0) throw new Error("Nothing to undo");
+    const sessionRef = db.collection(SOM_REVIEW_SESSIONS).doc(sessionId);
+    const sessionSnap = await transaction.get(sessionRef);
+    if (!sessionSnap.exists) throw new Error("Review session was not found");
+    const session = sessionSnap.data() as SessionDoc;
+    if (
+      session.datasetVersion !== datasetVersion ||
+      session.issueType !== issueType ||
+      session.reviewerId !== reviewerId
+    ) {
+      throw new Error("Review session does not match this reviewer");
+    }
+    const transition = planUndoTransition(session);
 
-    const previousId = session.proposalIds[session.cursor - 1];
+    const previousId = session.proposalIds[transition.cursor];
     const responseSnap = await transaction.get(
       currentResponseQuery(datasetVersion, previousId, reviewerId),
     );
@@ -274,9 +419,10 @@ export const undoPrevious = async (
       createdAt: now,
     });
     transaction.update(sessionRef, {
-      cursor: session.cursor - 1,
+      cursor: transition.cursor,
+      status: transition.status,
       updatedAt: now,
     });
-    return { cursor: session.cursor - 1 };
+    return { cursor: transition.cursor };
   });
 };

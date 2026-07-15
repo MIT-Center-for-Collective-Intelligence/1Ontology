@@ -1,17 +1,37 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Box,
-  Chip,
+  Button,
+  Collapse,
+  Divider,
   List,
   ListItem,
   ListItemText,
   Stack,
   Typography,
 } from "@mui/material";
+import ExpandLessIcon from "@mui/icons-material/ExpandLess";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import SubdirectoryArrowRightIcon from "@mui/icons-material/SubdirectoryArrowRight";
 import { diffWords } from "diff";
+import { alpha } from "@mui/material/styles";
 
 import { SomReviewContext } from "../../types/ISomReview";
+
+const sectionLabelSx = {
+  color: "text.secondary",
+  fontSize: "0.875rem",
+  fontWeight: 700,
+};
+
+const comparisonPanelSx = {
+  flex: 1,
+  minWidth: 0,
+  p: 2,
+  border: (theme: any) => `1px solid ${theme.palette.divider}`,
+  borderRadius: 1.5,
+  backgroundColor: "background.paper",
+};
 
 const ContextRenderer = ({ context }: { context: SomReviewContext }) => {
   switch (context.type) {
@@ -24,26 +44,13 @@ const ContextRenderer = ({ context }: { context: SomReviewContext }) => {
     case "duplicate-comparison":
       return <DuplicateComparison context={context} />;
     case "placement-comparison":
-      return <PlacementComparison context={context} />;
+      return null;
     case "overlap-comparison":
       return <OverlapComparison context={context} />;
-    default:
-      return null;
   }
 };
 
-const highlightSx = {
-  backgroundColor: (theme: any) =>
-    theme.palette.mode === "dark"
-      ? "rgba(255, 213, 79, 0.18)"
-      : "rgba(255, 213, 79, 0.45)",
-  borderRadius: "4px",
-  px: 0.5,
-};
-
-/* ------------------------------ title clarity ----------------------------- */
-
-/** Renders a title with the words that differ from the other title emphasized. */
+/** Renders a title with changed words emphasized without relying on color. */
 export const DiffedTitle = ({
   title,
   other,
@@ -53,24 +60,66 @@ export const DiffedTitle = ({
   other: string;
   changedColor: "error.main" | "success.main";
 }) => (
-  <Typography sx={{ fontWeight: 500 }}>
-    {diffWords(other, title)
-      .filter((part) => !part.removed)
-      .map((part, index) =>
-        part.added ? (
-          <Box
-            key={index}
-            component="span"
-            sx={{ color: changedColor, fontWeight: 700 }}
-          >
-            {part.value}
-          </Box>
-        ) : (
-          <span key={index}>{part.value}</span>
-        ),
-      )}
+  <Typography aria-label={title} sx={{ fontSize: "1.05rem", fontWeight: 600 }}>
+    <span aria-hidden="true">
+      {diffWords(other, title)
+        .filter((part) => !part.removed)
+        .map((part, index) =>
+          part.added ? (
+            <Box
+              key={`${part.value}-${index}`}
+              component="mark"
+              sx={{
+                color: changedColor,
+                backgroundColor: "action.selected",
+                borderRadius: 0.5,
+                fontWeight: 800,
+                px: 0.25,
+              }}
+            >
+              {part.value}
+            </Box>
+          ) : (
+            <span key={`${part.value}-${index}`}>{part.value}</span>
+          ),
+        )}
+    </span>
   </Typography>
 );
+
+const Disclosure = ({
+  closedLabel,
+  openLabel,
+  children,
+}: {
+  closedLabel: string;
+  openLabel: string;
+  children: React.ReactNode;
+}) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <Box>
+      <Button
+        variant="text"
+        color="inherit"
+        onClick={() => setOpen((value) => !value)}
+        endIcon={open ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+        aria-expanded={open}
+        sx={{
+          minHeight: 44,
+          px: 0.5,
+          color: "text.secondary",
+          fontWeight: 650,
+        }}
+      >
+        {open ? openLabel : closedLabel}
+      </Button>
+      <Collapse in={open} unmountOnExit>
+        {children}
+      </Collapse>
+    </Box>
+  );
+};
 
 const TitleComparison = ({
   context,
@@ -81,61 +130,84 @@ const TitleComparison = ({
   if (tasks.length === 0) return null;
 
   return (
-    <Box>
-      <Typography
-        variant="caption"
-        component="div"
-        sx={{
-          fontWeight: 700,
-          letterSpacing: "0.08em",
-          textTransform: "uppercase",
-          color: "text.secondary",
-          mb: 0.25,
-        }}
-      >
-        {tasks.length === 1 ? "O*NET Task:" : "O*NET Tasks:"}
-      </Typography>
-      <List dense disablePadding>
+    <Disclosure
+      closedLabel={`Show source ${tasks.length === 1 ? "task" : `tasks (${tasks.length})`}`}
+      openLabel="Hide source tasks"
+    >
+      <List dense disablePadding sx={{ pl: 1, pb: 1 }}>
         {tasks.map((task) => (
-          <ListItem key={task} disableGutters sx={{ py: 0.25 }}>
-            <ListItemText primary={task} sx={{ my: 0 }} />
+          <ListItem key={task} disableGutters alignItems="flex-start">
+            <ListItemText
+              primary={task}
+              primaryTypographyProps={{ sx: { lineHeight: 1.5 } }}
+            />
           </ListItem>
         ))}
       </List>
-    </Box>
+    </Disclosure>
   );
 };
 
 const OutlineItem = ({
   title,
   highlighted,
-  dimmed,
   indent = 0,
+  statusLabel,
 }: {
   title: string;
   highlighted?: boolean;
-  dimmed?: boolean;
   indent?: number;
+  statusLabel?: string;
 }) => (
   <Stack
+    data-outline-item={title}
+    data-highlighted={highlighted ? "true" : "false"}
     direction="row"
-    alignItems="center"
-    spacing={0.5}
-    sx={{ pl: indent * 3, py: 0.25 }}
-  >
-    <SubdirectoryArrowRightIcon sx={{ fontSize: 14, color: "text.disabled" }} />
-    <Typography
-      component="span"
-      sx={
+    alignItems="flex-start"
+    spacing={0.75}
+    sx={{
+      ml: indent * 2.25,
+      my: 0.5,
+      p: highlighted ? 0.75 : 0,
+      borderRadius: 1,
+      border: (theme) =>
         highlighted
-          ? highlightSx
-          : dimmed
-            ? { color: "text.secondary" }
-            : undefined
-      }
-    >
-      {title}
-    </Typography>
+          ? `1px solid ${alpha(theme.palette.primary.main, 0.7)}`
+          : "1px solid transparent",
+      backgroundColor: (theme) =>
+        highlighted
+          ? alpha(
+              theme.palette.primary.main,
+              theme.palette.mode === "dark" ? 0.2 : 0.1,
+            )
+          : "transparent",
+      color: "text.primary",
+    }}
+  >
+    <SubdirectoryArrowRightIcon
+      aria-hidden="true"
+      sx={{ mt: 0.35, flex: "0 0 auto", fontSize: 18, color: "text.secondary" }}
+    />
+    <Box sx={{ minWidth: 0 }}>
+      <Typography
+        sx={{ fontWeight: highlighted ? 700 : 500, lineHeight: 1.45 }}
+      >
+        {title}
+      </Typography>
+      {statusLabel && (
+        <Typography
+          sx={{
+            mt: 0.25,
+            color: "text.secondary",
+            fontSize: "0.8rem",
+            fontWeight: 700,
+            lineHeight: 1.35,
+          }}
+        >
+          {statusLabel}
+        </Typography>
+      )}
+    </Box>
   </Stack>
 );
 
@@ -144,29 +216,57 @@ const GroupingOutline = ({
 }: {
   context: Extract<SomReviewContext, { type: "grouping-outline" }>;
 }) => {
-  const unaffected = context.unaffectedChildren || [];
+  const sortTitles = (titles: string[]) =>
+    [...titles].sort((left, right) => left.localeCompare(right, "en"));
+  const proposedChildren = sortTitles(context.proposedChildren);
+  const unaffected = sortTitles(context.unaffectedChildren || []);
+  const proposedTitles = new Set(context.proposedChildren);
+  const currentChildren = sortTitles([
+    ...new Set([...context.proposedChildren, ...unaffected]),
+  ]);
+  const remainingChildren = unaffected.length > 0 && (
+    <Box sx={{ mt: 1.5 }}>
+      <Divider sx={{ mb: 1.25 }} />
+      <Typography sx={sectionLabelSx}>
+        Children not included in the new grouping
+      </Typography>
+      {unaffected.map((title) => (
+        <OutlineItem key={title} title={title} indent={1} />
+      ))}
+    </Box>
+  );
+
   return (
-    <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mt: 1 }}>
-      <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Chip label="Before" size="small" sx={{ mb: 1 }} />
-        <Typography sx={{ fontWeight: 600 }}>{context.parentTitle}</Typography>
-        {context.proposedChildren.map((child) => (
-          <OutlineItem key={child} title={child} highlighted indent={1} />
-        ))}
-        {unaffected.map((child) => (
-          <OutlineItem key={child} title={child} dimmed indent={1} />
+    <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
+      <Box sx={comparisonPanelSx} aria-label="Current grouping">
+        <Typography sx={sectionLabelSx}>Before</Typography>
+        <Typography sx={{ mt: 1, fontWeight: 750 }}>
+          {context.parentTitle}
+        </Typography>
+        {currentChildren.map((child) => (
+          <OutlineItem
+            key={child}
+            title={child}
+            highlighted={proposedTitles.has(child)}
+            indent={1}
+          />
         ))}
       </Box>
-      <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Chip label="After" size="small" color="primary" sx={{ mb: 1 }} />
-        <Typography sx={{ fontWeight: 600 }}>{context.parentTitle}</Typography>
-        <OutlineItem title={context.proposedGroupTitle} indent={1} />
-        {context.proposedChildren.map((child) => (
+      <Box sx={comparisonPanelSx} aria-label="Proposed grouping">
+        <Typography sx={sectionLabelSx}>After</Typography>
+        <Typography sx={{ mt: 1, fontWeight: 750 }}>
+          {context.parentTitle}
+        </Typography>
+        <OutlineItem
+          title={context.proposedGroupTitle}
+          highlighted
+          indent={1}
+          statusLabel="Proposed new group (not currently in the ontology)"
+        />
+        {proposedChildren.map((child) => (
           <OutlineItem key={child} title={child} highlighted indent={2} />
         ))}
-        {unaffected.map((child) => (
-          <OutlineItem key={child} title={child} dimmed indent={1} />
-        ))}
+        {remainingChildren}
       </Box>
     </Stack>
   );
@@ -177,26 +277,39 @@ const FlatList = ({
 }: {
   context: Extract<SomReviewContext, { type: "flat-list" }>;
 }) => (
-  <Box sx={{ mt: 1 }}>
-    <Typography sx={{ fontWeight: 600 }}>{context.parentTitle}</Typography>
+  <Box sx={comparisonPanelSx}>
+    <Typography sx={sectionLabelSx}>Current direct children</Typography>
+    <Typography sx={{ mt: 1, fontWeight: 750 }}>
+      {context.parentTitle}
+    </Typography>
     {context.currentChildren.map((child) => (
       <OutlineItem key={child} title={child} indent={1} />
     ))}
   </Box>
 );
 
-/* ----------------- experimental issue types (feature-flagged) -------------- */
-
 const LabeledValue = ({ label, value }: { label: string; value: string }) => (
-  <Box sx={{ mb: 1 }}>
-    <Typography
-      variant="caption"
-      sx={{ color: "text.secondary", textTransform: "uppercase" }}
-    >
-      {label}
+  <Box>
+    <Typography sx={sectionLabelSx}>{label}</Typography>
+    <Typography sx={{ mt: 0.5, fontSize: "1.05rem", fontWeight: 650 }}>
+      {value}
     </Typography>
-    <Typography>{value}</Typography>
   </Box>
+);
+
+const BoundaryNote = ({ children }: { children: React.ReactNode }) => (
+  <Typography
+    sx={{
+      mt: 2,
+      pt: 1.5,
+      borderTop: (theme) => `1px solid ${theme.palette.divider}`,
+      color: "text.secondary",
+      fontSize: "0.95rem",
+      lineHeight: 1.5,
+    }}
+  >
+    {children}
+  </Typography>
 );
 
 const DuplicateComparison = ({
@@ -204,38 +317,21 @@ const DuplicateComparison = ({
 }: {
   context: Extract<SomReviewContext, { type: "duplicate-comparison" }>;
 }) => (
-  <Box sx={{ mt: 1 }}>
-    <LabeledValue label="Parent" value={context.parentTitle} />
-    <LabeledValue label="First title" value={context.canonicalTitle} />
-    <LabeledValue label="Second title" value={context.candidateSynonymTitle} />
-    <Typography variant="body2" sx={{ color: "text.secondary" }}>
-      This question is only about whether the two titles name the same activity.
-      Merging is a separate, later decision.
+  <Box>
+    <Typography sx={{ mb: 1.5, color: "text.secondary" }}>
+      Both titles are under <strong>{context.parentTitle}</strong>.
     </Typography>
-  </Box>
-);
-
-const PlacementComparison = ({
-  context,
-}: {
-  context: Extract<SomReviewContext, { type: "placement-comparison" }>;
-}) => (
-  <Box sx={{ mt: 1 }}>
-    <LabeledValue label="Activity" value={context.nodeTitle} />
-    <LabeledValue label="Current parent" value={context.currentParentTitle} />
-    {context.currentBucket ? (
-      <LabeledValue label="Current bucket" value={context.currentBucket} />
-    ) : null}
-    {context.candidateHome ? (
-      <LabeledValue
-        label="Possible alternative home"
-        value={context.candidateHome}
-      />
-    ) : null}
-    <Typography variant="body2" sx={{ color: "text.secondary" }}>
-      Agreeing only marks the current placement as wrong. Choosing the final
-      destination and moving the activity are separate, later steps.
-    </Typography>
+    <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+      <Box sx={comparisonPanelSx}>
+        <LabeledValue label="First title" value={context.canonicalTitle} />
+      </Box>
+      <Box sx={comparisonPanelSx}>
+        <LabeledValue
+          label="Second title"
+          value={context.candidateSynonymTitle}
+        />
+      </Box>
+    </Stack>
   </Box>
 );
 
@@ -244,26 +340,28 @@ const OverlapComparison = ({
 }: {
   context: Extract<SomReviewContext, { type: "overlap-comparison" }>;
 }) => (
-  <Box sx={{ mt: 1 }}>
-    <LabeledValue label="Parent" value={context.parentTitle} />
+  <Box>
+    <Typography sx={{ mb: 1.5, color: "text.secondary" }}>
+      Both collections are under <strong>{context.parentTitle}</strong>.
+    </Typography>
     <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-      <Box sx={{ flex: 1 }}>
+      <Box sx={comparisonPanelSx}>
         <LabeledValue
-          label={`In "${context.firstCollection}"`}
+          label={context.firstCollection}
           value={context.firstTitle}
         />
       </Box>
-      <Box sx={{ flex: 1 }}>
+      <Box sx={comparisonPanelSx}>
         <LabeledValue
-          label={`In "${context.secondCollection}"`}
+          label={context.secondCollection}
           value={context.secondTitle}
         />
       </Box>
     </Stack>
-    <Typography variant="body2" sx={{ color: "text.secondary" }}>
-      Agreeing only marks a possible overlap. It does not approve merging
-      anything.
-    </Typography>
+    <BoundaryNote>
+      Agreeing only marks a possible overlap for follow-up. It does not merge
+      either activity.
+    </BoundaryNote>
   </Box>
 );
 

@@ -3,6 +3,7 @@ import { NextApiRequest, NextApiResponse } from "next";
 import fbAuth, { CustomNextApiRequest } from "../../../middlewares/fbAuth";
 import { getDataset } from "../../../lib/somReview/dataset";
 import { undoPrevious } from "../../../lib/somReview/store";
+import { reviewRequestData } from "../../../lib/somReview/request";
 import { SomIssueType, SomUndoResult } from "../../../types/ISomReview";
 
 const handler = async (request: NextApiRequest, res: NextApiResponse) => {
@@ -10,12 +11,17 @@ const handler = async (request: NextApiRequest, res: NextApiResponse) => {
   if (req.method !== "POST")
     return res.status(405).json({ error: "Method not allowed" });
   try {
-    const issueType = req.body?.data?.issueType as SomIssueType;
+    const data = reviewRequestData(req.body);
+    const issueType = data.issueType as SomIssueType;
+    const sessionId = typeof data.sessionId === "string" ? data.sessionId : "";
+    if (!sessionId)
+      return res.status(400).json({ error: "Missing sessionId" });
     const dataset = getDataset();
     if (!dataset.orderedIdsByIssue.has(issueType)) {
       return res.status(400).json({ error: "Unknown issue type" });
     }
     const { cursor } = await undoPrevious(
+      sessionId,
       dataset.datasetVersion,
       issueType,
       req.user.uid,

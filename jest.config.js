@@ -35,6 +35,7 @@ const customJestConfig = {
     "^testUtils/(.*)$": "<rootDir>/testUtils/$1",
   },
   moduleDirectories: ["node_modules", "src", "testUtils"],
+  modulePathIgnorePatterns: ["<rootDir>/.next/"],
 };
 
 module.exports = createJestConfig(customJestConfig);

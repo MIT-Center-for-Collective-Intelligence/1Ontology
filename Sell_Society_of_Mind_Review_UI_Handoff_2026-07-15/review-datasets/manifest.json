@@ -1,10 +1,10 @@
 {
   "schemaVersion": "som-review-v1",
-  "datasetVersion": "sell-review-2026-07-14-v1",
+  "datasetVersion": "sell-final-hierarchy-onet-2026-07-15-v1",
   "branch": "Sell",
-  "generatedAt": "2026-07-14T17:19:43.253Z",
-  "sourceOntology": "/Users/oneman/Downloads/final-hierarchy-restructured-v18-2026-07-07.json",
-  "sourceOntologySha256": "d2ac7b4ac724cce8328a9219a699c38eed0e3d87f8aed53a756c540e4e753712",
+  "generatedAt": "2026-07-15T16:00:00.000Z",
+  "sourceOntology": "firestore://ontology-41607/final-hierarchy-with-o*net",
+  "sourceOntologySha256": "e97abe83d5de04cf1e657abb782ee664430416f608d087a8699ae2b57b86c49f",
   "safety": {
     "reviewOnly": true,
     "mutatesOntology": false,
@@ -27,23 +27,23 @@
       "label": "Title clarity",
       "rolloutStatus": "prototype",
       "view": "title-comparison",
-      "proposals": 20,
-      "controls": 27
+      "proposals": 36,
+      "controls": 11
     },
     {
       "id": "sibling-grouping",
       "label": "Sibling grouping",
       "rolloutStatus": "prototype",
       "view": "grouping-outline",
-      "proposals": 1,
-      "controls": 1
+      "proposals": 4,
+      "controls": 0
     },
     {
       "id": "duplicate-synonym",
       "label": "Duplicate or synonym",
       "rolloutStatus": "experimental",
       "view": "duplicate-comparison",
-      "proposals": 0,
+      "proposals": 1,
       "controls": 0
     },
     {
@@ -51,7 +51,7 @@
       "label": "Placement",
       "rolloutStatus": "experimental",
       "view": "placement-comparison",
-      "proposals": 16,
+      "proposals": 10,
       "controls": 0
     },
     {
@@ -72,12 +72,13 @@
     "rejectedAgentCandidates": "diagnostics/rejected_agent_candidates.jsonl",
     "proposalSchema": "schema/review-proposal.schema.json",
     "responseSchema": "schema/review-response.schema.json",
-    "schemaSource": "src/agents/review-proposal-contract.ts"
+    "schemaSource": "src/agents/review-proposal-contract.ts",
+    "ontologySnapshot": "ontology-snapshot.json"
   },
   "counts": {
-    "proposals": 39,
-    "controls": 28,
-    "manualChecks": 1,
+    "proposals": 53,
+    "controls": 11,
+    "manualChecks": 0,
     "rejectedAgentCandidates": 3
   },
   "limitations": [
@@ -85,5 +86,16 @@
     "The ontology snapshot has no structured synonyms field, so formal-synonym auditing cannot be generated reliably from this file.",
     "A placement approval marks a misfit and records an advisory candidate home; destination selection and movement are separate tasks.",
     "A duplicate approval records a synonym judgment; structural merging and child re-parenting are separate tasks."
-  ]
+  ],
+  "sourceSnapshot": {
+    "file": "ontology-snapshot.json",
+    "sha256": "e97abe83d5de04cf1e657abb782ee664430416f608d087a8699ae2b57b86c49f",
+    "ontologyAppId": "final-hierarchy-with-o*net",
+    "ontologyName": "Final Hierarchy with O*Net",
+    "environment": "production",
+    "capturedAt": "2026-07-15T16:00:00.000Z",
+    "sellRootNodeId": "ivPKQuvb3SRqjtIKqn4d",
+    "nodeCount": 112,
+    "edgeCount": 146
+  }
 }

@@ -1,5 +1,5 @@
-import { useEffect, useState, useCallback } from 'react';
-import { useAuth } from '@components/components/context/AuthContext';
+import { useEffect, useCallback } from "react";
+import { useAuth } from "@components/components/context/AuthContext";
 import {
   collection,
   doc,
@@ -7,59 +7,51 @@ import {
   setDoc,
   Timestamp,
   updateDoc,
-} from 'firebase/firestore';
-import { LOGS, USERS } from '../firestoreClient/collections';
+} from "firebase/firestore";
+import { LOGS, USERS } from "../firestoreClient/collections";
 
 /** Fired on the window when `preferred-theme` is updated in this tab (storage events only fire cross-tab). */
-export const PREFERRED_THEME_CHANGE_EVENT = 'preferred-theme-change';
+export const PREFERRED_THEME_CHANGE_EVENT = "preferred-theme-change";
 
 function notifyPreferredThemeChanged() {
-  if (typeof window === 'undefined') return;
+  if (typeof window === "undefined") return;
   window.dispatchEvent(new Event(PREFERRED_THEME_CHANGE_EVENT));
 }
 
 export const useThemeManager = () => {
   const [authState, { dispatch }] = useAuth();
-  // Initialize from localStorage immediately to avoid flash
-  const [isDark, setIsDark] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const savedTheme = localStorage.getItem('preferred-theme');
-      return savedTheme ? savedTheme === 'dark' : true;
-    }
-    return true;
-  });
   const db = getFirestore();
   const isAuthLoading = !authState.isAuthInitialized;
+  const isDark = authState.settings.theme === "Dark";
 
   // Initialize theme on mount and listen for changes
   useEffect(() => {
     if (authState.isAuthenticated && authState.settings?.theme) {
       // User is logged in, use their preferred theme from AuthContext
-      const newIsDark = authState.settings.theme === 'Dark';
-      setIsDark(newIsDark);
+      const newIsDark = authState.settings.theme === "Dark";
       // Sync to localStorage for consistency
-      localStorage.setItem('preferred-theme', newIsDark ? 'dark' : 'light');
+      localStorage.setItem("preferred-theme", newIsDark ? "dark" : "light");
       notifyPreferredThemeChanged();
     } else {
       // User is not logged in, check localStorage (already initialized in state)
-      const savedTheme = localStorage.getItem('preferred-theme');
+      const savedTheme = localStorage.getItem("preferred-theme");
       if (savedTheme) {
-        const newIsDark = savedTheme === 'dark';
-        setIsDark(newIsDark);
+        const newIsDark = savedTheme === "dark";
+        const savedThemeName = newIsDark ? "Dark" : "Light";
+        if (authState.settings.theme !== savedThemeName) {
+          dispatch({ type: "setTheme", payload: savedThemeName });
+        }
       }
     }
-  }, [authState.isAuthenticated, authState.settings?.theme]);
+  }, [authState.isAuthenticated, authState.settings.theme, dispatch]);
 
   const handleThemeSwitch = useCallback(async () => {
     const newTheme = !isDark;
-    const themeString = newTheme ? 'Dark' : 'Light';
+    const themeString = newTheme ? "Dark" : "Light";
 
-    setIsDark(newTheme);
+    dispatch({ type: "setTheme", payload: themeString });
     try {
-      localStorage.setItem(
-        'preferred-theme',
-        newTheme ? 'dark' : 'light'
-      );
+      localStorage.setItem("preferred-theme", newTheme ? "dark" : "light");
       notifyPreferredThemeChanged();
     } catch (e) {
       /* ignore quota / private mode */
@@ -75,25 +67,25 @@ export const useThemeManager = () => {
         const logRef = doc(collection(db, LOGS));
         const now = new Date();
         const year = now.getFullYear();
-        const month = String(now.getMonth() + 1).padStart(2, '0');
-        const day = String(now.getDate()).padStart(2, '0');
-        const hours = String(now.getHours()).padStart(2, '0');
-        const minutes = String(now.getMinutes()).padStart(2, '0');
-        const seconds = String(now.getSeconds()).padStart(2, '0');
+        const month = String(now.getMonth() + 1).padStart(2, "0");
+        const day = String(now.getDate()).padStart(2, "0");
+        const hours = String(now.getHours()).padStart(2, "0");
+        const minutes = String(now.getMinutes()).padStart(2, "0");
+        const seconds = String(now.getSeconds()).padStart(2, "0");
 
         const doerCreate = `${authState.user.uname}-${year}-${month}-${day}-${hours}-${minutes}-${seconds}`;
         await setDoc(logRef, {
           doer: authState.user.uname,
           doerCreate,
-          action: 'theme change',
+          action: "theme change",
           theme: themeString,
           createdAt: Timestamp.fromDate(new Date()),
         });
-
-        // Update the local auth context
-        dispatch({ type: 'setTheme', payload: themeString });
       } catch (error) {
-        console.error('useThemeManager: Error saving theme to Firebase:', error);
+        console.error(
+          "useThemeManager: Error saving theme to Firebase:",
+          error,
+        );
       }
     }
   }, [isDark, authState.isAuthenticated, authState.user, db, dispatch]);
@@ -102,6 +94,6 @@ export const useThemeManager = () => {
     isDark,
     handleThemeSwitch,
     isAuthenticated: authState.isAuthenticated,
-    isAuthLoading
+    isAuthLoading,
   };
 };
