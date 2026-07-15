@@ -33,7 +33,9 @@ describe("Society of Mind review card", () => {
 
   it("submits agreement immediately", async () => {
     const onSubmit = jest.fn().mockResolvedValue(undefined);
-    render(<ReviewCard card={card} reviewerId="reviewer-1" onSubmit={onSubmit} />);
+    render(
+      <ReviewCard card={card} reviewerId="reviewer-1" onSubmit={onSubmit} />,
+    );
     fireEvent.click(screen.getByRole("button", { name: "Agree" }));
     await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
     expect(onSubmit.mock.calls[0][0]).toMatchObject({
@@ -45,7 +47,9 @@ describe("Society of Mind review card", () => {
 
   it("requires a non-whitespace disagreement reason", async () => {
     const onSubmit = jest.fn().mockResolvedValue(undefined);
-    render(<ReviewCard card={card} reviewerId="reviewer-1" onSubmit={onSubmit} />);
+    render(
+      <ReviewCard card={card} reviewerId="reviewer-1" onSubmit={onSubmit} />,
+    );
     fireEvent.click(screen.getByRole("button", { name: "Disagree" }));
     const save = screen.getByRole("button", { name: "Save disagreement" });
     expect(save).toBeDisabled();
@@ -70,10 +74,14 @@ describe("Society of Mind review card", () => {
       .fn()
       .mockRejectedValueOnce(new Error("network"))
       .mockResolvedValueOnce(undefined);
-    render(<ReviewCard card={card} reviewerId="reviewer-1" onSubmit={onSubmit} />);
+    render(
+      <ReviewCard card={card} reviewerId="reviewer-1" onSubmit={onSubmit} />,
+    );
     fireEvent.click(screen.getByRole("button", { name: "Agree" }));
     expect(
-      await screen.findByText("Your answer was not saved. This item is still open."),
+      await screen.findByText(
+        "Your answer was not saved. This item is still open.",
+      ),
     ).toBeInTheDocument();
     expect(screen.getByRole("heading", { level: 2 })).toHaveTextContent(
       "Sell Supplies",
@@ -83,7 +91,9 @@ describe("Society of Mind review card", () => {
   });
 
   it("names local drafts by reviewer as well as proposal", () => {
-    render(<ReviewCard card={card} reviewerId="reviewer-2" onSubmit={jest.fn()} />);
+    render(
+      <ReviewCard card={card} reviewerId="reviewer-2" onSubmit={jest.fn()} />,
+    );
     fireEvent.click(screen.getByRole("button", { name: "Disagree" }));
     fireEvent.change(screen.getByLabelText(/Why do you disagree/i), {
       target: { value: "Needs another title." },
@@ -93,5 +103,59 @@ describe("Society of Mind review card", () => {
         "som-review-draft-reviewer-2-dataset-1-title-1",
       ),
     ).toContain("Needs another title.");
+  });
+
+  it("presents placement as one clear decision without a detached footnote", () => {
+    const placementCard: SomReviewCard = {
+      proposalId: "placement-1",
+      datasetVersion: "dataset-1",
+      issueType: "placement",
+      reviewerView: {
+        question: 'Is "Sell Service" misplaced under "Sell (Information)"?',
+        currentState: "Sell Service is currently under Sell (Information).",
+        proposedState:
+          "Mark Sell Service as misplaced here. Advisory candidate home: Actors and Activities. The exact move remains a separate human decision.",
+        reasoning: "A service is an activity rather than information.",
+        context: {
+          type: "placement-comparison",
+          nodeTitle: "Sell Service",
+          currentParentTitle: "Sell (Information)",
+          currentBucket: "Information",
+          candidateHome: "Actors and Activities",
+          placementIssue: "wrong-bucket",
+        },
+        agreeLabel: "Agree",
+        disagreeLabel: "Disagree",
+      },
+    };
+
+    render(
+      <ReviewCard
+        card={placementCard}
+        reviewerId="reviewer-1"
+        onSubmit={jest.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Current placement")).toBeInTheDocument();
+    expect(screen.getByText("Recommended finding")).toBeInTheDocument();
+    expect(
+      screen.getByText("Possible new home to review next"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Yes, misplaced" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "No, keep here" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/advisory candidate home/i),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/exact move remains a separate human decision/i),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/agreeing only marks the current placement/i),
+    ).not.toBeInTheDocument();
   });
 });

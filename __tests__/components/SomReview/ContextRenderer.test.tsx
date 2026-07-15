@@ -84,8 +84,8 @@ describe("Society of Mind context renderers", () => {
     expect(screen.getByText(/does not merge or delete/i)).toBeInTheDocument();
   });
 
-  it("renders placement details without authorizing movement", () => {
-    render(
+  it("does not repeat placement details below the decision panels", () => {
+    const { container } = render(
       <ContextRenderer
         context={{
           type: "placement-comparison",
@@ -97,10 +97,7 @@ describe("Society of Mind context renderers", () => {
         }}
       />,
     );
-    expect(screen.getByText("Lease out")).toBeInTheDocument();
-    expect(screen.getByText("Current parent")).toBeInTheDocument();
-    expect(screen.getByText("Current object category")).toBeInTheDocument();
-    expect(screen.getByText(/does not move the activity/i)).toBeInTheDocument();
+    expect(container).toBeEmptyDOMElement();
   });
 
   it("renders structural overlap details without authorizing a merge", () => {

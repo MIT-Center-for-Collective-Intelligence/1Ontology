@@ -60,4 +60,39 @@ describe("Society of Mind reviewer card blinding", () => {
     );
     expect(card.reviewerView.question).not.toMatch(/merge|delete/i);
   });
+
+  it("replaces ambiguous placement copy with a clear current-parent decision", () => {
+    const card = toReviewerCard({
+      proposalId: "placement-example",
+      datasetVersion: dataset.datasetVersion,
+      issueType: "placement",
+      reviewerView: {
+        currentState: "Legacy current-state copy.",
+        proposedState:
+          "Advisory candidate home: Actors and Activities. The exact move remains a separate human decision.",
+        reasoning: "A service is an activity rather than information.",
+        context: {
+          type: "placement-comparison",
+          nodeTitle: "Sell Service",
+          currentParentTitle: "Sell (Information)",
+          currentBucket: "Information",
+          candidateHome: "Actors and Activities",
+          placementIssue: "wrong-bucket",
+        },
+      },
+    });
+
+    expect(card.reviewerView).toMatchObject({
+      question: 'Is "Sell Service" misplaced under "Sell (Information)"?',
+      currentState:
+        '"Sell Service" is currently under "Sell (Information)" in the "Information" category.',
+      proposedState:
+        '"Sell Service" does not belong under "Sell (Information)". Possible new home to review next: "Actors and Activities".',
+      agreeLabel: "Yes, misplaced",
+      disagreeLabel: "No, keep here",
+    });
+    expect(JSON.stringify(card)).not.toMatch(
+      /advisory candidate home|exact move remains|separate human decision/i,
+    );
+  });
 });

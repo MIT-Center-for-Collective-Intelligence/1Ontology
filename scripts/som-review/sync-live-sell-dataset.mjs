@@ -414,6 +414,35 @@ function canonicalizeKnownTitleAnnotations(record, index) {
   return { record: rewrite(record), aliases: [...aliases.entries()] };
 }
 
+function clarifyPlacementReviewerView(record) {
+  const context = record?.reviewerView?.context;
+  if (context?.type !== "placement-comparison") return record;
+
+  const nodeTitle = String(context.nodeTitle || "").trim();
+  const currentParentTitle = String(context.currentParentTitle || "").trim();
+  const currentBucket = String(context.currentBucket || "").trim();
+  const candidateHome = String(context.candidateHome || "").trim();
+  return {
+    ...record,
+    reviewerView: {
+      ...record.reviewerView,
+      question: `Is "${nodeTitle}" misplaced under "${currentParentTitle}"?`,
+      currentState: `"${nodeTitle}" is currently under "${currentParentTitle}"${
+        currentBucket ? ` in the "${currentBucket}" category` : ""
+      }.`,
+      proposedState: `"${nodeTitle}" does not belong under "${
+        currentParentTitle
+      }".${
+        candidateHome
+          ? ` Possible new home to review next: "${candidateHome}".`
+          : ""
+      }`,
+      agreeLabel: "Yes, misplaced",
+      disagreeLabel: "No, keep here",
+    },
+  };
+}
+
 function extendProposalSchema(directory) {
   const file = path.join(directory, "schema", "review-proposal.schema.json");
   const schema = readJson(file);
@@ -478,7 +507,7 @@ async function main() {
   const canonicalizedAliases = [];
   const transform = (record) => {
     const canonicalized = canonicalizeKnownTitleAnnotations(record, index);
-    record = canonicalized.record;
+    record = clarifyPlacementReviewerView(canonicalized.record);
     canonicalizedAliases.push(...canonicalized.aliases);
     let refs;
     try {

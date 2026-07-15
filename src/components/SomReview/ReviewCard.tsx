@@ -69,6 +69,24 @@ const StatePanel = ({
   </Box>
 );
 
+const PanelField = ({ label, value }: { label: string; value: string }) => (
+  <Box>
+    <Typography
+      sx={{
+        color: "text.secondary",
+        fontSize: "0.8rem",
+        fontWeight: 750,
+        lineHeight: 1.35,
+      }}
+    >
+      {label}
+    </Typography>
+    <Typography sx={{ mt: 0.25, fontSize: "1.05rem", lineHeight: 1.5 }}>
+      {value}
+    </Typography>
+  </Box>
+);
+
 const ReviewCard = ({
   card,
   reviewerId,
@@ -175,6 +193,10 @@ const ReviewCard = ({
         }
       : null;
   const showStatePanels = view.context.type !== "grouping-outline";
+  const placementContext =
+    view.context.type === "placement-comparison" ? view.context : null;
+  const agreeLabel = placementContext ? "Yes, misplaced" : view.agreeLabel;
+  const disagreeLabel = placementContext ? "No, keep here" : view.disagreeLabel;
 
   return (
     <Box
@@ -206,8 +228,24 @@ const ReviewCard = ({
           spacing={2}
           sx={{ mb: 3 }}
         >
-          <StatePanel label="Current" accent="neutral">
-            {titleDiff ? (
+          <StatePanel
+            label={placementContext ? "Current placement" : "Current"}
+            accent="neutral"
+          >
+            {placementContext ? (
+              <Stack spacing={1.5}>
+                <PanelField
+                  label="Current parent"
+                  value={placementContext.currentParentTitle}
+                />
+                {placementContext.currentBucket && (
+                  <PanelField
+                    label="Current category"
+                    value={placementContext.currentBucket}
+                  />
+                )}
+              </Stack>
+            ) : titleDiff ? (
               <DiffedTitle
                 title={titleDiff.current}
                 other={titleDiff.proposed}
@@ -219,8 +257,26 @@ const ReviewCard = ({
               </Typography>
             )}
           </StatePanel>
-          <StatePanel label="Proposed" accent="primary">
-            {titleDiff ? (
+          <StatePanel
+            label={placementContext ? "Recommended finding" : "Proposed"}
+            accent="primary"
+          >
+            {placementContext ? (
+              <Stack spacing={1.5}>
+                <Typography
+                  sx={{ fontSize: "1.05rem", fontWeight: 700, lineHeight: 1.5 }}
+                >
+                  &quot;{placementContext.nodeTitle}&quot; does not belong under{" "}
+                  &quot;{placementContext.currentParentTitle}&quot;.
+                </Typography>
+                {placementContext.candidateHome && (
+                  <PanelField
+                    label="Possible new home to review next"
+                    value={placementContext.candidateHome}
+                  />
+                )}
+              </Stack>
+            ) : titleDiff ? (
               <DiffedTitle
                 title={titleDiff.proposed}
                 other={titleDiff.current}
@@ -310,7 +366,7 @@ const ReviewCard = ({
                 fontWeight: 750,
               }}
             >
-              {view.agreeLabel}
+              {agreeLabel}
             </Button>
             <Button
               variant="outlined"
@@ -332,13 +388,17 @@ const ReviewCard = ({
                 fontWeight: 700,
               }}
             >
-              {view.disagreeLabel}
+              {disagreeLabel}
             </Button>
           </Stack>
         ) : (
           <Stack spacing={1.5}>
             <TextField
-              label="Why do you disagree?"
+              label={
+                placementContext
+                  ? `Why should "${placementContext.nodeTitle}" stay under "${placementContext.currentParentTitle}"?`
+                  : "Why do you disagree?"
+              }
               required
               multiline
               minRows={2}
@@ -357,7 +417,11 @@ const ReviewCard = ({
               }
             />
             <TextField
-              label="Suggested correction (optional)"
+              label={
+                placementContext
+                  ? "Other placement suggestion (optional)"
+                  : "Suggested correction (optional)"
+              }
               multiline
               maxRows={3}
               value={correction}
@@ -405,7 +469,9 @@ const ReviewCard = ({
                   fontWeight: 750,
                 }}
               >
-                Save disagreement
+                {placementContext
+                  ? "Keep current placement"
+                  : "Save disagreement"}
               </Button>
             </Stack>
           </Stack>

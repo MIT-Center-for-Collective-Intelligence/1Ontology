@@ -44,7 +44,7 @@ const ContextRenderer = ({ context }: { context: SomReviewContext }) => {
     case "duplicate-comparison":
       return <DuplicateComparison context={context} />;
     case "placement-comparison":
-      return <PlacementComparison context={context} />;
+      return null;
     case "overlap-comparison":
       return <OverlapComparison context={context} />;
   }
@@ -320,47 +320,6 @@ const DuplicateComparison = ({
     <BoundaryNote>
       This decision only records whether the titles name the same activity. It
       does not merge or delete anything.
-    </BoundaryNote>
-  </Box>
-);
-
-const PlacementComparison = ({
-  context,
-}: {
-  context: Extract<SomReviewContext, { type: "placement-comparison" }>;
-}) => (
-  <Box>
-    <Box sx={comparisonPanelSx}>
-      <LabeledValue label="Activity" value={context.nodeTitle} />
-      <Divider sx={{ my: 1.5 }} />
-      <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-        <Box sx={{ flex: 1 }}>
-          <LabeledValue
-            label="Current parent"
-            value={context.currentParentTitle}
-          />
-        </Box>
-        {context.currentBucket && (
-          <Box sx={{ flex: 1 }}>
-            <LabeledValue
-              label="Current object category"
-              value={context.currentBucket}
-            />
-          </Box>
-        )}
-      </Stack>
-      {context.candidateHome && (
-        <Box sx={{ mt: 2 }}>
-          <LabeledValue
-            label="Possible home (not part of this decision)"
-            value={context.candidateHome}
-          />
-        </Box>
-      )}
-    </Box>
-    <BoundaryNote>
-      Agreeing only marks the current placement for follow-up. It does not move
-      the activity or choose its final destination.
     </BoundaryNote>
   </Box>
 );

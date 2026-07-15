@@ -39,21 +39,51 @@ export const reviewerQuestion = (context: SomReviewContext): string => {
   }
 };
 
+const placementReviewerText = (
+  context: Extract<SomReviewContext, { type: "placement-comparison" }>,
+) => {
+  const category = cleanText(context.currentBucket);
+  const candidateHome = cleanText(context.candidateHome);
+  return {
+    currentState: `"${context.nodeTitle}" is currently under "${
+      context.currentParentTitle
+    }"${category ? ` in the "${category}" category` : ""}.`,
+    proposedState: `"${context.nodeTitle}" does not belong under "${
+      context.currentParentTitle
+    }".${
+      candidateHome
+        ? ` Possible new home to review next: "${candidateHome}".`
+        : ""
+    }`,
+    agreeLabel: "Yes, misplaced",
+    disagreeLabel: "No, keep here",
+  };
+};
+
 export const toReviewerCard = (record: any): SomReviewCard => {
   const view = record.reviewerView;
   const context = sanitizeContext(view.context);
+  const placementText =
+    context.type === "placement-comparison"
+      ? placementReviewerText(context)
+      : null;
   return {
     proposalId: record.proposalId,
     datasetVersion: record.datasetVersion,
     issueType: record.issueType as SomIssueType,
     reviewerView: {
       question: reviewerQuestion(context),
-      currentState: cleanText(view.currentState),
-      proposedState: cleanText(view.proposedState),
+      currentState: placementText?.currentState || cleanText(view.currentState),
+      proposedState:
+        placementText?.proposedState || cleanText(view.proposedState),
       reasoning: sanitizeReasoning(view.reasoning),
       context,
-      agreeLabel: cleanText(view.agreeLabel) || "Agree",
-      disagreeLabel: cleanText(view.disagreeLabel) || "Disagree",
+      agreeLabel:
+        placementText?.agreeLabel || cleanText(view.agreeLabel) || "Agree",
+      disagreeLabel:
+        placementText?.disagreeLabel ||
+        cleanText(view.disagreeLabel) ||
+        "Disagree",
     },
   };
 };
