@@ -805,50 +805,6 @@ const StructuredProperty = ({
 
     return inheritedParts;
   };
-  // Single write point for the focused node's parts. 
-  // On failure it re-fetches so the UI never keeps an unsaved change.
-  const saveParts = useCallback(
-    async (
-      newParts: ICollection[],
-      inheritedPartsDetails?: InheritedPartsDetail[] | null,
-    ) => {
-      const nodeId = currentVisibleNode?.id;
-      if (!nodeId) return;
-      setCurrentVisibleNode((prev: any) =>
-        prev && prev.id === nodeId
-          ? { ...prev, properties: { ...prev.properties, parts: newParts } }
-          : prev,
-      );
-      pendingWrites.start(nodeId, "properties.parts");
-      try {
-        await Post("/nodes/parts/update", {
-          nodeId,
-          parts: newParts,
-          ...(inheritedPartsDetails ? { inheritedPartsDetails } : {}),
-          ...(appName ? { appName } : {}),
-        });
-      } catch (error: any) {
-        const fresh = await fetchNode(nodeId);
-        setCurrentVisibleNode((prev: any) =>
-          prev?.id === nodeId && fresh ? fresh : prev,
-        );
-        const reason =
-          (typeof error === "string" ? error : error?.message) ||
-          "Please try again.";
-        setSnackbarMessage(`Failed to update parts: ${reason}`);
-      } finally {
-        pendingWrites.end(nodeId, "properties.parts");
-      }
-    },
-    [
-      currentVisibleNode,
-      appName,
-      setCurrentVisibleNode,
-      fetchNode,
-      setSnackbarMessage,
-    ],
-  );
-
   // Delta edits on parts (remove/replace/sort): instant local list + the
   // matching endpoint. On failure it re-fetches so the UI never keeps an
   // unsaved change.
@@ -895,11 +851,41 @@ const StructuredProperty = ({
   );
 
   const sortParts = useCallback(
-    async (newParts: ICollection[]) => {
+    async (
+      newParts: ICollection[],
+      inheritedPartsDetails?: InheritedPartsDetail[] | null,
+    ) => {
       const orderedIds = (newParts[0]?.nodes ?? []).map((n: ILinkNode) => n.id);
-      await savePartsDelta("/nodes/parts/sort", { orderedIds }, newParts);
+      await savePartsDelta(
+        "/nodes/parts/sort",
+        {
+          orderedIds,
+          ...(inheritedPartsDetails ? { inheritedPartsDetails } : {}),
+        },
+        newParts,
+      );
     },
     [savePartsDelta],
+  );
+
+  const togglePartOptional = useCallback(
+    async (partId: string, optional: boolean) => {
+      const source = currentVisibleNode?.properties?.parts;
+      if (!Array.isArray(source)) return;
+      const newParts: ICollection[] = JSON.parse(JSON.stringify(source));
+      const part = newParts[0]?.nodes?.find(
+        (n: ILinkNode) => n.id === partId,
+      );
+      if (!part) return;
+      if (optional) part.optional = true;
+      else delete part.optional;
+      await savePartsDelta(
+        "/nodes/parts/toggle-optional",
+        { partId, optional },
+        newParts,
+      );
+    },
+    [currentVisibleNode, savePartsDelta],
   );
 
   // Switch which generalization a part is specifically inherited from. The
@@ -1733,10 +1719,10 @@ const StructuredProperty = ({
             addNodesToCache={addNodesToCache}
             linkNodeRelation={linkNodeRelation}
             unlinkNodeRelation={unlinkNodeRelation}
-            saveParts={saveParts}
             sortParts={sortParts}
             switchPartSource={switchPartSource}
             addPartFromGen={addParts}
+            togglePartOptional={togglePartOptional}
             user={user}
             navigateToNode={navigateToNode}
             replaceWith={replaceWith}

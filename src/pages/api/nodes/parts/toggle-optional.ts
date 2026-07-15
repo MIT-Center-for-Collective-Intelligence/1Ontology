@@ -20,41 +20,39 @@ import {
 import { derivePartsAndRef } from "@components/lib/server/partsModel";
 
 /**
- * Reorders a node's parts. Ordering inherited parts out of the overall source's
- * relative order BREAKS the overall inheritance but moving own parts around never does. 
- * Pure reorder, there is no isPartOf changes, and descendants are not touched yet.
+ * Sets or clears a part's `optional` flag.
  */
-async function applySort(ctx: {
+async function applyToggleOptional(ctx: {
   nodeId: string;
   nodeData: INode;
-  orderedIds: string[];
-  inheritedPartsDetails?: any[];
+  partId: string;
+  optional: boolean;
   uname?: string;
   appName?: string;
 }): Promise<{ ok: true; ref: string | null; parts: ICollection[] }> {
-  const { nodeId, nodeData, orderedIds, inheritedPartsDetails, uname, appName } =
-    ctx;
+  const { nodeId, nodeData, partId, optional, uname, appName } = ctx;
   const cache: NodeCache = new Map([[nodeId, nodeData]]);
 
   const oldPartsCol = asPartsCollections(nodeData.properties?.parts);
   const gens = await buildGensForAttach(nodeData, cache);
   const { tagged, stored } = taggedPartsAndSource(nodeData, gens);
 
-  const byId = new Map(tagged.map((p) => [p.id, p]));
-  const sameMembership =
-    orderedIds.length === tagged.length &&
-    orderedIds.every((id) => byId.has(id)) &&
-    new Set(orderedIds).size === orderedIds.length;
-  if (!sameMembership) {
-    throw new HttpError(400, "orderedIds must be a permutation of the parts");
-  }
-  const reordered = orderedIds.map((id) => byId.get(id)!);
+  const part = tagged.find((p) => p.id === partId);
+  if (!part) throw new HttpError(400, "partId is not a part of this node");
+
+  const edited = tagged.map((p) => {
+    if (p.id !== partId) return p;
+    const node = { ...p };
+    if (optional) node.optional = true;
+    else delete node.optional;
+    return node;
+  });
 
   const {
     parts: newParts,
     sourceId: newSource,
     ref,
-  } = derivePartsAndRef(reordered, gens, { oldParts: tagged, sourceId: stored });
+  } = derivePartsAndRef(edited, gens, { oldParts: tagged, sourceId: stored });
   const ownerTitle = ref ? ((await getNode(ref, cache))?.title ?? "") : "";
   const partsEntry = partsInheritanceEntry(
     ref,
@@ -62,19 +60,11 @@ async function applySort(ctx: {
     nodeData.inheritance?.parts?.inheritanceType,
   );
 
-  const nodeUpdates: Record<string, any> = {
+  await db.collection(NODES).doc(nodeId).update({
     "properties.parts": toParts(newParts),
     "inheritance.parts": partsEntry,
     partsOverallSource: newSource,
-  };
-  // The "Switch To" pick rides along with its swap
-  if (Array.isArray(inheritedPartsDetails)) {
-    nodeUpdates.inheritedPartsDetails = inheritedPartsDetails.map((g) => ({
-      ...g,
-      createdAt: new Date(),
-    }));
-  }
-  await db.collection(NODES).doc(nodeId).update(nodeUpdates);
+  });
 
   if (uname) {
     await writeChangeLog({
@@ -84,7 +74,7 @@ async function applySort(ctx: {
       previousValue: oldPartsCol,
       newValue: toParts(newParts),
       modifiedAt: new Date(),
-      changeType: "sort elements",
+      changeType: "modify elements",
       fullNode: nodeData,
       ...(appName ? { appName } : {}),
     } as NodeChange);
@@ -100,26 +90,23 @@ function fail(res: NextApiResponse, status: number, msg: string) {
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") return fail(res, 405, "Method not allowed");
   const data = req.body.data;
-  const { nodeId, orderedIds, appName, user } = data as {
+  const { nodeId, partId, optional, appName, user } = data as {
     nodeId?: string;
-    orderedIds?: string[];
+    partId?: string;
+    optional?: boolean;
     appName?: string;
     user?: any;
   };
-  const inheritedPartsDetails = Array.isArray(data.inheritedPartsDetails)
-    ? data.inheritedPartsDetails
-    : undefined;
   const { uname } = user?.userData || {};
 
   if (!nodeId || typeof nodeId !== "string") {
     return fail(res, 400, "nodeId is required");
   }
-  if (
-    !Array.isArray(orderedIds) ||
-    orderedIds.length === 0 ||
-    orderedIds.some((id) => typeof id !== "string")
-  ) {
-    return fail(res, 400, "orderedIds must be a non-empty array of part ids");
+  if (!partId || typeof partId !== "string") {
+    return fail(res, 400, "partId is required");
+  }
+  if (typeof optional !== "boolean") {
+    return fail(res, 400, "optional must be a boolean");
   }
 
   try {
@@ -131,11 +118,11 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       return fail(res, 403, "Node does not belong to this app");
     }
 
-    const result = await applySort({
+    const result = await applyToggleOptional({
       nodeId,
       nodeData,
-      orderedIds,
-      inheritedPartsDetails,
+      partId,
+      optional,
       uname,
       appName,
     });
@@ -143,7 +130,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   } catch (error: any) {
     if (error instanceof HttpError)
       return fail(res, error.status, error.message);
-    console.error("nodes/parts/sort error", error);
+    console.error("nodes/parts/toggle-optional error", error);
     recordLogs(
       {
         type: "error",
@@ -152,7 +139,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
           message: error.message,
           stack: error.stack,
         }),
-        at: "nodes/parts/sort",
+        at: "nodes/parts/toggle-optional",
       },
       uname,
     );

@@ -67,13 +67,13 @@ interface InheritedPartsViewerProps {
   setDisplayDetails: any;
   enableEdit: boolean;
   replaceWith: any;
-  saveParts: (
+  sortParts: (
     newParts: ICollection[],
     inheritedPartsDetails?: InheritedPartsDetail[] | null,
   ) => Promise<void>;
-  sortParts: (newParts: ICollection[]) => Promise<void>;
   switchPartSource: (partId: string, genId: string) => Promise<void>;
   addPartFromGen: (partId: string, genId?: string) => Promise<void>;
+  togglePartOptional: (partId: string, optional: boolean) => Promise<void>;
   user: any;
   appName?: string;
   navigateToNode?: any;
@@ -104,10 +104,10 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
   readOnly = false,
   enableEdit,
   replaceWith,
-  saveParts,
   sortParts,
   switchPartSource,
   addPartFromGen,
+  togglePartOptional,
   currentVisibleNode,
   triggerSearch,
   addPart,
@@ -468,9 +468,12 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
         });
       }
 
-      // Show it now, then persist and let the server decide.
+      // The swap changes positions only, membership and sources stay.
+      // So it persists through the SORT endpoint, which
+      // applies the usual reorder rules. The patched details ride along so
+      // the user's pick survives a recompute.
       mutateInheritedPartsDetails?.(updatedDetails);
-      await saveParts(updatedParts, updatedDetails);
+      await sortParts(updatedParts, updatedDetails);
       refetchNow?.();
 
       recordLogs({
@@ -534,31 +537,15 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
   const toggleOptional = async (partId: string) => {
     try {
       if (!user?.uname || !partId) return;
-      const sourceParts: ICollection[] | undefined =
-        currentVisibleNode.properties?.["parts"];
-      if (!sourceParts) return;
-
-      // Flip optional on the part. Rows read optional live from properties.parts,
-      // so the (o) badge updates as soon as saveParts runs.
-      const updatedParts: ICollection[] = JSON.parse(
-        JSON.stringify(sourceParts),
+      // Rows read optional live from properties.parts, so the (o) badge
+      // updates as soon as the instant patch lands.
+      const current = currentVisibleNode.properties?.parts?.[0]?.nodes?.find(
+        (n: any) => n.id === partId,
       );
+      if (!current) return;
+      const newOptional = !current.optional;
 
-      let newOptional = false;
-      let found = false;
-      for (const col of updatedParts) {
-        const part = col.nodes.find((n: any) => n.id === partId);
-        if (part) {
-          part.optional = !part.optional;
-          newOptional = !!part.optional;
-          found = true;
-          break;
-        }
-      }
-      if (!found) return;
-
-      // Save through saveParts (maintains isPartOf, logs, handles failure).
-      saveParts(updatedParts);
+      togglePartOptional(partId, newOptional);
 
       recordLogs({
         action: "toggle optional",
