@@ -110,12 +110,43 @@ describe("Society of Mind reviewer card blinding", () => {
       currentState:
         '"Sell Service" is currently under "Sell (Information)" in the "Information" category.',
       proposedState:
-        '"Sell Service" does not belong under "Sell (Information)". Possible new home to review next: "Actors and Activities".',
+        '"Sell Service" does not belong under "Sell (Information)".',
       agreeLabel: "Yes, misplaced",
       disagreeLabel: "No, keep here",
     });
     expect(JSON.stringify(card)).not.toMatch(
       /advisory candidate home|exact move remains|separate human decision/i,
+    );
+    expect(card.reviewerView.context).toMatchObject({
+      candidateHome: "Actors and Activities",
+    });
+  });
+
+  it("constructs explicit questions for downstream action contexts", () => {
+    expect(
+      reviewerQuestion({
+        type: "merge-action",
+        parentTitle: "Sell",
+        canonicalTitle: "Rent out",
+        canonicalCollection: "main",
+        canonicalChildren: [],
+        absorbedTitle: "Lease out",
+        absorbedCollection: "main",
+        absorbedChildren: [],
+        resultingChildren: [],
+        absorbedBecomesSynonym: true,
+      }),
+    ).toBe('Should "Lease out" be merged into "Rent out"?');
+    expect(
+      reviewerQuestion({
+        type: "addition-action",
+        parentTitle: "Sell (Physical Object)",
+        proposedTitle: "Sell Furniture",
+        description: "Sell furniture.",
+        examples: [],
+      }),
+    ).toBe(
+      'Should the missing activity "Sell Furniture" be added under "Sell (Physical Object)"?',
     );
   });
 });

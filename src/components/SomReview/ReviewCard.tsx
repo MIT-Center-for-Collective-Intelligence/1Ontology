@@ -215,11 +215,26 @@ const ReviewCard = ({
           proposed: view.context.proposedTitle,
         }
       : null;
-  const showStatePanels = view.context.type !== "grouping-outline";
+  const showStatePanels = ![
+    "grouping-outline",
+    "merge-action",
+    "relocation-action",
+    "addition-action",
+    "merge-up-action",
+  ].includes(view.context.type);
   const placementContext =
     view.context.type === "placement-comparison" ? view.context : null;
-  const agreeLabel = placementContext ? "Yes, misplaced" : view.agreeLabel;
-  const disagreeLabel = placementContext ? "No, keep here" : view.disagreeLabel;
+  const wrongVerb = placementContext?.placementIssue === "wrong-verb";
+  const agreeLabel = wrongVerb
+    ? "Yes, different action"
+    : placementContext
+      ? "Yes, misplaced"
+      : view.agreeLabel;
+  const disagreeLabel = wrongVerb
+    ? "No, it belongs under Sell"
+    : placementContext
+      ? "No, keep here"
+      : view.disagreeLabel;
 
   return (
     <Box
@@ -252,7 +267,7 @@ const ReviewCard = ({
           sx={{ mb: 3 }}
         >
           <StatePanel
-            label={placementContext ? "Current placement" : "Current"}
+            label={placementContext ? "Current location" : "Current"}
             accent="neutral"
           >
             {placementContext ? (
@@ -285,20 +300,13 @@ const ReviewCard = ({
             accent="primary"
           >
             {placementContext ? (
-              <Stack spacing={1.5}>
-                <Typography
-                  sx={{ fontSize: "1.05rem", fontWeight: 700, lineHeight: 1.5 }}
-                >
-                  &quot;{placementContext.nodeTitle}&quot; does not belong under{" "}
-                  &quot;{placementContext.currentParentTitle}&quot;.
-                </Typography>
-                {placementContext.candidateHome && (
-                  <PanelField
-                    label="Possible new home to review next"
-                    value={placementContext.candidateHome}
-                  />
-                )}
-              </Stack>
+              <Typography
+                sx={{ fontSize: "1.05rem", fontWeight: 700, lineHeight: 1.5 }}
+              >
+                &quot;{placementContext.nodeTitle}&quot;{" "}
+                {wrongVerb ? "is not a kind of selling and " : ""}does not
+                belong under &quot;{placementContext.currentParentTitle}&quot;.
+              </Typography>
             ) : titleDiff ? (
               <DiffedTitle
                 title={titleDiff.proposed}
@@ -419,7 +427,9 @@ const ReviewCard = ({
             <TextField
               label={
                 placementContext
-                  ? `Why should "${placementContext.nodeTitle}" stay under "${placementContext.currentParentTitle}"?`
+                  ? wrongVerb
+                    ? `Why is "${placementContext.nodeTitle}" still a kind of selling?`
+                    : `Why should "${placementContext.nodeTitle}" stay under "${placementContext.currentParentTitle}"?`
                   : "Why do you disagree?"
               }
               required

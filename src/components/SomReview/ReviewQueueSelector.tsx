@@ -17,6 +17,11 @@ import DriveFileRenameOutlineIcon from "@mui/icons-material/DriveFileRenameOutli
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import HubOutlinedIcon from "@mui/icons-material/HubOutlined";
 import GroupsOutlinedIcon from "@mui/icons-material/GroupsOutlined";
+import AltRouteOutlinedIcon from "@mui/icons-material/AltRouteOutlined";
+import CallMergeOutlinedIcon from "@mui/icons-material/CallMergeOutlined";
+import PlaylistAddOutlinedIcon from "@mui/icons-material/PlaylistAddOutlined";
+import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutline";
+import SwapHorizOutlinedIcon from "@mui/icons-material/SwapHorizOutlined";
 
 import { SomIssueType, SomIssueTypeOption } from "../../types/ISomReview";
 
@@ -26,8 +31,18 @@ const ISSUE_DESCRIPTIONS: Record<SomIssueType, string> = {
     "Judge whether related activities belong under a proposed group.",
   "duplicate-synonym": "Judge whether two titles describe the same activity.",
   placement: "Judge whether an activity is under the wrong parent.",
+  "wrong-verb":
+    "Judge whether an activity uses a different main action than Sell.",
   "structural-overlap":
     "Flag concepts that may be repeated across nearby collections.",
+  "node-merge":
+    "Review an exact consolidation, including the survivor and moved children.",
+  relocation:
+    "Review an exact move from the current parent to a named new parent.",
+  "missing-activity":
+    "Judge whether a well-known Sell activity is missing from the ontology.",
+  "redundant-node":
+    "Review removal of a wrapper whose children can move to its parent.",
 };
 
 const IssueIcon = ({ issueType }: { issueType: SomIssueType }) => {
@@ -41,8 +56,18 @@ const IssueIcon = ({ issueType }: { issueType: SomIssueType }) => {
       return <ContentCopyOutlinedIcon sx={sx} />;
     case "placement":
       return <ErrorOutlineIcon sx={sx} />;
+    case "wrong-verb":
+      return <SwapHorizOutlinedIcon sx={sx} />;
     case "structural-overlap":
       return <HubOutlinedIcon sx={sx} />;
+    case "node-merge":
+      return <CallMergeOutlinedIcon sx={sx} />;
+    case "relocation":
+      return <AltRouteOutlinedIcon sx={sx} />;
+    case "missing-activity":
+      return <PlaylistAddOutlinedIcon sx={sx} />;
+    case "redundant-node":
+      return <RemoveCircleOutlineIcon sx={sx} />;
   }
 };
 

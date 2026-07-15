@@ -196,7 +196,20 @@ function buildIndex(snapshot) {
   const edgePairs = new Set(
     snapshot.edges.map((edge) => `${edge.parentId}\u001f${edge.childId}`),
   );
-  return { nodesById, idByTitle, edgeKeys, edgePairs };
+  const childrenByParent = new Map();
+  for (const edge of snapshot.edges) {
+    const children = childrenByParent.get(edge.parentId) || new Set();
+    children.add(edge.childId);
+    childrenByParent.set(edge.parentId, children);
+  }
+  return { nodesById, idByTitle, edgeKeys, edgePairs, childrenByParent };
+}
+
+function currentChildTitles(index, parentId) {
+  return [...(index.childrenByParent.get(parentId) || [])]
+    .map((childId) => index.nodesById.get(childId)?.title || "")
+    .filter(Boolean)
+    .sort((left, right) => left.localeCompare(right, "en"));
 }
 
 function resolveTitle(index, title) {
@@ -360,6 +373,107 @@ function deriveSourceRefs(record, index, snapshotHash) {
       subjectNodeId = first.childId;
       break;
     }
+    case "merge-action": {
+      parentNodeId = addTitle(context.parentTitle);
+      const canonicalId = addTitle(context.canonicalTitle);
+      const absorbedId = addTitle(context.absorbedTitle);
+      requireEdge(
+        index,
+        parentNodeId,
+        canonicalId,
+        context.canonicalCollection,
+      );
+      requireEdge(index, parentNodeId, absorbedId, context.absorbedCollection);
+      const canonicalChildren = [...(context.canonicalChildren || [])].sort(
+        (left, right) => left.localeCompare(right, "en"),
+      );
+      const absorbedChildren = [...(context.absorbedChildren || [])].sort(
+        (left, right) => left.localeCompare(right, "en"),
+      );
+      if (
+        JSON.stringify(canonicalChildren) !==
+        JSON.stringify(currentChildTitles(index, canonicalId))
+      ) {
+        throw new Error(
+          `Merge proposal for ${context.canonicalTitle} does not list every current direct child`,
+        );
+      }
+      if (
+        JSON.stringify(absorbedChildren) !==
+        JSON.stringify(currentChildTitles(index, absorbedId))
+      ) {
+        throw new Error(
+          `Merge proposal for ${context.absorbedTitle} does not list every current direct child`,
+        );
+      }
+      for (const title of context.canonicalChildren || []) {
+        const childId = addTitle(title);
+        requireAnyEdge(index, canonicalId, childId);
+      }
+      for (const title of context.absorbedChildren || []) {
+        const childId = addTitle(title);
+        requireAnyEdge(index, absorbedId, childId);
+      }
+      const expectedChildren = [
+        ...new Set([...canonicalChildren, ...absorbedChildren]),
+      ].sort((left, right) => left.localeCompare(right, "en"));
+      const resultingChildren = [...(context.resultingChildren || [])].sort(
+        (left, right) => left.localeCompare(right, "en"),
+      );
+      if (
+        JSON.stringify(resultingChildren) !== JSON.stringify(expectedChildren)
+      ) {
+        throw new Error(
+          `Merge result for ${context.canonicalTitle} does not match the current child union`,
+        );
+      }
+      subjectNodeId = absorbedId;
+      break;
+    }
+    case "relocation-action": {
+      parentNodeId = addTitle(context.currentParentTitle);
+      const proposedParentId = addTitle(context.proposedParentTitle);
+      subjectNodeId = addTitle(context.nodeTitle);
+      requireEdge(
+        index,
+        parentNodeId,
+        subjectNodeId,
+        context.currentCollection,
+      );
+      if (
+        index.edgeKeys.has(
+          edgeKey(proposedParentId, subjectNodeId, context.proposedCollection),
+        )
+      ) {
+        throw new Error(
+          `Proposed relocation already exists: ${context.proposedParentTitle} -> ${context.nodeTitle}`,
+        );
+      }
+      for (const title of context.childTitles || []) {
+        const childId = addTitle(title);
+        requireAnyEdge(index, subjectNodeId, childId);
+      }
+      break;
+    }
+    case "addition-action": {
+      parentNodeId = addTitle(context.parentTitle);
+      if (index.idByTitle.has(context.proposedTitle)) {
+        throw new Error(
+          `Proposed missing activity already exists: ${context.proposedTitle}`,
+        );
+      }
+      break;
+    }
+    case "merge-up-action": {
+      parentNodeId = addTitle(context.parentTitle);
+      subjectNodeId = addTitle(context.nodeTitle);
+      requireEdge(index, parentNodeId, subjectNodeId, context.parentCollection);
+      for (const title of context.childTitles || []) {
+        const childId = addTitle(title);
+        requireAnyEdge(index, subjectNodeId, childId);
+      }
+      break;
+    }
     default:
       throw new Error(`Unsupported proposal context type: ${context.type}`);
   }
@@ -454,7 +568,6 @@ function clarifyReviewerView(record) {
   const nodeTitle = String(context.nodeTitle || "").trim();
   const currentParentTitle = String(context.currentParentTitle || "").trim();
   const currentBucket = String(context.currentBucket || "").trim();
-  const candidateHome = String(context.candidateHome || "").trim();
   return {
     ...record,
     reviewerView: {
@@ -463,15 +576,18 @@ function clarifyReviewerView(record) {
       currentState: `"${nodeTitle}" is currently under "${currentParentTitle}"${
         currentBucket ? ` in the "${currentBucket}" category` : ""
       }.`,
-      proposedState: `"${nodeTitle}" does not belong under "${
-        currentParentTitle
-      }".${
-        candidateHome
-          ? ` Possible new home to review next: "${candidateHome}".`
-          : ""
-      }`,
-      agreeLabel: "Yes, misplaced",
-      disagreeLabel: "No, keep here",
+      proposedState:
+        context.placementIssue === "wrong-verb"
+          ? `"${nodeTitle}" is not a kind of selling and does not belong under "${currentParentTitle}".`
+          : `"${nodeTitle}" does not belong under "${currentParentTitle}".`,
+      agreeLabel:
+        context.placementIssue === "wrong-verb"
+          ? "Yes, different action"
+          : "Yes, misplaced",
+      disagreeLabel:
+        context.placementIssue === "wrong-verb"
+          ? "No, it belongs under Sell"
+          : "No, keep here",
     },
   };
 }

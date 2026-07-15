@@ -139,7 +139,7 @@ describe("Society of Mind review card", () => {
     ).toBeNull();
   });
 
-  it("presents placement as one clear decision without a detached footnote", () => {
+  it("keeps the advisory placement hint out of the main proposal panel", () => {
     const placementCard: SomReviewCard = {
       proposalId: "placement-1",
       datasetVersion: "dataset-1",
@@ -171,10 +171,10 @@ describe("Society of Mind review card", () => {
       />,
     );
 
-    expect(screen.getByText("Current placement")).toBeInTheDocument();
+    expect(screen.getByText("Current location")).toBeInTheDocument();
     expect(screen.getByText("Recommended finding")).toBeInTheDocument();
     expect(
-      screen.getByText("Possible new home to review next"),
+      screen.getByText("Possible new home to review next:"),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Yes, misplaced" }),

@@ -3,7 +3,12 @@ export type SomIssueType =
   | "sibling-grouping"
   | "duplicate-synonym"
   | "placement"
-  | "structural-overlap";
+  | "wrong-verb"
+  | "structural-overlap"
+  | "node-merge"
+  | "relocation"
+  | "missing-activity"
+  | "redundant-node";
 
 export type SomReviewDecision = "agree" | "disagree";
 
@@ -64,6 +69,41 @@ export type SomReviewContext =
       firstTitle: string;
       secondCollection: string;
       secondTitle: string;
+    }
+  | {
+      type: "merge-action";
+      parentTitle: string;
+      canonicalTitle: string;
+      canonicalCollection: string;
+      canonicalChildren: string[];
+      absorbedTitle: string;
+      absorbedCollection: string;
+      absorbedChildren: string[];
+      resultingChildren: string[];
+      absorbedBecomesSynonym: boolean;
+    }
+  | {
+      type: "relocation-action";
+      nodeTitle: string;
+      currentParentTitle: string;
+      currentCollection: string;
+      proposedParentTitle: string;
+      proposedCollection: string;
+      childTitles: string[];
+    }
+  | {
+      type: "addition-action";
+      parentTitle: string;
+      proposedTitle: string;
+      description: string;
+      examples: string[];
+    }
+  | {
+      type: "merge-up-action";
+      parentTitle: string;
+      parentCollection: string;
+      nodeTitle: string;
+      childTitles: string[];
     };
 
 /** The blinded card served to the reviewer. Allowlisted fields only. */

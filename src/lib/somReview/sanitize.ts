@@ -33,9 +33,19 @@ export const reviewerQuestion = (context: SomReviewContext): string => {
     case "duplicate-comparison":
       return `Do "${context.canonicalTitle}" and "${context.candidateSynonymTitle}" name the same activity?`;
     case "placement-comparison":
-      return `Is "${context.nodeTitle}" misplaced under "${context.currentParentTitle}"?`;
+      return context.placementIssue === "wrong-verb"
+        ? `Does "${context.nodeTitle}" use a different main action than "Sell"?`
+        : `Is "${context.nodeTitle}" misplaced under "${context.currentParentTitle}"?`;
     case "overlap-comparison":
       return `Could "${context.firstTitle}" and "${context.secondTitle}" represent the same concept?`;
+    case "merge-action":
+      return `Should "${context.absorbedTitle}" be merged into "${context.canonicalTitle}"?`;
+    case "relocation-action":
+      return `Should "${context.nodeTitle}" move from "${context.currentParentTitle}" to "${context.proposedParentTitle}"?`;
+    case "addition-action":
+      return `Should the missing activity "${context.proposedTitle}" be added under "${context.parentTitle}"?`;
+    case "merge-up-action":
+      return `Should the redundant wrapper "${context.nodeTitle}" be removed and its children moved directly under "${context.parentTitle}"?`;
   }
 };
 
@@ -43,20 +53,22 @@ const placementReviewerText = (
   context: Extract<SomReviewContext, { type: "placement-comparison" }>,
 ) => {
   const category = cleanText(context.currentBucket);
-  const candidateHome = cleanText(context.candidateHome);
   return {
     currentState: `"${context.nodeTitle}" is currently under "${
       context.currentParentTitle
     }"${category ? ` in the "${category}" category` : ""}.`,
-    proposedState: `"${context.nodeTitle}" does not belong under "${
-      context.currentParentTitle
-    }".${
-      candidateHome
-        ? ` Possible new home to review next: "${candidateHome}".`
-        : ""
-    }`,
-    agreeLabel: "Yes, misplaced",
-    disagreeLabel: "No, keep here",
+    proposedState:
+      context.placementIssue === "wrong-verb"
+        ? `"${context.nodeTitle}" is not a kind of selling and does not belong under "${context.currentParentTitle}".`
+        : `"${context.nodeTitle}" does not belong under "${context.currentParentTitle}".`,
+    agreeLabel:
+      context.placementIssue === "wrong-verb"
+        ? "Yes, different action"
+        : "Yes, misplaced",
+    disagreeLabel:
+      context.placementIssue === "wrong-verb"
+        ? "No, it belongs under Sell"
+        : "No, keep here",
   };
 };
 
@@ -153,6 +165,45 @@ const sanitizeContext = (context: any): SomReviewContext => {
         firstTitle: context.firstTitle,
         secondCollection: context.secondCollection,
         secondTitle: context.secondTitle,
+      };
+    case "merge-action":
+      return {
+        type: "merge-action",
+        parentTitle: context.parentTitle,
+        canonicalTitle: context.canonicalTitle,
+        canonicalCollection: context.canonicalCollection || "main",
+        canonicalChildren: context.canonicalChildren || [],
+        absorbedTitle: context.absorbedTitle,
+        absorbedCollection: context.absorbedCollection || "main",
+        absorbedChildren: context.absorbedChildren || [],
+        resultingChildren: context.resultingChildren || [],
+        absorbedBecomesSynonym: Boolean(context.absorbedBecomesSynonym),
+      };
+    case "relocation-action":
+      return {
+        type: "relocation-action",
+        nodeTitle: context.nodeTitle,
+        currentParentTitle: context.currentParentTitle,
+        currentCollection: context.currentCollection || "main",
+        proposedParentTitle: context.proposedParentTitle,
+        proposedCollection: context.proposedCollection || "main",
+        childTitles: context.childTitles || [],
+      };
+    case "addition-action":
+      return {
+        type: "addition-action",
+        parentTitle: context.parentTitle,
+        proposedTitle: context.proposedTitle,
+        description: context.description,
+        examples: context.examples || [],
+      };
+    case "merge-up-action":
+      return {
+        type: "merge-up-action",
+        parentTitle: context.parentTitle,
+        parentCollection: context.parentCollection || "main",
+        nodeTitle: context.nodeTitle,
+        childTitles: context.childTitles || [],
       };
     default:
       throw new Error(`Unknown reviewer context type: ${context?.type}`);
