@@ -105,6 +105,40 @@ describe("Society of Mind review card", () => {
     ).toContain("Needs another title.");
   });
 
+  it("reopens a prior disagreement with its explanation", () => {
+    render(
+      <ReviewCard
+        card={card}
+        reviewerId="reviewer-1"
+        mode="revise"
+        initialResponse={{
+          decision: "disagree",
+          disagreementReason: "The original title is more precise.",
+          suggestedCorrection: "Keep Sell Supply.",
+        }}
+        onSubmit={jest.fn()}
+      />,
+    );
+
+    expect(screen.getByLabelText(/Why do you disagree/i)).toHaveValue(
+      "The original title is more precise.",
+    );
+    expect(screen.getByLabelText(/Suggested correction/i)).toHaveValue(
+      "Keep Sell Supply.",
+    );
+    expect(
+      screen.getByRole("button", { name: "Save revised answer" }),
+    ).toBeEnabled();
+    expect(
+      screen.getByRole("button", { name: "Choose a different answer" }),
+    ).toBeInTheDocument();
+    expect(
+      window.sessionStorage.getItem(
+        "som-review-draft-reviewer-1-dataset-1-title-1",
+      ),
+    ).toBeNull();
+  });
+
   it("presents placement as one clear decision without a detached footnote", () => {
     const placementCard: SomReviewCard = {
       proposalId: "placement-1",

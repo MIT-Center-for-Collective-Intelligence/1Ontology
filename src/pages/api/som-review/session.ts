@@ -2,7 +2,10 @@ import { NextApiRequest, NextApiResponse } from "next";
 
 import fbAuth, { CustomNextApiRequest } from "../../../middlewares/fbAuth";
 import { getDataset, isIssueTypeEnabled } from "../../../lib/somReview/dataset";
-import { getOrCreateSession } from "../../../lib/somReview/store";
+import {
+  getOrCreateSession,
+  sessionResponses,
+} from "../../../lib/somReview/store";
 import { toReviewerCard } from "../../../lib/somReview/sanitize";
 import { reviewRequestData } from "../../../lib/somReview/request";
 import { SomIssueType, SomSessionResponse } from "../../../types/ISomReview";
@@ -30,6 +33,10 @@ const handler = async (request: NextApiRequest, res: NextApiResponse) => {
       return res.status(200).json(body);
     }
 
+    const cards = session.proposalIds.map((id) =>
+      toReviewerCard(dataset.recordsById.get(id)),
+    );
+    const responses = await sessionResponses(session);
     const body: SomSessionResponse = {
       session: {
         id: session.id,
@@ -38,10 +45,25 @@ const handler = async (request: NextApiRequest, res: NextApiResponse) => {
         cursor: session.cursor,
         total: session.proposalIds.length,
       },
-
-      cards: session.proposalIds.map((id) =>
-        toReviewerCard(dataset.recordsById.get(id)),
-      ),
+      cards,
+      history: session.proposalIds
+        .slice(0, session.cursor)
+        .flatMap((proposalId, proposalIndex) => {
+          const response = responses.get(proposalId);
+          const card = cards[proposalIndex];
+          if (!response || !card) return [];
+          return [
+            {
+              proposalId,
+              proposalIndex,
+              question: card.reviewerView.question,
+              decision: response.decision,
+              disagreementReason: response.disagreementReason || "",
+              suggestedCorrection: response.suggestedCorrection || "",
+              reviewedAt: response.reviewedAt,
+            },
+          ];
+        }),
     };
     return res.status(200).json(body);
   } catch (error: any) {

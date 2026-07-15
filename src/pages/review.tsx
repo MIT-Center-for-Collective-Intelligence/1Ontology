@@ -11,7 +11,6 @@ import {
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
-import UndoIcon from "@mui/icons-material/Undo";
 import Head from "next/head";
 import { useRouter } from "next/router";
 
@@ -21,6 +20,7 @@ import { Post } from "@components/lib/utils/Post";
 import ReviewCard, {
   ReviewSubmission,
 } from "@components/components/SomReview/ReviewCard";
+import ReviewHistorySelect from "@components/components/SomReview/ReviewHistorySelect";
 import ReviewQueueSelector from "@components/components/SomReview/ReviewQueueSelector";
 import ThemeModeToggle from "@components/components/SomReview/ThemeModeToggle";
 import {
@@ -29,8 +29,9 @@ import {
   SomOverviewResponse,
   SomRespondResult,
   SomReviewCard,
+  SomReviewHistoryItem,
+  SomReviseResult,
   SomSessionResponse,
-  SomUndoResult,
 } from "@components/types/ISomReview";
 
 type Phase = "loading" | "select" | "session" | "complete" | "empty";
@@ -44,8 +45,9 @@ export const ReviewPage = () => {
   const [sessionId, setSessionId] = useState("");
   const [cards, setCards] = useState<SomReviewCard[]>([]);
   const [cursor, setCursor] = useState(0);
+  const [history, setHistory] = useState<SomReviewHistoryItem[]>([]);
+  const [revisionProposalId, setRevisionProposalId] = useState("");
   const [loadError, setLoadError] = useState("");
-  const [undoing, setUndoing] = useState(false);
   const [canDeliberate, setCanDeliberate] = useState(false);
 
   const loadOverview = useCallback(async () => {
@@ -78,12 +80,16 @@ export const ReviewPage = () => {
         setSessionId("");
         setCards([]);
         setCursor(0);
+        setHistory([]);
+        setRevisionProposalId("");
         setPhase("empty");
         return;
       }
       setSessionId(result.session.id);
       setCards(result.cards);
       setCursor(result.session.cursor);
+      setHistory(result.history || []);
+      setRevisionProposalId("");
       setPhase(
         result.session.cursor >= result.cards.length ? "complete" : "session",
       );
@@ -101,6 +107,7 @@ export const ReviewPage = () => {
       if (!card || !sessionId || !user?.userId) {
         throw new Error("The active review session is unavailable");
       }
+      const reviewedAt = new Date().toISOString();
       const result = await Post<SomRespondResult>(
         "/som-review/respond",
         {
@@ -113,11 +120,29 @@ export const ReviewPage = () => {
             decision: submission.decision,
             disagreementReason: submission.disagreementReason,
             suggestedCorrection: submission.suggestedCorrection,
-            reviewedAt: new Date().toISOString(),
+            reviewedAt,
             elapsedMs: Math.max(0, Math.round(submission.elapsedMs)),
           },
         },
         false,
+      );
+      setHistory((currentHistory) =>
+        [
+          ...currentHistory.filter(
+            (item) => item.proposalId !== card.proposalId,
+          ),
+          {
+            proposalId: card.proposalId,
+            proposalIndex: cards.findIndex(
+              (candidate) => candidate.proposalId === card.proposalId,
+            ),
+            question: card.reviewerView.question,
+            decision: submission.decision,
+            disagreementReason: submission.disagreementReason,
+            suggestedCorrection: submission.suggestedCorrection,
+            reviewedAt,
+          },
+        ].sort((left, right) => left.proposalIndex - right.proposalIndex),
       );
       setCursor(result.cursor);
       if (result.completed) setPhase("complete");
@@ -125,36 +150,93 @@ export const ReviewPage = () => {
     [cards, cursor, sessionId, user?.userId],
   );
 
-  const undoPrevious = useCallback(async () => {
-    if (!issueType || !sessionId || cursor === 0) return;
-    setUndoing(true);
-    setLoadError("");
-    try {
-      const result = await Post<SomUndoResult>(
-        "/som-review/undo",
-        { issueType, sessionId },
+  const revisionItem = history.find(
+    (item) => item.proposalId === revisionProposalId,
+  );
+  const revisionCard = revisionItem
+    ? cards.find((card) => card.proposalId === revisionItem.proposalId)
+    : undefined;
+
+  const submitRevision = useCallback(
+    async (submission: ReviewSubmission) => {
+      const item = history.find(
+        (candidate) => candidate.proposalId === revisionProposalId,
+      );
+      const card = item
+        ? cards.find((candidate) => candidate.proposalId === item.proposalId)
+        : undefined;
+      if (!item || !card || !sessionId || !user?.userId) {
+        throw new Error("The earlier review is unavailable");
+      }
+
+      const reviewedAt = new Date().toISOString();
+      const result = await Post<SomReviseResult>(
+        "/som-review/revise",
+        {
+          sessionId,
+          response: {
+            schemaVersion: "som-review-v1",
+            datasetVersion: card.datasetVersion,
+            proposalId: card.proposalId,
+            reviewerId: user.userId,
+            decision: submission.decision,
+            disagreementReason: submission.disagreementReason,
+            suggestedCorrection: submission.suggestedCorrection,
+            reviewedAt,
+            elapsedMs: Math.max(0, Math.round(submission.elapsedMs)),
+          },
+        },
         false,
       );
-      setCursor(result.cursor);
+
+      if (result.changed) {
+        setHistory((currentHistory) =>
+          currentHistory.map((historyItem) =>
+            historyItem.proposalId === item.proposalId
+              ? {
+                  ...historyItem,
+                  decision: submission.decision,
+                  disagreementReason: submission.disagreementReason,
+                  suggestedCorrection: submission.suggestedCorrection,
+                  reviewedAt,
+                }
+              : historyItem,
+          ),
+        );
+      }
+      setRevisionProposalId("");
+      setPhase(cursor >= cards.length ? "complete" : "session");
+    },
+    [cards, cursor, history, revisionProposalId, sessionId, user?.userId],
+  );
+
+  const selectRevision = useCallback(
+    (proposalId: string) => {
+      if (!history.some((item) => item.proposalId === proposalId)) return;
+      setLoadError("");
+      setRevisionProposalId(proposalId);
       setPhase("session");
-    } catch {
-      setLoadError(
-        "The previous answer could not be undone. Please try again.",
-      );
-    } finally {
-      setUndoing(false);
-    }
-  }, [issueType, sessionId, cursor]);
+    },
+    [history],
+  );
+
+  const cancelRevision = useCallback(() => {
+    setRevisionProposalId("");
+    setPhase(cursor >= cards.length ? "complete" : "session");
+  }, [cards.length, cursor]);
 
   const exitToSelector = useCallback(() => {
     setIssueType(null);
     setSessionId("");
     setCards([]);
     setCursor(0);
+    setHistory([]);
+    setRevisionProposalId("");
     loadOverview();
   }, [loadOverview]);
 
   const currentCard = cards[cursor];
+  const activeCard = revisionCard || currentCard;
   const selectedIssue = issueTypes.find((issue) => issue.id === issueType);
   const issueLabel = selectedIssue?.label || "Proposal review";
 
@@ -205,12 +287,12 @@ export const ReviewPage = () => {
             />
           )}
 
-          {phase === "session" && currentCard && user?.userId && (
+          {phase === "session" && activeCard && user?.userId && (
             <Box>
               <Stack spacing={1.25} sx={{ mb: 2 }}>
                 <Stack
-                  direction="row"
-                  alignItems="center"
+                  direction={{ xs: "column", sm: "row" }}
+                  alignItems={{ xs: "stretch", sm: "center" }}
                   justifyContent="space-between"
                   spacing={1}
                 >
@@ -219,23 +301,26 @@ export const ReviewPage = () => {
                     color="inherit"
                     startIcon={<ArrowBackIcon />}
                     onClick={exitToSelector}
-                    sx={{ minHeight: 46, fontWeight: 700 }}
+                    sx={{
+                      minHeight: 48,
+                      fontWeight: 700,
+                      width: { xs: "100%", sm: "auto" },
+                    }}
                   >
                     Save and exit
                   </Button>
-                  <Stack direction="row" alignItems="center" spacing={1}>
-                    <Button
-                      variant="text"
-                      color="inherit"
-                      startIcon={
-                        undoing ? <CircularProgress size={18} /> : <UndoIcon />
-                      }
-                      disabled={cursor === 0 || undoing}
-                      onClick={undoPrevious}
-                      sx={{ minHeight: 46, fontWeight: 700 }}
-                    >
-                      Undo last answer
-                    </Button>
+                  <Stack
+                    direction="row"
+                    alignItems="center"
+                    justifyContent="flex-end"
+                    spacing={1}
+                    sx={{ width: { xs: "100%", sm: "auto" } }}
+                  >
+                    <ReviewHistorySelect
+                      history={history}
+                      selectedProposalId={revisionProposalId}
+                      onSelect={selectRevision}
+                    />
                     <ThemeModeToggle />
                   </Stack>
                 </Stack>
@@ -259,7 +344,16 @@ export const ReviewPage = () => {
                       fontWeight: 700,
                     }}
                   >
-                    Item {cursor + 1} of {cards.length}
+                    {revisionItem ? (
+                      <>
+                        Revising item {revisionItem.proposalIndex + 1} of{" "}
+                        {cards.length}
+                      </>
+                    ) : (
+                      <>
+                        Item {cursor + 1} of {cards.length}
+                      </>
+                    )}
                   </Typography>
                 </Stack>
                 <LinearProgress
@@ -269,16 +363,55 @@ export const ReviewPage = () => {
                   sx={{ height: 8, borderRadius: 1 }}
                 />
               </Stack>
+              {revisionItem && (
+                <Alert
+                  severity="info"
+                  sx={{ mb: 2 }}
+                  action={
+                    <Button
+                      color="inherit"
+                      onClick={cancelRevision}
+                      sx={{ minHeight: 40, fontWeight: 700 }}
+                    >
+                      Cancel revision
+                    </Button>
+                  }
+                >
+                  You are revising item {revisionItem.proposalIndex + 1}.
+                  Previous answer:{" "}
+                  <strong>
+                    {revisionItem.decision === "agree" ? "Agreed" : "Disagreed"}
+                  </strong>
+                  . Your progress remains at {cursor} of {cards.length} items
+                  completed.
+                </Alert>
+              )}
               <ReviewCard
-                key={currentCard.proposalId}
-                card={currentCard}
+                key={
+                  activeCard.proposalId +
+                  "-" +
+                  (revisionItem?.reviewedAt || "new")
+                }
+                card={activeCard}
                 reviewerId={user.userId}
-                onSubmit={submitResponse}
+                mode={revisionItem ? "revise" : "review"}
+                initialResponse={
+                  revisionItem
+                    ? {
+                        decision: revisionItem.decision,
+                        disagreementReason:
+                          revisionItem.disagreementReason || "",
+                        suggestedCorrection:
+                          revisionItem.suggestedCorrection || "",
+                      }
+                    : undefined
+                }
+                onSubmit={revisionItem ? submitRevision : submitResponse}
               />
             </Box>
           )}
 
-          {phase === "session" && (!currentCard || !user?.userId) && (
+          {phase === "session" && (!activeCard || !user?.userId) && (
             <Alert
               severity="error"
               action={<Button onClick={exitToSelector}>Exit</Button>}
@@ -311,21 +444,16 @@ export const ReviewPage = () => {
                     reviewed
                   </Typography>
                 </Box>
+                <ReviewHistorySelect
+                  history={history}
+                  selectedProposalId={revisionProposalId}
+                  onSelect={selectRevision}
+                />
                 <Stack
                   direction={{ xs: "column", sm: "row" }}
                   spacing={1.5}
                   sx={{ width: { xs: "100%", sm: "auto" } }}
                 >
-                  <Button
-                    variant="outlined"
-                    color="inherit"
-                    startIcon={<UndoIcon />}
-                    disabled={!sessionId || cursor === 0 || undoing}
-                    onClick={undoPrevious}
-                    sx={{ minHeight: 50, fontWeight: 700 }}
-                  >
-                    Undo last answer
-                  </Button>
                   <Button
                     variant="outlined"
                     startIcon={<ArrowBackIcon />}

@@ -23,6 +23,12 @@ export interface ReviewSubmission {
   elapsedMs: number;
 }
 
+export interface ExistingReviewResponse {
+  decision: "agree" | "disagree";
+  disagreementReason: string;
+  suggestedCorrection: string;
+}
+
 const stripStatePrefix = (text: string): string =>
   text.replace(/^(current|proposed)\s+title:\s*/i, "");
 
@@ -91,10 +97,14 @@ const ReviewCard = ({
   card,
   reviewerId,
   onSubmit,
+  initialResponse,
+  mode = "review",
 }: {
   card: SomReviewCard;
   reviewerId: string;
   onSubmit: (submission: ReviewSubmission) => Promise<void>;
+  initialResponse?: ExistingReviewResponse;
+  mode?: "review" | "revise";
 }) => {
   const [disagreeing, setDisagreeing] = useState(false);
   const [reason, setReason] = useState("");
@@ -105,15 +115,28 @@ const ReviewCard = ({
   const shownAtRef = useRef<number>(Date.now());
   const draftKey = useMemo(
     () =>
-      `som-review-draft-${reviewerId}-${card.datasetVersion}-${card.proposalId}`,
-    [card.datasetVersion, card.proposalId, reviewerId],
+      [
+        "som-review-draft",
+        reviewerId,
+        card.datasetVersion,
+        card.proposalId,
+        mode === "revise" ? "revise" : null,
+      ]
+        .filter(Boolean)
+        .join("-"),
+    [card.datasetVersion, card.proposalId, mode, reviewerId],
   );
+  const initialDecision = initialResponse?.decision;
+  const initialReason = initialResponse?.disagreementReason || "";
+  const initialCorrection = initialResponse?.suggestedCorrection || "";
 
   useEffect(() => {
     shownAtRef.current = Date.now();
-    setDisagreeing(false);
-    setReason("");
-    setCorrection("");
+    const startsWithDisagreement =
+      mode === "revise" && initialDecision === "disagree";
+    setDisagreeing(startsWithDisagreement);
+    setReason(startsWithDisagreement ? initialReason : "");
+    setCorrection(startsWithDisagreement ? initialCorrection : "");
     setSaveError(false);
 
     try {
@@ -132,7 +155,7 @@ const ReviewCard = ({
 
     const focusTimer = window.setTimeout(() => headingRef.current?.focus(), 0);
     return () => window.clearTimeout(focusTimer);
-  }, [draftKey]);
+  }, [draftKey, initialCorrection, initialDecision, initialReason, mode]);
 
   const persistDraft = (
     open: boolean,
@@ -447,7 +470,9 @@ const ReviewCard = ({
                 }}
                 sx={{ minHeight: 48, color: "text.primary", fontWeight: 650 }}
               >
-                Back to choices
+                {mode === "revise"
+                  ? "Choose a different answer"
+                  : "Back to choices"}
               </Button>
               <Button
                 variant="contained"
@@ -469,9 +494,11 @@ const ReviewCard = ({
                   fontWeight: 750,
                 }}
               >
-                {placementContext
-                  ? "Keep current placement"
-                  : "Save disagreement"}
+                {mode === "revise"
+                  ? "Save revised answer"
+                  : placementContext
+                    ? "Keep current placement"
+                    : "Save disagreement"}
               </Button>
             </Stack>
           </Stack>

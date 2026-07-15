@@ -2,6 +2,7 @@ import {
   isResumableSession,
   planResponseTransition,
   planUndoTransition,
+  reviewedProposalIndex,
 } from "../../../src/lib/somReview/sessionState";
 
 const session = {
@@ -44,14 +45,31 @@ describe("Society of Mind session transitions", () => {
   it("resumes only unfinished active sessions", () => {
     expect(isResumableSession(session)).toBe(true);
     expect(isResumableSession({ ...session, cursor: 2 })).toBe(false);
-    expect(
-      isResumableSession({ ...session, status: "completed" }),
-    ).toBe(false);
+    expect(isResumableSession({ ...session, status: "completed" })).toBe(false);
   });
 
   it("undoes the final answer and reopens a completed session", () => {
     expect(
       planUndoTransition({ ...session, cursor: 2, status: "completed" }),
     ).toEqual({ cursor: 1, status: "active" });
+  });
+
+  it("allows revising any previously reviewed proposal", () => {
+    expect(reviewedProposalIndex({ ...session, cursor: 2 }, "a")).toBe(0);
+    expect(
+      reviewedProposalIndex(
+        { ...session, cursor: 2, status: "completed" },
+        "b",
+      ),
+    ).toBe(1);
+  });
+
+  it("rejects revision of the current, future, or unrelated proposal", () => {
+    expect(() => reviewedProposalIndex({ ...session, cursor: 1 }, "b")).toThrow(
+      "previously reviewed",
+    );
+    expect(() =>
+      reviewedProposalIndex({ ...session, cursor: 1 }, "missing"),
+    ).toThrow("not part of this session");
   });
 });

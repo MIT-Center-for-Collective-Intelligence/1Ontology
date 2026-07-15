@@ -106,6 +106,17 @@ export interface SomSessionResponse {
   done?: boolean;
   session?: SomSessionState;
   cards?: SomReviewCard[];
+  history?: SomReviewHistoryItem[];
+}
+
+export interface SomReviewHistoryItem {
+  proposalId: string;
+  proposalIndex: number;
+  question: string;
+  decision: SomReviewDecision;
+  disagreementReason: string;
+  suggestedCorrection: string;
+  reviewedAt: string;
 }
 
 export interface SomOverviewResponse {
@@ -123,6 +134,11 @@ export interface SomRespondResult {
 export interface SomUndoResult {
   ok: boolean;
   cursor: number;
+}
+
+export interface SomReviseResult {
+  ok: boolean;
+  changed: boolean;
 }
 
 export interface SomDeliberationRoleSummary {

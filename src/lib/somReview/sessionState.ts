@@ -61,3 +61,24 @@ export const planUndoTransition = (
   }
   return { cursor: session.cursor - 1, status: "active" };
 };
+
+/**
+ * Validates an in-place revision without moving the session cursor. Only an
+ * item the reviewer has already completed in this session may be revised.
+ */
+export const reviewedProposalIndex = (
+  session: ReviewSessionCursorState,
+  proposalId: string,
+): number => {
+  if (session.cursor < 0 || session.cursor > session.proposalIds.length) {
+    throw new Error("Session cursor is invalid");
+  }
+  const proposalIndex = session.proposalIds.indexOf(proposalId);
+  if (proposalIndex < 0) {
+    throw new Error("Proposal is not part of this session");
+  }
+  if (proposalIndex >= session.cursor) {
+    throw new Error("Only a previously reviewed proposal may be revised");
+  }
+  return proposalIndex;
+};
