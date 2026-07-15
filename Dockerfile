@@ -77,6 +77,10 @@ COPY --from=builder /app/package.json .
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
+# Society of Mind review dataset, read from process.cwd() at request time
+# by src/lib/somReview/dataset.ts
+COPY --chown=nextjs:nodejs Sell_Society_of_Mind_Review_UI_Handoff_2026-07-14/review-datasets ./Sell_Society_of_Mind_Review_UI_Handoff_2026-07-14/review-datasets
+
 
 
 EXPOSE 3000
