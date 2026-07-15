@@ -4,7 +4,6 @@ import {
   Box,
   Button,
   CircularProgress,
-  Paper,
   Stack,
   TextField,
   Typography,
@@ -178,113 +177,90 @@ const ReviewCard = ({
   const showStatePanels = view.context.type !== "grouping-outline";
 
   return (
-    <Paper
-      elevation={0}
+    <Box
       aria-busy={saving}
       sx={{
         width: "100%",
-        height: {
-          xs: "calc(100dvh - 170px)",
-          sm: "min(680px, calc(100dvh - 185px))",
-        },
-        minHeight: { xs: 560, sm: 540 },
-        maxHeight: 720,
-        display: "flex",
-        flexDirection: "column",
-        borderRadius: 2,
-        border: (theme) => `1px solid ${theme.palette.divider}`,
-        overflow: "hidden",
       }}
     >
-      <Box
+      <Typography
+        ref={headingRef}
+        tabIndex={-1}
+        variant="h5"
+        component="h2"
         sx={{
-          flex: 1,
-          minHeight: 0,
-          overflowY: "auto",
-          p: { xs: 2.5, sm: 4 },
-          pb: 2.5,
+          mb: 3,
+          fontSize: { xs: "1.25rem", sm: "1.4rem" },
+          fontWeight: 750,
+          lineHeight: 1.4,
+          letterSpacing: 0,
+          "&:focus": { outline: "none" },
         }}
       >
+        {view.question}
+      </Typography>
+
+      {showStatePanels && (
+        <Stack
+          direction={{ xs: "column", md: "row" }}
+          spacing={2}
+          sx={{ mb: 3 }}
+        >
+          <StatePanel label="Current" accent="neutral">
+            {titleDiff ? (
+              <DiffedTitle
+                title={titleDiff.current}
+                other={titleDiff.proposed}
+                changedColor="error.main"
+              />
+            ) : (
+              <Typography sx={{ fontSize: "1.05rem", lineHeight: 1.5 }}>
+                {stripStatePrefix(view.currentState)}
+              </Typography>
+            )}
+          </StatePanel>
+          <StatePanel label="Proposed" accent="primary">
+            {titleDiff ? (
+              <DiffedTitle
+                title={titleDiff.proposed}
+                other={titleDiff.current}
+                changedColor="success.main"
+              />
+            ) : (
+              <Typography sx={{ fontSize: "1.05rem", lineHeight: 1.5 }}>
+                {stripStatePrefix(view.proposedState)}
+              </Typography>
+            )}
+          </StatePanel>
+        </Stack>
+      )}
+
+      <Box sx={{ mb: 3 }}>
         <Typography
-          ref={headingRef}
-          tabIndex={-1}
-          variant="h5"
-          component="h2"
+          component="h3"
           sx={{
-            mb: 3,
-            fontSize: { xs: "1.25rem", sm: "1.4rem" },
+            mb: 0.75,
+            color: "text.secondary",
+            fontSize: "0.875rem",
             fontWeight: 750,
-            lineHeight: 1.4,
             letterSpacing: 0,
-            "&:focus": { outline: "none" },
           }}
         >
-          {view.question}
+          Why this recommendation was made
         </Typography>
-
-        {showStatePanels && (
-          <Stack
-            direction={{ xs: "column", md: "row" }}
-            spacing={2}
-            sx={{ mb: 3 }}
-          >
-            <StatePanel label="Current" accent="neutral">
-              {titleDiff ? (
-                <DiffedTitle
-                  title={titleDiff.current}
-                  other={titleDiff.proposed}
-                  changedColor="error.main"
-                />
-              ) : (
-                <Typography sx={{ fontSize: "1.05rem", lineHeight: 1.5 }}>
-                  {stripStatePrefix(view.currentState)}
-                </Typography>
-              )}
-            </StatePanel>
-            <StatePanel label="Proposed" accent="primary">
-              {titleDiff ? (
-                <DiffedTitle
-                  title={titleDiff.proposed}
-                  other={titleDiff.current}
-                  changedColor="success.main"
-                />
-              ) : (
-                <Typography sx={{ fontSize: "1.05rem", lineHeight: 1.5 }}>
-                  {stripStatePrefix(view.proposedState)}
-                </Typography>
-              )}
-            </StatePanel>
-          </Stack>
-        )}
-
-        <Box sx={{ mb: 3 }}>
-          <Typography
-            component="h3"
-            sx={{
-              mb: 0.75,
-              color: "text.secondary",
-              fontSize: "0.875rem",
-              fontWeight: 750,
-              letterSpacing: 0,
-            }}
-          >
-            Why this recommendation was made
-          </Typography>
-          <Typography sx={{ fontSize: "1rem", lineHeight: 1.6 }}>
-            {view.reasoning}
-          </Typography>
-        </Box>
-
-        <ContextRenderer context={view.context} />
+        <Typography sx={{ fontSize: "1rem", lineHeight: 1.6 }}>
+          {view.reasoning}
+        </Typography>
       </Box>
+
+      <ContextRenderer context={view.context} />
 
       <Box
         sx={{
-          flex: "0 0 auto",
-          px: { xs: 2.5, sm: 4 },
-          py: 2.5,
+          mt: 3,
+          py: 2,
           borderTop: (theme) => `1px solid ${theme.palette.divider}`,
-          backgroundColor: "background.paper",
+          backgroundColor: "background.default",
         }}
       >
         {saveError && (
@@ -435,7 +411,7 @@ const ReviewCard = ({
           </Stack>
         )}
       </Box>
-    </Paper>
+    </Box>
   );
 };
 

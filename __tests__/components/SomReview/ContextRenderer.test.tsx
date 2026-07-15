@@ -28,7 +28,7 @@ describe("Society of Mind context renderers", () => {
     ).toBeInTheDocument();
   });
 
-  it("shows a compact grouping and collapses unaffected children", () => {
+  it("shows unchanged direct children in both grouping panels", () => {
     render(
       <ContextRenderer
         context={{
@@ -46,13 +46,12 @@ describe("Society of Mind context renderers", () => {
     expect(
       screen.getByText("Proposed new group (not currently in the ontology)"),
     ).toBeInTheDocument();
-    expect(screen.queryByText("Sell Bicycle")).not.toBeInTheDocument();
-    fireEvent.click(
-      screen.getByRole("button", {
-        name: "2 other direct children remain unchanged",
-      }),
-    );
-    expect(screen.getByText("Sell Bicycle")).toBeInTheDocument();
+    expect(screen.getAllByText("Unchanged direct children")).toHaveLength(2);
+    expect(screen.getAllByText("Sell Bicycle")).toHaveLength(2);
+    expect(screen.getAllByText("Sell Equipment")).toHaveLength(2);
+    expect(
+      screen.queryByRole("button", { name: /unchanged/i }),
+    ).not.toBeInTheDocument();
   });
 
   it("renders the flat-list control", () => {

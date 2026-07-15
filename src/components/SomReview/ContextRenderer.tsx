@@ -215,55 +215,45 @@ const GroupingOutline = ({
   context: Extract<SomReviewContext, { type: "grouping-outline" }>;
 }) => {
   const unaffected = context.unaffectedChildren || [];
-  return (
-    <Box>
-      <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
-        <Box sx={comparisonPanelSx} aria-label="Current grouping">
-          <Typography sx={sectionLabelSx}>Before</Typography>
-          <Typography sx={{ mt: 1, fontWeight: 750 }}>
-            {context.parentTitle}
-          </Typography>
-          {context.proposedChildren.map((child) => (
-            <OutlineItem key={child} title={child} highlighted indent={1} />
-          ))}
-        </Box>
-        <Box sx={comparisonPanelSx} aria-label="Proposed grouping">
-          <Typography sx={sectionLabelSx}>After</Typography>
-          <Typography sx={{ mt: 1, fontWeight: 750 }}>
-            {context.parentTitle}
-          </Typography>
-          <OutlineItem
-            title={context.proposedGroupTitle}
-            highlighted
-            indent={1}
-            statusLabel="Proposed new group (not currently in the ontology)"
-          />
-          {context.proposedChildren.map((child) => (
-            <OutlineItem key={child} title={child} highlighted indent={2} />
-          ))}
-        </Box>
-      </Stack>
-
-      {unaffected.length > 0 && (
-        <Box sx={{ mt: 1 }}>
-          <Disclosure
-            closedLabel={`${unaffected.length} other direct ${unaffected.length === 1 ? "child remains" : "children remain"} unchanged`}
-            openLabel="Hide unchanged children"
-          >
-            <List dense disablePadding sx={{ pl: 1, pb: 1 }}>
-              {unaffected.map((title) => (
-                <ListItem key={title} disableGutters sx={{ py: 0.25 }}>
-                  <ListItemText
-                    primary={title}
-                    primaryTypographyProps={{ color: "text.secondary" }}
-                  />
-                </ListItem>
-              ))}
-            </List>
-          </Disclosure>
-        </Box>
-      )}
+  const unchangedChildren = unaffected.length > 0 && (
+    <Box sx={{ mt: 1.5 }}>
+      <Divider sx={{ mb: 1.25 }} />
+      <Typography sx={sectionLabelSx}>Unchanged direct children</Typography>
+      {unaffected.map((title) => (
+        <OutlineItem key={title} title={title} indent={1} />
+      ))}
     </Box>
+  );
+
+  return (
+    <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
+      <Box sx={comparisonPanelSx} aria-label="Current grouping">
+        <Typography sx={sectionLabelSx}>Before</Typography>
+        <Typography sx={{ mt: 1, fontWeight: 750 }}>
+          {context.parentTitle}
+        </Typography>
+        {context.proposedChildren.map((child) => (
+          <OutlineItem key={child} title={child} highlighted indent={1} />
+        ))}
+        {unchangedChildren}
+      </Box>
+      <Box sx={comparisonPanelSx} aria-label="Proposed grouping">
+        <Typography sx={sectionLabelSx}>After</Typography>
+        <Typography sx={{ mt: 1, fontWeight: 750 }}>
+          {context.parentTitle}
+        </Typography>
+        <OutlineItem
+          title={context.proposedGroupTitle}
+          highlighted
+          indent={1}
+          statusLabel="Proposed new group (not currently in the ontology)"
+        />
+        {context.proposedChildren.map((child) => (
+          <OutlineItem key={child} title={child} highlighted indent={2} />
+        ))}
+        {unchangedChildren}
+      </Box>
+    </Stack>
   );
 };
 
