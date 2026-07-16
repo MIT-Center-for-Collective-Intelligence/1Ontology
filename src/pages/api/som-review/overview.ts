@@ -27,7 +27,7 @@ const handler = async (request: NextApiRequest, res: NextApiResponse) => {
               pendingSummary(dataset, issueType, reviewerId),
               activeSessionProgress(dataset, issueType, reviewerId),
             ])
-          : [{ pending: 0, waiting: 0, notApplicable: 0 }, null];
+          : [{ reviewed: 0, pending: 0, waiting: 0, notApplicable: 0 }, null];
         return {
           id: issueType,
           label: issue.label,

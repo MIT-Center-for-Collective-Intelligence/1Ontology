@@ -13,7 +13,6 @@ import {
   mergeReadyProposalIds,
   planResponseTransition,
   planUndoTransition,
-  reviewedProposalIndex,
 } from "./sessionState";
 
 export interface SessionDoc {
@@ -92,6 +91,7 @@ const reviewerDecisions = async (
 };
 
 export interface PendingSummary {
+  reviewed: number;
   pending: number;
   waiting: number;
   notApplicable: number;
@@ -108,12 +108,16 @@ export const pendingSummary = async (
     reviewerDecisions(dataset.datasetVersion, reviewerId),
   ]);
   const summary: PendingSummary = {
+    reviewed: 0,
     pending: 0,
     waiting: 0,
     notApplicable: 0,
   };
   for (const id of all) {
-    if (answered.has(id)) continue;
+    if (answered.has(id)) {
+      summary.reviewed += 1;
+      continue;
+    }
     const availability = proposalAvailability(
       dataset.recordsById.get(id),
       decisions,
@@ -369,66 +373,53 @@ export const saveResponse = async (
   });
 };
 
-/** Returns current responses for proposals in this session, keyed by ID. */
-export const sessionResponses = async (
-  session: StoredSession,
+/** Returns every current response for one reviewer and issue type, keyed by ID. */
+export const issueResponses = async (
+  datasetVersion: string,
+  issueType: SomIssueType,
+  reviewerId: string,
 ): Promise<Map<string, ResponsePayload>> => {
-  const proposalIds = new Set(session.proposalIds);
   const snapshot = await db
     .collection(SOM_REVIEW_RESPONSES)
-    .where("datasetVersion", "==", session.datasetVersion)
-    .where("issueType", "==", session.issueType)
-    .where("reviewerId", "==", session.reviewerId)
+    .where("datasetVersion", "==", datasetVersion)
+    .where("issueType", "==", issueType)
+    .where("reviewerId", "==", reviewerId)
     .where("status", "==", "current")
     .get();
   return new Map(
     snapshot.docs
       .map((doc) => doc.data() as StoredResponseDoc)
-      .filter(
-        (record) =>
-          proposalIds.has(record.proposalId) && Boolean(record.response),
-      )
+      .filter((record) => Boolean(record.response))
       .map((record) => [record.proposalId, record.response]),
   );
 };
 
 /**
- * Replaces one prior answer in place, appends an audit revision, and leaves
- * the reviewer's current queue position unchanged.
+ * Replaces any prior answer for this reviewer and issue type and appends an
+ * audit revision. Revisions are intentionally independent of review sessions
+ * so judgments from completed sessions remain editable.
  */
 export const reviseResponse = async (
-  sessionId: string,
   issueType: SomIssueType,
   payload: ResponsePayload,
 ): Promise<{ changed: boolean }> => {
   return db.runTransaction(async (transaction) => {
-    const sessionRef = db.collection(SOM_REVIEW_SESSIONS).doc(sessionId);
-    const [responseSnap, sessionSnap] = await Promise.all([
-      transaction.get(
-        currentResponseQuery(
-          payload.datasetVersion,
-          payload.proposalId,
-          payload.reviewerId,
-        ),
+    const responseSnap = await transaction.get(
+      currentResponseQuery(
+        payload.datasetVersion,
+        payload.proposalId,
+        payload.reviewerId,
       ),
-      transaction.get(sessionRef),
-    ]);
-    if (!sessionSnap.exists) throw new Error("Review session was not found");
-    const session = sessionSnap.data() as SessionDoc;
-    if (
-      session.datasetVersion !== payload.datasetVersion ||
-      session.issueType !== issueType ||
-      session.reviewerId !== payload.reviewerId
-    ) {
-      throw new Error("Review session does not match this response");
-    }
-    reviewedProposalIndex(session, payload.proposalId);
+    );
     if (responseSnap.empty) {
       throw new Error("The prior response could not be found");
     }
 
     const responseDoc = responseSnap.docs[0];
     const existing = responseDoc.data() as StoredResponseDoc;
+    if (existing.issueType !== issueType) {
+      throw new Error("The prior response belongs to another issue type");
+    }
     const identical =
       existing.response.decision === payload.decision &&
       (existing.response.disagreementReason || "") ===
@@ -453,7 +444,6 @@ export const reviseResponse = async (
       response: payload,
       createdAt: now,
     });
-    transaction.update(sessionRef, { updatedAt: now });
     return { changed: true };
   });
 };

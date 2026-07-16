@@ -179,6 +179,8 @@ export interface SomReviewCard {
   proposalId: string;
   datasetVersion: string;
   issueType: SomIssueType;
+  /** Zero-based position within the complete issue-type queue. */
+  proposalIndex?: number;
   reviewerView: {
     question: string;
     currentState: string;
@@ -195,6 +197,7 @@ export interface SomIssueTypeOption {
   label: string;
   stage: SomReviewStage;
   robTaskIds: number[];
+  reviewed: number;
   pending: number;
   waiting: number;
   notApplicable: number;
@@ -219,6 +222,7 @@ export interface SomSessionResponse {
   session?: SomSessionState;
   cards?: SomReviewCard[];
   history?: SomReviewHistoryItem[];
+  historyCards?: SomReviewCard[];
 }
 
 export interface SomReviewHistoryItem {
