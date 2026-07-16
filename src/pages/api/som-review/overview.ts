@@ -4,7 +4,7 @@ import fbAuth, { CustomNextApiRequest } from "../../../middlewares/fbAuth";
 import { getDataset, isIssueTypeEnabled } from "../../../lib/somReview/dataset";
 import {
   activeSessionProgress,
-  pendingCount,
+  pendingSummary,
 } from "../../../lib/somReview/store";
 import { SomIssueType, SomOverviewResponse } from "../../../types/ISomReview";
 import { reviewAccessForToken } from "../../../lib/somReview/access";
@@ -22,22 +22,24 @@ const handler = async (request: NextApiRequest, res: NextApiResponse) => {
         const issueType = issue.id as SomIssueType;
         const enabled = isIssueTypeEnabled(issueType);
         const total = (dataset.orderedIdsByIssue.get(issueType) || []).length;
-        const [pending, activeSession] = enabled
+        const [summary, activeSession] = enabled
           ? await Promise.all([
-              pendingCount(dataset, issueType, reviewerId),
+              pendingSummary(dataset, issueType, reviewerId),
               activeSessionProgress(
                 dataset.datasetVersion,
                 issueType,
                 reviewerId,
               ),
             ])
-          : [0, null];
+          : [{ pending: 0, waiting: 0, notApplicable: 0 }, null];
         return {
           id: issueType,
           label: issue.label,
+          stage: issue.stage,
+          robTaskIds: issue.robTaskIds || [],
           enabled,
           total,
-          pending,
+          ...summary,
           ...(activeSession ? { activeSession } : {}),
         };
       }),

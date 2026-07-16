@@ -15,6 +15,7 @@ const { getFirestore } = require("firebase-admin/firestore");
 const ONTOLOGY_APP_ID = "final-hierarchy-with-o*net";
 const ONTOLOGY_NAME = "Final Hierarchy with O*Net";
 const SNAPSHOT_SCHEMA_VERSION = "som-ontology-snapshot-v1";
+const REFERENCE_TITLES = new Set(["Advertise", "Persuade", "Provide service"]);
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(SCRIPT_DIR, "../..");
 
@@ -114,7 +115,13 @@ async function loadLiveSnapshot(environment, capturedAt) {
     .collection("nodes")
     .where("appName", "==", ONTOLOGY_APP_ID)
     .where("deleted", "==", false)
-    .select("title", "specializations")
+    .select(
+      "title",
+      "specializations",
+      "properties.description",
+      "synsets",
+      "actionAlternatives",
+    )
     .get();
   const allNodes = new Map(
     result.docs.map((doc) => [doc.id, { id: doc.id, ...doc.data() }]),
@@ -150,8 +157,24 @@ async function loadLiveSnapshot(environment, capturedAt) {
     }
   }
 
-  const nodes = [...descendants]
-    .map((id) => ({ id, title: String(allNodes.get(id)?.title || "").trim() }))
+  const referenceIds = [...allNodes.values()]
+    .filter((node) => REFERENCE_TITLES.has(String(node.title || "").trim()))
+    .map((node) => node.id)
+    .filter((id) => !descendants.has(id));
+  const nodes = [...descendants, ...referenceIds]
+    .map((id) => {
+      const node = allNodes.get(id);
+      return {
+        id,
+        title: String(node?.title || "").trim(),
+        description: String(node?.properties?.description || "").trim(),
+        synsets: String(node?.synsets || "").trim(),
+        actionAlternatives: Array.isArray(node?.actionAlternatives)
+          ? node.actionAlternatives.map(String).filter(Boolean).sort()
+          : [],
+        ...(referenceIds.includes(id) ? { referenceOnly: true } : {}),
+      };
+    })
     .sort((left, right) => left.id.localeCompare(right.id));
   const duplicateTitles = nodes
     .filter(
@@ -210,6 +233,29 @@ function currentChildTitles(index, parentId) {
     .map((childId) => index.nodesById.get(childId)?.title || "")
     .filter(Boolean)
     .sort((left, right) => left.localeCompare(right, "en"));
+}
+
+function nodeSynonyms(node) {
+  const values = new Set();
+  for (const value of node?.actionAlternatives || []) {
+    if (String(value).trim()) values.add(String(value).trim());
+  }
+  for (const value of String(node?.synsets || "").split(",")) {
+    const lemma = value.trim().replace(/\.[a-z]+\.\d+$/i, "");
+    if (lemma) values.add(lemma.replace(/_/g, " "));
+  }
+  return [...values].sort((left, right) => left.localeCompare(right, "en"));
+}
+
+function allRecordedSynonyms(node) {
+  const values = new Set(nodeSynonyms(node));
+  const match = String(node?.description || "").match(/Synonyms?:\s*([^.;]+)/i);
+  if (match) {
+    for (const value of match[1].split(/,|\bor\b/i)) {
+      if (value.trim()) values.add(value.trim());
+    }
+  }
+  return [...values].sort((left, right) => left.localeCompare(right, "en"));
 }
 
 function resolveTitle(index, title) {
@@ -344,9 +390,12 @@ function deriveSourceRefs(record, index, snapshotHash) {
     }
     case "duplicate-comparison": {
       const first = addDirectChild(context.parentTitle, context.canonicalTitle);
-      addDirectChild(context.parentTitle, context.candidateSynonymTitle);
+      const candidate = addDirectChild(
+        context.parentTitle,
+        context.candidateSynonymTitle,
+      );
       parentNodeId = first.parentId;
-      subjectNodeId = first.childId;
+      subjectNodeId = candidate.childId;
       break;
     }
     case "placement-comparison": {
@@ -472,6 +521,76 @@ function deriveSourceRefs(record, index, snapshotHash) {
         const childId = addTitle(title);
         requireAnyEdge(index, subjectNodeId, childId);
       }
+      break;
+    }
+    case "metadata-edit": {
+      subjectNodeId = addTitle(context.nodeTitle);
+      const node = index.nodesById.get(subjectNodeId);
+      if (
+        context.field === "description" &&
+        String(context.currentText || "") !== String(node?.description || "")
+      ) {
+        throw new Error(
+          `Description proposal for ${context.nodeTitle} is stale`,
+        );
+      }
+      if (
+        context.field === "synonyms" &&
+        Array.isArray(context.currentValues)
+      ) {
+        const current =
+          context.synonymScope === "all-recorded"
+            ? allRecordedSynonyms(node)
+            : nodeSynonyms(node);
+        const proposedCurrent = [...context.currentValues].sort((left, right) =>
+          left.localeCompare(right, "en"),
+        );
+        if (JSON.stringify(current) !== JSON.stringify(proposedCurrent)) {
+          throw new Error(`Synonym proposal for ${context.nodeTitle} is stale`);
+        }
+      }
+      break;
+    }
+    case "polysemy-review": {
+      parentNodeId = addTitle(context.currentParentTitle);
+      subjectNodeId = addTitle(context.nodeTitle);
+      requireAnyEdge(index, parentNodeId, subjectNodeId);
+      for (const sense of context.proposedSenses || []) {
+        if (index.idByTitle.has(sense.title)) addTitle(sense.title);
+        if (index.idByTitle.has(sense.destination)) addTitle(sense.destination);
+      }
+      break;
+    }
+    case "collection-design": {
+      parentNodeId = addTitle(context.parentTitle);
+      for (const title of context.currentChildren || []) {
+        const childId = addTitle(title);
+        requireAnyEdge(index, parentNodeId, childId);
+      }
+      for (const branch of context.proposedBranches || []) {
+        if (branch.status === "existing") addTitle(branch.title);
+        if (branch.status === "new" && index.idByTitle.has(branch.title)) {
+          throw new Error(
+            `Proposed collection branch already exists: ${branch.title}`,
+          );
+        }
+        for (const title of branch.children || []) addTitle(title);
+      }
+      break;
+    }
+    case "sense-relocation-action": {
+      parentNodeId = addTitle(context.currentParentTitle);
+      subjectNodeId = addTitle(context.nodeTitle);
+      requireEdge(
+        index,
+        parentNodeId,
+        subjectNodeId,
+        context.currentCollection,
+      );
+      const retainedId = addTitle(context.retainedSenseTitle);
+      const retainedParentId = addTitle(context.retainedParentTitle);
+      requireAnyEdge(index, retainedParentId, retainedId);
+      addTitle(context.proposedParentTitle);
       break;
     }
     default:
@@ -726,6 +845,9 @@ async function main() {
     capturedAt,
     sellRootNodeId: snapshot.sellRootNodeId,
     nodeCount: snapshot.nodes.length,
+    sellNodeCount: snapshot.nodes.filter((node) => !node.referenceOnly).length,
+    referenceNodeCount: snapshot.nodes.filter((node) => node.referenceOnly)
+      .length,
     edgeCount: snapshot.edges.length,
   };
   manifest.files.ontologySnapshot = "ontology-snapshot.json";

@@ -1,14 +1,38 @@
 export type SomIssueType =
   | "title-clarity"
-  | "sibling-grouping"
+  | "synonym-enrichment"
+  | "description-enrichment"
+  | "misc-facet-duplicate"
+  | "mistaken-synonym"
   | "duplicate-synonym"
+  | "polysemy"
+  | "flat-list-grouping"
+  | "compound-object-grouping"
+  | "collection-design"
   | "placement"
   | "wrong-verb"
-  | "structural-overlap"
   | "node-merge"
   | "relocation"
+  | "sense-relocation"
   | "missing-activity"
   | "redundant-node";
+
+export type SomReviewStage =
+  | "content"
+  | "within-branch"
+  | "outside-branch"
+  | "final-action"
+  | "additional-quality";
+
+export type SomProposalKind = "diagnosis" | "design" | "action";
+
+export interface SomReviewWorkflow {
+  robTaskIds: number[];
+  stage: SomReviewStage;
+  proposalKind: SomProposalKind;
+  dependsOnProposalIds: string[];
+  conflictGroupId?: string;
+}
 
 export type SomReviewDecision = "agree" | "disagree";
 
@@ -104,6 +128,50 @@ export type SomReviewContext =
       parentCollection: string;
       nodeTitle: string;
       childTitles: string[];
+    }
+  | {
+      type: "metadata-edit";
+      nodeTitle: string;
+      field: "synonyms" | "description";
+      currentText?: string;
+      proposedText?: string;
+      currentValues?: string[];
+      proposedValues?: string[];
+      synonymScope?: "structured-field" | "all-recorded";
+      sourceTasks?: string[];
+    }
+  | {
+      type: "polysemy-review";
+      nodeTitle: string;
+      currentParentTitle: string;
+      sourceTasks: string[];
+      proposedSenses: Array<{
+        title: string;
+        meaning: string;
+        destination: string;
+      }>;
+    }
+  | {
+      type: "collection-design";
+      parentTitle: string;
+      currentChildren: string[];
+      proposedCollectionName: string;
+      proposedBranches: Array<{
+        title: string;
+        status: "existing" | "new";
+        children: string[];
+      }>;
+    }
+  | {
+      type: "sense-relocation-action";
+      nodeTitle: string;
+      currentParentTitle: string;
+      currentCollection: string;
+      sourceTasks: string[];
+      retainedSenseTitle: string;
+      retainedParentTitle: string;
+      movedSenseTitle: string;
+      proposedParentTitle: string;
     };
 
 /** The blinded card served to the reviewer. Allowlisted fields only. */
@@ -125,7 +193,11 @@ export interface SomReviewCard {
 export interface SomIssueTypeOption {
   id: SomIssueType;
   label: string;
+  stage: SomReviewStage;
+  robTaskIds: number[];
   pending: number;
+  waiting: number;
+  notApplicable: number;
   total: number;
   enabled: boolean;
   activeSession?: {

@@ -1,76 +1,191 @@
 {
   "schemaVersion": "sell-comprehensive-candidate-audit-v1",
-  "datasetVersion": "sell-final-hierarchy-onet-2026-07-15-v2",
-  "generatedAt": "2026-07-15T23:12:00.783Z",
-  "sourceSnapshotSha256": "e97abe83d5de04cf1e657abb782ee664430416f608d087a8699ae2b57b86c49f",
+  "datasetVersion": "sell-final-hierarchy-onet-2026-07-15-v3",
+  "generatedAt": "2026-07-15T18:00:00.000Z",
+  "sourceSnapshotSha256": "c86217e0f2dbefe5b716bd5881b46d50cec9f76264676ab23f63bfe060266837",
   "taxonomy": [
     {
       "id": "title-clarity",
-      "label": "Title clarity",
+      "label": "1. Clarify unclear titles",
+      "stage": "content",
+      "robTaskIds": [
+        1
+      ],
       "rolloutStatus": "prototype",
       "view": "title-comparison"
     },
     {
-      "id": "sibling-grouping",
-      "label": "Sibling grouping",
-      "rolloutStatus": "prototype",
-      "view": "grouping-outline"
+      "id": "synonym-enrichment",
+      "label": "2. Add missing synonyms",
+      "stage": "content",
+      "robTaskIds": [
+        2
+      ],
+      "rolloutStatus": "experimental",
+      "view": "metadata-edit"
+    },
+    {
+      "id": "description-enrichment",
+      "label": "3. Add missing descriptions",
+      "stage": "content",
+      "robTaskIds": [
+        3
+      ],
+      "rolloutStatus": "experimental",
+      "view": "metadata-edit"
+    },
+    {
+      "id": "misc-facet-duplicate",
+      "label": "4. Repeated miscellaneous/facet nodes",
+      "stage": "within-branch",
+      "robTaskIds": [
+        4
+      ],
+      "rolloutStatus": "experimental",
+      "view": "overlap-comparison"
+    },
+    {
+      "id": "mistaken-synonym",
+      "label": "5. Mistaken synonyms",
+      "stage": "content",
+      "robTaskIds": [
+        5
+      ],
+      "rolloutStatus": "experimental",
+      "view": "metadata-edit"
     },
     {
       "id": "duplicate-synonym",
-      "label": "Duplicate or synonym",
+      "label": "6. Undetected synonyms",
+      "stage": "content",
+      "robTaskIds": [
+        6
+      ],
       "rolloutStatus": "experimental",
       "view": "duplicate-comparison"
     },
     {
+      "id": "polysemy",
+      "label": "7. Undetected double meanings",
+      "stage": "content",
+      "robTaskIds": [
+        7
+      ],
+      "rolloutStatus": "experimental",
+      "view": "polysemy-review"
+    },
+    {
+      "id": "flat-list-grouping",
+      "label": "8. Group long flat lists",
+      "stage": "within-branch",
+      "robTaskIds": [
+        8
+      ],
+      "rolloutStatus": "prototype",
+      "view": "grouping-outline"
+    },
+    {
+      "id": "compound-object-grouping",
+      "label": "9. Group compound objects",
+      "stage": "within-branch",
+      "robTaskIds": [
+        9
+      ],
+      "rolloutStatus": "prototype",
+      "view": "grouping-outline"
+    },
+    {
+      "id": "collection-design",
+      "label": "10. Create warranted collections",
+      "stage": "within-branch",
+      "robTaskIds": [
+        10
+      ],
+      "rolloutStatus": "experimental",
+      "view": "collection-design"
+    },
+    {
       "id": "placement",
-      "label": "Placement",
+      "label": "11. Wrong place within Sell",
+      "stage": "within-branch",
+      "robTaskIds": [
+        11
+      ],
       "rolloutStatus": "experimental",
       "view": "placement-comparison"
     },
     {
       "id": "wrong-verb",
-      "label": "Wrong main verb",
+      "label": "12. Misjudged synonyms outside Sell",
+      "stage": "outside-branch",
+      "robTaskIds": [
+        12
+      ],
       "rolloutStatus": "experimental",
       "view": "placement-comparison"
     },
     {
-      "id": "structural-overlap",
-      "label": "Structural overlap",
+      "id": "sense-relocation",
+      "label": "13. Move non-selling senses",
+      "stage": "outside-branch",
+      "robTaskIds": [
+        13
+      ],
       "rolloutStatus": "experimental",
-      "view": "overlap-comparison"
+      "view": "sense-relocation-action"
     },
     {
       "id": "node-merge",
-      "label": "Merge nodes",
+      "label": "Apply approved node merges",
+      "stage": "final-action",
+      "robTaskIds": [
+        4,
+        6
+      ],
       "rolloutStatus": "experimental",
       "view": "merge-action"
     },
     {
       "id": "relocation",
-      "label": "Exact relocation",
+      "label": "Apply approved relocations",
+      "stage": "final-action",
+      "robTaskIds": [
+        11,
+        12
+      ],
       "rolloutStatus": "experimental",
       "view": "relocation-action"
     },
     {
       "id": "missing-activity",
       "label": "Missing activity",
+      "stage": "additional-quality",
+      "robTaskIds": [],
       "rolloutStatus": "experimental",
       "view": "addition-action"
     },
     {
       "id": "redundant-node",
       "label": "Redundant node",
+      "stage": "additional-quality",
+      "robTaskIds": [],
       "rolloutStatus": "experimental",
       "view": "merge-up-action"
     }
   ],
   "generatedCounts": {
+    "synonymEnrichment": 1,
+    "descriptionEnrichment": 47,
+    "mistakenSynonyms": 3,
+    "duplicatePairs": 4,
+    "polysemyDiagnoses": 1,
     "evidenceConvergenceGroupings": 4,
-    "exactMerges": 3,
-    "exactRelocations": 0,
+    "collectionDesigns": 1,
+    "exactMerges": 6,
+    "exactRelocations": 11,
+    "senseRelocations": 1,
     "missingActivities": 10,
-    "redundantNodes": 1
+    "redundantNodes": 0
   },
   "evidenceConvergenceGroupings": [
     {
@@ -223,10 +338,11 @@
     }
   ],
   "decisions": [
-    "Wrong-verb findings were separated from ordinary placement findings.",
-    "Rent out and Lease out received an exact merge proposal after D8/H3 confirmation.",
-    "The two normalized cross-collection overlaps received exact structural-consolidation proposals.",
-    "No exact relocation was generated because no advisory destination was both precise and validated as the intended current target.",
-    "Rejected duplicate and grouping candidates remain in rejected_agent_candidates.jsonl and were not promoted."
+    "The 13 tasks in Rob's document are first-class issue queues rather than aliases for ten broader queues.",
+    "Flat-list grouping and O*NET compound-object grouping are separate review criteria.",
+    "Rent out and Lease out are no longer simultaneously treated as wrong verbs and an immediate merge; collection design is reviewed first.",
+    "Sell Products or Ideas is no longer moved intact when its idea sense is the actual problem.",
+    "Exact merges and relocations include prerequisite proposal IDs and are served only after an agreeing diagnosis.",
+    "All proposed current nodes and current relations are checked against the pinned Firestore snapshot."
   ]
 }

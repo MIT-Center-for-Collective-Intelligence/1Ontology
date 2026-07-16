@@ -1,56 +1,63 @@
 # Sell Society of Mind review datasets
 
-Dataset version: `sell-final-hierarchy-onet-2026-07-15-v2`
+Dataset version: `sell-final-hierarchy-onet-2026-07-15-v3`
 
-This package contains 71 atomic, review-only proposals and 11 controls for the
-Sell sub-ontology. It separates diagnostic judgments from exact structural
-actions:
+This package contains 143 atomic, review-only proposals and 11 title-clarity
+controls for the Sell sub-ontology. Its first 13 queues correspond one-to-one
+with the tasks in Rob's July 9 document:
 
-- **Title clarity**: 36 proposed renames and 11 status-quo controls.
-- **Sibling grouping**: 8 proposed intermediate nodes.
-- **Duplicate or synonym**: 1 same-activity judgment.
-- **Placement**: 3 current-parent judgments.
-- **Wrong main verb**: 7 activities whose action may not be Sell.
-- **Structural overlap**: 2 cross-collection overlap judgments.
-- **Merge nodes**: 3 exact consolidation plans with named survivors.
-- **Exact relocation**: 0 proposals because no advisory destination was both
-  precise and verified as the intended current target.
-- **Missing activity**: 10 high-confidence additions revalidated against the
-  current snapshot.
-- **Redundant node**: 1 exact wrapper-removal plan.
+1. Clarify unclear titles.
+2. Add missing structured synonyms.
+3. Add missing or non-substantive descriptions.
+4. Find repeated miscellaneous/facet nodes.
+5. Remove mistaken synonyms.
+6. Find undetected synonyms.
+7. Separate polysemous nodes.
+8. Group long flat lists.
+9. Group compound objects found in O*NET evidence.
+10. Create warranted collections.
+11. Correct placement within Sell.
+12. Identify activities whose main verb is not Sell.
+13. Move only the non-selling sense of a polysemous node.
 
-These are all accepted candidates found by the packaged detector outputs and
-the snapshot-bound action audit. This is not a claim that a semantic scan can
-prove the absence of every other possible ontology issue.
+Separate final-action queues show exact node merges and relocations. These
+items remain unavailable to a reviewer until that reviewer agrees with the
+corresponding diagnosis. A rejected prerequisite marks the action as not
+applicable. Missing-activity checks remain an additional pipeline quality
+queue; the unsafe `Sell (Other)` wrapper removal is not served because its
+only child is polysemous.
 
-Optional description and synonym enrichment is not treated as an issue queue
-in this package. The current source snapshot has no structured synonym field,
-and the older enrichment suggestions predate this snapshot. They need a fresh
-metadata export and a separate atomic review contract before they can be shown
-without presenting stale current state or combining several judgments.
+The package represents every documented issue family, but it does not claim
+that a finite semantic scan can prove every possible Sell defect has been
+found. `manifest.json` records this boundary explicitly.
 
 ## Reviewer interaction
 
-- Let the reviewer choose one issue type, then serve up to 10 items of that
-  type per session. The selector count is the full remaining queue, not the
-  session size.
-- Show one item at a time. Agree advances immediately without a page reload.
-- Disagree opens a required reason field; submit advances after validation.
-- Do not display `internalModelEvidence` or model confidence to reviewers.
-- Keep optional context collapsed by default; grouping uses a compact before/after outline.
-- Save decisions separately. No decision in this package authorizes an ontology write.
-
-See `manifest.json` for counts, file locations, and the full UI contract.
+- Present queues in task order within five stages: node content, structure
+  within Sell, movement outside Sell, exact actions, and additional checks.
+- Serve up to 10 items of one type per session. The selector count is the full
+  remaining queue, not the session size.
+- Show one item at a time. Agree advances immediately; disagree requires a
+  reason before advancing.
+- Keep source O*NET tasks collapsed by default.
+- Do not expose `internalModelEvidence`, model identity, or confidence.
+- Store decisions separately. No review decision writes to the ontology.
+- Revalidate every accepted exact action against a fresh Firestore snapshot
+  before implementation.
 
 ## Regeneration
 
-After refreshing the Firestore snapshot, rebuild the comprehensive candidate
-inventory with:
+Refresh the read-only Firestore snapshot, then rebuild the complete inventory:
 
 ```bash
-node scripts/som-review/expand-comprehensive-sell-dataset.mjs
+node scripts/som-review/sync-live-sell-dataset.mjs \
+  --input-dir Sell_Society_of_Mind_Review_UI_Handoff_2026-07-15/review-datasets \
+  --output-dir Sell_Society_of_Mind_Review_UI_Handoff_2026-07-15/review-datasets \
+  --environment production
+
+node scripts/som-review/expand-comprehensive-sell-dataset.mjs \
+  --directory Sell_Society_of_Mind_Review_UI_Handoff_2026-07-15/review-datasets
 ```
 
-The generator fails if an exact proposal references a missing node or current
-relationship. It intentionally leaves exact relocation empty when only a
-free-text destination hint exists.
+Both scripts fail closed on missing nodes, stale relations, invalid metadata,
+or dependency errors. Regeneration also removes obsolete per-queue files.

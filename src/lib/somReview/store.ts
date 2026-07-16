@@ -7,7 +7,12 @@ import {
   SOM_REVIEW_SESSIONS,
 } from "../firestoreClient/collections";
 import { SomIssueType } from "../../types/ISomReview";
-import { DEFAULT_SESSION_SIZE, MAX_SESSION_SIZE, SomDataset } from "./dataset";
+import {
+  DEFAULT_SESSION_SIZE,
+  MAX_SESSION_SIZE,
+  SomDataset,
+  proposalAvailability,
+} from "./dataset";
 import {
   isResumableSession,
   planResponseTransition,
@@ -72,18 +77,64 @@ const answeredProposalIds = async (
   return new Set(snapshot.docs.map((doc) => doc.data().proposalId));
 };
 
+const reviewerDecisions = async (
+  datasetVersion: string,
+  reviewerId: string,
+): Promise<Map<string, "agree" | "disagree">> => {
+  const snapshot = await db
+    .collection(SOM_REVIEW_RESPONSES)
+    .where("datasetVersion", "==", datasetVersion)
+    .where("reviewerId", "==", reviewerId)
+    .where("status", "==", "current")
+    .get();
+  return new Map(
+    snapshot.docs.map((doc) => {
+      const data = doc.data() as StoredResponseDoc;
+      return [data.proposalId, data.response.decision];
+    }),
+  );
+};
+
+export interface PendingSummary {
+  pending: number;
+  waiting: number;
+  notApplicable: number;
+}
+
+export const pendingSummary = async (
+  dataset: SomDataset,
+  issueType: SomIssueType,
+  reviewerId: string,
+): Promise<PendingSummary> => {
+  const all = dataset.orderedIdsByIssue.get(issueType) || [];
+  const [answered, decisions] = await Promise.all([
+    answeredProposalIds(dataset.datasetVersion, issueType, reviewerId),
+    reviewerDecisions(dataset.datasetVersion, reviewerId),
+  ]);
+  const summary: PendingSummary = {
+    pending: 0,
+    waiting: 0,
+    notApplicable: 0,
+  };
+  for (const id of all) {
+    if (answered.has(id)) continue;
+    const availability = proposalAvailability(
+      dataset.recordsById.get(id),
+      decisions,
+    );
+    if (availability === "ready") summary.pending += 1;
+    if (availability === "waiting") summary.waiting += 1;
+    if (availability === "not-applicable") summary.notApplicable += 1;
+  }
+  return summary;
+};
+
 export const pendingCount = async (
   dataset: SomDataset,
   issueType: SomIssueType,
   reviewerId: string,
 ): Promise<number> => {
-  const all = dataset.orderedIdsByIssue.get(issueType) || [];
-  const answered = await answeredProposalIds(
-    dataset.datasetVersion,
-    issueType,
-    reviewerId,
-  );
-  return all.filter((id) => !answered.has(id)).length;
+  return (await pendingSummary(dataset, issueType, reviewerId)).pending;
 };
 
 export const activeSessionProgress = async (
@@ -113,6 +164,7 @@ export const getOrCreateSession = async (
   issueType: SomIssueType,
   reviewerId: string,
 ): Promise<StoredSession | null> => {
+  const decisions = await reviewerDecisions(dataset.datasetVersion, reviewerId);
   const existing = await activeSessionQuery(
     dataset.datasetVersion,
     issueType,
@@ -121,7 +173,16 @@ export const getOrCreateSession = async (
   if (!existing.empty) {
     const existingDoc = existing.docs[0];
     const session = existingDoc.data() as SessionDoc;
-    if (isResumableSession(session)) {
+    const remainingReady = session.proposalIds
+      .slice(session.cursor)
+      .every(
+        (proposalId) =>
+          proposalAvailability(
+            dataset.recordsById.get(proposalId),
+            decisions,
+          ) === "ready",
+      );
+    if (isResumableSession(session) && remainingReady) {
       return { ...session, id: existingDoc.id };
     }
     if (session.status === "active") {
@@ -139,19 +200,19 @@ export const getOrCreateSession = async (
     reviewerId,
   );
   const remaining = all.filter((id) => !answered.has(id));
-  if (remaining.length === 0) return null;
-
-  const size = Math.min(
-    DEFAULT_SESSION_SIZE,
-    MAX_SESSION_SIZE,
-    remaining.length,
+  const ready = remaining.filter(
+    (id) =>
+      proposalAvailability(dataset.recordsById.get(id), decisions) === "ready",
   );
+  if (ready.length === 0) return null;
+
+  const size = Math.min(DEFAULT_SESSION_SIZE, MAX_SESSION_SIZE, ready.length);
   const now = Timestamp.now();
   const session: SessionDoc = {
     datasetVersion: dataset.datasetVersion,
     issueType,
     reviewerId,
-    proposalIds: remaining.slice(0, size),
+    proposalIds: ready.slice(0, size),
     cursor: 0,
     status: "active",
     createdAt: now,

@@ -14,16 +14,39 @@ const EXPECTED_SCHEMA_VERSION = "som-review-v1";
 
 export const SUPPORTED_ISSUE_TYPES: SomIssueType[] = [
   "title-clarity",
-  "sibling-grouping",
+  "synonym-enrichment",
+  "description-enrichment",
+  "misc-facet-duplicate",
+  "mistaken-synonym",
   "duplicate-synonym",
+  "polysemy",
+  "flat-list-grouping",
+  "compound-object-grouping",
+  "collection-design",
   "placement",
   "wrong-verb",
-  "structural-overlap",
+  "sense-relocation",
   "node-merge",
   "relocation",
   "missing-activity",
   "redundant-node",
 ];
+
+export type SomProposalAvailability = "ready" | "waiting" | "not-applicable";
+
+export const proposalAvailability = (
+  record: any,
+  decisions: Map<string, "agree" | "disagree">,
+): SomProposalAvailability => {
+  const dependencies: string[] = record?.workflow?.dependsOnProposalIds || [];
+  if (dependencies.some((id) => decisions.get(id) === "disagree")) {
+    return "not-applicable";
+  }
+  if (dependencies.some((id) => decisions.get(id) !== "agree")) {
+    return "waiting";
+  }
+  return "ready";
+};
 
 export const DEFAULT_SESSION_SIZE = 10;
 export const MAX_SESSION_SIZE = 15;
@@ -153,6 +176,37 @@ export const loadDataset = (dir?: string): SomDataset => {
     }
     recordsById.set(record.proposalId, Object.freeze(record));
   }
+
+  for (const record of recordsById.values()) {
+    const dependencies: string[] = record?.workflow?.dependsOnProposalIds || [];
+    for (const dependencyId of dependencies) {
+      if (dependencyId === record.proposalId) {
+        throw new Error(`Proposal ${record.proposalId} depends on itself`);
+      }
+      if (!recordsById.has(dependencyId)) {
+        throw new Error(
+          `Proposal ${record.proposalId} depends on missing proposal ${dependencyId}`,
+        );
+      }
+    }
+  }
+
+  const visiting = new Set<string>();
+  const visited = new Set<string>();
+  const visit = (proposalId: string): void => {
+    if (visited.has(proposalId)) return;
+    if (visiting.has(proposalId)) {
+      throw new Error(`Proposal dependency cycle includes ${proposalId}`);
+    }
+    visiting.add(proposalId);
+    const record = recordsById.get(proposalId);
+    for (const dependencyId of record?.workflow?.dependsOnProposalIds || []) {
+      visit(dependencyId);
+    }
+    visiting.delete(proposalId);
+    visited.add(proposalId);
+  };
+  for (const proposalId of recordsById.keys()) visit(proposalId);
 
   const orderedIdsByIssue = new Map<SomIssueType, string[]>();
   const issueLabels = new Map<SomIssueType, string>();
