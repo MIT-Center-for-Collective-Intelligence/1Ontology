@@ -1,8 +1,6 @@
 import path from "path";
 
 import {
-  DEFAULT_SESSION_SIZE,
-  MAX_SESSION_SIZE,
   SUPPORTED_ISSUE_TYPES,
   compileResponseValidator,
   isIssueTypeEnabled,
@@ -307,11 +305,6 @@ describe("Society of Mind review dataset", () => {
     } else {
       process.env.SOM_REVIEW_DISABLED_ISSUE_TYPES = previous;
     }
-  });
-
-  it("keeps review sessions small", () => {
-    expect(DEFAULT_SESSION_SIZE).toBe(10);
-    expect(MAX_SESSION_SIZE).toBe(15);
   });
 
   it("rejects unbounded reviewer text", () => {

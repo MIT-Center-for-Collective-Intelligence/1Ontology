@@ -7,14 +7,10 @@ import {
   SOM_REVIEW_SESSIONS,
 } from "../firestoreClient/collections";
 import { SomIssueType } from "../../types/ISomReview";
-import {
-  DEFAULT_SESSION_SIZE,
-  MAX_SESSION_SIZE,
-  SomDataset,
-  proposalAvailability,
-} from "./dataset";
+import { SomDataset, proposalAvailability } from "./dataset";
 import {
   isResumableSession,
+  mergeReadyProposalIds,
   planResponseTransition,
   planUndoTransition,
   reviewedProposalIndex,
@@ -138,26 +134,38 @@ export const pendingCount = async (
 };
 
 export const activeSessionProgress = async (
-  datasetVersion: string,
+  dataset: SomDataset,
   issueType: SomIssueType,
   reviewerId: string,
 ): Promise<{ cursor: number; total: number } | null> => {
   const snapshot = await activeSessionQuery(
-    datasetVersion,
+    dataset.datasetVersion,
     issueType,
     reviewerId,
   ).get();
   if (snapshot.empty) return null;
   const session = snapshot.docs[0].data() as SessionDoc;
   if (!isResumableSession(session)) return null;
-  return { cursor: session.cursor, total: session.proposalIds.length };
+
+  const [answered, decisions] = await Promise.all([
+    answeredProposalIds(dataset.datasetVersion, issueType, reviewerId),
+    reviewerDecisions(dataset.datasetVersion, reviewerId),
+  ]);
+  const ready = (dataset.orderedIdsByIssue.get(issueType) || []).filter(
+    (proposalId) =>
+      !answered.has(proposalId) &&
+      proposalAvailability(dataset.recordsById.get(proposalId), decisions) ===
+        "ready",
+  );
+  const proposalIds = mergeReadyProposalIds(session.proposalIds, ready);
+  return { cursor: session.cursor, total: proposalIds.length };
 };
 
 /**
  * Returns the reviewer's unfinished session for this issue type, or builds a
- * new one of up to DEFAULT_SESSION_SIZE unanswered records (hard cap 15,
- * single issue type, deterministic order from the dataset). Completed
- * sessions are kept as history; only "active" sessions are resumed.
+ * new one containing every currently ready unanswered record for that issue
+ * type, in deterministic dataset order. Completed sessions are kept as
+ * history; only "active" sessions are resumed.
  */
 export const getOrCreateSession = async (
   dataset: SomDataset,
@@ -183,7 +191,28 @@ export const getOrCreateSession = async (
           ) === "ready",
       );
     if (isResumableSession(session) && remainingReady) {
-      return { ...session, id: existingDoc.id };
+      const all = dataset.orderedIdsByIssue.get(issueType) || [];
+      const answered = await answeredProposalIds(
+        dataset.datasetVersion,
+        issueType,
+        reviewerId,
+      );
+      const ready = all.filter(
+        (proposalId) =>
+          !answered.has(proposalId) &&
+          proposalAvailability(
+            dataset.recordsById.get(proposalId),
+            decisions,
+          ) === "ready",
+      );
+      const proposalIds = mergeReadyProposalIds(session.proposalIds, ready);
+      if (proposalIds.length !== session.proposalIds.length) {
+        await existingDoc.ref.update({
+          proposalIds,
+          updatedAt: Timestamp.now(),
+        });
+      }
+      return { ...session, proposalIds, id: existingDoc.id };
     }
     if (session.status === "active") {
       await existingDoc.ref.update({
@@ -206,13 +235,12 @@ export const getOrCreateSession = async (
   );
   if (ready.length === 0) return null;
 
-  const size = Math.min(DEFAULT_SESSION_SIZE, MAX_SESSION_SIZE, ready.length);
   const now = Timestamp.now();
   const session: SessionDoc = {
     datasetVersion: dataset.datasetVersion,
     issueType,
     reviewerId,
-    proposalIds: ready.slice(0, size),
+    proposalIds: mergeReadyProposalIds([], ready),
     cursor: 0,
     status: "active",
     createdAt: now,

@@ -522,7 +522,7 @@ export const ReviewPage = () => {
                     component="h1"
                     sx={{ fontWeight: 800 }}
                   >
-                    Review set complete
+                    Review type complete
                   </Typography>
                   <Typography sx={{ mt: 0.75, color: "text.secondary" }}>
                     {cards.length} {cards.length === 1 ? "item" : "items"}{" "}
@@ -555,7 +555,7 @@ export const ReviewPage = () => {
                       onClick={() => startSession(issueType)}
                       sx={{ minHeight: 50, fontWeight: 750 }}
                     >
-                      Review another set
+                      Check for new proposals
                     </Button>
                   )}
                 </Stack>

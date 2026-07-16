@@ -119,9 +119,9 @@ describe("Society of Mind review queue selector", () => {
     expect(screen.getByText("Movement outside Sell")).toBeInTheDocument();
     expect(screen.getByText("Exact actions")).toBeInTheDocument();
     expect(screen.getByText("Additional quality checks")).toBeInTheDocument();
-    expect(screen.getByText("In progress: 4 of 10")).toBeInTheDocument();
+    expect(screen.getByText("In progress: item 4 of 10")).toBeInTheDocument();
     expect(
-      screen.getByText("In progress: 4 of 10").closest(".MuiChip-root"),
+      screen.getByText("In progress: item 4 of 10").closest(".MuiChip-root"),
     ).toHaveClass("MuiChip-outlined");
     expect(
       screen.getByText("16 ready to review").closest(".MuiChip-root"),
