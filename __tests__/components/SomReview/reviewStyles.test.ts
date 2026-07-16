@@ -1,5 +1,6 @@
 import {
   REVIEW_ACCENT_COLORS,
+  REVIEW_ICON_COLORS,
   REVIEW_PRIMARY_ACTION_HOVER,
   REVIEW_PRIMARY_ACTION_TEXT,
 } from "../../../src/components/SomReview/reviewStyles";
@@ -42,5 +43,14 @@ describe("Society of Mind review colors", () => {
     expect(
       contrast(REVIEW_ACCENT_COLORS.dark, "#28282a"),
     ).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it("keeps brighter issue icons distinguishable from their surfaces", () => {
+    expect(
+      contrast(REVIEW_ICON_COLORS.light, "#f5f5f5"),
+    ).toBeGreaterThanOrEqual(3);
+    expect(
+      contrast(REVIEW_ICON_COLORS.dark, "#333335"),
+    ).toBeGreaterThanOrEqual(3);
   });
 });

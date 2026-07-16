@@ -31,7 +31,7 @@ import {
   SomReviewStage,
 } from "../../types/ISomReview";
 import { ISSUE_DESCRIPTIONS } from "./reviewCopy";
-import { reviewAccentColor } from "./reviewStyles";
+import { reviewAccentColor, reviewIconColor } from "./reviewStyles";
 
 const activeQueueStatusSx: SxProps<Theme> = {
   backgroundColor: (theme) =>
@@ -292,7 +292,7 @@ const ReviewQueueSelector = ({
                             placeItems: "center",
                             borderRadius: 1.5,
                             color: available
-                              ? reviewAccentColor
+                              ? reviewIconColor
                               : "text.secondary",
                             backgroundColor: "action.hover",
                           }}

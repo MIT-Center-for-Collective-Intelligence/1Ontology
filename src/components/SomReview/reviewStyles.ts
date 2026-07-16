@@ -7,9 +7,16 @@ export const REVIEW_ACCENT_COLORS = {
   light: "#8a3500",
   dark: "#ffb47c",
 } as const;
+export const REVIEW_ICON_COLORS = {
+  light: "#e66700",
+  dark: "#ffb47c",
+} as const;
 
 export const reviewAccentColor = (theme: Theme): string =>
   REVIEW_ACCENT_COLORS[theme.palette.mode];
+
+export const reviewIconColor = (theme: Theme): string =>
+  REVIEW_ICON_COLORS[theme.palette.mode];
 
 export const reviewWarningTextColor = (theme: Theme): string =>
   theme.palette.mode === "dark" ? theme.palette.warning.main : "#7a3d00";
