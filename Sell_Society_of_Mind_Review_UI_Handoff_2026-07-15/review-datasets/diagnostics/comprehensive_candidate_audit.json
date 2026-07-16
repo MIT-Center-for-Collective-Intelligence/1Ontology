@@ -1,7 +1,7 @@
 {
   "schemaVersion": "sell-comprehensive-candidate-audit-v1",
-  "datasetVersion": "sell-final-hierarchy-onet-2026-07-15-v3",
-  "generatedAt": "2026-07-15T18:00:00.000Z",
+  "datasetVersion": "sell-final-hierarchy-onet-2026-07-15-v4",
+  "generatedAt": "2026-07-16T03:01:36.118Z",
   "sourceSnapshotSha256": "c86217e0f2dbefe5b716bd5881b46d50cec9f76264676ab23f63bfe060266837",
   "taxonomy": [
     {
@@ -195,7 +195,7 @@
         "Sell Flower",
         "Sell Plant"
       ],
-      "reasoning": "Sell Flower and Sell Plant have the same supporting O*NET task, and both title-clarity reviews independently converge on Sell Plants and Flowers. The proposed node preserves the narrower activities while giving their shared work a clear home."
+      "reasoning": "Sell Flower and Sell Plant have the same supporting O*NET task. The proposed group preserves the two narrower activities while giving their shared work a clear home."
     },
     {
       "title": "Sell Cosmetic Supplies",

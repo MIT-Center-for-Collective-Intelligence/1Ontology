@@ -5,7 +5,7 @@ import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
 
-const DATASET_VERSION = "sell-final-hierarchy-onet-2026-07-15-v3";
+const DATASET_VERSION = "sell-final-hierarchy-onet-2026-07-15-v4";
 const ONTOLOGY_APP_ID = "final-hierarchy-with-o*net";
 const ONTOLOGY_NAME = "Final Hierarchy with O*Net";
 const SOURCE_ARTIFACT =
@@ -163,7 +163,7 @@ const SERVICE_RELOCATIONS = [
   {
     title: "Sell Contract",
     reasoning:
-      "A contract is an ongoing legal or service arrangement rather than a standalone information object. The current ontology already has Sell service as the verified home for selling services and arrangements.",
+      "A contract is an ongoing legal or service arrangement rather than a standalone information object.",
   },
   {
     title: "Sell Membership",
@@ -200,13 +200,71 @@ const MARKET_TITLES = [
   "Market Space",
 ];
 
+const TITLE_CLARITY_OVERRIDES = {
+  "Market Event": {
+    proposedTitle: "Market Events",
+    reasoning:
+      'Pluralizing "Event" makes the title read naturally while preserving this event-specific node instead of expanding it to products and services.',
+  },
+  "Sell Bond": {
+    proposedTitle: "Sell Bonds",
+    reasoning:
+      'Pluralizing "Bond" makes the title read naturally while preserving this node\'s specific object. A broader financial-instrument grouping is reviewed separately.',
+  },
+  "Sell Flower": {
+    proposedTitle: "Sell Flowers",
+    reasoning:
+      'Pluralizing "Flower" makes the title read naturally while keeping the separate question of whether plant and flower activities need a shared group.',
+  },
+  "Sell Good": {
+    proposedTitle: "Sell Eyewear and Eye-Care Products",
+    reasoning:
+      'The generic word "Good" does not identify the work. The source task specifically names contact lenses, spectacles, sunglasses, and other eye-related products.',
+  },
+  "Sell Item": {
+    proposedTitle: "Sell Other Items",
+    reasoning:
+      'Pluralizing "Item" and adding "Other" reflects the source task\'s catch-all wording without duplicating the separate ticket-selling activity.',
+  },
+  "Sell Lotion": {
+    proposedTitle: "Sell Lotions",
+    reasoning:
+      'Pluralizing "Lotion" makes the title read naturally while keeping the broader cosmetic-supplies grouping as a separate decision.',
+  },
+  "Sell Plant": {
+    proposedTitle: "Sell Plants",
+    reasoning:
+      'Pluralizing "Plant" removes the industrial-plant ambiguity while keeping the broader plants-and-flowers grouping as a separate decision.',
+  },
+  "Sell Stamp": {
+    proposedTitle: "Sell Stamps",
+    reasoning:
+      'Pluralizing "Stamp" makes the title read naturally. Whether stamps and money orders need a shared parent is reviewed separately.',
+  },
+  "Sell Stock": {
+    proposedTitle: "Sell Stocks",
+    reasoning:
+      'Pluralizing "Stock" makes the title read naturally and reduces the inventory ambiguity while preserving this node\'s specific object.',
+  },
+  "Sell Tonic": {
+    proposedTitle: "Sell Tonics",
+    reasoning:
+      'Pluralizing "Tonic" makes the title read naturally while keeping the broader cosmetic-supplies grouping as a separate decision.',
+  },
+  "Sell Tobacco": {
+    proposedTitle: "Sell Tobacco Products",
+    reasoning:
+      'Adding "Products" makes the object explicit without combining food and beverage sales from the shared source task into this tobacco-specific node.',
+  },
+};
+
 const EXTRA_GROUPINGS = [
   {
     title: "Sell Plants and Flowers",
     parentTitle: "Sell (Physical Object)",
     children: ["Sell Flower", "Sell Plant"],
     reasoning:
-      "Sell Flower and Sell Plant have the same supporting O*NET task, and both title-clarity reviews independently converge on Sell Plants and Flowers. The proposed node preserves the narrower activities while giving their shared work a clear home.",
+      "Sell Flower and Sell Plant have the same supporting O*NET task. The proposed group preserves the two narrower activities while giving their shared work a clear home.",
   },
   {
     title: "Sell Cosmetic Supplies",
@@ -448,6 +506,96 @@ function writeJsonl(file, values) {
 
 function hash(value) {
   return crypto.createHash("sha256").update(value).digest("hex");
+}
+
+function firstSentence(value) {
+  const text = String(value || "")
+    .trim()
+    .replace(/\s+/g, " ");
+  const match = text.match(/^.*?[.!?](?:\s|$)/);
+  return (match?.[0] || text).trim();
+}
+
+function assertDiagnosisIsolation(record) {
+  const view = record.reviewerView || {};
+  const visibleText = [
+    view.question,
+    view.currentState,
+    view.proposedState,
+    view.reasoning,
+  ]
+    .filter(Boolean)
+    .join(" ");
+  if (/(?:^|\s)H\d+\s*(?::|not\s+run\b)/i.test(visibleText)) {
+    throw new Error(
+      `${record.proposalId} exposes an internal judge label to reviewers`,
+    );
+  }
+  const context = view.context;
+  if (
+    context?.type === "placement-comparison" &&
+    context.candidateHome &&
+    visibleText.toLowerCase().includes(context.candidateHome.toLowerCase())
+  ) {
+    throw new Error(
+      `${record.proposalId} exposes a downstream placement target during diagnosis`,
+    );
+  }
+}
+
+function normalizedTitleKey(value) {
+  return String(value || "")
+    .trim()
+    .replace(/\s+/g, " ")
+    .toLowerCase();
+}
+
+function assertTitleActionConsistency(records, snapshot) {
+  const existingTitles = new Map(
+    snapshot.nodes.map((node) => [normalizedTitleKey(node.title), node.title]),
+  );
+  const proposedTitles = new Map();
+  const proposedGroupTitles = new Map();
+
+  for (const record of records) {
+    const context = record.reviewerView?.context;
+    if (
+      context?.type === "title-comparison" &&
+      context.proposedTitle &&
+      normalizedTitleKey(context.currentTitle) !==
+        normalizedTitleKey(context.proposedTitle)
+    ) {
+      const key = normalizedTitleKey(context.proposedTitle);
+      const previous = proposedTitles.get(key);
+      if (previous && previous !== context.currentTitle) {
+        throw new Error(
+          `Conflicting title proposals: ${previous} and ${context.currentTitle} both become ${context.proposedTitle}`,
+        );
+      }
+      const existing = existingTitles.get(key);
+      if (existing && existing !== context.currentTitle) {
+        throw new Error(
+          `Proposed title already belongs to another current node: ${context.proposedTitle}`,
+        );
+      }
+      proposedTitles.set(key, context.currentTitle);
+    }
+    if (context?.type === "grouping-outline") {
+      proposedGroupTitles.set(
+        normalizedTitleKey(context.proposedGroupTitle),
+        context.proposedGroupTitle,
+      );
+    }
+  }
+
+  for (const [key, currentTitle] of proposedTitles) {
+    const groupTitle = proposedGroupTitles.get(key);
+    if (groupTitle) {
+      throw new Error(
+        `Title proposal for ${currentTitle} conflicts with proposed group ${groupTitle}`,
+      );
+    }
+  }
 }
 
 function proposalId(issueType, key) {
@@ -1227,7 +1375,7 @@ function servicePlacementRecords(args) {
       reviewerView: {
         question: `Is "${candidate.title}" currently in the wrong part of the Sell branch?`,
         currentState: `"${candidate.title}" is currently under "${current.parentTitle}".`,
-        proposedState: `Mark it as a service or ongoing arrangement rather than a physical or information object.`,
+        proposedState: `"${candidate.title}" does not belong under "${current.parentTitle}".`,
         reasoning: candidate.reasoning,
         context: {
           type: "placement-comparison",
@@ -1887,22 +2035,42 @@ function main() {
       context.nodeTitle === "Sell Service (1)"
         ? { ...context, candidateHome: "Actors and Activities" }
         : context;
+    const normalizedReasoning =
+      context?.type === "placement-comparison"
+        ? firstSentence(record.reviewerView?.reasoning)
+        : record.reviewerView?.reasoning;
+    const titleOverride =
+      context?.type === "title-comparison"
+        ? TITLE_CLARITY_OVERRIDES[context.currentTitle]
+        : undefined;
+    const normalizedReviewerView = titleOverride
+      ? {
+          ...record.reviewerView,
+          question: `Is "${titleOverride.proposedTitle}" a clearer title for this activity than "${context.currentTitle}"?`,
+          proposedState: `Proposed title: ${titleOverride.proposedTitle}`,
+          reasoning: titleOverride.reasoning,
+          context: {
+            ...context,
+            proposedTitle: titleOverride.proposedTitle,
+          },
+        }
+      : context?.type === "placement-comparison"
+        ? {
+            ...record.reviewerView,
+            context: normalizedContext,
+            reasoning: normalizedReasoning,
+            proposedState:
+              context.placementIssue === "wrong-verb"
+                ? `"${context.nodeTitle}" uses a different main action and does not belong under "${context.currentParentTitle}".`
+                : `"${context.nodeTitle}" does not belong under "${context.currentParentTitle}".`,
+          }
+        : record.reviewerView;
     return {
       ...record,
       datasetVersion: DATASET_VERSION,
       issueType,
       workflow: workflowFor(issueType),
-      reviewerView:
-        context?.type === "placement-comparison"
-          ? {
-              ...record.reviewerView,
-              context: normalizedContext,
-              proposedState:
-                context.placementIssue === "wrong-verb"
-                  ? `"${context.nodeTitle}" uses a different main action and does not belong under "${context.currentParentTitle}".`
-                  : `"${context.nodeTitle}" does not belong under "${context.currentParentTitle}".`,
-            }
-          : record.reviewerView,
+      reviewerView: normalizedReviewerView,
     };
   };
 
@@ -2013,6 +2181,14 @@ function main() {
     }
   }
   const proposals = [...existingProposals, ...generatedProposals];
+
+  for (const record of [...proposals, ...existingControls, ...manualChecks]) {
+    assertDiagnosisIsolation(record);
+  }
+  assertTitleActionConsistency(
+    [...proposals, ...existingControls, ...manualChecks],
+    snapshot,
+  );
 
   const everyRecordId = new Set(
     [...proposals, ...existingControls, ...manualChecks].map(

@@ -24,7 +24,7 @@ describe("Society of Mind review dataset", () => {
 
   it("loads and validates every proposal, control, and manual check", () => {
     expect(dataset.datasetVersion).toBe(
-      "sell-final-hierarchy-onet-2026-07-15-v3",
+      "sell-final-hierarchy-onet-2026-07-15-v4",
     );
     expect(dataset.recordsById.size).toBe(154);
     expect(dataset.manifest.counts).toMatchObject({

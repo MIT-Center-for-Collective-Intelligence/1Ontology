@@ -352,7 +352,7 @@ const BoundaryNote = ({ children }: { children: React.ReactNode }) => (
 
 const CollectionNote = ({ value }: { value: string }) => (
   <Typography sx={{ mt: 0.25, color: "text.secondary", fontSize: "0.85rem" }}>
-    Collection: {value || "main"}
+    Collection: {!value || value === "main" ? "Default" : value}
   </Typography>
 );
 
@@ -398,13 +398,11 @@ const PlacementNote = ({
 }: {
   context: Extract<SomReviewContext, { type: "placement-comparison" }>;
 }) => {
-  if (!context.candidateHome) return null;
   return (
     <BoundaryNote>
       {context.placementIssue === "wrong-verb"
-        ? "Possible action family to review next: "
-        : "Possible new home to review next: "}
-      <strong>{context.candidateHome}</strong>
+        ? "If you agree that this is not a selling activity, its appropriate location will be reviewed in a separate step."
+        : "If you agree that this activity is misplaced, its appropriate location will be reviewed in a separate step."}
     </BoundaryNote>
   );
 };
@@ -676,13 +674,10 @@ const PolysemyReview = ({
       <Box sx={comparisonPanelSx} aria-label="Meanings after separation">
         <Typography sx={sectionLabelSx}>After</Typography>
         {context.proposedSenses.map((sense) => (
-          <Box key={`${sense.title}-${sense.destination}`} sx={{ mt: 1.25 }}>
+          <Box key={sense.title} sx={{ mt: 1.25 }}>
             <Typography sx={{ fontWeight: 750 }}>{sense.title}</Typography>
             <Typography sx={{ mt: 0.35, lineHeight: 1.5 }}>
               {sense.meaning}
-            </Typography>
-            <Typography sx={{ mt: 0.35, color: "text.secondary" }}>
-              Proposed home: <strong>{sense.destination}</strong>
             </Typography>
           </Box>
         ))}
@@ -691,6 +686,10 @@ const PolysemyReview = ({
     <Box sx={{ mt: 1 }}>
       <SourceTasks tasks={context.sourceTasks} />
     </Box>
+    <BoundaryNote>
+      If you agree that the title combines distinct meanings, where each meaning
+      belongs will be reviewed in a separate step.
+    </BoundaryNote>
   </Box>
 );
 

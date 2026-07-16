@@ -119,7 +119,7 @@ describe("Society of Mind context renderers", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("places the advisory destination in a quiet bottom note", () => {
+  it("keeps the destination out of a placement diagnosis", () => {
     render(
       <ContextRenderer
         context={{
@@ -133,9 +133,11 @@ describe("Society of Mind context renderers", () => {
       />,
     );
     expect(
-      screen.getByText("Possible new home to review next:"),
+      screen.getByText(
+        "If you agree that this activity is misplaced, its appropriate location will be reviewed in a separate step.",
+      ),
     ).toBeInTheDocument();
-    expect(screen.getByText("Rent out")).toBeInTheDocument();
+    expect(screen.queryByText("Rent out")).not.toBeInTheDocument();
   });
 
   it("renders structural overlap details without authorizing a merge", () => {
@@ -204,6 +206,7 @@ describe("Society of Mind context renderers", () => {
     expect(
       screen.getByLabelText("Placement after relocation"),
     ).toHaveTextContent("Sell service");
+    expect(screen.getAllByText("Collection: Default")).toHaveLength(2);
 
     rerender(
       <ContextRenderer
@@ -312,6 +315,13 @@ describe("Society of Mind context renderers", () => {
     expect(
       screen.getByLabelText("Meanings after separation"),
     ).toHaveTextContent("Persuade");
+    expect(screen.queryByText(/proposed home/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Sell (Physical Object)"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/where each meaning belongs will be reviewed/i),
+    ).toBeInTheDocument();
   });
 
   it("renders collection design and the gated sense move as concrete outcomes", () => {

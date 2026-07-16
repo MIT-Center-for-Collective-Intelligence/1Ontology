@@ -139,7 +139,7 @@ describe("Society of Mind review card", () => {
     ).toBeNull();
   });
 
-  it("keeps the advisory placement hint out of the main proposal panel", () => {
+  it("keeps downstream placement details out of the diagnosis", () => {
     const placementCard: SomReviewCard = {
       proposalId: "placement-1",
       datasetVersion: "dataset-1",
@@ -174,8 +174,11 @@ describe("Society of Mind review card", () => {
     expect(screen.getByText("Current location")).toBeInTheDocument();
     expect(screen.getByText("Recommended finding")).toBeInTheDocument();
     expect(
-      screen.getByText("Possible new home to review next:"),
+      screen.getByText(
+        "If you agree that this activity is misplaced, its appropriate location will be reviewed in a separate step.",
+      ),
     ).toBeInTheDocument();
+    expect(screen.queryByText("Actors and Activities")).not.toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Yes, misplaced" }),
     ).toBeInTheDocument();

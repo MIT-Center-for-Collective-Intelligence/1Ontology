@@ -148,7 +148,7 @@ export type SomReviewContext =
       proposedSenses: Array<{
         title: string;
         meaning: string;
-        destination: string;
+        destination?: string;
       }>;
     }
   | {

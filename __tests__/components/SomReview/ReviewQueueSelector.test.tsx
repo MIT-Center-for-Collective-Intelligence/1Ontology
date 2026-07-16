@@ -120,7 +120,7 @@ describe("Society of Mind review queue selector", () => {
     expect(screen.getByText("Exact actions")).toBeInTheDocument();
     expect(screen.getByText("Additional quality checks")).toBeInTheDocument();
     expect(screen.getByText("In progress: 4 of 10")).toBeInTheDocument();
-    expect(screen.getAllByText("No proposals found")).toHaveLength(2);
+    expect(screen.getAllByText("No review items found")).toHaveLength(2);
     expect(screen.getByText("Reviewed")).toBeInTheDocument();
     expect(screen.getByText("Related review required")).toBeInTheDocument();
     expect(

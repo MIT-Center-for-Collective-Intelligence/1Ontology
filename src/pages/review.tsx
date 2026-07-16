@@ -22,6 +22,7 @@ import ReviewCard, {
 } from "@components/components/SomReview/ReviewCard";
 import ReviewHistorySelect from "@components/components/SomReview/ReviewHistorySelect";
 import ReviewQueueSelector from "@components/components/SomReview/ReviewQueueSelector";
+import ReviewTaskIntro from "@components/components/SomReview/ReviewTaskIntro";
 import ThemeModeToggle from "@components/components/SomReview/ThemeModeToggle";
 import {
   SomIssueType,
@@ -34,12 +35,13 @@ import {
   SomSessionResponse,
 } from "@components/types/ISomReview";
 
-type Phase = "loading" | "select" | "session" | "complete" | "empty";
+type Phase = "loading" | "select" | "intro" | "session" | "complete" | "empty";
 
 export const ReviewPage = () => {
   const [{ user }] = useAuth();
   const router = useRouter();
   const [phase, setPhase] = useState<Phase>("loading");
+  const [datasetVersion, setDatasetVersion] = useState("");
   const [issueTypes, setIssueTypes] = useState<SomIssueTypeOption[]>([]);
   const [issueType, setIssueType] = useState<SomIssueType | null>(null);
   const [sessionId, setSessionId] = useState("");
@@ -55,6 +57,7 @@ export const ReviewPage = () => {
     setLoadError("");
     try {
       const overview = await Post<SomOverviewResponse>("/som-review/overview");
+      setDatasetVersion(overview.datasetVersion);
       setIssueTypes(overview.issueTypes);
       setCanDeliberate(overview.canDeliberate);
       setPhase("select");
@@ -99,6 +102,43 @@ export const ReviewPage = () => {
       );
       setPhase("select");
     }
+  }, []);
+
+  const introStorageKey = useCallback(
+    (issue: SomIssueType) =>
+      `som-review-task-intro-${datasetVersion || "current"}-${issue}`,
+    [datasetVersion],
+  );
+
+  const chooseIssueType = useCallback(
+    (issue: SomIssueType) => {
+      try {
+        if (window.localStorage.getItem(introStorageKey(issue)) === "seen") {
+          startSession(issue);
+          return;
+        }
+      } catch {
+        // The introduction remains available if browser storage is unavailable.
+      }
+      setIssueType(issue);
+      setPhase("intro");
+    },
+    [introStorageKey, startSession],
+  );
+
+  const continueFromIntro = useCallback(() => {
+    if (!issueType) return;
+    try {
+      window.localStorage.setItem(introStorageKey(issueType), "seen");
+    } catch {
+      // The review can continue even when browser storage is unavailable.
+    }
+    startSession(issueType);
+  }, [introStorageKey, issueType, startSession]);
+
+  const leaveIntro = useCallback(() => {
+    setIssueType(null);
+    setPhase("select");
   }, []);
 
   const submitResponse = useCallback(
@@ -284,9 +324,21 @@ export const ReviewPage = () => {
           {phase === "select" && (
             <ReviewQueueSelector
               issueTypes={issueTypes}
-              onStart={startSession}
+              onStart={chooseIssueType}
               canDeliberate={canDeliberate}
               onOpenDeliberation={() => router.push("/review/admin")}
+              headerAction={<ThemeModeToggle />}
+            />
+          )}
+
+          {phase === "intro" && selectedIssue && (
+            <ReviewTaskIntro
+              issueType={selectedIssue.id}
+              label={selectedIssue.label}
+              itemCount={selectedIssue.pending}
+              resuming={Boolean(selectedIssue.activeSession)}
+              onContinue={continueFromIntro}
+              onBack={leaveIntro}
               headerAction={<ThemeModeToggle />}
             />
           )}

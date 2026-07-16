@@ -29,38 +29,7 @@ import {
   SomIssueTypeOption,
   SomReviewStage,
 } from "../../types/ISomReview";
-
-const ISSUE_DESCRIPTIONS: Record<SomIssueType, string> = {
-  "title-clarity": "Judge whether an activity title is clear and precise.",
-  "synonym-enrichment": "Review synonyms missing from structured metadata.",
-  "description-enrichment":
-    "Review evidence-grounded descriptions for empty nodes.",
-  "misc-facet-duplicate":
-    "Find concepts repeated in miscellaneous and explicit facets.",
-  "mistaken-synonym":
-    "Remove terms that name a meaningfully different activity.",
-  "duplicate-synonym": "Judge one possible synonym pair at a time.",
-  polysemy: "Separate one title that combines distinct activity meanings.",
-  "flat-list-grouping":
-    "Organize a long sibling list into coherent intermediate groups.",
-  "compound-object-grouping":
-    "Group activities joined in the same O*NET object phrase.",
-  "collection-design":
-    "Review a distinct specialization dimension and its branches.",
-  placement: "Judge whether an activity is under the wrong parent.",
-  "wrong-verb":
-    "Judge whether Market names promotion rather than a kind of selling.",
-  "sense-relocation":
-    "Move only the non-selling sense after a polysemy decision.",
-  "node-merge":
-    "Review an exact consolidation, including the survivor and moved children.",
-  relocation:
-    "Review an exact move from the current parent to a named new parent.",
-  "missing-activity":
-    "Judge whether a well-known Sell activity is missing from the ontology.",
-  "redundant-node":
-    "Review removal of a wrapper whose children can move to its parent.",
-};
+import { ISSUE_DESCRIPTIONS } from "./reviewCopy";
 
 const IssueIcon = ({ issueType }: { issueType: SomIssueType }) => {
   const sx = { fontSize: 28 };
@@ -103,7 +72,9 @@ const QueueStatus = ({ issue }: { issue: SomIssueTypeOption }) => {
     return <Chip label="Unavailable" size="small" variant="outlined" />;
   }
   if (issue.total === 0) {
-    return <Chip label="No proposals found" size="small" variant="outlined" />;
+    return (
+      <Chip label="No review items found" size="small" variant="outlined" />
+    );
   }
   if (issue.pending === 0 && issue.waiting > 0) {
     return (
