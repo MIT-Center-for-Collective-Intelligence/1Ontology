@@ -46,6 +46,16 @@ export const reviewerQuestion = (context: SomReviewContext): string => {
       return `Should the missing activity "${context.proposedTitle}" be added under "${context.parentTitle}"?`;
     case "merge-up-action":
       return `Should the redundant wrapper "${context.nodeTitle}" be removed and its children moved directly under "${context.parentTitle}"?`;
+    case "metadata-edit":
+      return context.field === "synonyms"
+        ? `Should the proposed synonym change be made for "${context.nodeTitle}"?`
+        : `Is the proposed description useful for "${context.nodeTitle}"?`;
+    case "polysemy-review":
+      return `Does "${context.nodeTitle}" combine meanings that should be represented separately?`;
+    case "collection-design":
+      return `Should "${context.parentTitle}" use the proposed "${context.proposedCollectionName}" collection?`;
+    case "sense-relocation-action":
+      return `Should the non-selling sense of "${context.nodeTitle}" move to "${context.proposedParentTitle}"?`;
   }
 };
 
@@ -204,6 +214,46 @@ const sanitizeContext = (context: any): SomReviewContext => {
         parentCollection: context.parentCollection || "main",
         nodeTitle: context.nodeTitle,
         childTitles: context.childTitles || [],
+      };
+    case "metadata-edit":
+      return {
+        type: "metadata-edit",
+        nodeTitle: context.nodeTitle,
+        field: context.field,
+        currentText: context.currentText || "",
+        proposedText: context.proposedText || "",
+        currentValues: context.currentValues || [],
+        proposedValues: context.proposedValues || [],
+        synonymScope: context.synonymScope || "structured-field",
+        sourceTasks: context.sourceTasks || [],
+      };
+    case "polysemy-review":
+      return {
+        type: "polysemy-review",
+        nodeTitle: context.nodeTitle,
+        currentParentTitle: context.currentParentTitle,
+        sourceTasks: context.sourceTasks || [],
+        proposedSenses: context.proposedSenses || [],
+      };
+    case "collection-design":
+      return {
+        type: "collection-design",
+        parentTitle: context.parentTitle,
+        currentChildren: context.currentChildren || [],
+        proposedCollectionName: context.proposedCollectionName,
+        proposedBranches: context.proposedBranches || [],
+      };
+    case "sense-relocation-action":
+      return {
+        type: "sense-relocation-action",
+        nodeTitle: context.nodeTitle,
+        currentParentTitle: context.currentParentTitle,
+        currentCollection: context.currentCollection || "main",
+        sourceTasks: context.sourceTasks || [],
+        retainedSenseTitle: context.retainedSenseTitle,
+        retainedParentTitle: context.retainedParentTitle,
+        movedSenseTitle: context.movedSenseTitle,
+        proposedParentTitle: context.proposedParentTitle,
       };
     default:
       throw new Error(`Unknown reviewer context type: ${context?.type}`);

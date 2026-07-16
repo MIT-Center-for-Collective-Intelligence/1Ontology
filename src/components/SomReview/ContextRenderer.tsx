@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import {
   Box,
   Button,
+  Chip,
   Collapse,
   Divider,
   List,
@@ -55,6 +56,14 @@ const ContextRenderer = ({ context }: { context: SomReviewContext }) => {
       return <AdditionAction context={context} />;
     case "merge-up-action":
       return <MergeUpAction context={context} />;
+    case "metadata-edit":
+      return <MetadataEdit context={context} />;
+    case "polysemy-review":
+      return <PolysemyReview context={context} />;
+    case "collection-design":
+      return <CollectionDesign context={context} />;
+    case "sense-relocation-action":
+      return <SenseRelocationAction context={context} />;
   }
 };
 
@@ -535,6 +544,210 @@ const MergeUpAction = ({
       ))}
     </Box>
   </Stack>
+);
+
+const SourceTasks = ({ tasks }: { tasks: string[] }) =>
+  tasks.length > 0 ? (
+    <Disclosure
+      closedLabel={`Show source ${tasks.length === 1 ? "task" : `tasks (${tasks.length})`}`}
+      openLabel="Hide source tasks"
+    >
+      <List dense disablePadding sx={{ pl: 1, pb: 1 }}>
+        {tasks.map((task) => (
+          <ListItem key={task} disableGutters alignItems="flex-start">
+            <ListItemText
+              primary={task}
+              primaryTypographyProps={{ sx: { lineHeight: 1.5 } }}
+            />
+          </ListItem>
+        ))}
+      </List>
+    </Disclosure>
+  ) : null;
+
+const SynonymValues = ({ values }: { values: string[] }) =>
+  values.length ? (
+    <Stack
+      direction="row"
+      flexWrap="wrap"
+      useFlexGap
+      spacing={1}
+      sx={{ mt: 1 }}
+    >
+      {values.map((value) => (
+        <Chip key={value} label={value} variant="outlined" />
+      ))}
+    </Stack>
+  ) : (
+    <Typography sx={{ mt: 1, color: "text.secondary" }}>None</Typography>
+  );
+
+const MetadataEdit = ({
+  context,
+}: {
+  context: Extract<SomReviewContext, { type: "metadata-edit" }>;
+}) => (
+  <Box>
+    <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
+      <Box sx={comparisonPanelSx} aria-label="Metadata before change">
+        <Typography sx={sectionLabelSx}>Before</Typography>
+        <Typography sx={{ mt: 1, fontWeight: 750 }}>
+          {context.nodeTitle}
+        </Typography>
+        <Typography sx={{ ...sectionLabelSx, mt: 1.25 }}>
+          {context.field === "synonyms"
+            ? context.synonymScope === "all-recorded"
+              ? "Current recorded synonyms"
+              : "Current structured synonyms"
+            : "Current description"}
+        </Typography>
+        {context.field === "synonyms" ? (
+          <SynonymValues values={context.currentValues || []} />
+        ) : (
+          <Typography sx={{ mt: 1, lineHeight: 1.55, color: "text.secondary" }}>
+            {context.currentText || "No description"}
+          </Typography>
+        )}
+      </Box>
+      <Box sx={comparisonPanelSx} aria-label="Metadata after change">
+        <Typography sx={sectionLabelSx}>After</Typography>
+        <Typography sx={{ mt: 1, fontWeight: 750 }}>
+          {context.nodeTitle}
+        </Typography>
+        <Typography sx={{ ...sectionLabelSx, mt: 1.25 }}>
+          {context.field === "synonyms"
+            ? context.synonymScope === "all-recorded"
+              ? "Recorded synonyms after this change"
+              : "Proposed structured synonyms"
+            : "Proposed description"}
+        </Typography>
+        {context.field === "synonyms" ? (
+          <SynonymValues values={context.proposedValues || []} />
+        ) : (
+          <Typography sx={{ mt: 1, lineHeight: 1.55 }}>
+            {context.proposedText}
+          </Typography>
+        )}
+      </Box>
+    </Stack>
+    <Box sx={{ mt: 1 }}>
+      <SourceTasks tasks={context.sourceTasks || []} />
+    </Box>
+  </Box>
+);
+
+const PolysemyReview = ({
+  context,
+}: {
+  context: Extract<SomReviewContext, { type: "polysemy-review" }>;
+}) => (
+  <Box>
+    <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
+      <Box sx={comparisonPanelSx} aria-label="Meaning before separation">
+        <Typography sx={sectionLabelSx}>Before</Typography>
+        <Typography sx={{ mt: 1, fontWeight: 750 }}>
+          {context.currentParentTitle}
+        </Typography>
+        <OutlineItem title={context.nodeTitle} highlighted indent={1} />
+      </Box>
+      <Box sx={comparisonPanelSx} aria-label="Meanings after separation">
+        <Typography sx={sectionLabelSx}>After</Typography>
+        {context.proposedSenses.map((sense) => (
+          <Box key={`${sense.title}-${sense.destination}`} sx={{ mt: 1.25 }}>
+            <Typography sx={{ fontWeight: 750 }}>{sense.title}</Typography>
+            <Typography sx={{ mt: 0.35, lineHeight: 1.5 }}>
+              {sense.meaning}
+            </Typography>
+            <Typography sx={{ mt: 0.35, color: "text.secondary" }}>
+              Proposed home: <strong>{sense.destination}</strong>
+            </Typography>
+          </Box>
+        ))}
+      </Box>
+    </Stack>
+    <Box sx={{ mt: 1 }}>
+      <SourceTasks tasks={context.sourceTasks} />
+    </Box>
+  </Box>
+);
+
+const CollectionDesign = ({
+  context,
+}: {
+  context: Extract<SomReviewContext, { type: "collection-design" }>;
+}) => (
+  <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
+    <Box sx={comparisonPanelSx} aria-label="Collections before redesign">
+      <Typography sx={sectionLabelSx}>Before</Typography>
+      <Typography sx={{ mt: 1, fontWeight: 750 }}>
+        {context.parentTitle}
+      </Typography>
+      {context.currentChildren.map((title) => (
+        <OutlineItem key={title} title={title} highlighted indent={1} />
+      ))}
+    </Box>
+    <Box sx={comparisonPanelSx} aria-label="Collections after redesign">
+      <Typography sx={sectionLabelSx}>After</Typography>
+      <Typography sx={{ mt: 1, fontWeight: 750 }}>
+        {context.parentTitle}
+      </Typography>
+      <Typography sx={{ mt: 1.25, color: "primary.main", fontWeight: 750 }}>
+        Collection: {context.proposedCollectionName}
+      </Typography>
+      {context.proposedBranches.map((branch) => (
+        <Box key={branch.title}>
+          <OutlineItem
+            title={branch.title}
+            highlighted
+            indent={1}
+            statusLabel={
+              branch.status === "new" ? "Proposed new activity" : undefined
+            }
+          />
+          {branch.children.map((title) => (
+            <OutlineItem key={title} title={title} highlighted indent={2} />
+          ))}
+        </Box>
+      ))}
+    </Box>
+  </Stack>
+);
+
+const SenseRelocationAction = ({
+  context,
+}: {
+  context: Extract<SomReviewContext, { type: "sense-relocation-action" }>;
+}) => (
+  <Box>
+    <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
+      <Box sx={comparisonPanelSx} aria-label="Combined sense before relocation">
+        <Typography sx={sectionLabelSx}>Before</Typography>
+        <Typography sx={{ mt: 1, fontWeight: 750 }}>
+          {context.currentParentTitle}
+        </Typography>
+        <CollectionNote value={context.currentCollection} />
+        <OutlineItem title={context.nodeTitle} highlighted indent={1} />
+      </Box>
+      <Box
+        sx={comparisonPanelSx}
+        aria-label="Separated senses after relocation"
+      >
+        <Typography sx={sectionLabelSx}>After</Typography>
+        <LabeledValue
+          label={`Retain under ${context.retainedParentTitle}`}
+          value={context.retainedSenseTitle}
+        />
+        <Divider sx={{ my: 1.5 }} />
+        <LabeledValue
+          label={`Move under ${context.proposedParentTitle}`}
+          value={context.movedSenseTitle}
+        />
+      </Box>
+    </Stack>
+    <Box sx={{ mt: 1 }}>
+      <SourceTasks tasks={context.sourceTasks} />
+    </Box>
+  </Box>
 );
 
 const DuplicateComparison = ({

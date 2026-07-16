@@ -13,7 +13,14 @@ export interface SomOntologySnapshot {
   environment: "development" | "production";
   capturedAt: string;
   sellRootNodeId: string;
-  nodes: Array<{ id: string; title: string }>;
+  nodes: Array<{
+    id: string;
+    title: string;
+    description?: string;
+    synsets?: string;
+    actionAlternatives?: string[];
+    referenceOnly?: boolean;
+  }>;
   edges: Array<{
     parentId: string;
     childId: string;
@@ -32,7 +39,7 @@ export interface SomProposalSourceRefs {
 
 type SnapshotIndex = {
   snapshot: SomOntologySnapshot;
-  nodesById: Map<string, { id: string; title: string }>;
+  nodesById: Map<string, SomOntologySnapshot["nodes"][number]>;
   idsByTitle: Map<string, string[]>;
   edgeKeys: Set<string>;
   edgePairs: Set<string>;
@@ -82,7 +89,7 @@ export const buildSnapshotIndex = (
     );
   }
 
-  const nodesById = new Map<string, { id: string; title: string }>();
+  const nodesById = new Map<string, SomOntologySnapshot["nodes"][number]>();
   const idsByTitle = new Map<string, string[]>();
   for (const node of snapshot.nodes) {
     if (!node.id || !node.title) {
@@ -236,6 +243,33 @@ const sameStringArray = (left: unknown, right: string[]): boolean =>
   left.length === right.length &&
   left.every((value, index) => value === right[index]);
 
+const nodeSynonyms = (
+  node?: SomOntologySnapshot["nodes"][number],
+): string[] => {
+  const values = new Set<string>();
+  for (const value of node?.actionAlternatives || []) {
+    if (String(value).trim()) values.add(String(value).trim());
+  }
+  for (const value of String(node?.synsets || "").split(",")) {
+    const lemma = value.trim().replace(/\.[a-z]+\.\d+$/i, "");
+    if (lemma) values.add(lemma.replace(/_/g, " "));
+  }
+  return [...values].sort((left, right) => left.localeCompare(right, "en"));
+};
+
+const allRecordedSynonyms = (
+  node?: SomOntologySnapshot["nodes"][number],
+): string[] => {
+  const values = new Set(nodeSynonyms(node));
+  const match = String(node?.description || "").match(/Synonyms?:\s*([^.;]+)/i);
+  if (match) {
+    for (const value of match[1].split(/,|\bor\b/i)) {
+      if (value.trim()) values.add(value.trim());
+    }
+  }
+  return [...values].sort((left, right) => left.localeCompare(right, "en"));
+};
+
 export const validateProposalAgainstSnapshot = (
   record: any,
   index: SnapshotIndex,
@@ -302,9 +336,12 @@ export const validateProposalAgainstSnapshot = (
     }
     case "duplicate-comparison": {
       const first = addDirectChild(context.parentTitle, context.canonicalTitle);
-      addDirectChild(context.parentTitle, context.candidateSynonymTitle);
+      const candidate = addDirectChild(
+        context.parentTitle,
+        context.candidateSynonymTitle,
+      );
       parentNodeId = first.parentId;
-      subjectNodeId = first.childId;
+      subjectNodeId = candidate.childId;
       break;
     }
     case "placement-comparison": {
@@ -435,6 +472,83 @@ export const validateProposalAgainstSnapshot = (
         const childId = addTitle(title);
         requireAnyEdge(index, subjectNodeId, childId);
       }
+      break;
+    }
+    case "metadata-edit": {
+      subjectNodeId = addTitle(context.nodeTitle);
+      const node = index.nodesById.get(subjectNodeId);
+      if (
+        context.field === "description" &&
+        String(context.currentText || "") !== String(node?.description || "")
+      ) {
+        throw new Error(
+          `Description proposal for ${context.nodeTitle} is stale`,
+        );
+      }
+      if (
+        context.field === "synonyms" &&
+        Array.isArray(context.currentValues)
+      ) {
+        const currentValues = [...context.currentValues].sort((left, right) =>
+          left.localeCompare(right, "en"),
+        );
+        const recordedValues =
+          context.synonymScope === "all-recorded"
+            ? allRecordedSynonyms(node)
+            : nodeSynonyms(node);
+        if (!sameStringArray(currentValues, recordedValues)) {
+          throw new Error(`Synonym proposal for ${context.nodeTitle} is stale`);
+        }
+      }
+      break;
+    }
+    case "polysemy-review": {
+      parentNodeId = addTitle(context.currentParentTitle);
+      subjectNodeId = addTitle(context.nodeTitle);
+      requireAnyEdge(index, parentNodeId, subjectNodeId);
+      for (const sense of context.proposedSenses || []) {
+        if ((index.idsByTitle.get(sense.title) || []).length === 1) {
+          addTitle(sense.title);
+        }
+        if ((index.idsByTitle.get(sense.destination) || []).length === 1) {
+          addTitle(sense.destination);
+        }
+      }
+      break;
+    }
+    case "collection-design": {
+      parentNodeId = addTitle(context.parentTitle);
+      for (const title of context.currentChildren || []) {
+        const childId = addTitle(title);
+        requireAnyEdge(index, parentNodeId, childId);
+      }
+      for (const branch of context.proposedBranches || []) {
+        if (branch.status === "existing") addTitle(branch.title);
+        if (
+          branch.status === "new" &&
+          (index.idsByTitle.get(branch.title) || []).length > 0
+        ) {
+          throw new Error(
+            `Proposed collection branch already exists: ${branch.title}`,
+          );
+        }
+        for (const title of branch.children || []) addTitle(title);
+      }
+      break;
+    }
+    case "sense-relocation-action": {
+      parentNodeId = addTitle(context.currentParentTitle);
+      subjectNodeId = addTitle(context.nodeTitle);
+      requireEdge(
+        index,
+        parentNodeId,
+        subjectNodeId,
+        context.currentCollection,
+      );
+      const retainedId = addTitle(context.retainedSenseTitle);
+      const retainedParentId = addTitle(context.retainedParentTitle);
+      requireAnyEdge(index, retainedParentId, retainedId);
+      addTitle(context.proposedParentTitle);
       break;
     }
     default:

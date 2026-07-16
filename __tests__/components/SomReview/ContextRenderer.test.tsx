@@ -218,4 +218,126 @@ describe("Society of Mind context renderers", () => {
       screen.getByLabelText("Hierarchy after wrapper removal"),
     ).not.toHaveTextContent("Sell (Other)");
   });
+
+  it("distinguishes structured synonym additions from recorded-synonym cleanup", () => {
+    const { rerender } = render(
+      <ContextRenderer
+        context={{
+          type: "metadata-edit",
+          nodeTitle: "Lease out",
+          field: "synonyms",
+          synonymScope: "structured-field",
+          currentValues: [],
+          proposedValues: ["Lease"],
+          sourceTasks: [],
+        }}
+      />,
+    );
+    expect(screen.getByText("Current structured synonyms")).toBeInTheDocument();
+    expect(
+      screen.getByText("Proposed structured synonyms"),
+    ).toBeInTheDocument();
+
+    rerender(
+      <ContextRenderer
+        context={{
+          type: "metadata-edit",
+          nodeTitle: "Sell Accessory",
+          field: "synonyms",
+          synonymScope: "all-recorded",
+          currentValues: ["Market Accessory"],
+          proposedValues: [],
+          sourceTasks: ["Sell and install accessories."],
+        }}
+      />,
+    );
+    expect(screen.getByText("Current recorded synonyms")).toBeInTheDocument();
+    expect(
+      screen.getByText("Recorded synonyms after this change"),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText("Sell and install accessories."),
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows the two meanings in a polysemy diagnosis", () => {
+    render(
+      <ContextRenderer
+        context={{
+          type: "polysemy-review",
+          nodeTitle: "Sell Products or Ideas",
+          currentParentTitle: "Sell (Other)",
+          sourceTasks: ["Selling or Influencing Others"],
+          proposedSenses: [
+            {
+              title: "Sell Product",
+              meaning: "Transfer a product for payment.",
+              destination: "Sell (Physical Object)",
+            },
+            {
+              title: "Persuade",
+              meaning: "Influence someone to accept an idea.",
+              destination: "Persuade",
+            },
+          ],
+        }}
+      />,
+    );
+    expect(
+      screen.getByLabelText("Meaning before separation"),
+    ).toHaveTextContent("Sell Products or Ideas");
+    expect(
+      screen.getByLabelText("Meanings after separation"),
+    ).toHaveTextContent("Sell Product");
+    expect(
+      screen.getByLabelText("Meanings after separation"),
+    ).toHaveTextContent("Persuade");
+  });
+
+  it("renders collection design and the gated sense move as concrete outcomes", () => {
+    const { rerender } = render(
+      <ContextRenderer
+        context={{
+          type: "collection-design",
+          parentTitle: "Sell",
+          currentChildren: ["Lease out", "Rent out"],
+          proposedCollectionName: "Sell what kind of usage?",
+          proposedBranches: [
+            { title: "Sell ownership", status: "new", children: [] },
+            {
+              title: "Sell temporary use",
+              status: "new",
+              children: ["Lease out", "Rent out"],
+            },
+          ],
+        }}
+      />,
+    );
+    expect(
+      screen.getByLabelText("Collections after redesign"),
+    ).toHaveTextContent("Sell what kind of usage?");
+    expect(screen.getByText("Sell temporary use")).toBeInTheDocument();
+
+    rerender(
+      <ContextRenderer
+        context={{
+          type: "sense-relocation-action",
+          nodeTitle: "Sell Products or Ideas",
+          currentParentTitle: "Sell (Other)",
+          currentCollection: "main",
+          sourceTasks: ["Selling or Influencing Others"],
+          retainedSenseTitle: "Sell Product",
+          retainedParentTitle: "Sell (Physical Object)",
+          movedSenseTitle: "Persuade about an idea",
+          proposedParentTitle: "Persuade",
+        }}
+      />,
+    );
+    expect(
+      screen.getByLabelText("Separated senses after relocation"),
+    ).toHaveTextContent("Sell Product");
+    expect(
+      screen.getByLabelText("Separated senses after relocation"),
+    ).toHaveTextContent("Persuade about an idea");
+  });
 });

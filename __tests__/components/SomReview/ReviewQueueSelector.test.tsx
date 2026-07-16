@@ -6,105 +6,138 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
 
 import ReviewQueueSelector from "../../../src/components/SomReview/ReviewQueueSelector";
-import { SomIssueTypeOption } from "../../../src/types/ISomReview";
+import {
+  SomIssueType,
+  SomIssueTypeOption,
+  SomReviewStage,
+} from "../../../src/types/ISomReview";
+
+const option = (
+  id: SomIssueType,
+  label: string,
+  stage: SomReviewStage,
+  robTaskIds: number[],
+  overrides: Partial<SomIssueTypeOption> = {},
+): SomIssueTypeOption => ({
+  id,
+  label,
+  stage,
+  robTaskIds,
+  total: 1,
+  pending: 1,
+  waiting: 0,
+  notApplicable: 0,
+  enabled: true,
+  ...overrides,
+});
 
 const issues: SomIssueTypeOption[] = [
-  {
-    id: "title-clarity",
-    label: "Title clarity",
+  option("title-clarity", "1. Clarify unclear titles", "content", [1], {
     total: 47,
     pending: 37,
-    enabled: true,
     activeSession: { cursor: 3, total: 10 },
-  },
-  {
-    id: "sibling-grouping",
-    label: "Sibling grouping",
-    total: 3,
-    pending: 3,
-    enabled: true,
-  },
-  {
-    id: "duplicate-synonym",
-    label: "Duplicate or synonym",
+  }),
+  option("synonym-enrichment", "2. Add missing synonyms", "content", [2], {
     total: 0,
     pending: 0,
-    enabled: true,
-  },
-  {
-    id: "placement",
-    label: "Placement",
+  }),
+  option(
+    "description-enrichment",
+    "3. Add missing descriptions",
+    "content",
+    [3],
+  ),
+  option(
+    "misc-facet-duplicate",
+    "4. Repeated miscellaneous/facet nodes",
+    "within-branch",
+    [4],
+    { pending: 0 },
+  ),
+  option("mistaken-synonym", "5. Mistaken synonyms", "content", [5]),
+  option("duplicate-synonym", "6. Undetected synonyms", "content", [6]),
+  option("polysemy", "7. Undetected double meanings", "content", [7]),
+  option(
+    "flat-list-grouping",
+    "8. Group long flat lists",
+    "within-branch",
+    [8],
+  ),
+  option(
+    "compound-object-grouping",
+    "9. Group compound objects",
+    "within-branch",
+    [9],
+  ),
+  option(
+    "collection-design",
+    "10. Create warranted collections",
+    "within-branch",
+    [10],
+  ),
+  option("placement", "11. Wrong place within Sell", "within-branch", [11], {
     total: 16,
     pending: 16,
-    enabled: true,
-  },
-  {
-    id: "structural-overlap",
-    label: "Structural overlap",
+  }),
+  option(
+    "wrong-verb",
+    "12. Misjudged synonyms outside Sell",
+    "outside-branch",
+    [12],
+  ),
+  option(
+    "sense-relocation",
+    "13. Move non-selling senses",
+    "outside-branch",
+    [13],
+  ),
+  option("node-merge", "Apply approved node merges", "final-action", [4, 6], {
+    total: 3,
+    pending: 0,
+    waiting: 3,
+  }),
+  option("relocation", "Apply approved relocations", "final-action", [11, 12], {
     total: 2,
     pending: 0,
-    enabled: true,
-  },
-  {
-    id: "wrong-verb",
-    label: "Wrong main verb",
-    total: 7,
-    pending: 7,
-    enabled: true,
-  },
-  {
-    id: "node-merge",
-    label: "Merge nodes",
-    total: 3,
-    pending: 3,
-    enabled: true,
-  },
-  {
-    id: "relocation",
-    label: "Exact relocation",
+    notApplicable: 2,
+  }),
+  option("missing-activity", "Missing activity", "additional-quality", []),
+  option("redundant-node", "Redundant node", "additional-quality", [], {
     total: 0,
     pending: 0,
-    enabled: true,
-  },
-  {
-    id: "missing-activity",
-    label: "Missing activity",
-    total: 10,
-    pending: 10,
-    enabled: true,
-  },
-  {
-    id: "redundant-node",
-    label: "Redundant node",
-    total: 1,
-    pending: 1,
-    enabled: true,
-  },
+  }),
 ];
 
 describe("Society of Mind review queue selector", () => {
-  it("shows all ten issue types and their availability", () => {
+  it("shows every task and action queue in its workflow stage", () => {
     render(<ReviewQueueSelector issueTypes={issues} onStart={jest.fn()} />);
     for (const issue of issues) {
       expect(screen.getByText(issue.label)).toBeInTheDocument();
     }
+    expect(screen.getByText("Content of nodes")).toBeInTheDocument();
+    expect(screen.getByText("Structure within Sell")).toBeInTheDocument();
+    expect(screen.getByText("Movement outside Sell")).toBeInTheDocument();
+    expect(screen.getByText("Exact actions")).toBeInTheDocument();
+    expect(screen.getByText("Additional quality checks")).toBeInTheDocument();
     expect(screen.getByText("Resume 4 of 10")).toBeInTheDocument();
     expect(screen.getAllByText("No items")).toHaveLength(2);
     expect(screen.getByText("Done")).toBeInTheDocument();
+    expect(screen.getByText("3 waiting")).toBeInTheDocument();
+    expect(screen.getByText("Not needed")).toBeInTheDocument();
   });
 
-  it("starts available queues and disables empty queues", () => {
+  it("starts available queues and explains dependency-blocked queues", () => {
     const onStart = jest.fn();
     render(<ReviewQueueSelector issueTypes={issues} onStart={onStart} />);
     fireEvent.click(
       screen.getByRole("button", {
-        name: "Start Placement review, 16 remaining",
+        name: "Start 11. Wrong place within Sell review, 16 remaining",
       }),
     );
     expect(onStart).toHaveBeenCalledWith("placement");
     expect(
       screen.getByRole("button", {
-        name: "Duplicate or synonym, no review items available",
+        name: "Apply approved node merges, 3 items waiting for prerequisite reviews",
       }),
     ).toBeDisabled();
   });

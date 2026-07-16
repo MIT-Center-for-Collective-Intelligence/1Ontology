@@ -4,456 +4,816 @@
   "ontologyName": "Final Hierarchy with O*Net",
   "firestoreProjectId": "ontology-41607",
   "environment": "production",
-  "capturedAt": "2026-07-15T16:00:00.000Z",
+  "capturedAt": "2026-07-15T18:00:00.000Z",
   "sellRootNodeId": "ivPKQuvb3SRqjtIKqn4d",
   "nodes": [
     {
       "id": "19y9uUU8KvzXDJldddwN",
-      "title": "Sell Service (1)"
+      "title": "Sell Service (1)",
+      "description": "Synonyms: Market Service",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "1CEChMeOA60EEAnIkHHC",
-      "title": "(O*Net) 4.A.4.a.6.I02.D05 - Sell products or services."
+      "title": "(O*Net) 4.A.4.a.6.I02.D05 - Sell products or services.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "1uMBewKDPr3vTW3g1Akb",
-      "title": "(O*Net) 5127 - Rent, sell, or issue sporting equipment and supplies, such as bowling shoes, golf balls, swimming suits, or beach chairs."
+      "title": "(O*Net) 5127 - Rent, sell, or issue sporting equipment and supplies, such as bowling shoes, golf balls, swimming suits, or beach chairs.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "1XmzY3teUNsQa0CIunIr",
-      "title": "Sell Jewelry"
+      "title": "Sell Jewelry",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "2NRS1Lkogwl5TkeY5kgy",
-      "title": "Sell Package"
+      "title": "Sell Package",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "2XDukf29nxcUippZU3mF",
-      "title": "Sell Souvenir"
+      "title": "Sell Souvenir",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "32CEMwyc6yJ31IVS2fXx",
-      "title": "(O*Net) 4734 - Perform foreign currency transactions and sell traveler's checks."
+      "title": "(O*Net) 4734 - Perform foreign currency transactions and sell traveler's checks.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "6qwIcFxzwR69Y2hHTFpV",
+      "title": "Provide service",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": [],
+      "referenceOnly": true
     },
     {
       "id": "75w0IRdqpqkCsJsNIG3H",
-      "title": "Sell Lotion"
+      "title": "Sell Lotion",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "7eHnKrpoL6lj6vFnsJTg",
-      "title": "(O*Net) 20764 - Sell or collect admission tickets, passes, or facility memberships from patrons at entertainment events."
+      "title": "(O*Net) 20764 - Sell or collect admission tickets, passes, or facility memberships from patrons at entertainment events.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "87psoSfZc04QgpByXJbI",
-      "title": "(O*Net) 20990 - Market artwork through brochures, mailings, or Web sites."
+      "title": "(O*Net) 20990 - Market artwork through brochures, mailings, or Web sites.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "8brd1yASEbMwnL5MNRKR",
-      "title": "Sell Order"
+      "title": "Sell Order",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "9lniAdOzB4KDpWJRy6Mj",
-      "title": "(O*Net) 20917 - Sell bicycles and accessories."
+      "title": "(O*Net) 20917 - Sell bicycles and accessories.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "A3DTvdJ4fFPTt4R43Pq3",
-      "title": "Sell (Information)"
+      "title": "Sell (Information)",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "A7gsp6EWsdAKH2M5fwSy",
-      "title": "(O*Net) 4.A.4.a.6.I02 - Sell products or services."
+      "title": "(O*Net) 4.A.4.a.6.I02 - Sell products or services.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "Aab9orb7yNR8Uqi0S7kl",
-      "title": "(O*Net) 11325 - Sell and collect payment for products such as stamps, prepaid mail envelopes, and money orders."
+      "title": "(O*Net) 11325 - Sell and collect payment for products such as stamps, prepaid mail envelopes, and money orders.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "aQXier3NrRRm4uKyJyI1",
-      "title": "(O*Net) 4.A.4.a.6 - Selling or Influencing Others"
+      "title": "(O*Net) 4.A.4.a.6 - Selling or Influencing Others",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "AX5NrslC6dxkoWkRMSiM",
-      "title": "Sell Good"
+      "title": "Sell Good",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "B5KNYY3XseFipnTG7a2D",
-      "title": "(O*Net) 7231 - Market vacant space to prospective tenants through leasing agents, advertising, or other methods."
+      "title": "(O*Net) 7231 - Market vacant space to prospective tenants through leasing agents, advertising, or other methods.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "B733rWJsxpdpFMgbXLem",
-      "title": "Sell Supply"
+      "title": "Sell Supply",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "BBQaFv0TmOXOoek1PHE5",
+      "title": "Advertise",
+      "description": "An activity that involves making a public announcement with the specific intention of promoting or selling something. It includes creating and disseminating messages designed to persuade an audience to take a particular action, such as purchasing a product, using a service, attending an event, or forming a favorable view of an organization or individual. Unlike a general 'Announce' activity, which primarily informs, an 'Advertise' activity is inherently persuasive. For example, stating a store's hours is an announcement, while encouraging customers to visit during those hours for a special sale is an advertisement. Activities in this category are often distinguished by what is being advertised, such as an event, an organization, or a product. Synonyms: advertize, promote, push, Advertise",
+      "synsets": "Advertise.v.02",
+      "actionAlternatives": [],
+      "referenceOnly": true
     },
     {
       "id": "bCGvc2ZlyuyU7rpwzNSX",
-      "title": "Sell Product"
+      "title": "Sell Product",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "Bdvht7fLZyhH1hWQqlx9",
-      "title": "(O*Net) 713 - Sell or arrange for delivery, insurance, financing, or service contracts for merchandise."
+      "title": "(O*Net) 713 - Sell or arrange for delivery, insurance, financing, or service contracts for merchandise.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "bfwWBFGnP7B49FH6vtql",
-      "title": "(O*Net) 4669 - Sell gambling chips, tokens, or tickets to patrons or to other workers for resale to patrons."
+      "title": "(O*Net) 4669 - Sell gambling chips, tokens, or tickets to patrons or to other workers for resale to patrons.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "by6MNP9TqvyPhdmRCKue",
-      "title": "Sell Specialty"
+      "title": "Sell Specialty",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "C1jYc2PTyZIjQd2Iyt7V",
-      "title": "Lease out"
+      "title": "Lease out",
+      "description": "A type of 'Sell' activity where the actor, as the owner or provider (the lessor), sells the right for another party (the lessee) to use an asset for a specified period. Unlike other 'Sell' activities, this does not transfer permanent ownership of the asset itself. This category covers granting temporary use of property, equipment, or other assets in exchange for regular payments. It includes both formal, long-term arrangements, often called 'leasing', and more informal, short-term arrangements, often called 'renting'. Synonyms: Lease",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "Cghl16NazP67Rmo1YqHC",
-      "title": "(O*Net) 23196 - Buy or sell stocks, bonds, commodity futures, foreign currencies, or other securities on behalf of investment dealers."
+      "title": "(O*Net) 23196 - Buy or sell stocks, bonds, commodity futures, foreign currencies, or other securities on behalf of investment dealers.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "ClxhRXjrlUzd1dPpqWKB",
-      "title": "(O*Net) 17620 - Sell products, services, or memberships."
+      "title": "(O*Net) 17620 - Sell products, services, or memberships.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "cqv3RkfevQFmvAwaXOgy",
-      "title": "(O*Net) 23376 - Sell and deliver plants and flowers to customers."
+      "title": "(O*Net) 23376 - Sell and deliver plants and flowers to customers.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "djuur704PsOsVj18b8mm",
-      "title": "Sell (Physical Object)"
+      "title": "Sell (Physical Object)",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "dpn8Axnsf9x5fK7x6YTb",
-      "title": "(O*Net) 13028 - Develop a group of products or accessories, and market them through venues such as boutiques or mail-order catalogs."
+      "title": "(O*Net) 13028 - Develop a group of products or accessories, and market them through venues such as boutiques or mail-order catalogs.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "e4S1J2dYsfLjqkODNXke",
-      "title": "Sell Future"
+      "title": "Sell Future",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "EbT3cZAnhvXCCqsqLkTC",
-      "title": "Sell Flower"
+      "title": "Sell Flower",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "eIQMnQrBROKinV7cVxu0",
-      "title": "Sell Accessory"
+      "title": "Sell Accessory",
+      "description": "Synonyms: Market Accessory",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "ErrhGnME6caIDzbHNB40",
-      "title": "Sell Food"
+      "title": "Sell Food",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "FoHHGZsfm19KIEoNDLQy",
-      "title": "Sell service"
+      "title": "Sell service",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "FSOgeprt7L5bWQABLw3P",
-      "title": "Sell Policy"
+      "title": "Sell Policy",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "fTycejOPURlMnSdWflCI",
-      "title": "(O*Net) 8026 - Sell food, beverages, or tobacco to players."
+      "title": "(O*Net) 8026 - Sell food, beverages, or tobacco to players.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "FVPUXSSaMq5Z7rR2aPnY",
-      "title": "(O*Net) 23221 - Purchase or sell financial derivatives for customers."
+      "title": "(O*Net) 23221 - Purchase or sell financial derivatives for customers.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "G0ZIvK2kQdpb4te7vZJE",
-      "title": "(O*Net) 2561 - Explain, promote, or sell products or services, such as travelers' checks, savings bonds, money orders, and cashier's checks, using computerized information about customers to tailor recommendations."
+      "title": "(O*Net) 2561 - Explain, promote, or sell products or services, such as travelers' checks, savings bonds, money orders, and cashier's checks, using computerized information about customers to tailor recommendations.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "G4oULS8gDMwsBoXqNWcv",
-      "title": "(O*Net) 13194 - Sell products being promoted and keep records of sales."
+      "title": "(O*Net) 13194 - Sell products being promoted and keep records of sales.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "gFhTZHA6sHFRVlarfRbA",
-      "title": "Sell Beverage"
+      "title": "Sell Beverage",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "gKJolGhxBqOTabNR9JZm",
-      "title": "(O*Net) 2413 - Sell tickets and other items to customers."
+      "title": "(O*Net) 2413 - Sell tickets and other items to customers.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "IbfRT8nRDOObzf6AeTU8",
-      "title": "(O*Net) 7006 - Sell gambling chips, tokens, or tickets to patrons, or to other workers for resale to patrons."
+      "title": "(O*Net) 7006 - Sell gambling chips, tokens, or tickets to patrons, or to other workers for resale to patrons.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "iPp8GQvAS6zDbJdLxZSw",
-      "title": "Sell Membership"
+      "title": "Sell Membership",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "ivPKQuvb3SRqjtIKqn4d",
-      "title": "Sell"
+      "title": "Sell",
+      "description": "An activity of transferring ownership of, or the right to use, a good, service, or asset to another party in exchange for money or an equivalent form of payment. The defining characteristic of selling is the transaction for payment. This distinguishes it from other forms of provision or transfer, such as 'Give' (a gift) or 'Trade' (barter). The scope of this activity is broad, encompassing the entire process of making something available for purchase, including not only the final exchange but also preparatory activities like marketing and advertising. What is sold can be the permanent ownership of an item (e.g., a physical object or information) or the temporary right to use an asset (e.g., leasing or renting). Synonyms: Market, Sell",
+      "synsets": "Market.v.01, Sell.v.01",
+      "actionAlternatives": []
     },
     {
       "id": "J1szj516OPETkugJfWrH",
-      "title": "Sell Derivative"
+      "title": "Sell Derivative",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "jaAdE2VZ0T3kWRJpfdvi",
-      "title": "(O*Net) 741 - Plan, describe, arrange, and sell itinerary tour packages and promotional travel incentives offered by various travel carriers."
+      "title": "(O*Net) 741 - Plan, describe, arrange, and sell itinerary tour packages and promotional travel incentives offered by various travel carriers.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "JAn4aShZSCASnUa9HZoc",
-      "title": "(O*Net) 4.A.4.a.6.I03.D04 - Market products, services, or events."
+      "title": "(O*Net) 4.A.4.a.6.I03.D04 - Market products, services, or events.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "jlg5laXDwQjJGRAowAGB",
-      "title": "Sell Estate"
+      "title": "Sell Estate",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "jsXlKplPQ3BxIrHzSwLL",
-      "title": "Rent out"
+      "title": "Rent out",
+      "description": "A type of selling activity where the temporary use of a property, asset, or good is provided to another party in exchange for payment, known as rent. Unlike other selling activities that permanently transfer ownership, renting out involves the owner retaining ownership while granting the user the right to use the asset for an agreed-upon period. Examples include leasing a vehicle, letting a residential property, or hiring out equipment.",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "kdQx4gLFEpA8YVjww6jQ",
-      "title": "Sell Part"
+      "title": "Sell Part",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "KhUzQuxTINfzlbfRJlIK",
-      "title": "(O*Net) 13170 - Sell or rent equipment, clothing, and supplies related to expeditions."
+      "title": "(O*Net) 13170 - Sell or rent equipment, clothing, and supplies related to expeditions.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "kOXJYkuifB9RE8cCPe52",
-      "title": "(O*Net) 4208 - Sell goods such as contact lenses, spectacles, sunglasses, and goods related to eyes, in general."
+      "title": "(O*Net) 4208 - Sell goods such as contact lenses, spectacles, sunglasses, and goods related to eyes, in general.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "kTbhUFgFIALviP2r9D1R",
-      "title": "(O*Net) 4.A.4.a.6.I02.D02 - Sell agricultural products."
+      "title": "(O*Net) 4.A.4.a.6.I02.D02 - Sell agricultural products.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "KWnONAzaLtQLObtzlGLP",
-      "title": "(O*Net) 643 - Demonstrate and sell hair care products and cosmetics."
+      "title": "(O*Net) 643 - Demonstrate and sell hair care products and cosmetics.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "L7pC2QvveXXu6UXYMWwf",
-      "title": "(O*Net) 23639 - Buy and sell jewelry, or serve as agents between buyers and sellers."
+      "title": "(O*Net) 23639 - Buy and sell jewelry, or serve as agents between buyers and sellers.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "L8Ho9JJmfZOPpu2gqhSn",
+      "title": "Persuade",
+      "description": "Activities that aim to convince others to adopt a particular belief, attitude, or course of action. As a type of 'Lead' activity, persuasion is distinct from directing or commanding. It seeks to influence the voluntary choices of others through reasoning, argument, or emotional appeal, rather than by exercising formal authority. This includes activities like negotiating a deal, making a sales pitch, or advocating for a new initiative. Persuasion activities are often specialized by their target, such as persuading a customer, a team member, or another stakeholder. Synonyms: Synonyms: Persuade",
+      "synsets": "Persuade.v.02",
+      "actionAlternatives": [],
+      "referenceOnly": true
     },
     {
       "id": "lPkcYj40VPyODSSBXdlt",
-      "title": "Sell Contract"
+      "title": "Sell Contract",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "mRcq1sjapxXXDWHYhrUy",
-      "title": "Sell Stock"
+      "title": "Sell Stock",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "MURT1siWDa81Bscf61dm",
-      "title": "Sell Pass"
+      "title": "Sell Pass",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "MV78JzMSoEwPX9XtSyZW",
-      "title": "(O*Net) 18843 - Sell funeral services, products, or merchandise to clients."
+      "title": "(O*Net) 18843 - Sell funeral services, products, or merchandise to clients.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "N1Qz5CWRwf3gJjIcyJfC",
-      "title": "(O*Net) 13782 - Sell parts and equipment."
+      "title": "(O*Net) 13782 - Sell parts and equipment.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "n6R43Sr73LTtAkYduDMy",
-      "title": "Sell Equipment"
+      "title": "Sell Equipment",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "NgPhuiPXVZeWaVJc9BRF",
-      "title": "(O*Net) 5093 - Sell pet food and supplies."
+      "title": "(O*Net) 5093 - Sell pet food and supplies.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "ntdGQhVj7DqLHEgtyBwA",
-      "title": "Sell Clothing"
+      "title": "Sell Clothing",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "oBpaloX36PSeAFCu8DfT",
-      "title": "Sell Currency"
+      "title": "Sell Currency",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "oqKJFFsUzHQcuArnIwRS",
-      "title": "Market Artwork"
+      "title": "Market Artwork",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "oQx9L0q4i1NkKG1hFG2S",
-      "title": "(O*Net) 19828 - Sell technical and scientific products that are environmentally sound or designed for environmental remediation."
+      "title": "(O*Net) 19828 - Sell technical and scientific products that are environmentally sound or designed for environmental remediation.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "ou4goQBXcVqcP9PBgKNc",
-      "title": "(O*Net) 4551 - Solicit tour patronage and sell souvenirs."
+      "title": "(O*Net) 4551 - Solicit tour patronage and sell souvenirs.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "pfckaSmBuEdX1UFbcJi4",
-      "title": "(O*Net) 11361 - Sell stamps and money orders."
+      "title": "(O*Net) 11361 - Sell stamps and money orders.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "PIXpvd0lLdAIDaIuWSD2",
-      "title": "(O*Net) 721 - Sell various types of insurance policies to businesses and individuals on behalf of insurance companies, including automobile, fire, life, property, medical and dental insurance, or specialized policies, such as marine, farm/crop, and medical malpractice."
+      "title": "(O*Net) 721 - Sell various types of insurance policies to businesses and individuals on behalf of insurance companies, including automobile, fire, life, property, medical and dental insurance, or specialized policies, such as marine, farm/crop, and medical malpractice.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "PkYqyMqjkJNgz1W2Lc2T",
-      "title": "(O*Net) 10725 - Sell and install accessories, such as batteries, windshield wiper blades, fan belts, bulbs, or headlamps."
+      "title": "(O*Net) 10725 - Sell and install accessories, such as batteries, windshield wiper blades, fan belts, bulbs, or headlamps.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "prSUePHOV2HTktxg2sFy",
-      "title": "Market Space"
+      "title": "Market Space",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "pYwj90XaWkmxI1Ze6602",
-      "title": "Sell Makeup"
+      "title": "Sell Makeup",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "Q2ruTiNLHbBOlFOCI6gu",
-      "title": "Sell (Other)"
+      "title": "Sell (Other)",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "Q75218OYnWQ1GcRo1Ylf",
-      "title": "Sell physical objects"
+      "title": "Sell physical objects",
+      "description": "The sale of a tangible, material item in exchange for payment. The defining characteristic of this activity is the physical nature of the object being sold—an item that can be touched, weighed, and moved. This category applies to activities like selling products in a retail store, a used car through a private listing, or handmade crafts on an e-commerce platform. It is distinct from selling intangible items, such as services (e.g., consulting, repairs), digital goods (e.g., software, streaming media), or financial assets (e.g., stocks, bonds).",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "qABxuOLg0JbHXgvt6d0K",
-      "title": "Sell Stamp"
+      "title": "Sell Stamp",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "qdgRkGpYX9yINEjtTf9V",
-      "title": "Sell Check"
+      "title": "Sell Check",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "qLrzhd5XmjxYoKph4vEx",
-      "title": "Sell Products or Ideas"
+      "title": "Sell Products or Ideas",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "QqYxIHqY5xF44OyRMqCq",
-      "title": "Sell Token"
+      "title": "Sell Token",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "QtvsmODzOa9mPfwI3wk8",
-      "title": "(O*Net) 4332 - Sell pet food or supplies to customers."
+      "title": "(O*Net) 4332 - Sell pet food or supplies to customers.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "QvmiElTMIdqYF37aLyMS",
-      "title": "(O*Net) 13157 - Sell travel packages."
+      "title": "(O*Net) 13157 - Sell travel packages.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "QwbLf2zFHFiIXBayBN1y",
-      "title": "(O*Net) 13286 - Sell mail products, and accept payment for products and mailing charges."
+      "title": "(O*Net) 13286 - Sell mail products, and accept payment for products and mailing charges.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "rcKF1UzocSJn3uL67Nz3",
-      "title": "(O*Net) 9683 - Sell products requiring extensive technical expertise and support for installation and use, such as material handling equipment, numerical-control machinery, or computer systems."
+      "title": "(O*Net) 9683 - Sell products requiring extensive technical expertise and support for installation and use, such as material handling equipment, numerical-control machinery, or computer systems.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "rHK904InnjxLHxnmUjY9",
-      "title": "(O*Net) 8065 - Recommend and sell lotions, tonics, or other cosmetic supplies."
+      "title": "(O*Net) 8065 - Recommend and sell lotions, tonics, or other cosmetic supplies.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "RM7QPgIBJYmyG3GrkKtS",
-      "title": "Sell Item"
+      "title": "Sell Item",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "RnatGzxhEhIAaoKdrBsn",
-      "title": "Sell Tobacco"
+      "title": "Sell Tobacco",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "RwNUBARhbm5pj96MVU3N",
-      "title": "(O*Net) 3421 - Market bank products to individuals and firms, promoting bank services that may meet customers' needs."
+      "title": "(O*Net) 3421 - Market bank products to individuals and firms, promoting bank services that may meet customers' needs.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "ry8mw4WjaKCgPgLlIwnB",
-      "title": "Sell Tonic"
+      "title": "Sell Tonic",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "s14r9U0jD8U0YoQjS9xT",
-      "title": "(O*Net) 5132 - Sell and serve refreshments to customers."
+      "title": "(O*Net) 5132 - Sell and serve refreshments to customers.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "symRQe1j6xo8BFwcPG2r",
-      "title": "Sell Plant"
+      "title": "Sell Plant",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "T26Dg1QJD5ilEGiI5zxy",
-      "title": "Sell Bicycle"
+      "title": "Sell Bicycle",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "T9BWCy0a6cfKg8J7vnk8",
-      "title": "(O*Net) 20616 - Sell service contracts for technical or scientific products."
+      "title": "(O*Net) 20616 - Sell service contracts for technical or scientific products.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "taseAibqL1RlkudZQ5E7",
-      "title": "(O*Net) 5119 - Sell tickets and collect fees from customers."
+      "title": "(O*Net) 5119 - Sell tickets and collect fees from customers.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "tdxR4H40ocVMqA1mx8xC",
-      "title": "Sell Incentive"
+      "title": "Sell Incentive",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "tqLlNYEMv27zQONnnSKe",
-      "title": "Sell Bond"
+      "title": "Sell Bond",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "UAHMc9VBbsTs2jwqOQdy",
-      "title": "(O*Net) 12887 - Sell supplies, such as seed, feed, fertilizers, or insecticides, arranging for loans or financing as necessary."
+      "title": "(O*Net) 12887 - Sell supplies, such as seed, feed, fertilizers, or insecticides, arranging for loans or financing as necessary.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "ubFUvirAxwyLrRU07mtk",
-      "title": "Sell Chip"
+      "title": "Sell Chip",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "UCGvDclOywFMHfh57uTu",
-      "title": "(O*Net) 8083 - Sell makeup to clients."
+      "title": "(O*Net) 8083 - Sell makeup to clients.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "US1b9Ap0WUL7vFcaI6GJ",
-      "title": "Market Casino"
+      "title": "Market Casino",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "vGxswrUFz1t4iZ6rfAF2",
-      "title": "Market Product"
+      "title": "Market Product",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "vpKcoHFTX70dk6flhJsJ",
-      "title": "Market Event"
+      "title": "Market Event",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "vSGAxf2C4fS3Dt9vRU1k",
-      "title": "(O*Net) 23202 - Sell services or equipment, such as trusts, investments, or check processing services."
+      "title": "(O*Net) 23202 - Sell services or equipment, such as trusts, investments, or check processing services.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "W9dWYwYXl1tIkOZrvMyP",
-      "title": "(O*Net) 8761 - Promote and sell nail care products."
+      "title": "(O*Net) 8761 - Promote and sell nail care products.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "wuMddwJhm98vv1spSBB6",
-      "title": "(O*Net) 3165 - Sell food specialties, such as sandwiches and beverages, to office workers and patrons of sports events."
+      "title": "(O*Net) 3165 - Sell food specialties, such as sandwiches and beverages, to office workers and patrons of sports events.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "x0nEgvfRvXBxxqayHNkD",
-      "title": "Sell Ticket"
+      "title": "Sell Ticket",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "XH1AYvq5pkAebBh3s11o",
-      "title": "(O*Net) 9659 - Sell alcoholic beverages to passengers."
+      "title": "(O*Net) 9659 - Sell alcoholic beverages to passengers.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "xMKu6gnUaxFJgyqwsfLv",
-      "title": "(O*Net) 20472 - Market or promote the casino to bring in business."
+      "title": "(O*Net) 20472 - Market or promote the casino to bring in business.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "XMWTMautGVCCtrN8cFWu",
-      "title": "(O*Net) 1822 - Manage pharmacy operations, hiring or supervising staff, performing administrative duties, or buying or selling non-pharmaceutical merchandise."
+      "title": "(O*Net) 1822 - Manage pharmacy operations, hiring or supervising staff, performing administrative duties, or buying or selling non-pharmaceutical merchandise.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "Xn0XpgMEW1gC99OQXBkK",
-      "title": "Sell Refreshment"
+      "title": "Sell Refreshment",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "xOxx3tXI1PIPtPiqrAJ5",
-      "title": "Sell Merchandise"
+      "title": "Sell Merchandise",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "XxEP6M1rRIuPr0WrJzZO",
-      "title": "Sell information"
+      "title": "Sell information",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "ZNDP8Y0slFM83T6ZjG2l",
-      "title": "(O*Net) 4599 - Sell, for a fee, real estate owned by others."
+      "title": "(O*Net) 4599 - Sell, for a fee, real estate owned by others.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     },
     {
       "id": "zwuoOVHETJcsbPIjkcK0",
-      "title": "(O*Net) 13237 - Circulate among potential customers or travel by foot, truck, automobile, or bicycle to deliver or sell merchandise or services."
+      "title": "(O*Net) 13237 - Circulate among potential customers or travel by foot, truck, automobile, or bicycle to deliver or sell merchandise or services.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
     }
   ],
   "edges": [

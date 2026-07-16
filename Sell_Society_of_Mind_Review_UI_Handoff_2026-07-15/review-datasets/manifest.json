@@ -1,10 +1,10 @@
 {
   "schemaVersion": "som-review-v1",
-  "datasetVersion": "sell-final-hierarchy-onet-2026-07-15-v2",
+  "datasetVersion": "sell-final-hierarchy-onet-2026-07-15-v3",
   "branch": "Sell",
-  "generatedAt": "2026-07-15T23:12:00.783Z",
+  "generatedAt": "2026-07-15T18:00:00.000Z",
   "sourceOntology": "firestore://ontology-41607/final-hierarchy-with-o*net",
-  "sourceOntologySha256": "e97abe83d5de04cf1e657abb782ee664430416f608d087a8699ae2b57b86c49f",
+  "sourceOntologySha256": "c86217e0f2dbefe5b716bd5881b46d50cec9f76264676ab23f63bfe060266837",
   "safety": {
     "reviewOnly": true,
     "mutatesOntology": false,
@@ -24,71 +24,191 @@
   "issueTypes": [
     {
       "id": "title-clarity",
-      "label": "Title clarity",
+      "label": "1. Clarify unclear titles",
+      "stage": "content",
+      "robTaskIds": [
+        1
+      ],
       "rolloutStatus": "prototype",
       "view": "title-comparison",
       "proposals": 36,
       "controls": 11
     },
     {
-      "id": "sibling-grouping",
-      "label": "Sibling grouping",
-      "rolloutStatus": "prototype",
-      "view": "grouping-outline",
-      "proposals": 8,
-      "controls": 0
-    },
-    {
-      "id": "duplicate-synonym",
-      "label": "Duplicate or synonym",
+      "id": "synonym-enrichment",
+      "label": "2. Add missing synonyms",
+      "stage": "content",
+      "robTaskIds": [
+        2
+      ],
       "rolloutStatus": "experimental",
-      "view": "duplicate-comparison",
+      "view": "metadata-edit",
       "proposals": 1,
       "controls": 0
     },
     {
-      "id": "placement",
-      "label": "Placement",
+      "id": "description-enrichment",
+      "label": "3. Add missing descriptions",
+      "stage": "content",
+      "robTaskIds": [
+        3
+      ],
       "rolloutStatus": "experimental",
-      "view": "placement-comparison",
-      "proposals": 3,
+      "view": "metadata-edit",
+      "proposals": 47,
       "controls": 0
     },
     {
-      "id": "wrong-verb",
-      "label": "Wrong main verb",
-      "rolloutStatus": "experimental",
-      "view": "placement-comparison",
-      "proposals": 7,
-      "controls": 0
-    },
-    {
-      "id": "structural-overlap",
-      "label": "Structural overlap",
+      "id": "misc-facet-duplicate",
+      "label": "4. Repeated miscellaneous/facet nodes",
+      "stage": "within-branch",
+      "robTaskIds": [
+        4
+      ],
       "rolloutStatus": "experimental",
       "view": "overlap-comparison",
       "proposals": 2,
       "controls": 0
     },
     {
-      "id": "node-merge",
-      "label": "Merge nodes",
+      "id": "mistaken-synonym",
+      "label": "5. Mistaken synonyms",
+      "stage": "content",
+      "robTaskIds": [
+        5
+      ],
       "rolloutStatus": "experimental",
-      "view": "merge-action",
+      "view": "metadata-edit",
       "proposals": 3,
       "controls": 0
     },
     {
+      "id": "duplicate-synonym",
+      "label": "6. Undetected synonyms",
+      "stage": "content",
+      "robTaskIds": [
+        6
+      ],
+      "rolloutStatus": "experimental",
+      "view": "duplicate-comparison",
+      "proposals": 4,
+      "controls": 0
+    },
+    {
+      "id": "polysemy",
+      "label": "7. Undetected double meanings",
+      "stage": "content",
+      "robTaskIds": [
+        7
+      ],
+      "rolloutStatus": "experimental",
+      "view": "polysemy-review",
+      "proposals": 1,
+      "controls": 0
+    },
+    {
+      "id": "flat-list-grouping",
+      "label": "8. Group long flat lists",
+      "stage": "within-branch",
+      "robTaskIds": [
+        8
+      ],
+      "rolloutStatus": "prototype",
+      "view": "grouping-outline",
+      "proposals": 4,
+      "controls": 0
+    },
+    {
+      "id": "compound-object-grouping",
+      "label": "9. Group compound objects",
+      "stage": "within-branch",
+      "robTaskIds": [
+        9
+      ],
+      "rolloutStatus": "prototype",
+      "view": "grouping-outline",
+      "proposals": 4,
+      "controls": 0
+    },
+    {
+      "id": "collection-design",
+      "label": "10. Create warranted collections",
+      "stage": "within-branch",
+      "robTaskIds": [
+        10
+      ],
+      "rolloutStatus": "experimental",
+      "view": "collection-design",
+      "proposals": 1,
+      "controls": 0
+    },
+    {
+      "id": "placement",
+      "label": "11. Wrong place within Sell",
+      "stage": "within-branch",
+      "robTaskIds": [
+        11
+      ],
+      "rolloutStatus": "experimental",
+      "view": "placement-comparison",
+      "proposals": 7,
+      "controls": 0
+    },
+    {
+      "id": "wrong-verb",
+      "label": "12. Misjudged synonyms outside Sell",
+      "stage": "outside-branch",
+      "robTaskIds": [
+        12
+      ],
+      "rolloutStatus": "experimental",
+      "view": "placement-comparison",
+      "proposals": 5,
+      "controls": 0
+    },
+    {
+      "id": "sense-relocation",
+      "label": "13. Move non-selling senses",
+      "stage": "outside-branch",
+      "robTaskIds": [
+        13
+      ],
+      "rolloutStatus": "experimental",
+      "view": "sense-relocation-action",
+      "proposals": 1,
+      "controls": 0
+    },
+    {
+      "id": "node-merge",
+      "label": "Apply approved node merges",
+      "stage": "final-action",
+      "robTaskIds": [
+        4,
+        6
+      ],
+      "rolloutStatus": "experimental",
+      "view": "merge-action",
+      "proposals": 6,
+      "controls": 0
+    },
+    {
       "id": "relocation",
-      "label": "Exact relocation",
+      "label": "Apply approved relocations",
+      "stage": "final-action",
+      "robTaskIds": [
+        11,
+        12
+      ],
       "rolloutStatus": "experimental",
       "view": "relocation-action",
-      "proposals": 0,
+      "proposals": 11,
       "controls": 0
     },
     {
       "id": "missing-activity",
       "label": "Missing activity",
+      "stage": "additional-quality",
+      "robTaskIds": [],
       "rolloutStatus": "experimental",
       "view": "addition-action",
       "proposals": 10,
@@ -97,9 +217,11 @@
     {
       "id": "redundant-node",
       "label": "Redundant node",
+      "stage": "additional-quality",
+      "robTaskIds": [],
       "rolloutStatus": "experimental",
       "view": "merge-up-action",
-      "proposals": 1,
+      "proposals": 0,
       "controls": 0
     }
   ],
@@ -116,35 +238,39 @@
     "ontologySnapshot": "ontology-snapshot.json"
   },
   "counts": {
-    "proposals": 71,
+    "proposals": 143,
     "controls": 11,
     "manualChecks": 0,
     "rejectedAgentCandidates": 3
   },
   "limitations": [
-    "The dataset is exhaustive for the packaged detector outputs and the snapshot-bound action audit, not a proof that no other semantic issue exists.",
-    "Optional description and synonym enrichment is not counted as an ontology issue in this package. The current source snapshot has no structured synonym field, so the older enrichment suggestions must be refreshed and given a separate atomic review contract before they can be served safely.",
-    "Placement and wrong-verb approvals only confirm the diagnosis. An exact relocation is offered only when a current target node and relation are verified.",
-    "The exact-relocation queue is intentionally empty because the current evidence names only advisory destinations, not safe current target nodes.",
-    "Merge, grouping, and redundant-node decisions are review-only. Acceptance does not write to Firestore.",
-    "Some proposals conflict or depend on one another; accepted actions must be sequenced and revalidated against a fresh snapshot before implementation."
+    "The dataset covers all 13 documented issue families, but it is not proof that every semantic issue in Sell has been discovered.",
+    "Description proposals are deliberately conservative and preserve linked O*NET wording; human reviewers should improve awkward phrasing rather than accepting unsupported detail.",
+    "Exact merge and relocation actions remain unavailable to an individual reviewer until that reviewer agrees with the prerequisite diagnosis.",
+    "Rent out and Lease out are handled by collection design; the earlier contradictory wrong-verb and immediate-merge actions have been removed.",
+    "Sell Products or Ideas is handled first as a polysemy diagnosis and then as a gated sense-relocation action; it is not moved intact out of Sell.",
+    "Every decision is review-only. Acceptance never writes to Firestore, and accepted actions must be revalidated against a fresh snapshot before implementation."
   ],
   "sourceSnapshot": {
     "file": "ontology-snapshot.json",
-    "sha256": "e97abe83d5de04cf1e657abb782ee664430416f608d087a8699ae2b57b86c49f",
+    "sha256": "c86217e0f2dbefe5b716bd5881b46d50cec9f76264676ab23f63bfe060266837",
     "ontologyAppId": "final-hierarchy-with-o*net",
     "ontologyName": "Final Hierarchy with O*Net",
     "environment": "production",
-    "capturedAt": "2026-07-15T16:00:00.000Z",
+    "capturedAt": "2026-07-15T18:00:00.000Z",
     "sellRootNodeId": "ivPKQuvb3SRqjtIKqn4d",
-    "nodeCount": 112,
+    "nodeCount": 115,
+    "sellNodeCount": 112,
+    "referenceNodeCount": 3,
     "edgeCount": 146
   },
   "coverage": {
     "snapshotBound": true,
     "exhaustiveWithinPackagedDetectorOutputs": true,
     "semanticCompletenessGuaranteed": false,
-    "exactRelocationsWithVerifiedCurrentTargets": 0,
-    "note": "All accepted candidates found by the packaged Sell scans and the revalidated action audit are included. No finite semantic scan can prove that every possible ontology defect has been found."
+    "robTaskFamiliesRepresented": 13,
+    "robTaskFamiliesTotal": 13,
+    "exactRelocationsWithVerifiedCurrentTargets": 11,
+    "note": "Every issue family in Rob's July 9 document has an atomic review contract and at least one snapshot-bound Sell item. Candidate generation is exhaustive only for the packaged scans and deterministic metadata checks; no finite semantic scan can prove that every possible defect has been found."
   }
 }

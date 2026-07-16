@@ -1,181 +1,243 @@
+import path from "path";
+
 import {
   DEFAULT_SESSION_SIZE,
   MAX_SESSION_SIZE,
   SUPPORTED_ISSUE_TYPES,
   isIssueTypeEnabled,
   loadDataset,
+  proposalAvailability,
 } from "../../../src/lib/somReview/dataset";
 import {
   loadOntologySnapshot,
   validateProposalAgainstSnapshot,
 } from "../../../src/lib/somReview/ontologySnapshot";
-import path from "path";
 
 describe("Society of Mind review dataset", () => {
-  const dataset = loadDataset();
+  const datasetRoot = path.join(
+    process.cwd(),
+    "Sell_Society_of_Mind_Review_UI_Handoff_2026-07-15",
+    "review-datasets",
+  );
+  const dataset = loadDataset(datasetRoot);
 
   it("loads and validates every proposal, control, and manual check", () => {
     expect(dataset.datasetVersion).toBe(
-      "sell-final-hierarchy-onet-2026-07-15-v2",
+      "sell-final-hierarchy-onet-2026-07-15-v3",
     );
-    expect(dataset.recordsById.size).toBe(82);
+    expect(dataset.recordsById.size).toBe(154);
+    expect(dataset.manifest.counts).toMatchObject({
+      proposals: 143,
+      controls: 11,
+      manualChecks: 0,
+    });
   });
 
-  it("indexes the complete detector and action taxonomy", () => {
+  it("keeps all 13 Rob tasks distinct and exposes action queues separately", () => {
     expect(SUPPORTED_ISSUE_TYPES).toEqual([
       "title-clarity",
-      "sibling-grouping",
+      "synonym-enrichment",
+      "description-enrichment",
+      "misc-facet-duplicate",
+      "mistaken-synonym",
       "duplicate-synonym",
+      "polysemy",
+      "flat-list-grouping",
+      "compound-object-grouping",
+      "collection-design",
       "placement",
       "wrong-verb",
-      "structural-overlap",
+      "sense-relocation",
       "node-merge",
       "relocation",
       "missing-activity",
       "redundant-node",
     ]);
-    expect(dataset.orderedIdsByIssue.get("title-clarity")).toHaveLength(47);
-    expect(dataset.orderedIdsByIssue.get("sibling-grouping")).toHaveLength(8);
-    expect(dataset.orderedIdsByIssue.get("duplicate-synonym")).toHaveLength(1);
-    expect(dataset.orderedIdsByIssue.get("placement")).toHaveLength(3);
-    expect(dataset.orderedIdsByIssue.get("wrong-verb")).toHaveLength(7);
-    expect(dataset.orderedIdsByIssue.get("structural-overlap")).toHaveLength(2);
-    expect(dataset.orderedIdsByIssue.get("node-merge")).toHaveLength(3);
-    expect(dataset.orderedIdsByIssue.get("relocation")).toHaveLength(0);
-    expect(dataset.orderedIdsByIssue.get("missing-activity")).toHaveLength(10);
-    expect(dataset.orderedIdsByIssue.get("redundant-node")).toHaveLength(1);
+
+    const representedTasks = [
+      ...new Set(
+        [...dataset.recordsById.values()].flatMap(
+          (record) => record.workflow.robTaskIds,
+        ),
+      ),
+    ].sort((left, right) => left - right);
+    expect(representedTasks).toEqual([
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
+    ]);
+    expect(dataset.manifest.coverage).toMatchObject({
+      robTaskFamiliesRepresented: 13,
+      robTaskFamiliesTotal: 13,
+      semanticCompletenessGuaranteed: false,
+    });
   });
 
-  it("serves only snapshot-valid exact action proposals", () => {
+  it("indexes the expected number of review items in each queue", () => {
+    const expected = {
+      "title-clarity": 47,
+      "synonym-enrichment": 1,
+      "description-enrichment": 47,
+      "misc-facet-duplicate": 2,
+      "mistaken-synonym": 3,
+      "duplicate-synonym": 4,
+      polysemy: 1,
+      "flat-list-grouping": 4,
+      "compound-object-grouping": 4,
+      "collection-design": 1,
+      placement: 7,
+      "wrong-verb": 5,
+      "sense-relocation": 1,
+      "node-merge": 6,
+      relocation: 11,
+      "missing-activity": 10,
+      "redundant-node": 0,
+    } as const;
+    for (const [issueType, count] of Object.entries(expected)) {
+      expect(
+        dataset.orderedIdsByIssue.get(issueType as keyof typeof expected),
+      ).toHaveLength(count);
+    }
+  });
+
+  it("is pinned to the current production Sell snapshot and verified destinations", () => {
+    expect(dataset.manifest.sourceSnapshot).toMatchObject({
+      ontologyAppId: "final-hierarchy-with-o*net",
+      ontologyName: "Final Hierarchy with O*Net",
+      environment: "production",
+      nodeCount: 115,
+      sellNodeCount: 112,
+      referenceNodeCount: 3,
+      edgeCount: 146,
+    });
+    const { snapshot } = loadOntologySnapshot(datasetRoot, dataset.manifest);
+    expect(snapshot.nodes.map((node) => node.title)).toEqual(
+      expect.arrayContaining(["Advertise", "Persuade", "Provide service"]),
+    );
+    expect(
+      snapshot.nodes.some((node) => node.title === "Sell Financial Instrument"),
+    ).toBe(false);
+  });
+
+  it("serves only snapshot-bound exact action proposals", () => {
     const exactTypes = new Set([
       "node-merge",
       "relocation",
+      "sense-relocation",
       "missing-activity",
       "redundant-node",
     ]);
     const exactActions = [...dataset.recordsById.values()].filter((record) =>
       exactTypes.has(record.issueType),
     );
-    expect(exactActions).toHaveLength(14);
+    expect(exactActions).toHaveLength(28);
     expect(
       exactActions.every(
         (record) =>
+          record.workflow.proposalKind === "action" &&
           record.provenance.sourceSnapshotSha256 ===
-          dataset.manifest.sourceSnapshot.sha256,
+            dataset.manifest.sourceSnapshot.sha256,
       ),
     ).toBe(true);
   });
 
-  it("is pinned to a validated production Firestore snapshot", () => {
-    expect(dataset.manifest.sourceSnapshot).toMatchObject({
-      ontologyAppId: "final-hierarchy-with-o*net",
-      ontologyName: "Final Hierarchy with O*Net",
-      environment: "production",
-      nodeCount: 112,
-      edgeCount: 146,
-    });
-    const snapshotPath = path.join(
-      process.cwd(),
-      "Sell_Society_of_Mind_Review_UI_Handoff_2026-07-15",
-      "review-datasets",
-    );
-    const source = loadOntologySnapshot(snapshotPath, dataset.manifest);
-    expect(
-      source.snapshot.nodes.some(
-        (node) => node.title === "Sell Financial Instrument",
+  it("gates downstream actions on their diagnostic decision", () => {
+    const gatedActions = [...dataset.recordsById.values()].filter((record) =>
+      ["node-merge", "relocation", "sense-relocation"].includes(
+        record.issueType,
       ),
-    ).toBe(false);
+    );
+    expect(gatedActions).toHaveLength(18);
+    for (const record of gatedActions) {
+      expect(record.workflow.dependsOnProposalIds).toHaveLength(1);
+      const dependencyId = record.workflow.dependsOnProposalIds[0];
+      expect(dataset.recordsById.has(dependencyId)).toBe(true);
+      expect(proposalAvailability(record, new Map())).toBe("waiting");
+      expect(
+        proposalAvailability(record, new Map([[dependencyId, "agree"]])),
+      ).toBe("ready");
+      expect(
+        proposalAvailability(record, new Map([[dependencyId, "disagree"]])),
+      ).toBe("not-applicable");
+    }
   });
 
-  it("covers every deterministic duplicate pair and redundant wrapper in the snapshot", () => {
-    const snapshotPath = path.join(
-      process.cwd(),
-      "Sell_Society_of_Mind_Review_UI_Handoff_2026-07-15",
-      "review-datasets",
-    );
-    const { snapshot } = loadOntologySnapshot(snapshotPath, dataset.manifest);
-    const titleById = new Map(
-      snapshot.nodes.map((node) => [node.id, node.title]),
-    );
-    const childrenByParent = new Map<string, string[]>();
-    for (const edge of snapshot.edges) {
-      childrenByParent.set(edge.parentId, [
-        ...(childrenByParent.get(edge.parentId) || []),
-        edge.childId,
-      ]);
-    }
+  it("does not reintroduce the contradictory Rent/Lease or whole-node polysemy actions", () => {
+    const records = [...dataset.recordsById.values()];
+    const rentLeaseShortcut = records.some((record) => {
+      const context = record.reviewerView.context;
+      return (
+        (context.type === "duplicate-comparison" &&
+          [context.canonicalTitle, context.candidateSynonymTitle].some(
+            (title: string) => ["Rent out", "Lease out"].includes(title),
+          )) ||
+        (context.type === "placement-comparison" &&
+          ["Rent out", "Lease out"].includes(context.nodeTitle))
+      );
+    });
+    expect(rentLeaseShortcut).toBe(false);
 
-    const normalizeTitle = (title: string) =>
-      title
-        .toLowerCase()
-        .replace(/[()]/g, "")
-        .replace(/\b(objects|activities|informations)\b/g, (word) =>
-          word.slice(0, -1),
-        )
-        .replace(/[^a-z0-9]+/g, " ")
-        .trim();
-    const semanticNodes = snapshot.nodes.filter(
-      (node) => !node.title.startsWith("(O*Net)"),
+    expect(
+      records.some(
+        (record) =>
+          record.reviewerView.context.type === "merge-up-action" &&
+          record.reviewerView.context.nodeTitle === "Sell (Other)",
+      ),
+    ).toBe(false);
+    const senseAction = records.find(
+      (record) => record.issueType === "sense-relocation",
     );
-    const titlesByNormalizedForm = new Map<string, string[]>();
-    for (const node of semanticNodes) {
-      const key = normalizeTitle(node.title);
-      titlesByNormalizedForm.set(key, [
-        ...(titlesByNormalizedForm.get(key) || []),
-        node.title,
-      ]);
-    }
-    const duplicatePairs = [...titlesByNormalizedForm.values()]
-      .filter((titles) => titles.length > 1)
-      .map((titles) => [...titles].sort().join(" -> "))
+    expect(senseAction.reviewerView.context).toMatchObject({
+      type: "sense-relocation-action",
+      nodeTitle: "Sell Products or Ideas",
+      retainedSenseTitle: "Sell Product",
+      proposedParentTitle: "Persuade",
+    });
+  });
+
+  it("separates structured synonym gaps from mistaken recorded synonyms", () => {
+    const records = [...dataset.recordsById.values()];
+    const enrichment = records.filter(
+      (record) => record.issueType === "synonym-enrichment",
+    );
+    expect(enrichment).toHaveLength(1);
+    expect(enrichment[0].reviewerView.context).toMatchObject({
+      type: "metadata-edit",
+      nodeTitle: "Lease out",
+      synonymScope: "structured-field",
+      proposedValues: ["Lease"],
+    });
+
+    const mistakenTitles = records
+      .filter((record) => record.issueType === "mistaken-synonym")
+      .map((record) => record.reviewerView.context.nodeTitle)
       .sort();
-    expect(duplicatePairs).toEqual([
-      "Sell (Information) -> Sell information",
-      "Sell (Physical Object) -> Sell physical objects",
+    expect(mistakenTitles).toEqual([
+      "Sell",
+      "Sell Accessory",
+      "Sell Service (1)",
     ]);
+  });
 
-    const exactMergePairs = [...dataset.recordsById.values()]
-      .filter((record) => record.reviewerView.context.type === "merge-action")
-      .map((record) => {
-        const context = record.reviewerView.context;
-        if (context.type !== "merge-action") return "";
-        return [context.canonicalTitle, context.absorbedTitle]
-          .sort()
-          .join(" -> ");
-      });
-    for (const pair of duplicatePairs) {
-      expect(exactMergePairs).toContain(pair);
-    }
-
-    const redundantWrappers = semanticNodes
-      .filter((node) => {
-        const semanticChildren = (childrenByParent.get(node.id) || [])
-          .map((childId) => titleById.get(childId) || "")
-          .filter((title) => title && !title.startsWith("(O*Net)"));
-        return semanticChildren.length === 1;
-      })
-      .map((node) => node.title)
-      .sort();
-    expect(redundantWrappers).toEqual(["Sell (Other)"]);
-
-    const reviewedWrappers = [...dataset.recordsById.values()]
-      .filter(
-        (record) => record.reviewerView.context.type === "merge-up-action",
-      )
-      .map((record) => {
-        const context = record.reviewerView.context;
-        return context.type === "merge-up-action" ? context.nodeTitle : "";
-      });
-    expect(reviewedWrappers).toEqual(redundantWrappers);
+  it("uses substantive descriptions and covers synonym-only placeholders", () => {
+    const descriptions = [...dataset.recordsById.values()].filter(
+      (record) => record.issueType === "description-enrichment",
+    );
+    expect(descriptions).toHaveLength(47);
+    expect(
+      descriptions.every(
+        (record) =>
+          record.reviewerView.context.proposedText.length >= 30 &&
+          !record.reviewerView.context.proposedText.startsWith(
+            "The activity of",
+          ),
+      ),
+    ).toBe(true);
+    expect(
+      descriptions.map((record) => record.reviewerView.context.nodeTitle),
+    ).toEqual(expect.arrayContaining(["Sell Accessory", "Sell Service (1)"]));
   });
 
   it("rejects a proposal whose current node is not in the snapshot", () => {
-    const snapshotPath = path.join(
-      process.cwd(),
-      "Sell_Society_of_Mind_Review_UI_Handoff_2026-07-15",
-      "review-datasets",
-    );
-    const source = loadOntologySnapshot(snapshotPath, dataset.manifest);
+    const source = loadOntologySnapshot(datasetRoot, dataset.manifest);
     const record = JSON.parse(
       JSON.stringify(
         [...dataset.recordsById.values()].find(
@@ -191,13 +253,8 @@ describe("Society of Mind review dataset", () => {
     );
   });
 
-  it("rejects an exact merge that omits a current direct child", () => {
-    const snapshotPath = path.join(
-      process.cwd(),
-      "Sell_Society_of_Mind_Review_UI_Handoff_2026-07-15",
-      "review-datasets",
-    );
-    const source = loadOntologySnapshot(snapshotPath, dataset.manifest);
+  it("rejects a merge that omits a current direct child", () => {
+    const source = loadOntologySnapshot(datasetRoot, dataset.manifest);
     const record = JSON.parse(
       JSON.stringify(
         [...dataset.recordsById.values()].find(
@@ -214,12 +271,7 @@ describe("Society of Mind review dataset", () => {
   });
 
   it("rejects an exact relocation when the proposed relation already exists", () => {
-    const snapshotPath = path.join(
-      process.cwd(),
-      "Sell_Society_of_Mind_Review_UI_Handoff_2026-07-15",
-      "review-datasets",
-    );
-    const source = loadOntologySnapshot(snapshotPath, dataset.manifest);
+    const source = loadOntologySnapshot(datasetRoot, dataset.manifest);
     const record = JSON.parse(
       JSON.stringify(
         [...dataset.recordsById.values()].find(

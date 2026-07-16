@@ -23,18 +23,34 @@ import PlaylistAddOutlinedIcon from "@mui/icons-material/PlaylistAddOutlined";
 import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutline";
 import SwapHorizOutlinedIcon from "@mui/icons-material/SwapHorizOutlined";
 
-import { SomIssueType, SomIssueTypeOption } from "../../types/ISomReview";
+import {
+  SomIssueType,
+  SomIssueTypeOption,
+  SomReviewStage,
+} from "../../types/ISomReview";
 
 const ISSUE_DESCRIPTIONS: Record<SomIssueType, string> = {
   "title-clarity": "Judge whether an activity title is clear and precise.",
-  "sibling-grouping":
-    "Judge whether related activities belong under a proposed group.",
-  "duplicate-synonym": "Judge whether two titles describe the same activity.",
+  "synonym-enrichment": "Review synonyms missing from structured metadata.",
+  "description-enrichment":
+    "Review evidence-grounded descriptions for empty nodes.",
+  "misc-facet-duplicate":
+    "Find concepts repeated in miscellaneous and explicit facets.",
+  "mistaken-synonym":
+    "Remove terms that name a meaningfully different activity.",
+  "duplicate-synonym": "Judge one possible synonym pair at a time.",
+  polysemy: "Separate one title that combines distinct activity meanings.",
+  "flat-list-grouping":
+    "Organize a long sibling list into coherent intermediate groups.",
+  "compound-object-grouping":
+    "Group activities joined in the same O*NET object phrase.",
+  "collection-design":
+    "Review a distinct specialization dimension and its branches.",
   placement: "Judge whether an activity is under the wrong parent.",
   "wrong-verb":
-    "Judge whether an activity uses a different main action than Sell.",
-  "structural-overlap":
-    "Flag concepts that may be repeated across nearby collections.",
+    "Judge whether Market names promotion rather than a kind of selling.",
+  "sense-relocation":
+    "Move only the non-selling sense after a polysemy decision.",
   "node-merge":
     "Review an exact consolidation, including the survivor and moved children.",
   relocation:
@@ -50,19 +66,29 @@ const IssueIcon = ({ issueType }: { issueType: SomIssueType }) => {
   switch (issueType) {
     case "title-clarity":
       return <DriveFileRenameOutlineIcon sx={sx} />;
-    case "sibling-grouping":
+    case "flat-list-grouping":
+    case "compound-object-grouping":
+    case "collection-design":
       return <AccountTreeOutlinedIcon sx={sx} />;
+    case "synonym-enrichment":
+    case "description-enrichment":
+      return <PlaylistAddOutlinedIcon sx={sx} />;
+    case "mistaken-synonym":
+      return <RemoveCircleOutlineIcon sx={sx} />;
     case "duplicate-synonym":
       return <ContentCopyOutlinedIcon sx={sx} />;
+    case "polysemy":
+      return <AltRouteOutlinedIcon sx={sx} />;
     case "placement":
       return <ErrorOutlineIcon sx={sx} />;
     case "wrong-verb":
       return <SwapHorizOutlinedIcon sx={sx} />;
-    case "structural-overlap":
+    case "misc-facet-duplicate":
       return <HubOutlinedIcon sx={sx} />;
     case "node-merge":
       return <CallMergeOutlinedIcon sx={sx} />;
     case "relocation":
+    case "sense-relocation":
       return <AltRouteOutlinedIcon sx={sx} />;
     case "missing-activity":
       return <PlaylistAddOutlinedIcon sx={sx} />;
@@ -77,6 +103,18 @@ const QueueStatus = ({ issue }: { issue: SomIssueTypeOption }) => {
   }
   if (issue.total === 0) {
     return <Chip label="No items" size="small" variant="outlined" />;
+  }
+  if (issue.pending === 0 && issue.waiting > 0) {
+    return (
+      <Chip
+        label={`${issue.waiting} waiting`}
+        size="small"
+        variant="outlined"
+      />
+    );
+  }
+  if (issue.pending === 0 && issue.notApplicable > 0) {
+    return <Chip label="Not needed" size="small" variant="outlined" />;
   }
   if (issue.pending === 0) {
     return (
@@ -101,6 +139,42 @@ const QueueStatus = ({ issue }: { issue: SomIssueTypeOption }) => {
     <Chip label={`${issue.pending} to review`} size="small" color="primary" />
   );
 };
+
+const REVIEW_STAGES: Array<{
+  id: SomReviewStage;
+  title: string;
+  description: string;
+}> = [
+  {
+    id: "content",
+    title: "Content of nodes",
+    description: "Review titles, synonyms, descriptions, and meanings first.",
+  },
+  {
+    id: "within-branch",
+    title: "Structure within Sell",
+    description:
+      "Review duplicate structure, groups, collections, and placement.",
+  },
+  {
+    id: "outside-branch",
+    title: "Movement outside Sell",
+    description:
+      "Review activities or senses that do not use Sell as their main action.",
+  },
+  {
+    id: "final-action",
+    title: "Exact actions",
+    description:
+      "These unlock only after you agree with their prerequisite diagnosis.",
+  },
+  {
+    id: "additional-quality",
+    title: "Additional quality checks",
+    description:
+      "Useful checks identified by the broader Society of Mind pipeline.",
+  },
+];
 
 const ReviewQueueSelector = ({
   issueTypes,
@@ -149,95 +223,124 @@ const ReviewQueueSelector = ({
       issue to review.
     </Typography>
 
-    <Stack spacing={1.5}>
-      {issueTypes.map((issue) => {
-        const available = issue.enabled && issue.pending > 0;
+    <Stack spacing={4}>
+      {REVIEW_STAGES.map((stage) => {
+        const stageIssues = issueTypes.filter(
+          (issue) => issue.stage === stage.id,
+        );
+        if (!stageIssues.length) return null;
         return (
-          <Card
-            key={issue.id}
-            variant="outlined"
-            sx={{
-              borderRadius: 2,
-              opacity: available ? 1 : 0.72,
-              overflow: "hidden",
-            }}
+          <Box
+            key={stage.id}
+            component="section"
+            aria-labelledby={`${stage.id}-heading`}
           >
-            <CardActionArea
-              disabled={!available}
-              onClick={() => onStart(issue.id)}
-              aria-label={
-                available
-                  ? `${issue.activeSession ? "Resume" : "Start"} ${issue.label} review, ${issue.pending} remaining`
-                  : `${issue.label}, no review items available`
-              }
-              sx={{ p: { xs: 2, sm: 2.5 }, minHeight: 104 }}
+            <Typography
+              id={`${stage.id}-heading`}
+              component="h2"
+              sx={{ fontSize: "1.2rem", fontWeight: 800 }}
             >
-              <Box
-                sx={{
-                  display: "grid",
-                  gridTemplateColumns: {
-                    xs: "48px minmax(0, 1fr)",
-                    sm: "48px minmax(0, 1fr) auto",
-                  },
-                  alignItems: "center",
-                  columnGap: 2,
-                  rowGap: 1.25,
-                }}
-              >
-                <Box
-                  sx={{
-                    width: 48,
-                    height: 48,
-                    display: "grid",
-                    placeItems: "center",
-                    borderRadius: 1.5,
-                    color: available ? "primary.main" : "text.disabled",
-                    backgroundColor: "action.hover",
-                  }}
-                >
-                  <IssueIcon issueType={issue.id} />
-                </Box>
-                <Box sx={{ minWidth: 0 }}>
-                  <Typography
+              {stage.title}
+            </Typography>
+            <Typography sx={{ mt: 0.35, mb: 1.5, color: "text.secondary" }}>
+              {stage.description}
+            </Typography>
+            <Stack spacing={1.25}>
+              {stageIssues.map((issue) => {
+                const available = issue.enabled && issue.pending > 0;
+                const unavailableLabel = issue.waiting
+                  ? `${issue.label}, ${issue.waiting} items waiting for prerequisite reviews`
+                  : `${issue.label}, no review items available`;
+                return (
+                  <Card
+                    key={issue.id}
+                    variant="outlined"
                     sx={{
-                      fontSize: "1.05rem",
-                      fontWeight: 750,
-                      lineHeight: 1.35,
+                      borderRadius: 2,
+                      opacity: available ? 1 : 0.72,
+                      overflow: "hidden",
                     }}
                   >
-                    {issue.label}
-                  </Typography>
-                  <Typography
-                    sx={{
-                      mt: 0.35,
-                      color: "text.secondary",
-                      fontSize: "0.95rem",
-                      lineHeight: 1.45,
-                    }}
-                  >
-                    {ISSUE_DESCRIPTIONS[issue.id]}
-                  </Typography>
-                </Box>
-                <Stack
-                  direction="row"
-                  alignItems="center"
-                  spacing={1}
-                  sx={{
-                    gridColumn: { xs: "2", sm: "3" },
-                    justifySelf: { xs: "start", sm: "end" },
-                  }}
-                >
-                  <QueueStatus issue={issue} />
-                  {available && (
-                    <ArrowForwardIcon
-                      aria-hidden="true"
-                      sx={{ color: "text.secondary" }}
-                    />
-                  )}
-                </Stack>
-              </Box>
-            </CardActionArea>
-          </Card>
+                    <CardActionArea
+                      disabled={!available}
+                      onClick={() => onStart(issue.id)}
+                      aria-label={
+                        available
+                          ? `${issue.activeSession ? "Resume" : "Start"} ${issue.label} review, ${issue.pending} remaining`
+                          : unavailableLabel
+                      }
+                      sx={{ p: { xs: 1.75, sm: 2 }, minHeight: 92 }}
+                    >
+                      <Box
+                        sx={{
+                          display: "grid",
+                          gridTemplateColumns: {
+                            xs: "48px minmax(0, 1fr)",
+                            sm: "48px minmax(0, 1fr) auto",
+                          },
+                          alignItems: "center",
+                          columnGap: 2,
+                          rowGap: 1.25,
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            width: 48,
+                            height: 48,
+                            display: "grid",
+                            placeItems: "center",
+                            borderRadius: 1.5,
+                            color: available ? "primary.main" : "text.disabled",
+                            backgroundColor: "action.hover",
+                          }}
+                        >
+                          <IssueIcon issueType={issue.id} />
+                        </Box>
+                        <Box sx={{ minWidth: 0 }}>
+                          <Typography
+                            sx={{
+                              fontSize: "1.05rem",
+                              fontWeight: 750,
+                              lineHeight: 1.35,
+                            }}
+                          >
+                            {issue.label}
+                          </Typography>
+                          <Typography
+                            sx={{
+                              mt: 0.35,
+                              color: "text.secondary",
+                              fontSize: "0.95rem",
+                              lineHeight: 1.45,
+                            }}
+                          >
+                            {ISSUE_DESCRIPTIONS[issue.id]}
+                          </Typography>
+                        </Box>
+                        <Stack
+                          direction="row"
+                          alignItems="center"
+                          spacing={1}
+                          sx={{
+                            gridColumn: { xs: "2", sm: "3" },
+                            justifySelf: { xs: "start", sm: "end" },
+                          }}
+                        >
+                          <QueueStatus issue={issue} />
+                          {available && (
+                            <ArrowForwardIcon
+                              aria-hidden="true"
+                              sx={{ color: "text.secondary" }}
+                            />
+                          )}
+                        </Stack>
+                      </Box>
+                    </CardActionArea>
+                  </Card>
+                );
+              })}
+            </Stack>
+          </Box>
         );
       })}
       {issueTypes.length === 0 && (
