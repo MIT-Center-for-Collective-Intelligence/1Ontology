@@ -445,7 +445,7 @@ const ReviewCard = ({
               helperText={
                 reason.length > 0 && !reasonValid
                   ? "Enter at least one non-space character."
-                  : "Required"
+                  : ""
               }
               inputProps={{ maxLength: 2000 }}
             />
