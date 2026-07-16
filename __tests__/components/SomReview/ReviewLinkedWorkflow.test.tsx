@@ -37,7 +37,21 @@ jest.mock("../../../src/components/SomReview/ThemeModeToggle", () => ({
 
 jest.mock("../../../src/components/SomReview/ReviewHistorySelect", () => ({
   __esModule: true,
-  default: () => null,
+  default: ({ history, onSelect, selectedProposalId }: any) => {
+    if (!history.length) return null;
+    const item = history[1] || history[0];
+    return (
+      <button
+        type="button"
+        aria-label={`Open saved answer ${item.proposalIndex + 1}`}
+        onClick={() => onSelect(item.proposalId)}
+      >
+        {selectedProposalId
+          ? `Revising item ${item.proposalIndex + 1}`
+          : "Open a saved answer"}
+      </button>
+    );
+  },
 }));
 
 jest.mock("../../../src/components/SomReview/ReviewCard", () => ({
@@ -63,11 +77,12 @@ const card = (
   proposalId: string,
   issueType: "placement" | "relocation",
   question: string,
+  proposalIndex = 0,
 ): SomReviewCard => ({
   proposalId,
   datasetVersion: "dataset-1",
   issueType,
-  proposalIndex: 0,
+  proposalIndex,
   reviewerView: {
     question,
     currentState: "Current",
@@ -268,5 +283,98 @@ describe("linked proposal review journey", () => {
         issueType: "placement",
       }),
     );
+  });
+
+  it("replaces queue progress with an unambiguous saved-answer status while revising", async () => {
+    const postMock = Post as jest.Mock;
+    const queueCards = Array.from({ length: 47 }, (_, index) =>
+      card(
+        `placement-${index + 1}`,
+        "placement",
+        `Is proposal ${index + 1} misplaced?`,
+        index,
+      ),
+    );
+    const savedHistory = queueCards.slice(0, 30).map((savedCard, index) => ({
+      proposalId: savedCard.proposalId,
+      proposalIndex: index,
+      question: savedCard.reviewerView.question,
+      decision: "agree" as const,
+      disagreementReason: "",
+      suggestedCorrection: "",
+      reviewedAt: `2026-07-16T10:${String(index).padStart(2, "0")}:00.000Z`,
+    }));
+
+    postMock.mockImplementation((url: string, body: any) => {
+      if (url === "/som-review/overview") {
+        return Promise.resolve({
+          datasetVersion: "dataset-1",
+          canDeliberate: false,
+          readyFollowUps: [],
+          issueTypes: [
+            {
+              id: "placement",
+              label: "11. Wrong place within Sell",
+              stage: "within-branch",
+              robTaskIds: [11],
+              reviewed: 30,
+              pending: 17,
+              waiting: 0,
+              notApplicable: 0,
+              total: 47,
+              enabled: true,
+              activeSession: { cursor: 30, total: 47 },
+            },
+          ],
+        });
+      }
+      if (url === "/som-review/session" && body.issueType === "placement") {
+        return Promise.resolve({
+          session: {
+            id: "placement-session",
+            issueType: "placement",
+            datasetVersion: "dataset-1",
+            cursor: 30,
+            total: 47,
+          },
+          cards: queueCards,
+          history: savedHistory,
+          historyCards: queueCards.slice(0, 30),
+        });
+      }
+      throw new Error(`Unexpected request: ${url}`);
+    });
+
+    render(<ReviewPage />);
+
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: "Resume 11. Wrong place within Sell review, 17 remaining",
+      }),
+    );
+
+    expect(
+      await screen.findByRole("progressbar", {
+        name: "30 of 47 items completed",
+      }),
+    ).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Open saved answer 2" }),
+    );
+
+    expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
+    expect(screen.getByText("Saved item 2 of 47")).toBeInTheDocument();
+    expect(
+      screen.getByRole("status", {
+        name: "Reviewing saved item 2 of 47. Queue progress remains 30 of 47 reviewed.",
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Reviewing a saved answer")).toBeInTheDocument();
+    expect(
+      screen.getByText("Queue remains 30 of 47 reviewed"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Keep saved answer" }),
+    ).toBeInTheDocument();
   });
 });

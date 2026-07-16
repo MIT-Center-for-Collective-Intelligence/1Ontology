@@ -11,6 +11,7 @@ import {
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import Head from "next/head";
 import { useRouter } from "next/router";
 
@@ -659,7 +660,7 @@ export const ReviewPage = () => {
                   >
                     {revisionItem ? (
                       <>
-                        Revising item {revisionItem.proposalIndex + 1} of{" "}
+                        Saved item {revisionItem.proposalIndex + 1} of{" "}
                         {issueTotal}
                       </>
                     ) : (
@@ -670,20 +671,59 @@ export const ReviewPage = () => {
                     )}
                   </Typography>
                 </Stack>
-                <LinearProgress
-                  variant="determinate"
-                  value={
-                    availableReviewTotal === 0
-                      ? 100
-                      : (history.length / availableReviewTotal) * 100
-                  }
-                  aria-label={
-                    availableReviewTotal === 0
-                      ? "All available items completed"
-                      : `${history.length} of ${availableReviewTotal} items completed`
-                  }
-                  sx={{ height: 8, borderRadius: 1 }}
-                />
+                {revisionItem ? (
+                  <Box
+                    role="status"
+                    aria-label={`Reviewing saved item ${
+                      revisionItem.proposalIndex + 1
+                    } of ${issueTotal}. Queue progress remains ${history.length} of ${availableReviewTotal} reviewed.`}
+                    sx={{
+                      display: "flex",
+                      flexDirection: { xs: "column", sm: "row" },
+                      alignItems: { xs: "flex-start", sm: "center" },
+                      justifyContent: "space-between",
+                      gap: 0.75,
+                      borderLeft: 4,
+                      borderColor: "info.main",
+                      borderRadius: 1,
+                      backgroundColor: "action.hover",
+                      px: 1.5,
+                      py: 1.1,
+                    }}
+                  >
+                    <Stack direction="row" alignItems="center" spacing={1}>
+                      <HistoryOutlinedIcon
+                        aria-hidden="true"
+                        color="info"
+                        sx={{ fontSize: 22 }}
+                      />
+                      <Typography sx={{ fontWeight: 750 }}>
+                        Reviewing a saved answer
+                      </Typography>
+                    </Stack>
+                    <Typography
+                      sx={{ color: "text.secondary", fontWeight: 650 }}
+                    >
+                      Queue remains {history.length} of {availableReviewTotal}{" "}
+                      reviewed
+                    </Typography>
+                  </Box>
+                ) : (
+                  <LinearProgress
+                    variant="determinate"
+                    value={
+                      availableReviewTotal === 0
+                        ? 100
+                        : (history.length / availableReviewTotal) * 100
+                    }
+                    aria-label={
+                      availableReviewTotal === 0
+                        ? "All available items completed"
+                        : `${history.length} of ${availableReviewTotal} items completed`
+                    }
+                    sx={{ height: 8, borderRadius: 1 }}
+                  />
+                )}
               </Stack>
               {revisionItem && (
                 <Alert
@@ -700,15 +740,12 @@ export const ReviewPage = () => {
                     </Button>
                   }
                 >
-                  You are revising item {revisionItem.proposalIndex + 1}. Saved
-                  answer:{" "}
+                  Saved answer:{" "}
                   <strong>
                     {revisionItem.decision === "agree" ? "Agreed" : "Disagreed"}
                   </strong>
-                  . No change is made until you submit a revised answer.{" "}
-                  {cards.length === 0
-                    ? "All currently available proposals remain reviewed."
-                    : `Your progress remains at ${history.length} of ${availableReviewTotal} items completed.`}
+                  . Submit a revised answer to replace it, or keep the saved
+                  answer to return to your current review position.
                 </Alert>
               )}
               {!revisionItem &&
