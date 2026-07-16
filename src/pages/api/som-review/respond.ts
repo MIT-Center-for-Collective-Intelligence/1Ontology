@@ -6,9 +6,14 @@ import {
   getDataset,
   isIssueTypeEnabled,
 } from "../../../lib/somReview/dataset";
-import { ResponsePayload, saveResponse } from "../../../lib/somReview/store";
+import {
+  ResponsePayload,
+  reviewerReadyDependentRecords,
+  saveResponse,
+} from "../../../lib/somReview/store";
 import { reviewRequestData } from "../../../lib/somReview/request";
 import { SomRespondResult } from "../../../types/ISomReview";
+import { toLinkedFollowUps } from "../../../lib/somReview/followUps";
 
 let validateResponse: ReturnType<typeof compileResponseValidator> | null = null;
 
@@ -21,8 +26,7 @@ const handler = async (request: NextApiRequest, res: NextApiResponse) => {
     const data = reviewRequestData(req.body);
     const payload = data.response as ResponsePayload;
     const sessionId = typeof data.sessionId === "string" ? data.sessionId : "";
-    if (!sessionId)
-      return res.status(400).json({ error: "Missing sessionId" });
+    if (!sessionId) return res.status(400).json({ error: "Missing sessionId" });
     if (!payload)
       return res.status(400).json({ error: "Missing response payload" });
 
@@ -60,7 +64,20 @@ const handler = async (request: NextApiRequest, res: NextApiResponse) => {
       record.issueType,
       payload,
     );
-    const body: SomRespondResult = { ok: true, cursor, completed };
+    const followUpRecords =
+      payload.decision === "agree"
+        ? await reviewerReadyDependentRecords(
+            dataset,
+            req.user.uid,
+            payload.proposalId,
+          )
+        : [];
+    const body: SomRespondResult = {
+      ok: true,
+      cursor,
+      completed,
+      followUps: toLinkedFollowUps(dataset, followUpRecords),
+    };
     return res.status(200).json(body);
   } catch (error: any) {
     console.error(error);

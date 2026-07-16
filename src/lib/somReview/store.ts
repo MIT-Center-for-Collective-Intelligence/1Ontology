@@ -11,9 +11,11 @@ import { SomDataset, proposalAvailability } from "./dataset";
 import {
   isResumableSession,
   mergeReadyProposalIds,
+  prioritizeProposalAtCursor,
   planResponseTransition,
   planUndoTransition,
 } from "./sessionState";
+import { readyDependentRecords } from "./followUps";
 
 export interface SessionDoc {
   datasetVersion: string;
@@ -137,6 +139,15 @@ export const pendingCount = async (
   return (await pendingSummary(dataset, issueType, reviewerId)).pending;
 };
 
+export const reviewerReadyDependentRecords = async (
+  dataset: SomDataset,
+  reviewerId: string,
+  sourceProposalId?: string,
+): Promise<any[]> => {
+  const decisions = await reviewerDecisions(dataset.datasetVersion, reviewerId);
+  return readyDependentRecords(dataset, decisions, sourceProposalId);
+};
+
 export const activeSessionProgress = async (
   dataset: SomDataset,
   issueType: SomIssueType,
@@ -175,6 +186,7 @@ export const getOrCreateSession = async (
   dataset: SomDataset,
   issueType: SomIssueType,
   reviewerId: string,
+  preferredProposalId?: string,
 ): Promise<StoredSession | null> => {
   const decisions = await reviewerDecisions(dataset.datasetVersion, reviewerId);
   const existing = await activeSessionQuery(
@@ -209,8 +221,17 @@ export const getOrCreateSession = async (
             decisions,
           ) === "ready",
       );
-      const proposalIds = mergeReadyProposalIds(session.proposalIds, ready);
-      if (proposalIds.length !== session.proposalIds.length) {
+      const proposalIds = prioritizeProposalAtCursor(
+        mergeReadyProposalIds(session.proposalIds, ready),
+        session.cursor,
+        preferredProposalId,
+      );
+      if (
+        proposalIds.length !== session.proposalIds.length ||
+        proposalIds.some(
+          (proposalId, index) => proposalId !== session.proposalIds[index],
+        )
+      ) {
         await existingDoc.ref.update({
           proposalIds,
           updatedAt: Timestamp.now(),
@@ -244,7 +265,11 @@ export const getOrCreateSession = async (
     datasetVersion: dataset.datasetVersion,
     issueType,
     reviewerId,
-    proposalIds: mergeReadyProposalIds([], ready),
+    proposalIds: prioritizeProposalAtCursor(
+      mergeReadyProposalIds([], ready),
+      0,
+      preferredProposalId,
+    ),
     cursor: 0,
     status: "active",
     createdAt: now,

@@ -9,6 +9,7 @@ import ReviewQueueSelector from "../../../src/components/SomReview/ReviewQueueSe
 import {
   SomIssueType,
   SomIssueTypeOption,
+  SomLinkedFollowUp,
   SomReviewStage,
 } from "../../../src/types/ISomReview";
 
@@ -110,6 +111,21 @@ const issues: SomIssueTypeOption[] = [
   }),
 ];
 
+const readyFollowUp: SomLinkedFollowUp = {
+  proposalId: "relocation-1",
+  issueType: "relocation",
+  issueLabel: "Apply approved relocations",
+  question: 'Should "Sell Contract" move to "Sign Contract"?',
+  sources: [
+    {
+      proposalId: "placement-1",
+      issueType: "placement",
+      issueLabel: "11. Wrong place within Sell",
+      question: 'Is "Sell Contract" misplaced under "Sell"?',
+    },
+  ],
+};
+
 describe("Society of Mind review queue selector", () => {
   it("shows every task and action queue in its workflow stage", () => {
     render(<ReviewQueueSelector issueTypes={issues} onStart={jest.fn()} />);
@@ -157,6 +173,25 @@ describe("Society of Mind review queue selector", () => {
         name: "Apply approved node merges; review its related diagnosis first",
       }),
     ).toBeDisabled();
+  });
+
+  it("keeps postponed linked actions directly accessible", () => {
+    const onStartFollowUp = jest.fn();
+    render(
+      <ReviewQueueSelector
+        issueTypes={issues}
+        onStart={jest.fn()}
+        readyFollowUps={[readyFollowUp]}
+        onStartFollowUp={onStartFollowUp}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: `Review this next: ${readyFollowUp.question}`,
+      }),
+    );
+    expect(onStartFollowUp).toHaveBeenCalledWith(readyFollowUp);
   });
 
   it("shows the deliberation entry only for authorized reviewers", () => {

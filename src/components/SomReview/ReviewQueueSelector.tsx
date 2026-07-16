@@ -28,10 +28,12 @@ import SwapHorizOutlinedIcon from "@mui/icons-material/SwapHorizOutlined";
 import {
   SomIssueType,
   SomIssueTypeOption,
+  SomLinkedFollowUp,
   SomReviewStage,
 } from "../../types/ISomReview";
 import { ISSUE_DESCRIPTIONS } from "./reviewCopy";
 import { reviewAccentColor, reviewIconColor } from "./reviewStyles";
+import ReviewFollowUpPanel from "./ReviewFollowUpPanel";
 
 const activeQueueStatusSx: SxProps<Theme> = {
   backgroundColor: (theme) =>
@@ -178,12 +180,16 @@ const ReviewQueueSelector = ({
   canDeliberate = false,
   onOpenDeliberation,
   headerAction,
+  readyFollowUps = [],
+  onStartFollowUp,
 }: {
   issueTypes: SomIssueTypeOption[];
   onStart: (issueType: SomIssueType) => void;
   canDeliberate?: boolean;
   onOpenDeliberation?: () => void;
   headerAction?: React.ReactNode;
+  readyFollowUps?: SomLinkedFollowUp[];
+  onStartFollowUp?: (followUp: SomLinkedFollowUp) => void;
 }) => (
   <Box>
     <Stack
@@ -219,6 +225,13 @@ const ReviewQueueSelector = ({
       Reviews are recorded separately from ontology changes. Choose one type of
       issue to review.
     </Typography>
+
+    {onStartFollowUp && (
+      <ReviewFollowUpPanel
+        followUps={readyFollowUps}
+        onReview={onStartFollowUp}
+      />
+    )}
 
     <Stack spacing={4}>
       {REVIEW_STAGES.map((stage) => {

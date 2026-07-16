@@ -18,6 +18,10 @@ const handler = async (request: NextApiRequest, res: NextApiResponse) => {
   try {
     const data = reviewRequestData(req.body);
     const issueType = data.issueType as SomIssueType;
+    const preferredProposalId =
+      typeof data.preferredProposalId === "string"
+        ? data.preferredProposalId
+        : undefined;
     const dataset = getDataset();
     if (!dataset.orderedIdsByIssue.has(issueType)) {
       return res.status(400).json({ error: "Unknown issue type" });
@@ -27,8 +31,33 @@ const handler = async (request: NextApiRequest, res: NextApiResponse) => {
         .status(403)
         .json({ error: "This issue type is not enabled yet" });
     }
+    if (preferredProposalId) {
+      const preferredRecord = dataset.recordsById.get(preferredProposalId);
+      if (
+        !preferredRecord ||
+        preferredRecord.issueType !== issueType ||
+        !preferredRecord.workflow.dependsOnProposalIds.length
+      ) {
+        return res.status(400).json({
+          error: "The requested linked follow-up is invalid",
+        });
+      }
+    }
 
-    const session = await getOrCreateSession(dataset, issueType, req.user.uid);
+    const session = await getOrCreateSession(
+      dataset,
+      issueType,
+      req.user.uid,
+      preferredProposalId,
+    );
+    if (
+      preferredProposalId &&
+      (!session || session.proposalIds[session.cursor] !== preferredProposalId)
+    ) {
+      return res.status(409).json({
+        error: "This related follow-up is no longer available for review",
+      });
+    }
     const orderedProposalIds = dataset.orderedIdsByIssue.get(issueType) || [];
     const proposalIndexes = new Map(
       orderedProposalIds.map((proposalId, index) => [proposalId, index]),
@@ -81,6 +110,9 @@ const handler = async (request: NextApiRequest, res: NextApiResponse) => {
       cards,
       history,
       historyCards,
+      ...(preferredProposalId
+        ? { focusedProposalId: preferredProposalId }
+        : {}),
     };
     return res.status(200).json(body);
   } catch (error: any) {

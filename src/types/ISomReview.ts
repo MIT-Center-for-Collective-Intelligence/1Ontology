@@ -223,6 +223,8 @@ export interface SomSessionResponse {
   cards?: SomReviewCard[];
   history?: SomReviewHistoryItem[];
   historyCards?: SomReviewCard[];
+  /** Present only when an exact linked proposal was requested and focused. */
+  focusedProposalId?: string;
 }
 
 export interface SomReviewHistoryItem {
@@ -235,9 +237,26 @@ export interface SomReviewHistoryItem {
   reviewedAt: string;
 }
 
+export interface SomFollowUpSource {
+  proposalId: string;
+  issueType: SomIssueType;
+  issueLabel: string;
+  question: string;
+}
+
+/** A ready action proposal connected to one or more completed diagnoses. */
+export interface SomLinkedFollowUp {
+  proposalId: string;
+  issueType: SomIssueType;
+  issueLabel: string;
+  question: string;
+  sources: SomFollowUpSource[];
+}
+
 export interface SomOverviewResponse {
   datasetVersion: string;
   issueTypes: SomIssueTypeOption[];
+  readyFollowUps: SomLinkedFollowUp[];
   canDeliberate: boolean;
 }
 
@@ -245,6 +264,7 @@ export interface SomRespondResult {
   ok: boolean;
   cursor: number;
   completed: boolean;
+  followUps: SomLinkedFollowUp[];
 }
 
 export interface SomUndoResult {
@@ -255,6 +275,7 @@ export interface SomUndoResult {
 export interface SomReviseResult {
   ok: boolean;
   changed: boolean;
+  followUps: SomLinkedFollowUp[];
 }
 
 export interface SomDeliberationRoleSummary {
