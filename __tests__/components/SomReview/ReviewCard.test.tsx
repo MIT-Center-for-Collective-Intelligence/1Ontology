@@ -192,4 +192,43 @@ describe("Society of Mind review card", () => {
       screen.queryByText(/agreeing only marks the current placement/i),
     ).not.toBeInTheDocument();
   });
+
+  it("does not repeat generic state panels when the context has before and after panels", () => {
+    const metadataCard: SomReviewCard = {
+      proposalId: "metadata-1",
+      datasetVersion: "dataset-1",
+      issueType: "description-enrichment",
+      reviewerView: {
+        question: "Should this description be added?",
+        currentState: "GENERIC CURRENT STATE",
+        proposedState: "GENERIC PROPOSED STATE",
+        reasoning: "The source task supports this description.",
+        context: {
+          type: "metadata-edit",
+          nodeTitle: "Sell Product",
+          field: "description",
+          currentText: "",
+          proposedText: "Transfer a product to a buyer for payment.",
+          sourceTasks: [],
+        },
+        agreeLabel: "Agree",
+        disagreeLabel: "Disagree",
+      },
+    };
+
+    render(
+      <ReviewCard
+        card={metadataCard}
+        reviewerId="reviewer-1"
+        onSubmit={jest.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Before")).toBeInTheDocument();
+    expect(screen.getByText("After")).toBeInTheDocument();
+    expect(screen.queryByText("GENERIC CURRENT STATE")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("GENERIC PROPOSED STATE"),
+    ).not.toBeInTheDocument();
+  });
 });

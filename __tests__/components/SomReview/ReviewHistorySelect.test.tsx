@@ -30,7 +30,7 @@ const history: SomReviewHistoryItem[] = [
 ];
 
 describe("Review history selector", () => {
-  it("explains when there are no prior reviews", () => {
+  it("does not reserve toolbar space before the first review", () => {
     render(
       <ReviewHistorySelect
         history={[]}
@@ -40,9 +40,8 @@ describe("Review history selector", () => {
     );
 
     expect(
-      screen.getByRole("combobox", { name: "Revise an earlier review" }),
-    ).toHaveAttribute("aria-disabled", "true");
-    expect(screen.getByText("No prior reviews yet")).toBeInTheDocument();
+      screen.queryByRole("combobox", { name: "Revise an earlier review" }),
+    ).not.toBeInTheDocument();
   });
 
   it("lists readable prior proposals and selects one for revision", () => {

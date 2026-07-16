@@ -18,6 +18,8 @@ const ReviewHistorySelect = ({
   selectedProposalId: string;
   onSelect: (proposalId: string) => void;
 }) => {
+  if (history.length === 0) return null;
+
   const selectedItem = history.find(
     (item) => item.proposalId === selectedProposalId,
   );
@@ -33,7 +35,6 @@ const ReviewHistorySelect = ({
       <Select<string>
         value={selectedProposalId}
         displayEmpty
-        disabled={history.length === 0}
         inputProps={{ "aria-label": "Revise an earlier review" }}
         onChange={(event: SelectChangeEvent<string>) =>
           onSelect(event.target.value)
@@ -41,9 +42,7 @@ const ReviewHistorySelect = ({
         renderValue={() =>
           selectedItem
             ? "Revising item " + (selectedItem.proposalIndex + 1)
-            : history.length > 0
-              ? "Revise an earlier review"
-              : "No prior reviews yet"
+            : "Revise an earlier review"
         }
         MenuProps={{
           PaperProps: {

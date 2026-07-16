@@ -60,6 +60,9 @@ initializeFirestore();
 
 const App = (props: AppPropsWithLayout) => {
   const { Component, emotionCache = clientSideEmotionCache, pageProps } = props;
+  const reviewSurface = props.router.pathname.startsWith("/review");
+  const showReactQueryDevtools =
+    process.env.NODE_ENV === "development" && !reviewSurface;
   const db = getFirestore();
   const [queryClient] = useState(
     () =>
@@ -149,7 +152,7 @@ const App = (props: AppPropsWithLayout) => {
             </SnackbarProvider>
           </CacheProvider>
         </Hydrate>
-        <ReactQueryDevtools />
+        {showReactQueryDevtools && <ReactQueryDevtools />}
       </QueryClientProvider>
     </ErrorBoundary>
   );

@@ -14,7 +14,10 @@ import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 
 import { SomReviewCard } from "../../types/ISomReview";
-import ContextRenderer, { DiffedTitle } from "./ContextRenderer";
+import ContextRenderer, {
+  contextShowsStateComparison,
+  DiffedTitle,
+} from "./ContextRenderer";
 
 export interface ReviewSubmission {
   decision: "agree" | "disagree";
@@ -215,13 +218,7 @@ const ReviewCard = ({
           proposed: view.context.proposedTitle,
         }
       : null;
-  const showStatePanels = ![
-    "grouping-outline",
-    "merge-action",
-    "relocation-action",
-    "addition-action",
-    "merge-up-action",
-  ].includes(view.context.type);
+  const showStatePanels = !contextShowsStateComparison(view.context);
   const placementContext =
     view.context.type === "placement-comparison" ? view.context : null;
   const wrongVerb = placementContext?.placementIssue === "wrong-verb";
@@ -356,6 +353,7 @@ const ReviewCard = ({
             sx={{ mb: 2 }}
             action={
               <Button
+                disableElevation
                 color="inherit"
                 disabled={saving}
                 onClick={() => submit(disagreeing ? "disagree" : "agree")}
@@ -377,6 +375,7 @@ const ReviewCard = ({
           >
             <Button
               variant="contained"
+              disableElevation
               color="success"
               size="large"
               startIcon={
@@ -400,6 +399,7 @@ const ReviewCard = ({
               {agreeLabel}
             </Button>
             <Button
+              disableElevation
               variant="outlined"
               color="inherit"
               size="large"
@@ -448,6 +448,7 @@ const ReviewCard = ({
                   ? "Enter at least one non-space character."
                   : "Required"
               }
+              inputProps={{ maxLength: 2000 }}
             />
             <TextField
               label={
@@ -458,6 +459,7 @@ const ReviewCard = ({
               multiline
               maxRows={3}
               value={correction}
+              inputProps={{ maxLength: 2000 }}
               onChange={(event) => {
                 setCorrection(event.target.value);
                 persistDraft(true, reason, event.target.value);
@@ -469,6 +471,7 @@ const ReviewCard = ({
               justifyContent="flex-end"
             >
               <Button
+                disableElevation
                 startIcon={<ArrowBackIcon />}
                 disabled={saving}
                 onClick={() => {
@@ -486,6 +489,7 @@ const ReviewCard = ({
               </Button>
               <Button
                 variant="contained"
+                disableElevation
                 color="error"
                 disabled={!reasonValid || saving}
                 startIcon={

@@ -28,6 +28,26 @@ describe("Society of Mind context renderers", () => {
     ).toBeInTheDocument();
   });
 
+  it("shows repeated source tasks only once", () => {
+    render(
+      <ContextRenderer
+        context={{
+          type: "title-comparison",
+          currentTitle: "Sell Product",
+          proposedTitle: "Sell Products",
+          linkedTasks: [
+            "Sell products or services.",
+            "Sell products or services.",
+            "  Sell products or services.  ",
+          ],
+        }}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Show source task" }));
+    expect(screen.getAllByText("Sell products or services.")).toHaveLength(1);
+  });
+
   it("keeps the current children alphabetized and labels only the after split", () => {
     render(
       <ContextRenderer

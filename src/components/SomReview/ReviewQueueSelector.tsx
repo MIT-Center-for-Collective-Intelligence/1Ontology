@@ -207,6 +207,7 @@ const ReviewQueueSelector = ({
         <Chip label="Final Hierarchy with O*Net" variant="outlined" />
         {canDeliberate && onOpenDeliberation && (
           <Button
+            disableElevation
             variant="outlined"
             startIcon={<GroupsOutlinedIcon />}
             onClick={onOpenDeliberation}
@@ -257,8 +258,13 @@ const ReviewQueueSelector = ({
                     variant="outlined"
                     sx={{
                       borderRadius: 2,
-                      opacity: available ? 1 : 0.72,
                       overflow: "hidden",
+                      backgroundColor: available
+                        ? "background.paper"
+                        : "action.hover",
+                      "& .MuiCardActionArea-root.Mui-disabled": {
+                        opacity: 1,
+                      },
                     }}
                   >
                     <CardActionArea
@@ -290,7 +296,9 @@ const ReviewQueueSelector = ({
                             display: "grid",
                             placeItems: "center",
                             borderRadius: 1.5,
-                            color: available ? "primary.main" : "text.disabled",
+                            color: available
+                              ? "primary.main"
+                              : "text.secondary",
                             backgroundColor: "action.hover",
                           }}
                         >

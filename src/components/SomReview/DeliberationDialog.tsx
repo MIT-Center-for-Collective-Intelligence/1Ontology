@@ -35,7 +35,9 @@ import {
   SomDeliberationResolutionDecision,
   SomReviewDecision,
 } from "../../types/ISomReview";
-import ContextRenderer from "./ContextRenderer";
+import ContextRenderer, {
+  contextShowsStateComparison,
+} from "./ContextRenderer";
 
 const percent = (value: number | null): string =>
   value === null ? "No responses" : `${Math.round(value * 100)}% agree`;
@@ -267,7 +269,18 @@ const DeliberationDialog = ({
             <CircularProgress aria-label="Loading deliberation" />
           </Stack>
         )}
-        {!loading && loadError && <Alert severity="error">{loadError}</Alert>}
+        {!loading && loadError && (
+          <Alert
+            severity="error"
+            action={
+              <Button disableElevation color="inherit" onClick={onRefresh}>
+                Retry
+              </Button>
+            }
+          >
+            {loadError}
+          </Alert>
+        )}
         {!loading && detail && (
           <Stack spacing={4}>
             {mutationError && (
@@ -298,21 +311,25 @@ const DeliberationDialog = ({
               >
                 {detail.card.reviewerView.question}
               </Typography>
-              <Stack
-                direction={{ xs: "column", md: "row" }}
-                spacing={2}
-                sx={{ mt: 2.5 }}
-              >
-                <StatePanel
-                  label="Current"
-                  value={detail.card.reviewerView.currentState}
-                />
-                <StatePanel
-                  label="Proposed"
-                  value={detail.card.reviewerView.proposedState}
-                  proposed
-                />
-              </Stack>
+              {!contextShowsStateComparison(
+                detail.card.reviewerView.context,
+              ) && (
+                <Stack
+                  direction={{ xs: "column", md: "row" }}
+                  spacing={2}
+                  sx={{ mt: 2.5 }}
+                >
+                  <StatePanel
+                    label="Current"
+                    value={detail.card.reviewerView.currentState}
+                  />
+                  <StatePanel
+                    label="Proposed"
+                    value={detail.card.reviewerView.proposedState}
+                    proposed
+                  />
+                </Stack>
+              )}
               <Box sx={{ mt: 2.5 }}>
                 <Typography sx={{ color: "text.secondary", fontWeight: 750 }}>
                   Proposal rationale
@@ -534,6 +551,7 @@ const DeliberationDialog = ({
                 />
                 <Button
                   variant="contained"
+                  disableElevation
                   startIcon={
                     saving === "comment" ? (
                       <CircularProgress size={20} color="inherit" />
@@ -601,6 +619,7 @@ const DeliberationDialog = ({
                     inputProps={{ maxLength: 2000 }}
                   />
                   <Button
+                    disableElevation
                     variant="outlined"
                     startIcon={
                       saving === "position" ? (
@@ -681,6 +700,7 @@ const DeliberationDialog = ({
                     />
                     <Button
                       variant="contained"
+                      disableElevation
                       startIcon={
                         saving === "resolution" ? (
                           <CircularProgress size={20} color="inherit" />
@@ -714,6 +734,7 @@ const DeliberationDialog = ({
       </DialogContent>
       <DialogActions sx={{ px: { xs: 2, sm: 3 }, py: 2 }}>
         <Button
+          disableElevation
           color="inherit"
           onClick={onClose}
           disabled={Boolean(saving)}

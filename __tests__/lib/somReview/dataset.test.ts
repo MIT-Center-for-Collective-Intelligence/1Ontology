@@ -4,6 +4,7 @@ import {
   DEFAULT_SESSION_SIZE,
   MAX_SESSION_SIZE,
   SUPPORTED_ISSUE_TYPES,
+  compileResponseValidator,
   isIssueTypeEnabled,
   loadDataset,
   proposalAvailability,
@@ -311,5 +312,26 @@ describe("Society of Mind review dataset", () => {
   it("keeps review sessions small", () => {
     expect(DEFAULT_SESSION_SIZE).toBe(10);
     expect(MAX_SESSION_SIZE).toBe(15);
+  });
+
+  it("rejects unbounded reviewer text", () => {
+    const validate = compileResponseValidator(datasetRoot);
+    const payload = {
+      schemaVersion: "som-review-v1",
+      datasetVersion: dataset.datasetVersion,
+      proposalId: "proposal-1",
+      reviewerId: "reviewer-1",
+      decision: "disagree",
+      disagreementReason: "x".repeat(2001),
+      suggestedCorrection: "",
+      reviewedAt: "2026-07-15T12:00:00.000Z",
+    };
+
+    expect(validate(payload)).toBe(false);
+    expect(validate.errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ keyword: "maxLength" }),
+      ]),
+    );
   });
 });

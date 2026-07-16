@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Alert,
   Box,
@@ -39,6 +39,7 @@ export const DeliberationAdminPage = () => {
   );
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [detailError, setDetailError] = useState("");
+  const detailRequestSequence = useRef(0);
 
   const loadOverview = useCallback(async () => {
     setLoadingOverview(true);
@@ -68,6 +69,7 @@ export const DeliberationAdminPage = () => {
 
   const loadProposal = useCallback(async (proposalId: string) => {
     if (!proposalId) return;
+    const requestSequence = ++detailRequestSequence.current;
     setLoadingDetail(true);
     setDetailError("");
     try {
@@ -76,14 +78,18 @@ export const DeliberationAdminPage = () => {
         { proposalId },
         false,
       );
+      if (requestSequence !== detailRequestSequence.current) return;
       setDetail(result);
     } catch (error: any) {
+      if (requestSequence !== detailRequestSequence.current) return;
       setDetailError(
         error?.response?.data?.error ||
           "This deliberation could not be loaded. Please try again.",
       );
     } finally {
-      setLoadingDetail(false);
+      if (requestSequence === detailRequestSequence.current) {
+        setLoadingDetail(false);
+      }
     }
   }, []);
 
@@ -97,9 +103,11 @@ export const DeliberationAdminPage = () => {
   );
 
   const closeProposal = useCallback(() => {
+    detailRequestSequence.current += 1;
     setSelectedProposalId("");
     setDetail(null);
     setDetailError("");
+    setLoadingDetail(false);
   }, []);
 
   const mutate = useCallback(
@@ -137,6 +145,7 @@ export const DeliberationAdminPage = () => {
             sx={{ mb: 2 }}
           >
             <Button
+              disableElevation
               color="inherit"
               startIcon={<ArrowBackIcon />}
               onClick={() => router.push("/review")}
@@ -155,7 +164,7 @@ export const DeliberationAdminPage = () => {
             <Alert
               severity="error"
               action={
-                <Button color="inherit" onClick={loadOverview}>
+                <Button disableElevation color="inherit" onClick={loadOverview}>
                   Retry
                 </Button>
               }

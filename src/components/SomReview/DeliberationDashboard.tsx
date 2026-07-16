@@ -397,6 +397,7 @@ const DeliberationDashboard = ({
                   )}
                 </Box>
                 <Button
+                  disableElevation
                   variant="outlined"
                   endIcon={
                     resolved ? <CheckCircleOutlineIcon /> : <ArrowForwardIcon />

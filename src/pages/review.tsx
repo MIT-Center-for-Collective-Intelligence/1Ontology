@@ -261,7 +261,11 @@ export const ReviewPage = () => {
               onClose={() => setLoadError("")}
               action={
                 phase === "select" ? (
-                  <Button color="inherit" onClick={loadOverview}>
+                  <Button
+                    disableElevation
+                    color="inherit"
+                    onClick={loadOverview}
+                  >
                     Retry
                   </Button>
                 ) : undefined
@@ -297,6 +301,7 @@ export const ReviewPage = () => {
                   spacing={1}
                 >
                   <Button
+                    disableElevation
                     variant="outlined"
                     color="inherit"
                     startIcon={<ArrowBackIcon />}
@@ -369,20 +374,22 @@ export const ReviewPage = () => {
                   sx={{ mb: 2 }}
                   action={
                     <Button
+                      disableElevation
                       color="inherit"
                       onClick={cancelRevision}
                       sx={{ minHeight: 40, fontWeight: 700 }}
                     >
-                      Cancel revision
+                      Keep saved answer
                     </Button>
                   }
                 >
-                  You are revising item {revisionItem.proposalIndex + 1}.
-                  Previous answer:{" "}
+                  You are revising item {revisionItem.proposalIndex + 1}. Saved
+                  answer:{" "}
                   <strong>
                     {revisionItem.decision === "agree" ? "Agreed" : "Disagreed"}
                   </strong>
-                  . Your progress remains at {cursor} of {cards.length} items
+                  . No change is made until you submit a revised answer. Your
+                  progress remains at {cursor} of {cards.length} items
                   completed.
                 </Alert>
               )}
@@ -414,7 +421,11 @@ export const ReviewPage = () => {
           {phase === "session" && (!activeCard || !user?.userId) && (
             <Alert
               severity="error"
-              action={<Button onClick={exitToSelector}>Exit</Button>}
+              action={
+                <Button disableElevation onClick={exitToSelector}>
+                  Exit
+                </Button>
+              }
             >
               The current review item is unavailable.
             </Alert>
@@ -455,6 +466,7 @@ export const ReviewPage = () => {
                   sx={{ width: { xs: "100%", sm: "auto" } }}
                 >
                   <Button
+                    disableElevation
                     variant="outlined"
                     startIcon={<ArrowBackIcon />}
                     onClick={exitToSelector}
@@ -465,6 +477,7 @@ export const ReviewPage = () => {
                   {issueType && (
                     <Button
                       variant="contained"
+                      disableElevation
                       onClick={() => startSession(issueType)}
                       sx={{ minHeight: 50, fontWeight: 750 }}
                     >
@@ -495,6 +508,7 @@ export const ReviewPage = () => {
                   Nothing left in this review type
                 </Typography>
                 <Button
+                  disableElevation
                   variant="outlined"
                   startIcon={<ArrowBackIcon />}
                   onClick={exitToSelector}

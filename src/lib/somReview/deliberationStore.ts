@@ -28,6 +28,10 @@ import {
 } from "./access";
 import { aggregateDeliberationVotes } from "./deliberation";
 import { toReviewerCard } from "./sanitize";
+import {
+  applicableReviewResponses,
+  remainingIndependentReviewCount,
+} from "./reviewWorkflow";
 
 interface UserProfile {
   userId: string;
@@ -362,7 +366,11 @@ export const loadDeliberationOverview = async (
   proposals: SomDeliberationProposalSummary[];
   remainingIndependentReviews: number;
 }> => {
-  const bundle = await loadBundle(dataset.datasetVersion);
+  const rawBundle = await loadBundle(dataset.datasetVersion);
+  const bundle = {
+    ...rawBundle,
+    responses: applicableReviewResponses(dataset, rawBundle.responses),
+  };
   const independentlyReviewed = new Set(
     bundle.responses
       .filter((response) => response.reviewerId === requesterId)
@@ -389,9 +397,10 @@ export const loadDeliberationOverview = async (
     });
   return {
     proposals,
-    remainingIndependentReviews: Math.max(
-      0,
-      allRecords.length - proposals.length,
+    remainingIndependentReviews: remainingIndependentReviewCount(
+      dataset,
+      requesterId,
+      rawBundle.responses,
     ),
   };
 };
@@ -425,7 +434,11 @@ export const loadDeliberationProposal = async (
 ): Promise<SomDeliberationProposalResponse> => {
   const record = dataset.recordsById.get(proposalId);
   if (!record) throw new Error("Unknown proposalId");
-  const bundle = await loadBundle(dataset.datasetVersion, proposalId);
+  const rawBundle = await loadBundle(dataset.datasetVersion);
+  const bundle = {
+    ...rawBundle,
+    responses: applicableReviewResponses(dataset, rawBundle.responses),
+  };
   const participants = participantsFor(proposalId, bundle);
   const mine = participants.find(
     (participant) => participant.reviewerId === requesterId,

@@ -19,6 +19,26 @@ import { alpha } from "@mui/material/styles";
 
 import { SomReviewContext } from "../../types/ISomReview";
 
+const CONTEXTS_WITH_STATE_COMPARISONS = new Set<SomReviewContext["type"]>([
+  "grouping-outline",
+  "merge-action",
+  "relocation-action",
+  "addition-action",
+  "merge-up-action",
+  "metadata-edit",
+  "polysemy-review",
+  "collection-design",
+  "sense-relocation-action",
+]);
+
+export const contextShowsStateComparison = (
+  context: SomReviewContext,
+): boolean => CONTEXTS_WITH_STATE_COMPARISONS.has(context.type);
+
+const uniqueTextValues = (values: string[]): string[] => [
+  ...new Set(values.map((value) => value.trim()).filter(Boolean)),
+];
+
 const sectionLabelSx = {
   color: "text.secondary",
   fontSize: "0.875rem",
@@ -117,6 +137,7 @@ const Disclosure = ({
   return (
     <Box>
       <Button
+        disableElevation
         variant="text"
         color="inherit"
         onClick={() => setOpen((value) => !value)}
@@ -143,7 +164,7 @@ const TitleComparison = ({
 }: {
   context: Extract<SomReviewContext, { type: "title-comparison" }>;
 }) => {
-  const tasks = context.linkedTasks || [];
+  const tasks = uniqueTextValues(context.linkedTasks || []);
   if (tasks.length === 0) return null;
 
   return (
@@ -546,14 +567,15 @@ const MergeUpAction = ({
   </Stack>
 );
 
-const SourceTasks = ({ tasks }: { tasks: string[] }) =>
-  tasks.length > 0 ? (
+const SourceTasks = ({ tasks }: { tasks: string[] }) => {
+  const uniqueTasks = uniqueTextValues(tasks);
+  return uniqueTasks.length > 0 ? (
     <Disclosure
-      closedLabel={`Show source ${tasks.length === 1 ? "task" : `tasks (${tasks.length})`}`}
+      closedLabel={`Show source ${uniqueTasks.length === 1 ? "task" : `tasks (${uniqueTasks.length})`}`}
       openLabel="Hide source tasks"
     >
       <List dense disablePadding sx={{ pl: 1, pb: 1 }}>
-        {tasks.map((task) => (
+        {uniqueTasks.map((task) => (
           <ListItem key={task} disableGutters alignItems="flex-start">
             <ListItemText
               primary={task}
@@ -564,6 +586,7 @@ const SourceTasks = ({ tasks }: { tasks: string[] }) =>
       </List>
     </Disclosure>
   ) : null;
+};
 
 const SynonymValues = ({ values }: { values: string[] }) =>
   values.length ? (
