@@ -9,6 +9,7 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
+import { alpha, SxProps, Theme } from "@mui/material/styles";
 import AccountTreeOutlinedIcon from "@mui/icons-material/AccountTreeOutlined";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
@@ -30,6 +31,24 @@ import {
   SomReviewStage,
 } from "../../types/ISomReview";
 import { ISSUE_DESCRIPTIONS } from "./reviewCopy";
+
+const activeQueueStatusSx: SxProps<Theme> = {
+  backgroundColor: (theme) =>
+    alpha(
+      theme.palette.primary.main,
+      theme.palette.mode === "dark" ? 0.2 : 0.1,
+    ),
+  border: (theme) =>
+    `1px solid ${alpha(
+      theme.palette.primary.main,
+      theme.palette.mode === "dark" ? 0.8 : 0.65,
+    )}`,
+  color: "text.primary",
+  fontWeight: 700,
+  "& .MuiChip-label": {
+    color: "inherit",
+  },
+};
 
 const IssueIcon = ({ issueType }: { issueType: SomIssueType }) => {
   const sx = { fontSize: 28 };
@@ -104,7 +123,8 @@ const QueueStatus = ({ issue }: { issue: SomIssueTypeOption }) => {
       <Chip
         label={`In progress: ${issue.activeSession.cursor + 1} of ${issue.activeSession.total}`}
         size="small"
-        color="primary"
+        variant="outlined"
+        sx={activeQueueStatusSx}
       />
     );
   }
@@ -112,7 +132,8 @@ const QueueStatus = ({ issue }: { issue: SomIssueTypeOption }) => {
     <Chip
       label={`${issue.pending} ready to review`}
       size="small"
-      color="primary"
+      variant="outlined"
+      sx={activeQueueStatusSx}
     />
   );
 };

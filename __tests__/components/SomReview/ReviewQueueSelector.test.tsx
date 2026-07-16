@@ -120,6 +120,12 @@ describe("Society of Mind review queue selector", () => {
     expect(screen.getByText("Exact actions")).toBeInTheDocument();
     expect(screen.getByText("Additional quality checks")).toBeInTheDocument();
     expect(screen.getByText("In progress: 4 of 10")).toBeInTheDocument();
+    expect(
+      screen.getByText("In progress: 4 of 10").closest(".MuiChip-root"),
+    ).toHaveClass("MuiChip-outlined");
+    expect(
+      screen.getByText("16 ready to review").closest(".MuiChip-root"),
+    ).toHaveClass("MuiChip-outlined");
     expect(screen.getAllByText("No review items found")).toHaveLength(2);
     expect(screen.getByText("Reviewed")).toBeInTheDocument();
     expect(screen.getByText("Related review required")).toBeInTheDocument();
