@@ -20,7 +20,7 @@ const history: SomReviewHistoryItem[] = [
   },
   {
     proposalId: "proposal-2",
-    proposalIndex: 1,
+    proposalIndex: 10,
     question: "Is the second activity misplaced?",
     decision: "disagree",
     disagreementReason: "It belongs here.",
@@ -59,7 +59,7 @@ describe("Review history selector", () => {
     );
     fireEvent.click(
       screen.getByRole("option", {
-        name: /Item 2: Is the second activity misplaced\? Current answer: Disagreed/,
+        name: /Item 11: Is the second activity misplaced\? Current answer: Disagreed/,
       }),
     );
 
@@ -75,6 +75,6 @@ describe("Review history selector", () => {
       />,
     );
 
-    expect(screen.getByText("Revising item 2")).toBeInTheDocument();
+    expect(screen.getByText("Revising item 11")).toBeInTheDocument();
   });
 });

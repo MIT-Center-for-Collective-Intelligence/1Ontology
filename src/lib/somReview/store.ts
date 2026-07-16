@@ -7,17 +7,12 @@ import {
   SOM_REVIEW_SESSIONS,
 } from "../firestoreClient/collections";
 import { SomIssueType } from "../../types/ISomReview";
-import {
-  DEFAULT_SESSION_SIZE,
-  MAX_SESSION_SIZE,
-  SomDataset,
-  proposalAvailability,
-} from "./dataset";
+import { SomDataset, proposalAvailability } from "./dataset";
 import {
   isResumableSession,
+  mergeReadyProposalIds,
   planResponseTransition,
   planUndoTransition,
-  reviewedProposalIndex,
 } from "./sessionState";
 
 export interface SessionDoc {
@@ -96,6 +91,7 @@ const reviewerDecisions = async (
 };
 
 export interface PendingSummary {
+  reviewed: number;
   pending: number;
   waiting: number;
   notApplicable: number;
@@ -112,12 +108,16 @@ export const pendingSummary = async (
     reviewerDecisions(dataset.datasetVersion, reviewerId),
   ]);
   const summary: PendingSummary = {
+    reviewed: 0,
     pending: 0,
     waiting: 0,
     notApplicable: 0,
   };
   for (const id of all) {
-    if (answered.has(id)) continue;
+    if (answered.has(id)) {
+      summary.reviewed += 1;
+      continue;
+    }
     const availability = proposalAvailability(
       dataset.recordsById.get(id),
       decisions,
@@ -138,26 +138,38 @@ export const pendingCount = async (
 };
 
 export const activeSessionProgress = async (
-  datasetVersion: string,
+  dataset: SomDataset,
   issueType: SomIssueType,
   reviewerId: string,
 ): Promise<{ cursor: number; total: number } | null> => {
   const snapshot = await activeSessionQuery(
-    datasetVersion,
+    dataset.datasetVersion,
     issueType,
     reviewerId,
   ).get();
   if (snapshot.empty) return null;
   const session = snapshot.docs[0].data() as SessionDoc;
   if (!isResumableSession(session)) return null;
-  return { cursor: session.cursor, total: session.proposalIds.length };
+
+  const [answered, decisions] = await Promise.all([
+    answeredProposalIds(dataset.datasetVersion, issueType, reviewerId),
+    reviewerDecisions(dataset.datasetVersion, reviewerId),
+  ]);
+  const ready = (dataset.orderedIdsByIssue.get(issueType) || []).filter(
+    (proposalId) =>
+      !answered.has(proposalId) &&
+      proposalAvailability(dataset.recordsById.get(proposalId), decisions) ===
+        "ready",
+  );
+  const proposalIds = mergeReadyProposalIds(session.proposalIds, ready);
+  return { cursor: session.cursor, total: proposalIds.length };
 };
 
 /**
  * Returns the reviewer's unfinished session for this issue type, or builds a
- * new one of up to DEFAULT_SESSION_SIZE unanswered records (hard cap 15,
- * single issue type, deterministic order from the dataset). Completed
- * sessions are kept as history; only "active" sessions are resumed.
+ * new one containing every currently ready unanswered record for that issue
+ * type, in deterministic dataset order. Completed sessions are kept as
+ * history; only "active" sessions are resumed.
  */
 export const getOrCreateSession = async (
   dataset: SomDataset,
@@ -183,7 +195,28 @@ export const getOrCreateSession = async (
           ) === "ready",
       );
     if (isResumableSession(session) && remainingReady) {
-      return { ...session, id: existingDoc.id };
+      const all = dataset.orderedIdsByIssue.get(issueType) || [];
+      const answered = await answeredProposalIds(
+        dataset.datasetVersion,
+        issueType,
+        reviewerId,
+      );
+      const ready = all.filter(
+        (proposalId) =>
+          !answered.has(proposalId) &&
+          proposalAvailability(
+            dataset.recordsById.get(proposalId),
+            decisions,
+          ) === "ready",
+      );
+      const proposalIds = mergeReadyProposalIds(session.proposalIds, ready);
+      if (proposalIds.length !== session.proposalIds.length) {
+        await existingDoc.ref.update({
+          proposalIds,
+          updatedAt: Timestamp.now(),
+        });
+      }
+      return { ...session, proposalIds, id: existingDoc.id };
     }
     if (session.status === "active") {
       await existingDoc.ref.update({
@@ -206,13 +239,12 @@ export const getOrCreateSession = async (
   );
   if (ready.length === 0) return null;
 
-  const size = Math.min(DEFAULT_SESSION_SIZE, MAX_SESSION_SIZE, ready.length);
   const now = Timestamp.now();
   const session: SessionDoc = {
     datasetVersion: dataset.datasetVersion,
     issueType,
     reviewerId,
-    proposalIds: ready.slice(0, size),
+    proposalIds: mergeReadyProposalIds([], ready),
     cursor: 0,
     status: "active",
     createdAt: now,
@@ -341,66 +373,53 @@ export const saveResponse = async (
   });
 };
 
-/** Returns current responses for proposals in this session, keyed by ID. */
-export const sessionResponses = async (
-  session: StoredSession,
+/** Returns every current response for one reviewer and issue type, keyed by ID. */
+export const issueResponses = async (
+  datasetVersion: string,
+  issueType: SomIssueType,
+  reviewerId: string,
 ): Promise<Map<string, ResponsePayload>> => {
-  const proposalIds = new Set(session.proposalIds);
   const snapshot = await db
     .collection(SOM_REVIEW_RESPONSES)
-    .where("datasetVersion", "==", session.datasetVersion)
-    .where("issueType", "==", session.issueType)
-    .where("reviewerId", "==", session.reviewerId)
+    .where("datasetVersion", "==", datasetVersion)
+    .where("issueType", "==", issueType)
+    .where("reviewerId", "==", reviewerId)
     .where("status", "==", "current")
     .get();
   return new Map(
     snapshot.docs
       .map((doc) => doc.data() as StoredResponseDoc)
-      .filter(
-        (record) =>
-          proposalIds.has(record.proposalId) && Boolean(record.response),
-      )
+      .filter((record) => Boolean(record.response))
       .map((record) => [record.proposalId, record.response]),
   );
 };
 
 /**
- * Replaces one prior answer in place, appends an audit revision, and leaves
- * the reviewer's current queue position unchanged.
+ * Replaces any prior answer for this reviewer and issue type and appends an
+ * audit revision. Revisions are intentionally independent of review sessions
+ * so judgments from completed sessions remain editable.
  */
 export const reviseResponse = async (
-  sessionId: string,
   issueType: SomIssueType,
   payload: ResponsePayload,
 ): Promise<{ changed: boolean }> => {
   return db.runTransaction(async (transaction) => {
-    const sessionRef = db.collection(SOM_REVIEW_SESSIONS).doc(sessionId);
-    const [responseSnap, sessionSnap] = await Promise.all([
-      transaction.get(
-        currentResponseQuery(
-          payload.datasetVersion,
-          payload.proposalId,
-          payload.reviewerId,
-        ),
+    const responseSnap = await transaction.get(
+      currentResponseQuery(
+        payload.datasetVersion,
+        payload.proposalId,
+        payload.reviewerId,
       ),
-      transaction.get(sessionRef),
-    ]);
-    if (!sessionSnap.exists) throw new Error("Review session was not found");
-    const session = sessionSnap.data() as SessionDoc;
-    if (
-      session.datasetVersion !== payload.datasetVersion ||
-      session.issueType !== issueType ||
-      session.reviewerId !== payload.reviewerId
-    ) {
-      throw new Error("Review session does not match this response");
-    }
-    reviewedProposalIndex(session, payload.proposalId);
+    );
     if (responseSnap.empty) {
       throw new Error("The prior response could not be found");
     }
 
     const responseDoc = responseSnap.docs[0];
     const existing = responseDoc.data() as StoredResponseDoc;
+    if (existing.issueType !== issueType) {
+      throw new Error("The prior response belongs to another issue type");
+    }
     const identical =
       existing.response.decision === payload.decision &&
       (existing.response.disagreementReason || "") ===
@@ -425,7 +444,6 @@ export const reviseResponse = async (
       response: payload,
       createdAt: now,
     });
-    transaction.update(sessionRef, { updatedAt: now });
     return { changed: true };
   });
 };

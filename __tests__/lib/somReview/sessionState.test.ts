@@ -1,5 +1,6 @@
 import {
   isResumableSession,
+  mergeReadyProposalIds,
   planResponseTransition,
   planUndoTransition,
   reviewedProposalIndex,
@@ -12,6 +13,17 @@ const session = {
 };
 
 describe("Society of Mind session transitions", () => {
+  it("includes the complete ready queue and expands older capped sessions", () => {
+    const completeQueue = Array.from(
+      { length: 47 },
+      (_, index) => `proposal-${index + 1}`,
+    );
+    expect(mergeReadyProposalIds([], completeQueue)).toEqual(completeQueue);
+    expect(
+      mergeReadyProposalIds(completeQueue.slice(0, 10), completeQueue),
+    ).toEqual(completeQueue);
+  });
+
   it("advances the current item and completes the final item", () => {
     expect(planResponseTransition(session, "a", false)).toEqual({
       cursor: 1,

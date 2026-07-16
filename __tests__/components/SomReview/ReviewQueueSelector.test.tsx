@@ -24,6 +24,7 @@ const option = (
   stage,
   robTaskIds,
   total: 1,
+  reviewed: 0,
   pending: 1,
   waiting: 0,
   notApplicable: 0,
@@ -34,6 +35,7 @@ const option = (
 const issues: SomIssueTypeOption[] = [
   option("title-clarity", "1. Clarify unclear titles", "content", [1], {
     total: 47,
+    reviewed: 10,
     pending: 37,
     activeSession: { cursor: 3, total: 10 },
   }),
@@ -119,9 +121,13 @@ describe("Society of Mind review queue selector", () => {
     expect(screen.getByText("Movement outside Sell")).toBeInTheDocument();
     expect(screen.getByText("Exact actions")).toBeInTheDocument();
     expect(screen.getByText("Additional quality checks")).toBeInTheDocument();
-    expect(screen.getByText("In progress: 4 of 10")).toBeInTheDocument();
     expect(
-      screen.getByText("In progress: 4 of 10").closest(".MuiChip-root"),
+      screen.getByText("In progress: 10 of 47 reviewed"),
+    ).toBeInTheDocument();
+    expect(
+      screen
+        .getByText("In progress: 10 of 47 reviewed")
+        .closest(".MuiChip-root"),
     ).toHaveClass("MuiChip-outlined");
     expect(
       screen.getByText("16 ready to review").closest(".MuiChip-root"),

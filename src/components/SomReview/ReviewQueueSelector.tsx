@@ -116,9 +116,10 @@ const QueueStatus = ({ issue }: { issue: SomIssueTypeOption }) => {
     );
   }
   if (issue.activeSession) {
+    const availableTotal = issue.reviewed + issue.pending;
     return (
       <Chip
-        label={`In progress: ${issue.activeSession.cursor + 1} of ${issue.activeSession.total}`}
+        label={`In progress: ${issue.reviewed} of ${availableTotal} reviewed`}
         size="small"
         variant="outlined"
         sx={activeQueueStatusSx}

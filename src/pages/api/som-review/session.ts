@@ -4,10 +4,11 @@ import fbAuth, { CustomNextApiRequest } from "../../../middlewares/fbAuth";
 import { getDataset, isIssueTypeEnabled } from "../../../lib/somReview/dataset";
 import {
   getOrCreateSession,
-  sessionResponses,
+  issueResponses,
 } from "../../../lib/somReview/store";
 import { toReviewerCard } from "../../../lib/somReview/sanitize";
 import { reviewRequestData } from "../../../lib/somReview/request";
+import { orderedReviewEntries } from "../../../lib/somReview/reviewHistory";
 import { SomIssueType, SomSessionResponse } from "../../../types/ISomReview";
 
 const handler = async (request: NextApiRequest, res: NextApiResponse) => {
@@ -28,15 +29,47 @@ const handler = async (request: NextApiRequest, res: NextApiResponse) => {
     }
 
     const session = await getOrCreateSession(dataset, issueType, req.user.uid);
+    const orderedProposalIds = dataset.orderedIdsByIssue.get(issueType) || [];
+    const proposalIndexes = new Map(
+      orderedProposalIds.map((proposalId, index) => [proposalId, index]),
+    );
+    const responses = await issueResponses(
+      dataset.datasetVersion,
+      issueType,
+      req.user.uid,
+    );
+    const history = orderedReviewEntries(orderedProposalIds, responses).flatMap(
+      ({ proposalId, proposalIndex, response }) => {
+        const record = dataset.recordsById.get(proposalId);
+        if (!record) return [];
+        const card = toReviewerCard(record);
+        return [
+          {
+            proposalId,
+            proposalIndex,
+            question: card.reviewerView.question,
+            decision: response.decision,
+            disagreementReason: response.disagreementReason || "",
+            suggestedCorrection: response.suggestedCorrection || "",
+            reviewedAt: response.reviewedAt,
+          },
+        ];
+      },
+    );
+    const historyCards = history.map((item) => ({
+      ...toReviewerCard(dataset.recordsById.get(item.proposalId)),
+      proposalIndex: item.proposalIndex,
+    }));
+
     if (!session) {
-      const body: SomSessionResponse = { done: true };
+      const body: SomSessionResponse = { done: true, history, historyCards };
       return res.status(200).json(body);
     }
 
-    const cards = session.proposalIds.map((id) =>
-      toReviewerCard(dataset.recordsById.get(id)),
-    );
-    const responses = await sessionResponses(session);
+    const cards = session.proposalIds.map((id) => ({
+      ...toReviewerCard(dataset.recordsById.get(id)),
+      proposalIndex: proposalIndexes.get(id),
+    }));
     const body: SomSessionResponse = {
       session: {
         id: session.id,
@@ -46,24 +79,8 @@ const handler = async (request: NextApiRequest, res: NextApiResponse) => {
         total: session.proposalIds.length,
       },
       cards,
-      history: session.proposalIds
-        .slice(0, session.cursor)
-        .flatMap((proposalId, proposalIndex) => {
-          const response = responses.get(proposalId);
-          const card = cards[proposalIndex];
-          if (!response || !card) return [];
-          return [
-            {
-              proposalId,
-              proposalIndex,
-              question: card.reviewerView.question,
-              decision: response.decision,
-              disagreementReason: response.disagreementReason || "",
-              suggestedCorrection: response.suggestedCorrection || "",
-              reviewedAt: response.reviewedAt,
-            },
-          ];
-        }),
+      history,
+      historyCards,
     };
     return res.status(200).json(body);
   } catch (error: any) {

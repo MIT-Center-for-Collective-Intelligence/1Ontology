@@ -49,6 +49,7 @@ export const ReviewPage = () => {
   const [cards, setCards] = useState<SomReviewCard[]>([]);
   const [cursor, setCursor] = useState(0);
   const [history, setHistory] = useState<SomReviewHistoryItem[]>([]);
+  const [historyCards, setHistoryCards] = useState<SomReviewCard[]>([]);
   const [revisionProposalId, setRevisionProposalId] = useState("");
   const [loadError, setLoadError] = useState("");
   const [canDeliberate, setCanDeliberate] = useState(false);
@@ -86,20 +87,19 @@ export const ReviewPage = () => {
         issueType: issue,
       });
       setIssueType(issue);
+      setHistory(result.history || []);
+      setHistoryCards(result.historyCards || []);
+      setRevisionProposalId("");
       if (result.done || !result.session || !result.cards?.length) {
         setSessionId("");
         setCards([]);
         setCursor(0);
-        setHistory([]);
-        setRevisionProposalId("");
         setPhase("empty");
         return;
       }
       setSessionId(result.session.id);
       setCards(result.cards);
       setCursor(result.session.cursor);
-      setHistory(result.history || []);
-      setRevisionProposalId("");
       setPhase(
         result.session.cursor >= result.cards.length ? "complete" : "session",
       );
@@ -185,9 +185,11 @@ export const ReviewPage = () => {
           ),
           {
             proposalId: card.proposalId,
-            proposalIndex: cards.findIndex(
-              (candidate) => candidate.proposalId === card.proposalId,
-            ),
+            proposalIndex:
+              card.proposalIndex ??
+              cards.findIndex(
+                (candidate) => candidate.proposalId === card.proposalId,
+              ),
             question: card.reviewerView.question,
             decision: submission.decision,
             disagreementReason: submission.disagreementReason,
@@ -195,6 +197,16 @@ export const ReviewPage = () => {
             reviewedAt,
           },
         ].sort((left, right) => left.proposalIndex - right.proposalIndex),
+      );
+      setHistoryCards((currentCards) =>
+        currentCards.some(
+          (historyCard) => historyCard.proposalId === card.proposalId,
+        )
+          ? currentCards
+          : [...currentCards, card].sort(
+              (left, right) =>
+                (left.proposalIndex ?? 0) - (right.proposalIndex ?? 0),
+            ),
       );
       setCursor(result.cursor);
       if (result.completed) setPhase("complete");
@@ -206,7 +218,7 @@ export const ReviewPage = () => {
     (item) => item.proposalId === revisionProposalId,
   );
   const revisionCard = revisionItem
-    ? cards.find((card) => card.proposalId === revisionItem.proposalId)
+    ? historyCards.find((card) => card.proposalId === revisionItem.proposalId)
     : undefined;
 
   const submitRevision = useCallback(
@@ -215,9 +227,11 @@ export const ReviewPage = () => {
         (candidate) => candidate.proposalId === revisionProposalId,
       );
       const card = item
-        ? cards.find((candidate) => candidate.proposalId === item.proposalId)
+        ? historyCards.find(
+            (candidate) => candidate.proposalId === item.proposalId,
+          )
         : undefined;
-      if (!item || !card || !sessionId || !user?.userId) {
+      if (!item || !card || !user?.userId) {
         throw new Error("The earlier review is unavailable");
       }
 
@@ -225,7 +239,6 @@ export const ReviewPage = () => {
       const result = await Post<SomReviseResult>(
         "/som-review/revise",
         {
-          sessionId,
           response: {
             schemaVersion: "som-review-v1",
             datasetVersion: card.datasetVersion,
@@ -255,11 +268,30 @@ export const ReviewPage = () => {
               : historyItem,
           ),
         );
+        if (issueType) {
+          await startSession(issueType);
+          return;
+        }
       }
       setRevisionProposalId("");
-      setPhase(cursor >= cards.length ? "complete" : "session");
+      setPhase(
+        cards.length === 0
+          ? "empty"
+          : cursor >= cards.length
+            ? "complete"
+            : "session",
+      );
     },
-    [cards, cursor, history, revisionProposalId, sessionId, user?.userId],
+    [
+      cards.length,
+      cursor,
+      history,
+      historyCards,
+      issueType,
+      revisionProposalId,
+      startSession,
+      user?.userId,
+    ],
   );
 
   const selectRevision = useCallback(
@@ -274,7 +306,13 @@ export const ReviewPage = () => {
 
   const cancelRevision = useCallback(() => {
     setRevisionProposalId("");
-    setPhase(cursor >= cards.length ? "complete" : "session");
+    setPhase(
+      cards.length === 0
+        ? "empty"
+        : cursor >= cards.length
+          ? "complete"
+          : "session",
+    );
   }, [cards.length, cursor]);
 
   const exitToSelector = useCallback(() => {
@@ -283,6 +321,7 @@ export const ReviewPage = () => {
     setCards([]);
     setCursor(0);
     setHistory([]);
+    setHistoryCards([]);
     setRevisionProposalId("");
     setRetryIssueType(null);
     loadOverview();
@@ -292,6 +331,9 @@ export const ReviewPage = () => {
   const activeCard = revisionCard || currentCard;
   const selectedIssue = issueTypes.find((issue) => issue.id === issueType);
   const issueLabel = selectedIssue?.label || "Proposal review";
+  const issueTotal = selectedIssue?.total || cards.length;
+  const availableReviewTotal =
+    history.length + Math.max(0, cards.length - cursor);
 
   return (
     <>
@@ -426,19 +468,28 @@ export const ReviewPage = () => {
                     {revisionItem ? (
                       <>
                         Revising item {revisionItem.proposalIndex + 1} of{" "}
-                        {cards.length}
+                        {issueTotal}
                       </>
                     ) : (
                       <>
-                        Item {cursor + 1} of {cards.length}
+                        Item {(currentCard?.proposalIndex ?? cursor) + 1} of{" "}
+                        {issueTotal}
                       </>
                     )}
                   </Typography>
                 </Stack>
                 <LinearProgress
                   variant="determinate"
-                  value={(cursor / cards.length) * 100}
-                  aria-label={`${cursor} of ${cards.length} items completed`}
+                  value={
+                    availableReviewTotal === 0
+                      ? 100
+                      : (history.length / availableReviewTotal) * 100
+                  }
+                  aria-label={
+                    availableReviewTotal === 0
+                      ? "All available items completed"
+                      : `${history.length} of ${availableReviewTotal} items completed`
+                  }
                   sx={{ height: 8, borderRadius: 1 }}
                 />
               </Stack>
@@ -462,9 +513,10 @@ export const ReviewPage = () => {
                   <strong>
                     {revisionItem.decision === "agree" ? "Agreed" : "Disagreed"}
                   </strong>
-                  . No change is made until you submit a revised answer. Your
-                  progress remains at {cursor} of {cards.length} items
-                  completed.
+                  . No change is made until you submit a revised answer.{" "}
+                  {cards.length === 0
+                    ? "All currently available proposals remain reviewed."
+                    : `Your progress remains at ${history.length} of ${availableReviewTotal} items completed.`}
                 </Alert>
               )}
               <ReviewCard
@@ -522,11 +574,12 @@ export const ReviewPage = () => {
                     component="h1"
                     sx={{ fontWeight: 800 }}
                   >
-                    Review set complete
+                    Review type complete
                   </Typography>
                   <Typography sx={{ mt: 0.75, color: "text.secondary" }}>
-                    {cards.length} {cards.length === 1 ? "item" : "items"}{" "}
-                    reviewed
+                    {history.length}{" "}
+                    {history.length === 1 ? "judgment" : "judgments"} available
+                    to revise
                   </Typography>
                 </Box>
                 <ReviewHistorySelect
@@ -555,7 +608,7 @@ export const ReviewPage = () => {
                       onClick={() => startSession(issueType)}
                       sx={{ minHeight: 50, fontWeight: 750 }}
                     >
-                      Review another set
+                      Check for new proposals
                     </Button>
                   )}
                 </Stack>
@@ -579,8 +632,20 @@ export const ReviewPage = () => {
                   component="h1"
                   sx={{ fontWeight: 800 }}
                 >
-                  Nothing left in this review type
+                  All available proposals reviewed
                 </Typography>
+                <Typography sx={{ color: "text.secondary" }}>
+                  {history.length > 0
+                    ? `You can revise any of your ${history.length} saved ${
+                        history.length === 1 ? "judgment" : "judgments"
+                      } below.`
+                    : "No proposals are currently available for this review type."}
+                </Typography>
+                <ReviewHistorySelect
+                  history={history}
+                  selectedProposalId={revisionProposalId}
+                  onSelect={selectRevision}
+                />
                 <Button
                   disableElevation
                   variant="outlined"

@@ -48,9 +48,6 @@ export const proposalAvailability = (
   return "ready";
 };
 
-export const DEFAULT_SESSION_SIZE = 10;
-export const MAX_SESSION_SIZE = 15;
-
 export interface SomDataset {
   datasetVersion: string;
   manifest: any;

@@ -18,6 +18,24 @@ export const isResumableSession = (
   session.cursor < session.proposalIds.length;
 
 /**
+ * Keeps the existing session order while adding every newly available proposal.
+ * This lets an older, previously capped session grow into the complete queue.
+ */
+export const mergeReadyProposalIds = (
+  existingProposalIds: string[],
+  readyProposalIds: string[],
+): string[] => {
+  const included = new Set(existingProposalIds);
+  const merged = [...existingProposalIds];
+  for (const proposalId of readyProposalIds) {
+    if (included.has(proposalId)) continue;
+    included.add(proposalId);
+    merged.push(proposalId);
+  }
+  return merged;
+};
+
+/**
  * Plans a response write while allowing a lost-network-response retry to be a
  * no-op. Stale changed responses and future-card responses are rejected.
  */

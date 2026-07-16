@@ -20,8 +20,6 @@ const handler = async (request: NextApiRequest, res: NextApiResponse) => {
     const dataset = getDataset();
     const data = reviewRequestData(req.body);
     const payload = data.response as ResponsePayload;
-    const sessionId = typeof data.sessionId === "string" ? data.sessionId : "";
-    if (!sessionId) return res.status(400).json({ error: "Missing sessionId" });
     if (!payload)
       return res.status(400).json({ error: "Missing response payload" });
 
@@ -54,11 +52,7 @@ const handler = async (request: NextApiRequest, res: NextApiResponse) => {
         .json({ error: "Disagree requires a non-whitespace reason" });
     }
 
-    const { changed } = await reviseResponse(
-      sessionId,
-      record.issueType,
-      payload,
-    );
+    const { changed } = await reviseResponse(record.issueType, payload);
     const body: SomReviseResult = { ok: true, changed };
     return res.status(200).json(body);
   } catch (error: any) {
