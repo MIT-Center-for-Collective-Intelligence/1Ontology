@@ -1,6 +1,7 @@
 import {
   isResumableSession,
   mergeReadyProposalIds,
+  prioritizeProposalAtCursor,
   planResponseTransition,
   planUndoTransition,
   reviewedProposalIndex,
@@ -22,6 +23,29 @@ describe("Society of Mind session transitions", () => {
     expect(
       mergeReadyProposalIds(completeQueue.slice(0, 10), completeQueue),
     ).toEqual(completeQueue);
+  });
+
+  it("focuses an exact follow-up without changing completed work", () => {
+    expect(
+      prioritizeProposalAtCursor(
+        ["done", "next", "target", "later"],
+        1,
+        "target",
+      ),
+    ).toEqual(["done", "target", "next", "later"]);
+  });
+
+  it("leaves missing and already reviewed follow-ups unchanged", () => {
+    const ids = ["done", "next", "later"];
+    expect(prioritizeProposalAtCursor(ids, 1, "done")).toBe(ids);
+    expect(prioritizeProposalAtCursor(ids, 1, "missing")).toBe(ids);
+    expect(prioritizeProposalAtCursor(ids, 1)).toBe(ids);
+  });
+
+  it("rejects an invalid cursor before reordering a follow-up", () => {
+    expect(() => prioritizeProposalAtCursor(["a"], 2, "a")).toThrow(
+      "Session cursor is invalid",
+    );
   });
 
   it("advances the current item and completes the final item", () => {

@@ -6,9 +6,14 @@ import {
   getDataset,
   isIssueTypeEnabled,
 } from "../../../lib/somReview/dataset";
-import { ResponsePayload, reviseResponse } from "../../../lib/somReview/store";
+import {
+  ResponsePayload,
+  reviewerReadyDependentRecords,
+  reviseResponse,
+} from "../../../lib/somReview/store";
 import { reviewRequestData } from "../../../lib/somReview/request";
 import { SomReviseResult } from "../../../types/ISomReview";
+import { toLinkedFollowUps } from "../../../lib/somReview/followUps";
 
 let validateResponse: ReturnType<typeof compileResponseValidator> | null = null;
 
@@ -53,7 +58,19 @@ const handler = async (request: NextApiRequest, res: NextApiResponse) => {
     }
 
     const { changed } = await reviseResponse(record.issueType, payload);
-    const body: SomReviseResult = { ok: true, changed };
+    const followUpRecords =
+      payload.decision === "agree"
+        ? await reviewerReadyDependentRecords(
+            dataset,
+            req.user.uid,
+            payload.proposalId,
+          )
+        : [];
+    const body: SomReviseResult = {
+      ok: true,
+      changed,
+      followUps: toLinkedFollowUps(dataset, followUpRecords),
+    };
     return res.status(200).json(body);
   } catch (error: any) {
     console.error(error);

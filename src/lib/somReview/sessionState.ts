@@ -36,6 +36,32 @@ export const mergeReadyProposalIds = (
 };
 
 /**
+ * Moves an exact linked proposal to the current cursor without changing the
+ * completed prefix or dropping any other proposal from the session.
+ */
+export const prioritizeProposalAtCursor = (
+  proposalIds: string[],
+  cursor: number,
+  preferredProposalId?: string,
+): string[] => {
+  if (cursor < 0 || cursor > proposalIds.length) {
+    throw new Error("Session cursor is invalid");
+  }
+  if (!preferredProposalId) return proposalIds;
+
+  const preferredIndex = proposalIds.indexOf(preferredProposalId);
+  if (preferredIndex < cursor || preferredIndex < 0) return proposalIds;
+  if (preferredIndex === cursor) return proposalIds;
+
+  return [
+    ...proposalIds.slice(0, cursor),
+    preferredProposalId,
+    ...proposalIds.slice(cursor, preferredIndex),
+    ...proposalIds.slice(preferredIndex + 1),
+  ];
+};
+
+/**
  * Plans a response write while allowing a lost-network-response retry to be a
  * no-op. Stale changed responses and future-card responses are rejected.
  */

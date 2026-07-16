@@ -11,6 +11,7 @@ import {
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import Head from "next/head";
 import { useRouter } from "next/router";
 
@@ -21,6 +22,7 @@ import ReviewCard, {
   ReviewSubmission,
 } from "@components/components/SomReview/ReviewCard";
 import ReviewHistorySelect from "@components/components/SomReview/ReviewHistorySelect";
+import ReviewFollowUpPanel from "@components/components/SomReview/ReviewFollowUpPanel";
 import ReviewQueueSelector from "@components/components/SomReview/ReviewQueueSelector";
 import ReviewTaskIntro from "@components/components/SomReview/ReviewTaskIntro";
 import ThemeModeToggle from "@components/components/SomReview/ThemeModeToggle";
@@ -28,6 +30,8 @@ import { reviewInteractiveSurfaceSx } from "@components/components/SomReview/rev
 import {
   SomIssueType,
   SomIssueTypeOption,
+  SomFollowUpSource,
+  SomLinkedFollowUp,
   SomOverviewResponse,
   SomRespondResult,
   SomReviewCard,
@@ -36,7 +40,31 @@ import {
   SomSessionResponse,
 } from "@components/types/ISomReview";
 
-type Phase = "loading" | "select" | "intro" | "session" | "complete" | "empty";
+type Phase =
+  | "loading"
+  | "select"
+  | "intro"
+  | "session"
+  | "follow-up"
+  | "sequence-complete"
+  | "complete"
+  | "empty";
+
+interface LinkedReviewSequence {
+  source: SomFollowUpSource;
+  followUp: SomLinkedFollowUp;
+}
+
+interface FollowUpOffer {
+  source: SomFollowUpSource;
+  followUps: SomLinkedFollowUp[];
+  sourceQueueCompleted: boolean;
+}
+
+interface CompletedSequence {
+  sequence: LinkedReviewSequence;
+  followUpQueueCompleted: boolean;
+}
 
 export const ReviewPage = () => {
   const [{ user }] = useAuth();
@@ -44,6 +72,7 @@ export const ReviewPage = () => {
   const [phase, setPhase] = useState<Phase>("loading");
   const [datasetVersion, setDatasetVersion] = useState("");
   const [issueTypes, setIssueTypes] = useState<SomIssueTypeOption[]>([]);
+  const [readyFollowUps, setReadyFollowUps] = useState<SomLinkedFollowUp[]>([]);
   const [issueType, setIssueType] = useState<SomIssueType | null>(null);
   const [sessionId, setSessionId] = useState("");
   const [cards, setCards] = useState<SomReviewCard[]>([]);
@@ -56,6 +85,13 @@ export const ReviewPage = () => {
   const [retryIssueType, setRetryIssueType] = useState<SomIssueType | null>(
     null,
   );
+  const [followUpOffer, setFollowUpOffer] = useState<FollowUpOffer | null>(
+    null,
+  );
+  const [activeSequence, setActiveSequence] =
+    useState<LinkedReviewSequence | null>(null);
+  const [completedSequence, setCompletedSequence] =
+    useState<CompletedSequence | null>(null);
 
   const loadOverview = useCallback(async () => {
     setPhase("loading");
@@ -65,6 +101,7 @@ export const ReviewPage = () => {
       const overview = await Post<SomOverviewResponse>("/som-review/overview");
       setDatasetVersion(overview.datasetVersion);
       setIssueTypes(overview.issueTypes);
+      setReadyFollowUps(overview.readyFollowUps || []);
       setCanDeliberate(overview.canDeliberate);
       setPhase("select");
     } catch {
@@ -77,40 +114,81 @@ export const ReviewPage = () => {
     if (user) loadOverview();
   }, [user, loadOverview]);
 
-  const startSession = useCallback(async (issue: SomIssueType) => {
-    setIssueType(issue);
-    setPhase("loading");
-    setLoadError("");
-    setRetryIssueType(null);
-    try {
-      const result = await Post<SomSessionResponse>("/som-review/session", {
-        issueType: issue,
-      });
+  const startSession = useCallback(
+    async (
+      issue: SomIssueType,
+      options: {
+        preferredProposalId?: string;
+        sequence?: LinkedReviewSequence | null;
+      } = {},
+    ) => {
       setIssueType(issue);
-      setHistory(result.history || []);
-      setHistoryCards(result.historyCards || []);
-      setRevisionProposalId("");
-      if (result.done || !result.session || !result.cards?.length) {
-        setSessionId("");
-        setCards([]);
-        setCursor(0);
-        setPhase("empty");
+      setPhase("loading");
+      setLoadError("");
+      setRetryIssueType(null);
+      setFollowUpOffer(null);
+      setCompletedSequence(null);
+      setActiveSequence(options.sequence || null);
+      try {
+        const result = await Post<SomSessionResponse>("/som-review/session", {
+          issueType: issue,
+          ...(options.preferredProposalId
+            ? { preferredProposalId: options.preferredProposalId }
+            : {}),
+        });
+        if (
+          options.preferredProposalId &&
+          result.focusedProposalId !== options.preferredProposalId
+        ) {
+          throw new Error("The related follow-up could not be focused");
+        }
+        setIssueType(issue);
+        setHistory(result.history || []);
+        setHistoryCards(result.historyCards || []);
+        setRevisionProposalId("");
+        if (result.done || !result.session || !result.cards?.length) {
+          setSessionId("");
+          setCards([]);
+          setCursor(0);
+          setPhase("empty");
+          return;
+        }
+        setSessionId(result.session.id);
+        setCards(result.cards);
+        setCursor(result.session.cursor);
+        setPhase(
+          result.session.cursor >= result.cards.length ? "complete" : "session",
+        );
+      } catch {
+        setActiveSequence(null);
+        setLoadError(
+          options.preferredProposalId
+            ? "That related follow-up could not be opened. It may already have been reviewed."
+            : "The review session could not be started. Please try again.",
+        );
+        setRetryIssueType(options.preferredProposalId ? null : issue);
+        setPhase("select");
+      }
+    },
+    [],
+  );
+
+  const startLinkedFollowUp = useCallback(
+    (followUp: SomLinkedFollowUp, source?: SomFollowUpSource) => {
+      const linkedSource = source || followUp.sources[0];
+      if (!linkedSource) {
+        startSession(followUp.issueType, {
+          preferredProposalId: followUp.proposalId,
+        });
         return;
       }
-      setSessionId(result.session.id);
-      setCards(result.cards);
-      setCursor(result.session.cursor);
-      setPhase(
-        result.session.cursor >= result.cards.length ? "complete" : "session",
-      );
-    } catch {
-      setLoadError(
-        "The review session could not be started. Please try again.",
-      );
-      setRetryIssueType(issue);
-      setPhase("select");
-    }
-  }, []);
+      startSession(followUp.issueType, {
+        preferredProposalId: followUp.proposalId,
+        sequence: { source: linkedSource, followUp },
+      });
+    },
+    [startSession],
+  );
 
   const introStorageKey = useCallback(
     (issue: SomIssueType) =>
@@ -122,6 +200,9 @@ export const ReviewPage = () => {
     (issue: SomIssueType) => {
       setLoadError("");
       setRetryIssueType(null);
+      setFollowUpOffer(null);
+      setActiveSequence(null);
+      setCompletedSequence(null);
       try {
         if (window.localStorage.getItem(introStorageKey(issue)) === "seen") {
           startSession(issue);
@@ -209,9 +290,35 @@ export const ReviewPage = () => {
             ),
       );
       setCursor(result.cursor);
+      const followUps = result.followUps || [];
+      if (followUps.length > 0) {
+        const sourceIssue = issueTypes.find(
+          (candidate) => candidate.id === card.issueType,
+        );
+        setFollowUpOffer({
+          source: {
+            proposalId: card.proposalId,
+            issueType: card.issueType,
+            issueLabel: sourceIssue?.label || "Earlier review",
+            question: card.reviewerView.question,
+          },
+          followUps,
+          sourceQueueCompleted: result.completed,
+        });
+        setPhase("follow-up");
+        return;
+      }
+      if (activeSequence?.followUp.proposalId === card.proposalId) {
+        setCompletedSequence({
+          sequence: activeSequence,
+          followUpQueueCompleted: result.completed,
+        });
+        setPhase("sequence-complete");
+        return;
+      }
       if (result.completed) setPhase("complete");
     },
-    [cards, cursor, sessionId, user?.userId],
+    [activeSequence, cards, cursor, issueTypes, sessionId, user?.userId],
   );
 
   const revisionItem = history.find(
@@ -268,6 +375,29 @@ export const ReviewPage = () => {
               : historyItem,
           ),
         );
+      }
+
+      const followUps = result.followUps || [];
+      if (followUps.length > 0) {
+        const sourceIssue = issueTypes.find(
+          (candidate) => candidate.id === card.issueType,
+        );
+        setRevisionProposalId("");
+        setFollowUpOffer({
+          source: {
+            proposalId: card.proposalId,
+            issueType: card.issueType,
+            issueLabel: sourceIssue?.label || "Earlier review",
+            question: card.reviewerView.question,
+          },
+          followUps,
+          sourceQueueCompleted: cards.length === 0 || cursor >= cards.length,
+        });
+        setPhase("follow-up");
+        return;
+      }
+
+      if (result.changed) {
         if (issueType) {
           await startSession(issueType);
           return;
@@ -287,6 +417,7 @@ export const ReviewPage = () => {
       cursor,
       history,
       historyCards,
+      issueTypes,
       issueType,
       revisionProposalId,
       startSession,
@@ -324,8 +455,34 @@ export const ReviewPage = () => {
     setHistoryCards([]);
     setRevisionProposalId("");
     setRetryIssueType(null);
+    setFollowUpOffer(null);
+    setActiveSequence(null);
+    setCompletedSequence(null);
     loadOverview();
   }, [loadOverview]);
+
+  const continueOriginalQueue = useCallback(() => {
+    if (!followUpOffer) return;
+    setActiveSequence(null);
+    setFollowUpOffer(null);
+    setPhase(followUpOffer.sourceQueueCompleted ? "complete" : "session");
+  }, [followUpOffer]);
+
+  const returnToSourceQueue = useCallback(() => {
+    if (!completedSequence) return;
+    const sourceIssueType = completedSequence.sequence.source.issueType;
+    setCompletedSequence(null);
+    setActiveSequence(null);
+    startSession(sourceIssueType);
+  }, [completedSequence, startSession]);
+
+  const continueFollowUpQueue = useCallback(() => {
+    if (!completedSequence) return;
+    const followUpIssueType = completedSequence.sequence.followUp.issueType;
+    setCompletedSequence(null);
+    setActiveSequence(null);
+    startSession(followUpIssueType);
+  }, [completedSequence, startSession]);
 
   const currentCard = cards[cursor];
   const activeCard = revisionCard || currentCard;
@@ -387,10 +544,46 @@ export const ReviewPage = () => {
             <ReviewQueueSelector
               issueTypes={issueTypes}
               onStart={chooseIssueType}
+              readyFollowUps={readyFollowUps}
+              onStartFollowUp={(followUp) => startLinkedFollowUp(followUp)}
               canDeliberate={canDeliberate}
               onOpenDeliberation={() => router.push("/review/admin")}
               headerAction={<ThemeModeToggle />}
             />
+          )}
+
+          {phase === "follow-up" && followUpOffer && (
+            <Stack sx={{ py: 2 }}>
+              <Stack direction="row" justifyContent="flex-end">
+                <ThemeModeToggle />
+              </Stack>
+              <ReviewFollowUpPanel
+                variant="handoff"
+                sourceLabel={followUpOffer.source.issueLabel}
+                followUps={followUpOffer.followUps}
+                onReview={(followUp) =>
+                  startLinkedFollowUp(followUp, followUpOffer.source)
+                }
+                onContinue={continueOriginalQueue}
+                continueLabel={`${
+                  followUpOffer.sourceQueueCompleted ? "Finish" : "Continue"
+                } ${followUpOffer.source.issueLabel}`}
+              />
+            </Stack>
+          )}
+
+          {phase === "follow-up" && !followUpOffer && (
+            <Alert
+              severity="error"
+              action={
+                <Button disableElevation onClick={exitToSelector}>
+                  All review types
+                </Button>
+              }
+            >
+              The related follow-up is unavailable. Return to all review types
+              and try again.
+            </Alert>
           )}
 
           {phase === "intro" && selectedIssue && (
@@ -467,7 +660,7 @@ export const ReviewPage = () => {
                   >
                     {revisionItem ? (
                       <>
-                        Revising item {revisionItem.proposalIndex + 1} of{" "}
+                        Saved item {revisionItem.proposalIndex + 1} of{" "}
                         {issueTotal}
                       </>
                     ) : (
@@ -478,20 +671,59 @@ export const ReviewPage = () => {
                     )}
                   </Typography>
                 </Stack>
-                <LinearProgress
-                  variant="determinate"
-                  value={
-                    availableReviewTotal === 0
-                      ? 100
-                      : (history.length / availableReviewTotal) * 100
-                  }
-                  aria-label={
-                    availableReviewTotal === 0
-                      ? "All available items completed"
-                      : `${history.length} of ${availableReviewTotal} items completed`
-                  }
-                  sx={{ height: 8, borderRadius: 1 }}
-                />
+                {revisionItem ? (
+                  <Box
+                    role="status"
+                    aria-label={`Reviewing saved item ${
+                      revisionItem.proposalIndex + 1
+                    } of ${issueTotal}. Queue progress remains ${history.length} of ${availableReviewTotal} reviewed.`}
+                    sx={{
+                      display: "flex",
+                      flexDirection: { xs: "column", sm: "row" },
+                      alignItems: { xs: "flex-start", sm: "center" },
+                      justifyContent: "space-between",
+                      gap: 0.75,
+                      borderLeft: 4,
+                      borderColor: "info.main",
+                      borderRadius: 1,
+                      backgroundColor: "action.hover",
+                      px: 1.5,
+                      py: 1.1,
+                    }}
+                  >
+                    <Stack direction="row" alignItems="center" spacing={1}>
+                      <HistoryOutlinedIcon
+                        aria-hidden="true"
+                        color="info"
+                        sx={{ fontSize: 22 }}
+                      />
+                      <Typography sx={{ fontWeight: 750 }}>
+                        Reviewing a saved answer
+                      </Typography>
+                    </Stack>
+                    <Typography
+                      sx={{ color: "text.secondary", fontWeight: 650 }}
+                    >
+                      Queue remains {history.length} of {availableReviewTotal}{" "}
+                      reviewed
+                    </Typography>
+                  </Box>
+                ) : (
+                  <LinearProgress
+                    variant="determinate"
+                    value={
+                      availableReviewTotal === 0
+                        ? 100
+                        : (history.length / availableReviewTotal) * 100
+                    }
+                    aria-label={
+                      availableReviewTotal === 0
+                        ? "All available items completed"
+                        : `${history.length} of ${availableReviewTotal} items completed`
+                    }
+                    sx={{ height: 8, borderRadius: 1 }}
+                  />
+                )}
               </Stack>
               {revisionItem && (
                 <Alert
@@ -508,17 +740,24 @@ export const ReviewPage = () => {
                     </Button>
                   }
                 >
-                  You are revising item {revisionItem.proposalIndex + 1}. Saved
-                  answer:{" "}
+                  Saved answer:{" "}
                   <strong>
                     {revisionItem.decision === "agree" ? "Agreed" : "Disagreed"}
                   </strong>
-                  . No change is made until you submit a revised answer.{" "}
-                  {cards.length === 0
-                    ? "All currently available proposals remain reviewed."
-                    : `Your progress remains at ${history.length} of ${availableReviewTotal} items completed.`}
+                  . Submit a revised answer to replace it, or keep the saved
+                  answer to return to your current review position.
                 </Alert>
               )}
+              {!revisionItem &&
+                activeSequence?.followUp.proposalId ===
+                  activeCard.proposalId && (
+                  <Alert severity="info" sx={{ mb: 2 }}>
+                    Related follow-up from{" "}
+                    <strong>{activeSequence.source.issueLabel}</strong>. This is
+                    a separate decision. After answering it, you can return to
+                    the original review queue.
+                  </Alert>
+                )}
               <ReviewCard
                 key={
                   activeCard.proposalId +
@@ -554,6 +793,106 @@ export const ReviewPage = () => {
               }
             >
               The current review item is unavailable.
+            </Alert>
+          )}
+
+          {phase === "sequence-complete" && completedSequence && (
+            <Stack sx={{ py: 2 }}>
+              <Stack direction="row" justifyContent="flex-end">
+                <ThemeModeToggle />
+              </Stack>
+              <Stack
+                alignItems="center"
+                spacing={2.5}
+                sx={{ py: { xs: 7, sm: 10 }, textAlign: "center" }}
+              >
+                <CheckCircleOutlineIcon color="success" sx={{ fontSize: 56 }} />
+                <Box>
+                  <Typography
+                    variant="h5"
+                    component="h1"
+                    sx={{ fontWeight: 800 }}
+                  >
+                    Related decisions completed
+                  </Typography>
+                  <Typography
+                    sx={{ mt: 0.75, color: "text.secondary", lineHeight: 1.55 }}
+                  >
+                    You reviewed the diagnosis and its exact follow-up as two
+                    separate decisions.
+                  </Typography>
+                </Box>
+                <Box
+                  sx={{
+                    width: "100%",
+                    borderTop: 1,
+                    borderBottom: 1,
+                    borderColor: "divider",
+                    py: 2,
+                  }}
+                >
+                  <Typography sx={{ fontWeight: 750 }}>
+                    {completedSequence.sequence.source.issueLabel}
+                  </Typography>
+                  <Typography sx={{ mt: 0.4, color: "text.secondary" }}>
+                    {completedSequence.sequence.source.question}
+                  </Typography>
+                  <Typography sx={{ mt: 1.5, fontWeight: 750 }}>
+                    {completedSequence.sequence.followUp.issueLabel}
+                  </Typography>
+                  <Typography sx={{ mt: 0.4, color: "text.secondary" }}>
+                    {completedSequence.sequence.followUp.question}
+                  </Typography>
+                </Box>
+                <Stack
+                  direction={{ xs: "column", sm: "row" }}
+                  spacing={1.5}
+                  sx={{ width: { xs: "100%", sm: "auto" } }}
+                >
+                  <Button
+                    disableElevation
+                    variant="contained"
+                    startIcon={<ArrowBackIcon />}
+                    onClick={returnToSourceQueue}
+                    sx={{ minHeight: 50, fontWeight: 750 }}
+                  >
+                    Return to {completedSequence.sequence.source.issueLabel}
+                  </Button>
+                  {completedSequence.followUpQueueCompleted ? (
+                    <Button
+                      disableElevation
+                      variant="outlined"
+                      onClick={exitToSelector}
+                      sx={{ minHeight: 50, fontWeight: 700 }}
+                    >
+                      All review types
+                    </Button>
+                  ) : (
+                    <Button
+                      disableElevation
+                      variant="outlined"
+                      onClick={continueFollowUpQueue}
+                      sx={{ minHeight: 50, fontWeight: 700 }}
+                    >
+                      Continue {completedSequence.sequence.followUp.issueLabel}
+                    </Button>
+                  )}
+                </Stack>
+              </Stack>
+            </Stack>
+          )}
+
+          {phase === "sequence-complete" && !completedSequence && (
+            <Alert
+              severity="error"
+              action={
+                <Button disableElevation onClick={exitToSelector}>
+                  All review types
+                </Button>
+              }
+            >
+              The completed review sequence is unavailable. Return to all review
+              types and try again.
             </Alert>
           )}
 
