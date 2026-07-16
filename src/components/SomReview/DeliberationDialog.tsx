@@ -38,6 +38,12 @@ import {
 import ContextRenderer, {
   contextShowsStateComparison,
 } from "./ContextRenderer";
+import {
+  reviewAccentColor,
+  reviewInteractiveSurfaceSx,
+  reviewToneChipSx,
+} from "./reviewStyles";
+import type { ReviewTone } from "./reviewStyles";
 
 const percent = (value: number | null): string =>
   value === null ? "No responses" : `${Math.round(value * 100)}% agree`;
@@ -65,9 +71,7 @@ const stanceLabel = (stance: SomDeliberationCommentStance): string => {
   }
 };
 
-const stanceColor = (
-  stance: SomDeliberationCommentStance,
-): "success" | "error" | "warning" | "info" => {
+const stanceTone = (stance: SomDeliberationCommentStance): ReviewTone => {
   switch (stance) {
     case "support":
       return "success";
@@ -97,9 +101,7 @@ const StatePanel = ({
       borderRadius: 1.5,
       border: (theme) =>
         `2px solid ${
-          proposed
-            ? alpha(theme.palette.primary.main, 0.55)
-            : theme.palette.divider
+          proposed ? reviewAccentColor(theme) : theme.palette.divider
         }`,
       backgroundColor: (theme) =>
         proposed ? alpha(theme.palette.primary.main, 0.06) : "background.paper",
@@ -107,7 +109,7 @@ const StatePanel = ({
   >
     <Typography
       sx={{
-        color: proposed ? "primary.main" : "text.secondary",
+        color: proposed ? reviewAccentColor : "text.secondary",
         fontWeight: 750,
       }}
     >
@@ -226,14 +228,27 @@ const DeliberationDialog = ({
       maxWidth="lg"
       aria-labelledby="deliberation-dialog-title"
       PaperProps={{ sx: { borderRadius: { xs: 0, md: 2 } } }}
+      sx={reviewInteractiveSurfaceSx}
     >
       <Box component="header" sx={{ px: { xs: 2, sm: 3 }, py: 2 }}>
         <Stack direction="row" alignItems="center" spacing={1}>
-          <ForumOutlinedIcon color="primary" />
+          <ForumOutlinedIcon
+            aria-hidden="true"
+            sx={{
+              color: reviewAccentColor,
+              display: { xs: "none", sm: "block" },
+            }}
+          />
           <Typography
             id="deliberation-dialog-title"
             component="h2"
-            sx={{ flex: 1, fontSize: "1.25rem", fontWeight: 800 }}
+            sx={{
+              flex: 1,
+              minWidth: 0,
+              fontSize: { xs: "1.1rem", sm: "1.25rem" },
+              fontWeight: 800,
+              lineHeight: 1.3,
+            }}
           >
             Proposal deliberation
           </Typography>
@@ -438,14 +453,20 @@ const DeliberationDialog = ({
                                 ? "Agree"
                                 : "Disagree"
                             }
-                            color={
+                            variant="outlined"
+                            sx={reviewToneChipSx(
                               participant.effectiveDecision === "agree"
                                 ? "success"
-                                : "error"
-                            }
+                                : "error",
+                            )}
                           />
                           {participant.revised && (
-                            <Chip size="small" label="Revised" color="info" />
+                            <Chip
+                              size="small"
+                              label="Revised"
+                              variant="outlined"
+                              sx={reviewToneChipSx("info")}
+                            />
                           )}
                         </Stack>
                       </Box>
@@ -501,7 +522,8 @@ const DeliberationDialog = ({
                       <Chip
                         size="small"
                         label={stanceLabel(comment.stance)}
-                        color={stanceColor(comment.stance)}
+                        variant="outlined"
+                        sx={reviewToneChipSx(stanceTone(comment.stance))}
                       />
                       <Typography
                         sx={{
@@ -533,7 +555,11 @@ const DeliberationDialog = ({
                     )
                   }
                   aria-label="Comment type"
-                  sx={{ alignSelf: { sm: "flex-start" }, minWidth: 220 }}
+                  sx={{
+                    alignSelf: { sm: "flex-start" },
+                    width: { xs: "100%", sm: "auto" },
+                    minWidth: { sm: 220 },
+                  }}
                 >
                   <MenuItem value="support">Reason to support</MenuItem>
                   <MenuItem value="oppose">Reason to oppose</MenuItem>
@@ -591,20 +617,19 @@ const DeliberationDialog = ({
                       value && setPositionDecision(value)
                     }
                     aria-label="Revised judgment"
-                    sx={{ alignSelf: { sm: "flex-start" } }}
+                    sx={{
+                      alignSelf: { sm: "flex-start" },
+                      width: { xs: "100%", sm: "auto" },
+                      "& .MuiToggleButton-root": {
+                        flex: { xs: 1, sm: "initial" },
+                        minWidth: { xs: 0, sm: 130 },
+                        minHeight: 46,
+                        fontWeight: 700,
+                      },
+                    }}
                   >
-                    <ToggleButton
-                      value="agree"
-                      sx={{ minWidth: 130, minHeight: 46, fontWeight: 700 }}
-                    >
-                      Agree
-                    </ToggleButton>
-                    <ToggleButton
-                      value="disagree"
-                      sx={{ minWidth: 130, minHeight: 46, fontWeight: 700 }}
-                    >
-                      Disagree
-                    </ToggleButton>
+                    <ToggleButton value="agree">Agree</ToggleButton>
+                    <ToggleButton value="disagree">Disagree</ToggleButton>
                   </ToggleButtonGroup>
                   <TextField
                     label="Reason for the revised judgment"
@@ -675,8 +700,10 @@ const DeliberationDialog = ({
                       aria-label="Final resolution"
                       sx={{
                         alignSelf: { sm: "flex-start" },
+                        width: { xs: "100%", sm: "auto" },
                         "& .MuiToggleButton-root": {
-                          minWidth: { xs: 94, sm: 120 },
+                          flex: { xs: 1, sm: "initial" },
+                          minWidth: { xs: 0, sm: 120 },
                           minHeight: 46,
                           fontWeight: 700,
                         },

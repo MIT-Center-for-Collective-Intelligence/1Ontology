@@ -31,6 +31,7 @@ import {
   SomReviewStage,
 } from "../../types/ISomReview";
 import { ISSUE_DESCRIPTIONS } from "./reviewCopy";
+import { reviewAccentColor } from "./reviewStyles";
 
 const activeQueueStatusSx: SxProps<Theme> = {
   backgroundColor: (theme) =>
@@ -38,11 +39,7 @@ const activeQueueStatusSx: SxProps<Theme> = {
       theme.palette.primary.main,
       theme.palette.mode === "dark" ? 0.2 : 0.1,
     ),
-  border: (theme) =>
-    `1px solid ${alpha(
-      theme.palette.primary.main,
-      theme.palette.mode === "dark" ? 0.8 : 0.65,
-    )}`,
+  boxShadow: (theme) => `inset 0 0 0 1px ${reviewAccentColor(theme)}`,
   color: "text.primary",
   fontWeight: 700,
   "& .MuiChip-label": {
@@ -295,7 +292,7 @@ const ReviewQueueSelector = ({
                             placeItems: "center",
                             borderRadius: 1.5,
                             color: available
-                              ? "primary.main"
+                              ? reviewAccentColor
                               : "text.secondary",
                             backgroundColor: "action.hover",
                           }}

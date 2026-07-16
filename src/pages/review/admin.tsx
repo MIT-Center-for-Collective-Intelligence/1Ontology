@@ -14,6 +14,7 @@ import { useRouter } from "next/router";
 import DeliberationDashboard from "@components/components/SomReview/DeliberationDashboard";
 import DeliberationDialog from "@components/components/SomReview/DeliberationDialog";
 import ThemeModeToggle from "@components/components/SomReview/ThemeModeToggle";
+import { reviewInteractiveSurfaceSx } from "@components/components/SomReview/reviewStyles";
 import { useAuth } from "@components/components/context/AuthContext";
 import withAuthUser from "@components/components/hoc/withAuthUser";
 import { Post } from "@components/lib/utils/Post";
@@ -130,11 +131,14 @@ export const DeliberationAdminPage = () => {
       </Head>
       <Box
         component="main"
-        sx={{
-          minHeight: "100dvh",
-          backgroundColor: "background.default",
-          py: 3,
-        }}
+        sx={[
+          reviewInteractiveSurfaceSx,
+          {
+            minHeight: "100dvh",
+            backgroundColor: "background.default",
+            py: { xs: 2, sm: 3 },
+          },
+        ]}
       >
         <Container maxWidth="lg">
           <Stack

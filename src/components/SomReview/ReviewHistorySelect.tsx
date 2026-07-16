@@ -30,6 +30,7 @@ const ReviewHistorySelect = ({
       sx={{
         width: { xs: "100%", sm: 360 },
         maxWidth: "100%",
+        minWidth: 0,
       }}
     >
       <Select<string>

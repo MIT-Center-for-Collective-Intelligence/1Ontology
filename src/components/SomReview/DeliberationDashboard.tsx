@@ -27,6 +27,8 @@ import {
   SomDeliberationRecommendation,
   SomIssueType,
 } from "../../types/ISomReview";
+import { reviewToneChipSx, reviewWarningTextColor } from "./reviewStyles";
+import type { ReviewTone } from "./reviewStyles";
 
 type QueueFilter = "attention" | "ready" | "resolved" | "all";
 
@@ -57,9 +59,9 @@ const RECOMMENDATION_LABELS: Record<SomDeliberationRecommendation, string> = {
   "needs-deliberation": "Needs discussion",
 };
 
-const recommendationColor = (
+const recommendationTone = (
   recommendation: SomDeliberationRecommendation,
-): "default" | "success" | "error" | "warning" => {
+): ReviewTone => {
   switch (recommendation) {
     case "ready-to-accept":
       return "success";
@@ -68,7 +70,7 @@ const recommendationColor = (
     case "needs-deliberation":
       return "warning";
     default:
-      return "default";
+      return "info";
   }
 };
 
@@ -268,7 +270,8 @@ const DeliberationDashboard = ({
             "& .MuiToggleButton-root": {
               flex: { xs: 1, lg: "initial" },
               minHeight: 46,
-              px: { xs: 1, sm: 2 },
+              px: { xs: 0.5, sm: 2 },
+              fontSize: { xs: "0.75rem", sm: "0.875rem" },
               fontWeight: 700,
             },
           }}
@@ -284,7 +287,7 @@ const DeliberationDashboard = ({
             setIssueFilter(event.target.value as SomIssueType | "all")
           }
           aria-label="Filter by issue type"
-          sx={{ minWidth: 190, minHeight: 46 }}
+          sx={{ minWidth: { xs: 0, sm: 190 }, minHeight: 46 }}
         >
           <MenuItem value="all">All issue types</MenuItem>
           {issues.map((issue) => (
@@ -298,7 +301,7 @@ const DeliberationDashboard = ({
           onChange={(event) => setSearch(event.target.value)}
           placeholder="Search proposals"
           aria-label="Search proposals"
-          sx={{ flex: 1 }}
+          sx={{ flex: 1, minWidth: 0 }}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
@@ -327,7 +330,8 @@ const DeliberationDashboard = ({
                   <Stack
                     direction="row"
                     alignItems="center"
-                    spacing={1}
+                    flexWrap="wrap"
+                    gap={1}
                     sx={{ mb: 1 }}
                   >
                     <Chip
@@ -336,13 +340,14 @@ const DeliberationDashboard = ({
                         resolved ||
                         RECOMMENDATION_LABELS[proposal.aggregate.recommendation]
                       }
-                      color={
+                      variant="outlined"
+                      sx={reviewToneChipSx(
                         resolved
                           ? "info"
-                          : recommendationColor(
+                          : recommendationTone(
                               proposal.aggregate.recommendation,
-                            )
-                      }
+                            ),
+                      )}
                     />
                     <Typography
                       sx={{ color: "text.secondary", fontSize: "0.875rem" }}
@@ -387,7 +392,7 @@ const DeliberationDashboard = ({
                       direction="row"
                       alignItems="center"
                       spacing={0.75}
-                      sx={{ mt: 1.5, color: "warning.main" }}
+                      sx={{ mt: 1.5, color: reviewWarningTextColor }}
                     >
                       <WarningAmberOutlinedIcon fontSize="small" />
                       <Typography sx={{ fontWeight: 700 }}>
@@ -403,6 +408,7 @@ const DeliberationDashboard = ({
                     resolved ? <CheckCircleOutlineIcon /> : <ArrowForwardIcon />
                   }
                   onClick={() => onOpen(proposal.proposalId)}
+                  aria-label={`Open deliberation: ${proposal.question}`}
                   sx={{ minHeight: 48, minWidth: 170, fontWeight: 750 }}
                 >
                   Open deliberation

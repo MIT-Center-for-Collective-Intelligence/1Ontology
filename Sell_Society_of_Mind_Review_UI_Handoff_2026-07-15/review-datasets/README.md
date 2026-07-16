@@ -1,6 +1,6 @@
 # Sell Society of Mind review datasets
 
-Dataset version: `sell-final-hierarchy-onet-2026-07-15-v3`
+Dataset version: `sell-final-hierarchy-onet-2026-07-15-v4`
 
 This package contains 143 atomic, review-only proposals and 11 title-clarity
 controls for the Sell sub-ontology. Its first 13 queues correspond one-to-one

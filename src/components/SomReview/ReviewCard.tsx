@@ -18,6 +18,7 @@ import ContextRenderer, {
   contextShowsStateComparison,
   DiffedTitle,
 } from "./ContextRenderer";
+import { reviewAccentColor } from "./reviewStyles";
 
 export interface ReviewSubmission {
   decision: "agree" | "disagree";
@@ -53,7 +54,7 @@ const StatePanel = ({
       border: (theme) =>
         `2px solid ${
           accent === "primary"
-            ? alpha(theme.palette.primary.main, 0.55)
+            ? reviewAccentColor(theme)
             : theme.palette.divider
         }`,
       backgroundColor: (theme) =>
@@ -66,7 +67,7 @@ const StatePanel = ({
       component="div"
       sx={{
         mb: 0.75,
-        color: accent === "primary" ? "primary.main" : "text.secondary",
+        color: accent === "primary" ? reviewAccentColor : "text.secondary",
         fontSize: "0.875rem",
         fontWeight: 750,
         letterSpacing: 0,
@@ -284,7 +285,6 @@ const ReviewCard = ({
               <DiffedTitle
                 title={titleDiff.current}
                 other={titleDiff.proposed}
-                changedColor="error.main"
               />
             ) : (
               <Typography sx={{ fontSize: "1.05rem", lineHeight: 1.5 }}>
@@ -308,7 +308,6 @@ const ReviewCard = ({
               <DiffedTitle
                 title={titleDiff.proposed}
                 other={titleDiff.current}
-                changedColor="success.main"
               />
             ) : (
               <Typography sx={{ fontSize: "1.05rem", lineHeight: 1.5 }}>

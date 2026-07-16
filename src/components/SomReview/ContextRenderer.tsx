@@ -18,6 +18,7 @@ import { diffWords } from "diff";
 import { alpha } from "@mui/material/styles";
 
 import { SomReviewContext } from "../../types/ISomReview";
+import { reviewAccentColor } from "./reviewStyles";
 
 const CONTEXTS_WITH_STATE_COMPARISONS = new Set<SomReviewContext["type"]>([
   "grouping-outline",
@@ -91,11 +92,9 @@ const ContextRenderer = ({ context }: { context: SomReviewContext }) => {
 export const DiffedTitle = ({
   title,
   other,
-  changedColor,
 }: {
   title: string;
   other: string;
-  changedColor: "error.main" | "success.main";
 }) => (
   <Typography aria-label={title} sx={{ fontSize: "1.05rem", fontWeight: 600 }}>
     <span aria-hidden="true">
@@ -107,7 +106,7 @@ export const DiffedTitle = ({
               key={`${part.value}-${index}`}
               component="mark"
               sx={{
-                color: changedColor,
+                color: "text.primary",
                 backgroundColor: "action.selected",
                 borderRadius: 0.5,
                 fontWeight: 800,
@@ -210,7 +209,7 @@ const OutlineItem = ({
       borderRadius: 1,
       border: (theme) =>
         highlighted
-          ? `1px solid ${alpha(theme.palette.primary.main, 0.7)}`
+          ? `1px solid ${reviewAccentColor(theme)}`
           : "1px solid transparent",
       backgroundColor: (theme) =>
         highlighted
@@ -713,7 +712,7 @@ const CollectionDesign = ({
       <Typography sx={{ mt: 1, fontWeight: 750 }}>
         {context.parentTitle}
       </Typography>
-      <Typography sx={{ mt: 1.25, color: "primary.main", fontWeight: 750 }}>
+      <Typography sx={{ mt: 1.25, color: reviewAccentColor, fontWeight: 750 }}>
         Collection: {context.proposedCollectionName}
       </Typography>
       {context.proposedBranches.map((branch) => (

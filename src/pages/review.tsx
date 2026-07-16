@@ -24,6 +24,7 @@ import ReviewHistorySelect from "@components/components/SomReview/ReviewHistoryS
 import ReviewQueueSelector from "@components/components/SomReview/ReviewQueueSelector";
 import ReviewTaskIntro from "@components/components/SomReview/ReviewTaskIntro";
 import ThemeModeToggle from "@components/components/SomReview/ThemeModeToggle";
+import { reviewInteractiveSurfaceSx } from "@components/components/SomReview/reviewStyles";
 import {
   SomIssueType,
   SomIssueTypeOption,
@@ -51,10 +52,14 @@ export const ReviewPage = () => {
   const [revisionProposalId, setRevisionProposalId] = useState("");
   const [loadError, setLoadError] = useState("");
   const [canDeliberate, setCanDeliberate] = useState(false);
+  const [retryIssueType, setRetryIssueType] = useState<SomIssueType | null>(
+    null,
+  );
 
   const loadOverview = useCallback(async () => {
     setPhase("loading");
     setLoadError("");
+    setRetryIssueType(null);
     try {
       const overview = await Post<SomOverviewResponse>("/som-review/overview");
       setDatasetVersion(overview.datasetVersion);
@@ -72,8 +77,10 @@ export const ReviewPage = () => {
   }, [user, loadOverview]);
 
   const startSession = useCallback(async (issue: SomIssueType) => {
+    setIssueType(issue);
     setPhase("loading");
     setLoadError("");
+    setRetryIssueType(null);
     try {
       const result = await Post<SomSessionResponse>("/som-review/session", {
         issueType: issue,
@@ -100,6 +107,7 @@ export const ReviewPage = () => {
       setLoadError(
         "The review session could not be started. Please try again.",
       );
+      setRetryIssueType(issue);
       setPhase("select");
     }
   }, []);
@@ -112,6 +120,8 @@ export const ReviewPage = () => {
 
   const chooseIssueType = useCallback(
     (issue: SomIssueType) => {
+      setLoadError("");
+      setRetryIssueType(null);
       try {
         if (window.localStorage.getItem(introStorageKey(issue)) === "seen") {
           startSession(issue);
@@ -137,6 +147,8 @@ export const ReviewPage = () => {
   }, [introStorageKey, issueType, startSession]);
 
   const leaveIntro = useCallback(() => {
+    setLoadError("");
+    setRetryIssueType(null);
     setIssueType(null);
     setPhase("select");
   }, []);
@@ -272,6 +284,7 @@ export const ReviewPage = () => {
     setCursor(0);
     setHistory([]);
     setRevisionProposalId("");
+    setRetryIssueType(null);
     loadOverview();
   }, [loadOverview]);
 
@@ -287,11 +300,14 @@ export const ReviewPage = () => {
       </Head>
       <Box
         component="main"
-        sx={{
-          minHeight: "100dvh",
-          backgroundColor: "background.default",
-          py: { xs: 2, sm: 3 },
-        }}
+        sx={[
+          reviewInteractiveSurfaceSx,
+          {
+            minHeight: "100dvh",
+            backgroundColor: "background.default",
+            py: { xs: 2, sm: 3 },
+          },
+        ]}
       >
         <Container maxWidth="md">
           {loadError && (
@@ -304,7 +320,11 @@ export const ReviewPage = () => {
                   <Button
                     disableElevation
                     color="inherit"
-                    onClick={loadOverview}
+                    onClick={() =>
+                      retryIssueType
+                        ? startSession(retryIssueType)
+                        : loadOverview()
+                    }
                   >
                     Retry
                   </Button>
@@ -371,13 +391,15 @@ export const ReviewPage = () => {
                     alignItems="center"
                     justifyContent="flex-end"
                     spacing={1}
-                    sx={{ width: { xs: "100%", sm: "auto" } }}
+                    sx={{ width: { xs: "100%", sm: "auto" }, minWidth: 0 }}
                   >
-                    <ReviewHistorySelect
-                      history={history}
-                      selectedProposalId={revisionProposalId}
-                      onSelect={selectRevision}
-                    />
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <ReviewHistorySelect
+                        history={history}
+                        selectedProposalId={revisionProposalId}
+                        onSelect={selectRevision}
+                      />
+                    </Box>
                     <ThemeModeToggle />
                   </Stack>
                 </Stack>

@@ -71,7 +71,17 @@ describe("Society of Mind deliberation dashboard", () => {
       screen.getByText(/3 proposals remain in your independent review/),
     ).toBeInTheDocument();
     expect(screen.getByText("Is Sell Supplies clearer?")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Open deliberation" }));
+    fireEvent.click(screen.getByRole("button", { name: "All" }));
+    expect(
+      screen.getByRole("button", {
+        name: "Open deliberation: Is Lease out misplaced?",
+      }),
+    ).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Open deliberation: Is Sell Supplies clearer?",
+      }),
+    );
     expect(onOpen).toHaveBeenCalledWith("proposal-1");
   });
 
