@@ -45,16 +45,51 @@ const issues: SomIssueTypeOption[] = [
     pending: 0,
     enabled: true,
   },
+  {
+    id: "wrong-verb",
+    label: "Wrong main verb",
+    total: 7,
+    pending: 7,
+    enabled: true,
+  },
+  {
+    id: "node-merge",
+    label: "Merge nodes",
+    total: 3,
+    pending: 3,
+    enabled: true,
+  },
+  {
+    id: "relocation",
+    label: "Exact relocation",
+    total: 0,
+    pending: 0,
+    enabled: true,
+  },
+  {
+    id: "missing-activity",
+    label: "Missing activity",
+    total: 10,
+    pending: 10,
+    enabled: true,
+  },
+  {
+    id: "redundant-node",
+    label: "Redundant node",
+    total: 1,
+    pending: 1,
+    enabled: true,
+  },
 ];
 
 describe("Society of Mind review queue selector", () => {
-  it("shows all five issue types and their availability", () => {
+  it("shows all ten issue types and their availability", () => {
     render(<ReviewQueueSelector issueTypes={issues} onStart={jest.fn()} />);
     for (const issue of issues) {
       expect(screen.getByText(issue.label)).toBeInTheDocument();
     }
     expect(screen.getByText("Resume 4 of 10")).toBeInTheDocument();
-    expect(screen.getByText("No items")).toBeInTheDocument();
+    expect(screen.getAllByText("No items")).toHaveLength(2);
     expect(screen.getByText("Done")).toBeInTheDocument();
   });
 

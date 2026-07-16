@@ -17,7 +17,12 @@ export const SUPPORTED_ISSUE_TYPES: SomIssueType[] = [
   "sibling-grouping",
   "duplicate-synonym",
   "placement",
+  "wrong-verb",
   "structural-overlap",
+  "node-merge",
+  "relocation",
+  "missing-activity",
+  "redundant-node",
 ];
 
 export const DEFAULT_SESSION_SIZE = 10;

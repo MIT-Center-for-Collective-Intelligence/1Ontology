@@ -35,7 +35,12 @@ const ISSUE_LABELS: Record<SomIssueType, string> = {
   "sibling-grouping": "Sibling grouping",
   "duplicate-synonym": "Duplicate or synonym",
   placement: "Placement",
+  "wrong-verb": "Wrong main verb",
   "structural-overlap": "Structural overlap",
+  "node-merge": "Merge nodes",
+  relocation: "Exact relocation",
+  "missing-activity": "Missing activity",
+  "redundant-node": "Redundant node",
 };
 
 const RECOMMENDATION_LABELS: Record<SomDeliberationRecommendation, string> = {

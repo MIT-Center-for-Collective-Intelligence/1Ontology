@@ -36,6 +36,7 @@ type SnapshotIndex = {
   idsByTitle: Map<string, string[]>;
   edgeKeys: Set<string>;
   edgePairs: Set<string>;
+  childrenByParent: Map<string, Set<string>>;
 };
 
 const normalizeCollection = (value?: string): string => {
@@ -101,6 +102,7 @@ export const buildSnapshotIndex = (
 
   const edgeKeys = new Set<string>();
   const edgePairs = new Set<string>();
+  const childrenByParent = new Map<string, Set<string>>();
   for (const edge of snapshot.edges) {
     if (!nodesById.has(edge.parentId) || !nodesById.has(edge.childId)) {
       throw new Error(
@@ -109,14 +111,30 @@ export const buildSnapshotIndex = (
     }
     edgeKeys.add(edgeKey(edge.parentId, edge.childId, edge.collectionName));
     edgePairs.add(edgePair(edge.parentId, edge.childId));
+    const children = childrenByParent.get(edge.parentId) || new Set<string>();
+    children.add(edge.childId);
+    childrenByParent.set(edge.parentId, children);
   }
 
   if (!nodesById.has(snapshot.sellRootNodeId)) {
     throw new Error("Ontology snapshot is missing its Sell root node");
   }
 
-  return { snapshot, nodesById, idsByTitle, edgeKeys, edgePairs };
+  return {
+    snapshot,
+    nodesById,
+    idsByTitle,
+    edgeKeys,
+    edgePairs,
+    childrenByParent,
+  };
 };
+
+const currentChildTitles = (index: SnapshotIndex, parentId: string): string[] =>
+  [...(index.childrenByParent.get(parentId) || [])]
+    .map((childId) => index.nodesById.get(childId)?.title || "")
+    .filter(Boolean)
+    .sort((left, right) => left.localeCompare(right, "en"));
 
 const resolveUniqueTitle = (index: SnapshotIndex, title: string): string => {
   const ids = index.idsByTitle.get(title) || [];
@@ -314,6 +332,109 @@ export const validateProposalAgainstSnapshot = (
       );
       parentNodeId = first.parentId;
       subjectNodeId = first.childId;
+      break;
+    }
+    case "merge-action": {
+      parentNodeId = addTitle(context.parentTitle);
+      const canonicalId = addTitle(context.canonicalTitle);
+      const absorbedId = addTitle(context.absorbedTitle);
+      requireEdge(
+        index,
+        parentNodeId,
+        canonicalId,
+        context.canonicalCollection,
+      );
+      requireEdge(index, parentNodeId, absorbedId, context.absorbedCollection);
+      const canonicalChildren = [...(context.canonicalChildren || [])].sort(
+        (left, right) => left.localeCompare(right, "en"),
+      );
+      const absorbedChildren = [...(context.absorbedChildren || [])].sort(
+        (left, right) => left.localeCompare(right, "en"),
+      );
+      if (
+        !sameStringArray(
+          canonicalChildren,
+          currentChildTitles(index, canonicalId),
+        )
+      ) {
+        throw new Error(
+          `Merge proposal for ${context.canonicalTitle} does not list every current direct child`,
+        );
+      }
+      if (
+        !sameStringArray(
+          absorbedChildren,
+          currentChildTitles(index, absorbedId),
+        )
+      ) {
+        throw new Error(
+          `Merge proposal for ${context.absorbedTitle} does not list every current direct child`,
+        );
+      }
+      for (const title of context.canonicalChildren || []) {
+        const childId = addTitle(title);
+        requireAnyEdge(index, canonicalId, childId);
+      }
+      for (const title of context.absorbedChildren || []) {
+        const childId = addTitle(title);
+        requireAnyEdge(index, absorbedId, childId);
+      }
+      const expectedChildren = [
+        ...new Set([...canonicalChildren, ...absorbedChildren]),
+      ].sort((left, right) => left.localeCompare(right, "en"));
+      const resultingChildren = [...(context.resultingChildren || [])].sort(
+        (left, right) => left.localeCompare(right, "en"),
+      );
+      if (!sameStringArray(resultingChildren, expectedChildren)) {
+        throw new Error(
+          `Merge result for ${context.canonicalTitle} does not match the current child union`,
+        );
+      }
+      subjectNodeId = absorbedId;
+      break;
+    }
+    case "relocation-action": {
+      parentNodeId = addTitle(context.currentParentTitle);
+      const proposedParentId = addTitle(context.proposedParentTitle);
+      subjectNodeId = addTitle(context.nodeTitle);
+      requireEdge(
+        index,
+        parentNodeId,
+        subjectNodeId,
+        context.currentCollection,
+      );
+      if (
+        index.edgeKeys.has(
+          edgeKey(proposedParentId, subjectNodeId, context.proposedCollection),
+        )
+      ) {
+        throw new Error(
+          `Proposed relocation already exists: ${context.proposedParentTitle} -> ${context.nodeTitle}`,
+        );
+      }
+      for (const title of context.childTitles || []) {
+        const childId = addTitle(title);
+        requireAnyEdge(index, subjectNodeId, childId);
+      }
+      break;
+    }
+    case "addition-action": {
+      parentNodeId = addTitle(context.parentTitle);
+      if ((index.idsByTitle.get(context.proposedTitle) || []).length > 0) {
+        throw new Error(
+          `Proposed missing activity already exists: ${context.proposedTitle}`,
+        );
+      }
+      break;
+    }
+    case "merge-up-action": {
+      parentNodeId = addTitle(context.parentTitle);
+      subjectNodeId = addTitle(context.nodeTitle);
+      requireEdge(index, parentNodeId, subjectNodeId, context.parentCollection);
+      for (const title of context.childTitles || []) {
+        const childId = addTitle(title);
+        requireAnyEdge(index, subjectNodeId, childId);
+      }
       break;
     }
     default:

@@ -44,9 +44,17 @@ const ContextRenderer = ({ context }: { context: SomReviewContext }) => {
     case "duplicate-comparison":
       return <DuplicateComparison context={context} />;
     case "placement-comparison":
-      return null;
+      return <PlacementNote context={context} />;
     case "overlap-comparison":
       return <OverlapComparison context={context} />;
+    case "merge-action":
+      return <MergeAction context={context} />;
+    case "relocation-action":
+      return <RelocationAction context={context} />;
+    case "addition-action":
+      return <AdditionAction context={context} />;
+    case "merge-up-action":
+      return <MergeUpAction context={context} />;
   }
 };
 
@@ -310,6 +318,223 @@ const BoundaryNote = ({ children }: { children: React.ReactNode }) => (
   >
     {children}
   </Typography>
+);
+
+const CollectionNote = ({ value }: { value: string }) => (
+  <Typography sx={{ mt: 0.25, color: "text.secondary", fontSize: "0.85rem" }}>
+    Collection: {value || "main"}
+  </Typography>
+);
+
+const ChildOutline = ({
+  titles,
+  highlighted = false,
+  emptyLabel = "No direct children",
+  indent = 1,
+}: {
+  titles: string[];
+  highlighted?: boolean;
+  emptyLabel?: string;
+  indent?: number;
+}) =>
+  titles.length > 0 ? (
+    <Box
+      sx={{
+        mt: 0.75,
+        columns: { xs: 1, sm: titles.length > 8 ? 2 : 1 },
+        columnGap: 2,
+      }}
+    >
+      {[...titles]
+        .sort((left, right) => left.localeCompare(right, "en"))
+        .map((title) => (
+          <Box key={title} sx={{ breakInside: "avoid" }}>
+            <OutlineItem
+              title={title}
+              highlighted={highlighted}
+              indent={indent}
+            />
+          </Box>
+        ))}
+    </Box>
+  ) : (
+    <Typography sx={{ mt: 0.75, color: "text.secondary" }}>
+      {emptyLabel}
+    </Typography>
+  );
+
+const PlacementNote = ({
+  context,
+}: {
+  context: Extract<SomReviewContext, { type: "placement-comparison" }>;
+}) => {
+  if (!context.candidateHome) return null;
+  return (
+    <BoundaryNote>
+      {context.placementIssue === "wrong-verb"
+        ? "Possible action family to review next: "
+        : "Possible new home to review next: "}
+      <strong>{context.candidateHome}</strong>
+    </BoundaryNote>
+  );
+};
+
+const MergeAction = ({
+  context,
+}: {
+  context: Extract<SomReviewContext, { type: "merge-action" }>;
+}) => {
+  const movedChildren = new Set(context.absorbedChildren);
+  return (
+    <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
+      <Box sx={comparisonPanelSx} aria-label="Nodes before merge">
+        <Typography sx={sectionLabelSx}>Before</Typography>
+        <Typography sx={{ mt: 1, fontWeight: 750 }}>
+          {context.canonicalTitle}
+        </Typography>
+        <CollectionNote value={context.canonicalCollection} />
+        <ChildOutline titles={context.canonicalChildren} />
+        <Divider sx={{ my: 1.5 }} />
+        <Typography sx={{ fontWeight: 750 }}>
+          {context.absorbedTitle}
+        </Typography>
+        <CollectionNote value={context.absorbedCollection} />
+        <ChildOutline titles={context.absorbedChildren} highlighted />
+      </Box>
+      <Box sx={comparisonPanelSx} aria-label="Node after merge">
+        <Typography sx={sectionLabelSx}>After</Typography>
+        <Typography sx={{ mt: 1, fontWeight: 750 }}>
+          {context.canonicalTitle}
+        </Typography>
+        <CollectionNote value={context.canonicalCollection} />
+        {context.absorbedBecomesSynonym && (
+          <Typography sx={{ mt: 1, color: "text.secondary" }}>
+            Synonym: <strong>{context.absorbedTitle}</strong>
+          </Typography>
+        )}
+        <Typography sx={{ ...sectionLabelSx, mt: 1.5 }}>
+          Direct children after consolidation
+        </Typography>
+        <Box
+          sx={{
+            mt: 0.5,
+            columns: {
+              xs: 1,
+              sm: context.resultingChildren.length > 8 ? 2 : 1,
+            },
+            columnGap: 2,
+          }}
+        >
+          {[...context.resultingChildren]
+            .sort((left, right) => left.localeCompare(right, "en"))
+            .map((title) => (
+              <Box key={title} sx={{ breakInside: "avoid" }}>
+                <OutlineItem
+                  title={title}
+                  highlighted={movedChildren.has(title)}
+                  indent={1}
+                />
+              </Box>
+            ))}
+        </Box>
+        {context.resultingChildren.length === 0 && (
+          <Typography sx={{ mt: 0.75, color: "text.secondary" }}>
+            No direct children
+          </Typography>
+        )}
+      </Box>
+    </Stack>
+  );
+};
+
+const RelocationAction = ({
+  context,
+}: {
+  context: Extract<SomReviewContext, { type: "relocation-action" }>;
+}) => (
+  <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
+    <Box sx={comparisonPanelSx} aria-label="Placement before relocation">
+      <Typography sx={sectionLabelSx}>Before</Typography>
+      <Typography sx={{ mt: 1, fontWeight: 750 }}>
+        {context.currentParentTitle}
+      </Typography>
+      <CollectionNote value={context.currentCollection} />
+      <OutlineItem title={context.nodeTitle} highlighted indent={1} />
+      <ChildOutline titles={context.childTitles} indent={2} />
+    </Box>
+    <Box sx={comparisonPanelSx} aria-label="Placement after relocation">
+      <Typography sx={sectionLabelSx}>After</Typography>
+      <Typography sx={{ mt: 1, fontWeight: 750 }}>
+        {context.proposedParentTitle}
+      </Typography>
+      <CollectionNote value={context.proposedCollection} />
+      <OutlineItem title={context.nodeTitle} highlighted indent={1} />
+      <ChildOutline titles={context.childTitles} indent={2} />
+    </Box>
+  </Stack>
+);
+
+const AdditionAction = ({
+  context,
+}: {
+  context: Extract<SomReviewContext, { type: "addition-action" }>;
+}) => (
+  <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
+    <Box sx={comparisonPanelSx} aria-label="Ontology before addition">
+      <Typography sx={sectionLabelSx}>Before</Typography>
+      <Typography sx={{ mt: 1, fontWeight: 750 }}>
+        {context.parentTitle}
+      </Typography>
+      <Typography sx={{ mt: 1, color: "text.secondary", lineHeight: 1.5 }}>
+        No direct child named &quot;{context.proposedTitle}&quot;.
+      </Typography>
+    </Box>
+    <Box sx={comparisonPanelSx} aria-label="Ontology after addition">
+      <Typography sx={sectionLabelSx}>After</Typography>
+      <Typography sx={{ mt: 1, fontWeight: 750 }}>
+        {context.parentTitle}
+      </Typography>
+      <OutlineItem title={context.proposedTitle} highlighted indent={1} />
+      <Typography sx={{ mt: 1.25, lineHeight: 1.55 }}>
+        {context.description}
+      </Typography>
+      {context.examples.length > 0 && (
+        <Typography sx={{ mt: 1, color: "text.secondary", lineHeight: 1.5 }}>
+          Examples: {context.examples.join(", ")}
+        </Typography>
+      )}
+    </Box>
+  </Stack>
+);
+
+const MergeUpAction = ({
+  context,
+}: {
+  context: Extract<SomReviewContext, { type: "merge-up-action" }>;
+}) => (
+  <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
+    <Box sx={comparisonPanelSx} aria-label="Hierarchy before wrapper removal">
+      <Typography sx={sectionLabelSx}>Before</Typography>
+      <Typography sx={{ mt: 1, fontWeight: 750 }}>
+        {context.parentTitle}
+      </Typography>
+      <CollectionNote value={context.parentCollection} />
+      <OutlineItem title={context.nodeTitle} highlighted indent={1} />
+      {context.childTitles.map((title) => (
+        <OutlineItem key={title} title={title} highlighted indent={2} />
+      ))}
+    </Box>
+    <Box sx={comparisonPanelSx} aria-label="Hierarchy after wrapper removal">
+      <Typography sx={sectionLabelSx}>After</Typography>
+      <Typography sx={{ mt: 1, fontWeight: 750 }}>
+        {context.parentTitle}
+      </Typography>
+      <CollectionNote value={context.parentCollection} />
+      {context.childTitles.map((title) => (
+        <OutlineItem key={title} title={title} highlighted indent={1} />
+      ))}
+    </Box>
+  </Stack>
 );
 
 const DuplicateComparison = ({

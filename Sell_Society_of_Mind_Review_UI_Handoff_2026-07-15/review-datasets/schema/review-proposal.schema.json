@@ -25,7 +25,12 @@
             "sibling-grouping",
             "duplicate-synonym",
             "placement",
-            "structural-overlap"
+            "wrong-verb",
+            "structural-overlap",
+            "node-merge",
+            "relocation",
+            "missing-activity",
+            "redundant-node"
           ]
         },
         "reviewMode": {
@@ -280,6 +285,169 @@
                     "firstTitle",
                     "secondCollection",
                     "secondTitle"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "merge-action"
+                    },
+                    "parentTitle": {
+                      "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+                    },
+                    "canonicalTitle": {
+                      "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+                    },
+                    "canonicalCollection": {
+                      "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+                    },
+                    "canonicalChildren": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+                      }
+                    },
+                    "absorbedTitle": {
+                      "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+                    },
+                    "absorbedCollection": {
+                      "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+                    },
+                    "absorbedChildren": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+                      }
+                    },
+                    "resultingChildren": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+                      }
+                    },
+                    "absorbedBecomesSynonym": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "parentTitle",
+                    "canonicalTitle",
+                    "canonicalCollection",
+                    "canonicalChildren",
+                    "absorbedTitle",
+                    "absorbedCollection",
+                    "absorbedChildren",
+                    "resultingChildren",
+                    "absorbedBecomesSynonym"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "relocation-action"
+                    },
+                    "nodeTitle": {
+                      "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+                    },
+                    "currentParentTitle": {
+                      "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+                    },
+                    "currentCollection": {
+                      "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+                    },
+                    "proposedParentTitle": {
+                      "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+                    },
+                    "proposedCollection": {
+                      "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+                    },
+                    "childTitles": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+                      }
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "nodeTitle",
+                    "currentParentTitle",
+                    "currentCollection",
+                    "proposedParentTitle",
+                    "proposedCollection",
+                    "childTitles"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "addition-action"
+                    },
+                    "parentTitle": {
+                      "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+                    },
+                    "proposedTitle": {
+                      "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+                    },
+                    "description": {
+                      "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+                    },
+                    "examples": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+                      }
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "parentTitle",
+                    "proposedTitle",
+                    "description",
+                    "examples"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "merge-up-action"
+                    },
+                    "parentTitle": {
+                      "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+                    },
+                    "parentCollection": {
+                      "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+                    },
+                    "nodeTitle": {
+                      "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+                    },
+                    "childTitles": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+                      },
+                      "minItems": 1
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "parentTitle",
+                    "parentCollection",
+                    "nodeTitle",
+                    "childTitles"
                   ],
                   "additionalProperties": false
                 }

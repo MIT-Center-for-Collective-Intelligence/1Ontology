@@ -1,8 +1,8 @@
 {
   "schemaVersion": "som-review-v1",
-  "datasetVersion": "sell-final-hierarchy-onet-2026-07-15-v1",
+  "datasetVersion": "sell-final-hierarchy-onet-2026-07-15-v2",
   "branch": "Sell",
-  "generatedAt": "2026-07-15T16:00:00.000Z",
+  "generatedAt": "2026-07-15T23:12:00.783Z",
   "sourceOntology": "firestore://ontology-41607/final-hierarchy-with-o*net",
   "sourceOntologySha256": "e97abe83d5de04cf1e657abb782ee664430416f608d087a8699ae2b57b86c49f",
   "safety": {
@@ -35,7 +35,7 @@
       "label": "Sibling grouping",
       "rolloutStatus": "prototype",
       "view": "grouping-outline",
-      "proposals": 4,
+      "proposals": 8,
       "controls": 0
     },
     {
@@ -51,7 +51,15 @@
       "label": "Placement",
       "rolloutStatus": "experimental",
       "view": "placement-comparison",
-      "proposals": 10,
+      "proposals": 3,
+      "controls": 0
+    },
+    {
+      "id": "wrong-verb",
+      "label": "Wrong main verb",
+      "rolloutStatus": "experimental",
+      "view": "placement-comparison",
+      "proposals": 7,
       "controls": 0
     },
     {
@@ -60,6 +68,38 @@
       "rolloutStatus": "experimental",
       "view": "overlap-comparison",
       "proposals": 2,
+      "controls": 0
+    },
+    {
+      "id": "node-merge",
+      "label": "Merge nodes",
+      "rolloutStatus": "experimental",
+      "view": "merge-action",
+      "proposals": 3,
+      "controls": 0
+    },
+    {
+      "id": "relocation",
+      "label": "Exact relocation",
+      "rolloutStatus": "experimental",
+      "view": "relocation-action",
+      "proposals": 0,
+      "controls": 0
+    },
+    {
+      "id": "missing-activity",
+      "label": "Missing activity",
+      "rolloutStatus": "experimental",
+      "view": "addition-action",
+      "proposals": 10,
+      "controls": 0
+    },
+    {
+      "id": "redundant-node",
+      "label": "Redundant node",
+      "rolloutStatus": "experimental",
+      "view": "merge-up-action",
+      "proposals": 1,
       "controls": 0
     }
   ],
@@ -76,16 +116,18 @@
     "ontologySnapshot": "ontology-snapshot.json"
   },
   "counts": {
-    "proposals": 53,
+    "proposals": 71,
     "controls": 11,
     "manualChecks": 0,
     "rejectedAgentCandidates": 3
   },
   "limitations": [
-    "The first reviewer round should use title-clarity and sibling-grouping only; the other issue types exercise the common shell but remain experimental.",
-    "The ontology snapshot has no structured synonyms field, so formal-synonym auditing cannot be generated reliably from this file.",
-    "A placement approval marks a misfit and records an advisory candidate home; destination selection and movement are separate tasks.",
-    "A duplicate approval records a synonym judgment; structural merging and child re-parenting are separate tasks."
+    "The dataset is exhaustive for the packaged detector outputs and the snapshot-bound action audit, not a proof that no other semantic issue exists.",
+    "Optional description and synonym enrichment is not counted as an ontology issue in this package. The current source snapshot has no structured synonym field, so the older enrichment suggestions must be refreshed and given a separate atomic review contract before they can be served safely.",
+    "Placement and wrong-verb approvals only confirm the diagnosis. An exact relocation is offered only when a current target node and relation are verified.",
+    "The exact-relocation queue is intentionally empty because the current evidence names only advisory destinations, not safe current target nodes.",
+    "Merge, grouping, and redundant-node decisions are review-only. Acceptance does not write to Firestore.",
+    "Some proposals conflict or depend on one another; accepted actions must be sequenced and revalidated against a fresh snapshot before implementation."
   ],
   "sourceSnapshot": {
     "file": "ontology-snapshot.json",
@@ -97,5 +139,12 @@
     "sellRootNodeId": "ivPKQuvb3SRqjtIKqn4d",
     "nodeCount": 112,
     "edgeCount": 146
+  },
+  "coverage": {
+    "snapshotBound": true,
+    "exhaustiveWithinPackagedDetectorOutputs": true,
+    "semanticCompletenessGuaranteed": false,
+    "exactRelocationsWithVerifiedCurrentTargets": 0,
+    "note": "All accepted candidates found by the packaged Sell scans and the revalidated action audit are included. No finite semantic scan can prove that every possible ontology defect has been found."
   }
 }

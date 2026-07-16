@@ -1,0 +1,232 @@
+{
+  "schemaVersion": "sell-comprehensive-candidate-audit-v1",
+  "datasetVersion": "sell-final-hierarchy-onet-2026-07-15-v2",
+  "generatedAt": "2026-07-15T23:12:00.783Z",
+  "sourceSnapshotSha256": "e97abe83d5de04cf1e657abb782ee664430416f608d087a8699ae2b57b86c49f",
+  "taxonomy": [
+    {
+      "id": "title-clarity",
+      "label": "Title clarity",
+      "rolloutStatus": "prototype",
+      "view": "title-comparison"
+    },
+    {
+      "id": "sibling-grouping",
+      "label": "Sibling grouping",
+      "rolloutStatus": "prototype",
+      "view": "grouping-outline"
+    },
+    {
+      "id": "duplicate-synonym",
+      "label": "Duplicate or synonym",
+      "rolloutStatus": "experimental",
+      "view": "duplicate-comparison"
+    },
+    {
+      "id": "placement",
+      "label": "Placement",
+      "rolloutStatus": "experimental",
+      "view": "placement-comparison"
+    },
+    {
+      "id": "wrong-verb",
+      "label": "Wrong main verb",
+      "rolloutStatus": "experimental",
+      "view": "placement-comparison"
+    },
+    {
+      "id": "structural-overlap",
+      "label": "Structural overlap",
+      "rolloutStatus": "experimental",
+      "view": "overlap-comparison"
+    },
+    {
+      "id": "node-merge",
+      "label": "Merge nodes",
+      "rolloutStatus": "experimental",
+      "view": "merge-action"
+    },
+    {
+      "id": "relocation",
+      "label": "Exact relocation",
+      "rolloutStatus": "experimental",
+      "view": "relocation-action"
+    },
+    {
+      "id": "missing-activity",
+      "label": "Missing activity",
+      "rolloutStatus": "experimental",
+      "view": "addition-action"
+    },
+    {
+      "id": "redundant-node",
+      "label": "Redundant node",
+      "rolloutStatus": "experimental",
+      "view": "merge-up-action"
+    }
+  ],
+  "generatedCounts": {
+    "evidenceConvergenceGroupings": 4,
+    "exactMerges": 3,
+    "exactRelocations": 0,
+    "missingActivities": 10,
+    "redundantNodes": 1
+  },
+  "evidenceConvergenceGroupings": [
+    {
+      "title": "Sell Plants and Flowers",
+      "parentTitle": "Sell (Physical Object)",
+      "children": [
+        "Sell Flower",
+        "Sell Plant"
+      ],
+      "reasoning": "Sell Flower and Sell Plant have the same supporting O*NET task, and both title-clarity reviews independently converge on Sell Plants and Flowers. The proposed node preserves the narrower activities while giving their shared work a clear home."
+    },
+    {
+      "title": "Sell Cosmetic Supplies",
+      "parentTitle": "Sell (Physical Object)",
+      "children": [
+        "Sell Lotion",
+        "Sell Tonic"
+      ],
+      "reasoning": "Sell Lotion and Sell Tonic share the same supporting task, which explicitly covers lotions, tonics, and other cosmetic supplies. The proposed grouping keeps the two narrower activities distinct while representing their common category."
+    },
+    {
+      "title": "Sell Stamps and Money Orders",
+      "parentTitle": "Sell (Physical Object)",
+      "children": [
+        "Sell Order",
+        "Sell Stamp"
+      ],
+      "reasoning": "Sell Order and Sell Stamp share the same source task, Sell stamps and money orders. The proposed grouping represents that combined activity without incorrectly treating stamps and money orders as synonyms."
+    },
+    {
+      "title": "Sell Travel Packages and Incentives",
+      "parentTitle": "Sell (Information)",
+      "children": [
+        "Sell Incentive",
+        "Sell Package"
+      ],
+      "reasoning": "The linked evidence describes arranging and selling travel packages and promotional travel incentives together. The proposed grouping retains the two narrower activities and represents their shared travel-offering context."
+    }
+  ],
+  "missingActivities": [
+    {
+      "title": "Sell Furniture",
+      "parentTitle": "Sell (Physical Object)",
+      "description": "Sell movable furnishings such as tables, chairs, sofas, beds, and cabinets.",
+      "examples": [
+        "a sofa",
+        "a dining table",
+        "a bed frame"
+      ],
+      "reasoning": "Furniture sales are a common specialization with product-fit, showroom, delivery, and assembly requirements. No current Sell node names this activity."
+    },
+    {
+      "title": "Sell Appliance",
+      "parentTitle": "Sell (Physical Object)",
+      "description": "Sell household and commercial appliances such as refrigerators, washing machines, ovens, and dishwashers.",
+      "examples": [
+        "a refrigerator",
+        "a washing machine",
+        "a dishwasher"
+      ],
+      "reasoning": "Appliance sales require sizing, installation, warranty, delivery, and safety knowledge that distinguishes them from generic equipment sales. No current Sell node names this activity."
+    },
+    {
+      "title": "Sell Vehicle",
+      "parentTitle": "Sell (Physical Object)",
+      "description": "Sell transportation vehicles such as cars, motorcycles, trucks, boats, and recreational vehicles.",
+      "examples": [
+        "a car",
+        "a motorcycle",
+        "a recreational vehicle"
+      ],
+      "reasoning": "Vehicle sales are a major specialization involving title transfer, registration, inspection, financing, and dealer regulation. No current Sell node names whole-vehicle sales."
+    },
+    {
+      "title": "Sell Electronics",
+      "parentTitle": "Sell (Physical Object)",
+      "description": "Sell electronic devices such as televisions, computers, cameras, audio systems, and mobile devices.",
+      "examples": [
+        "a television",
+        "a laptop computer",
+        "a digital camera"
+      ],
+      "reasoning": "Electronics sales require product specifications, compatibility, setup, demonstration, warranty, and support knowledge. The current Sell subtree has no electronics-specific activity."
+    },
+    {
+      "title": "Sell Medicine",
+      "parentTitle": "Sell (Physical Object)",
+      "description": "Sell medicinal products such as prescription drugs, over-the-counter medications, and therapeutic supplies.",
+      "examples": [
+        "prescription tablets",
+        "cough syrup",
+        "pain relievers"
+      ],
+      "reasoning": "Medicine sales are a common regulated specialization involving prescription validation, pharmacy licensing, controlled-substance rules, labeling, safety, and storage. No current Sell node names it."
+    },
+    {
+      "title": "Sell Option",
+      "parentTitle": "Sell (Information)",
+      "description": "Sell options contracts that give the holder the right, but not the obligation, to buy or sell an underlying asset at a specified price.",
+      "examples": [
+        "a call option",
+        "a put option",
+        "an equity option"
+      ],
+      "reasoning": "Options are a standard derivative category with strike, expiration, premium, exercise, disclosure, and approval requirements. Sell Derivative is broader, while no current node names options specifically."
+    },
+    {
+      "title": "Sell Loan",
+      "parentTitle": "Sell (Information)",
+      "description": "Sell lending products or loan contracts such as mortgages, auto loans, business loans, and personal loans.",
+      "examples": [
+        "a mortgage loan",
+        "an auto loan",
+        "a small business loan"
+      ],
+      "reasoning": "Loan sales involve borrower qualification, underwriting, disclosures, and lending-specific compliance. The current Sell subtree has no loan-product activity."
+    },
+    {
+      "title": "Sell Deposit Account",
+      "parentTitle": "Sell (Information)",
+      "description": "Sell bank deposit products such as checking accounts, savings accounts, and certificates of deposit.",
+      "examples": [
+        "a checking account",
+        "a savings account",
+        "a certificate of deposit"
+      ],
+      "reasoning": "Deposit-account sales use account-opening, identity-verification, disclosure, and banking-compliance workflows distinct from securities, currency, checks, or insurance. No current Sell node names this activity."
+    },
+    {
+      "title": "Sell License",
+      "parentTitle": "Sell (Information)",
+      "description": "Sell legal permissions or usage rights, such as software, intellectual-property, or operating licenses.",
+      "examples": [
+        "a software license",
+        "a patent license",
+        "a broadcast license"
+      ],
+      "reasoning": "License sales involve rights scope, usage restrictions, renewal, and legal or regulatory compliance. The current Sell subtree has no license-specific activity."
+    },
+    {
+      "title": "Sell Subscription",
+      "parentTitle": "Sell (Information)",
+      "description": "Sell recurring access rights to content, services, software, or publications.",
+      "examples": [
+        "a streaming subscription",
+        "a SaaS subscription",
+        "a magazine subscription"
+      ],
+      "reasoning": "Subscription sales involve recurring billing, provisioning, renewal, cancellation, and auto-renewal rules. The current Sell subtree has no subscription-specific activity."
+    }
+  ],
+  "decisions": [
+    "Wrong-verb findings were separated from ordinary placement findings.",
+    "Rent out and Lease out received an exact merge proposal after D8/H3 confirmation.",
+    "The two normalized cross-collection overlaps received exact structural-consolidation proposals.",
+    "No exact relocation was generated because no advisory destination was both precise and validated as the intended current target.",
+    "Rejected duplicate and grouping candidates remain in rejected_agent_candidates.jsonl and were not promoted."
+  ]
+}
