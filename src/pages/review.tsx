@@ -22,7 +22,9 @@ import ReviewCard, {
 } from "@components/components/SomReview/ReviewCard";
 import ReviewHistorySelect from "@components/components/SomReview/ReviewHistorySelect";
 import ReviewQueueSelector from "@components/components/SomReview/ReviewQueueSelector";
+import ReviewTaskIntro from "@components/components/SomReview/ReviewTaskIntro";
 import ThemeModeToggle from "@components/components/SomReview/ThemeModeToggle";
+import { reviewInteractiveSurfaceSx } from "@components/components/SomReview/reviewStyles";
 import {
   SomIssueType,
   SomIssueTypeOption,
@@ -34,12 +36,13 @@ import {
   SomSessionResponse,
 } from "@components/types/ISomReview";
 
-type Phase = "loading" | "select" | "session" | "complete" | "empty";
+type Phase = "loading" | "select" | "intro" | "session" | "complete" | "empty";
 
 export const ReviewPage = () => {
   const [{ user }] = useAuth();
   const router = useRouter();
   const [phase, setPhase] = useState<Phase>("loading");
+  const [datasetVersion, setDatasetVersion] = useState("");
   const [issueTypes, setIssueTypes] = useState<SomIssueTypeOption[]>([]);
   const [issueType, setIssueType] = useState<SomIssueType | null>(null);
   const [sessionId, setSessionId] = useState("");
@@ -49,12 +52,17 @@ export const ReviewPage = () => {
   const [revisionProposalId, setRevisionProposalId] = useState("");
   const [loadError, setLoadError] = useState("");
   const [canDeliberate, setCanDeliberate] = useState(false);
+  const [retryIssueType, setRetryIssueType] = useState<SomIssueType | null>(
+    null,
+  );
 
   const loadOverview = useCallback(async () => {
     setPhase("loading");
     setLoadError("");
+    setRetryIssueType(null);
     try {
       const overview = await Post<SomOverviewResponse>("/som-review/overview");
+      setDatasetVersion(overview.datasetVersion);
       setIssueTypes(overview.issueTypes);
       setCanDeliberate(overview.canDeliberate);
       setPhase("select");
@@ -69,8 +77,10 @@ export const ReviewPage = () => {
   }, [user, loadOverview]);
 
   const startSession = useCallback(async (issue: SomIssueType) => {
+    setIssueType(issue);
     setPhase("loading");
     setLoadError("");
+    setRetryIssueType(null);
     try {
       const result = await Post<SomSessionResponse>("/som-review/session", {
         issueType: issue,
@@ -97,8 +107,50 @@ export const ReviewPage = () => {
       setLoadError(
         "The review session could not be started. Please try again.",
       );
+      setRetryIssueType(issue);
       setPhase("select");
     }
+  }, []);
+
+  const introStorageKey = useCallback(
+    (issue: SomIssueType) =>
+      `som-review-task-intro-${datasetVersion || "current"}-${issue}`,
+    [datasetVersion],
+  );
+
+  const chooseIssueType = useCallback(
+    (issue: SomIssueType) => {
+      setLoadError("");
+      setRetryIssueType(null);
+      try {
+        if (window.localStorage.getItem(introStorageKey(issue)) === "seen") {
+          startSession(issue);
+          return;
+        }
+      } catch {
+        // The introduction remains available if browser storage is unavailable.
+      }
+      setIssueType(issue);
+      setPhase("intro");
+    },
+    [introStorageKey, startSession],
+  );
+
+  const continueFromIntro = useCallback(() => {
+    if (!issueType) return;
+    try {
+      window.localStorage.setItem(introStorageKey(issueType), "seen");
+    } catch {
+      // The review can continue even when browser storage is unavailable.
+    }
+    startSession(issueType);
+  }, [introStorageKey, issueType, startSession]);
+
+  const leaveIntro = useCallback(() => {
+    setLoadError("");
+    setRetryIssueType(null);
+    setIssueType(null);
+    setPhase("select");
   }, []);
 
   const submitResponse = useCallback(
@@ -232,6 +284,7 @@ export const ReviewPage = () => {
     setCursor(0);
     setHistory([]);
     setRevisionProposalId("");
+    setRetryIssueType(null);
     loadOverview();
   }, [loadOverview]);
 
@@ -247,11 +300,14 @@ export const ReviewPage = () => {
       </Head>
       <Box
         component="main"
-        sx={{
-          minHeight: "100dvh",
-          backgroundColor: "background.default",
-          py: { xs: 2, sm: 3 },
-        }}
+        sx={[
+          reviewInteractiveSurfaceSx,
+          {
+            minHeight: "100dvh",
+            backgroundColor: "background.default",
+            py: { xs: 2, sm: 3 },
+          },
+        ]}
       >
         <Container maxWidth="md">
           {loadError && (
@@ -261,7 +317,15 @@ export const ReviewPage = () => {
               onClose={() => setLoadError("")}
               action={
                 phase === "select" ? (
-                  <Button color="inherit" onClick={loadOverview}>
+                  <Button
+                    disableElevation
+                    color="inherit"
+                    onClick={() =>
+                      retryIssueType
+                        ? startSession(retryIssueType)
+                        : loadOverview()
+                    }
+                  >
                     Retry
                   </Button>
                 ) : undefined
@@ -280,9 +344,21 @@ export const ReviewPage = () => {
           {phase === "select" && (
             <ReviewQueueSelector
               issueTypes={issueTypes}
-              onStart={startSession}
+              onStart={chooseIssueType}
               canDeliberate={canDeliberate}
               onOpenDeliberation={() => router.push("/review/admin")}
+              headerAction={<ThemeModeToggle />}
+            />
+          )}
+
+          {phase === "intro" && selectedIssue && (
+            <ReviewTaskIntro
+              issueType={selectedIssue.id}
+              label={selectedIssue.label}
+              itemCount={selectedIssue.pending}
+              resuming={Boolean(selectedIssue.activeSession)}
+              onContinue={continueFromIntro}
+              onBack={leaveIntro}
               headerAction={<ThemeModeToggle />}
             />
           )}
@@ -297,6 +373,7 @@ export const ReviewPage = () => {
                   spacing={1}
                 >
                   <Button
+                    disableElevation
                     variant="outlined"
                     color="inherit"
                     startIcon={<ArrowBackIcon />}
@@ -314,13 +391,15 @@ export const ReviewPage = () => {
                     alignItems="center"
                     justifyContent="flex-end"
                     spacing={1}
-                    sx={{ width: { xs: "100%", sm: "auto" } }}
+                    sx={{ width: { xs: "100%", sm: "auto" }, minWidth: 0 }}
                   >
-                    <ReviewHistorySelect
-                      history={history}
-                      selectedProposalId={revisionProposalId}
-                      onSelect={selectRevision}
-                    />
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <ReviewHistorySelect
+                        history={history}
+                        selectedProposalId={revisionProposalId}
+                        onSelect={selectRevision}
+                      />
+                    </Box>
                     <ThemeModeToggle />
                   </Stack>
                 </Stack>
@@ -369,20 +448,22 @@ export const ReviewPage = () => {
                   sx={{ mb: 2 }}
                   action={
                     <Button
+                      disableElevation
                       color="inherit"
                       onClick={cancelRevision}
                       sx={{ minHeight: 40, fontWeight: 700 }}
                     >
-                      Cancel revision
+                      Keep saved answer
                     </Button>
                   }
                 >
-                  You are revising item {revisionItem.proposalIndex + 1}.
-                  Previous answer:{" "}
+                  You are revising item {revisionItem.proposalIndex + 1}. Saved
+                  answer:{" "}
                   <strong>
                     {revisionItem.decision === "agree" ? "Agreed" : "Disagreed"}
                   </strong>
-                  . Your progress remains at {cursor} of {cards.length} items
+                  . No change is made until you submit a revised answer. Your
+                  progress remains at {cursor} of {cards.length} items
                   completed.
                 </Alert>
               )}
@@ -414,7 +495,11 @@ export const ReviewPage = () => {
           {phase === "session" && (!activeCard || !user?.userId) && (
             <Alert
               severity="error"
-              action={<Button onClick={exitToSelector}>Exit</Button>}
+              action={
+                <Button disableElevation onClick={exitToSelector}>
+                  Exit
+                </Button>
+              }
             >
               The current review item is unavailable.
             </Alert>
@@ -455,6 +540,7 @@ export const ReviewPage = () => {
                   sx={{ width: { xs: "100%", sm: "auto" } }}
                 >
                   <Button
+                    disableElevation
                     variant="outlined"
                     startIcon={<ArrowBackIcon />}
                     onClick={exitToSelector}
@@ -465,6 +551,7 @@ export const ReviewPage = () => {
                   {issueType && (
                     <Button
                       variant="contained"
+                      disableElevation
                       onClick={() => startSession(issueType)}
                       sx={{ minHeight: 50, fontWeight: 750 }}
                     >
@@ -495,6 +582,7 @@ export const ReviewPage = () => {
                   Nothing left in this review type
                 </Typography>
                 <Button
+                  disableElevation
                   variant="outlined"
                   startIcon={<ArrowBackIcon />}
                   onClick={exitToSelector}

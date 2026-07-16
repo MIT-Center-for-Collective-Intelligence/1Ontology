@@ -35,7 +35,15 @@ import {
   SomDeliberationResolutionDecision,
   SomReviewDecision,
 } from "../../types/ISomReview";
-import ContextRenderer from "./ContextRenderer";
+import ContextRenderer, {
+  contextShowsStateComparison,
+} from "./ContextRenderer";
+import {
+  reviewAccentColor,
+  reviewInteractiveSurfaceSx,
+  reviewToneChipSx,
+} from "./reviewStyles";
+import type { ReviewTone } from "./reviewStyles";
 
 const percent = (value: number | null): string =>
   value === null ? "No responses" : `${Math.round(value * 100)}% agree`;
@@ -63,9 +71,7 @@ const stanceLabel = (stance: SomDeliberationCommentStance): string => {
   }
 };
 
-const stanceColor = (
-  stance: SomDeliberationCommentStance,
-): "success" | "error" | "warning" | "info" => {
+const stanceTone = (stance: SomDeliberationCommentStance): ReviewTone => {
   switch (stance) {
     case "support":
       return "success";
@@ -95,9 +101,7 @@ const StatePanel = ({
       borderRadius: 1.5,
       border: (theme) =>
         `2px solid ${
-          proposed
-            ? alpha(theme.palette.primary.main, 0.55)
-            : theme.palette.divider
+          proposed ? reviewAccentColor(theme) : theme.palette.divider
         }`,
       backgroundColor: (theme) =>
         proposed ? alpha(theme.palette.primary.main, 0.06) : "background.paper",
@@ -105,7 +109,7 @@ const StatePanel = ({
   >
     <Typography
       sx={{
-        color: proposed ? "primary.main" : "text.secondary",
+        color: proposed ? reviewAccentColor : "text.secondary",
         fontWeight: 750,
       }}
     >
@@ -224,14 +228,27 @@ const DeliberationDialog = ({
       maxWidth="lg"
       aria-labelledby="deliberation-dialog-title"
       PaperProps={{ sx: { borderRadius: { xs: 0, md: 2 } } }}
+      sx={reviewInteractiveSurfaceSx}
     >
       <Box component="header" sx={{ px: { xs: 2, sm: 3 }, py: 2 }}>
         <Stack direction="row" alignItems="center" spacing={1}>
-          <ForumOutlinedIcon color="primary" />
+          <ForumOutlinedIcon
+            aria-hidden="true"
+            sx={{
+              color: reviewAccentColor,
+              display: { xs: "none", sm: "block" },
+            }}
+          />
           <Typography
             id="deliberation-dialog-title"
             component="h2"
-            sx={{ flex: 1, fontSize: "1.25rem", fontWeight: 800 }}
+            sx={{
+              flex: 1,
+              minWidth: 0,
+              fontSize: { xs: "1.1rem", sm: "1.25rem" },
+              fontWeight: 800,
+              lineHeight: 1.3,
+            }}
           >
             Proposal deliberation
           </Typography>
@@ -267,7 +284,18 @@ const DeliberationDialog = ({
             <CircularProgress aria-label="Loading deliberation" />
           </Stack>
         )}
-        {!loading && loadError && <Alert severity="error">{loadError}</Alert>}
+        {!loading && loadError && (
+          <Alert
+            severity="error"
+            action={
+              <Button disableElevation color="inherit" onClick={onRefresh}>
+                Retry
+              </Button>
+            }
+          >
+            {loadError}
+          </Alert>
+        )}
         {!loading && detail && (
           <Stack spacing={4}>
             {mutationError && (
@@ -298,21 +326,25 @@ const DeliberationDialog = ({
               >
                 {detail.card.reviewerView.question}
               </Typography>
-              <Stack
-                direction={{ xs: "column", md: "row" }}
-                spacing={2}
-                sx={{ mt: 2.5 }}
-              >
-                <StatePanel
-                  label="Current"
-                  value={detail.card.reviewerView.currentState}
-                />
-                <StatePanel
-                  label="Proposed"
-                  value={detail.card.reviewerView.proposedState}
-                  proposed
-                />
-              </Stack>
+              {!contextShowsStateComparison(
+                detail.card.reviewerView.context,
+              ) && (
+                <Stack
+                  direction={{ xs: "column", md: "row" }}
+                  spacing={2}
+                  sx={{ mt: 2.5 }}
+                >
+                  <StatePanel
+                    label="Current"
+                    value={detail.card.reviewerView.currentState}
+                  />
+                  <StatePanel
+                    label="Proposed"
+                    value={detail.card.reviewerView.proposedState}
+                    proposed
+                  />
+                </Stack>
+              )}
               <Box sx={{ mt: 2.5 }}>
                 <Typography sx={{ color: "text.secondary", fontWeight: 750 }}>
                   Proposal rationale
@@ -421,14 +453,20 @@ const DeliberationDialog = ({
                                 ? "Agree"
                                 : "Disagree"
                             }
-                            color={
+                            variant="outlined"
+                            sx={reviewToneChipSx(
                               participant.effectiveDecision === "agree"
                                 ? "success"
-                                : "error"
-                            }
+                                : "error",
+                            )}
                           />
                           {participant.revised && (
-                            <Chip size="small" label="Revised" color="info" />
+                            <Chip
+                              size="small"
+                              label="Revised"
+                              variant="outlined"
+                              sx={reviewToneChipSx("info")}
+                            />
                           )}
                         </Stack>
                       </Box>
@@ -484,7 +522,8 @@ const DeliberationDialog = ({
                       <Chip
                         size="small"
                         label={stanceLabel(comment.stance)}
-                        color={stanceColor(comment.stance)}
+                        variant="outlined"
+                        sx={reviewToneChipSx(stanceTone(comment.stance))}
                       />
                       <Typography
                         sx={{
@@ -516,7 +555,11 @@ const DeliberationDialog = ({
                     )
                   }
                   aria-label="Comment type"
-                  sx={{ alignSelf: { sm: "flex-start" }, minWidth: 220 }}
+                  sx={{
+                    alignSelf: { sm: "flex-start" },
+                    width: { xs: "100%", sm: "auto" },
+                    minWidth: { sm: 220 },
+                  }}
                 >
                   <MenuItem value="support">Reason to support</MenuItem>
                   <MenuItem value="oppose">Reason to oppose</MenuItem>
@@ -534,6 +577,7 @@ const DeliberationDialog = ({
                 />
                 <Button
                   variant="contained"
+                  disableElevation
                   startIcon={
                     saving === "comment" ? (
                       <CircularProgress size={20} color="inherit" />
@@ -573,20 +617,19 @@ const DeliberationDialog = ({
                       value && setPositionDecision(value)
                     }
                     aria-label="Revised judgment"
-                    sx={{ alignSelf: { sm: "flex-start" } }}
+                    sx={{
+                      alignSelf: { sm: "flex-start" },
+                      width: { xs: "100%", sm: "auto" },
+                      "& .MuiToggleButton-root": {
+                        flex: { xs: 1, sm: "initial" },
+                        minWidth: { xs: 0, sm: 130 },
+                        minHeight: 46,
+                        fontWeight: 700,
+                      },
+                    }}
                   >
-                    <ToggleButton
-                      value="agree"
-                      sx={{ minWidth: 130, minHeight: 46, fontWeight: 700 }}
-                    >
-                      Agree
-                    </ToggleButton>
-                    <ToggleButton
-                      value="disagree"
-                      sx={{ minWidth: 130, minHeight: 46, fontWeight: 700 }}
-                    >
-                      Disagree
-                    </ToggleButton>
+                    <ToggleButton value="agree">Agree</ToggleButton>
+                    <ToggleButton value="disagree">Disagree</ToggleButton>
                   </ToggleButtonGroup>
                   <TextField
                     label="Reason for the revised judgment"
@@ -601,6 +644,7 @@ const DeliberationDialog = ({
                     inputProps={{ maxLength: 2000 }}
                   />
                   <Button
+                    disableElevation
                     variant="outlined"
                     startIcon={
                       saving === "position" ? (
@@ -656,8 +700,10 @@ const DeliberationDialog = ({
                       aria-label="Final resolution"
                       sx={{
                         alignSelf: { sm: "flex-start" },
+                        width: { xs: "100%", sm: "auto" },
                         "& .MuiToggleButton-root": {
-                          minWidth: { xs: 94, sm: 120 },
+                          flex: { xs: 1, sm: "initial" },
+                          minWidth: { xs: 0, sm: 120 },
                           minHeight: 46,
                           fontWeight: 700,
                         },
@@ -681,6 +727,7 @@ const DeliberationDialog = ({
                     />
                     <Button
                       variant="contained"
+                      disableElevation
                       startIcon={
                         saving === "resolution" ? (
                           <CircularProgress size={20} color="inherit" />
@@ -714,6 +761,7 @@ const DeliberationDialog = ({
       </DialogContent>
       <DialogActions sx={{ px: { xs: 2, sm: 3 }, py: 2 }}>
         <Button
+          disableElevation
           color="inherit"
           onClick={onClose}
           disabled={Boolean(saving)}

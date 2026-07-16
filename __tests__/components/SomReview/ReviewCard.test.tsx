@@ -139,7 +139,7 @@ describe("Society of Mind review card", () => {
     ).toBeNull();
   });
 
-  it("keeps the advisory placement hint out of the main proposal panel", () => {
+  it("keeps downstream placement details out of the diagnosis", () => {
     const placementCard: SomReviewCard = {
       proposalId: "placement-1",
       datasetVersion: "dataset-1",
@@ -174,8 +174,11 @@ describe("Society of Mind review card", () => {
     expect(screen.getByText("Current location")).toBeInTheDocument();
     expect(screen.getByText("Recommended finding")).toBeInTheDocument();
     expect(
-      screen.getByText("Possible new home to review next:"),
+      screen.getByText(
+        "If you agree that this activity is misplaced, its appropriate location will be reviewed in a separate step.",
+      ),
     ).toBeInTheDocument();
+    expect(screen.queryByText("Actors and Activities")).not.toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Yes, misplaced" }),
     ).toBeInTheDocument();
@@ -190,6 +193,45 @@ describe("Society of Mind review card", () => {
     ).not.toBeInTheDocument();
     expect(
       screen.queryByText(/agreeing only marks the current placement/i),
+    ).not.toBeInTheDocument();
+  });
+
+  it("does not repeat generic state panels when the context has before and after panels", () => {
+    const metadataCard: SomReviewCard = {
+      proposalId: "metadata-1",
+      datasetVersion: "dataset-1",
+      issueType: "description-enrichment",
+      reviewerView: {
+        question: "Should this description be added?",
+        currentState: "GENERIC CURRENT STATE",
+        proposedState: "GENERIC PROPOSED STATE",
+        reasoning: "The source task supports this description.",
+        context: {
+          type: "metadata-edit",
+          nodeTitle: "Sell Product",
+          field: "description",
+          currentText: "",
+          proposedText: "Transfer a product to a buyer for payment.",
+          sourceTasks: [],
+        },
+        agreeLabel: "Agree",
+        disagreeLabel: "Disagree",
+      },
+    };
+
+    render(
+      <ReviewCard
+        card={metadataCard}
+        reviewerId="reviewer-1"
+        onSubmit={jest.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Before")).toBeInTheDocument();
+    expect(screen.getByText("After")).toBeInTheDocument();
+    expect(screen.queryByText("GENERIC CURRENT STATE")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("GENERIC PROPOSED STATE"),
     ).not.toBeInTheDocument();
   });
 });

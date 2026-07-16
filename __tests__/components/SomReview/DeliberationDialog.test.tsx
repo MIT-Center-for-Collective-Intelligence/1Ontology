@@ -156,4 +156,68 @@ describe("Society of Mind deliberation dialog", () => {
       ),
     );
   });
+
+  it("does not duplicate state summaries for self-contained comparisons", () => {
+    const metadataDetail: SomDeliberationProposalResponse = {
+      ...detail,
+      card: {
+        ...detail.card,
+        issueType: "description-enrichment",
+        reviewerView: {
+          ...detail.card.reviewerView,
+          currentState: "GENERIC CURRENT STATE",
+          proposedState: "GENERIC PROPOSED STATE",
+          context: {
+            type: "metadata-edit",
+            nodeTitle: "Sell Product",
+            field: "description",
+            currentText: "",
+            proposedText: "Transfer a product to a buyer for payment.",
+            sourceTasks: [],
+          },
+        },
+      },
+    };
+
+    render(
+      <DeliberationDialog
+        open
+        loading={false}
+        detail={metadataDetail}
+        loadError=""
+        onClose={jest.fn()}
+        onRefresh={jest.fn()}
+        onComment={jest.fn()}
+        onPosition={jest.fn()}
+        onResolve={jest.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Before")).toBeInTheDocument();
+    expect(screen.getByText("After")).toBeInTheDocument();
+    expect(screen.queryByText("GENERIC CURRENT STATE")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("GENERIC PROPOSED STATE"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("offers a retry when proposal details fail to load", () => {
+    const onRefresh = jest.fn();
+    render(
+      <DeliberationDialog
+        open
+        loading={false}
+        detail={null}
+        loadError="The proposal could not be loaded."
+        onClose={jest.fn()}
+        onRefresh={onRefresh}
+        onComment={jest.fn()}
+        onPosition={jest.fn()}
+        onResolve={jest.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    expect(onRefresh).toHaveBeenCalledTimes(1);
+  });
 });

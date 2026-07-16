@@ -93,12 +93,13 @@ describe("Society of Mind reviewer card blinding", () => {
         currentState: "Legacy current-state copy.",
         proposedState:
           "Advisory candidate home: Actors and Activities. The exact move remains a separate human decision.",
-        reasoning: "A service is an activity rather than information.",
+        reasoning:
+          "A service is an activity rather than information. Actors and Activities is the proposed destination. H1: high confidence.",
         context: {
           type: "placement-comparison",
           nodeTitle: "Sell Service",
           currentParentTitle: "Sell (Information)",
-          currentBucket: "Information",
+          currentBucket: "main",
           candidateHome: "Actors and Activities",
           placementIssue: "wrong-bucket",
         },
@@ -107,19 +108,62 @@ describe("Society of Mind reviewer card blinding", () => {
 
     expect(card.reviewerView).toMatchObject({
       question: 'Is "Sell Service" misplaced under "Sell (Information)"?',
-      currentState:
-        '"Sell Service" is currently under "Sell (Information)" in the "Information" category.',
+      currentState: '"Sell Service" is currently under "Sell (Information)".',
       proposedState:
         '"Sell Service" does not belong under "Sell (Information)".',
       agreeLabel: "Yes, misplaced",
       disagreeLabel: "No, keep here",
     });
     expect(JSON.stringify(card)).not.toMatch(
-      /advisory candidate home|exact move remains|separate human decision/i,
+      /advisory candidate home|exact move remains|separate human decision|actors and activities|H1/i,
     );
-    expect(card.reviewerView.context).toMatchObject({
-      candidateHome: "Actors and Activities",
+    expect(card.reviewerView.reasoning).toBe(
+      "A service is an activity rather than information.",
+    );
+    expect(card.reviewerView.context).not.toHaveProperty("candidateHome");
+    expect(card.reviewerView.context).toMatchObject({ currentBucket: "" });
+  });
+
+  it("removes proposed destinations from a polysemy diagnosis", () => {
+    const card = toReviewerCard({
+      proposalId: "polysemy-example",
+      datasetVersion: dataset.datasetVersion,
+      issueType: "polysemy",
+      reviewerView: {
+        currentState: "One title combines two meanings.",
+        proposedState: "Represent the meanings separately.",
+        reasoning: "Selling and persuading are distinct activities.",
+        context: {
+          type: "polysemy-review",
+          nodeTitle: "Sell Products or Ideas",
+          currentParentTitle: "Sell (Other)",
+          sourceTasks: ["Selling or Influencing Others"],
+          proposedSenses: [
+            {
+              title: "Sell Product",
+              meaning: "Transfer a product for payment.",
+              destination: "Sell (Physical Object)",
+            },
+            {
+              title: "Persuade",
+              meaning: "Influence someone to accept an idea.",
+              destination: "Persuade",
+            },
+          ],
+        },
+      },
     });
+
+    expect(card.reviewerView.context).toMatchObject({
+      type: "polysemy-review",
+      proposedSenses: [
+        { title: "Sell Product", meaning: "Transfer a product for payment." },
+        { title: "Persuade", meaning: "Influence someone to accept an idea." },
+      ],
+    });
+    expect(JSON.stringify(card.reviewerView.context)).not.toMatch(
+      /destination|Sell \(Physical Object\)/i,
+    );
   });
 
   it("constructs explicit questions for downstream action contexts", () => {

@@ -27,10 +27,12 @@
         },
         "disagreementReason": {
           "type": "string",
+          "maxLength": 2000,
           "default": ""
         },
         "suggestedCorrection": {
           "type": "string",
+          "maxLength": 2000,
           "default": ""
         },
         "reviewedAt": {

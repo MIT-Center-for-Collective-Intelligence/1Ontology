@@ -9,6 +9,7 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
+import { alpha, SxProps, Theme } from "@mui/material/styles";
 import AccountTreeOutlinedIcon from "@mui/icons-material/AccountTreeOutlined";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
@@ -19,6 +20,7 @@ import HubOutlinedIcon from "@mui/icons-material/HubOutlined";
 import GroupsOutlinedIcon from "@mui/icons-material/GroupsOutlined";
 import AltRouteOutlinedIcon from "@mui/icons-material/AltRouteOutlined";
 import CallMergeOutlinedIcon from "@mui/icons-material/CallMergeOutlined";
+import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import PlaylistAddOutlinedIcon from "@mui/icons-material/PlaylistAddOutlined";
 import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutline";
 import SwapHorizOutlinedIcon from "@mui/icons-material/SwapHorizOutlined";
@@ -28,37 +30,21 @@ import {
   SomIssueTypeOption,
   SomReviewStage,
 } from "../../types/ISomReview";
+import { ISSUE_DESCRIPTIONS } from "./reviewCopy";
+import { reviewAccentColor, reviewIconColor } from "./reviewStyles";
 
-const ISSUE_DESCRIPTIONS: Record<SomIssueType, string> = {
-  "title-clarity": "Judge whether an activity title is clear and precise.",
-  "synonym-enrichment": "Review synonyms missing from structured metadata.",
-  "description-enrichment":
-    "Review evidence-grounded descriptions for empty nodes.",
-  "misc-facet-duplicate":
-    "Find concepts repeated in miscellaneous and explicit facets.",
-  "mistaken-synonym":
-    "Remove terms that name a meaningfully different activity.",
-  "duplicate-synonym": "Judge one possible synonym pair at a time.",
-  polysemy: "Separate one title that combines distinct activity meanings.",
-  "flat-list-grouping":
-    "Organize a long sibling list into coherent intermediate groups.",
-  "compound-object-grouping":
-    "Group activities joined in the same O*NET object phrase.",
-  "collection-design":
-    "Review a distinct specialization dimension and its branches.",
-  placement: "Judge whether an activity is under the wrong parent.",
-  "wrong-verb":
-    "Judge whether Market names promotion rather than a kind of selling.",
-  "sense-relocation":
-    "Move only the non-selling sense after a polysemy decision.",
-  "node-merge":
-    "Review an exact consolidation, including the survivor and moved children.",
-  relocation:
-    "Review an exact move from the current parent to a named new parent.",
-  "missing-activity":
-    "Judge whether a well-known Sell activity is missing from the ontology.",
-  "redundant-node":
-    "Review removal of a wrapper whose children can move to its parent.",
+const activeQueueStatusSx: SxProps<Theme> = {
+  backgroundColor: (theme) =>
+    alpha(
+      theme.palette.primary.main,
+      theme.palette.mode === "dark" ? 0.2 : 0.1,
+    ),
+  boxShadow: (theme) => `inset 0 0 0 1px ${reviewAccentColor(theme)}`,
+  color: "text.primary",
+  fontWeight: 700,
+  "& .MuiChip-label": {
+    color: "inherit",
+  },
 };
 
 const IssueIcon = ({ issueType }: { issueType: SomIssueType }) => {
@@ -102,12 +88,15 @@ const QueueStatus = ({ issue }: { issue: SomIssueTypeOption }) => {
     return <Chip label="Unavailable" size="small" variant="outlined" />;
   }
   if (issue.total === 0) {
-    return <Chip label="No items" size="small" variant="outlined" />;
+    return (
+      <Chip label="No review items found" size="small" variant="outlined" />
+    );
   }
   if (issue.pending === 0 && issue.waiting > 0) {
     return (
       <Chip
-        label={`${issue.waiting} waiting`}
+        icon={<LockOutlinedIcon />}
+        label="Related review required"
         size="small"
         variant="outlined"
       />
@@ -120,7 +109,7 @@ const QueueStatus = ({ issue }: { issue: SomIssueTypeOption }) => {
     return (
       <Chip
         icon={<CheckCircleOutlineIcon />}
-        label="Done"
+        label="Reviewed"
         size="small"
         variant="outlined"
       />
@@ -129,14 +118,20 @@ const QueueStatus = ({ issue }: { issue: SomIssueTypeOption }) => {
   if (issue.activeSession) {
     return (
       <Chip
-        label={`Resume ${issue.activeSession.cursor + 1} of ${issue.activeSession.total}`}
+        label={`In progress: ${issue.activeSession.cursor + 1} of ${issue.activeSession.total}`}
         size="small"
-        color="primary"
+        variant="outlined"
+        sx={activeQueueStatusSx}
       />
     );
   }
   return (
-    <Chip label={`${issue.pending} to review`} size="small" color="primary" />
+    <Chip
+      label={`${issue.pending} ready to review`}
+      size="small"
+      variant="outlined"
+      sx={activeQueueStatusSx}
+    />
   );
 };
 
@@ -166,7 +161,7 @@ const REVIEW_STAGES: Array<{
     id: "final-action",
     title: "Exact actions",
     description:
-      "These unlock only after you agree with their prerequisite diagnosis.",
+      "Exact merge and move proposals appear here after you agree with their related diagnosis.",
   },
   {
     id: "additional-quality",
@@ -207,6 +202,7 @@ const ReviewQueueSelector = ({
         <Chip label="Final Hierarchy with O*Net" variant="outlined" />
         {canDeliberate && onOpenDeliberation && (
           <Button
+            disableElevation
             variant="outlined"
             startIcon={<GroupsOutlinedIcon />}
             onClick={onOpenDeliberation}
@@ -249,7 +245,7 @@ const ReviewQueueSelector = ({
               {stageIssues.map((issue) => {
                 const available = issue.enabled && issue.pending > 0;
                 const unavailableLabel = issue.waiting
-                  ? `${issue.label}, ${issue.waiting} items waiting for prerequisite reviews`
+                  ? `${issue.label}; review its related diagnosis first`
                   : `${issue.label}, no review items available`;
                 return (
                   <Card
@@ -257,8 +253,13 @@ const ReviewQueueSelector = ({
                     variant="outlined"
                     sx={{
                       borderRadius: 2,
-                      opacity: available ? 1 : 0.72,
                       overflow: "hidden",
+                      backgroundColor: available
+                        ? "background.paper"
+                        : "action.hover",
+                      "& .MuiCardActionArea-root.Mui-disabled": {
+                        opacity: 1,
+                      },
                     }}
                   >
                     <CardActionArea
@@ -290,7 +291,9 @@ const ReviewQueueSelector = ({
                             display: "grid",
                             placeItems: "center",
                             borderRadius: 1.5,
-                            color: available ? "primary.main" : "text.disabled",
+                            color: available
+                              ? reviewIconColor
+                              : "text.secondary",
                             backgroundColor: "action.hover",
                           }}
                         >
@@ -316,6 +319,20 @@ const ReviewQueueSelector = ({
                           >
                             {ISSUE_DESCRIPTIONS[issue.id]}
                           </Typography>
+                          {issue.pending === 0 && issue.waiting > 0 && (
+                            <Typography
+                              sx={{
+                                mt: 0.6,
+                                color: "text.primary",
+                                fontSize: "0.9rem",
+                                fontWeight: 650,
+                                lineHeight: 1.4,
+                              }}
+                            >
+                              Review its related diagnosis first. If you agree,
+                              this action will become available.
+                            </Typography>
+                          )}
                         </Box>
                         <Stack
                           direction="row"

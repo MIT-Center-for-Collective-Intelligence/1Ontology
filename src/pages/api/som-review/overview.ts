@@ -48,7 +48,9 @@ const handler = async (request: NextApiRequest, res: NextApiResponse) => {
     const body: SomOverviewResponse = {
       datasetVersion: dataset.datasetVersion,
       issueTypes,
-      canDeliberate: reviewAccessForToken(req.user).canDeliberate,
+      canDeliberate:
+        process.env.SOM_REVIEW_DELIBERATION_ENABLED === "true" &&
+        reviewAccessForToken(req.user).canDeliberate,
     };
     return res.status(200).json(body);
   } catch (error: any) {

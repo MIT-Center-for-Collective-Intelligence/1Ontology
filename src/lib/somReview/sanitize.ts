@@ -19,6 +19,11 @@ export const sanitizeReasoning = (value: unknown): string => {
     .replace(/\s+/g, " ");
 };
 
+const firstSentence = (value: string): string => {
+  const match = value.match(/^.*?[.!?](?:\s|$)/);
+  return (match?.[0] || value).trim();
+};
+
 export const reviewerQuestion = (context: SomReviewContext): string => {
   switch (context.type) {
     case "title-comparison":
@@ -115,7 +120,10 @@ export const toReviewerCard = (record: any): SomReviewCard => {
         placementText?.proposedState ||
         duplicateText?.proposedState ||
         cleanText(view.proposedState),
-      reasoning: sanitizeReasoning(view.reasoning),
+      reasoning:
+        context.type === "placement-comparison"
+          ? firstSentence(sanitizeReasoning(view.reasoning))
+          : sanitizeReasoning(view.reasoning),
       context,
       agreeLabel:
         placementText?.agreeLabel || cleanText(view.agreeLabel) || "Agree",
@@ -163,8 +171,10 @@ const sanitizeContext = (context: any): SomReviewContext => {
         type: "placement-comparison",
         nodeTitle: context.nodeTitle,
         currentParentTitle: context.currentParentTitle,
-        currentBucket: context.currentBucket || "",
-        candidateHome: context.candidateHome || "",
+        currentBucket:
+          context.currentBucket && context.currentBucket !== "main"
+            ? context.currentBucket
+            : "",
         placementIssue: context.placementIssue,
       };
     case "overlap-comparison":
@@ -233,7 +243,10 @@ const sanitizeContext = (context: any): SomReviewContext => {
         nodeTitle: context.nodeTitle,
         currentParentTitle: context.currentParentTitle,
         sourceTasks: context.sourceTasks || [],
-        proposedSenses: context.proposedSenses || [],
+        proposedSenses: (context.proposedSenses || []).map((sense: any) => ({
+          title: sense.title,
+          meaning: sense.meaning,
+        })),
       };
     case "collection-design":
       return {
