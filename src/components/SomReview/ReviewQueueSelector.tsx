@@ -19,6 +19,7 @@ import HubOutlinedIcon from "@mui/icons-material/HubOutlined";
 import GroupsOutlinedIcon from "@mui/icons-material/GroupsOutlined";
 import AltRouteOutlinedIcon from "@mui/icons-material/AltRouteOutlined";
 import CallMergeOutlinedIcon from "@mui/icons-material/CallMergeOutlined";
+import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import PlaylistAddOutlinedIcon from "@mui/icons-material/PlaylistAddOutlined";
 import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutline";
 import SwapHorizOutlinedIcon from "@mui/icons-material/SwapHorizOutlined";
@@ -102,12 +103,13 @@ const QueueStatus = ({ issue }: { issue: SomIssueTypeOption }) => {
     return <Chip label="Unavailable" size="small" variant="outlined" />;
   }
   if (issue.total === 0) {
-    return <Chip label="No items" size="small" variant="outlined" />;
+    return <Chip label="No proposals found" size="small" variant="outlined" />;
   }
   if (issue.pending === 0 && issue.waiting > 0) {
     return (
       <Chip
-        label={`${issue.waiting} waiting`}
+        icon={<LockOutlinedIcon />}
+        label="Related review required"
         size="small"
         variant="outlined"
       />
@@ -120,7 +122,7 @@ const QueueStatus = ({ issue }: { issue: SomIssueTypeOption }) => {
     return (
       <Chip
         icon={<CheckCircleOutlineIcon />}
-        label="Done"
+        label="Reviewed"
         size="small"
         variant="outlined"
       />
@@ -129,14 +131,18 @@ const QueueStatus = ({ issue }: { issue: SomIssueTypeOption }) => {
   if (issue.activeSession) {
     return (
       <Chip
-        label={`Resume ${issue.activeSession.cursor + 1} of ${issue.activeSession.total}`}
+        label={`In progress: ${issue.activeSession.cursor + 1} of ${issue.activeSession.total}`}
         size="small"
         color="primary"
       />
     );
   }
   return (
-    <Chip label={`${issue.pending} to review`} size="small" color="primary" />
+    <Chip
+      label={`${issue.pending} ready to review`}
+      size="small"
+      color="primary"
+    />
   );
 };
 
@@ -166,7 +172,7 @@ const REVIEW_STAGES: Array<{
     id: "final-action",
     title: "Exact actions",
     description:
-      "These unlock only after you agree with their prerequisite diagnosis.",
+      "Exact merge and move proposals appear here after you agree with their related diagnosis.",
   },
   {
     id: "additional-quality",
@@ -250,7 +256,7 @@ const ReviewQueueSelector = ({
               {stageIssues.map((issue) => {
                 const available = issue.enabled && issue.pending > 0;
                 const unavailableLabel = issue.waiting
-                  ? `${issue.label}, ${issue.waiting} items waiting for prerequisite reviews`
+                  ? `${issue.label}; review its related diagnosis first`
                   : `${issue.label}, no review items available`;
                 return (
                   <Card
@@ -324,6 +330,20 @@ const ReviewQueueSelector = ({
                           >
                             {ISSUE_DESCRIPTIONS[issue.id]}
                           </Typography>
+                          {issue.pending === 0 && issue.waiting > 0 && (
+                            <Typography
+                              sx={{
+                                mt: 0.6,
+                                color: "text.primary",
+                                fontSize: "0.9rem",
+                                fontWeight: 650,
+                                lineHeight: 1.4,
+                              }}
+                            >
+                              Review its related diagnosis first. If you agree,
+                              this action will become available.
+                            </Typography>
+                          )}
                         </Box>
                         <Stack
                           direction="row"

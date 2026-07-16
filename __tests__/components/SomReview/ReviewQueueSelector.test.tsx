@@ -119,10 +119,15 @@ describe("Society of Mind review queue selector", () => {
     expect(screen.getByText("Movement outside Sell")).toBeInTheDocument();
     expect(screen.getByText("Exact actions")).toBeInTheDocument();
     expect(screen.getByText("Additional quality checks")).toBeInTheDocument();
-    expect(screen.getByText("Resume 4 of 10")).toBeInTheDocument();
-    expect(screen.getAllByText("No items")).toHaveLength(2);
-    expect(screen.getByText("Done")).toBeInTheDocument();
-    expect(screen.getByText("3 waiting")).toBeInTheDocument();
+    expect(screen.getByText("In progress: 4 of 10")).toBeInTheDocument();
+    expect(screen.getAllByText("No proposals found")).toHaveLength(2);
+    expect(screen.getByText("Reviewed")).toBeInTheDocument();
+    expect(screen.getByText("Related review required")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Review its related diagnosis first. If you agree, this action will become available.",
+      ),
+    ).toBeInTheDocument();
     expect(screen.getByText("Not needed")).toBeInTheDocument();
   });
 
@@ -137,7 +142,7 @@ describe("Society of Mind review queue selector", () => {
     expect(onStart).toHaveBeenCalledWith("placement");
     expect(
       screen.getByRole("button", {
-        name: "Apply approved node merges, 3 items waiting for prerequisite reviews",
+        name: "Apply approved node merges; review its related diagnosis first",
       }),
     ).toBeDisabled();
   });
