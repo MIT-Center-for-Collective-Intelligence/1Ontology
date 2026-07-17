@@ -85,20 +85,34 @@ const handler = async (request: NextApiRequest, res: NextApiResponse) => {
         ];
       },
     );
-    const historyCards = history.map((item) => ({
-      ...toReviewerCard(dataset.recordsById.get(item.proposalId)),
-      proposalIndex: item.proposalIndex,
-    }));
+    const historyCards = history.map((item) => {
+      const record = dataset.recordsById.get(item.proposalId);
+      if (!record) {
+        throw new Error(
+          `History references unknown proposal ${item.proposalId}`,
+        );
+      }
+      return {
+        ...toReviewerCard(record),
+        proposalIndex: item.proposalIndex,
+      };
+    });
 
     if (!session) {
       const body: SomSessionResponse = { done: true, history, historyCards };
       return res.status(200).json(body);
     }
 
-    const cards = session.proposalIds.map((id) => ({
-      ...toReviewerCard(dataset.recordsById.get(id)),
-      proposalIndex: proposalIndexes.get(id),
-    }));
+    const cards = session.proposalIds.map((id) => {
+      const record = dataset.recordsById.get(id);
+      if (!record) {
+        throw new Error(`Session references unknown proposal ${id}`);
+      }
+      return {
+        ...toReviewerCard(record),
+        proposalIndex: proposalIndexes.get(id),
+      };
+    });
     const body: SomSessionResponse = {
       session: {
         id: session.id,

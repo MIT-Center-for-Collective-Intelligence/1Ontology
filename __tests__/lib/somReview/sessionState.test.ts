@@ -1,4 +1,5 @@
 import {
+  dropMissingProposalIds,
   isResumableSession,
   mergeReadyProposalIds,
   prioritizeProposalAtCursor,
@@ -23,6 +24,19 @@ describe("Society of Mind session transitions", () => {
     expect(
       mergeReadyProposalIds(completeQueue.slice(0, 10), completeQueue),
     ).toEqual(completeQueue);
+  });
+
+  it("drops missing proposal ids and preserves the remaining cursor position", () => {
+    expect(
+      dropMissingProposalIds(
+        ["gone", "current", "later", "also-gone"],
+        2,
+        new Set(["current", "later"]),
+      ),
+    ).toEqual({ proposalIds: ["current", "later"], cursor: 1 });
+    expect(
+      dropMissingProposalIds(["only-gone"], 0, new Set(["still-here"])),
+    ).toEqual({ proposalIds: [], cursor: 0 });
   });
 
   it("focuses an exact follow-up without changing completed work", () => {

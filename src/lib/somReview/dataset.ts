@@ -38,7 +38,8 @@ export const proposalAvailability = (
   record: any,
   decisions: Map<string, "agree" | "disagree">,
 ): SomProposalAvailability => {
-  const dependencies: string[] = record?.workflow?.dependsOnProposalIds || [];
+  if (!record) return "not-applicable";
+  const dependencies: string[] = record.workflow?.dependsOnProposalIds || [];
   if (dependencies.some((id) => decisions.get(id) === "disagree")) {
     return "not-applicable";
   }

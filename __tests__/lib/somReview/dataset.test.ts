@@ -157,6 +157,7 @@ describe("Society of Mind review dataset", () => {
         proposalAvailability(record, new Map([[dependencyId, "disagree"]])),
       ).toBe("not-applicable");
     }
+    expect(proposalAvailability(undefined, new Map())).toBe("not-applicable");
   });
 
   it("does not reintroduce the contradictory Rent/Lease or whole-node polysemy actions", () => {

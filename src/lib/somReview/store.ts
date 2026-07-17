@@ -9,6 +9,7 @@ import {
 import { SomIssueType } from "../../types/ISomReview";
 import { SomDataset, proposalAvailability } from "./dataset";
 import {
+  dropMissingProposalIds,
   isResumableSession,
   mergeReadyProposalIds,
   prioritizeProposalAtCursor,
@@ -197,8 +198,13 @@ export const getOrCreateSession = async (
   if (!existing.empty) {
     const existingDoc = existing.docs[0];
     const session = existingDoc.data() as SessionDoc;
-    const remainingReady = session.proposalIds
-      .slice(session.cursor)
+    const sanitized = dropMissingProposalIds(
+      session.proposalIds,
+      session.cursor,
+      dataset.recordsById,
+    );
+    const remainingReady = sanitized.proposalIds
+      .slice(sanitized.cursor)
       .every(
         (proposalId) =>
           proposalAvailability(
@@ -206,7 +212,14 @@ export const getOrCreateSession = async (
             decisions,
           ) === "ready",
       );
-    if (isResumableSession(session) && remainingReady) {
+    if (
+      isResumableSession({
+        ...session,
+        proposalIds: sanitized.proposalIds,
+        cursor: sanitized.cursor,
+      }) &&
+      remainingReady
+    ) {
       const all = dataset.orderedIdsByIssue.get(issueType) || [];
       const answered = await answeredProposalIds(
         dataset.datasetVersion,
@@ -222,22 +235,29 @@ export const getOrCreateSession = async (
           ) === "ready",
       );
       const proposalIds = prioritizeProposalAtCursor(
-        mergeReadyProposalIds(session.proposalIds, ready),
-        session.cursor,
+        mergeReadyProposalIds(sanitized.proposalIds, ready),
+        sanitized.cursor,
         preferredProposalId,
       );
       if (
         proposalIds.length !== session.proposalIds.length ||
+        sanitized.cursor !== session.cursor ||
         proposalIds.some(
           (proposalId, index) => proposalId !== session.proposalIds[index],
         )
       ) {
         await existingDoc.ref.update({
           proposalIds,
+          cursor: sanitized.cursor,
           updatedAt: Timestamp.now(),
         });
       }
-      return { ...session, proposalIds, id: existingDoc.id };
+      return {
+        ...session,
+        proposalIds,
+        cursor: sanitized.cursor,
+        id: existingDoc.id,
+      };
     }
     if (session.status === "active") {
       await existingDoc.ref.update({

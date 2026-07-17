@@ -36,6 +36,31 @@ export const mergeReadyProposalIds = (
 };
 
 /**
+ * Drops proposal IDs that are no longer in the dataset and shifts the cursor
+ * so it still points at the same remaining item (or the end of the queue).
+ */
+export const dropMissingProposalIds = (
+  proposalIds: string[],
+  cursor: number,
+  knownProposalIds: Set<string> | Map<string, unknown>,
+): { proposalIds: string[]; cursor: number } => {
+  let nextCursor = cursor;
+  const nextIds: string[] = [];
+  for (let index = 0; index < proposalIds.length; index += 1) {
+    const proposalId = proposalIds[index];
+    if (!knownProposalIds.has(proposalId)) {
+      if (index < cursor) nextCursor -= 1;
+      continue;
+    }
+    nextIds.push(proposalId);
+  }
+  return {
+    proposalIds: nextIds,
+    cursor: Math.max(0, Math.min(nextCursor, nextIds.length)),
+  };
+};
+
+/**
  * Moves an exact linked proposal to the current cursor without changing the
  * completed prefix or dropping any other proposal from the session.
  */
