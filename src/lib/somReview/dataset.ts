@@ -9,6 +9,7 @@ import {
   loadOntologySnapshot,
   validateProposalAgainstSnapshot,
 } from "./ontologySnapshot";
+import { numberedIssueLabelMap } from "./reviewTaxonomy";
 
 const EXPECTED_SCHEMA_VERSION = "som-review-v1";
 
@@ -207,9 +208,8 @@ export const loadDataset = (dir?: string): SomDataset => {
   for (const proposalId of recordsById.keys()) visit(proposalId);
 
   const orderedIdsByIssue = new Map<SomIssueType, string[]>();
-  const issueLabels = new Map<SomIssueType, string>();
+  const issueLabels = numberedIssueLabelMap(manifest.issueTypes || []);
   for (const issue of manifest.issueTypes || []) {
-    issueLabels.set(issue.id, issue.label);
     const ids = [...recordsById.values()]
       .filter((r) => r.issueType === issue.id)
       .sort((a, b) => orderKey(a).localeCompare(orderKey(b)))

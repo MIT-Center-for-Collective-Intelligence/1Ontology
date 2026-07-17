@@ -22,7 +22,7 @@ describe("Society of Mind reviewer card blinding", () => {
       expect(serialized).not.toMatch(
         /internalModelEvidence|detector|judge|promptVersion|rolloutStatus/i,
       );
-      expect(serialized).not.toMatch(/\bH\d+\s*(?::|not\s+run\b)/i);
+      expect(serialized).not.toMatch(/\b[HJ]\d+\s*(?::|not\s+run\b)/i);
     }
   });
 
@@ -58,7 +58,7 @@ describe("Society of Mind reviewer card blinding", () => {
       },
     });
     expect(card.reviewerView.question).toBe(
-      'Do "Sell products" and "Sell merchandise" name the same activity?',
+      'Should "Sell merchandise" be recorded as a synonym of "Sell products"?',
     );
     expect(card.reviewerView.question).not.toMatch(/merge|delete/i);
     expect(card.reviewerView.proposedState).toBe(
@@ -66,6 +66,21 @@ describe("Society of Mind reviewer card blinding", () => {
     );
     expect(card.reviewerView.proposedState).not.toMatch(
       /merge|delete|downstream/i,
+    );
+  });
+
+  it("names the mistaken synonym in recorded-synonym removal questions", () => {
+    expect(
+      reviewerQuestion({
+        type: "metadata-edit",
+        nodeTitle: "Sell Service",
+        field: "synonyms",
+        synonymScope: "all-recorded",
+        currentValues: ["Market Service", "Sell"],
+        proposedValues: ["Sell"],
+      }),
+    ).toBe(
+      'Should "Market Service" be removed as a synonym of "Sell Service"?',
     );
   });
 

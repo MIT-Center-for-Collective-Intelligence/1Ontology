@@ -4,7 +4,7 @@ export const ISSUE_DESCRIPTIONS: Record<SomIssueType, string> = {
   "title-clarity": "Judge whether an activity title is clear and precise.",
   "synonym-enrichment": "Review synonyms missing from structured metadata.",
   "description-enrichment":
-    "Review evidence-grounded descriptions for empty nodes.",
+    "Optionally review evidence-grounded descriptions for empty nodes.",
   "misc-facet-duplicate":
     "Find concepts repeated in miscellaneous and explicit facets.",
   "mistaken-synonym":
@@ -18,8 +18,7 @@ export const ISSUE_DESCRIPTIONS: Record<SomIssueType, string> = {
   "collection-design":
     "Review a distinct specialization dimension and its branches.",
   placement: "Judge whether an activity is under the wrong parent.",
-  "wrong-verb":
-    "Judge whether Market names promotion rather than a kind of selling.",
+  "wrong-verb": "Assess whether misjudged synonyms should be moved.",
   "sense-relocation":
     "Move only the non-selling sense after a polysemy decision.",
   "node-merge":
@@ -27,7 +26,7 @@ export const ISSUE_DESCRIPTIONS: Record<SomIssueType, string> = {
   relocation:
     "Review an exact move from the current parent to a named new parent.",
   "missing-activity":
-    "Judge whether a well-known Sell activity is missing from the ontology.",
+    "Optionally judge whether a well-known activity is missing from the sub-branch.",
   "redundant-node":
     "Review removal of a wrapper whose children can move to its parent.",
 };
@@ -54,9 +53,9 @@ export const ISSUE_INTRODUCTIONS: Record<SomIssueType, string> = {
   "collection-design":
     "Review a collection that captures a distinct specialization dimension. Agree only if the dimension and proposed branches organize the activities coherently without treating related activities as synonyms.",
   placement:
-    "Review whether an activity is currently under the wrong parent within the Sell branch. Decide only whether its present placement is wrong; a possible new parent will be reviewed separately.",
+    "Review whether an activity is currently under the wrong parent within the current sub-branch. Decide only whether its present placement is wrong; a specific new parent will be reviewed separately.",
   "wrong-verb":
-    "Review whether the activity's main action is promotion or another action rather than selling. Decide only whether it belongs under Sell; a possible destination will be reviewed separately.",
+    "Assess whether a synonym was misjudged because the activity uses a different main action. Decide whether it belongs in the current sub-branch; a specific destination will be reviewed separately.",
   "sense-relocation":
     "Review the exact separation and relocation proposed after a polysemy diagnosis. The before-and-after view shows which sense remains in Sell and which sense moves elsewhere.",
   "node-merge":
@@ -64,7 +63,7 @@ export const ISSUE_INTRODUCTIONS: Record<SomIssueType, string> = {
   relocation:
     "Review an exact move after a related placement diagnosis. The before-and-after view shows the current parent, proposed parent, and any direct children that would move with the activity.",
   "missing-activity":
-    "Review a proposed activity that is not currently represented in the Sell branch. Agree only if it is a distinct, commonly needed activity and the proposed parent is appropriate.",
+    "Optionally review a proposed activity that is not currently represented in the sub-branch. Agree only if it is distinct, commonly needed, and placed under an appropriate parent.",
   "redundant-node":
     "Review a wrapper node that may add no useful distinction. The before-and-after view shows which children would move directly to its parent if the wrapper were removed.",
 };

@@ -229,7 +229,7 @@ const ReviewCard = ({
       ? "Yes, misplaced"
       : view.agreeLabel;
   const disagreeLabel = wrongVerb
-    ? "No, it belongs under Sell"
+    ? "No, it belongs here"
     : placementContext
       ? "No, keep here"
       : view.disagreeLabel;

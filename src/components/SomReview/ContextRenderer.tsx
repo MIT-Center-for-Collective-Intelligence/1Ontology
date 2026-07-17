@@ -21,6 +21,7 @@ import { SomReviewContext } from "../../types/ISomReview";
 import { reviewAccentColor } from "./reviewStyles";
 
 const CONTEXTS_WITH_STATE_COMPARISONS = new Set<SomReviewContext["type"]>([
+  "duplicate-comparison",
   "grouping-outline",
   "merge-action",
   "relocation-action",
@@ -168,8 +169,8 @@ const TitleComparison = ({
 
   return (
     <Disclosure
-      closedLabel={`Show source ${tasks.length === 1 ? "task" : `tasks (${tasks.length})`}`}
-      openLabel="Hide source tasks"
+      closedLabel={`Show source O*NET evidence${tasks.length > 1 ? ` (${tasks.length})` : ""}`}
+      openLabel="Hide source O*NET evidence"
     >
       <List dense disablePadding sx={{ pl: 1, pb: 1 }}>
         {tasks.map((task) => (
@@ -274,38 +275,43 @@ const GroupingOutline = ({
   );
 
   return (
-    <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
-      <Box sx={comparisonPanelSx} aria-label="Current grouping">
-        <Typography sx={sectionLabelSx}>Before</Typography>
-        <Typography sx={{ mt: 1, fontWeight: 750 }}>
-          {context.parentTitle}
-        </Typography>
-        {currentChildren.map((child) => (
+    <Box>
+      <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
+        <Box sx={comparisonPanelSx} aria-label="Current grouping">
+          <Typography sx={sectionLabelSx}>Before</Typography>
+          <Typography sx={{ mt: 1, fontWeight: 750 }}>
+            {context.parentTitle}
+          </Typography>
+          {currentChildren.map((child) => (
+            <OutlineItem
+              key={child}
+              title={child}
+              highlighted={proposedTitles.has(child)}
+              indent={1}
+            />
+          ))}
+        </Box>
+        <Box sx={comparisonPanelSx} aria-label="Proposed grouping">
+          <Typography sx={sectionLabelSx}>After</Typography>
+          <Typography sx={{ mt: 1, fontWeight: 750 }}>
+            {context.parentTitle}
+          </Typography>
           <OutlineItem
-            key={child}
-            title={child}
-            highlighted={proposedTitles.has(child)}
+            title={context.proposedGroupTitle}
+            highlighted
             indent={1}
+            statusLabel="Proposed new group (not currently in the ontology)"
           />
-        ))}
+          {proposedChildren.map((child) => (
+            <OutlineItem key={child} title={child} highlighted indent={2} />
+          ))}
+          {remainingChildren}
+        </Box>
+      </Stack>
+      <Box sx={{ mt: 1 }}>
+        <SourceTasks tasks={context.sourceTasks || []} />
       </Box>
-      <Box sx={comparisonPanelSx} aria-label="Proposed grouping">
-        <Typography sx={sectionLabelSx}>After</Typography>
-        <Typography sx={{ mt: 1, fontWeight: 750 }}>
-          {context.parentTitle}
-        </Typography>
-        <OutlineItem
-          title={context.proposedGroupTitle}
-          highlighted
-          indent={1}
-          statusLabel="Proposed new group (not currently in the ontology)"
-        />
-        {proposedChildren.map((child) => (
-          <OutlineItem key={child} title={child} highlighted indent={2} />
-        ))}
-        {remainingChildren}
-      </Box>
-    </Stack>
+    </Box>
   );
 };
 
@@ -398,11 +404,14 @@ const PlacementNote = ({
   context: Extract<SomReviewContext, { type: "placement-comparison" }>;
 }) => {
   return (
-    <BoundaryNote>
-      {context.placementIssue === "wrong-verb"
-        ? "If you agree that this is not a selling activity, its appropriate location will be reviewed in a separate step."
-        : "If you agree that this activity is misplaced, its appropriate location will be reviewed in a separate step."}
-    </BoundaryNote>
+    <Box>
+      <SourceTasks tasks={context.sourceTasks || []} />
+      <BoundaryNote>
+        {context.placementIssue === "wrong-verb"
+          ? "If you agree that this is not a selling activity, its appropriate location will be reviewed in a separate step."
+          : "If you agree that this activity is misplaced, its appropriate location will be reviewed in a separate step."}
+      </BoundaryNote>
+    </Box>
   );
 };
 
@@ -568,8 +577,8 @@ const SourceTasks = ({ tasks }: { tasks: string[] }) => {
   const uniqueTasks = uniqueTextValues(tasks);
   return uniqueTasks.length > 0 ? (
     <Disclosure
-      closedLabel={`Show source ${uniqueTasks.length === 1 ? "task" : `tasks (${uniqueTasks.length})`}`}
-      openLabel="Hide source tasks"
+      closedLabel={`Show source O*NET evidence${uniqueTasks.length > 1 ? ` (${uniqueTasks.length})` : ""}`}
+      openLabel="Hide source O*NET evidence"
     >
       <List dense disablePadding sx={{ pl: 1, pb: 1 }}>
         {uniqueTasks.map((task) => (
@@ -606,55 +615,89 @@ const MetadataEdit = ({
   context,
 }: {
   context: Extract<SomReviewContext, { type: "metadata-edit" }>;
-}) => (
-  <Box>
-    <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
-      <Box sx={comparisonPanelSx} aria-label="Metadata before change">
-        <Typography sx={sectionLabelSx}>Before</Typography>
-        <Typography sx={{ mt: 1, fontWeight: 750 }}>
-          {context.nodeTitle}
-        </Typography>
-        <Typography sx={{ ...sectionLabelSx, mt: 1.25 }}>
-          {context.field === "synonyms"
-            ? context.synonymScope === "all-recorded"
-              ? "Current recorded synonyms"
-              : "Current structured synonyms"
-            : "Current description"}
-        </Typography>
-        {context.field === "synonyms" ? (
-          <SynonymValues values={context.currentValues || []} />
-        ) : (
-          <Typography sx={{ mt: 1, lineHeight: 1.55, color: "text.secondary" }}>
-            {context.currentText || "No description"}
+}) => {
+  const removedSynonyms = (context.currentValues || []).filter(
+    (value) => !(context.proposedValues || []).includes(value),
+  );
+  const isRemovalReview =
+    context.field === "synonyms" &&
+    context.synonymScope === "all-recorded" &&
+    removedSynonyms.length > 0;
+
+  return (
+    <Box>
+      <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
+        <Box sx={comparisonPanelSx} aria-label="Metadata before change">
+          <Typography sx={sectionLabelSx}>Before</Typography>
+          {isRemovalReview ? (
+            <>
+              <Typography sx={{ mt: 1, fontWeight: 750 }}>
+                {removedSynonyms.join(", ")}
+              </Typography>
+              <Typography sx={{ mt: 0.5, color: "text.secondary" }}>
+                Recorded as{" "}
+                {removedSynonyms.length === 1 ? "a synonym" : "synonyms"} of
+              </Typography>
+              <Typography sx={{ mt: 0.35, fontWeight: 700 }}>
+                {context.nodeTitle}
+              </Typography>
+            </>
+          ) : (
+            <Typography sx={{ mt: 1, fontWeight: 750 }}>
+              {context.nodeTitle}
+            </Typography>
+          )}
+          <Typography sx={{ ...sectionLabelSx, mt: 1.25 }}>
+            {context.field === "synonyms"
+              ? context.synonymScope === "all-recorded"
+                ? "Current recorded synonyms"
+                : "Current structured synonyms"
+              : "Current description"}
           </Typography>
-        )}
-      </Box>
-      <Box sx={comparisonPanelSx} aria-label="Metadata after change">
-        <Typography sx={sectionLabelSx}>After</Typography>
-        <Typography sx={{ mt: 1, fontWeight: 750 }}>
-          {context.nodeTitle}
-        </Typography>
-        <Typography sx={{ ...sectionLabelSx, mt: 1.25 }}>
-          {context.field === "synonyms"
-            ? context.synonymScope === "all-recorded"
-              ? "Recorded synonyms after this change"
-              : "Proposed structured synonyms"
-            : "Proposed description"}
-        </Typography>
-        {context.field === "synonyms" ? (
-          <SynonymValues values={context.proposedValues || []} />
-        ) : (
-          <Typography sx={{ mt: 1, lineHeight: 1.55 }}>
-            {context.proposedText}
+          {context.field === "synonyms" ? (
+            <SynonymValues values={context.currentValues || []} />
+          ) : (
+            <Typography
+              sx={{ mt: 1, lineHeight: 1.55, color: "text.secondary" }}
+            >
+              {context.currentText || "No description"}
+            </Typography>
+          )}
+        </Box>
+        <Box sx={comparisonPanelSx} aria-label="Metadata after change">
+          <Typography sx={sectionLabelSx}>After</Typography>
+          {isRemovalReview ? (
+            <Typography sx={{ mt: 1, fontWeight: 750, lineHeight: 1.5 }}>
+              Remove {removedSynonyms.join(", ")} from the synonyms recorded for{" "}
+              {context.nodeTitle}
+            </Typography>
+          ) : (
+            <Typography sx={{ mt: 1, fontWeight: 750 }}>
+              {context.nodeTitle}
+            </Typography>
+          )}
+          <Typography sx={{ ...sectionLabelSx, mt: 1.25 }}>
+            {context.field === "synonyms"
+              ? context.synonymScope === "all-recorded"
+                ? "Recorded synonyms after this change"
+                : "Proposed structured synonyms"
+              : "Proposed description"}
           </Typography>
-        )}
+          {context.field === "synonyms" ? (
+            <SynonymValues values={context.proposedValues || []} />
+          ) : (
+            <Typography sx={{ mt: 1, lineHeight: 1.55 }}>
+              {context.proposedText}
+            </Typography>
+          )}
+        </Box>
+      </Stack>
+      <Box sx={{ mt: 1 }}>
+        <SourceTasks tasks={context.sourceTasks || []} />
       </Box>
-    </Stack>
-    <Box sx={{ mt: 1 }}>
-      <SourceTasks tasks={context.sourceTasks || []} />
     </Box>
-  </Box>
-);
+  );
+};
 
 const PolysemyReview = ({
   context,
@@ -697,41 +740,48 @@ const CollectionDesign = ({
 }: {
   context: Extract<SomReviewContext, { type: "collection-design" }>;
 }) => (
-  <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
-    <Box sx={comparisonPanelSx} aria-label="Collections before redesign">
-      <Typography sx={sectionLabelSx}>Before</Typography>
-      <Typography sx={{ mt: 1, fontWeight: 750 }}>
-        {context.parentTitle}
-      </Typography>
-      {context.currentChildren.map((title) => (
-        <OutlineItem key={title} title={title} highlighted indent={1} />
-      ))}
+  <Box>
+    <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
+      <Box sx={comparisonPanelSx} aria-label="Collections before redesign">
+        <Typography sx={sectionLabelSx}>Before</Typography>
+        <Typography sx={{ mt: 1, fontWeight: 750 }}>
+          {context.parentTitle}
+        </Typography>
+        {context.currentChildren.map((title) => (
+          <OutlineItem key={title} title={title} highlighted indent={1} />
+        ))}
+      </Box>
+      <Box sx={comparisonPanelSx} aria-label="Collections after redesign">
+        <Typography sx={sectionLabelSx}>After</Typography>
+        <Typography sx={{ mt: 1, fontWeight: 750 }}>
+          {context.parentTitle}
+        </Typography>
+        <Typography
+          sx={{ mt: 1.25, color: reviewAccentColor, fontWeight: 750 }}
+        >
+          Collection: {context.proposedCollectionName}
+        </Typography>
+        {context.proposedBranches.map((branch) => (
+          <Box key={branch.title}>
+            <OutlineItem
+              title={branch.title}
+              highlighted
+              indent={1}
+              statusLabel={
+                branch.status === "new" ? "Proposed new activity" : undefined
+              }
+            />
+            {branch.children.map((title) => (
+              <OutlineItem key={title} title={title} highlighted indent={2} />
+            ))}
+          </Box>
+        ))}
+      </Box>
+    </Stack>
+    <Box sx={{ mt: 1 }}>
+      <SourceTasks tasks={context.sourceTasks || []} />
     </Box>
-    <Box sx={comparisonPanelSx} aria-label="Collections after redesign">
-      <Typography sx={sectionLabelSx}>After</Typography>
-      <Typography sx={{ mt: 1, fontWeight: 750 }}>
-        {context.parentTitle}
-      </Typography>
-      <Typography sx={{ mt: 1.25, color: reviewAccentColor, fontWeight: 750 }}>
-        Collection: {context.proposedCollectionName}
-      </Typography>
-      {context.proposedBranches.map((branch) => (
-        <Box key={branch.title}>
-          <OutlineItem
-            title={branch.title}
-            highlighted
-            indent={1}
-            statusLabel={
-              branch.status === "new" ? "Proposed new activity" : undefined
-            }
-          />
-          {branch.children.map((title) => (
-            <OutlineItem key={title} title={title} highlighted indent={2} />
-          ))}
-        </Box>
-      ))}
-    </Box>
-  </Stack>
+  </Box>
 );
 
 const SenseRelocationAction = ({
@@ -777,20 +827,32 @@ const DuplicateComparison = ({
   context: Extract<SomReviewContext, { type: "duplicate-comparison" }>;
 }) => (
   <Box>
-    <Typography sx={{ mb: 1.5, color: "text.secondary" }}>
-      Both titles are under <strong>{context.parentTitle}</strong>.
-    </Typography>
     <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-      <Box sx={comparisonPanelSx}>
-        <LabeledValue label="First title" value={context.canonicalTitle} />
+      <Box
+        sx={comparisonPanelSx}
+        aria-label="Separate node before synonym change"
+      >
+        <Typography sx={sectionLabelSx}>Before</Typography>
+        <Typography sx={{ mt: 1, fontWeight: 750 }}>
+          {context.candidateSynonymTitle}
+        </Typography>
+        <Typography sx={{ mt: 0.5, color: "text.secondary" }}>
+          Separate node under {context.parentTitle}
+        </Typography>
       </Box>
-      <Box sx={comparisonPanelSx}>
-        <LabeledValue
-          label="Second title"
-          value={context.candidateSynonymTitle}
-        />
+      <Box sx={comparisonPanelSx} aria-label="Proposed synonym relationship">
+        <Typography sx={sectionLabelSx}>After</Typography>
+        <Typography sx={{ mt: 1, fontWeight: 750 }}>
+          {context.canonicalTitle}
+        </Typography>
+        <Typography sx={{ mt: 0.5, color: "text.secondary" }}>
+          Record {context.candidateSynonymTitle} as a synonym
+        </Typography>
       </Box>
     </Stack>
+    <Box sx={{ mt: 1 }}>
+      <SourceTasks tasks={context.sourceTasks || []} />
+    </Box>
   </Box>
 );
 

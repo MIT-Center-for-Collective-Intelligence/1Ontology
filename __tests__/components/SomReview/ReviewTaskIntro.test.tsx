@@ -14,7 +14,7 @@ describe("ReviewTaskIntro", () => {
     render(
       <ReviewTaskIntro
         issueType="placement"
-        label="11. Wrong place within Sell"
+        label="10. Wrong place within Sub-branch"
         itemCount={7}
         resuming={false}
         onContinue={onContinue}
@@ -23,7 +23,9 @@ describe("ReviewTaskIntro", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: "11. Wrong place within Sell" }),
+      screen.getByRole("heading", {
+        name: "10. Wrong place within Sub-branch",
+      }),
     ).toBeInTheDocument();
     expect(
       screen.getByText(/decide only whether its present placement is wrong/i),
