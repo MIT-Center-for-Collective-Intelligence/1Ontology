@@ -8,12 +8,14 @@ const cleanText = (value: unknown): string =>
   typeof value === "string" ? value.trim() : "";
 
 /**
- * Some source reasoning ends with internal critic output such as "H6: other"
+ * Some source reasoning ends with internal critic output such as "J6: other"
  * or "H2 not run". The reviewer must never see those control identities.
  */
 export const sanitizeReasoning = (value: unknown): string => {
   const reasoning = cleanText(value);
-  const internalMarker = reasoning.search(/(?:^|\s)H\d+\s*(?::|not\s+run\b)/i);
+  const internalMarker = reasoning.search(
+    /(?:^|\s)[HJ]\d+\s*(?::|not\s+run\b)/i,
+  );
   return (internalMarker >= 0 ? reasoning.slice(0, internalMarker) : reasoning)
     .trim()
     .replace(/\s+/g, " ");
@@ -36,7 +38,7 @@ export const reviewerQuestion = (context: SomReviewContext): string => {
     case "flat-list":
       return `Is it reasonable to leave these activities directly under "${context.parentTitle}"?`;
     case "duplicate-comparison":
-      return `Do "${context.canonicalTitle}" and "${context.candidateSynonymTitle}" name the same activity?`;
+      return `Should "${context.candidateSynonymTitle}" be recorded as a synonym of "${context.canonicalTitle}"?`;
     case "placement-comparison":
       return context.placementIssue === "wrong-verb"
         ? `Does "${context.nodeTitle}" use a different main action than "Sell"?`
@@ -52,6 +54,21 @@ export const reviewerQuestion = (context: SomReviewContext): string => {
     case "merge-up-action":
       return `Should the redundant wrapper "${context.nodeTitle}" be removed and its children moved directly under "${context.parentTitle}"?`;
     case "metadata-edit":
+      if (
+        context.field === "synonyms" &&
+        context.synonymScope === "all-recorded"
+      ) {
+        const removed = (context.currentValues || []).filter(
+          (value) => !(context.proposedValues || []).includes(value),
+        );
+        if (removed.length > 0) {
+          return `Should ${removed
+            .map((value) => `"${value}"`)
+            .join(" and ")} be removed as ${
+            removed.length === 1 ? "a synonym" : "synonyms"
+          } of "${context.nodeTitle}"?`;
+        }
+      }
       return context.field === "synonyms"
         ? `Should the proposed synonym change be made for "${context.nodeTitle}"?`
         : `Is the proposed description useful for "${context.nodeTitle}"?`;
@@ -82,7 +99,7 @@ const placementReviewerText = (
         : "Yes, misplaced",
     disagreeLabel:
       context.placementIssue === "wrong-verb"
-        ? "No, it belongs under Sell"
+        ? "No, it belongs here"
         : "No, keep here",
   };
 };
@@ -152,6 +169,7 @@ const sanitizeContext = (context: any): SomReviewContext => {
         proposedGroupTitle: context.proposedGroupTitle,
         proposedChildren: context.proposedChildren,
         unaffectedChildren: context.unaffectedChildren || [],
+        sourceTasks: context.sourceTasks || [],
       };
     case "flat-list":
       return {
@@ -165,6 +183,7 @@ const sanitizeContext = (context: any): SomReviewContext => {
         parentTitle: context.parentTitle,
         canonicalTitle: context.canonicalTitle,
         candidateSynonymTitle: context.candidateSynonymTitle,
+        sourceTasks: context.sourceTasks || [],
       };
     case "placement-comparison":
       return {
@@ -176,6 +195,7 @@ const sanitizeContext = (context: any): SomReviewContext => {
             ? context.currentBucket
             : "",
         placementIssue: context.placementIssue,
+        sourceTasks: context.sourceTasks || [],
       };
     case "overlap-comparison":
       return {
@@ -185,6 +205,7 @@ const sanitizeContext = (context: any): SomReviewContext => {
         firstTitle: context.firstTitle,
         secondCollection: context.secondCollection,
         secondTitle: context.secondTitle,
+        sourceTasks: context.sourceTasks || [],
       };
     case "merge-action":
       return {
@@ -255,6 +276,7 @@ const sanitizeContext = (context: any): SomReviewContext => {
         currentChildren: context.currentChildren || [],
         proposedCollectionName: context.proposedCollectionName,
         proposedBranches: context.proposedBranches || [],
+        sourceTasks: context.sourceTasks || [],
       };
     case "sense-relocation-action":
       return {

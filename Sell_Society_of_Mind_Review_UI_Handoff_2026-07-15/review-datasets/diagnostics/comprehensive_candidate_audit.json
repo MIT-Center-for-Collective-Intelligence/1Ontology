@@ -6,7 +6,7 @@
   "taxonomy": [
     {
       "id": "title-clarity",
-      "label": "1. Clarify unclear titles",
+      "label": "Clarify unclear titles",
       "stage": "content",
       "robTaskIds": [
         1
@@ -16,7 +16,7 @@
     },
     {
       "id": "synonym-enrichment",
-      "label": "2. Add missing synonyms",
+      "label": "Add missing synonyms",
       "stage": "content",
       "robTaskIds": [
         2
@@ -26,17 +26,18 @@
     },
     {
       "id": "description-enrichment",
-      "label": "3. Add missing descriptions",
-      "stage": "content",
+      "label": "Add missing descriptions",
+      "stage": "additional-quality",
       "robTaskIds": [
         3
       ],
+      "optional": true,
       "rolloutStatus": "experimental",
       "view": "metadata-edit"
     },
     {
       "id": "misc-facet-duplicate",
-      "label": "4. Repeated miscellaneous/facet nodes",
+      "label": "Repeated miscellaneous/facet nodes",
       "stage": "within-branch",
       "robTaskIds": [
         4
@@ -46,7 +47,7 @@
     },
     {
       "id": "mistaken-synonym",
-      "label": "5. Mistaken synonyms",
+      "label": "Mistaken synonyms",
       "stage": "content",
       "robTaskIds": [
         5
@@ -56,7 +57,7 @@
     },
     {
       "id": "duplicate-synonym",
-      "label": "6. Undetected synonyms",
+      "label": "Undetected synonyms",
       "stage": "content",
       "robTaskIds": [
         6
@@ -66,7 +67,7 @@
     },
     {
       "id": "polysemy",
-      "label": "7. Undetected double meanings",
+      "label": "Undetected double meanings",
       "stage": "content",
       "robTaskIds": [
         7
@@ -76,7 +77,7 @@
     },
     {
       "id": "flat-list-grouping",
-      "label": "8. Group long flat lists",
+      "label": "Group long flat lists",
       "stage": "within-branch",
       "robTaskIds": [
         8
@@ -86,7 +87,7 @@
     },
     {
       "id": "compound-object-grouping",
-      "label": "9. Group compound objects",
+      "label": "Group compound objects",
       "stage": "within-branch",
       "robTaskIds": [
         9
@@ -96,7 +97,7 @@
     },
     {
       "id": "collection-design",
-      "label": "10. Create warranted collections",
+      "label": "Create warranted collections",
       "stage": "within-branch",
       "robTaskIds": [
         10
@@ -106,7 +107,7 @@
     },
     {
       "id": "placement",
-      "label": "11. Wrong place within Sell",
+      "label": "Wrong place within Sub-branch",
       "stage": "within-branch",
       "robTaskIds": [
         11
@@ -116,7 +117,7 @@
     },
     {
       "id": "wrong-verb",
-      "label": "12. Misjudged synonyms outside Sell",
+      "label": "Misjudged synonyms within Sub-branch",
       "stage": "outside-branch",
       "robTaskIds": [
         12
@@ -126,7 +127,7 @@
     },
     {
       "id": "sense-relocation",
-      "label": "13. Move non-selling senses",
+      "label": "Move a separated non-selling sense",
       "stage": "outside-branch",
       "robTaskIds": [
         13
@@ -136,7 +137,7 @@
     },
     {
       "id": "node-merge",
-      "label": "Apply approved node merges",
+      "label": "Review approved node merges",
       "stage": "final-action",
       "robTaskIds": [
         4,
@@ -147,7 +148,7 @@
     },
     {
       "id": "relocation",
-      "label": "Apply approved relocations",
+      "label": "Review approved relocations",
       "stage": "final-action",
       "robTaskIds": [
         11,
@@ -161,6 +162,7 @@
       "label": "Missing activity",
       "stage": "additional-quality",
       "robTaskIds": [],
+      "optional": true,
       "rolloutStatus": "experimental",
       "view": "addition-action"
     },
@@ -185,7 +187,24 @@
     "exactRelocations": 11,
     "senseRelocations": 1,
     "missingActivities": 10,
-    "redundantNodes": 0
+    "redundantNodes": 0,
+    "deferredPureNumberNormalization": 12
+  },
+  "deferredPolicyCandidates": {
+    "titleNumberNormalization": [
+      "Market Event",
+      "Market Product",
+      "Sell Beverage",
+      "Sell Bond",
+      "Sell Flower",
+      "Sell Lotion",
+      "Sell Plant",
+      "Sell Refreshment",
+      "Sell Stamp",
+      "Sell Stock",
+      "Sell Supply",
+      "Sell Tonic"
+    ]
   },
   "evidenceConvergenceGroupings": [
     {
@@ -343,6 +362,7 @@
     "Rent out and Lease out are no longer simultaneously treated as wrong verbs and an immediate merge; collection design is reviewed first.",
     "Sell Products or Ideas is no longer moved intact when its idea sense is the actual problem.",
     "Exact merges and relocations include prerequisite proposal IDs and are served only after an agreeing diagnosis.",
+    "Pure singular-to-plural title changes are held out until the team sets an ontology-wide title policy.",
     "All proposed current nodes and current relations are checked against the pinned Firestore snapshot."
   ]
 }

@@ -46,66 +46,87 @@ const issues: SomIssueTypeOption[] = [
   }),
   option(
     "description-enrichment",
-    "3. Add missing descriptions",
-    "content",
+    "15. Add missing descriptions",
+    "additional-quality",
     [3],
+    { optional: true },
   ),
   option(
     "misc-facet-duplicate",
-    "4. Repeated miscellaneous/facet nodes",
+    "6. Repeated miscellaneous/facet nodes",
     "within-branch",
     [4],
     { pending: 0 },
   ),
-  option("mistaken-synonym", "5. Mistaken synonyms", "content", [5]),
-  option("duplicate-synonym", "6. Undetected synonyms", "content", [6]),
-  option("polysemy", "7. Undetected double meanings", "content", [7]),
+  option("mistaken-synonym", "3. Mistaken synonyms", "content", [5]),
+  option("duplicate-synonym", "4. Undetected synonyms", "content", [6]),
+  option("polysemy", "5. Undetected double meanings", "content", [7]),
   option(
     "flat-list-grouping",
-    "8. Group long flat lists",
+    "7. Group long flat lists",
     "within-branch",
     [8],
   ),
   option(
     "compound-object-grouping",
-    "9. Group compound objects",
+    "8. Group compound objects",
     "within-branch",
     [9],
   ),
   option(
     "collection-design",
-    "10. Create warranted collections",
+    "9. Create warranted collections",
     "within-branch",
     [10],
   ),
-  option("placement", "11. Wrong place within Sell", "within-branch", [11], {
-    total: 16,
-    pending: 16,
-  }),
+  option(
+    "placement",
+    "10. Wrong place within Sub-branch",
+    "within-branch",
+    [11],
+    {
+      total: 16,
+      pending: 16,
+    },
+  ),
   option(
     "wrong-verb",
-    "12. Misjudged synonyms outside Sell",
+    "11. Misjudged synonyms within Sub-branch",
     "outside-branch",
     [12],
   ),
   option(
     "sense-relocation",
-    "13. Move non-selling senses",
+    "12. Move a separated non-selling sense",
     "outside-branch",
     [13],
   ),
-  option("node-merge", "Apply approved node merges", "final-action", [4, 6], {
-    total: 3,
-    pending: 0,
-    waiting: 3,
+  option(
+    "node-merge",
+    "13. Review approved node merges",
+    "final-action",
+    [4, 6],
+    {
+      total: 3,
+      pending: 0,
+      waiting: 3,
+    },
+  ),
+  option(
+    "relocation",
+    "14. Review approved relocations",
+    "final-action",
+    [11, 12],
+    {
+      total: 2,
+      pending: 0,
+      notApplicable: 2,
+    },
+  ),
+  option("missing-activity", "16. Missing activity", "additional-quality", [], {
+    optional: true,
   }),
-  option("relocation", "Apply approved relocations", "final-action", [11, 12], {
-    total: 2,
-    pending: 0,
-    notApplicable: 2,
-  }),
-  option("missing-activity", "Missing activity", "additional-quality", []),
-  option("redundant-node", "Redundant node", "additional-quality", [], {
+  option("redundant-node", "17. Redundant node", "additional-quality", [], {
     total: 0,
     pending: 0,
   }),
@@ -114,13 +135,13 @@ const issues: SomIssueTypeOption[] = [
 const readyFollowUp: SomLinkedFollowUp = {
   proposalId: "relocation-1",
   issueType: "relocation",
-  issueLabel: "Apply approved relocations",
+  issueLabel: "14. Review approved relocations",
   question: 'Should "Sell Contract" move to "Sign Contract"?',
   sources: [
     {
       proposalId: "placement-1",
       issueType: "placement",
-      issueLabel: "11. Wrong place within Sell",
+      issueLabel: "10. Wrong place within Sub-branch",
       question: 'Is "Sell Contract" misplaced under "Sell"?',
     },
   ],
@@ -133,10 +154,15 @@ describe("Society of Mind review queue selector", () => {
       expect(screen.getByText(issue.label)).toBeInTheDocument();
     }
     expect(screen.getByText("Content of nodes")).toBeInTheDocument();
-    expect(screen.getByText("Structure within Sell")).toBeInTheDocument();
-    expect(screen.getByText("Movement outside Sell")).toBeInTheDocument();
-    expect(screen.getByText("Exact actions")).toBeInTheDocument();
-    expect(screen.getByText("Additional quality checks")).toBeInTheDocument();
+    expect(screen.getByText("Structure within Sub-branch")).toBeInTheDocument();
+    expect(screen.getByText("Movement beyond Sub-branch")).toBeInTheDocument();
+    expect(screen.getByText("Follow-up change proposals")).toBeInTheDocument();
+    expect(
+      screen.getByText("Additional optional quality checks"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getAllByText("Optional for initial restructuring"),
+    ).toHaveLength(2);
     expect(
       screen.getByText("In progress: 10 of 47 reviewed"),
     ).toBeInTheDocument();
@@ -164,13 +190,13 @@ describe("Society of Mind review queue selector", () => {
     render(<ReviewQueueSelector issueTypes={issues} onStart={onStart} />);
     fireEvent.click(
       screen.getByRole("button", {
-        name: "Start 11. Wrong place within Sell review, 16 remaining",
+        name: "Start 10. Wrong place within Sub-branch review, 16 remaining",
       }),
     );
     expect(onStart).toHaveBeenCalledWith("placement");
     expect(
       screen.getByRole("button", {
-        name: "Apply approved node merges; review its related diagnosis first",
+        name: "13. Review approved node merges; review its related diagnosis first",
       }),
     ).toBeDisabled();
   });

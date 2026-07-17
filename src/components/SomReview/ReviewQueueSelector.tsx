@@ -29,8 +29,8 @@ import {
   SomIssueType,
   SomIssueTypeOption,
   SomLinkedFollowUp,
-  SomReviewStage,
 } from "../../types/ISomReview";
+import { SOM_REVIEW_STAGES } from "../../lib/somReview/reviewTaxonomy";
 import { ISSUE_DESCRIPTIONS } from "./reviewCopy";
 import { reviewAccentColor, reviewIconColor } from "./reviewStyles";
 import ReviewFollowUpPanel from "./ReviewFollowUpPanel";
@@ -138,42 +138,6 @@ const QueueStatus = ({ issue }: { issue: SomIssueTypeOption }) => {
   );
 };
 
-const REVIEW_STAGES: Array<{
-  id: SomReviewStage;
-  title: string;
-  description: string;
-}> = [
-  {
-    id: "content",
-    title: "Content of nodes",
-    description: "Review titles, synonyms, descriptions, and meanings first.",
-  },
-  {
-    id: "within-branch",
-    title: "Structure within Sell",
-    description:
-      "Review duplicate structure, groups, collections, and placement.",
-  },
-  {
-    id: "outside-branch",
-    title: "Movement outside Sell",
-    description:
-      "Review activities or senses that do not use Sell as their main action.",
-  },
-  {
-    id: "final-action",
-    title: "Exact actions",
-    description:
-      "Exact merge and move proposals appear here after you agree with their related diagnosis.",
-  },
-  {
-    id: "additional-quality",
-    title: "Additional quality checks",
-    description:
-      "Useful checks identified by the broader Society of Mind pipeline.",
-  },
-];
-
 const ReviewQueueSelector = ({
   issueTypes,
   onStart,
@@ -234,7 +198,7 @@ const ReviewQueueSelector = ({
     )}
 
     <Stack spacing={4}>
-      {REVIEW_STAGES.map((stage) => {
+      {SOM_REVIEW_STAGES.map((stage) => {
         const stageIssues = issueTypes.filter(
           (issue) => issue.stage === stage.id,
         );
@@ -314,15 +278,30 @@ const ReviewQueueSelector = ({
                           <IssueIcon issueType={issue.id} />
                         </Box>
                         <Box sx={{ minWidth: 0 }}>
-                          <Typography
-                            sx={{
-                              fontSize: "1.05rem",
-                              fontWeight: 750,
-                              lineHeight: 1.35,
-                            }}
+                          <Stack
+                            direction="row"
+                            alignItems="center"
+                            flexWrap="wrap"
+                            useFlexGap
+                            spacing={1}
                           >
-                            {issue.label}
-                          </Typography>
+                            <Typography
+                              sx={{
+                                fontSize: "1.05rem",
+                                fontWeight: 750,
+                                lineHeight: 1.35,
+                              }}
+                            >
+                              {issue.label}
+                            </Typography>
+                            {issue.optional && (
+                              <Chip
+                                label="Optional for initial restructuring"
+                                size="small"
+                                variant="outlined"
+                              />
+                            )}
+                          </Stack>
                           <Typography
                             sx={{
                               mt: 0.35,

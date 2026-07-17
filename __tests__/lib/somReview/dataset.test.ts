@@ -24,9 +24,9 @@ describe("Society of Mind review dataset", () => {
     expect(dataset.datasetVersion).toBe(
       "sell-final-hierarchy-onet-2026-07-15-v4",
     );
-    expect(dataset.recordsById.size).toBe(154);
+    expect(dataset.recordsById.size).toBe(142);
     expect(dataset.manifest.counts).toMatchObject({
-      proposals: 143,
+      proposals: 131,
       controls: 11,
       manualChecks: 0,
     });
@@ -72,7 +72,7 @@ describe("Society of Mind review dataset", () => {
 
   it("indexes the expected number of review items in each queue", () => {
     const expected = {
-      "title-clarity": 47,
+      "title-clarity": 35,
       "synonym-enrichment": 1,
       "description-enrichment": 47,
       "misc-facet-duplicate": 2,
@@ -95,6 +95,47 @@ describe("Society of Mind review dataset", () => {
         dataset.orderedIdsByIssue.get(issueType as keyof typeof expected),
       ).toHaveLength(count);
     }
+  });
+
+  it("defers pure singular-to-plural changes and marks optional queues", () => {
+    const titleChanges = [...dataset.recordsById.values()]
+      .filter(
+        (record) =>
+          record.issueType === "title-clarity" &&
+          record.reviewMode === "proposed-change",
+      )
+      .map((record) => record.reviewerView.context.currentTitle);
+    expect(titleChanges).not.toEqual(
+      expect.arrayContaining(["Sell Bond", "Sell Flower", "Sell Stock"]),
+    );
+    expect(
+      dataset.manifest.issueTypes
+        .filter((issue: any) => issue.optional)
+        .map((issue: any) => issue.id),
+    ).toEqual(["description-enrichment", "missing-activity"]);
+    expect(
+      dataset.manifest.issueTypes.find(
+        (issue: any) => issue.id === "description-enrichment",
+      ).stage,
+    ).toBe("additional-quality");
+  });
+
+  it("includes collapsed O*NET evidence for semantic review cards", () => {
+    for (const issueType of ["duplicate-synonym", "placement"]) {
+      const records = [...dataset.recordsById.values()].filter(
+        (record) => record.issueType === issueType,
+      );
+      expect(records.length).toBeGreaterThan(0);
+      expect(
+        records.every(
+          (record) => record.reviewerView.context.sourceTasks.length > 0,
+        ),
+      ).toBe(true);
+    }
+    const collection = [...dataset.recordsById.values()].find(
+      (record) => record.issueType === "collection-design",
+    );
+    expect(collection.reviewerView.context.sourceTasks).toEqual([]);
   });
 
   it("is pinned to the current production Sell snapshot and verified destinations", () => {

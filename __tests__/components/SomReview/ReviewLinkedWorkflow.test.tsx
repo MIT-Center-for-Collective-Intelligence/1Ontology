@@ -123,13 +123,13 @@ const action = card(
 const followUp: SomLinkedFollowUp = {
   proposalId: action.proposalId,
   issueType: "relocation",
-  issueLabel: "Apply approved relocations",
+  issueLabel: "14. Review approved relocations",
   question: action.reviewerView.question,
   sources: [
     {
       proposalId: diagnosis.proposalId,
       issueType: "placement",
-      issueLabel: "11. Wrong place within Sell",
+      issueLabel: "10. Wrong place within Sub-branch",
       question: diagnosis.reviewerView.question,
     },
   ],
@@ -155,7 +155,7 @@ describe("linked proposal review journey", () => {
           issueTypes: [
             {
               id: "placement",
-              label: "11. Wrong place within Sell",
+              label: "10. Wrong place within Sub-branch",
               stage: "within-branch",
               robTaskIds: [11],
               reviewed: 0,
@@ -167,7 +167,7 @@ describe("linked proposal review journey", () => {
             },
             {
               id: "relocation",
-              label: "Apply approved relocations",
+              label: "14. Review approved relocations",
               stage: "final-action",
               robTaskIds: [11],
               reviewed: 0,
@@ -238,7 +238,7 @@ describe("linked proposal review journey", () => {
 
     fireEvent.click(
       await screen.findByRole("button", {
-        name: "Start 11. Wrong place within Sell review, 1 remaining",
+        name: "Start 10. Wrong place within Sub-branch review, 1 remaining",
       }),
     );
     await waitFor(() =>
@@ -274,7 +274,7 @@ describe("linked proposal review journey", () => {
     ).toBeInTheDocument();
     fireEvent.click(
       screen.getByRole("button", {
-        name: "Return to 11. Wrong place within Sell",
+        name: "Return to 10. Wrong place within Sub-branch",
       }),
     );
 
@@ -314,7 +314,7 @@ describe("linked proposal review journey", () => {
           issueTypes: [
             {
               id: "placement",
-              label: "11. Wrong place within Sell",
+              label: "10. Wrong place within Sub-branch",
               stage: "within-branch",
               robTaskIds: [11],
               reviewed: 30,
@@ -349,7 +349,7 @@ describe("linked proposal review journey", () => {
 
     fireEvent.click(
       await screen.findByRole("button", {
-        name: "Resume 11. Wrong place within Sell review, 17 remaining",
+        name: "Resume 10. Wrong place within Sub-branch review, 17 remaining",
       }),
     );
 

@@ -22,7 +22,9 @@ describe("Society of Mind context renderers", () => {
     expect(
       screen.queryByText("Recommend and sell lotions or tonics."),
     ).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Show source task" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Show source O*NET evidence" }),
+    );
     expect(
       screen.getByText("Recommend and sell lotions or tonics."),
     ).toBeInTheDocument();
@@ -44,7 +46,9 @@ describe("Society of Mind context renderers", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Show source task" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Show source O*NET evidence" }),
+    );
     expect(screen.getAllByText("Sell products or services.")).toHaveLength(1);
   });
 
@@ -109,11 +113,19 @@ describe("Society of Mind context renderers", () => {
           parentTitle: "Sell",
           canonicalTitle: "Sell Products",
           candidateSynonymTitle: "Sell Merchandise",
+          sourceTasks: ["Sell products to customers."],
         }}
       />,
     );
-    expect(screen.getByText("Sell Products")).toBeInTheDocument();
-    expect(screen.getByText("Sell Merchandise")).toBeInTheDocument();
+    expect(
+      screen.getByLabelText("Separate node before synonym change"),
+    ).toHaveTextContent("Sell Merchandise");
+    expect(
+      screen.getByLabelText("Proposed synonym relationship"),
+    ).toHaveTextContent("Sell Products");
+    expect(
+      screen.queryByText("Sell products to customers."),
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByText(/merge|delete|downstream/i),
     ).not.toBeInTheDocument();
@@ -129,6 +141,7 @@ describe("Society of Mind context renderers", () => {
           currentBucket: "Unknown",
           candidateHome: "Rent out",
           placementIssue: "wrong-parent",
+          sourceTasks: ["Rent merchandise to customers."],
         }}
       />,
     );
@@ -138,6 +151,9 @@ describe("Society of Mind context renderers", () => {
       ),
     ).toBeInTheDocument();
     expect(screen.queryByText("Rent out")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Show source O*NET evidence" }),
+    ).toBeInTheDocument();
   });
 
   it("renders structural overlap details without authorizing a merge", () => {
@@ -275,6 +291,15 @@ describe("Society of Mind context renderers", () => {
       />,
     );
     expect(screen.getByText("Current recorded synonyms")).toBeInTheDocument();
+    const beforePanel = screen.getByLabelText("Metadata before change");
+    expect(beforePanel).toHaveTextContent("Market Accessory");
+    expect(beforePanel).toHaveTextContent("Recorded as a synonym of");
+    expect(beforePanel).toHaveTextContent("Sell Accessory");
+    const afterPanel = screen.getByLabelText("Metadata after change");
+    expect(afterPanel).toHaveTextContent("Remove Market Accessory");
+    expect(afterPanel).toHaveTextContent(
+      "from the synonyms recorded for Sell Accessory",
+    );
     expect(
       screen.getByText("Recorded synonyms after this change"),
     ).toBeInTheDocument();

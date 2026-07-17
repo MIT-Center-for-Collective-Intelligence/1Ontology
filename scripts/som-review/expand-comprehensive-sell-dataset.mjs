@@ -14,7 +14,7 @@ const SOURCE_ARTIFACT =
 const ISSUE_TYPES = [
   {
     id: "title-clarity",
-    label: "1. Clarify unclear titles",
+    label: "Clarify unclear titles",
     stage: "content",
     robTaskIds: [1],
     rolloutStatus: "prototype",
@@ -22,7 +22,7 @@ const ISSUE_TYPES = [
   },
   {
     id: "synonym-enrichment",
-    label: "2. Add missing synonyms",
+    label: "Add missing synonyms",
     stage: "content",
     robTaskIds: [2],
     rolloutStatus: "experimental",
@@ -30,15 +30,16 @@ const ISSUE_TYPES = [
   },
   {
     id: "description-enrichment",
-    label: "3. Add missing descriptions",
-    stage: "content",
+    label: "Add missing descriptions",
+    stage: "additional-quality",
     robTaskIds: [3],
+    optional: true,
     rolloutStatus: "experimental",
     view: "metadata-edit",
   },
   {
     id: "misc-facet-duplicate",
-    label: "4. Repeated miscellaneous/facet nodes",
+    label: "Repeated miscellaneous/facet nodes",
     stage: "within-branch",
     robTaskIds: [4],
     rolloutStatus: "experimental",
@@ -46,7 +47,7 @@ const ISSUE_TYPES = [
   },
   {
     id: "mistaken-synonym",
-    label: "5. Mistaken synonyms",
+    label: "Mistaken synonyms",
     stage: "content",
     robTaskIds: [5],
     rolloutStatus: "experimental",
@@ -54,7 +55,7 @@ const ISSUE_TYPES = [
   },
   {
     id: "duplicate-synonym",
-    label: "6. Undetected synonyms",
+    label: "Undetected synonyms",
     stage: "content",
     robTaskIds: [6],
     rolloutStatus: "experimental",
@@ -62,7 +63,7 @@ const ISSUE_TYPES = [
   },
   {
     id: "polysemy",
-    label: "7. Undetected double meanings",
+    label: "Undetected double meanings",
     stage: "content",
     robTaskIds: [7],
     rolloutStatus: "experimental",
@@ -70,7 +71,7 @@ const ISSUE_TYPES = [
   },
   {
     id: "flat-list-grouping",
-    label: "8. Group long flat lists",
+    label: "Group long flat lists",
     stage: "within-branch",
     robTaskIds: [8],
     rolloutStatus: "prototype",
@@ -78,7 +79,7 @@ const ISSUE_TYPES = [
   },
   {
     id: "compound-object-grouping",
-    label: "9. Group compound objects",
+    label: "Group compound objects",
     stage: "within-branch",
     robTaskIds: [9],
     rolloutStatus: "prototype",
@@ -86,7 +87,7 @@ const ISSUE_TYPES = [
   },
   {
     id: "collection-design",
-    label: "10. Create warranted collections",
+    label: "Create warranted collections",
     stage: "within-branch",
     robTaskIds: [10],
     rolloutStatus: "experimental",
@@ -94,7 +95,7 @@ const ISSUE_TYPES = [
   },
   {
     id: "placement",
-    label: "11. Wrong place within Sell",
+    label: "Wrong place within Sub-branch",
     stage: "within-branch",
     robTaskIds: [11],
     rolloutStatus: "experimental",
@@ -102,7 +103,7 @@ const ISSUE_TYPES = [
   },
   {
     id: "wrong-verb",
-    label: "12. Misjudged synonyms outside Sell",
+    label: "Misjudged synonyms within Sub-branch",
     stage: "outside-branch",
     robTaskIds: [12],
     rolloutStatus: "experimental",
@@ -110,7 +111,7 @@ const ISSUE_TYPES = [
   },
   {
     id: "sense-relocation",
-    label: "13. Move non-selling senses",
+    label: "Move a separated non-selling sense",
     stage: "outside-branch",
     robTaskIds: [13],
     rolloutStatus: "experimental",
@@ -118,7 +119,7 @@ const ISSUE_TYPES = [
   },
   {
     id: "node-merge",
-    label: "Apply approved node merges",
+    label: "Review approved node merges",
     stage: "final-action",
     robTaskIds: [4, 6],
     rolloutStatus: "experimental",
@@ -126,7 +127,7 @@ const ISSUE_TYPES = [
   },
   {
     id: "relocation",
-    label: "Apply approved relocations",
+    label: "Review approved relocations",
     stage: "final-action",
     robTaskIds: [11, 12],
     rolloutStatus: "experimental",
@@ -137,6 +138,7 @@ const ISSUE_TYPES = [
     label: "Missing activity",
     stage: "additional-quality",
     robTaskIds: [],
+    optional: true,
     rolloutStatus: "experimental",
     view: "addition-action",
   },
@@ -151,6 +153,21 @@ const ISSUE_TYPES = [
 ];
 
 const ISSUE_BY_ID = new Map(ISSUE_TYPES.map((issue) => [issue.id, issue]));
+
+const PURE_NUMBER_NORMALIZATION_TITLES = new Set([
+  "Market Event",
+  "Market Product",
+  "Sell Beverage",
+  "Sell Bond",
+  "Sell Flower",
+  "Sell Lotion",
+  "Sell Plant",
+  "Sell Refreshment",
+  "Sell Stamp",
+  "Sell Stock",
+  "Sell Supply",
+  "Sell Tonic",
+]);
 
 const PRODUCT_SYNONYM_PAIRS = [
   ["Sell Product", "Sell Merchandise"],
@@ -1026,6 +1043,11 @@ function groupingRecords({ manifest, index, snapshotHash, generatedAt }) {
           proposedGroupTitle: candidate.title,
           proposedChildren: candidate.children,
           unaffectedChildren,
+          sourceTasks: [
+            ...new Set(
+              candidate.children.flatMap((title) => sourceTasks(index, title)),
+            ),
+          ],
         },
       },
       evidence: {
@@ -1196,8 +1218,8 @@ function mistakenSynonymRecords(args) {
           } of "${node.title}"?`,
           currentState: `Current recorded synonyms: ${currentValues.join(", ")}.`,
           proposedState: proposedValues.length
-            ? `Keep ${proposedValues.join(", ")} and remove ${mistakenValues.join(", ")} wherever recorded as synonyms.`
-            : `Remove ${mistakenValues.join(", ")} wherever recorded as synonyms.`,
+            ? `Remove ${mistakenValues.join(", ")} from the synonyms recorded for "${node.title}"; keep ${proposedValues.join(", ")}.`
+            : `Remove ${mistakenValues.join(", ")} from the synonyms recorded for "${node.title}".`,
           reasoning:
             "Marketing promotes or creates demand, while selling completes or arranges an exchange for payment. Treating a Market activity as a direct synonym of a Sell activity collapses distinct work.",
           context: {
@@ -1239,7 +1261,7 @@ function duplicateDiagnosticRecords(args) {
         relatedTitles: [canonicalTitle],
       },
       reviewerView: {
-        question: `Do "${canonicalTitle}" and "${candidateSynonymTitle}" name the same selling activity?`,
+        question: `Should "${candidateSynonymTitle}" be recorded as a synonym of "${canonicalTitle}"?`,
         currentState: `They are separate sibling nodes under ${parentTitle}.`,
         proposedState: `Treat "${candidateSynonymTitle}" as a synonym of "${canonicalTitle}".`,
         reasoning:
@@ -1249,6 +1271,12 @@ function duplicateDiagnosticRecords(args) {
           parentTitle,
           canonicalTitle,
           candidateSynonymTitle,
+          sourceTasks: [
+            ...new Set([
+              ...sourceTasks(index, candidateSynonymTitle),
+              ...sourceTasks(index, canonicalTitle),
+            ]),
+          ],
         },
       },
       evidence: {
@@ -1346,6 +1374,13 @@ function collectionDesignRecord(args) {
             children: ["Lease out", "Rent out"],
           },
         ],
+        sourceTasks: [
+          ...new Set(
+            ["Lease out", "Rent out"].flatMap((title) =>
+              sourceTasks(index, title),
+            ),
+          ),
+        ],
       },
     },
     evidence: {
@@ -1384,6 +1419,7 @@ function servicePlacementRecords(args) {
           currentBucket: current.collectionName,
           candidateHome: "Sell service",
           placementIssue: "wrong-bucket",
+          sourceTasks: sourceTasks(index, candidate.title),
         },
       },
       evidence: {
@@ -1645,7 +1681,7 @@ function mergeRecords(args, diagnostics) {
           detectorId: "D8",
           detectorName: "DuplicateScanner",
           detectorConfidence: "medium",
-          judgeId: "H3",
+          judgeId: "J3",
           judgeName: "CanonicalTitleChooser",
           judgeConfidence: "medium",
         },
@@ -1690,7 +1726,7 @@ function missingActivityRecords({
         detectorId: "D9",
         detectorName: "GapScanner",
         detectorPromptVersion: "wave-17-d9-gap-scanner-2026-05",
-        judgeId: "H4+H5",
+        judgeId: "J4+J5",
         judgeName: "NoveltyAndDistinctionGates",
         judgePromptVersion: "wave-18-h4+wave-17-h5-2026-05",
         detectorConfidence: "high",
@@ -1933,6 +1969,7 @@ function extendSchema(schema) {
         parentTitle: nonEmpty,
         currentChildren: stringArray(1),
         proposedCollectionName: nonEmpty,
+        sourceTasks: stringArray(),
         proposedBranches: {
           type: "array",
           minItems: 2,
@@ -1998,6 +2035,18 @@ function extendSchema(schema) {
       enum: ["structured-field", "all-recorded"],
     };
   }
+  for (const contextType of [
+    "grouping-outline",
+    "duplicate-comparison",
+    "placement-comparison",
+    "overlap-comparison",
+    "collection-design",
+  ]) {
+    const option = contextOptions.find(
+      (candidate) => candidate.properties?.type?.const === contextType,
+    );
+    if (option) option.properties.sourceTasks = stringArray();
+  }
   return schema;
 }
 
@@ -2024,17 +2073,64 @@ function main() {
   const snapshot = JSON.parse(snapshotText);
   const index = buildIndex(snapshot);
 
+  const sourceEvidenceForContext = (context) => {
+    if (!context) return context;
+    const evidenceFor = (titles) => [
+      ...new Set(
+        titles.filter(Boolean).flatMap((title) => sourceTasks(index, title)),
+      ),
+    ];
+    switch (context.type) {
+      case "grouping-outline":
+        return {
+          ...context,
+          sourceTasks: evidenceFor(context.proposedChildren || []),
+        };
+      case "duplicate-comparison":
+        return {
+          ...context,
+          sourceTasks: evidenceFor([
+            context.candidateSynonymTitle,
+            context.canonicalTitle,
+          ]),
+        };
+      case "placement-comparison":
+        return {
+          ...context,
+          sourceTasks: evidenceFor([context.nodeTitle]),
+        };
+      case "overlap-comparison":
+        return {
+          ...context,
+          sourceTasks: evidenceFor([context.firstTitle, context.secondTitle]),
+        };
+      case "collection-design":
+        return {
+          ...context,
+          sourceTasks: evidenceFor(context.currentChildren || []),
+        };
+      default:
+        return context;
+    }
+  };
+
+  const normalizeJudgeIds = (evidence = {}) => ({
+    ...evidence,
+    judgeId: String(evidence.judgeId || "").replace(/\bH(\d+)/g, "J$1"),
+  });
+
   const normalizeExistingRecord = (record) => {
     const context = record.reviewerView?.context;
     let issueType = record.issueType;
     if (context?.placementIssue === "wrong-verb") issueType = "wrong-verb";
     if (issueType === "structural-overlap") issueType = "misc-facet-duplicate";
     if (issueType === "sibling-grouping") issueType = "flat-list-grouping";
-    const normalizedContext =
+    const normalizedContext = sourceEvidenceForContext(
       context?.type === "placement-comparison" &&
-      context.nodeTitle === "Sell Service (1)"
+        context.nodeTitle === "Sell Service (1)"
         ? { ...context, candidateHome: "Actors and Activities" }
-        : context;
+        : context,
+    );
     const normalizedReasoning =
       context?.type === "placement-comparison"
         ? firstSentence(record.reviewerView?.reasoning)
@@ -2050,7 +2146,7 @@ function main() {
           proposedState: `Proposed title: ${titleOverride.proposedTitle}`,
           reasoning: titleOverride.reasoning,
           context: {
-            ...context,
+            ...normalizedContext,
             proposedTitle: titleOverride.proposedTitle,
           },
         }
@@ -2064,13 +2160,17 @@ function main() {
                 ? `"${context.nodeTitle}" uses a different main action and does not belong under "${context.currentParentTitle}".`
                 : `"${context.nodeTitle}" does not belong under "${context.currentParentTitle}".`,
           }
-        : record.reviewerView;
+        : {
+            ...record.reviewerView,
+            context: normalizedContext,
+          };
     return {
       ...record,
       datasetVersion: DATASET_VERSION,
       issueType,
       workflow: workflowFor(issueType),
       reviewerView: normalizedReviewerView,
+      internalModelEvidence: normalizeJudgeIds(record.internalModelEvidence),
     };
   };
 
@@ -2093,6 +2193,12 @@ function main() {
     if (
       context?.type === "placement-comparison" &&
       ["Sell Ticket", "Sell Specialty"].includes(context.nodeTitle)
+    ) {
+      return false;
+    }
+    if (
+      context?.type === "title-comparison" &&
+      PURE_NUMBER_NORMALIZATION_TITLES.has(context.currentTitle)
     ) {
       return false;
     }
@@ -2263,6 +2369,7 @@ function main() {
   };
   manifest.limitations = [
     "The dataset covers all 13 documented issue families, but it is not proof that every semantic issue in Sell has been discovered.",
+    `The ${PURE_NUMBER_NORMALIZATION_TITLES.size} title proposals that only changed grammatical number are deferred until the team adopts a singular/plural title policy.`,
     "Description proposals are deliberately conservative and preserve linked O*NET wording; human reviewers should improve awkward phrasing rather than accepting unsupported detail.",
     "Exact merge and relocation actions remain unavailable to an individual reviewer until that reviewer agrees with the prerequisite diagnosis.",
     "Rent out and Lease out are handled by collection design; the earlier contradictory wrong-verb and immediate-merge actions have been removed.",
@@ -2308,6 +2415,10 @@ function main() {
         senseRelocations: 1,
         missingActivities: MISSING_ACTIVITIES.length,
         redundantNodes: 0,
+        deferredPureNumberNormalization: PURE_NUMBER_NORMALIZATION_TITLES.size,
+      },
+      deferredPolicyCandidates: {
+        titleNumberNormalization: [...PURE_NUMBER_NORMALIZATION_TITLES].sort(),
       },
       evidenceConvergenceGroupings: EXTRA_GROUPINGS,
       missingActivities: MISSING_ACTIVITIES,
@@ -2317,6 +2428,7 @@ function main() {
         "Rent out and Lease out are no longer simultaneously treated as wrong verbs and an immediate merge; collection design is reviewed first.",
         "Sell Products or Ideas is no longer moved intact when its idea sense is the actual problem.",
         "Exact merges and relocations include prerequisite proposal IDs and are served only after an agreeing diagnosis.",
+        "Pure singular-to-plural title changes are held out until the team sets an ontology-wide title policy.",
         "All proposed current nodes and current relations are checked against the pinned Firestore snapshot.",
       ],
     },
