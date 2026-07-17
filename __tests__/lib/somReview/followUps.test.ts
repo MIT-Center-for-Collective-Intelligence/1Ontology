@@ -60,12 +60,12 @@ describe("Society of Mind linked follow-ups", () => {
     expect(summary).toMatchObject({
       proposalId: relocation.proposalId,
       issueType: "relocation",
-      issueLabel: "Apply approved relocations",
+      issueLabel: "14. Review approved relocations",
       question: expect.stringContaining("move from"),
       sources: [
         {
           proposalId: sourceProposalId,
-          issueLabel: expect.stringMatching(/^1[12]\./),
+          issueLabel: expect.stringMatching(/^1[01]\./),
           question: expect.any(String),
         },
       ],

@@ -163,6 +163,12 @@
                         "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
                       },
                       "default": []
+                    },
+                    "sourceTasks": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+                      }
                     }
                   },
                   "required": [
@@ -214,6 +220,12 @@
                     },
                     "candidateSynonymTitle": {
                       "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+                    },
+                    "sourceTasks": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+                      }
                     }
                   },
                   "required": [
@@ -252,6 +264,12 @@
                         "wrong-parent",
                         "wrong-verb"
                       ]
+                    },
+                    "sourceTasks": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+                      }
                     }
                   },
                   "required": [
@@ -283,6 +301,12 @@
                     },
                     "secondTitle": {
                       "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+                    },
+                    "sourceTasks": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+                      }
                     }
                   },
                   "required": [
@@ -616,6 +640,12 @@
                           "children"
                         ],
                         "additionalProperties": false
+                      }
+                    },
+                    "sourceTasks": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
                       }
                     }
                   },

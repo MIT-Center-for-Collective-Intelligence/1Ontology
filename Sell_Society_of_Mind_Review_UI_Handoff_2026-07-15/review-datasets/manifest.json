@@ -24,19 +24,19 @@
   "issueTypes": [
     {
       "id": "title-clarity",
-      "label": "1. Clarify unclear titles",
+      "label": "Clarify unclear titles",
       "stage": "content",
       "robTaskIds": [
         1
       ],
       "rolloutStatus": "prototype",
       "view": "title-comparison",
-      "proposals": 36,
+      "proposals": 24,
       "controls": 11
     },
     {
       "id": "synonym-enrichment",
-      "label": "2. Add missing synonyms",
+      "label": "Add missing synonyms",
       "stage": "content",
       "robTaskIds": [
         2
@@ -48,11 +48,12 @@
     },
     {
       "id": "description-enrichment",
-      "label": "3. Add missing descriptions",
-      "stage": "content",
+      "label": "Add missing descriptions",
+      "stage": "additional-quality",
       "robTaskIds": [
         3
       ],
+      "optional": true,
       "rolloutStatus": "experimental",
       "view": "metadata-edit",
       "proposals": 47,
@@ -60,7 +61,7 @@
     },
     {
       "id": "misc-facet-duplicate",
-      "label": "4. Repeated miscellaneous/facet nodes",
+      "label": "Repeated miscellaneous/facet nodes",
       "stage": "within-branch",
       "robTaskIds": [
         4
@@ -72,7 +73,7 @@
     },
     {
       "id": "mistaken-synonym",
-      "label": "5. Mistaken synonyms",
+      "label": "Mistaken synonyms",
       "stage": "content",
       "robTaskIds": [
         5
@@ -84,7 +85,7 @@
     },
     {
       "id": "duplicate-synonym",
-      "label": "6. Undetected synonyms",
+      "label": "Undetected synonyms",
       "stage": "content",
       "robTaskIds": [
         6
@@ -96,7 +97,7 @@
     },
     {
       "id": "polysemy",
-      "label": "7. Undetected double meanings",
+      "label": "Undetected double meanings",
       "stage": "content",
       "robTaskIds": [
         7
@@ -108,7 +109,7 @@
     },
     {
       "id": "flat-list-grouping",
-      "label": "8. Group long flat lists",
+      "label": "Group long flat lists",
       "stage": "within-branch",
       "robTaskIds": [
         8
@@ -120,7 +121,7 @@
     },
     {
       "id": "compound-object-grouping",
-      "label": "9. Group compound objects",
+      "label": "Group compound objects",
       "stage": "within-branch",
       "robTaskIds": [
         9
@@ -132,7 +133,7 @@
     },
     {
       "id": "collection-design",
-      "label": "10. Create warranted collections",
+      "label": "Create warranted collections",
       "stage": "within-branch",
       "robTaskIds": [
         10
@@ -144,7 +145,7 @@
     },
     {
       "id": "placement",
-      "label": "11. Wrong place within Sell",
+      "label": "Wrong place within Sub-branch",
       "stage": "within-branch",
       "robTaskIds": [
         11
@@ -156,7 +157,7 @@
     },
     {
       "id": "wrong-verb",
-      "label": "12. Misjudged synonyms outside Sell",
+      "label": "Misjudged synonyms within Sub-branch",
       "stage": "outside-branch",
       "robTaskIds": [
         12
@@ -168,7 +169,7 @@
     },
     {
       "id": "sense-relocation",
-      "label": "13. Move non-selling senses",
+      "label": "Move a separated non-selling sense",
       "stage": "outside-branch",
       "robTaskIds": [
         13
@@ -180,7 +181,7 @@
     },
     {
       "id": "node-merge",
-      "label": "Apply approved node merges",
+      "label": "Review approved node merges",
       "stage": "final-action",
       "robTaskIds": [
         4,
@@ -193,7 +194,7 @@
     },
     {
       "id": "relocation",
-      "label": "Apply approved relocations",
+      "label": "Review approved relocations",
       "stage": "final-action",
       "robTaskIds": [
         11,
@@ -209,6 +210,7 @@
       "label": "Missing activity",
       "stage": "additional-quality",
       "robTaskIds": [],
+      "optional": true,
       "rolloutStatus": "experimental",
       "view": "addition-action",
       "proposals": 10,
@@ -238,13 +240,14 @@
     "ontologySnapshot": "ontology-snapshot.json"
   },
   "counts": {
-    "proposals": 143,
+    "proposals": 131,
     "controls": 11,
     "manualChecks": 0,
     "rejectedAgentCandidates": 3
   },
   "limitations": [
     "The dataset covers all 13 documented issue families, but it is not proof that every semantic issue in Sell has been discovered.",
+    "The 12 title proposals that only changed grammatical number are deferred until the team adopts a singular/plural title policy.",
     "Description proposals are deliberately conservative and preserve linked O*NET wording; human reviewers should improve awkward phrasing rather than accepting unsupported detail.",
     "Exact merge and relocation actions remain unavailable to an individual reviewer until that reviewer agrees with the prerequisite diagnosis.",
     "Rent out and Lease out are handled by collection design; the earlier contradictory wrong-verb and immediate-merge actions have been removed.",

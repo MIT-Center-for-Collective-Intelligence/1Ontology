@@ -66,6 +66,7 @@ export type SomReviewContext =
       proposedGroupTitle: string;
       proposedChildren: string[];
       unaffectedChildren?: string[];
+      sourceTasks?: string[];
     }
   | {
       type: "flat-list";
@@ -77,6 +78,7 @@ export type SomReviewContext =
       parentTitle: string;
       canonicalTitle: string;
       candidateSynonymTitle: string;
+      sourceTasks?: string[];
     }
   | {
       type: "placement-comparison";
@@ -85,6 +87,7 @@ export type SomReviewContext =
       currentBucket?: string;
       candidateHome?: string;
       placementIssue: "wrong-bucket" | "wrong-parent" | "wrong-verb";
+      sourceTasks?: string[];
     }
   | {
       type: "overlap-comparison";
@@ -93,6 +96,7 @@ export type SomReviewContext =
       firstTitle: string;
       secondCollection: string;
       secondTitle: string;
+      sourceTasks?: string[];
     }
   | {
       type: "merge-action";
@@ -161,6 +165,7 @@ export type SomReviewContext =
         status: "existing" | "new";
         children: string[];
       }>;
+      sourceTasks?: string[];
     }
   | {
       type: "sense-relocation-action";
@@ -203,6 +208,7 @@ export interface SomIssueTypeOption {
   notApplicable: number;
   total: number;
   enabled: boolean;
+  optional?: boolean;
   activeSession?: {
     cursor: number;
     total: number;

@@ -11,13 +11,13 @@ import { SomLinkedFollowUp } from "../../../src/types/ISomReview";
 const followUp: SomLinkedFollowUp = {
   proposalId: "relocation-1",
   issueType: "relocation",
-  issueLabel: "Apply approved relocations",
+  issueLabel: "14. Review approved relocations",
   question: 'Should "Sell Contract" move to "Sign Contract"?',
   sources: [
     {
       proposalId: "placement-1",
       issueType: "placement",
-      issueLabel: "11. Wrong place within Sell",
+      issueLabel: "10. Wrong place within Sub-branch",
       question: 'Is "Sell Contract" misplaced under "Sell"?',
     },
   ],
@@ -31,7 +31,7 @@ describe("linked follow-up panel", () => {
     expect(screen.getByText("Ready related decisions")).toBeInTheDocument();
     expect(screen.getByText(followUp.question)).toBeInTheDocument();
     expect(
-      screen.getByText("Follows 11. Wrong place within Sell"),
+      screen.getByText("Follows 10. Wrong place within Sub-branch"),
     ).toBeInTheDocument();
     fireEvent.click(
       screen.getByRole("button", {
@@ -46,11 +46,11 @@ describe("linked follow-up panel", () => {
     render(
       <ReviewFollowUpPanel
         variant="handoff"
-        sourceLabel="11. Wrong place within Sell"
+        sourceLabel="10. Wrong place within Sub-branch"
         followUps={[followUp]}
         onReview={jest.fn()}
         onContinue={onContinue}
-        continueLabel="Continue 11. Wrong place within Sell"
+        continueLabel="Continue 10. Wrong place within Sub-branch"
       />,
     );
 
@@ -59,7 +59,7 @@ describe("linked follow-up panel", () => {
     ).toBeInTheDocument();
     fireEvent.click(
       screen.getByRole("button", {
-        name: "Continue 11. Wrong place within Sell",
+        name: "Continue 10. Wrong place within Sub-branch",
       }),
     );
     expect(onContinue).toHaveBeenCalledTimes(1);
