@@ -40,6 +40,10 @@ import {
   getOperatingSystem,
 } from "../firestoreClient/errors.firestore";
 import { getAuth } from "firebase/auth";
+import {
+  childSourceOf,
+  overallRefThroughGen,
+} from "@components/lib/server/partsModel";
 import { DISPLAY, SANDBOX_ONTOLOGY_APP_ID } from "../CONSTANTS";
 
 export function userHasOntologyEditAccess(
@@ -876,8 +880,41 @@ export const createNewNode = (
     }
   }
 
+  // Parts don't inherit by ref: the child stores its own list, each part
+  // tagged with the node that OWNS it, and attaches to the parent as its
+  // overall source.
+  const parentParts: ILinkNode[] =
+    (Array.isArray(parentNodeData.properties?.parts) &&
+      parentNodeData.properties.parts[0]?.nodes) ||
+    [];
+  updatedProperties.parts = [
+    {
+      collectionName: "main",
+      nodes: parentParts.map((p) => ({
+        ...p,
+        inheritedFrom: childSourceOf(p, parentNodeData.id),
+      })),
+    },
+  ];
+  const partsRef = overallRefThroughGen({
+    id: parentNodeData.id,
+    ref: parentNodeData.inheritance?.parts?.ref ?? null,
+    parts: parentParts,
+  });
+  updatedInheritance.parts = {
+    ref: partsRef,
+    title:
+      partsRef === parentNodeData.id
+        ? (parentNodeData.title ?? "")
+        : (parentNodeData.inheritance?.parts?.title ?? ""),
+    inheritanceType:
+      parentNodeData.inheritance?.parts?.inheritanceType ??
+      "inheritUnlessAlreadyOverRidden",
+  };
+
   const newNode: any = {
     ...parentNodeData,
+    partsOverallSource: parentNodeData.id,
     contributors: [],
     contributorsByProperty: [],
     textValue: {},
