@@ -74,6 +74,7 @@ interface InheritedPartsViewerProps {
   switchPartSource: (partId: string, genId: string) => Promise<void>;
   addPartFromGen: (partId: string, genId?: string) => Promise<void>;
   togglePartOptional: (partId: string, optional: boolean) => Promise<void>;
+  savingPartIds: Set<string>;
   user: any;
   appName?: string;
   navigateToNode?: any;
@@ -108,6 +109,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
   switchPartSource,
   addPartFromGen,
   togglePartOptional,
+  savingPartIds,
   currentVisibleNode,
   triggerSearch,
   addPart,
@@ -510,8 +512,20 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
 
   const onReplacePart = async (oldPartId: string, newPartId: string) => {
     if (!oldPartId || !newPartId || oldPartId === newPartId) return;
-    // The new id shows a pending row until the recompute fills its symbol;
-    // refetch so it resolves promptly.
+    if (inheritedPartsDetails) {
+      const updated: InheritedPartsDetail[] = JSON.parse(
+        JSON.stringify(inheritedPartsDetails),
+      );
+      for (const gen of updated) {
+        const row = gen.details.find((d) => d.to === oldPartId);
+        if (row) {
+          row.to = newPartId;
+          row.toTitle = allNodes[newPartId]?.title || row.toTitle || "";
+          row.symbol = row.from === newPartId ? "=" : ">";
+        }
+      }
+      mutateInheritedPartsDetails?.(updated);
+    }
     await replaceWith(oldPartId, newPartId);
     refetchNow?.();
   };
@@ -965,12 +979,30 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                       />
 
                       <ListItemIcon sx={{ minWidth: "auto" }}>
-                        {entry.pending ? (
+                        {savingPartIds.has(entry.to) ? (
+                          <Tooltip title="Linking this part…" placement="top">
+                            <span
+                              style={{
+                                display: "inline-flex",
+                                cursor: "default",
+                              }}
+                            >
+                              <SyncedSpinner size={18} />
+                            </span>
+                          </Tooltip>
+                        ) : entry.pending ? (
                           <Tooltip
-                            title="Calculating inheritance for this part"
+                            title="Generating inheritance for this part"
                             placement="top"
                           >
-                            <SyncedSpinner size={18} />
+                            <span
+                              style={{
+                                display: "inline-flex",
+                                cursor: "default",
+                              }}
+                            >
+                              <SyncedSpinner size={18} />
+                            </span>
                           </Tooltip>
                         ) : entry.symbol === "x" ? (
                           <CloseIcon sx={{ fontSize: 20, color: "orange" }} />
@@ -1034,7 +1066,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                         <Tooltip title={"Remove part"} placement="top">
                           <span
                             style={{
-                              cursor: entry.pending
+                              cursor: savingPartIds.has(entry.to)
                                 ? "not-allowed"
                                 : undefined,
                               display: "inline-flex",
@@ -1042,7 +1074,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                           >
                             <IconButton
                               sx={{ p: 0.5 }}
-                              disabled={entry.pending}
+                              disabled={savingPartIds.has(entry.to)}
                               onClick={() => {
                                 onRemovePart(entry.to);
                               }}
@@ -1050,14 +1082,14 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                               <RemoveIcon
                                 sx={{
                                   fontSize: 20,
-                                  color: entry.pending
+                                  color: savingPartIds.has(entry.to)
                                     ? "gray"
                                     : "red",
-                                  border: entry.pending
+                                  border: savingPartIds.has(entry.to)
                                     ? "1px solid gray"
                                     : "1px solid red",
                                   borderRadius: "50%",
-                                  opacity: entry.pending
+                                  opacity: savingPartIds.has(entry.to)
                                     ? 0.5
                                     : 1,
                                 }}
@@ -1108,7 +1140,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                 <Box
                                   component="button"
                                   type="button"
-                                  disabled={entry.pending}
+                                  disabled={savingPartIds.has(entry.to)}
                                   onMouseDown={(e: React.MouseEvent) => {
                                     e.stopPropagation();
                                   }}
@@ -1118,7 +1150,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                     toggleOptional(entry.to);
                                   }}
                                   sx={{
-                                    cursor: entry.pending
+                                    cursor: savingPartIds.has(entry.to)
                                       ? "not-allowed"
                                       : "pointer",
                                     "&:disabled": { opacity: 0.5 },
@@ -1182,7 +1214,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                               >
                                 <Select
                                   value={entry.to}
-                                  disabled={entry.pending}
+                                  disabled={savingPartIds.has(entry.to)}
                                   onChange={(e) => {
                                     const newPartId = e.target.value;
                                     onReplacePart(entry.to, newPartId);
@@ -1272,7 +1304,10 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                           <MenuItem
                                             key={`source-${source.genId}`}
                                             onClick={() => {
-                                              if (isCurrent || entry.pending) {
+                                              if (
+                                                isCurrent ||
+                                                savingPartIds.has(entry.to)
+                                              ) {
                                                 return;
                                               }
                                               switchPartSource(

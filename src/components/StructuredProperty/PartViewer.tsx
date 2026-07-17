@@ -25,6 +25,7 @@ interface PartViewerProps {
   switchPartSource: (partId: string, genId: string) => Promise<void>;
   addPartFromGen: (partId: string, genId?: string) => Promise<void>;
   togglePartOptional: (partId: string, optional: boolean) => Promise<void>;
+  savingPartIds: Set<string>;
   user: any;
   navigateToNode: any;
   replaceWith: any;
@@ -53,6 +54,7 @@ const PartViewer: React.FC<PartViewerProps> = ({
   switchPartSource,
   addPartFromGen,
   togglePartOptional,
+  savingPartIds,
   user,
   navigateToNode,
   replaceWith,
@@ -123,6 +125,7 @@ const PartViewer: React.FC<PartViewerProps> = ({
           switchPartSource={switchPartSource}
           addPartFromGen={addPartFromGen}
           togglePartOptional={togglePartOptional}
+          savingPartIds={savingPartIds}
           appName={appName}
           inheritedPartsDetails={inheritedPartsDetails}
           inheritedPartsLoading={inheritedPartsLoading}

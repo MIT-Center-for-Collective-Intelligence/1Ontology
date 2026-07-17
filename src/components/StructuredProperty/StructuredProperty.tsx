@@ -805,6 +805,8 @@ const StructuredProperty = ({
 
     return inheritedParts;
   };
+  const [savingPartIds, setSavingPartIds] = useState<Set<string>>(new Set());
+
   // Delta edits on parts (remove/replace/sort): instant local list + the
   // matching endpoint. On failure it re-fetches so the UI never keeps an
   // unsaved change.
@@ -813,9 +815,13 @@ const StructuredProperty = ({
       endpoint: string,
       payload: Record<string, any>,
       instantParts: ICollection[],
+      affectedIds: string[] = [],
     ) => {
       const nodeId = currentVisibleNode?.id;
       if (!nodeId) return;
+      if (affectedIds.length) {
+        setSavingPartIds((prev) => new Set([...prev, ...affectedIds]));
+      }
       setCurrentVisibleNode((prev: any) =>
         prev && prev.id === nodeId
           ? { ...prev, properties: { ...prev.properties, parts: instantParts } }
@@ -839,6 +845,13 @@ const StructuredProperty = ({
         setSnackbarMessage(`Failed to update parts: ${reason}`);
       } finally {
         pendingWrites.end(nodeId, "properties.parts");
+        if (affectedIds.length) {
+          setSavingPartIds((prev) => {
+            const next = new Set(prev);
+            affectedIds.forEach((id) => next.delete(id));
+            return next;
+          });
+        }
       }
     },
     [
@@ -883,6 +896,7 @@ const StructuredProperty = ({
         "/nodes/parts/toggle-optional",
         { partId, optional },
         newParts,
+        [partId],
       );
     },
     [currentVisibleNode, savePartsDelta],
@@ -907,6 +921,7 @@ const StructuredProperty = ({
         "/nodes/parts/switch-source",
         { partId, genId },
         newParts,
+        [partId],
       );
     },
     [currentVisibleNode, relatedNodes, savePartsDelta],
@@ -1015,6 +1030,7 @@ const StructuredProperty = ({
           "/nodes/parts/remove",
           { removeIds: [linkId] },
           newParts,
+          [linkId],
         );
         return;
       }
@@ -1205,6 +1221,7 @@ const StructuredProperty = ({
         "/nodes/parts/add",
         { partIds: [partId], ...(genId ? { genId } : {}) },
         newParts,
+        [partId],
       );
     } catch (error) {
       console.error(error);
@@ -1256,6 +1273,7 @@ const StructuredProperty = ({
           "/nodes/parts/replace",
           { fromId: oldPartId, toId: newPartId },
           updatedParts,
+          [oldPartId, newPartId],
         );
 
         recordLogs({
@@ -1723,6 +1741,7 @@ const StructuredProperty = ({
             switchPartSource={switchPartSource}
             addPartFromGen={addParts}
             togglePartOptional={togglePartOptional}
+            savingPartIds={savingPartIds}
             user={user}
             navigateToNode={navigateToNode}
             replaceWith={replaceWith}
