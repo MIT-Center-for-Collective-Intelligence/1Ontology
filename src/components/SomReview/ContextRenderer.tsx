@@ -127,13 +127,15 @@ export const DiffedTitle = ({
 const Disclosure = ({
   closedLabel,
   openLabel,
+  initiallyOpen = false,
   children,
 }: {
   closedLabel: string;
   openLabel: string;
+  initiallyOpen?: boolean;
   children: React.ReactNode;
 }) => {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(initiallyOpen);
   return (
     <Box>
       <Button
@@ -171,6 +173,7 @@ const TitleComparison = ({
     <Disclosure
       closedLabel={`Show source O*NET evidence${tasks.length > 1 ? ` (${tasks.length})` : ""}`}
       openLabel="Hide source O*NET evidence"
+      initiallyOpen
     >
       <List dense disablePadding sx={{ pl: 1, pb: 1 }}>
         {tasks.map((task) => (
@@ -579,6 +582,7 @@ const SourceTasks = ({ tasks }: { tasks: string[] }) => {
     <Disclosure
       closedLabel={`Show source O*NET evidence${uniqueTasks.length > 1 ? ` (${uniqueTasks.length})` : ""}`}
       openLabel="Hide source O*NET evidence"
+      initiallyOpen
     >
       <List dense disablePadding sx={{ pl: 1, pb: 1 }}>
         {uniqueTasks.map((task) => (

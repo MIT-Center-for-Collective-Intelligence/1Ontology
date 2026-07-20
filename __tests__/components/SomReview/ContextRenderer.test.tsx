@@ -8,7 +8,7 @@ import "@testing-library/jest-dom";
 import ContextRenderer from "../../../src/components/SomReview/ContextRenderer";
 
 describe("Society of Mind context renderers", () => {
-  it("keeps title evidence collapsed until requested", () => {
+  it("shows title evidence by default and lets the reviewer collapse it", () => {
     render(
       <ContextRenderer
         context={{
@@ -20,11 +20,18 @@ describe("Society of Mind context renderers", () => {
       />,
     );
     expect(
-      screen.queryByText("Recommend and sell lotions or tonics."),
-    ).not.toBeInTheDocument();
-    fireEvent.click(
-      screen.getByRole("button", { name: "Show source O*NET evidence" }),
-    );
+      screen.getByText("Recommend and sell lotions or tonics."),
+    ).toBeInTheDocument();
+    const collapseButton = screen.getByRole("button", {
+      name: "Hide source O*NET evidence",
+    });
+    expect(collapseButton).toHaveAttribute("aria-expanded", "true");
+    fireEvent.click(collapseButton);
+    const expandButton = screen.getByRole("button", {
+      name: "Show source O*NET evidence",
+    });
+    expect(expandButton).toHaveAttribute("aria-expanded", "false");
+    fireEvent.click(expandButton);
     expect(
       screen.getByText("Recommend and sell lotions or tonics."),
     ).toBeInTheDocument();
@@ -46,9 +53,6 @@ describe("Society of Mind context renderers", () => {
       />,
     );
 
-    fireEvent.click(
-      screen.getByRole("button", { name: "Show source O*NET evidence" }),
-    );
     expect(screen.getAllByText("Sell products or services.")).toHaveLength(1);
   });
 
@@ -123,9 +127,7 @@ describe("Society of Mind context renderers", () => {
     expect(
       screen.getByLabelText("Proposed synonym relationship"),
     ).toHaveTextContent("Sell Products");
-    expect(
-      screen.queryByText("Sell products to customers."),
-    ).not.toBeInTheDocument();
+    expect(screen.getByText("Sell products to customers.")).toBeInTheDocument();
     expect(
       screen.queryByText(/merge|delete|downstream/i),
     ).not.toBeInTheDocument();
@@ -152,7 +154,10 @@ describe("Society of Mind context renderers", () => {
     ).toBeInTheDocument();
     expect(screen.queryByText("Rent out")).not.toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Show source O*NET evidence" }),
+      screen.getByRole("button", { name: "Hide source O*NET evidence" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Rent merchandise to customers."),
     ).toBeInTheDocument();
   });
 
@@ -304,8 +309,8 @@ describe("Society of Mind context renderers", () => {
       screen.getByText("Recorded synonyms after this change"),
     ).toBeInTheDocument();
     expect(
-      screen.queryByText("Sell and install accessories."),
-    ).not.toBeInTheDocument();
+      screen.getByText("Sell and install accessories."),
+    ).toBeInTheDocument();
   });
 
   it("shows the two meanings in a polysemy diagnosis", () => {
@@ -346,6 +351,9 @@ describe("Society of Mind context renderers", () => {
     ).not.toBeInTheDocument();
     expect(
       screen.getByText(/where each meaning belongs will be reviewed/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Selling or Influencing Others"),
     ).toBeInTheDocument();
   });
 
