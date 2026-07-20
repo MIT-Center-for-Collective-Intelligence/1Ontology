@@ -56,7 +56,7 @@ const issues: SomIssueTypeOption[] = [
     "6. Repeated miscellaneous/facet nodes",
     "within-branch",
     [4],
-    { pending: 0 },
+    { total: 4, reviewed: 4, pending: 0 },
   ),
   option("mistaken-synonym", "3. Mistaken synonyms", "content", [5]),
   option("duplicate-synonym", "4. Undetected synonyms", "content", [6]),
@@ -175,7 +175,8 @@ describe("Society of Mind review queue selector", () => {
       screen.getByText("16 ready to review").closest(".MuiChip-root"),
     ).toHaveClass("MuiChip-outlined");
     expect(screen.getAllByText("No review items found")).toHaveLength(2);
-    expect(screen.getByText("Reviewed")).toBeInTheDocument();
+    expect(screen.getByText("4 reviewed")).toBeInTheDocument();
+    expect(screen.getByText("Review completed items")).toBeInTheDocument();
     expect(screen.getByText("Related review required")).toBeInTheDocument();
     expect(
       screen.getByText(
@@ -194,9 +195,20 @@ describe("Society of Mind review queue selector", () => {
       }),
     );
     expect(onStart).toHaveBeenCalledWith("placement");
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Review completed items in 6. Repeated miscellaneous/facet nodes, 4 saved",
+      }),
+    );
+    expect(onStart).toHaveBeenCalledWith("misc-facet-duplicate");
     expect(
       screen.getByRole("button", {
         name: "13. Review approved node merges; review its related diagnosis first",
+      }),
+    ).toBeDisabled();
+    expect(
+      screen.getByRole("button", {
+        name: "2. Add missing synonyms, no review items available",
       }),
     ).toBeDisabled();
   });
