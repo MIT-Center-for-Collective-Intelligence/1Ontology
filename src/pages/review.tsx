@@ -203,6 +203,17 @@ export const ReviewPage = () => {
       setFollowUpOffer(null);
       setActiveSequence(null);
       setCompletedSequence(null);
+      const selectedQueue = issueTypes.find(
+        (candidate) => candidate.id === issue,
+      );
+      if (
+        selectedQueue &&
+        selectedQueue.pending === 0 &&
+        selectedQueue.reviewed > 0
+      ) {
+        startSession(issue);
+        return;
+      }
       try {
         if (window.localStorage.getItem(introStorageKey(issue)) === "seen") {
           startSession(issue);
@@ -214,7 +225,7 @@ export const ReviewPage = () => {
       setIssueType(issue);
       setPhase("intro");
     },
-    [introStorageKey, startSession],
+    [introStorageKey, issueTypes, startSession],
   );
 
   const continueFromIntro = useCallback(() => {

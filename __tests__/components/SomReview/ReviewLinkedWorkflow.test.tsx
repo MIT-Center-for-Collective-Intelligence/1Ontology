@@ -377,4 +377,76 @@ describe("linked proposal review journey", () => {
       screen.getByRole("button", { name: "Keep saved answer" }),
     ).toBeInTheDocument();
   });
+
+  it("opens a completed review type from the main menu for revision", async () => {
+    const postMock = Post as jest.Mock;
+    const completedCard = card(
+      "placement-1",
+      "placement",
+      'Is "Sell Contract" misplaced under "Sell"?',
+    );
+    const savedHistory = [
+      {
+        proposalId: completedCard.proposalId,
+        proposalIndex: 0,
+        question: completedCard.reviewerView.question,
+        decision: "agree" as const,
+        disagreementReason: "",
+        suggestedCorrection: "",
+        reviewedAt: "2026-07-20T08:00:00.000Z",
+      },
+    ];
+
+    postMock.mockImplementation((url: string, body: any) => {
+      if (url === "/som-review/overview") {
+        return Promise.resolve({
+          datasetVersion: "dataset-1",
+          canDeliberate: false,
+          readyFollowUps: [],
+          issueTypes: [
+            {
+              id: "placement",
+              label: "10. Wrong place within Sub-branch",
+              stage: "within-branch",
+              robTaskIds: [11],
+              reviewed: 1,
+              pending: 0,
+              waiting: 0,
+              notApplicable: 0,
+              total: 1,
+              enabled: true,
+            },
+          ],
+        });
+      }
+      if (url === "/som-review/session" && body.issueType === "placement") {
+        return Promise.resolve({
+          done: true,
+          history: savedHistory,
+          historyCards: [completedCard],
+        });
+      }
+      throw new Error(`Unexpected request: ${url}`);
+    });
+
+    render(<ReviewPage />);
+
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: "Review completed items in 10. Wrong place within Sub-branch, 1 saved",
+      }),
+    );
+
+    await waitFor(() =>
+      expect(postMock).toHaveBeenLastCalledWith("/som-review/session", {
+        issueType: "placement",
+      }),
+    );
+    expect(
+      await screen.findByText("All available proposals reviewed"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Open saved answer 1" }),
+    ).toBeInTheDocument();
+  });
 });

@@ -18,6 +18,7 @@ import DriveFileRenameOutlineIcon from "@mui/icons-material/DriveFileRenameOutli
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import HubOutlinedIcon from "@mui/icons-material/HubOutlined";
 import GroupsOutlinedIcon from "@mui/icons-material/GroupsOutlined";
+import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import AltRouteOutlinedIcon from "@mui/icons-material/AltRouteOutlined";
 import CallMergeOutlinedIcon from "@mui/icons-material/CallMergeOutlined";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
@@ -92,6 +93,16 @@ const QueueStatus = ({ issue }: { issue: SomIssueTypeOption }) => {
   if (issue.total === 0) {
     return (
       <Chip label="No review items found" size="small" variant="outlined" />
+    );
+  }
+  if (issue.pending === 0 && issue.reviewed > 0) {
+    return (
+      <Chip
+        icon={<CheckCircleOutlineIcon />}
+        label={`${issue.reviewed} reviewed`}
+        size="small"
+        variant="outlined"
+      />
     );
   }
   if (issue.pending === 0 && issue.waiting > 0) {
@@ -221,7 +232,11 @@ const ReviewQueueSelector = ({
             </Typography>
             <Stack spacing={1.25}>
               {stageIssues.map((issue) => {
-                const available = issue.enabled && issue.pending > 0;
+                const hasNewItems = issue.pending > 0;
+                const hasSavedItems = issue.reviewed > 0;
+                const completedOnly = !hasNewItems && hasSavedItems;
+                const available =
+                  issue.enabled && (hasNewItems || hasSavedItems);
                 const unavailableLabel = issue.waiting
                   ? `${issue.label}; review its related diagnosis first`
                   : `${issue.label}, no review items available`;
@@ -244,9 +259,11 @@ const ReviewQueueSelector = ({
                       disabled={!available}
                       onClick={() => onStart(issue.id)}
                       aria-label={
-                        available
-                          ? `${issue.activeSession ? "Resume" : "Start"} ${issue.label} review, ${issue.pending} remaining`
-                          : unavailableLabel
+                        completedOnly
+                          ? `Review completed items in ${issue.label}, ${issue.reviewed} saved`
+                          : available
+                            ? `${issue.activeSession ? "Resume" : "Start"} ${issue.label} review, ${issue.pending} remaining`
+                            : unavailableLabel
                       }
                       sx={{ p: { xs: 1.75, sm: 2 }, minHeight: 92 }}
                     >
@@ -322,8 +339,9 @@ const ReviewQueueSelector = ({
                                 lineHeight: 1.4,
                               }}
                             >
-                              Review its related diagnosis first. If you agree,
-                              this action will become available.
+                              {hasSavedItems
+                                ? "No new items are ready. You can revisit your saved judgments; related actions require their diagnoses first."
+                                : "Review its related diagnosis first. If you agree, this action will become available."}
                             </Typography>
                           )}
                         </Box>
@@ -331,18 +349,44 @@ const ReviewQueueSelector = ({
                           direction="row"
                           alignItems="center"
                           spacing={1}
+                          useFlexGap
+                          flexWrap="wrap"
                           sx={{
                             gridColumn: { xs: "2", sm: "3" },
                             justifySelf: { xs: "start", sm: "end" },
                           }}
                         >
                           <QueueStatus issue={issue} />
-                          {available && (
+                          {completedOnly ? (
+                            <Stack
+                              direction="row"
+                              alignItems="center"
+                              spacing={0.6}
+                              sx={{ color: "text.primary" }}
+                            >
+                              <HistoryOutlinedIcon
+                                aria-hidden="true"
+                                sx={{ fontSize: 20 }}
+                              />
+                              <Typography
+                                sx={{
+                                  fontSize: "0.9rem",
+                                  fontWeight: 750,
+                                }}
+                              >
+                                Review completed items
+                              </Typography>
+                              <ArrowForwardIcon
+                                aria-hidden="true"
+                                sx={{ color: "text.secondary" }}
+                              />
+                            </Stack>
+                          ) : available ? (
                             <ArrowForwardIcon
                               aria-hidden="true"
                               sx={{ color: "text.secondary" }}
                             />
-                          )}
+                          ) : null}
                         </Stack>
                       </Box>
                     </CardActionArea>
