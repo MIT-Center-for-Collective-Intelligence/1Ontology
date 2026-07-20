@@ -349,6 +349,8 @@ const ReviewQueueSelector = ({
                           direction="row"
                           alignItems="center"
                           spacing={1}
+                          useFlexGap
+                          flexWrap="wrap"
                           sx={{
                             gridColumn: { xs: "2", sm: "3" },
                             justifySelf: { xs: "start", sm: "end" },
@@ -370,7 +372,6 @@ const ReviewQueueSelector = ({
                                 sx={{
                                   fontSize: "0.9rem",
                                   fontWeight: 750,
-                                  whiteSpace: "nowrap",
                                 }}
                               >
                                 Review completed items
