@@ -30,6 +30,8 @@ const option = (
   waiting: 0,
   notApplicable: 0,
   enabled: true,
+  prerequisiteIssueTypes: [],
+  blockedBy: [],
   ...overrides,
 });
 
@@ -211,6 +213,78 @@ describe("Society of Mind review queue selector", () => {
         name: "2. Add missing synonyms, no review items available",
       }),
     ).toBeDisabled();
+  });
+
+  it("guides reviewers to prerequisites and locks invalid later queues", () => {
+    const onStart = jest.fn();
+    const dependencyIssues = issues.map((issue) =>
+      issue.id === "placement"
+        ? {
+            ...issue,
+            prerequisiteIssueTypes: ["title-clarity" as const],
+            blockedBy: [
+              {
+                id: "title-clarity" as const,
+                label: "1. Clarify unclear titles",
+                remaining: 37,
+              },
+            ],
+          }
+        : issue,
+    );
+    render(
+      <ReviewQueueSelector issueTypes={dependencyIssues} onStart={onStart} />,
+    );
+
+    expect(screen.getByText("Guided review path")).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Continue 1. Clarify unclear titles",
+      }),
+    );
+    expect(onStart).toHaveBeenCalledWith("title-clarity");
+    expect(
+      screen.getByRole("button", {
+        name: "10. Wrong place within Sub-branch; complete Phase 1: Clarify labels first",
+      }),
+    ).toBeDisabled();
+    expect(screen.getByText("Earlier phase required")).toBeInTheDocument();
+    expect(
+      screen.getByText("Complete Phase 1: Clarify labels first."),
+    ).toBeInTheDocument();
+  });
+
+  it("keeps saved reviews accessible while locking new items in a later phase", () => {
+    const onStart = jest.fn();
+    const dependencyIssues = issues.map((issue) =>
+      issue.id === "placement"
+        ? {
+            ...issue,
+            reviewed: 3,
+            pending: 13,
+            blockedBy: [
+              {
+                id: "title-clarity" as const,
+                label: "1. Clarify unclear titles",
+                remaining: 37,
+              },
+            ],
+          }
+        : issue,
+    );
+    render(
+      <ReviewQueueSelector issueTypes={dependencyIssues} onStart={onStart} />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Review completed items in 10. Wrong place within Sub-branch, 3 saved; complete Phase 1: Clarify labels before new items",
+      }),
+    );
+    expect(onStart).toHaveBeenCalledWith("placement");
+    expect(
+      screen.getByText("3 reviewed; new items locked"),
+    ).toBeInTheDocument();
   });
 
   it("keeps postponed linked actions directly accessible", () => {

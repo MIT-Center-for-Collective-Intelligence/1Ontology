@@ -209,10 +209,18 @@ export interface SomIssueTypeOption {
   total: number;
   enabled: boolean;
   optional?: boolean;
+  prerequisiteIssueTypes: SomIssueType[];
+  blockedBy: SomIssuePrerequisite[];
   activeSession?: {
     cursor: number;
     total: number;
   };
+}
+
+export interface SomIssuePrerequisite {
+  id: SomIssueType;
+  label: string;
+  remaining: number;
 }
 
 export interface SomSessionState {

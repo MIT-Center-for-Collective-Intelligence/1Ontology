@@ -120,6 +120,7 @@ export const ReviewPage = () => {
       options: {
         preferredProposalId?: string;
         sequence?: LinkedReviewSequence | null;
+        historyOnly?: boolean;
       } = {},
     ) => {
       setIssueType(issue);
@@ -135,6 +136,7 @@ export const ReviewPage = () => {
           ...(options.preferredProposalId
             ? { preferredProposalId: options.preferredProposalId }
             : {}),
+          ...(options.historyOnly ? { historyOnly: true } : {}),
         });
         if (
           options.preferredProposalId &&
@@ -206,6 +208,10 @@ export const ReviewPage = () => {
       const selectedQueue = issueTypes.find(
         (candidate) => candidate.id === issue,
       );
+      if (selectedQueue?.blockedBy?.length && selectedQueue.reviewed > 0) {
+        startSession(issue, { historyOnly: true });
+        return;
+      }
       if (
         selectedQueue &&
         selectedQueue.pending === 0 &&
@@ -410,7 +416,12 @@ export const ReviewPage = () => {
 
       if (result.changed) {
         if (issueType) {
-          await startSession(issueType);
+          const selectedQueue = issueTypes.find(
+            (candidate) => candidate.id === issueType,
+          );
+          await startSession(issueType, {
+            historyOnly: Boolean(selectedQueue?.blockedBy?.length),
+          });
           return;
         }
       }

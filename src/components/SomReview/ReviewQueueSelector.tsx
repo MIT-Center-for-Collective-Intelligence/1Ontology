@@ -32,9 +32,32 @@ import {
   SomLinkedFollowUp,
 } from "../../types/ISomReview";
 import { SOM_REVIEW_STAGES } from "../../lib/somReview/reviewTaxonomy";
+import { SOM_REVIEW_PATH } from "../../lib/somReview/reviewDependencies";
 import { ISSUE_DESCRIPTIONS } from "./reviewCopy";
 import { reviewAccentColor, reviewIconColor } from "./reviewStyles";
 import ReviewFollowUpPanel from "./ReviewFollowUpPanel";
+import ReviewPath from "./ReviewPath";
+
+const reviewPathStepByIssue = new Map(
+  SOM_REVIEW_PATH.flatMap((step) =>
+    step.issueTypes.map((issueType) => [issueType, step] as const),
+  ),
+);
+
+const blockingPhaseSummary = (
+  blockers: SomIssueTypeOption["blockedBy"],
+): string => {
+  const labels = Array.from(
+    new Set(
+      blockers.map((blocker) => {
+        const step = reviewPathStepByIssue.get(blocker.id);
+        return step ? `Phase ${step.number}: ${step.title}` : blocker.label;
+      }),
+    ),
+  );
+  if (labels.length <= 1) return labels[0] || "the earlier phase";
+  return `${labels.slice(0, -1).join(", ")} and ${labels[labels.length - 1]}`;
+};
 
 const activeQueueStatusSx: SxProps<Theme> = {
   backgroundColor: (theme) =>
@@ -93,6 +116,20 @@ const QueueStatus = ({ issue }: { issue: SomIssueTypeOption }) => {
   if (issue.total === 0) {
     return (
       <Chip label="No review items found" size="small" variant="outlined" />
+    );
+  }
+  if ((issue.blockedBy || []).length > 0 && issue.pending > 0) {
+    return (
+      <Chip
+        icon={<LockOutlinedIcon />}
+        label={
+          issue.reviewed > 0
+            ? `${issue.reviewed} reviewed; new items locked`
+            : "Earlier phase required"
+        }
+        size="small"
+        variant="outlined"
+      />
     );
   }
   if (issue.pending === 0 && issue.reviewed > 0) {
@@ -201,6 +238,8 @@ const ReviewQueueSelector = ({
       issue to review.
     </Typography>
 
+    <ReviewPath issueTypes={issueTypes} onStart={onStart} />
+
     {onStartFollowUp && (
       <ReviewFollowUpPanel
         followUps={readyFollowUps}
@@ -234,12 +273,17 @@ const ReviewQueueSelector = ({
               {stageIssues.map((issue) => {
                 const hasNewItems = issue.pending > 0;
                 const hasSavedItems = issue.reviewed > 0;
+                const blockers = issue.blockedBy || [];
+                const blocked = blockers.length > 0 && hasNewItems;
                 const completedOnly = !hasNewItems && hasSavedItems;
                 const available =
-                  issue.enabled && (hasNewItems || hasSavedItems);
-                const unavailableLabel = issue.waiting
-                  ? `${issue.label}; review its related diagnosis first`
-                  : `${issue.label}, no review items available`;
+                  issue.enabled && (hasSavedItems || (hasNewItems && !blocked));
+                const blockerPhases = blockingPhaseSummary(blockers);
+                const unavailableLabel = blocked
+                  ? `${issue.label}; complete ${blockerPhases} first`
+                  : issue.waiting
+                    ? `${issue.label}; review its related diagnosis first`
+                    : `${issue.label}, no review items available`;
                 return (
                   <Card
                     key={issue.id}
@@ -259,11 +303,13 @@ const ReviewQueueSelector = ({
                       disabled={!available}
                       onClick={() => onStart(issue.id)}
                       aria-label={
-                        completedOnly
-                          ? `Review completed items in ${issue.label}, ${issue.reviewed} saved`
-                          : available
-                            ? `${issue.activeSession ? "Resume" : "Start"} ${issue.label} review, ${issue.pending} remaining`
-                            : unavailableLabel
+                        blocked && hasSavedItems
+                          ? `Review completed items in ${issue.label}, ${issue.reviewed} saved; complete ${blockerPhases} before new items`
+                          : completedOnly
+                            ? `Review completed items in ${issue.label}, ${issue.reviewed} saved`
+                            : available
+                              ? `${issue.activeSession ? "Resume" : "Start"} ${issue.label} review, ${issue.pending} remaining`
+                              : unavailableLabel
                       }
                       sx={{ p: { xs: 1.75, sm: 2 }, minHeight: 92 }}
                     >
@@ -342,6 +388,19 @@ const ReviewQueueSelector = ({
                               {hasSavedItems
                                 ? "No new items are ready. You can revisit your saved judgments; related actions require their diagnoses first."
                                 : "Review its related diagnosis first. If you agree, this action will become available."}
+                            </Typography>
+                          )}
+                          {blocked && (
+                            <Typography
+                              sx={{
+                                mt: 0.6,
+                                color: "text.primary",
+                                fontSize: "0.9rem",
+                                fontWeight: 650,
+                                lineHeight: 1.4,
+                              }}
+                            >
+                              Complete {blockerPhases} first.
                             </Typography>
                           )}
                         </Box>
