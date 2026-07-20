@@ -11,6 +11,10 @@ import { SomIssueType, SomOverviewResponse } from "../../../types/ISomReview";
 import { reviewAccessForToken } from "../../../lib/somReview/access";
 import { toLinkedFollowUps } from "../../../lib/somReview/followUps";
 import { numberReviewIssues } from "../../../lib/somReview/reviewTaxonomy";
+import {
+  blockingIssuePrerequisites,
+  issuePrerequisiteTypes,
+} from "../../../lib/somReview/reviewDependencies";
 
 const handler = async (request: NextApiRequest, res: NextApiResponse) => {
   const req = request as CustomNextApiRequest;
@@ -20,7 +24,7 @@ const handler = async (request: NextApiRequest, res: NextApiResponse) => {
     const dataset = getDataset();
     const reviewerId = req.user.uid;
 
-    const [issueTypes, readyFollowUpRecords] = await Promise.all([
+    const [baseIssueTypes, readyFollowUpRecords] = await Promise.all([
       Promise.all(
         numberReviewIssues(dataset.manifest.issueTypes || []).map(
           async (issue: any) => {
@@ -45,6 +49,8 @@ const handler = async (request: NextApiRequest, res: NextApiResponse) => {
               optional: Boolean(issue.optional),
               enabled,
               total,
+              prerequisiteIssueTypes: issuePrerequisiteTypes(issueType),
+              blockedBy: [],
               ...summary,
               ...(activeSession ? { activeSession } : {}),
             };
@@ -53,6 +59,13 @@ const handler = async (request: NextApiRequest, res: NextApiResponse) => {
       ),
       reviewerReadyDependentRecords(dataset, reviewerId),
     ]);
+    const issuesByType = new Map(
+      baseIssueTypes.map((issue) => [issue.id, issue]),
+    );
+    const issueTypes = baseIssueTypes.map((issue) => ({
+      ...issue,
+      blockedBy: blockingIssuePrerequisites(issue.id, issuesByType),
+    }));
 
     const body: SomOverviewResponse = {
       datasetVersion: dataset.datasetVersion,

@@ -6,8 +6,13 @@ import {
   SOM_REVIEW_RESPONSE_REVISIONS,
   SOM_REVIEW_SESSIONS,
 } from "../firestoreClient/collections";
-import { SomIssueType } from "../../types/ISomReview";
-import { SomDataset, proposalAvailability } from "./dataset";
+import { SomIssuePrerequisite, SomIssueType } from "../../types/ISomReview";
+import {
+  isIssueTypeEnabled,
+  SomDataset,
+  proposalAvailability,
+} from "./dataset";
+import { issuePrerequisiteTypes } from "./reviewDependencies";
 import {
   dropMissingProposalIds,
   isResumableSession,
@@ -138,6 +143,32 @@ export const pendingCount = async (
   reviewerId: string,
 ): Promise<number> => {
   return (await pendingSummary(dataset, issueType, reviewerId)).pending;
+};
+
+export const reviewerBlockingPrerequisites = async (
+  dataset: SomDataset,
+  issueType: SomIssueType,
+  reviewerId: string,
+): Promise<SomIssuePrerequisite[]> => {
+  const prerequisiteTypes =
+    issuePrerequisiteTypes(issueType).filter(isIssueTypeEnabled);
+  const summaries = await Promise.all(
+    prerequisiteTypes.map(async (prerequisiteType) => ({
+      prerequisiteType,
+      summary: await pendingSummary(dataset, prerequisiteType, reviewerId),
+    })),
+  );
+  return summaries.flatMap(({ prerequisiteType, summary }) => {
+    const remaining = summary.pending + summary.waiting;
+    if (remaining === 0) return [];
+    return [
+      {
+        id: prerequisiteType,
+        label: dataset.issueLabels.get(prerequisiteType) || prerequisiteType,
+        remaining,
+      },
+    ];
+  });
 };
 
 export const reviewerReadyDependentRecords = async (

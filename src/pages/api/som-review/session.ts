@@ -5,6 +5,7 @@ import { getDataset, isIssueTypeEnabled } from "../../../lib/somReview/dataset";
 import {
   getOrCreateSession,
   issueResponses,
+  reviewerBlockingPrerequisites,
 } from "../../../lib/somReview/store";
 import { toReviewerCard } from "../../../lib/somReview/sanitize";
 import { reviewRequestData } from "../../../lib/somReview/request";
@@ -22,6 +23,7 @@ const handler = async (request: NextApiRequest, res: NextApiResponse) => {
       typeof data.preferredProposalId === "string"
         ? data.preferredProposalId
         : undefined;
+    const historyOnly = data.historyOnly === true;
     const dataset = getDataset();
     if (!dataset.orderedIdsByIssue.has(issueType)) {
       return res.status(400).json({ error: "Unknown issue type" });
@@ -44,12 +46,29 @@ const handler = async (request: NextApiRequest, res: NextApiResponse) => {
       }
     }
 
-    const session = await getOrCreateSession(
-      dataset,
-      issueType,
-      req.user.uid,
-      preferredProposalId,
-    );
+    if (!preferredProposalId && !historyOnly) {
+      const blockedBy = await reviewerBlockingPrerequisites(
+        dataset,
+        issueType,
+        req.user.uid,
+      );
+      if (blockedBy.length > 0) {
+        return res.status(409).json({
+          code: "PREREQUISITE_REVIEW_REQUIRED",
+          error: "Complete the required earlier review types first",
+          blockedBy,
+        });
+      }
+    }
+
+    const session = historyOnly
+      ? null
+      : await getOrCreateSession(
+          dataset,
+          issueType,
+          req.user.uid,
+          preferredProposalId,
+        );
     if (
       preferredProposalId &&
       (!session || session.proposalIds[session.cursor] !== preferredProposalId)
