@@ -1,13 +1,20 @@
 import React from "react";
-import { Box, Button, Chip, Stack, Typography } from "@mui/material";
+import { Box, Button, Stack, Typography } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
-import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import CheckIcon from "@mui/icons-material/Check";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 
 import { SOM_REVIEW_PATH } from "../../lib/somReview/reviewDependencies";
 import { SomIssueType, SomIssueTypeOption } from "../../types/ISomReview";
 
-type StepStatus = "complete" | "current" | "later" | "contextual" | "optional";
+type StepStatus =
+  | "complete"
+  | "current"
+  | "later"
+  | "available"
+  | "contextual"
+  | "optional";
 
 const statusForStep = (
   issues: SomIssueTypeOption[],
@@ -24,7 +31,7 @@ const statusForStep = (
   }
   if (contextual) {
     return relevant.some((issue) => issue.pending > 0)
-      ? "current"
+      ? "available"
       : "contextual";
   }
   if (
@@ -37,39 +44,65 @@ const statusForStep = (
   return "later";
 };
 
-const StatusChip = ({ status }: { status: StepStatus }) => {
-  if (status === "complete") {
-    return (
-      <Chip
-        icon={<CheckCircleOutlineIcon />}
-        label="Complete"
-        color="success"
-        size="small"
-        variant="outlined"
-      />
-    );
+const statusLabel = (status: StepStatus): string => {
+  switch (status) {
+    case "complete":
+      return "Done";
+    case "current":
+      return "Current phase";
+    case "later":
+      return "Later";
+    case "available":
+      return "Available now";
+    case "contextual":
+      return "Unlocks as needed";
+    case "optional":
+      return "Optional";
   }
-  if (status === "current") {
-    return <Chip label="Current" color="primary" size="small" />;
-  }
-  if (status === "later") {
-    return (
-      <Chip
-        icon={<LockOutlinedIcon />}
-        label="Later"
-        size="small"
-        variant="outlined"
-      />
-    );
-  }
-  return (
-    <Chip
-      label={status === "optional" ? "Optional" : "As decisions unlock it"}
-      size="small"
-      variant="outlined"
-    />
-  );
 };
+
+const PhaseMarker = ({
+  number,
+  status,
+}: {
+  number: number;
+  status: StepStatus;
+}) => (
+  <Box
+    aria-hidden="true"
+    sx={{
+      width: 36,
+      height: 36,
+      flex: "0 0 36px",
+      borderRadius: "50%",
+      display: "grid",
+      placeItems: "center",
+      border: 2,
+      borderColor:
+        status === "current" || status === "available"
+          ? "primary.main"
+          : status === "complete"
+            ? "success.main"
+            : "divider",
+      backgroundColor:
+        status === "current"
+          ? "primary.main"
+          : status === "complete"
+            ? "success.main"
+            : "background.paper",
+      color:
+        status === "current" || status === "complete"
+          ? "primary.contrastText"
+          : status === "available"
+            ? "primary.main"
+            : "text.secondary",
+      fontSize: "0.9rem",
+      fontWeight: 800,
+    }}
+  >
+    {status === "complete" ? <CheckIcon sx={{ fontSize: 21 }} /> : number}
+  </Box>
+);
 
 const ReviewPath = ({
   issueTypes,
@@ -91,7 +124,6 @@ const ReviewPath = ({
     };
   });
   const nextIssue = steps
-    .filter((step) => !step.contextual && !step.optional)
     .flatMap((step) => step.issues)
     .find(
       (issue) =>
@@ -99,6 +131,9 @@ const ReviewPath = ({
         issue.pending > 0 &&
         (issue.blockedBy || []).length === 0,
     );
+  const nextStep = nextIssue
+    ? steps.find((step) => step.issueTypes.includes(nextIssue.id))
+    : undefined;
 
   return (
     <Box
@@ -108,33 +143,114 @@ const ReviewPath = ({
         borderTop: 1,
         borderBottom: 1,
         borderColor: "divider",
-        py: 2.25,
+        py: 2,
         mb: 3.5,
       }}
     >
-      <Stack
-        direction={{ xs: "column", sm: "row" }}
-        justifyContent="space-between"
-        alignItems={{ xs: "stretch", sm: "flex-start" }}
-        spacing={1.5}
-        sx={{ mb: 2 }}
+      <Typography
+        id="review-path-heading"
+        component="h2"
+        sx={{ fontSize: "1.15rem", fontWeight: 800 }}
       >
-        <Box>
-          <Typography
-            id="review-path-heading"
-            component="h2"
-            sx={{ fontSize: "1.15rem", fontWeight: 800 }}
+        Guided review path
+      </Typography>
+      <Typography sx={{ mt: 0.3, color: "text.secondary", lineHeight: 1.45 }}>
+        Finish the current phase to unlock later review work.
+      </Typography>
+      <Box
+        component="ol"
+        aria-label="Review phases"
+        sx={{
+          listStyle: "none",
+          p: 0,
+          mt: 2,
+          mb: 0,
+          display: "grid",
+          gridTemplateColumns: {
+            xs: "1fr",
+            sm: "repeat(2, minmax(0, 1fr))",
+            md: "repeat(5, minmax(0, 1fr))",
+          },
+          gap: { xs: 1, md: 1.5 },
+        }}
+      >
+        {steps.map((step) => (
+          <Box
+            component="li"
+            key={step.id}
+            aria-current={step.status === "current" ? "step" : undefined}
+            sx={{
+              minWidth: 0,
+              py: 0.75,
+            }}
           >
-            Guided review path
-          </Typography>
-          <Typography
-            sx={{ mt: 0.35, color: "text.secondary", lineHeight: 1.5 }}
-          >
-            Complete each required phase before starting proposals that depend
-            on it.
-          </Typography>
-        </Box>
-        {nextIssue && (
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <PhaseMarker number={step.number} status={step.status} />
+              <Box sx={{ minWidth: 0 }}>
+                <Typography
+                  sx={{
+                    fontWeight: step.status === "current" ? 800 : 700,
+                    lineHeight: 1.25,
+                    color:
+                      step.status === "later"
+                        ? "text.secondary"
+                        : "text.primary",
+                  }}
+                >
+                  {step.title}
+                </Typography>
+                <Stack direction="row" alignItems="center" spacing={0.35}>
+                  {step.status === "later" && (
+                    <LockOutlinedIcon
+                      aria-hidden="true"
+                      sx={{ color: "text.secondary", fontSize: 14 }}
+                    />
+                  )}
+                  <Typography
+                    sx={{
+                      mt: 0.15,
+                      color:
+                        step.status === "current" || step.status === "available"
+                          ? "primary.main"
+                          : "text.secondary",
+                      fontSize: "0.78rem",
+                      fontWeight: 650,
+                      lineHeight: 1.25,
+                    }}
+                  >
+                    {statusLabel(step.status)}
+                  </Typography>
+                </Stack>
+              </Box>
+            </Stack>
+          </Box>
+        ))}
+      </Box>
+      {nextIssue && nextStep && (
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          alignItems={{ xs: "stretch", sm: "center" }}
+          justifyContent="space-between"
+          spacing={1.5}
+          sx={{
+            mt: 1.5,
+            py: 1.5,
+            px: { xs: 1.5, sm: 2 },
+            borderLeft: 4,
+            borderColor: "primary.main",
+            backgroundColor: (theme) => alpha(theme.palette.primary.main, 0.08),
+          }}
+        >
+          <Box sx={{ minWidth: 0 }}>
+            <Typography sx={{ fontWeight: 800, lineHeight: 1.35 }}>
+              Next: {nextStep.title}
+            </Typography>
+            <Typography
+              sx={{ mt: 0.25, color: "text.secondary", lineHeight: 1.45 }}
+            >
+              {nextStep.description}
+            </Typography>
+          </Box>
           <Button
             disableElevation
             variant="contained"
@@ -144,63 +260,8 @@ const ReviewPath = ({
           >
             {nextIssue.activeSession ? "Continue" : "Start"} {nextIssue.label}
           </Button>
-        )}
-      </Stack>
-      <Box
-        sx={{
-          display: "grid",
-          gridTemplateColumns: {
-            xs: "1fr",
-            md: "repeat(2, minmax(0, 1fr))",
-            xl: "repeat(5, minmax(0, 1fr))",
-          },
-          gap: 0,
-        }}
-      >
-        {steps.map((step, index) => (
-          <Box
-            key={step.id}
-            sx={{
-              minWidth: 0,
-              py: { xs: 1.25, md: 0.5 },
-              px: { xs: 0, md: 1.5 },
-              borderTop: {
-                xs: index === 0 ? 0 : 1,
-                md: index < 2 ? 0 : 1,
-                xl: 0,
-              },
-              borderLeft: {
-                xs: 0,
-                md: index % 2 === 0 ? 0 : 1,
-                xl: index === 0 ? 0 : 1,
-              },
-              borderColor: "divider",
-            }}
-          >
-            <Stack
-              direction="row"
-              alignItems="center"
-              justifyContent="space-between"
-              spacing={1}
-            >
-              <Typography sx={{ fontWeight: 800, lineHeight: 1.35 }}>
-                {step.number}. {step.title}
-              </Typography>
-              <StatusChip status={step.status} />
-            </Stack>
-            <Typography
-              sx={{
-                mt: 0.55,
-                color: "text.secondary",
-                fontSize: "0.88rem",
-                lineHeight: 1.45,
-              }}
-            >
-              {step.description}
-            </Typography>
-          </Box>
-        ))}
-      </Box>
+        </Stack>
+      )}
     </Box>
   );
 };

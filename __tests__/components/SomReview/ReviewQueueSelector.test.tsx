@@ -237,6 +237,11 @@ describe("Society of Mind review queue selector", () => {
     );
 
     expect(screen.getByText("Guided review path")).toBeInTheDocument();
+    expect(
+      screen.getByRole("list", { name: "Review phases" }),
+    ).toBeInTheDocument();
+    expect(screen.getAllByRole("listitem")).toHaveLength(5);
+    expect(screen.getByText("Next: Clarify labels")).toBeInTheDocument();
     fireEvent.click(
       screen.getByRole("button", {
         name: "Continue 1. Clarify unclear titles",
