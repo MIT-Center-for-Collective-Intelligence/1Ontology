@@ -1,0 +1,130 @@
+{
+  "schemaVersion": "som-expert-title-application-plan-v1",
+  "createdAt": "2026-07-22",
+  "sourceOntology": {
+    "appId": "final-hierarchy-with-o*net",
+    "name": "Final Hierarchy with O*Net"
+  },
+  "targetOntology": {
+    "appId": "final-hierarchy-with-o*net-rob-title-review-2026-07-22",
+    "name": "Final Hierarchy with O*Net - Rob Title Review 2026-07-22"
+  },
+  "benchmark": {
+    "file": "rob-title-benchmark.json",
+    "sha256": "0ef95cc93314fcaab16cfa1804cb14ddbb4feecbf86fb8b91e861c7156e1f191",
+    "reviewerLabel": "expert-reviewer",
+    "reviewed": 35,
+    "agreed": 26,
+    "disagreed": 9
+  },
+  "renames": [
+    { "sourceNodeId": "prSUePHOV2HTktxg2sFy", "from": "Market Space", "to": "Market Vacant Space", "decisionSource": "acceptedProposal" },
+    { "sourceNodeId": "qdgRkGpYX9yINEjtTf9V", "from": "Sell Check", "to": "Sell Traveler's Checks", "decisionSource": "acceptedProposal" },
+    { "sourceNodeId": "ubFUvirAxwyLrRU07mtk", "from": "Sell Chip", "to": "Sell Gambling Chips", "decisionSource": "acceptedProposal" },
+    { "sourceNodeId": "ntdGQhVj7DqLHEgtyBwA", "from": "Sell Clothing", "to": "Sell Expedition Clothing", "decisionSource": "acceptedProposal" },
+    { "sourceNodeId": "lPkcYj40VPyODSSBXdlt", "from": "Sell Contract", "to": "Sell Service Contracts", "decisionSource": "acceptedProposal" },
+    { "sourceNodeId": "oBpaloX36PSeAFCu8DfT", "from": "Sell Currency", "to": "Sell Foreign Currencies", "decisionSource": "acceptedProposal" },
+    { "sourceNodeId": "J1szj516OPETkugJfWrH", "from": "Sell Derivative", "to": "Sell Financial Derivatives", "decisionSource": "acceptedProposal" },
+    { "sourceNodeId": "jlg5laXDwQjJGRAowAGB", "from": "Sell Estate", "to": "Sell Real Estate", "decisionSource": "acceptedProposal" },
+    { "sourceNodeId": "e4S1J2dYsfLjqkODNXke", "from": "Sell Future", "to": "Sell Commodity Futures", "decisionSource": "acceptedProposal" },
+    { "sourceNodeId": "AX5NrslC6dxkoWkRMSiM", "from": "Sell Good", "to": "Sell Eyewear and Eye-Care Products", "decisionSource": "acceptedProposal" },
+    { "sourceNodeId": "tdxR4H40ocVMqA1mx8xC", "from": "Sell Incentive", "to": "Sell Travel Incentives", "decisionSource": "acceptedProposal" },
+    { "sourceNodeId": "8brd1yASEbMwnL5MNRKR", "from": "Sell Order", "to": "Sell Money Orders", "decisionSource": "acceptedProposal" },
+    { "sourceNodeId": "2NRS1Lkogwl5TkeY5kgy", "from": "Sell Package", "to": "Sell Travel Packages", "decisionSource": "acceptedProposal" },
+    { "sourceNodeId": "MURT1siWDa81Bscf61dm", "from": "Sell Pass", "to": "Sell Admission Passes", "decisionSource": "acceptedProposal" },
+    { "sourceNodeId": "FSOgeprt7L5bWQABLw3P", "from": "Sell Policy", "to": "Sell Insurance Policies", "decisionSource": "acceptedProposal" },
+    { "sourceNodeId": "2XDukf29nxcUippZU3mF", "from": "Sell Souvenir", "to": "Sell Tour Souvenirs", "decisionSource": "acceptedProposal" },
+    { "sourceNodeId": "by6MNP9TqvyPhdmRCKue", "from": "Sell Specialty", "to": "Sell Food Specialties", "decisionSource": "acceptedProposal" },
+    { "sourceNodeId": "RnatGzxhEhIAaoKdrBsn", "from": "Sell Tobacco", "to": "Sell Tobacco Products", "decisionSource": "acceptedProposal" },
+    { "sourceNodeId": "QqYxIHqY5xF44OyRMqCq", "from": "Sell Token", "to": "Sell Gambling Tokens", "decisionSource": "acceptedProposal" },
+    { "sourceNodeId": "eIQMnQrBROKinV7cVxu0", "from": "Sell Accessory", "to": "Sell Accessories", "decisionSource": "expertAlternative", "expertSuggestedCorrection": "Sell Accessories" },
+    { "sourceNodeId": "RM7QPgIBJYmyG3GrkKtS", "from": "Sell Item", "to": "Sell Items", "decisionSource": "expertAlternative", "expertSuggestedCorrection": "Sell items" },
+    { "sourceNodeId": "kdQx4gLFEpA8YVjww6jQ", "from": "Sell Part", "to": "Sell Parts", "decisionSource": "expertAlternative", "expertSuggestedCorrection": "Two nodes: Sell Parts, Sell Equipment", "existingSiblingSatisfies": ["Sell Equipment"] },
+    { "sourceNodeId": "19y9uUU8KvzXDJldddwN", "from": "Sell Service (1)", "to": "Sell Services", "decisionSource": "expertAlternative", "expertSuggestedCorrection": "Two nodes: Sell products, Sell services", "existingSiblingSatisfies": ["Sell Product"] }
+  ],
+  "splits": [
+    {
+      "sourceNodeId": "T26Dg1QJD5ilEGiI5zxy",
+      "from": "Sell Bicycle",
+      "decisionSource": "expertAlternative",
+      "expertSuggestedCorrection": "Two separate nodes: Sell Bicycles, Sell Bicycle Accessories",
+      "retainSourceAs": {
+        "title": "Sell Bicycles",
+        "sourceTaskTitles": ["Sell bicycles and accessories."]
+      },
+      "create": [
+        {
+          "title": "Sell Bicycle Accessories",
+          "sourceTaskTitles": ["Sell bicycles and accessories."]
+        }
+      ]
+    },
+    {
+      "sourceNodeId": "n6R43Sr73LTtAkYduDMy",
+      "from": "Sell Equipment",
+      "decisionSource": "expertAlternative",
+      "expertSuggestedCorrection": "Three nodes: Sell Equipment, Sell Sporting Equipment, Sell Expedition Equipment",
+      "retainSourceAs": {
+        "title": "Sell Equipment",
+        "sourceTaskTitles": [
+          "Sell parts and equipment.",
+          "Sell services or equipment, such as trusts, investments, or check processing services."
+        ]
+      },
+      "create": [
+        {
+          "title": "Sell Expedition Equipment",
+          "sourceTaskTitles": ["Sell or rent equipment, clothing, and supplies related to expeditions."]
+        },
+        {
+          "title": "Sell Sporting Equipment",
+          "sourceTaskTitles": ["Rent, sell, or issue sporting equipment and supplies, such as bowling shoes, golf balls, swimming suits, or beach chairs."]
+        }
+      ]
+    },
+    {
+      "sourceNodeId": "ErrhGnME6caIDzbHNB40",
+      "from": "Sell Food",
+      "decisionSource": "expertAlternative",
+      "expertSuggestedCorrection": "Two nodes: Sell Pet Food, Sell Food",
+      "retainSourceAs": {
+        "title": "Sell Food",
+        "sourceTaskTitles": ["Sell food, beverages, or tobacco to players."]
+      },
+      "create": [
+        {
+          "title": "Sell Pet Food",
+          "sourceTaskTitles": [
+            "Sell pet food or supplies to customers.",
+            "Sell pet food and supplies."
+          ]
+        }
+      ]
+    },
+    {
+      "sourceNodeId": "qLrzhd5XmjxYoKph4vEx",
+      "from": "Sell Products or Ideas",
+      "decisionSource": "expertAlternative",
+      "expertSuggestedCorrection": "Two nodes: Sell products, Sell ideas",
+      "retainSourceAs": {
+        "title": "Sell Products",
+        "sourceTaskTitles": ["Selling or Influencing Others"]
+      },
+      "create": [
+        {
+          "title": "Sell Ideas",
+          "sourceTaskTitles": ["Selling or Influencing Others"]
+        }
+      ]
+    }
+  ],
+  "regenerateWithoutApplying": [
+    {
+      "sourceNodeId": "bCGvc2ZlyuyU7rpwzNSX",
+      "title": "Sell Product",
+      "decisionSource": "expertRequestedPromptRevision",
+      "expertSuggestedCorrection": "See comment above and redo prompt",
+      "reason": "The expert supplied a policy and examples, not an unambiguous final node set. The updated D12 agent must generate a fresh review proposal after the approved edits are applied."
+    }
+  ]
+}

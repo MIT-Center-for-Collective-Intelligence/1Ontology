@@ -12,8 +12,8 @@ const { loadEnvConfig } = require("@next/env");
 const { cert, initializeApp } = require("firebase-admin/app");
 const { getFirestore } = require("firebase-admin/firestore");
 
-const ONTOLOGY_APP_ID = "final-hierarchy-with-o*net";
-const ONTOLOGY_NAME = "Final Hierarchy with O*Net";
+let ONTOLOGY_APP_ID = "final-hierarchy-with-o*net";
+let ONTOLOGY_NAME = "Final Hierarchy with O*Net";
 const SNAPSHOT_SCHEMA_VERSION = "som-ontology-snapshot-v1";
 const REFERENCE_TITLES = new Set(["Advertise", "Persuade", "Provide service"]);
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
@@ -301,7 +301,8 @@ function validatePath(index, sourcePath) {
     const nodeId = index.idByTitle.get(part);
     if (!nodeId) continue;
     if (parentId && parentId !== nodeId) {
-      requireEdge(index, parentId, nodeId, collectionName);
+      if (collectionName === "main") requireAnyEdge(index, parentId, nodeId);
+      else requireEdge(index, parentId, nodeId, collectionName);
     }
     parentId = nodeId;
     collectionName = "main";
@@ -364,6 +365,33 @@ function deriveSourceRefs(record, index, snapshotHash) {
       }
       break;
     }
+    case "title-split": {
+      subjectNodeId = addTitle(context.currentTitle);
+      const parent = sourceParent(index, record);
+      parentNodeId = parent.id;
+      if (parentNodeId) {
+        referenced.add(parentNodeId);
+        requireEdge(index, parentNodeId, subjectNodeId, parent.collectionName);
+      }
+      for (const proposedNode of context.proposedNodes || []) {
+        const exists = index.idByTitle.has(proposedNode.title);
+        if (proposedNode.status === "new" && exists) {
+          throw new Error(
+            `Proposed split node already exists: ${proposedNode.title}`,
+          );
+        }
+        if (
+          proposedNode.status === "current" &&
+          proposedNode.title !== context.currentTitle
+        ) {
+          throw new Error(
+            `Current split node does not match the subject: ${proposedNode.title}`,
+          );
+        }
+        if (proposedNode.status === "existing") addTitle(proposedNode.title);
+      }
+      break;
+    }
     case "grouping-outline": {
       if (index.idByTitle.has(context.proposedGroupTitle)) {
         throw new Error(
@@ -389,13 +417,11 @@ function deriveSourceRefs(record, index, snapshotHash) {
       break;
     }
     case "duplicate-comparison": {
-      const first = addDirectChild(context.parentTitle, context.canonicalTitle);
-      const candidate = addDirectChild(
-        context.parentTitle,
-        context.candidateSynonymTitle,
-      );
-      parentNodeId = first.parentId;
-      subjectNodeId = candidate.childId;
+      parentNodeId = addTitle(context.parentTitle);
+      const canonicalId = addTitle(context.canonicalTitle);
+      subjectNodeId = addTitle(context.candidateSynonymTitle);
+      requireAnyEdge(index, parentNodeId, canonicalId);
+      requireAnyEdge(index, parentNodeId, subjectNodeId);
       break;
     }
     case "placement-comparison": {
@@ -747,6 +773,12 @@ function extendProposalSchema(directory) {
 async function main() {
   loadEnvConfig(REPO_ROOT);
   const args = parseArgs();
+  ONTOLOGY_APP_ID =
+    args["ontology-app-id"] ||
+    process.env.SOM_ONTOLOGY_APP_ID ||
+    ONTOLOGY_APP_ID;
+  ONTOLOGY_NAME =
+    args["ontology-name"] || process.env.SOM_ONTOLOGY_NAME || ONTOLOGY_NAME;
   const inputDir = path.resolve(required(args["input-dir"], "--input-dir"));
   const outputDir = path.resolve(required(args["output-dir"], "--output-dir"));
   const environment = args.environment || "production";

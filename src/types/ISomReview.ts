@@ -60,6 +60,20 @@ export type SomReviewContext =
       linkedTasks?: string[];
     }
   | {
+      type: "title-split";
+      currentTitle: string;
+      linkedTasks: string[];
+      proposedNodes: Array<{
+        title: string;
+        status: "current" | "existing" | "new";
+        sourceTaskIndexes: number[];
+        sourceTasks: string[];
+        reason: string;
+      }>;
+      deferredTaskIndexes: number[];
+      deferredTasks: string[];
+    }
+  | {
       type: "grouping-outline";
       parentTitle: string;
       structure: "intermediate" | "facet-collection";

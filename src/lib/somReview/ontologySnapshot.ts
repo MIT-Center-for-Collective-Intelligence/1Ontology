@@ -2,8 +2,7 @@ import crypto from "crypto";
 import fs from "fs";
 import path from "path";
 
-export const SELL_ONTOLOGY_APP_ID = "final-hierarchy-with-o*net";
-export const SELL_ONTOLOGY_NAME = "Final Hierarchy with O*Net";
+export { SELL_ONTOLOGY_APP_ID, SELL_ONTOLOGY_NAME } from "./ontologyConfig";
 
 export interface SomOntologySnapshot {
   schemaVersion: "som-ontology-snapshot-v1";
@@ -78,17 +77,6 @@ export const buildSnapshotIndex = (
       `Unexpected ontology snapshot schemaVersion: ${snapshot.schemaVersion}`,
     );
   }
-  if (snapshot.ontologyAppId !== SELL_ONTOLOGY_APP_ID) {
-    throw new Error(
-      `Review dataset targets ${snapshot.ontologyAppId}, expected ${SELL_ONTOLOGY_APP_ID}`,
-    );
-  }
-  if (snapshot.ontologyName !== SELL_ONTOLOGY_NAME) {
-    throw new Error(
-      `Review dataset targets ${snapshot.ontologyName}, expected ${SELL_ONTOLOGY_NAME}`,
-    );
-  }
-
   const nodesById = new Map<string, SomOntologySnapshot["nodes"][number]>();
   const idsByTitle = new Map<string, string[]>();
   for (const node of snapshot.nodes) {
@@ -202,7 +190,8 @@ const validatePath = (index: SnapshotIndex, sourcePath: unknown): void => {
     if (ids.length === 0) continue;
     const nodeId = resolveUniqueTitle(index, part);
     if (parentId && parentId !== nodeId) {
-      requireEdge(index, parentId, nodeId, collectionName);
+      if (collectionName === "main") requireAnyEdge(index, parentId, nodeId);
+      else requireEdge(index, parentId, nodeId, collectionName);
     }
     parentId = nodeId;
     collectionName = "main";
@@ -310,6 +299,33 @@ export const validateProposalAgainstSnapshot = (
       }
       break;
     }
+    case "title-split": {
+      subjectNodeId = addTitle(context.currentTitle);
+      const parent = sourceParent(index, record);
+      parentNodeId = parent.id;
+      if (parentNodeId) {
+        referenced.add(parentNodeId);
+        requireEdge(index, parentNodeId, subjectNodeId, parent.collectionName);
+      }
+      for (const proposedNode of context.proposedNodes || []) {
+        const existingIds = index.idsByTitle.get(proposedNode.title) || [];
+        if (proposedNode.status === "new" && existingIds.length > 0) {
+          throw new Error(
+            `Proposed split node already exists: ${proposedNode.title}`,
+          );
+        }
+        if (proposedNode.status === "current") {
+          if (proposedNode.title !== context.currentTitle) {
+            throw new Error(
+              `Current split node does not match the subject: ${proposedNode.title}`,
+            );
+          }
+          referenced.add(subjectNodeId);
+        }
+        if (proposedNode.status === "existing") addTitle(proposedNode.title);
+      }
+      break;
+    }
     case "grouping-outline": {
       if ((index.idsByTitle.get(context.proposedGroupTitle) || []).length > 0) {
         throw new Error(
@@ -335,13 +351,11 @@ export const validateProposalAgainstSnapshot = (
       break;
     }
     case "duplicate-comparison": {
-      const first = addDirectChild(context.parentTitle, context.canonicalTitle);
-      const candidate = addDirectChild(
-        context.parentTitle,
-        context.candidateSynonymTitle,
-      );
-      parentNodeId = first.parentId;
-      subjectNodeId = candidate.childId;
+      parentNodeId = addTitle(context.parentTitle);
+      const canonicalId = addTitle(context.canonicalTitle);
+      subjectNodeId = addTitle(context.candidateSynonymTitle);
+      requireAnyEdge(index, parentNodeId, canonicalId);
+      requireAnyEdge(index, parentNodeId, subjectNodeId);
       break;
     }
     case "placement-comparison": {
@@ -556,8 +570,8 @@ export const validateProposalAgainstSnapshot = (
   }
 
   const expected: SomProposalSourceRefs = {
-    sourceOntologyAppId: SELL_ONTOLOGY_APP_ID,
-    sourceOntologyName: SELL_ONTOLOGY_NAME,
+    sourceOntologyAppId: index.snapshot.ontologyAppId,
+    sourceOntologyName: index.snapshot.ontologyName,
     sourceSnapshotSha256: snapshotSha256,
     subjectNodeId,
     parentNodeId,

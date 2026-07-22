@@ -56,6 +56,44 @@ describe("Society of Mind context renderers", () => {
     expect(screen.getAllByText("Sell products or services.")).toHaveLength(1);
   });
 
+  it("shows a title split with numbered evidence and existing-node status", () => {
+    render(
+      <ContextRenderer
+        context={{
+          type: "title-split",
+          currentTitle: "Sell Product",
+          linkedTasks: ["Sell agricultural products.", "Sell products."],
+          proposedNodes: [
+            {
+              title: "Sell Agricultural Products",
+              status: "new",
+              sourceTaskIndexes: [1],
+              sourceTasks: ["Sell agricultural products."],
+              reason: "The source names a restricted product category.",
+            },
+            {
+              title: "Sell Products",
+              status: "existing",
+              sourceTaskIndexes: [2],
+              sourceTasks: ["Sell products."],
+              reason: "The generic source belongs with the existing node.",
+            },
+          ],
+          deferredTaskIndexes: [],
+          deferredTasks: [],
+        }}
+      />,
+    );
+
+    expect(screen.getByText("Before")).toBeInTheDocument();
+    expect(screen.getByText("After")).toBeInTheDocument();
+    expect(screen.getByText("New node")).toBeInTheDocument();
+    expect(screen.getByText("Already in ontology")).toBeInTheDocument();
+    expect(screen.getByText("Uses source item 1")).toBeInTheDocument();
+    expect(screen.getByText("Uses source item 2")).toBeInTheDocument();
+    expect(screen.getAllByText("Sell agricultural products.")).toHaveLength(1);
+  });
+
   it("keeps the current children alphabetized and labels only the after split", () => {
     render(
       <ContextRenderer

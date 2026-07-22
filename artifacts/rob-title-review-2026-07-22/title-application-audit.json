@@ -1,0 +1,373 @@
+{
+  "schemaVersion": "som-title-application-audit-v1",
+  "generatedAt": "2026-07-22T22:51:34.928Z",
+  "mode": "apply",
+  "environment": "production",
+  "firestoreProjectId": "ontology-41607",
+  "sourceOntology": {
+    "appId": "final-hierarchy-with-o*net",
+    "name": "Final Hierarchy with O*Net"
+  },
+  "targetOntology": {
+    "appId": "final-hierarchy-with-o*net-rob-title-review-2026-07-22",
+    "name": "Final Hierarchy with O*Net - Rob Title Review 2026-07-22"
+  },
+  "planSha256": "9e7ae384e433a2552e109529feed508dbed5dcf60661c0b06b097bcdb9394ad5",
+  "benchmarkSha256": "0ef95cc93314fcaab16cfa1804cb14ddbb4feecbf86fb8b91e861c7156e1f191",
+  "resume": true,
+  "existingTargetNodeCount": 52285,
+  "nodesRemainingToWrite": 0,
+  "sourceDigestBefore": "7d707f384e969dd87386baa61e1aa7c6c028a999d49856449715713835d32a74",
+  "expectedTargetDigest": "85bb52116f6168ab3fd10caf27c76d0e6993c187a22d73a5423c0d5767053e1a",
+  "ownedSourceNodeCount": 52280,
+  "clonedOnetEvidenceNodeCount": 0,
+  "unresolvedDirectReferenceCount": 0,
+  "unresolvedDirectReferenceSample": [],
+  "nonOnetExternalReferenceCount": 0,
+  "nonOnetExternalReferenceSample": [],
+  "sourceNodeCount": 52280,
+  "targetNodeCount": 52285,
+  "newNodeCount": 5,
+  "renames": [
+    {
+      "sourceNodeId": "prSUePHOV2HTktxg2sFy",
+      "targetNodeId": "cb2e5e63d0cff1bfa2099edc317f",
+      "from": "Market Space",
+      "to": "Market Vacant Space",
+      "decisionSource": "acceptedProposal"
+    },
+    {
+      "sourceNodeId": "qdgRkGpYX9yINEjtTf9V",
+      "targetNodeId": "1790b26433e3a81749557c5de7a4",
+      "from": "Sell Check",
+      "to": "Sell Traveler's Checks",
+      "decisionSource": "acceptedProposal"
+    },
+    {
+      "sourceNodeId": "ubFUvirAxwyLrRU07mtk",
+      "targetNodeId": "6cc96cf79270c4013f293ff5d16e",
+      "from": "Sell Chip",
+      "to": "Sell Gambling Chips",
+      "decisionSource": "acceptedProposal"
+    },
+    {
+      "sourceNodeId": "ntdGQhVj7DqLHEgtyBwA",
+      "targetNodeId": "69a76cef42054681bc3735ab1092",
+      "from": "Sell Clothing",
+      "to": "Sell Expedition Clothing",
+      "decisionSource": "acceptedProposal"
+    },
+    {
+      "sourceNodeId": "lPkcYj40VPyODSSBXdlt",
+      "targetNodeId": "6f55fe00e37ec13082cd0ab99a7d",
+      "from": "Sell Contract",
+      "to": "Sell Service Contracts",
+      "decisionSource": "acceptedProposal"
+    },
+    {
+      "sourceNodeId": "oBpaloX36PSeAFCu8DfT",
+      "targetNodeId": "59b9ff989f552f66010691266f35",
+      "from": "Sell Currency",
+      "to": "Sell Foreign Currencies",
+      "decisionSource": "acceptedProposal"
+    },
+    {
+      "sourceNodeId": "J1szj516OPETkugJfWrH",
+      "targetNodeId": "f4f8afa69e23b508de94f4f63368",
+      "from": "Sell Derivative",
+      "to": "Sell Financial Derivatives",
+      "decisionSource": "acceptedProposal"
+    },
+    {
+      "sourceNodeId": "jlg5laXDwQjJGRAowAGB",
+      "targetNodeId": "2b5bb4fa407dbd68eba9b9f708fe",
+      "from": "Sell Estate",
+      "to": "Sell Real Estate",
+      "decisionSource": "acceptedProposal"
+    },
+    {
+      "sourceNodeId": "e4S1J2dYsfLjqkODNXke",
+      "targetNodeId": "d21cda9179673a5e06e0a62ffca8",
+      "from": "Sell Future",
+      "to": "Sell Commodity Futures",
+      "decisionSource": "acceptedProposal"
+    },
+    {
+      "sourceNodeId": "AX5NrslC6dxkoWkRMSiM",
+      "targetNodeId": "3069ab644d9b4ca5b61193b9a04c",
+      "from": "Sell Good",
+      "to": "Sell Eyewear and Eye-Care Products",
+      "decisionSource": "acceptedProposal"
+    },
+    {
+      "sourceNodeId": "tdxR4H40ocVMqA1mx8xC",
+      "targetNodeId": "71faf5d7cab019a10cc9c44354fe",
+      "from": "Sell Incentive",
+      "to": "Sell Travel Incentives",
+      "decisionSource": "acceptedProposal"
+    },
+    {
+      "sourceNodeId": "8brd1yASEbMwnL5MNRKR",
+      "targetNodeId": "6a79f25b4716054c9019bec46f15",
+      "from": "Sell Order",
+      "to": "Sell Money Orders",
+      "decisionSource": "acceptedProposal"
+    },
+    {
+      "sourceNodeId": "2NRS1Lkogwl5TkeY5kgy",
+      "targetNodeId": "af5724f49bdd47f9b0c64d675ccc",
+      "from": "Sell Package",
+      "to": "Sell Travel Packages",
+      "decisionSource": "acceptedProposal"
+    },
+    {
+      "sourceNodeId": "MURT1siWDa81Bscf61dm",
+      "targetNodeId": "fc65d03112d9770241363caa4062",
+      "from": "Sell Pass",
+      "to": "Sell Admission Passes",
+      "decisionSource": "acceptedProposal"
+    },
+    {
+      "sourceNodeId": "FSOgeprt7L5bWQABLw3P",
+      "targetNodeId": "c1653400b0c62ec28fab9b40a16f",
+      "from": "Sell Policy",
+      "to": "Sell Insurance Policies",
+      "decisionSource": "acceptedProposal"
+    },
+    {
+      "sourceNodeId": "2XDukf29nxcUippZU3mF",
+      "targetNodeId": "77d7ee6d4aa17cd1f5761ba6cf58",
+      "from": "Sell Souvenir",
+      "to": "Sell Tour Souvenirs",
+      "decisionSource": "acceptedProposal"
+    },
+    {
+      "sourceNodeId": "by6MNP9TqvyPhdmRCKue",
+      "targetNodeId": "4b5f556c908bfc6e9619db0f74eb",
+      "from": "Sell Specialty",
+      "to": "Sell Food Specialties",
+      "decisionSource": "acceptedProposal"
+    },
+    {
+      "sourceNodeId": "RnatGzxhEhIAaoKdrBsn",
+      "targetNodeId": "b986e17de73e7ec113862d000440",
+      "from": "Sell Tobacco",
+      "to": "Sell Tobacco Products",
+      "decisionSource": "acceptedProposal"
+    },
+    {
+      "sourceNodeId": "QqYxIHqY5xF44OyRMqCq",
+      "targetNodeId": "d4fa8979106e17055b8f57288542",
+      "from": "Sell Token",
+      "to": "Sell Gambling Tokens",
+      "decisionSource": "acceptedProposal"
+    },
+    {
+      "sourceNodeId": "eIQMnQrBROKinV7cVxu0",
+      "targetNodeId": "25e1d9a1285b91501822848b1c73",
+      "from": "Sell Accessory",
+      "to": "Sell Accessories",
+      "decisionSource": "expertAlternative"
+    },
+    {
+      "sourceNodeId": "RM7QPgIBJYmyG3GrkKtS",
+      "targetNodeId": "0c70ae0e4b53a4d7e484a343f908",
+      "from": "Sell Item",
+      "to": "Sell Items",
+      "decisionSource": "expertAlternative"
+    },
+    {
+      "sourceNodeId": "kdQx4gLFEpA8YVjww6jQ",
+      "targetNodeId": "3da8c9bfbc065029cdef43a29cc4",
+      "from": "Sell Part",
+      "to": "Sell Parts",
+      "decisionSource": "expertAlternative"
+    },
+    {
+      "sourceNodeId": "19y9uUU8KvzXDJldddwN",
+      "targetNodeId": "e05f953c021fe58aa236f9b6b739",
+      "from": "Sell Service (1)",
+      "to": "Sell Services",
+      "decisionSource": "expertAlternative"
+    }
+  ],
+  "splits": [
+    {
+      "sourceNodeId": "T26Dg1QJD5ilEGiI5zxy",
+      "retainedTargetNodeId": "a93112a22141a390b9d1a25ef495",
+      "retainedTitle": "Sell Bicycles",
+      "created": [
+        {
+          "id": "b4a8ed3542e8ba83cc0352c3fe27",
+          "title": "Sell Bicycle Accessories"
+        }
+      ]
+    },
+    {
+      "sourceNodeId": "n6R43Sr73LTtAkYduDMy",
+      "retainedTargetNodeId": "ce18c1d945fe905c4541f133e0ca",
+      "retainedTitle": "Sell Equipment",
+      "created": [
+        {
+          "id": "ef592e7c13e6aea4bcafe8561a8f",
+          "title": "Sell Expedition Equipment"
+        },
+        {
+          "id": "4a6c88e8c2be8ebaad82ff104b78",
+          "title": "Sell Sporting Equipment"
+        }
+      ]
+    },
+    {
+      "sourceNodeId": "ErrhGnME6caIDzbHNB40",
+      "retainedTargetNodeId": "9027842bf8f614c420e6afb6aa3f",
+      "retainedTitle": "Sell Food",
+      "created": [
+        {
+          "id": "134132ca54b3c837ef3647d2fac2",
+          "title": "Sell Pet Food"
+        }
+      ]
+    },
+    {
+      "sourceNodeId": "qLrzhd5XmjxYoKph4vEx",
+      "retainedTargetNodeId": "6ada6d5e9e672a9a9d1dd4c70c12",
+      "retainedTitle": "Sell Products",
+      "created": [
+        {
+          "id": "ccea66be4f40a9de4d617e045ffa",
+          "title": "Sell Ideas"
+        }
+      ]
+    }
+  ],
+  "pendingRegeneration": [
+    {
+      "sourceNodeId": "bCGvc2ZlyuyU7rpwzNSX",
+      "title": "Sell Product",
+      "decisionSource": "expertRequestedPromptRevision",
+      "expertSuggestedCorrection": "See comment above and redo prompt",
+      "reason": "The expert supplied a policy and examples, not an unambiguous final node set. The updated D12 agent must generate a fresh review proposal after the approved edits are applied."
+    }
+  ],
+  "externalReferenceCount": 0,
+  "externalReferenceSample": [],
+  "originalTitlesOfChangedNodes": [
+    {
+      "id": "cb2e5e63d0cff1bfa2099edc317f",
+      "title": "Market Space"
+    },
+    {
+      "id": "1790b26433e3a81749557c5de7a4",
+      "title": "Sell Check"
+    },
+    {
+      "id": "6cc96cf79270c4013f293ff5d16e",
+      "title": "Sell Chip"
+    },
+    {
+      "id": "69a76cef42054681bc3735ab1092",
+      "title": "Sell Clothing"
+    },
+    {
+      "id": "6f55fe00e37ec13082cd0ab99a7d",
+      "title": "Sell Contract"
+    },
+    {
+      "id": "59b9ff989f552f66010691266f35",
+      "title": "Sell Currency"
+    },
+    {
+      "id": "f4f8afa69e23b508de94f4f63368",
+      "title": "Sell Derivative"
+    },
+    {
+      "id": "2b5bb4fa407dbd68eba9b9f708fe",
+      "title": "Sell Estate"
+    },
+    {
+      "id": "d21cda9179673a5e06e0a62ffca8",
+      "title": "Sell Future"
+    },
+    {
+      "id": "3069ab644d9b4ca5b61193b9a04c",
+      "title": "Sell Good"
+    },
+    {
+      "id": "71faf5d7cab019a10cc9c44354fe",
+      "title": "Sell Incentive"
+    },
+    {
+      "id": "6a79f25b4716054c9019bec46f15",
+      "title": "Sell Order"
+    },
+    {
+      "id": "af5724f49bdd47f9b0c64d675ccc",
+      "title": "Sell Package"
+    },
+    {
+      "id": "fc65d03112d9770241363caa4062",
+      "title": "Sell Pass"
+    },
+    {
+      "id": "c1653400b0c62ec28fab9b40a16f",
+      "title": "Sell Policy"
+    },
+    {
+      "id": "77d7ee6d4aa17cd1f5761ba6cf58",
+      "title": "Sell Souvenir"
+    },
+    {
+      "id": "4b5f556c908bfc6e9619db0f74eb",
+      "title": "Sell Specialty"
+    },
+    {
+      "id": "b986e17de73e7ec113862d000440",
+      "title": "Sell Tobacco"
+    },
+    {
+      "id": "d4fa8979106e17055b8f57288542",
+      "title": "Sell Token"
+    },
+    {
+      "id": "25e1d9a1285b91501822848b1c73",
+      "title": "Sell Accessory"
+    },
+    {
+      "id": "0c70ae0e4b53a4d7e484a343f908",
+      "title": "Sell Item"
+    },
+    {
+      "id": "3da8c9bfbc065029cdef43a29cc4",
+      "title": "Sell Part"
+    },
+    {
+      "id": "e05f953c021fe58aa236f9b6b739",
+      "title": "Sell Service (1)"
+    },
+    {
+      "id": "a93112a22141a390b9d1a25ef495",
+      "title": "Sell Bicycle"
+    },
+    {
+      "id": "ce18c1d945fe905c4541f133e0ca",
+      "title": "Sell Equipment"
+    },
+    {
+      "id": "9027842bf8f614c420e6afb6aa3f",
+      "title": "Sell Food"
+    },
+    {
+      "id": "6ada6d5e9e672a9a9d1dd4c70c12",
+      "title": "Sell Products or Ideas"
+    }
+  ],
+  "sourceDigestAfter": "7d707f384e969dd87386baa61e1aa7c6c028a999d49856449715713835d32a74",
+  "targetDigestAfter": "85bb52116f6168ab3fd10caf27c76d0e6993c187a22d73a5423c0d5767053e1a",
+  "targetNodeCountAfter": 52285,
+  "verification": {
+    "sourceUnchanged": true,
+    "targetCountMatches": true,
+    "targetDigestMatches": true
+  }
+}

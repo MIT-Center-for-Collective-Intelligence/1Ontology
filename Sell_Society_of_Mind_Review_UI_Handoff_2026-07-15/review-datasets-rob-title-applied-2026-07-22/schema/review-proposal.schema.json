@@ -1,0 +1,528 @@
+{
+  "$ref": "#/definitions/SocietyOfMindReviewProposal",
+  "definitions": {
+    "SocietyOfMindReviewProposal": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "type": "string",
+          "const": "som-review-v1"
+        },
+        "datasetVersion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "proposalId": {
+          "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+        },
+        "branch": {
+          "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+        },
+        "issueType": {
+          "type": "string",
+          "enum": [
+            "title-clarity",
+            "sibling-grouping",
+            "duplicate-synonym",
+            "placement",
+            "structural-overlap"
+          ]
+        },
+        "reviewMode": {
+          "type": "string",
+          "enum": [
+            "proposed-change",
+            "status-quo-audit",
+            "manual-check"
+          ]
+        },
+        "rolloutStatus": {
+          "type": "string",
+          "enum": [
+            "prototype",
+            "experimental",
+            "control"
+          ]
+        },
+        "subject": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+            },
+            "parentTitle": {
+              "type": "string",
+              "default": ""
+            },
+            "path": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+              },
+              "default": []
+            },
+            "relatedTitles": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+              },
+              "default": []
+            }
+          },
+          "required": [
+            "title"
+          ],
+          "additionalProperties": false
+        },
+        "reviewerView": {
+          "type": "object",
+          "properties": {
+            "question": {
+              "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+            },
+            "currentState": {
+              "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+            },
+            "proposedState": {
+              "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+            },
+            "reasoning": {
+              "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+            },
+            "context": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "title-comparison"
+                    },
+                    "currentTitle": {
+                      "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+                    },
+                    "proposedTitle": {
+                      "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+                    },
+                    "linkedTasks": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+                      },
+                      "default": []
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "currentTitle"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "title-split"
+                    },
+                    "currentTitle": {
+                      "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+                    },
+                    "linkedTasks": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+                      },
+                      "minItems": 1
+                    },
+                    "proposedNodes": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "title": {
+                            "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "current",
+                              "existing",
+                              "new"
+                            ]
+                          },
+                          "sourceTaskIndexes": {
+                            "type": "array",
+                            "items": {
+                              "type": "integer",
+                              "exclusiveMinimum": 0
+                            },
+                            "minItems": 1
+                          },
+                          "sourceTasks": {
+                            "type": "array",
+                            "items": {
+                              "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+                            },
+                            "minItems": 1
+                          },
+                          "reason": {
+                            "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+                          }
+                        },
+                        "required": [
+                          "title",
+                          "status",
+                          "sourceTaskIndexes",
+                          "sourceTasks",
+                          "reason"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "minItems": 2
+                    },
+                    "deferredTaskIndexes": {
+                      "type": "array",
+                      "items": {
+                        "type": "integer",
+                        "exclusiveMinimum": 0
+                      },
+                      "default": []
+                    },
+                    "deferredTasks": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+                      },
+                      "default": []
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "currentTitle",
+                    "linkedTasks",
+                    "proposedNodes"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "grouping-outline"
+                    },
+                    "parentTitle": {
+                      "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+                    },
+                    "structure": {
+                      "type": "string",
+                      "enum": [
+                        "intermediate",
+                        "facet-collection"
+                      ]
+                    },
+                    "proposedGroupTitle": {
+                      "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+                    },
+                    "proposedChildren": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+                      },
+                      "minItems": 2
+                    },
+                    "unaffectedChildren": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+                      },
+                      "default": []
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "parentTitle",
+                    "structure",
+                    "proposedGroupTitle",
+                    "proposedChildren"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "flat-list"
+                    },
+                    "parentTitle": {
+                      "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+                    },
+                    "currentChildren": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+                      },
+                      "minItems": 2
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "parentTitle",
+                    "currentChildren"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "duplicate-comparison"
+                    },
+                    "parentTitle": {
+                      "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+                    },
+                    "canonicalTitle": {
+                      "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+                    },
+                    "candidateSynonymTitle": {
+                      "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "parentTitle",
+                    "canonicalTitle",
+                    "candidateSynonymTitle"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "placement-comparison"
+                    },
+                    "nodeTitle": {
+                      "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+                    },
+                    "currentParentTitle": {
+                      "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+                    },
+                    "currentBucket": {
+                      "type": "string",
+                      "default": ""
+                    },
+                    "candidateHome": {
+                      "type": "string",
+                      "default": ""
+                    },
+                    "placementIssue": {
+                      "type": "string",
+                      "enum": [
+                        "wrong-bucket",
+                        "wrong-parent",
+                        "wrong-verb"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "nodeTitle",
+                    "currentParentTitle",
+                    "placementIssue"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "overlap-comparison"
+                    },
+                    "parentTitle": {
+                      "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+                    },
+                    "firstCollection": {
+                      "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+                    },
+                    "firstTitle": {
+                      "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+                    },
+                    "secondCollection": {
+                      "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+                    },
+                    "secondTitle": {
+                      "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "parentTitle",
+                    "firstCollection",
+                    "firstTitle",
+                    "secondCollection",
+                    "secondTitle"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            },
+            "agreeLabel": {
+              "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion",
+              "default": "Agree"
+            },
+            "disagreeLabel": {
+              "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion",
+              "default": "Disagree"
+            },
+            "rejectionReasonRequired": {
+              "type": "boolean",
+              "const": true
+            },
+            "autoAdvanceOnAgree": {
+              "type": "boolean",
+              "const": true
+            },
+            "hideModelConfidence": {
+              "type": "boolean",
+              "const": true
+            }
+          },
+          "required": [
+            "question",
+            "currentState",
+            "proposedState",
+            "reasoning",
+            "context",
+            "rejectionReasonRequired",
+            "autoAdvanceOnAgree",
+            "hideModelConfidence"
+          ],
+          "additionalProperties": false
+        },
+        "internalModelEvidence": {
+          "type": "object",
+          "properties": {
+            "detectorId": {
+              "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+            },
+            "detectorName": {
+              "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+            },
+            "detectorPromptVersion": {
+              "type": "string",
+              "default": ""
+            },
+            "judgeId": {
+              "type": "string",
+              "default": ""
+            },
+            "judgeName": {
+              "type": "string",
+              "default": ""
+            },
+            "judgePromptVersion": {
+              "type": "string",
+              "default": ""
+            },
+            "detectorConfidence": {
+              "type": "string",
+              "default": ""
+            },
+            "judgeConfidence": {
+              "type": "string",
+              "default": ""
+            },
+            "reviewerVisible": {
+              "type": "boolean",
+              "const": false
+            }
+          },
+          "required": [
+            "detectorId",
+            "detectorName",
+            "reviewerVisible"
+          ],
+          "additionalProperties": false
+        },
+        "provenance": {
+          "type": "object",
+          "properties": {
+            "sourceOntology": {
+              "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+            },
+            "sourceOntologySha256": {
+              "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+            },
+            "sourceArtifact": {
+              "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+            },
+            "sourceRecord": {
+              "type": "string",
+              "default": ""
+            },
+            "sourceOntologyAppId": {
+              "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+            },
+            "sourceOntologyName": {
+              "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+            },
+            "sourceSnapshotSha256": {
+              "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+            },
+            "subjectNodeId": {
+              "type": "string"
+            },
+            "parentNodeId": {
+              "type": "string"
+            },
+            "referencedNodeIds": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+              },
+              "uniqueItems": true
+            }
+          },
+          "required": [
+            "sourceOntology",
+            "sourceOntologySha256",
+            "sourceArtifact",
+            "sourceOntologyAppId",
+            "sourceOntologyName",
+            "sourceSnapshotSha256",
+            "subjectNodeId",
+            "parentNodeId",
+            "referencedNodeIds"
+          ],
+          "additionalProperties": false
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "datasetVersion",
+        "proposalId",
+        "branch",
+        "issueType",
+        "reviewMode",
+        "rolloutStatus",
+        "subject",
+        "reviewerView",
+        "internalModelEvidence",
+        "provenance",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

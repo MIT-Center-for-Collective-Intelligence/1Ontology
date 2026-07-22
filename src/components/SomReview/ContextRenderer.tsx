@@ -21,6 +21,7 @@ import { SomReviewContext } from "../../types/ISomReview";
 import { reviewAccentColor } from "./reviewStyles";
 
 const CONTEXTS_WITH_STATE_COMPARISONS = new Set<SomReviewContext["type"]>([
+  "title-split",
   "duplicate-comparison",
   "grouping-outline",
   "merge-action",
@@ -60,6 +61,8 @@ const ContextRenderer = ({ context }: { context: SomReviewContext }) => {
   switch (context.type) {
     case "title-comparison":
       return <TitleComparison context={context} />;
+    case "title-split":
+      return <TitleSplit context={context} />;
     case "grouping-outline":
       return <GroupingOutline context={context} />;
     case "flat-list":
@@ -186,6 +189,96 @@ const TitleComparison = ({
         ))}
       </List>
     </Disclosure>
+  );
+};
+
+const TitleSplit = ({
+  context,
+}: {
+  context: Extract<SomReviewContext, { type: "title-split" }>;
+}) => {
+  const tasks = uniqueTextValues(context.linkedTasks || []);
+  const statusLabel = {
+    current: "Keep current node",
+    existing: "Already in ontology",
+    new: "New node",
+  } as const;
+
+  return (
+    <Stack direction={{ xs: "column", lg: "row" }} spacing={2} sx={{ mb: 3 }}>
+      <Box sx={comparisonPanelSx}>
+        <Typography sx={sectionLabelSx}>Before</Typography>
+        <Typography sx={{ mt: 0.75, fontSize: "1.05rem", fontWeight: 750 }}>
+          {context.currentTitle}
+        </Typography>
+        <Typography sx={{ ...sectionLabelSx, mt: 2 }}>
+          Source O*NET evidence
+        </Typography>
+        <List component="ol" dense disablePadding sx={{ pl: 3, mt: 0.5 }}>
+          {tasks.map((task, index) => (
+            <ListItem
+              component="li"
+              key={`${index + 1}-${task}`}
+              disableGutters
+              alignItems="flex-start"
+              sx={{ display: "list-item", pl: 0.5 }}
+            >
+              <ListItemText
+                primary={task}
+                primaryTypographyProps={{ sx: { lineHeight: 1.5 } }}
+              />
+            </ListItem>
+          ))}
+        </List>
+      </Box>
+
+      <Box sx={comparisonPanelSx}>
+        <Typography sx={sectionLabelSx}>After</Typography>
+        <Stack divider={<Divider flexItem />} sx={{ mt: 0.5 }}>
+          {context.proposedNodes.map((node) => (
+            <Box key={`${node.status}-${node.title}`} sx={{ py: 1.25 }}>
+              <Stack
+                direction={{ xs: "column", sm: "row" }}
+                spacing={1}
+                alignItems={{ xs: "flex-start", sm: "center" }}
+              >
+                <Typography sx={{ fontSize: "1.05rem", fontWeight: 750 }}>
+                  {node.title}
+                </Typography>
+                <Chip
+                  size="small"
+                  variant="outlined"
+                  label={statusLabel[node.status]}
+                  sx={{ fontWeight: 650 }}
+                />
+              </Stack>
+              <Typography sx={{ mt: 0.75, lineHeight: 1.5 }}>
+                {node.reason}
+              </Typography>
+              <Typography
+                sx={{ mt: 0.75, color: "text.secondary", fontWeight: 650 }}
+              >
+                Uses source{" "}
+                {node.sourceTaskIndexes.length === 1 ? "item" : "items"}{" "}
+                {node.sourceTaskIndexes.join(", ")}
+              </Typography>
+            </Box>
+          ))}
+        </Stack>
+        {context.deferredTaskIndexes.length > 0 && (
+          <Box sx={{ mt: 1.5, pt: 1.5, borderTop: 1, borderColor: "divider" }}>
+            <Typography sx={sectionLabelSx}>
+              Needs separate placement review
+            </Typography>
+            <Typography sx={{ mt: 0.5 }}>
+              Source{" "}
+              {context.deferredTaskIndexes.length === 1 ? "item" : "items"}{" "}
+              {context.deferredTaskIndexes.join(", ")}
+            </Typography>
+          </Box>
+        )}
+      </Box>
+    </Stack>
   );
 };
 
