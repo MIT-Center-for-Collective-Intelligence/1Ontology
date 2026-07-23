@@ -33,6 +33,7 @@ import {
 } from "../../types/ISomReview";
 import { SOM_REVIEW_STAGES } from "../../lib/somReview/reviewTaxonomy";
 import { SOM_REVIEW_PATH } from "../../lib/somReview/reviewDependencies";
+import { SELL_ONTOLOGY_NAME } from "../../lib/somReview/ontologyConfig";
 import { ISSUE_DESCRIPTIONS } from "./reviewCopy";
 import { reviewAccentColor, reviewIconColor } from "./reviewStyles";
 import ReviewFollowUpPanel from "./ReviewFollowUpPanel";
@@ -218,7 +219,7 @@ const ReviewQueueSelector = ({
         Proposal review
       </Typography>
       <Stack direction="row" alignItems="center" flexWrap="wrap" gap={1}>
-        <Chip label="Final Hierarchy with O*Net" variant="outlined" />
+        <Chip label={SELL_ONTOLOGY_NAME} variant="outlined" />
         {canDeliberate && onOpenDeliberation && (
           <Button
             disableElevation

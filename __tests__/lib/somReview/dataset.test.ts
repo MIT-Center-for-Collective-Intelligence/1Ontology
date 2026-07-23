@@ -370,3 +370,52 @@ describe("Society of Mind review dataset", () => {
     );
   });
 });
+
+describe("Rob post-title-review pass", () => {
+  const dataset = loadDataset();
+
+  it("serves only the fresh title splits against the isolated ontology", () => {
+    expect(dataset.datasetVersion).toBe(
+      "sell-rob-title-applied-title-pass-2026-07-22-v1",
+    );
+    expect(dataset.recordsById.size).toBe(4);
+    expect(dataset.manifest.sourceSnapshot).toMatchObject({
+      ontologyAppId: "final-hierarchy-with-o*net-rob-title-review-2026-07-22",
+      ontologyName: "Final Hierarchy with O*Net - Rob Title Review 2026-07-22",
+      environment: "production",
+    });
+    expect(dataset.manifest.counts.gatedDownstreamCandidates).toBe(23);
+    expect(
+      [...dataset.recordsById.values()].map(
+        (record) => record.reviewerView.context.currentTitle,
+      ),
+    ).toEqual(
+      expect.arrayContaining([
+        "Market Product",
+        "Sell Beverage",
+        "Sell Product",
+        "Sell Supply",
+      ]),
+    );
+    expect(
+      [...dataset.recordsById.values()].every(
+        (record) => record.reviewerView.context.type === "title-split",
+      ),
+    ).toBe(true);
+  });
+
+  it("distinguishes existing destinations from new split nodes", () => {
+    const product = [...dataset.recordsById.values()].find(
+      (record) => record.reviewerView.context.currentTitle === "Sell Product",
+    );
+    expect(product.reviewerView.context.proposedNodes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ title: "Sell Products", status: "existing" }),
+        expect.objectContaining({
+          title: "Sell Agricultural Products",
+          status: "new",
+        }),
+      ]),
+    );
+  });
+});

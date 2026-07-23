@@ -33,6 +33,8 @@ export const reviewerQuestion = (context: SomReviewContext): string => {
         context.proposedTitle !== context.currentTitle
         ? `Is "${context.proposedTitle}" clearer than "${context.currentTitle}"?`
         : `Is "${context.currentTitle}" clear enough as the title of this activity?`;
+    case "title-split":
+      return `Should the evidence currently grouped under "${context.currentTitle}" be represented by the activity nodes shown below?`;
     case "grouping-outline":
       return `Should the new grouping "${context.proposedGroupTitle}" be created under "${context.parentTitle}" with the highlighted children under it?`;
     case "flat-list":
@@ -160,6 +162,21 @@ const sanitizeContext = (context: any): SomReviewContext => {
         currentTitle: context.currentTitle,
         proposedTitle: context.proposedTitle,
         linkedTasks: context.linkedTasks || [],
+      };
+    case "title-split":
+      return {
+        type: "title-split",
+        currentTitle: context.currentTitle,
+        linkedTasks: context.linkedTasks || [],
+        proposedNodes: (context.proposedNodes || []).map((node: any) => ({
+          title: node.title,
+          status: node.status,
+          sourceTaskIndexes: node.sourceTaskIndexes || [],
+          sourceTasks: node.sourceTasks || [],
+          reason: node.reason,
+        })),
+        deferredTaskIndexes: context.deferredTaskIndexes || [],
+        deferredTasks: context.deferredTasks || [],
       };
     case "grouping-outline":
       return {

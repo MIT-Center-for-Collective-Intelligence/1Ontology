@@ -176,6 +176,12 @@ export const ONTOLOGY_APPS = development
         name: "Final Hierarchy with O*Net",
       },
       {
+        id: "final-hierarchy-with-o*net-rob-title-review-2026-07-22",
+        name: "Final Hierarchy with O*Net - Rob Title Review 2026-07-22",
+        type: "other",
+        editAccess: true,
+      },
+      {
         id: "ontology-development-version",
         name: "Ontology - Development Version",
         type: "other",
@@ -191,6 +197,12 @@ export const ONTOLOGY_APPS = development
       {
         id: "final-hierarchy-with-o*net",
         name: "Final Hierarchy with O*Net",
+      },
+      {
+        id: "final-hierarchy-with-o*net-rob-title-review-2026-07-22",
+        name: "Final Hierarchy with O*Net - Rob Title Review 2026-07-22",
+        type: "other",
+        editAccess: true,
       },
       { id: "sandbox", name: "Sandbox", type: "other", editAccess: true },
       /*  {

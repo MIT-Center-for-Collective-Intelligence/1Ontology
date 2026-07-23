@@ -1,0 +1,1846 @@
+{
+  "schemaVersion": "som-reviewer-benchmark-v1",
+  "exportedAt": "2026-07-22T22:49:20.580Z",
+  "firestoreProjectId": "ontology-41607",
+  "datasetVersion": "sell-final-hierarchy-onet-2026-07-15-v4",
+  "sourceOntology": "firestore://ontology-41607/final-hierarchy-with-o*net",
+  "sourceOntologySha256": "c86217e0f2dbefe5b716bd5881b46d50cec9f76264676ab23f63bfe060266837",
+  "issueType": "title-clarity",
+  "reviewer": {
+    "label": "expert-reviewer"
+  },
+  "counts": {
+    "expected": 35,
+    "reviewed": 35,
+    "agreed": 26,
+    "disagreed": 9,
+    "missing": 0,
+    "orphanedHistoricalResponses": 2
+  },
+  "missingProposalIds": [],
+  "orphanedResponses": [
+    {
+      "proposalId": "som-d42652f4fadb154cdf43",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-f69272a44f96c53dac86",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    }
+  ],
+  "sourceNodeEvidence": [
+    {
+      "nodeId": "oqKJFFsUzHQcuArnIwRS",
+      "title": "Market Artwork",
+      "appName": "final-hierarchy-with-o*net",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "87psoSfZc04QgpByXJbI",
+              "linkTitle": "(O*Net) 20990 - Market artwork through brochures, mailings, or Web sites.",
+              "title": "(O*Net) 20990 - Market artwork through brochures, mailings, or Web sites.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Market Artwork"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "US1b9Ap0WUL7vFcaI6GJ",
+      "title": "Market Casino",
+      "appName": "final-hierarchy-with-o*net",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "xMKu6gnUaxFJgyqwsfLv",
+              "linkTitle": "(O*Net) 20472 - Market or promote the casino to bring in business.",
+              "title": "(O*Net) 20472 - Market or promote the casino to bring in business.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Promote Casino",
+                "Market Casino"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "prSUePHOV2HTktxg2sFy",
+      "title": "Market Space",
+      "appName": "final-hierarchy-with-o*net",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "B5KNYY3XseFipnTG7a2D",
+              "linkTitle": "(O*Net) 7231 - Market vacant space to prospective tenants through leasing agents, advertising, or other methods.",
+              "title": "(O*Net) 7231 - Market vacant space to prospective tenants through leasing agents, advertising, or other methods.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Market Space"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "eIQMnQrBROKinV7cVxu0",
+      "title": "Sell Accessory",
+      "appName": "final-hierarchy-with-o*net",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "PkYqyMqjkJNgz1W2Lc2T",
+              "linkTitle": "(O*Net) 10725 - Sell and install accessories, such as batteries, windshield wiper blades, fan belts, bulbs, or headlamps.",
+              "title": "(O*Net) 10725 - Sell and install accessories, such as batteries, windshield wiper blades, fan belts, bulbs, or headlamps.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Install Accessory",
+                "Sell Accessory"
+              ]
+            },
+            {
+              "nodeId": "9lniAdOzB4KDpWJRy6Mj",
+              "linkTitle": "(O*Net) 20917 - Sell bicycles and accessories.",
+              "title": "(O*Net) 20917 - Sell bicycles and accessories.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell Accessory",
+                "Sell Bicycle"
+              ]
+            },
+            {
+              "nodeId": "dpn8Axnsf9x5fK7x6YTb",
+              "linkTitle": "(O*Net) 13028 - Develop a group of products or accessories, and market them through venues such as boutiques or mail-order catalogs.",
+              "title": "(O*Net) 13028 - Develop a group of products or accessories, and market them through venues such as boutiques or mail-order catalogs.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Develop Product",
+                "Develop Accessory",
+                "Market Product",
+                "Sell Accessory"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "T26Dg1QJD5ilEGiI5zxy",
+      "title": "Sell Bicycle",
+      "appName": "final-hierarchy-with-o*net",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "9lniAdOzB4KDpWJRy6Mj",
+              "linkTitle": "(O*Net) 20917 - Sell bicycles and accessories.",
+              "title": "(O*Net) 20917 - Sell bicycles and accessories.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell Accessory",
+                "Sell Bicycle"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "qdgRkGpYX9yINEjtTf9V",
+      "title": "Sell Check",
+      "appName": "final-hierarchy-with-o*net",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "32CEMwyc6yJ31IVS2fXx",
+              "linkTitle": "(O*Net) 4734 - Perform foreign currency transactions and sell traveler's checks.",
+              "title": "(O*Net) 4734 - Perform foreign currency transactions and sell traveler's checks.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Perform Transaction",
+                "Sell Check"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "ubFUvirAxwyLrRU07mtk",
+      "title": "Sell Chip",
+      "appName": "final-hierarchy-with-o*net",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "bfwWBFGnP7B49FH6vtql",
+              "linkTitle": "(O*Net) 4669 - Sell gambling chips, tokens, or tickets to patrons or to other workers for resale to patrons.",
+              "title": "(O*Net) 4669 - Sell gambling chips, tokens, or tickets to patrons or to other workers for resale to patrons.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell Chip",
+                "Sell Ticket",
+                "Sell Token"
+              ]
+            },
+            {
+              "nodeId": "IbfRT8nRDOObzf6AeTU8",
+              "linkTitle": "(O*Net) 7006 - Sell gambling chips, tokens, or tickets to patrons, or to other workers for resale to patrons.",
+              "title": "(O*Net) 7006 - Sell gambling chips, tokens, or tickets to patrons, or to other workers for resale to patrons.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell Chip",
+                "Sell Ticket",
+                "Sell Token"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "ntdGQhVj7DqLHEgtyBwA",
+      "title": "Sell Clothing",
+      "appName": "final-hierarchy-with-o*net",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "KhUzQuxTINfzlbfRJlIK",
+              "linkTitle": "(O*Net) 13170 - Sell or rent equipment, clothing, and supplies related to expeditions.",
+              "title": "(O*Net) 13170 - Sell or rent equipment, clothing, and supplies related to expeditions.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Rent Clothing",
+                "Rent Equipment",
+                "Rent Supply",
+                "Sell Clothing",
+                "Sell Equipment",
+                "Sell Supply"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "lPkcYj40VPyODSSBXdlt",
+      "title": "Sell Contract",
+      "appName": "final-hierarchy-with-o*net",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "T9BWCy0a6cfKg8J7vnk8",
+              "linkTitle": "(O*Net) 20616 - Sell service contracts for technical or scientific products.",
+              "title": "(O*Net) 20616 - Sell service contracts for technical or scientific products.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell Contract"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "oBpaloX36PSeAFCu8DfT",
+      "title": "Sell Currency",
+      "appName": "final-hierarchy-with-o*net",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "Cghl16NazP67Rmo1YqHC",
+              "linkTitle": "(O*Net) 23196 - Buy or sell stocks, bonds, commodity futures, foreign currencies, or other securities on behalf of investment dealers.",
+              "title": "(O*Net) 23196 - Buy or sell stocks, bonds, commodity futures, foreign currencies, or other securities on behalf of investment dealers.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Buy Bond",
+                "Buy Currency",
+                "Buy Future",
+                "Buy Stock",
+                "Sell Bond",
+                "Sell Currency",
+                "Sell Future",
+                "Sell Stock"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "J1szj516OPETkugJfWrH",
+      "title": "Sell Derivative",
+      "appName": "final-hierarchy-with-o*net",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "FVPUXSSaMq5Z7rR2aPnY",
+              "linkTitle": "(O*Net) 23221 - Purchase or sell financial derivatives for customers.",
+              "title": "(O*Net) 23221 - Purchase or sell financial derivatives for customers.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Purchase Derivative",
+                "Sell Derivative"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "n6R43Sr73LTtAkYduDMy",
+      "title": "Sell Equipment",
+      "appName": "final-hierarchy-with-o*net",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "KhUzQuxTINfzlbfRJlIK",
+              "linkTitle": "(O*Net) 13170 - Sell or rent equipment, clothing, and supplies related to expeditions.",
+              "title": "(O*Net) 13170 - Sell or rent equipment, clothing, and supplies related to expeditions.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Rent Clothing",
+                "Rent Equipment",
+                "Rent Supply",
+                "Sell Clothing",
+                "Sell Equipment",
+                "Sell Supply"
+              ]
+            },
+            {
+              "nodeId": "N1Qz5CWRwf3gJjIcyJfC",
+              "linkTitle": "(O*Net) 13782 - Sell parts and equipment.",
+              "title": "(O*Net) 13782 - Sell parts and equipment.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell Equipment",
+                "Sell Part"
+              ]
+            },
+            {
+              "nodeId": "vSGAxf2C4fS3Dt9vRU1k",
+              "linkTitle": "(O*Net) 23202 - Sell services or equipment, such as trusts, investments, or check processing services.",
+              "title": "(O*Net) 23202 - Sell services or equipment, such as trusts, investments, or check processing services.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell Service (1)",
+                "Sell Equipment"
+              ]
+            },
+            {
+              "nodeId": "1uMBewKDPr3vTW3g1Akb",
+              "linkTitle": "(O*Net) 5127 - Rent, sell, or issue sporting equipment and supplies, such as bowling shoes, golf balls, swimming suits, or beach chairs.",
+              "title": "(O*Net) 5127 - Rent, sell, or issue sporting equipment and supplies, such as bowling shoes, golf balls, swimming suits, or beach chairs.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Rent Equipment",
+                "Sell Equipment",
+                "Supply Equipment"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "jlg5laXDwQjJGRAowAGB",
+      "title": "Sell Estate",
+      "appName": "final-hierarchy-with-o*net",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "ZNDP8Y0slFM83T6ZjG2l",
+              "linkTitle": "(O*Net) 4599 - Sell, for a fee, real estate owned by others.",
+              "title": "(O*Net) 4599 - Sell, for a fee, real estate owned by others.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell Estate"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "ErrhGnME6caIDzbHNB40",
+      "title": "Sell Food",
+      "appName": "final-hierarchy-with-o*net",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "QtvsmODzOa9mPfwI3wk8",
+              "linkTitle": "(O*Net) 4332 - Sell pet food or supplies to customers.",
+              "title": "(O*Net) 4332 - Sell pet food or supplies to customers.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell Food",
+                "Sell Supply"
+              ]
+            },
+            {
+              "nodeId": "NgPhuiPXVZeWaVJc9BRF",
+              "linkTitle": "(O*Net) 5093 - Sell pet food and supplies.",
+              "title": "(O*Net) 5093 - Sell pet food and supplies.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell Food",
+                "Sell Supply"
+              ]
+            },
+            {
+              "nodeId": "fTycejOPURlMnSdWflCI",
+              "linkTitle": "(O*Net) 8026 - Sell food, beverages, or tobacco to players.",
+              "title": "(O*Net) 8026 - Sell food, beverages, or tobacco to players.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell Beverage",
+                "Sell Food",
+                "Sell Tobacco"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "e4S1J2dYsfLjqkODNXke",
+      "title": "Sell Future",
+      "appName": "final-hierarchy-with-o*net",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "Cghl16NazP67Rmo1YqHC",
+              "linkTitle": "(O*Net) 23196 - Buy or sell stocks, bonds, commodity futures, foreign currencies, or other securities on behalf of investment dealers.",
+              "title": "(O*Net) 23196 - Buy or sell stocks, bonds, commodity futures, foreign currencies, or other securities on behalf of investment dealers.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Buy Bond",
+                "Buy Currency",
+                "Buy Future",
+                "Buy Stock",
+                "Sell Bond",
+                "Sell Currency",
+                "Sell Future",
+                "Sell Stock"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "AX5NrslC6dxkoWkRMSiM",
+      "title": "Sell Good",
+      "appName": "final-hierarchy-with-o*net",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "kOXJYkuifB9RE8cCPe52",
+              "linkTitle": "(O*Net) 4208 - Sell goods such as contact lenses, spectacles, sunglasses, and goods related to eyes, in general.",
+              "title": "(O*Net) 4208 - Sell goods such as contact lenses, spectacles, sunglasses, and goods related to eyes, in general.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell Good"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "tdxR4H40ocVMqA1mx8xC",
+      "title": "Sell Incentive",
+      "appName": "final-hierarchy-with-o*net",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "jaAdE2VZ0T3kWRJpfdvi",
+              "linkTitle": "(O*Net) 741 - Plan, describe, arrange, and sell itinerary tour packages and promotional travel incentives offered by various travel carriers.",
+              "title": "(O*Net) 741 - Plan, describe, arrange, and sell itinerary tour packages and promotional travel incentives offered by various travel carriers.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Plan Package",
+                "Describe Package",
+                "Sell Incentive",
+                "Sell Package",
+                "Arrange Package"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "RM7QPgIBJYmyG3GrkKtS",
+      "title": "Sell Item",
+      "appName": "final-hierarchy-with-o*net",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "gKJolGhxBqOTabNR9JZm",
+              "linkTitle": "(O*Net) 2413 - Sell tickets and other items to customers.",
+              "title": "(O*Net) 2413 - Sell tickets and other items to customers.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell Item",
+                "Sell Ticket"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "1XmzY3teUNsQa0CIunIr",
+      "title": "Sell Jewelry",
+      "appName": "final-hierarchy-with-o*net",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "L7pC2QvveXXu6UXYMWwf",
+              "linkTitle": "(O*Net) 23639 - Buy and sell jewelry, or serve as agents between buyers and sellers.",
+              "title": "(O*Net) 23639 - Buy and sell jewelry, or serve as agents between buyers and sellers.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Buy Jewelry",
+                "Sell Jewelry",
+                "Serve Agent"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "pYwj90XaWkmxI1Ze6602",
+      "title": "Sell Makeup",
+      "appName": "final-hierarchy-with-o*net",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "UCGvDclOywFMHfh57uTu",
+              "linkTitle": "(O*Net) 8083 - Sell makeup to clients.",
+              "title": "(O*Net) 8083 - Sell makeup to clients.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell Makeup"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "iPp8GQvAS6zDbJdLxZSw",
+      "title": "Sell Membership",
+      "appName": "final-hierarchy-with-o*net",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "ClxhRXjrlUzd1dPpqWKB",
+              "linkTitle": "(O*Net) 17620 - Sell products, services, or memberships.",
+              "title": "(O*Net) 17620 - Sell products, services, or memberships.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell Service (1)",
+                "Sell Membership",
+                "Sell Product"
+              ]
+            },
+            {
+              "nodeId": "7eHnKrpoL6lj6vFnsJTg",
+              "linkTitle": "(O*Net) 20764 - Sell or collect admission tickets, passes, or facility memberships from patrons at entertainment events.",
+              "title": "(O*Net) 20764 - Sell or collect admission tickets, passes, or facility memberships from patrons at entertainment events.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Collect Membership",
+                "Collect Pass",
+                "Collect Ticket",
+                "Sell Membership",
+                "Sell Pass",
+                "Sell Ticket"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "xOxx3tXI1PIPtPiqrAJ5",
+      "title": "Sell Merchandise",
+      "appName": "final-hierarchy-with-o*net",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "zwuoOVHETJcsbPIjkcK0",
+              "linkTitle": "(O*Net) 13237 - Circulate among potential customers or travel by foot, truck, automobile, or bicycle to deliver or sell merchandise or services.",
+              "title": "(O*Net) 13237 - Circulate among potential customers or travel by foot, truck, automobile, or bicycle to deliver or sell merchandise or services.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Deliver Service",
+                "Deliver Merchandise",
+                "Travel Customer",
+                "Circulate Customer",
+                "Sell Service (1)",
+                "Sell Merchandise"
+              ]
+            },
+            {
+              "nodeId": "XMWTMautGVCCtrN8cFWu",
+              "linkTitle": "(O*Net) 1822 - Manage pharmacy operations, hiring or supervising staff, performing administrative duties, or buying or selling non-pharmaceutical merchandise.",
+              "title": "(O*Net) 1822 - Manage pharmacy operations, hiring or supervising staff, performing administrative duties, or buying or selling non-pharmaceutical merchandise.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Perform Duty",
+                "Buy Merchandise",
+                "Hire Staff",
+                "Sell Merchandise",
+                "Manage Operation",
+                "Oversee Staff"
+              ]
+            },
+            {
+              "nodeId": "MV78JzMSoEwPX9XtSyZW",
+              "linkTitle": "(O*Net) 18843 - Sell funeral services, products, or merchandise to clients.",
+              "title": "(O*Net) 18843 - Sell funeral services, products, or merchandise to clients.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell Service (1)",
+                "Sell Merchandise",
+                "Sell Product"
+              ]
+            },
+            {
+              "nodeId": "Bdvht7fLZyhH1hWQqlx9",
+              "linkTitle": "(O*Net) 713 - Sell or arrange for delivery, insurance, financing, or service contracts for merchandise.",
+              "title": "(O*Net) 713 - Sell or arrange for delivery, insurance, financing, or service contracts for merchandise.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell Merchandise",
+                "Arrange Delivery",
+                "Arrange Financing",
+                "Arrange Contract",
+                "Arrange Insurance"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "8brd1yASEbMwnL5MNRKR",
+      "title": "Sell Order",
+      "appName": "final-hierarchy-with-o*net",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "pfckaSmBuEdX1UFbcJi4",
+              "linkTitle": "(O*Net) 11361 - Sell stamps and money orders.",
+              "title": "(O*Net) 11361 - Sell stamps and money orders.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell Order",
+                "Sell Stamp"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "2NRS1Lkogwl5TkeY5kgy",
+      "title": "Sell Package",
+      "appName": "final-hierarchy-with-o*net",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "QvmiElTMIdqYF37aLyMS",
+              "linkTitle": "(O*Net) 13157 - Sell travel packages.",
+              "title": "(O*Net) 13157 - Sell travel packages.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell Package"
+              ]
+            },
+            {
+              "nodeId": "jaAdE2VZ0T3kWRJpfdvi",
+              "linkTitle": "(O*Net) 741 - Plan, describe, arrange, and sell itinerary tour packages and promotional travel incentives offered by various travel carriers.",
+              "title": "(O*Net) 741 - Plan, describe, arrange, and sell itinerary tour packages and promotional travel incentives offered by various travel carriers.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Plan Package",
+                "Describe Package",
+                "Sell Incentive",
+                "Sell Package",
+                "Arrange Package"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "kdQx4gLFEpA8YVjww6jQ",
+      "title": "Sell Part",
+      "appName": "final-hierarchy-with-o*net",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "N1Qz5CWRwf3gJjIcyJfC",
+              "linkTitle": "(O*Net) 13782 - Sell parts and equipment.",
+              "title": "(O*Net) 13782 - Sell parts and equipment.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell Equipment",
+                "Sell Part"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "MURT1siWDa81Bscf61dm",
+      "title": "Sell Pass",
+      "appName": "final-hierarchy-with-o*net",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "7eHnKrpoL6lj6vFnsJTg",
+              "linkTitle": "(O*Net) 20764 - Sell or collect admission tickets, passes, or facility memberships from patrons at entertainment events.",
+              "title": "(O*Net) 20764 - Sell or collect admission tickets, passes, or facility memberships from patrons at entertainment events.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Collect Membership",
+                "Collect Pass",
+                "Collect Ticket",
+                "Sell Membership",
+                "Sell Pass",
+                "Sell Ticket"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "FSOgeprt7L5bWQABLw3P",
+      "title": "Sell Policy",
+      "appName": "final-hierarchy-with-o*net",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "PIXpvd0lLdAIDaIuWSD2",
+              "linkTitle": "(O*Net) 721 - Sell various types of insurance policies to businesses and individuals on behalf of insurance companies, including automobile, fire, life, property, medical and dental insurance, or specialized policies, such as marine, farm/crop, and medical malpractice.",
+              "title": "(O*Net) 721 - Sell various types of insurance policies to businesses and individuals on behalf of insurance companies, including automobile, fire, life, property, medical and dental insurance, or specialized policies, such as marine, farm/crop, and medical malpractice.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell Policy"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "bCGvc2ZlyuyU7rpwzNSX",
+      "title": "Sell Product",
+      "appName": "final-hierarchy-with-o*net",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "Aab9orb7yNR8Uqi0S7kl",
+              "linkTitle": "(O*Net) 11325 - Sell and collect payment for products such as stamps, prepaid mail envelopes, and money orders.",
+              "title": "(O*Net) 11325 - Sell and collect payment for products such as stamps, prepaid mail envelopes, and money orders.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Collect Payment",
+                "Sell Product"
+              ]
+            },
+            {
+              "nodeId": "G4oULS8gDMwsBoXqNWcv",
+              "linkTitle": "(O*Net) 13194 - Sell products being promoted and keep records of sales.",
+              "title": "(O*Net) 13194 - Sell products being promoted and keep records of sales.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Document Record",
+                "Sell Product"
+              ]
+            },
+            {
+              "nodeId": "QwbLf2zFHFiIXBayBN1y",
+              "linkTitle": "(O*Net) 13286 - Sell mail products, and accept payment for products and mailing charges.",
+              "title": "(O*Net) 13286 - Sell mail products, and accept payment for products and mailing charges.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Receive Payment",
+                "Sell Product"
+              ]
+            },
+            {
+              "nodeId": "ClxhRXjrlUzd1dPpqWKB",
+              "linkTitle": "(O*Net) 17620 - Sell products, services, or memberships.",
+              "title": "(O*Net) 17620 - Sell products, services, or memberships.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell Service (1)",
+                "Sell Membership",
+                "Sell Product"
+              ]
+            },
+            {
+              "nodeId": "MV78JzMSoEwPX9XtSyZW",
+              "linkTitle": "(O*Net) 18843 - Sell funeral services, products, or merchandise to clients.",
+              "title": "(O*Net) 18843 - Sell funeral services, products, or merchandise to clients.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell Service (1)",
+                "Sell Merchandise",
+                "Sell Product"
+              ]
+            },
+            {
+              "nodeId": "oQx9L0q4i1NkKG1hFG2S",
+              "linkTitle": "(O*Net) 19828 - Sell technical and scientific products that are environmentally sound or designed for environmental remediation.",
+              "title": "(O*Net) 19828 - Sell technical and scientific products that are environmentally sound or designed for environmental remediation.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell Product"
+              ]
+            },
+            {
+              "nodeId": "G0ZIvK2kQdpb4te7vZJE",
+              "linkTitle": "(O*Net) 2561 - Explain, promote, or sell products or services, such as travelers' checks, savings bonds, money orders, and cashier's checks, using computerized information about customers to tailor recommendations.",
+              "title": "(O*Net) 2561 - Explain, promote, or sell products or services, such as travelers' checks, savings bonds, money orders, and cashier's checks, using computerized information about customers to tailor recommendations.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Advertise Product",
+                "Advertise Service",
+                "Explain Product",
+                "Explain Service",
+                "Sell Service (1)",
+                "Sell Product"
+              ]
+            },
+            {
+              "nodeId": "kTbhUFgFIALviP2r9D1R",
+              "linkTitle": "(O*Net) 4.A.4.a.6.I02.D02 - Sell agricultural products.",
+              "title": "(O*Net) 4.A.4.a.6.I02.D02 - Sell agricultural products.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell Product"
+              ]
+            },
+            {
+              "nodeId": "1CEChMeOA60EEAnIkHHC",
+              "linkTitle": "(O*Net) 4.A.4.a.6.I02.D05 - Sell products or services.",
+              "title": "(O*Net) 4.A.4.a.6.I02.D05 - Sell products or services.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell Service (1)",
+                "Sell Product"
+              ]
+            },
+            {
+              "nodeId": "A7gsp6EWsdAKH2M5fwSy",
+              "linkTitle": "(O*Net) 4.A.4.a.6.I02 - Sell products or services.",
+              "title": "(O*Net) 4.A.4.a.6.I02 - Sell products or services.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell Service (1)",
+                "Sell Product"
+              ]
+            },
+            {
+              "nodeId": "KWnONAzaLtQLObtzlGLP",
+              "linkTitle": "(O*Net) 643 - Demonstrate and sell hair care products and cosmetics.",
+              "title": "(O*Net) 643 - Demonstrate and sell hair care products and cosmetics.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Demonstrate Product",
+                "Sell Product"
+              ]
+            },
+            {
+              "nodeId": "W9dWYwYXl1tIkOZrvMyP",
+              "linkTitle": "(O*Net) 8761 - Promote and sell nail care products.",
+              "title": "(O*Net) 8761 - Promote and sell nail care products.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Advertise Product",
+                "Sell Product"
+              ]
+            },
+            {
+              "nodeId": "rcKF1UzocSJn3uL67Nz3",
+              "linkTitle": "(O*Net) 9683 - Sell products requiring extensive technical expertise and support for installation and use, such as material handling equipment, numerical-control machinery, or computer systems.",
+              "title": "(O*Net) 9683 - Sell products requiring extensive technical expertise and support for installation and use, such as material handling equipment, numerical-control machinery, or computer systems.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell Product"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "qLrzhd5XmjxYoKph4vEx",
+      "title": "Sell Products or Ideas",
+      "appName": "final-hierarchy-with-o*net",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "aQXier3NrRRm4uKyJyI1",
+              "linkTitle": "(O*Net) 4.A.4.a.6 - Selling or Influencing Others",
+              "title": "(O*Net) 4.A.4.a.6 - Selling or Influencing Others",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell Products or Ideas",
+                "Influence People"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "19y9uUU8KvzXDJldddwN",
+      "title": "Sell Service (1)",
+      "appName": "final-hierarchy-with-o*net",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "zwuoOVHETJcsbPIjkcK0",
+              "linkTitle": "(O*Net) 13237 - Circulate among potential customers or travel by foot, truck, automobile, or bicycle to deliver or sell merchandise or services.",
+              "title": "(O*Net) 13237 - Circulate among potential customers or travel by foot, truck, automobile, or bicycle to deliver or sell merchandise or services.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Deliver Service",
+                "Deliver Merchandise",
+                "Travel Customer",
+                "Circulate Customer",
+                "Sell Service (1)",
+                "Sell Merchandise"
+              ]
+            },
+            {
+              "nodeId": "ClxhRXjrlUzd1dPpqWKB",
+              "linkTitle": "(O*Net) 17620 - Sell products, services, or memberships.",
+              "title": "(O*Net) 17620 - Sell products, services, or memberships.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell Service (1)",
+                "Sell Membership",
+                "Sell Product"
+              ]
+            },
+            {
+              "nodeId": "MV78JzMSoEwPX9XtSyZW",
+              "linkTitle": "(O*Net) 18843 - Sell funeral services, products, or merchandise to clients.",
+              "title": "(O*Net) 18843 - Sell funeral services, products, or merchandise to clients.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell Service (1)",
+                "Sell Merchandise",
+                "Sell Product"
+              ]
+            },
+            {
+              "nodeId": "vSGAxf2C4fS3Dt9vRU1k",
+              "linkTitle": "(O*Net) 23202 - Sell services or equipment, such as trusts, investments, or check processing services.",
+              "title": "(O*Net) 23202 - Sell services or equipment, such as trusts, investments, or check processing services.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell Service (1)",
+                "Sell Equipment"
+              ]
+            },
+            {
+              "nodeId": "G0ZIvK2kQdpb4te7vZJE",
+              "linkTitle": "(O*Net) 2561 - Explain, promote, or sell products or services, such as travelers' checks, savings bonds, money orders, and cashier's checks, using computerized information about customers to tailor recommendations.",
+              "title": "(O*Net) 2561 - Explain, promote, or sell products or services, such as travelers' checks, savings bonds, money orders, and cashier's checks, using computerized information about customers to tailor recommendations.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Advertise Product",
+                "Advertise Service",
+                "Explain Product",
+                "Explain Service",
+                "Sell Service (1)",
+                "Sell Product"
+              ]
+            },
+            {
+              "nodeId": "1CEChMeOA60EEAnIkHHC",
+              "linkTitle": "(O*Net) 4.A.4.a.6.I02.D05 - Sell products or services.",
+              "title": "(O*Net) 4.A.4.a.6.I02.D05 - Sell products or services.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell Service (1)",
+                "Sell Product"
+              ]
+            },
+            {
+              "nodeId": "A7gsp6EWsdAKH2M5fwSy",
+              "linkTitle": "(O*Net) 4.A.4.a.6.I02 - Sell products or services.",
+              "title": "(O*Net) 4.A.4.a.6.I02 - Sell products or services.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell Service (1)",
+                "Sell Product"
+              ]
+            },
+            {
+              "nodeId": "JAn4aShZSCASnUa9HZoc",
+              "linkTitle": "(O*Net) 4.A.4.a.6.I03.D04 - Market products, services, or events.",
+              "title": "(O*Net) 4.A.4.a.6.I03.D04 - Market products, services, or events.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Market Event",
+                "Market Product",
+                "Sell Service (1)"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "2XDukf29nxcUippZU3mF",
+      "title": "Sell Souvenir",
+      "appName": "final-hierarchy-with-o*net",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "ou4goQBXcVqcP9PBgKNc",
+              "linkTitle": "(O*Net) 4551 - Solicit tour patronage and sell souvenirs.",
+              "title": "(O*Net) 4551 - Solicit tour patronage and sell souvenirs.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Solicit Patronage",
+                "Sell Souvenir"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "by6MNP9TqvyPhdmRCKue",
+      "title": "Sell Specialty",
+      "appName": "final-hierarchy-with-o*net",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "wuMddwJhm98vv1spSBB6",
+              "linkTitle": "(O*Net) 3165 - Sell food specialties, such as sandwiches and beverages, to office workers and patrons of sports events.",
+              "title": "(O*Net) 3165 - Sell food specialties, such as sandwiches and beverages, to office workers and patrons of sports events.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell Specialty"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "x0nEgvfRvXBxxqayHNkD",
+      "title": "Sell Ticket",
+      "appName": "final-hierarchy-with-o*net",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "7eHnKrpoL6lj6vFnsJTg",
+              "linkTitle": "(O*Net) 20764 - Sell or collect admission tickets, passes, or facility memberships from patrons at entertainment events.",
+              "title": "(O*Net) 20764 - Sell or collect admission tickets, passes, or facility memberships from patrons at entertainment events.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Collect Membership",
+                "Collect Pass",
+                "Collect Ticket",
+                "Sell Membership",
+                "Sell Pass",
+                "Sell Ticket"
+              ]
+            },
+            {
+              "nodeId": "gKJolGhxBqOTabNR9JZm",
+              "linkTitle": "(O*Net) 2413 - Sell tickets and other items to customers.",
+              "title": "(O*Net) 2413 - Sell tickets and other items to customers.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell Item",
+                "Sell Ticket"
+              ]
+            },
+            {
+              "nodeId": "bfwWBFGnP7B49FH6vtql",
+              "linkTitle": "(O*Net) 4669 - Sell gambling chips, tokens, or tickets to patrons or to other workers for resale to patrons.",
+              "title": "(O*Net) 4669 - Sell gambling chips, tokens, or tickets to patrons or to other workers for resale to patrons.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell Chip",
+                "Sell Ticket",
+                "Sell Token"
+              ]
+            },
+            {
+              "nodeId": "taseAibqL1RlkudZQ5E7",
+              "linkTitle": "(O*Net) 5119 - Sell tickets and collect fees from customers.",
+              "title": "(O*Net) 5119 - Sell tickets and collect fees from customers.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Collect Fee",
+                "Sell Ticket"
+              ]
+            },
+            {
+              "nodeId": "IbfRT8nRDOObzf6AeTU8",
+              "linkTitle": "(O*Net) 7006 - Sell gambling chips, tokens, or tickets to patrons, or to other workers for resale to patrons.",
+              "title": "(O*Net) 7006 - Sell gambling chips, tokens, or tickets to patrons, or to other workers for resale to patrons.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell Chip",
+                "Sell Ticket",
+                "Sell Token"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "RnatGzxhEhIAaoKdrBsn",
+      "title": "Sell Tobacco",
+      "appName": "final-hierarchy-with-o*net",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "fTycejOPURlMnSdWflCI",
+              "linkTitle": "(O*Net) 8026 - Sell food, beverages, or tobacco to players.",
+              "title": "(O*Net) 8026 - Sell food, beverages, or tobacco to players.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell Beverage",
+                "Sell Food",
+                "Sell Tobacco"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "QqYxIHqY5xF44OyRMqCq",
+      "title": "Sell Token",
+      "appName": "final-hierarchy-with-o*net",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "bfwWBFGnP7B49FH6vtql",
+              "linkTitle": "(O*Net) 4669 - Sell gambling chips, tokens, or tickets to patrons or to other workers for resale to patrons.",
+              "title": "(O*Net) 4669 - Sell gambling chips, tokens, or tickets to patrons or to other workers for resale to patrons.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell Chip",
+                "Sell Ticket",
+                "Sell Token"
+              ]
+            },
+            {
+              "nodeId": "IbfRT8nRDOObzf6AeTU8",
+              "linkTitle": "(O*Net) 7006 - Sell gambling chips, tokens, or tickets to patrons, or to other workers for resale to patrons.",
+              "title": "(O*Net) 7006 - Sell gambling chips, tokens, or tickets to patrons, or to other workers for resale to patrons.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell Chip",
+                "Sell Ticket",
+                "Sell Token"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "judgments": [
+    {
+      "proposalId": "som-89810f66be074b817f3c",
+      "reviewMode": "status-quo-audit",
+      "subjectNodeId": "oqKJFFsUzHQcuArnIwRS",
+      "parentNodeId": "A3DTvdJ4fFPTt4R43Pq3",
+      "currentTitle": "Market Artwork",
+      "proposedTitle": "",
+      "linkedTasks": [
+        "Market artwork through brochures, mailings, or Web sites."
+      ],
+      "agentReasoning": "The title clearly names the activity of promoting artwork for sale or visibility.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-6f3c916d07f461242ce4",
+      "reviewMode": "status-quo-audit",
+      "subjectNodeId": "US1b9Ap0WUL7vFcaI6GJ",
+      "parentNodeId": "A3DTvdJ4fFPTt4R43Pq3",
+      "currentTitle": "Market Casino",
+      "proposedTitle": "",
+      "linkedTasks": [
+        "Market or promote the casino to bring in business."
+      ],
+      "agentReasoning": "The title clearly names the activity of marketing or promoting a casino to attract business.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-6baa81b903210db301ed",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "prSUePHOV2HTktxg2sFy",
+      "parentNodeId": "djuur704PsOsVj18b8mm",
+      "currentTitle": "Market Space",
+      "proposedTitle": "Market Vacant Space",
+      "linkedTasks": [
+        "Market vacant space to prospective tenants through leasing agents, advertising, or other methods."
+      ],
+      "agentReasoning": "“Market Space” is ambiguous without the modifier indicating the work is promoting vacant space to prospective tenants.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-4ea0c9dda791be4a4870",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "eIQMnQrBROKinV7cVxu0",
+      "parentNodeId": "djuur704PsOsVj18b8mm",
+      "currentTitle": "Sell Accessory",
+      "proposedTitle": "Sell Product Accessories",
+      "linkedTasks": [
+        "Sell and install accessories, such as batteries, windshield wiper blades, fan belts, bulbs, or headlamps.",
+        "Sell bicycles and accessories.",
+        "Develop a group of products or accessories, and market them through venues such as boutiques or mail-order catalogs."
+      ],
+      "agentReasoning": "The singular object \"Accessory\" is awkward and too generic for the mixed descriptions, while \"Product Accessories\" preserves the shared accessory/product focus without inventing a domain.",
+      "decision": "disagree",
+      "disagreementReason": "Accessories is specific enough to convey the meaning",
+      "suggestedCorrection": "Sell Accessories",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-adb9f208dab91f2c2111",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "T26Dg1QJD5ilEGiI5zxy",
+      "parentNodeId": "djuur704PsOsVj18b8mm",
+      "currentTitle": "Sell Bicycle",
+      "proposedTitle": "Sell Bicycles and Accessories",
+      "linkedTasks": [
+        "Sell bicycles and accessories."
+      ],
+      "agentReasoning": "The singular title is understandable but loses the accessories part and has a number mismatch with the task description.",
+      "decision": "disagree",
+      "disagreementReason": "Bicycles and bicycle accessories are not the same, would suggest breaking this into two separate nodes.",
+      "suggestedCorrection": "Two separate nodes: Sell Bicycles, Sell Bicycle Accessories",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-5c23f66ab9f7449a63e1",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "qdgRkGpYX9yINEjtTf9V",
+      "parentNodeId": "A3DTvdJ4fFPTt4R43Pq3",
+      "currentTitle": "Sell Check",
+      "proposedTitle": "Sell Traveler's Checks",
+      "linkedTasks": [
+        "Perform foreign currency transactions and sell traveler's checks."
+      ],
+      "agentReasoning": "Standing alone, \"Sell Check\" is ambiguous and ungrammatical because it does not indicate that the work involves traveler's checks.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-85ace55865a1290f5867",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "ubFUvirAxwyLrRU07mtk",
+      "parentNodeId": "djuur704PsOsVj18b8mm",
+      "currentTitle": "Sell Chip",
+      "proposedTitle": "Sell Gambling Chips",
+      "linkedTasks": [
+        "Sell gambling chips, tokens, or tickets to patrons or to other workers for resale to patrons.",
+        "Sell gambling chips, tokens, or tickets to patrons, or to other workers for resale to patrons."
+      ],
+      "agentReasoning": "Standing alone, \"Sell Chip\" is ambiguous and uses the wrong number; the descriptions specify selling gambling chips, tokens, or tickets.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-44f9bc3a150e25c45c60",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "ntdGQhVj7DqLHEgtyBwA",
+      "parentNodeId": "djuur704PsOsVj18b8mm",
+      "currentTitle": "Sell Clothing",
+      "proposedTitle": "Sell Expedition Clothing",
+      "linkedTasks": [
+        "Sell or rent equipment, clothing, and supplies related to expeditions."
+      ],
+      "agentReasoning": "The title is understandable as retail clothing sales but loses the expedition context needed to distinguish the work.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-eaa89c13edb5b46e05cf",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "lPkcYj40VPyODSSBXdlt",
+      "parentNodeId": "A3DTvdJ4fFPTt4R43Pq3",
+      "currentTitle": "Sell Contract",
+      "proposedTitle": "Sell Service Contracts",
+      "linkedTasks": [
+        "Sell service contracts for technical or scientific products."
+      ],
+      "agentReasoning": "The title is vague and singular, while the task specifically involves selling service contracts.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-6a270fcf0f2b530875f5",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "oBpaloX36PSeAFCu8DfT",
+      "parentNodeId": "A3DTvdJ4fFPTt4R43Pq3",
+      "currentTitle": "Sell Currency",
+      "proposedTitle": "Sell Foreign Currencies",
+      "linkedTasks": [
+        "Buy or sell stocks, bonds, commodity futures, foreign currencies, or other securities on behalf of investment dealers."
+      ],
+      "agentReasoning": "The title is understandable but too broad without the modifier indicating foreign currency trading from the task description.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-c1924c597860a6c360c7",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "J1szj516OPETkugJfWrH",
+      "parentNodeId": "A3DTvdJ4fFPTt4R43Pq3",
+      "currentTitle": "Sell Derivative",
+      "proposedTitle": "Sell Financial Derivatives",
+      "linkedTasks": [
+        "Purchase or sell financial derivatives for customers."
+      ],
+      "agentReasoning": "The original title is awkwardly singular and too generic; adding “Financial” and pluralizing the object matches the task description.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-42c9b6fe6bae2281000c",
+      "reviewMode": "status-quo-audit",
+      "subjectNodeId": "n6R43Sr73LTtAkYduDMy",
+      "parentNodeId": "djuur704PsOsVj18b8mm",
+      "currentTitle": "Sell Equipment",
+      "proposedTitle": "",
+      "linkedTasks": [
+        "Sell or rent equipment, clothing, and supplies related to expeditions.",
+        "Sell parts and equipment.",
+        "Sell services or equipment, such as trusts, investments, or check processing services.",
+        "Rent, sell, or issue sporting equipment and supplies, such as bowling shoes, golf balls, swimming suits, or beach chairs."
+      ],
+      "agentReasoning": "The title directly names the activity of selling equipment and is understandable on its own despite broad contexts.",
+      "decision": "disagree",
+      "disagreementReason": "Sell Equipment is fine when the word appears on its own, without a modifier before it. But when a modifer precedes it, that modifer should be included, for example, Sell Sporting Equipment. And when a phrase follows the word Equipment that gives more information about its nature, that should also be included, for example, Sell Expedition Equipment.",
+      "suggestedCorrection": "Three nodes: Sell Equipment, Sell Sporting Equipment, Sell Expedition Equipment",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-51917dd63d7f5ca4fc61",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "jlg5laXDwQjJGRAowAGB",
+      "parentNodeId": "djuur704PsOsVj18b8mm",
+      "currentTitle": "Sell Estate",
+      "proposedTitle": "Sell Real Estate",
+      "linkedTasks": [
+        "Sell, for a fee, real estate owned by others."
+      ],
+      "agentReasoning": "\"Estate\" alone is ambiguous, while the description specifically refers to selling real estate owned by others.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-3fc843d38409687d3983",
+      "reviewMode": "status-quo-audit",
+      "subjectNodeId": "ErrhGnME6caIDzbHNB40",
+      "parentNodeId": "djuur704PsOsVj18b8mm",
+      "currentTitle": "Sell Food",
+      "proposedTitle": "",
+      "linkedTasks": [
+        "Sell pet food or supplies to customers.",
+        "Sell pet food and supplies.",
+        "Sell food, beverages, or tobacco to players."
+      ],
+      "agentReasoning": "The title plainly names the activity of selling food, which is present across the linked descriptions despite related items also being included.",
+      "decision": "disagree",
+      "disagreementReason": "Pet food is more specific, would suggest separating that from the more general \"Food\"",
+      "suggestedCorrection": "Two nodes: Sell Pet Food, Sell Food",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-cc2b17d2c0538f6cc131",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "e4S1J2dYsfLjqkODNXke",
+      "parentNodeId": "A3DTvdJ4fFPTt4R43Pq3",
+      "currentTitle": "Sell Future",
+      "proposedTitle": "Sell Commodity Futures",
+      "linkedTasks": [
+        "Buy or sell stocks, bonds, commodity futures, foreign currencies, or other securities on behalf of investment dealers."
+      ],
+      "agentReasoning": "\"Sell Future\" is ambiguous and grammatically off, while the description specifically names commodity futures as tradable securities.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-895b9806b8331ba3b34f",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "AX5NrslC6dxkoWkRMSiM",
+      "parentNodeId": "djuur704PsOsVj18b8mm",
+      "currentTitle": "Sell Good",
+      "proposedTitle": "Sell Eyewear and Eye-Care Products",
+      "linkedTasks": [
+        "Sell goods such as contact lenses, spectacles, sunglasses, and goods related to eyes, in general."
+      ],
+      "agentReasoning": "The generic word \"Good\" does not identify the work. The source task specifically names contact lenses, spectacles, sunglasses, and other eye-related products.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-21c20ead4b036182bc22",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "tdxR4H40ocVMqA1mx8xC",
+      "parentNodeId": "A3DTvdJ4fFPTt4R43Pq3",
+      "currentTitle": "Sell Incentive",
+      "proposedTitle": "Sell Travel Incentives",
+      "linkedTasks": [
+        "Plan, describe, arrange, and sell itinerary tour packages and promotional travel incentives offered by various travel carriers."
+      ],
+      "agentReasoning": "“Incentive” alone is too vague; the task describes selling promotional travel incentives and tour packages.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-ca35dca6928b8fc72ce7",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "RM7QPgIBJYmyG3GrkKtS",
+      "parentNodeId": "djuur704PsOsVj18b8mm",
+      "currentTitle": "Sell Item",
+      "proposedTitle": "Sell Other Items",
+      "linkedTasks": [
+        "Sell tickets and other items to customers."
+      ],
+      "agentReasoning": "Pluralizing \"Item\" and adding \"Other\" reflects the source task's catch-all wording without duplicating the separate ticket-selling activity.",
+      "decision": "disagree",
+      "disagreementReason": "The word \"other\" is not necessary",
+      "suggestedCorrection": "Sell items",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-90427f947120d95f4bec",
+      "reviewMode": "status-quo-audit",
+      "subjectNodeId": "1XmzY3teUNsQa0CIunIr",
+      "parentNodeId": "djuur704PsOsVj18b8mm",
+      "currentTitle": "Sell Jewelry",
+      "proposedTitle": "",
+      "linkedTasks": [
+        "Buy and sell jewelry, or serve as agents between buyers and sellers."
+      ],
+      "agentReasoning": "The title clearly names the work activity of selling jewelry and the object is specific enough on its own.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-e9330459376ad02233e7",
+      "reviewMode": "status-quo-audit",
+      "subjectNodeId": "pYwj90XaWkmxI1Ze6602",
+      "parentNodeId": "djuur704PsOsVj18b8mm",
+      "currentTitle": "Sell Makeup",
+      "proposedTitle": "",
+      "linkedTasks": [
+        "Sell makeup to clients."
+      ],
+      "agentReasoning": "The title plainly names the work of selling makeup, and the object is already specific enough without added context.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-f8e28aca3be30690b1b7",
+      "reviewMode": "status-quo-audit",
+      "subjectNodeId": "iPp8GQvAS6zDbJdLxZSw",
+      "parentNodeId": "A3DTvdJ4fFPTt4R43Pq3",
+      "currentTitle": "Sell Membership",
+      "proposedTitle": "",
+      "linkedTasks": [
+        "Sell products, services, or memberships.",
+        "Sell or collect admission tickets, passes, or facility memberships from patrons at entertainment events."
+      ],
+      "agentReasoning": "The title clearly names the work of selling memberships, which is directly supported by the descriptions.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-61b319cbec7a67fc3494",
+      "reviewMode": "status-quo-audit",
+      "subjectNodeId": "xOxx3tXI1PIPtPiqrAJ5",
+      "parentNodeId": "djuur704PsOsVj18b8mm",
+      "currentTitle": "Sell Merchandise",
+      "proposedTitle": "",
+      "linkedTasks": [
+        "Circulate among potential customers or travel by foot, truck, automobile, or bicycle to deliver or sell merchandise or services.",
+        "Manage pharmacy operations, hiring or supervising staff, performing administrative duties, or buying or selling non-pharmaceutical merchandise.",
+        "Sell funeral services, products, or merchandise to clients.",
+        "Sell or arrange for delivery, insurance, financing, or service contracts for merchandise."
+      ],
+      "agentReasoning": "The title clearly names the work of selling goods or products, which matches the linked descriptions.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-f7dc8818f581c3c17e8b",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "8brd1yASEbMwnL5MNRKR",
+      "parentNodeId": "djuur704PsOsVj18b8mm",
+      "currentTitle": "Sell Order",
+      "proposedTitle": "Sell Money Orders",
+      "linkedTasks": [
+        "Sell stamps and money orders."
+      ],
+      "agentReasoning": "Standing alone, \"Sell Order\" is ambiguous because \"order\" could mean a customer purchase, while the task description specifically refers to money orders.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-f27da2b7e0af7ed39446",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "2NRS1Lkogwl5TkeY5kgy",
+      "parentNodeId": "A3DTvdJ4fFPTt4R43Pq3",
+      "currentTitle": "Sell Package",
+      "proposedTitle": "Sell Travel Packages",
+      "linkedTasks": [
+        "Sell travel packages.",
+        "Plan, describe, arrange, and sell itinerary tour packages and promotional travel incentives offered by various travel carriers."
+      ],
+      "agentReasoning": "\"Sell Package\" is too generic and singular, while the descriptions specifically refer to selling travel or tour packages.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-d12c761e2357629b4044",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "kdQx4gLFEpA8YVjww6jQ",
+      "parentNodeId": "djuur704PsOsVj18b8mm",
+      "currentTitle": "Sell Part",
+      "proposedTitle": "Sell Parts and Equipment",
+      "linkedTasks": [
+        "Sell parts and equipment."
+      ],
+      "agentReasoning": "The singular object \"Part\" is too vague and loses the equipment scope from the task description.",
+      "decision": "disagree",
+      "disagreementReason": "Parts are typically sub-elements of a piece of equipment, while Equipment is the entire item.",
+      "suggestedCorrection": "Two nodes: Sell Parts, Sell Equipment",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-be08902d90d5554720cb",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "MURT1siWDa81Bscf61dm",
+      "parentNodeId": "A3DTvdJ4fFPTt4R43Pq3",
+      "currentTitle": "Sell Pass",
+      "proposedTitle": "Sell Admission Passes",
+      "linkedTasks": [
+        "Sell or collect admission tickets, passes, or facility memberships from patrons at entertainment events."
+      ],
+      "agentReasoning": "The object 'Pass' is too generic and singular, while the description specifically refers to admission passes for patrons at events.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-e8e0e127fb7068c0f5b1",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "FSOgeprt7L5bWQABLw3P",
+      "parentNodeId": "A3DTvdJ4fFPTt4R43Pq3",
+      "currentTitle": "Sell Policy",
+      "proposedTitle": "Sell Insurance Policies",
+      "linkedTasks": [
+        "Sell various types of insurance policies to businesses and individuals on behalf of insurance companies, including automobile, fire, life, property, medical and dental insurance, or specialized policies, such as marine, farm/crop, and medical malpractice."
+      ],
+      "agentReasoning": "Standing alone, \"Policy\" is too broad and could mean rules or insurance products, while the descriptions specifically name insurance policies.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-e0871137304b8eef47f1",
+      "reviewMode": "status-quo-audit",
+      "subjectNodeId": "bCGvc2ZlyuyU7rpwzNSX",
+      "parentNodeId": "djuur704PsOsVj18b8mm",
+      "currentTitle": "Sell Product",
+      "proposedTitle": "",
+      "linkedTasks": [
+        "Sell and collect payment for products such as stamps, prepaid mail envelopes, and money orders.",
+        "Sell products being promoted and keep records of sales.",
+        "Sell mail products, and accept payment for products and mailing charges.",
+        "Sell products, services, or memberships.",
+        "Sell funeral services, products, or merchandise to clients.",
+        "Sell technical and scientific products that are environmentally sound or designed for environmental remediation.",
+        "Explain, promote, or sell products or services, such as travelers' checks, savings bonds, money orders, and cashier's checks, using computerized information about customers to tailor recommendations.",
+        ".A.4.a.6.I02.D02 - Sell agricultural products.",
+        ".A.4.a.6.I02.D05 - Sell products or services.",
+        ".A.4.a.6.I02 - Sell products or services.",
+        "Demonstrate and sell hair care products and cosmetics.",
+        "Promote and sell nail care products.",
+        "Sell products requiring extensive technical expertise and support for installation and use, such as material handling equipment, numerical-control machinery, or computer systems."
+      ],
+      "agentReasoning": "The title clearly names the activity of selling products despite being generic.",
+      "decision": "disagree",
+      "disagreementReason": "In cases where product is used without any additional explantion, Sell Product is good, e.g. \"Sell products, services, or memberships.\" But when a modifier precedes the word Product, it should be included, for example, Sell agricultural products or Sell hair care products. And when a list follows the word Product, a modifier should be generated to describe those items, for example, \"Products...such as travelers' checks, savings bonds, money orders, and cashier's checks\" would be better stated as Sell Financial products.",
+      "suggestedCorrection": "See comment above and redo prompt",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-1b416ca2f8105feae10e",
+      "reviewMode": "status-quo-audit",
+      "subjectNodeId": "qLrzhd5XmjxYoKph4vEx",
+      "parentNodeId": "Q2ruTiNLHbBOlFOCI6gu",
+      "currentTitle": "Sell Products or Ideas",
+      "proposedTitle": "",
+      "linkedTasks": [
+        ".A.4.a.6 - Selling or Influencing Others"
+      ],
+      "agentReasoning": "The title clearly names work involving selling tangible products or intangible ideas and is understandable on its own.",
+      "decision": "disagree",
+      "disagreementReason": "Sell products involves exchange of money, while Sell ideas is only about persuasion",
+      "suggestedCorrection": "Two nodes: Sell products, Sell ideas",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-3e1f049f2776bcc2b92b",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "19y9uUU8KvzXDJldddwN",
+      "parentNodeId": "A3DTvdJ4fFPTt4R43Pq3",
+      "currentTitle": "Sell Service (1)",
+      "proposedTitle": "Sell Products or Services",
+      "linkedTasks": [
+        "Circulate among potential customers or travel by foot, truck, automobile, or bicycle to deliver or sell merchandise or services.",
+        "Sell products, services, or memberships.",
+        "Sell funeral services, products, or merchandise to clients.",
+        "Sell services or equipment, such as trusts, investments, or check processing services.",
+        "Explain, promote, or sell products or services, such as travelers' checks, savings bonds, money orders, and cashier's checks, using computerized information about customers to tailor recommendations.",
+        ".A.4.a.6.I02.D05 - Sell products or services.",
+        ".A.4.a.6.I02 - Sell products or services.",
+        ".A.4.a.6.I03.D04 - Market products, services, or events."
+      ],
+      "agentReasoning": "The singular generic object and numeric suffix make the title awkward and underspecified, while the descriptions consistently refer to selling products or services.",
+      "decision": "disagree",
+      "disagreementReason": "Products can refer to anything sold, while the term Services is more specific",
+      "suggestedCorrection": "Two nodes: Sell products, Sell services",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-c16e063ee220a05cb104",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "2XDukf29nxcUippZU3mF",
+      "parentNodeId": "djuur704PsOsVj18b8mm",
+      "currentTitle": "Sell Souvenir",
+      "proposedTitle": "Sell Tour Souvenirs",
+      "linkedTasks": [
+        "Solicit tour patronage and sell souvenirs."
+      ],
+      "agentReasoning": "The title is understandable but has an awkward singular object, and adding 'Tour' ties it more clearly to the described work.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-5dbeeaa39b6d532c9dc1",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "by6MNP9TqvyPhdmRCKue",
+      "parentNodeId": "djuur704PsOsVj18b8mm",
+      "currentTitle": "Sell Specialty",
+      "proposedTitle": "Sell Food Specialties",
+      "linkedTasks": [
+        "Sell food specialties, such as sandwiches and beverages, to office workers and patrons of sports events."
+      ],
+      "agentReasoning": "The standalone title is vague and has a number/lemma slip, while the description makes clear the work is selling food specialties.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-144f1802199564991e32",
+      "reviewMode": "status-quo-audit",
+      "subjectNodeId": "x0nEgvfRvXBxxqayHNkD",
+      "parentNodeId": "djuur704PsOsVj18b8mm",
+      "currentTitle": "Sell Ticket",
+      "proposedTitle": "",
+      "linkedTasks": [
+        "Sell or collect admission tickets, passes, or facility memberships from patrons at entertainment events.",
+        "Sell tickets and other items to customers.",
+        "Sell gambling chips, tokens, or tickets to patrons or to other workers for resale to patrons.",
+        "Sell tickets and collect fees from customers.",
+        "Sell gambling chips, tokens, or tickets to patrons, or to other workers for resale to patrons."
+      ],
+      "agentReasoning": "The title plainly names the activity of selling tickets, matching the linked descriptions.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-6f807a8986689b96a176",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "RnatGzxhEhIAaoKdrBsn",
+      "parentNodeId": "djuur704PsOsVj18b8mm",
+      "currentTitle": "Sell Tobacco",
+      "proposedTitle": "Sell Tobacco Products",
+      "linkedTasks": [
+        "Sell food, beverages, or tobacco to players."
+      ],
+      "agentReasoning": "Adding \"Products\" makes the object explicit without combining food and beverage sales from the shared source task into this tobacco-specific node.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-30207373488a8e558ea5",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "QqYxIHqY5xF44OyRMqCq",
+      "parentNodeId": "djuur704PsOsVj18b8mm",
+      "currentTitle": "Sell Token",
+      "proposedTitle": "Sell Gambling Tokens",
+      "linkedTasks": [
+        "Sell gambling chips, tokens, or tickets to patrons or to other workers for resale to patrons.",
+        "Sell gambling chips, tokens, or tickets to patrons, or to other workers for resale to patrons."
+      ],
+      "agentReasoning": "\"Sell Token\" is too generic and has a singular lemma slip, while the descriptions specify gambling tokens sold to patrons or workers.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    }
+  ]
+}
