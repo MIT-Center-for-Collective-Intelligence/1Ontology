@@ -1,0 +1,313 @@
+{
+  "schemaVersion": "som-review-v1",
+  "datasetVersion": "sell-rob-title-v2-downstream-2026-07-23-v2",
+  "branch": "Sell",
+  "generatedAt": "2026-07-23T16:30:00.000Z",
+  "sourceOntology": "firestore://ontology-41607/final-hierarchy-with-o*net-rob-title-review-v2-2026-07-23",
+  "sourceOntologySha256": "f2a528122af33b89cbf513a733a5733884b7fdabd3786dfede19f80734ebb375",
+  "safety": {
+    "reviewOnly": true,
+    "mutatesOntology": false,
+    "approvalAuthorizesAutomaticWrite": false,
+    "modelConfidenceVisibleToReviewer": false
+  },
+  "uiContract": {
+    "issueHomogeneousSessions": true,
+    "defaultSessionSize": 10,
+    "maximumSessionSize": 15,
+    "oneAtomicItemAtATime": true,
+    "agreeAutoAdvancesWithoutPageReload": true,
+    "disagreeRequiresReason": true,
+    "optionalContextCollapsedByDefault": true,
+    "allowSaveAndExit": true
+  },
+  "issueTypes": [
+    {
+      "id": "title-clarity",
+      "label": "Clarify unclear titles",
+      "stage": "content",
+      "robTaskIds": [
+        1
+      ],
+      "rolloutStatus": "prototype",
+      "view": "title-comparison",
+      "proposals": 0,
+      "controls": 0
+    },
+    {
+      "id": "synonym-enrichment",
+      "label": "Add missing synonyms",
+      "stage": "content",
+      "robTaskIds": [
+        2
+      ],
+      "rolloutStatus": "experimental",
+      "view": "metadata-edit",
+      "proposals": 1,
+      "controls": 0
+    },
+    {
+      "id": "description-enrichment",
+      "label": "Add missing descriptions",
+      "stage": "additional-quality",
+      "robTaskIds": [
+        3
+      ],
+      "optional": true,
+      "rolloutStatus": "experimental",
+      "view": "metadata-edit",
+      "proposals": 65,
+      "controls": 0
+    },
+    {
+      "id": "misc-facet-duplicate",
+      "label": "Repeated miscellaneous/facet nodes",
+      "stage": "within-branch",
+      "robTaskIds": [
+        4
+      ],
+      "rolloutStatus": "experimental",
+      "view": "overlap-comparison",
+      "proposals": 2,
+      "controls": 0
+    },
+    {
+      "id": "mistaken-synonym",
+      "label": "Mistaken synonyms",
+      "stage": "content",
+      "robTaskIds": [
+        5
+      ],
+      "rolloutStatus": "experimental",
+      "view": "metadata-edit",
+      "proposals": 3,
+      "controls": 0
+    },
+    {
+      "id": "duplicate-synonym",
+      "label": "Undetected synonyms",
+      "stage": "content",
+      "robTaskIds": [
+        6
+      ],
+      "rolloutStatus": "experimental",
+      "view": "duplicate-comparison",
+      "proposals": 2,
+      "controls": 0
+    },
+    {
+      "id": "polysemy",
+      "label": "Undetected double meanings",
+      "stage": "content",
+      "robTaskIds": [
+        7
+      ],
+      "rolloutStatus": "experimental",
+      "view": "polysemy-review",
+      "proposals": 0,
+      "controls": 0
+    },
+    {
+      "id": "flat-list-grouping",
+      "label": "Group long flat lists",
+      "stage": "within-branch",
+      "robTaskIds": [
+        8
+      ],
+      "rolloutStatus": "prototype",
+      "view": "grouping-outline",
+      "proposals": 3,
+      "controls": 0
+    },
+    {
+      "id": "compound-object-grouping",
+      "label": "Group compound objects",
+      "stage": "within-branch",
+      "robTaskIds": [
+        9
+      ],
+      "rolloutStatus": "prototype",
+      "view": "grouping-outline",
+      "proposals": 6,
+      "controls": 0
+    },
+    {
+      "id": "collection-design",
+      "label": "Create warranted collections",
+      "stage": "within-branch",
+      "robTaskIds": [
+        10
+      ],
+      "rolloutStatus": "experimental",
+      "view": "collection-design",
+      "proposals": 1,
+      "controls": 0
+    },
+    {
+      "id": "placement",
+      "label": "Wrong place within Sub-branch",
+      "stage": "within-branch",
+      "robTaskIds": [
+        11
+      ],
+      "rolloutStatus": "experimental",
+      "view": "placement-comparison",
+      "proposals": 12,
+      "controls": 0
+    },
+    {
+      "id": "wrong-verb",
+      "label": "Misjudged synonyms within Sub-branch",
+      "stage": "outside-branch",
+      "robTaskIds": [
+        12
+      ],
+      "rolloutStatus": "experimental",
+      "view": "placement-comparison",
+      "proposals": 8,
+      "controls": 0
+    },
+    {
+      "id": "sense-relocation",
+      "label": "Move a separated non-selling sense",
+      "stage": "outside-branch",
+      "robTaskIds": [
+        13
+      ],
+      "rolloutStatus": "experimental",
+      "view": "sense-relocation-action",
+      "proposals": 0,
+      "controls": 0
+    },
+    {
+      "id": "node-merge",
+      "label": "Review approved node merges",
+      "stage": "final-action",
+      "robTaskIds": [
+        4,
+        6
+      ],
+      "rolloutStatus": "experimental",
+      "view": "merge-action",
+      "proposals": 4,
+      "controls": 0
+    },
+    {
+      "id": "relocation",
+      "label": "Review approved relocations",
+      "stage": "final-action",
+      "robTaskIds": [
+        11,
+        12
+      ],
+      "rolloutStatus": "experimental",
+      "view": "relocation-action",
+      "proposals": 20,
+      "controls": 0
+    },
+    {
+      "id": "missing-activity",
+      "label": "Missing activity",
+      "stage": "additional-quality",
+      "robTaskIds": [],
+      "optional": true,
+      "rolloutStatus": "experimental",
+      "view": "addition-action",
+      "proposals": 10,
+      "controls": 0
+    },
+    {
+      "id": "redundant-node",
+      "label": "Redundant node",
+      "stage": "additional-quality",
+      "robTaskIds": [],
+      "rolloutStatus": "experimental",
+      "view": "merge-up-action",
+      "proposals": 0,
+      "controls": 0
+    }
+  ],
+  "files": {
+    "allProposals": "all_proposals.jsonl",
+    "allControls": "all_controls.jsonl",
+    "manualChecks": "manual_checks.jsonl",
+    "proposalsByIssue": "proposals/<issue-type>.jsonl",
+    "controlsByIssue": "controls/<issue-type>.jsonl",
+    "rejectedAgentCandidates": "diagnostics/rejected_agent_candidates.jsonl",
+    "proposalSchema": "schema/review-proposal.schema.json",
+    "responseSchema": "schema/review-response.schema.json",
+    "schemaSource": "src/agents/review-proposal-contract.ts",
+    "ontologySnapshot": "ontology-snapshot.json"
+  },
+  "counts": {
+    "proposals": 137,
+    "controls": 0,
+    "manualChecks": 0,
+    "rejectedAgentCandidates": 0,
+    "historicalPreSplitRejectedCandidates": 3
+  },
+  "limitations": [
+    "The app supports all 13 documented issue families, but this regenerated cycle is not proof that every semantic issue in Sell has been discovered.",
+    "The four expert-approved title-split proposals are already applied to the source ontology copy and are intentionally absent from this downstream review set.",
+    "Description proposals are deliberately conservative and preserve linked O*NET wording; human reviewers should improve awkward phrasing rather than accepting unsupported detail.",
+    "Exact merge and relocation actions remain unavailable to an individual reviewer until that reviewer agrees with the prerequisite diagnosis.",
+    "Rent out and Lease out are handled by collection design; the earlier contradictory wrong-verb and immediate-merge actions have been removed.",
+    "The earlier Sell Products or Ideas polysemy was resolved by the approved split into Sell Products and Sell Ideas. The remaining Sell Ideas placement is reviewed as a wrong-verb diagnosis followed by a gated relocation.",
+    "Every decision is review-only. Acceptance never writes to Firestore, and accepted actions must be revalidated against a fresh snapshot before implementation."
+  ],
+  "sourceSnapshot": {
+    "file": "ontology-snapshot.json",
+    "sha256": "f2a528122af33b89cbf513a733a5733884b7fdabd3786dfede19f80734ebb375",
+    "ontologyAppId": "final-hierarchy-with-o*net-rob-title-review-v2-2026-07-23",
+    "ontologyName": "Final Hierarchy with O*Net - Rob Title Review v2 2026-07-23",
+    "environment": "production",
+    "capturedAt": "2026-07-23T16:03:31.462Z",
+    "sellRootNodeId": "8fe5f67aba55d631d7e198d5330b",
+    "nodeCount": 133,
+    "sellNodeCount": 130,
+    "referenceNodeCount": 3,
+    "edgeCount": 168
+  },
+  "coverage": {
+    "snapshotBound": true,
+    "exhaustiveWithinPackagedDetectorOutputs": true,
+    "semanticCompletenessGuaranteed": false,
+    "robTaskFamiliesRepresented": 10,
+    "robTaskFamiliesTotal": 13,
+    "exactRelocationsWithVerifiedCurrentTargets": 20,
+    "note": "Every issue family in Rob's July 9 document retains an atomic review contract. This cycle contains only unresolved snapshot-bound candidates after the accepted title splits; resolved or currently inapplicable queues may contain zero items. Candidate generation is exhaustive only for the packaged scans and deterministic metadata checks."
+  },
+  "regeneration": {
+    "mode": "drop-stale-and-rebind",
+    "excludedIssueTypes": [
+      "title-clarity"
+    ],
+    "excludedRecordCount": 35,
+    "staleRecordCount": 64,
+    "staleRecordAuditFile": "diagnostics/stale_records.jsonl",
+    "expansion": {
+      "generator": "scripts/som-review/expand-comprehensive-sell-dataset.mjs",
+      "replacedIssueTypes": [
+        "collection-design",
+        "compound-object-grouping",
+        "description-enrichment",
+        "duplicate-synonym",
+        "flat-list-grouping",
+        "missing-activity",
+        "mistaken-synonym",
+        "node-merge",
+        "placement",
+        "polysemy",
+        "redundant-node",
+        "relocation",
+        "sense-relocation",
+        "synonym-enrichment",
+        "wrong-verb"
+      ],
+      "inputProposalCount": 137,
+      "retainedProposalCount": 2,
+      "generatedProposalCount": 135,
+      "historicalPreSplitRejectedCandidates": 3
+    }
+  }
+}

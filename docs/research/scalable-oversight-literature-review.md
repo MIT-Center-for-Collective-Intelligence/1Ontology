@@ -77,6 +77,33 @@ proven to exceed expert capability, and the decomposition itself may omit global
 interactions. A rigorous paper should call this _scalable human oversight of
 high-volume, open-ended AI proposals_, not superhuman alignment.
 
+### Organizational design foundation from Rob's papers
+
+Two articles Rob supplied add an organizational-design explanation for why the
+review process should be decomposed and dependency-aware.
+
+[Malone, Laubacher, and Johns (2011)](https://hbr.org/2011/07/the-big-idea-the-age-of-hyperspecialization)
+describe hyperspecialization as dividing knowledge work into small tasks and
+then coordinating the flow of work, quality control, and integration across
+specialists. Applied here, atomic proposal cards are not sufficient by
+themselves: the system must also encode which decisions invalidate, enable, or
+follow from other decisions, and an ontology steward must inspect the assembled
+result.
+
+[Malone, Laubacher, and Dellarocas (2010)](https://shop.sloanreview.mit.edu/the-collective-intelligence-genome)
+analyze collective-intelligence systems through the genes of who performs work,
+why they participate, and how creation and decisions are organized. Their
+distinction between crowd and hierarchy supports a staged governance model:
+broader contributors may later help create or review bounded proposals, while
+expert hierarchy remains appropriate for final adjudication when context,
+accountability, and cross-proposal integration matter.
+
+These articles do not establish that the present interface is effective. They
+provide design hypotheses to test: whether smaller review units reduce burden,
+whether explicit dependencies prevent inconsistent judgments, and whether
+expert integration produces a more coherent final ontology than independent
+item approval alone.
+
 ## 2. No objective target does not mean no evaluation
 
 Ontology quality is multidimensional. [Burton-Jones et al.](https://doi.org/10.1016/j.datak.2004.11.010)
@@ -256,20 +283,22 @@ to the review app, the study interface should:
 
 ## 9. Literature-to-design matrix
 
-| Evidence                             | What the study contributes                                          | Design consequence                                                                             |
-| ------------------------------------ | ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| Irving et al., AI debate             | Stronger agents can surface evidence for weaker judges              | Compare raw rationales with structured AI synthesis, not unaided voting alone                  |
-| Khan et al., empirical debate        | Debate helped nonexpert judges on answerable tasks                  | Test whether the benefit extends to partly contestable judgments; retain an unresolved outcome |
-| Lightman et al., process supervision | Local step feedback can outperform outcome-only feedback            | Review bounded proposal steps and separately validate whole-ontology outcomes                  |
-| Burns et al., weak-to-strong         | Weak labels can elicit some strong capability but leave a large gap | Do not treat lower-expertise agreement as proof that oversight has succeeded                   |
-| Plank; Davani et al.                 | Label variation may encode perspectives                             | Store distributions and annotator-level data; do not majority-collapse the dataset             |
-| Schaekermann et al.                  | Disagreement has resolvable and irreducible causes                  | Code disagreement reasons and allow unresolved cases                                           |
-| Jury Learning                        | Aggregation composition changes outcomes                            | Make reviewer composition explicit and report counterfactual aggregation policies              |
-| Buçinca et al.                       | Explanations can induce overreliance                                | Lock an independent initial judgment before model rationale                                    |
-| Bondi et al.                         | Deferral messaging changes human performance                        | Experimentally control what the reviewer learns about the model                                |
-| Amershi et al.                       | Human-AI systems require correction and control affordances         | Preserve revision, provenance, and clear action boundaries                                     |
-| OntoClean                            | Some ontology errors are formally testable                          | Separate formal checks from preference-sensitive structural judgments                          |
-| Burton-Jones et al.                  | Ontology quality is multidimensional                                | Include pragmatic and social utility, not only structural correctness                          |
+| Evidence                             | What the study contributes                                           | Design consequence                                                                             |
+| ------------------------------------ | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| Irving et al., AI debate             | Stronger agents can surface evidence for weaker judges               | Compare raw rationales with structured AI synthesis, not unaided voting alone                  |
+| Khan et al., empirical debate        | Debate helped nonexpert judges on answerable tasks                   | Test whether the benefit extends to partly contestable judgments; retain an unresolved outcome |
+| Lightman et al., process supervision | Local step feedback can outperform outcome-only feedback             | Review bounded proposal steps and separately validate whole-ontology outcomes                  |
+| Burns et al., weak-to-strong         | Weak labels can elicit some strong capability but leave a large gap  | Do not treat lower-expertise agreement as proof that oversight has succeeded                   |
+| Plank; Davani et al.                 | Label variation may encode perspectives                              | Store distributions and annotator-level data; do not majority-collapse the dataset             |
+| Schaekermann et al.                  | Disagreement has resolvable and irreducible causes                   | Code disagreement reasons and allow unresolved cases                                           |
+| Jury Learning                        | Aggregation composition changes outcomes                             | Make reviewer composition explicit and report counterfactual aggregation policies              |
+| Buçinca et al.                       | Explanations can induce overreliance                                 | Lock an independent initial judgment before model rationale                                    |
+| Bondi et al.                         | Deferral messaging changes human performance                         | Experimentally control what the reviewer learns about the model                                |
+| Amershi et al.                       | Human-AI systems require correction and control affordances          | Preserve revision, provenance, and clear action boundaries                                     |
+| OntoClean                            | Some ontology errors are formally testable                           | Separate formal checks from preference-sensitive structural judgments                          |
+| Burton-Jones et al.                  | Ontology quality is multidimensional                                 | Include pragmatic and social utility, not only structural correctness                          |
+| Malone et al., hyperspecialization   | Small knowledge tasks require workflow, quality, and integration     | Encode dependencies and evaluate the assembled ontology after atomic review                    |
+| Malone et al., CI Genome             | Creation and decision rights can use different crowd/hierarchy forms | Separate broad contribution from expert operational adjudication                               |
 
 ## 10. Open research gap
 
@@ -304,6 +333,8 @@ remain unresolved when quality has no single objective target**.
 - Kim, S., et al. (2021). [Moderator Chatbot for Deliberative Discussion](https://doi.org/10.1145/3449161).
 - Leike, J., et al. (2018). [Scalable Agent Alignment via Reward Modeling](https://arxiv.org/abs/1811.07871).
 - Lightman, H., et al. (2023). [Let's Verify Step by Step](https://arxiv.org/abs/2305.20050).
+- Malone, T. W., Laubacher, R., & Dellarocas, C. (2010). [The Collective Intelligence Genome](https://shop.sloanreview.mit.edu/the-collective-intelligence-genome). MIT Sloan Management Review, 51(3), 21-31.
+- Malone, T. W., Laubacher, R., & Johns, T. (2011). [The Age of Hyperspecialization](https://hbr.org/2011/07/the-big-idea-the-age-of-hyperspecialization). Harvard Business Review, 89(7/8), 56-65.
 - Ma, S., et al. (2024). [Towards Human-AI Deliberation](https://arxiv.org/abs/2403.16812).
 - Merritt, D., et al. (2015). [Using Expertise for Crowd-Sourcing](https://ojs.aaai.org/index.php/HCOMP/article/view/13263).
 - Plank, B. (2022). [The “Problem” of Human Label Variation](https://aclanthology.org/2022.emnlp-main.731/).

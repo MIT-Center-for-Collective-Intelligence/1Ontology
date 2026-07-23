@@ -1,0 +1,189 @@
+{
+  "schemaVersion": "som-expert-title-application-plan-v2",
+  "createdAt": "2026-07-23",
+  "sourceOntology": {
+    "appId": "final-hierarchy-with-o*net-rob-title-review-2026-07-22",
+    "name": "Final Hierarchy with O*Net - Rob Title Review 2026-07-22"
+  },
+  "targetOntology": {
+    "appId": "final-hierarchy-with-o*net-rob-title-review-v2-2026-07-23",
+    "name": "Final Hierarchy with O*Net - Rob Title Review v2 2026-07-23"
+  },
+  "benchmark": {
+    "file": "rob-title-followup-benchmark.json",
+    "sha256": "458d0db34a74b5adba361e39115a4d2fc8c1706af6bf14b7c69c4099642712f8",
+    "reviewerLabel": "rob-laubacher",
+    "reviewed": 4,
+    "agreed": 4,
+    "disagreed": 0
+  },
+  "renames": [],
+  "splits": [
+    {
+      "sourceNodeId": "c336211ce6075035e3a71fa21fac",
+      "from": "Market Product",
+      "decisionSource": "acceptedProposal",
+      "retainSourceAs": {
+        "title": "Market Products",
+        "status": "new",
+        "sourceTaskTitles": [
+          "Develop a group of products or accessories, and market them through venues such as boutiques or mail-order catalogs.",
+          "Market products, services, or events."
+        ]
+      },
+      "create": [
+        {
+          "title": "Market Bank Products",
+          "status": "new",
+          "sourceTaskTitles": [
+            "Market bank products to individuals and firms, promoting bank services that may meet customers' needs."
+          ]
+        },
+        {
+          "title": "Market Services",
+          "status": "new",
+          "sourceTaskTitles": [
+            "Market products, services, or events."
+          ]
+        }
+      ],
+      "assignToExisting": []
+    },
+    {
+      "sourceNodeId": "b77dba8ca35053301e9ea41ee3af",
+      "from": "Sell Beverage",
+      "decisionSource": "acceptedProposal",
+      "retainSourceAs": {
+        "title": "Sell Beverages",
+        "status": "new",
+        "sourceTaskTitles": [
+          "Sell food, beverages, or tobacco to players."
+        ]
+      },
+      "create": [
+        {
+          "title": "Sell Alcoholic Beverages",
+          "status": "new",
+          "sourceTaskTitles": [
+            "Sell alcoholic beverages to passengers."
+          ]
+        }
+      ],
+      "assignToExisting": []
+    },
+    {
+      "sourceNodeId": "e95928e99e4cf4679ecbc15e3ff3",
+      "from": "Sell Product",
+      "decisionSource": "acceptedProposal",
+      "retainSourceAs": {
+        "title": "Sell Hair Care Products",
+        "status": "new",
+        "sourceTaskTitles": [
+          "Demonstrate and sell hair care products and cosmetics."
+        ]
+      },
+      "create": [
+        {
+          "title": "Sell Cosmetics",
+          "status": "new",
+          "sourceTaskTitles": [
+            "Demonstrate and sell hair care products and cosmetics."
+          ]
+        },
+        {
+          "title": "Sell Financial Products",
+          "status": "new",
+          "sourceTaskTitles": [
+            "Explain, promote, or sell products or services, such as travelers' checks, savings bonds, money orders, and cashier's checks, using computerized information about customers to tailor recommendations."
+          ]
+        },
+        {
+          "title": "Sell Nail Care Products",
+          "status": "new",
+          "sourceTaskTitles": [
+            "Promote and sell nail care products."
+          ]
+        },
+        {
+          "title": "Sell Agricultural Products",
+          "status": "new",
+          "sourceTaskTitles": [
+            "Sell agricultural products."
+          ]
+        },
+        {
+          "title": "Sell Postal Products",
+          "status": "new",
+          "sourceTaskTitles": [
+            "Sell and collect payment for products such as stamps, prepaid mail envelopes, and money orders.",
+            "Sell mail products, and accept payment for products and mailing charges."
+          ]
+        },
+        {
+          "title": "Sell Funeral Products",
+          "status": "new",
+          "sourceTaskTitles": [
+            "Sell funeral services, products, or merchandise to clients."
+          ]
+        },
+        {
+          "title": "Sell Technical Products",
+          "status": "new",
+          "sourceTaskTitles": [
+            "Sell products requiring extensive technical expertise and support for installation and use, such as material handling equipment, numerical-control machinery, or computer systems.",
+            "Sell technical and scientific products that are environmentally sound or designed for environmental remediation."
+          ]
+        }
+      ],
+      "assignToExisting": [
+        {
+          "sourceNodeId": "6ada6d5e9e672a9a9d1dd4c70c12",
+          "title": "Sell Products",
+          "sourceTaskTitles": [
+            "Sell products being promoted and keep records of sales.",
+            "Sell products or services.",
+            "Sell products, services, or memberships."
+          ]
+        }
+      ]
+    },
+    {
+      "sourceNodeId": "819bba1d5d9f84b3b6a92f9a9527",
+      "from": "Sell Supply",
+      "decisionSource": "acceptedProposal",
+      "retainSourceAs": {
+        "title": "Sell Cosmetic Supplies",
+        "status": "new",
+        "sourceTaskTitles": [
+          "Recommend and sell lotions, tonics, or other cosmetic supplies."
+        ]
+      },
+      "create": [
+        {
+          "title": "Sell Expedition Supplies",
+          "status": "new",
+          "sourceTaskTitles": [
+            "Sell or rent equipment, clothing, and supplies related to expeditions."
+          ]
+        },
+        {
+          "title": "Sell Pet Supplies",
+          "status": "new",
+          "sourceTaskTitles": [
+            "Sell pet food and supplies.",
+            "Sell pet food or supplies to customers."
+          ]
+        },
+        {
+          "title": "Sell Agricultural Supplies",
+          "status": "new",
+          "sourceTaskTitles": [
+            "Sell supplies, such as seed, feed, fertilizers, or insecticides, arranging for loans or financing as necessary."
+          ]
+        }
+      ],
+      "assignToExisting": []
+    }
+  ],
+  "regenerateWithoutApplying": []
+}

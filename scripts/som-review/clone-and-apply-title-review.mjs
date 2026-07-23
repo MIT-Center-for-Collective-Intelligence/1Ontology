@@ -135,15 +135,19 @@ function canonicalTaskTitle(node) {
 function replaceCollectionLinks(collections, sourceId, replacements) {
   return (collections || []).map((collection) => {
     const nodes = [];
+    const seen = new Set();
     for (const link of collection.nodes || []) {
       if (linkId(link) !== sourceId) {
+        const id = linkId(link);
+        if (!id || seen.has(id)) continue;
+        seen.add(id);
         nodes.push(link);
         continue;
       }
       for (const replacement of replacements) {
-        nodes.push(
-          linkWithIdentity(link, replacement.id, replacement.title),
-        );
+        if (seen.has(replacement.id)) continue;
+        seen.add(replacement.id);
+        nodes.push(linkWithIdentity(link, replacement.id, replacement.title));
       }
     }
     return { ...collection, nodes };
@@ -158,20 +162,22 @@ function addSiblingToParents(nodes, sourceNode, sibling) {
       const parent = nodes.get(parentId);
       if (!parent) continue;
       let foundSource = false;
-      parent.specializations = (parent.specializations || []).map((collection) => {
-        const nextLinks = [];
-        for (const childLink of collection.nodes || []) {
-          nextLinks.push(childLink);
-          if (linkId(childLink) === sourceNode.id) {
-            foundSource = true;
-            nextLinks.push(
-              linkWithIdentity(childLink, sibling.id, sibling.title),
-            );
-            reciprocalParentLinks += 1;
+      parent.specializations = (parent.specializations || []).map(
+        (collection) => {
+          const nextLinks = [];
+          for (const childLink of collection.nodes || []) {
+            nextLinks.push(childLink);
+            if (linkId(childLink) === sourceNode.id) {
+              foundSource = true;
+              nextLinks.push(
+                linkWithIdentity(childLink, sibling.id, sibling.title),
+              );
+              reciprocalParentLinks += 1;
+            }
           }
-        }
-        return { ...collection, nodes: nextLinks };
-      });
+          return { ...collection, nodes: nextLinks };
+        },
+      );
       if (!foundSource) {
         throw new Error(
           `Parent ${parentId} does not reciprocally specialize ${sourceNode.id}`,
@@ -180,7 +186,9 @@ function addSiblingToParents(nodes, sourceNode, sibling) {
     }
   }
   if (!reciprocalParentLinks) {
-    throw new Error(`Split source ${sourceNode.id} has no reciprocal parent links`);
+    throw new Error(
+      `Split source ${sourceNode.id} has no reciprocal parent links`,
+    );
   }
 }
 
@@ -198,8 +206,45 @@ function directSpecializationEntries(node, nodes) {
   );
 }
 
+function addDirectSpecialization(node, entry) {
+  const collectionName = entry.collectionName || "main";
+  let foundCollection = false;
+  node.specializations = (node.specializations || []).map((collection) => {
+    if ((collection.collectionName || "main") !== collectionName) {
+      return collection;
+    }
+    foundCollection = true;
+    if ((collection.nodes || []).some((link) => linkId(link) === entry.id)) {
+      return collection;
+    }
+    return {
+      ...collection,
+      nodes: [
+        ...(collection.nodes || []),
+        cloneAndRemap(entry.link, new Map()),
+      ],
+    };
+  });
+  if (!foundCollection) {
+    node.specializations.push({
+      collectionName,
+      nodes: [cloneAndRemap(entry.link, new Map())],
+    });
+  }
+}
+
 function taskAssignments(split) {
-  return [split.retainSourceAs, ...split.create].map((output) => ({
+  return [
+    { ...split.retainSourceAs, outputMode: "retained" },
+    ...(split.create || []).map((output) => ({
+      ...output,
+      outputMode: "new",
+    })),
+    ...(split.assignToExisting || []).map((output) => ({
+      ...output,
+      outputMode: "existing",
+    })),
+  ].map((output) => ({
     ...output,
     sourceTaskTitles: new Set(output.sourceTaskTitles),
   }));
@@ -207,7 +252,8 @@ function taskAssignments(split) {
 
 function applySplit(nodes, split, targetAppId) {
   const sourceNode = nodes.get(split.targetNodeId);
-  if (!sourceNode) throw new Error(`Missing split source ${split.sourceNodeId}`);
+  if (!sourceNode)
+    throw new Error(`Missing split source ${split.sourceNodeId}`);
   if (sourceNode.title !== split.from) {
     throw new Error(
       `Split source ${split.sourceNodeId} expected title "${split.from}" but found "${sourceNode.title}"`,
@@ -219,8 +265,12 @@ function applySplit(nodes, split, targetAppId) {
     outputs.flatMap((output) => [...output.sourceTaskTitles]),
   );
   const directEntries = directSpecializationEntries(sourceNode, nodes);
-  const onetEntries = directEntries.filter((entry) => isOnetEvidence(entry.node));
-  const liveTaskTitles = new Set(onetEntries.map((entry) => canonicalTaskTitle(entry.node)));
+  const onetEntries = directEntries.filter((entry) =>
+    isOnetEvidence(entry.node),
+  );
+  const liveTaskTitles = new Set(
+    onetEntries.map((entry) => canonicalTaskTitle(entry.node)),
+  );
   for (const title of declaredTaskTitles) {
     if (!liveTaskTitles.has(title)) {
       throw new Error(
@@ -253,12 +303,16 @@ function applySplit(nodes, split, targetAppId) {
     .filter((collection) => collection.nodes.length > 0);
 
   const created = [];
-  for (const output of outputs.slice(1)) {
+  const outputNodes = new Map([[retained, sourceNode]]);
+  for (const output of outputs.filter(
+    (candidate) => candidate.outputMode === "new",
+  )) {
     const newId = deterministicNodeId(
       targetAppId,
       `${split.sourceNodeId}\u001fsplit\u001f${output.title}`,
     );
-    if (nodes.has(newId)) throw new Error(`Generated duplicate node ID ${newId}`);
+    if (nodes.has(newId))
+      throw new Error(`Generated duplicate node ID ${newId}`);
     const sibling = {
       ...cloneAndRemap(originalSource, new Map()),
       id: newId,
@@ -280,17 +334,47 @@ function applySplit(nodes, split, targetAppId) {
     nodes.set(newId, sibling);
     addSiblingToParents(nodes, sourceNode, sibling);
     created.push(sibling);
+    outputNodes.set(output, sibling);
   }
 
-  const outputNodes = [sourceNode, ...created];
+  const assignedExisting = [];
+  for (const output of outputs.filter(
+    (candidate) => candidate.outputMode === "existing",
+  )) {
+    const existing = nodes.get(output.targetNodeId);
+    if (!existing) {
+      throw new Error(
+        `Split ${split.from} cannot find existing output ${output.sourceNodeId}`,
+      );
+    }
+    if (existing.id === sourceNode.id) {
+      throw new Error(`Split ${split.from} cannot assign back to its source`);
+    }
+    if (existing.title !== output.title) {
+      throw new Error(
+        `Existing split output ${output.sourceNodeId} expected "${output.title}" but found "${existing.title}"`,
+      );
+    }
+    outputNodes.set(output, existing);
+    assignedExisting.push(existing);
+  }
+
   for (const taskEntry of onetEntries) {
-    const assignedNodes = outputNodes.filter((outputNode, index) =>
-      outputs[index].sourceTaskTitles.has(canonicalTaskTitle(taskEntry.node)),
+    const assignedOutputs = outputs.filter((output) =>
+      output.sourceTaskTitles.has(canonicalTaskTitle(taskEntry.node)),
+    );
+    const assignedNodes = assignedOutputs.map((output) =>
+      outputNodes.get(output),
     );
     if (!assignedNodes.length) {
       throw new Error(
         `No resulting node receives task ${canonicalTaskTitle(taskEntry.node)} from ${split.from}`,
       );
+    }
+    for (const output of assignedOutputs) {
+      if (output.outputMode === "existing") {
+        addDirectSpecialization(outputNodes.get(output), taskEntry);
+      }
     }
     let foundReciprocal = false;
     taskEntry.node.generalizations = (taskEntry.node.generalizations || []).map(
@@ -322,6 +406,10 @@ function applySplit(nodes, split, targetAppId) {
     retainedTargetNodeId: sourceNode.id,
     retainedTitle: sourceNode.title,
     created: created.map((node) => ({ id: node.id, title: node.title })),
+    assignedExisting: assignedExisting.map((node) => ({
+      id: node.id,
+      title: node.title,
+    })),
   };
 }
 
@@ -360,12 +448,47 @@ function refreshLinkTitles(value, titleById) {
   return next;
 }
 
+function normalizedProposalSplitOutputs(proposedNodes = []) {
+  return proposedNodes
+    .map((output) => ({
+      title: output.title,
+      status: output.status || "new",
+      sourceTaskTitles: [...new Set(output.sourceTasks || [])].sort(),
+    }))
+    .sort((left, right) => left.title.localeCompare(right.title, "en"));
+}
+
+function normalizedPlanSplitOutputs(split) {
+  return [
+    {
+      ...split.retainSourceAs,
+      status: split.retainSourceAs.status || "new",
+    },
+    ...(split.create || []).map((output) => ({
+      ...output,
+      status: output.status || "new",
+    })),
+    ...(split.assignToExisting || []).map((output) => ({
+      ...output,
+      status: "existing",
+    })),
+  ]
+    .map((output) => ({
+      title: output.title,
+      status: output.status,
+      sourceTaskTitles: [...new Set(output.sourceTaskTitles || [])].sort(),
+    }))
+    .sort((left, right) => left.title.localeCompare(right.title, "en"));
+}
+
 function validatePlanAgainstBenchmark(plan, benchmark, benchmarkFile) {
   if (sha256File(benchmarkFile) !== plan.benchmark.sha256) {
     throw new Error("Benchmark SHA-256 does not match the application plan");
   }
   if (benchmark.reviewer.label !== plan.benchmark.reviewerLabel) {
-    throw new Error("Application plan reviewer does not match benchmark reviewer");
+    throw new Error(
+      "Application plan reviewer does not match benchmark reviewer",
+    );
   }
   for (const field of ["reviewed", "agreed", "disagreed"]) {
     if (benchmark.counts[field] !== plan.benchmark[field]) {
@@ -381,8 +504,13 @@ function validatePlanAgainstBenchmark(plan, benchmark, benchmarkFile) {
       throw new Error(`Rename ${rename.sourceNodeId} does not match benchmark`);
     }
     if (rename.decisionSource === "acceptedProposal") {
-      if (judgment.decision !== "agree" || judgment.proposedTitle !== rename.to) {
-        throw new Error(`Accepted rename ${rename.sourceNodeId} is not approved`);
+      if (
+        judgment.decision !== "agree" ||
+        judgment.proposedTitle !== rename.to
+      ) {
+        throw new Error(
+          `Accepted rename ${rename.sourceNodeId} is not approved`,
+        );
       }
     } else if (
       judgment.decision !== "disagree" ||
@@ -393,13 +521,29 @@ function validatePlanAgainstBenchmark(plan, benchmark, benchmarkFile) {
   }
   for (const split of plan.splits) {
     const judgment = judgments.get(split.sourceNodeId);
-    if (
-      !judgment ||
-      judgment.currentTitle !== split.from ||
+    if (!judgment || judgment.currentTitle !== split.from) {
+      throw new Error(
+        `Split ${split.sourceNodeId} does not match expert review`,
+      );
+    }
+    if (split.decisionSource === "acceptedProposal") {
+      if (judgment.decision !== "agree") {
+        throw new Error(`Split ${split.sourceNodeId} was not approved`);
+      }
+      const expected = normalizedProposalSplitOutputs(judgment.proposedNodes);
+      const planned = normalizedPlanSplitOutputs(split);
+      if (JSON.stringify(expected) !== JSON.stringify(planned)) {
+        throw new Error(
+          `Split ${split.sourceNodeId} does not exactly match the approved proposal`,
+        );
+      }
+    } else if (
       judgment.decision !== "disagree" ||
       judgment.suggestedCorrection !== split.expertSuggestedCorrection
     ) {
-      throw new Error(`Split ${split.sourceNodeId} does not match expert review`);
+      throw new Error(
+        `Split ${split.sourceNodeId} does not match expert review`,
+      );
     }
   }
   for (const pending of plan.regenerateWithoutApplying) {
@@ -409,7 +553,9 @@ function validatePlanAgainstBenchmark(plan, benchmark, benchmarkFile) {
       judgment.decision !== "disagree" ||
       judgment.suggestedCorrection !== pending.expertSuggestedCorrection
     ) {
-      throw new Error(`Pending item ${pending.sourceNodeId} does not match review`);
+      throw new Error(
+        `Pending item ${pending.sourceNodeId} does not match review`,
+      );
     }
   }
 }
@@ -472,7 +618,14 @@ function cloneAndTransform(sourceDocuments, plan) {
     splitResults.push(
       applySplit(
         targetDocuments,
-        { ...split, targetNodeId: idMap.get(split.sourceNodeId) },
+        {
+          ...split,
+          targetNodeId: idMap.get(split.sourceNodeId),
+          assignToExisting: (split.assignToExisting || []).map((output) => ({
+            ...output,
+            targetNodeId: idMap.get(output.sourceNodeId),
+          })),
+        },
         targetAppId,
       ),
     );
@@ -491,10 +644,13 @@ function cloneAndTransform(sourceDocuments, plan) {
     ...splitResults.flatMap((result) => [
       result.retainedTargetNodeId,
       ...result.created.map((node) => node.id),
+      ...result.assignedExisting.map((node) => node.id),
     ]),
   ]);
   const newlyAmbiguousTitles = [...activeTitles]
-    .filter(([, ids]) => ids.length > 1 && ids.some((id) => changedTargetIds.has(id)))
+    .filter(
+      ([, ids]) => ids.length > 1 && ids.some((id) => changedTargetIds.has(id)),
+    )
     .map(([title, ids]) => ({ title, ids }));
   if (newlyAmbiguousTitles.length) {
     throw new Error(
@@ -568,7 +724,10 @@ function credentials(environment) {
 }
 
 async function readOntology(db, appId) {
-  const snapshot = await db.collection("nodes").where("appName", "==", appId).get();
+  const snapshot = await db
+    .collection("nodes")
+    .where("appName", "==", appId)
+    .get();
   return new Map(
     snapshot.docs.map((document) => [
       document.id,
@@ -643,7 +802,9 @@ async function writeOntology(db, documents, concurrency = 6) {
         }
         await batch.commit();
         written += chunk.length;
-        process.stderr.write(`Wrote ${written}/${entries.length} remaining nodes\n`);
+        process.stderr.write(
+          `Wrote ${written}/${entries.length} remaining nodes\n`,
+        );
       }
     },
   );
@@ -662,6 +823,8 @@ function runSelfTest() {
   const parentId = "parent";
   const sourceId = "bicycle";
   const taskId = "task";
+  const existingId = "existing";
+  const existingTaskId = "existing-task";
   const sourceDocuments = new Map([
     [
       parentId,
@@ -671,7 +834,13 @@ function runSelfTest() {
         title: "Sell",
         deleted: false,
         specializations: [
-          { collectionName: "main", nodes: [{ id: sourceId, title: "Sell Bicycle" }] },
+          {
+            collectionName: "main",
+            nodes: [
+              { id: sourceId, title: "Sell Bicycle" },
+              { id: existingId, title: "Sell Products" },
+            ],
+          },
         ],
         generalizations: [],
       },
@@ -684,8 +853,27 @@ function runSelfTest() {
         title: "Sell Bicycle",
         deleted: false,
         specializations: [
-          { collectionName: "O*NET", nodes: [{ id: taskId, title: "Sell bicycles and accessories." }] },
+          {
+            collectionName: "O*NET",
+            nodes: [
+              { id: taskId, title: "Sell bicycles and accessories." },
+              { id: existingTaskId, title: "Sell products." },
+            ],
+          },
         ],
+        generalizations: [
+          { collectionName: "main", nodes: [{ id: parentId, title: "Sell" }] },
+        ],
+      },
+    ],
+    [
+      existingId,
+      {
+        id: existingId,
+        appName: sourceAppId,
+        title: "Sell Products",
+        deleted: false,
+        specializations: [],
         generalizations: [
           { collectionName: "main", nodes: [{ id: parentId, title: "Sell" }] },
         ],
@@ -701,7 +889,27 @@ function runSelfTest() {
         oNet: true,
         specializations: [],
         generalizations: [
-          { collectionName: "O*NET", nodes: [{ id: sourceId, title: "Sell Bicycle" }] },
+          {
+            collectionName: "O*NET",
+            nodes: [{ id: sourceId, title: "Sell Bicycle" }],
+          },
+        ],
+      },
+    ],
+    [
+      existingTaskId,
+      {
+        id: existingTaskId,
+        appName: sourceAppId,
+        title: "Sell products.",
+        deleted: false,
+        oNet: true,
+        specializations: [],
+        generalizations: [
+          {
+            collectionName: "O*NET",
+            nodes: [{ id: sourceId, title: "Sell Bicycle" }],
+          },
         ],
       },
     ],
@@ -724,31 +932,61 @@ function runSelfTest() {
             sourceTaskTitles: ["Sell bicycles and accessories."],
           },
         ],
+        assignToExisting: [
+          {
+            sourceNodeId: existingId,
+            title: "Sell Products",
+            sourceTaskTitles: ["Sell products."],
+          },
+        ],
       },
     ],
     regenerateWithoutApplying: [],
   };
   const result = cloneAndTransform(sourceDocuments, plan);
-  if (result.targetDocuments.size !== 4 || result.report.newNodeCount !== 1) {
+  if (result.targetDocuments.size !== 6 || result.report.newNodeCount !== 1) {
     throw new Error("Self-test did not create exactly one split node");
   }
   const targetSourceId = result.idMap.get(sourceId);
   const targetTaskId = result.idMap.get(taskId);
+  const targetExistingId = result.idMap.get(existingId);
+  const targetExistingTaskId = result.idMap.get(existingTaskId);
   const targetParentId = result.idMap.get(parentId);
   const targetSource = result.targetDocuments.get(targetSourceId);
   const targetTask = result.targetDocuments.get(targetTaskId);
+  const targetExisting = result.targetDocuments.get(targetExistingId);
+  const targetExistingTask = result.targetDocuments.get(targetExistingTaskId);
   const targetParent = result.targetDocuments.get(targetParentId);
   const created = result.report.splits[0].created[0];
   if (
     targetSource.title !== "Sell Bicycles" ||
-    !targetSource.specializations[0].nodes.some((link) => linkId(link) === targetTaskId) ||
-    !targetParent.specializations[0].nodes.some((link) => linkId(link) === created.id) ||
-    !targetTask.generalizations[0].nodes.some((link) => linkId(link) === created.id) ||
+    !targetSource.specializations[0].nodes.some(
+      (link) => linkId(link) === targetTaskId,
+    ) ||
+    !targetParent.specializations[0].nodes.some(
+      (link) => linkId(link) === created.id,
+    ) ||
+    !targetTask.generalizations[0].nodes.some(
+      (link) => linkId(link) === created.id,
+    ) ||
+    !targetExisting.specializations[0].nodes.some(
+      (link) => linkId(link) === targetExistingTaskId,
+    ) ||
+    !targetExistingTask.generalizations[0].nodes.some(
+      (link) => linkId(link) === targetExistingId,
+    ) ||
+    targetExistingTask.generalizations[0].nodes.some(
+      (link) => linkId(link) === targetSourceId,
+    ) ||
     sourceDocuments.get(sourceId).title !== "Sell Bicycle"
   ) {
-    throw new Error("Self-test failed reciprocal split or source-isolation checks");
+    throw new Error(
+      "Self-test failed reciprocal split or source-isolation checks",
+    );
   }
-  process.stdout.write("PASS: isolated ontology clone and split transformation\n");
+  process.stdout.write(
+    "PASS: isolated ontology clone and split transformation\n",
+  );
 }
 
 async function main() {
@@ -762,7 +1000,8 @@ async function main() {
     args.plan || path.join(DEFAULT_ARTIFACT_DIR, "title-application-plan.json"),
   );
   const benchmarkFile = path.resolve(
-    args.benchmark || path.join(DEFAULT_ARTIFACT_DIR, "rob-title-benchmark.json"),
+    args.benchmark ||
+      path.join(DEFAULT_ARTIFACT_DIR, "rob-title-benchmark.json"),
   );
   const outputFile = path.resolve(
     args.out || path.join(DEFAULT_ARTIFACT_DIR, "title-application-audit.json"),
@@ -782,7 +1021,8 @@ async function main() {
   const db = getFirestore(app);
   const sourceClosure = await readSourceClosure(db, plan.sourceOntology.appId);
   const sourceDocuments = sourceClosure.documents;
-  if (!sourceDocuments.size) throw new Error("Source ontology contains no nodes");
+  if (!sourceDocuments.size)
+    throw new Error("Source ontology contains no nodes");
   const sourceDigestBefore = digestDocuments(sourceDocuments);
   const existingTarget = await readOntology(db, plan.targetOntology.appId);
   const transformed = cloneAndTransform(sourceDocuments, plan);
@@ -797,7 +1037,9 @@ async function main() {
       throw new Error(`Existing target contains unexpected node ${id}`);
     }
     if (digestDocument(existing) !== digestDocument(expected)) {
-      throw new Error(`Existing target node ${id} differs from this clone plan`);
+      throw new Error(
+        `Existing target node ${id} differs from this clone plan`,
+      );
     }
   }
   const documentsToWrite = new Map(

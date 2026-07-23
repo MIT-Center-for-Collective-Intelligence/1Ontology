@@ -11,7 +11,10 @@ const { cert, initializeApp } = require("firebase-admin/app");
 const { getAuth } = require("firebase-admin/auth");
 const { getFirestore } = require("firebase-admin/firestore");
 
-const REPO_ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), "../..");
+const REPO_ROOT = path.resolve(
+  path.dirname(new URL(import.meta.url).pathname),
+  "../..",
+);
 const DEFAULT_DATASET_DIR = path.join(
   REPO_ROOT,
   "Sell_Society_of_Mind_Review_UI_Handoff_2026-07-15",
@@ -147,6 +150,7 @@ async function main() {
         currentTitle: proposal.reviewerView?.context?.currentTitle || "",
         proposedTitle: proposal.reviewerView?.context?.proposedTitle || "",
         linkedTasks: proposal.reviewerView?.context?.linkedTasks || [],
+        proposedNodes: proposal.reviewerView?.context?.proposedNodes || [],
         agentReasoning: proposal.reviewerView?.reasoning || "",
         decision: record.response?.decision || "",
         disagreementReason: record.response?.disagreementReason || "",
@@ -160,25 +164,37 @@ async function main() {
 
   const expected = proposalsById.size;
   const missingProposalIds = [...proposalsById.keys()].filter(
-    (proposalId) => !judgments.some((judgment) => judgment.proposalId === proposalId),
+    (proposalId) =>
+      !judgments.some((judgment) => judgment.proposalId === proposalId),
   );
-  const subjectNodeIds = [...new Set(judgments.map((item) => item.subjectNodeId).filter(Boolean))];
+  const subjectNodeIds = [
+    ...new Set(judgments.map((item) => item.subjectNodeId).filter(Boolean)),
+  ];
   const subjectSnapshots = subjectNodeIds.length
-    ? await db.getAll(...subjectNodeIds.map((nodeId) => db.collection("nodes").doc(nodeId)))
+    ? await db.getAll(
+        ...subjectNodeIds.map((nodeId) => db.collection("nodes").doc(nodeId)),
+      )
     : [];
   const subjectNodes = subjectSnapshots
     .filter((snapshot) => snapshot.exists)
     .map((snapshot) => ({ id: snapshot.id, ...snapshot.data() }));
   const childNodeIds = [
-    ...new Set(subjectNodes.flatMap((node) => linkedNodeIds(node.specializations))),
+    ...new Set(
+      subjectNodes.flatMap((node) => linkedNodeIds(node.specializations)),
+    ),
   ];
   const childSnapshots = childNodeIds.length
-    ? await db.getAll(...childNodeIds.map((nodeId) => db.collection("nodes").doc(nodeId)))
+    ? await db.getAll(
+        ...childNodeIds.map((nodeId) => db.collection("nodes").doc(nodeId)),
+      )
     : [];
   const childrenById = new Map(
     childSnapshots
       .filter((snapshot) => snapshot.exists)
-      .map((snapshot) => [snapshot.id, { id: snapshot.id, ...snapshot.data() }]),
+      .map((snapshot) => [
+        snapshot.id,
+        { id: snapshot.id, ...snapshot.data() },
+      ]),
   );
   const sourceNodeEvidence = subjectNodes
     .map((node) => ({
@@ -213,8 +229,11 @@ async function main() {
     counts: {
       expected,
       reviewed: judgments.length,
-      agreed: judgments.filter((judgment) => judgment.decision === "agree").length,
-      disagreed: judgments.filter((judgment) => judgment.decision === "disagree").length,
+      agreed: judgments.filter((judgment) => judgment.decision === "agree")
+        .length,
+      disagreed: judgments.filter(
+        (judgment) => judgment.decision === "disagree",
+      ).length,
       missing: missingProposalIds.length,
       orphanedHistoricalResponses: orphanedResponses.length,
     },

@@ -57,3 +57,11 @@ original ontology with Rob's manually restructured ontology, decompose the
 expert changes into atomic operations, and test whether prompts can recover
 those operations. This should remain separate from the operational title pass
 so that evaluation design does not delay ontology improvement.
+
+## July 23 completion
+
+Rob agreed with all four follow-up split proposals. They were applied to a
+second isolated ontology copy, and the downstream Sell queues were regenerated
+against that new structure. See
+[rob-title-followup-cycle-2026-07-23.md](./rob-title-followup-cycle-2026-07-23.md)
+for the application audit, regenerated task counts, and next review phase.

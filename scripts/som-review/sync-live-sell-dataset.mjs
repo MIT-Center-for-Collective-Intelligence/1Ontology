@@ -781,6 +781,14 @@ async function main() {
     args["ontology-name"] || process.env.SOM_ONTOLOGY_NAME || ONTOLOGY_NAME;
   const inputDir = path.resolve(required(args["input-dir"], "--input-dir"));
   const outputDir = path.resolve(required(args["output-dir"], "--output-dir"));
+  const datasetVersion = args["dataset-version"];
+  const dropStale = args["drop-stale"] === "true";
+  const excludedIssueTypes = new Set(
+    String(args["exclude-issue-types"] || "")
+      .split(",")
+      .map((value) => value.trim())
+      .filter(Boolean),
+  );
   const environment = args.environment || "production";
   if (!new Set(["development", "production"]).has(environment)) {
     throw new Error("--environment must be development or production");
@@ -805,6 +813,8 @@ async function main() {
   const index = buildIndex(snapshot);
   const manifest = readJson(path.join(outputDir, "manifest.json"));
   const canonicalizedAliases = [];
+  const excludedRecords = [];
+  const staleRecords = [];
   const transform = (record) => {
     const canonicalized = canonicalizeKnownTitleAnnotations(record, index);
     record = clarifyReviewerView(canonicalized.record);
@@ -833,15 +843,43 @@ async function main() {
     };
   };
 
-  const proposals = readJsonl(path.join(outputDir, "all_proposals.jsonl")).map(
-    transform,
+  const transformRecords = (records, sourceFile) =>
+    records.flatMap((record) => {
+      if (excludedIssueTypes.has(record.issueType)) {
+        excludedRecords.push({
+          proposalId: record.proposalId,
+          issueType: record.issueType,
+          sourceFile,
+          reason: "Issue type was explicitly excluded after expert completion.",
+        });
+        return [];
+      }
+      try {
+        return [transform(record)];
+      } catch (error) {
+        if (!dropStale) throw error;
+        staleRecords.push({
+          proposalId: record.proposalId,
+          issueType: record.issueType,
+          sourceFile,
+          reason: error instanceof Error ? error.message : String(error),
+        });
+        return [];
+      }
+    });
+
+  const proposals = transformRecords(
+    readJsonl(path.join(outputDir, "all_proposals.jsonl")),
+    "all_proposals.jsonl",
   );
-  const controls = readJsonl(path.join(outputDir, "all_controls.jsonl")).map(
-    transform,
+  const controls = transformRecords(
+    readJsonl(path.join(outputDir, "all_controls.jsonl")),
+    "all_controls.jsonl",
   );
-  const manualChecks = readJsonl(
-    path.join(outputDir, "manual_checks.jsonl"),
-  ).map(transform);
+  const manualChecks = transformRecords(
+    readJsonl(path.join(outputDir, "manual_checks.jsonl")),
+    "manual_checks.jsonl",
+  );
   writeJsonl(path.join(outputDir, "all_proposals.jsonl"), proposals);
   writeJsonl(path.join(outputDir, "all_controls.jsonl"), controls);
   writeJsonl(path.join(outputDir, "manual_checks.jsonl"), manualChecks);
@@ -866,6 +904,7 @@ async function main() {
   }
 
   manifest.generatedAt = capturedAt;
+  if (datasetVersion) manifest.datasetVersion = datasetVersion;
   manifest.sourceOntology = `firestore://${snapshot.firestoreProjectId}/${ONTOLOGY_APP_ID}`;
   manifest.sourceOntologySha256 = snapshotHash;
   manifest.sourceSnapshot = {
@@ -886,12 +925,25 @@ async function main() {
   manifest.counts.proposals = proposals.length;
   manifest.counts.controls = controls.length;
   manifest.counts.manualChecks = manualChecks.length;
+  manifest.regeneration = {
+    mode: dropStale ? "drop-stale-and-rebind" : "strict-rebind",
+    excludedIssueTypes: [...excludedIssueTypes].sort(),
+    excludedRecordCount: excludedRecords.length,
+    staleRecordCount: staleRecords.length,
+    staleRecordAuditFile: "diagnostics/stale_records.jsonl",
+  };
   writeJson(path.join(outputDir, "manifest.json"), manifest);
+  writeJsonl(path.join(outputDir, "diagnostics", "stale_records.jsonl"), [
+    ...excludedRecords,
+    ...staleRecords,
+  ]);
   extendProposalSchema(outputDir);
 
   process.stdout.write(
     `PASS: ${proposals.length + controls.length + manualChecks.length} records validated against ` +
       `${snapshot.nodes.length} live Sell nodes and ${snapshot.edges.length} relations; ` +
+      `${excludedRecords.length} completed records excluded; ` +
+      `${staleRecords.length} stale records removed; ` +
       `${new Set(canonicalizedAliases.map(([alias]) => alias)).size} annotated title alias(es) canonicalized; ` +
       `${snapshotHash}\n`,
   );
