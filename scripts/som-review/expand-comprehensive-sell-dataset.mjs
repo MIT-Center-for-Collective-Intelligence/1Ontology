@@ -5,9 +5,9 @@ import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
 
-const DATASET_VERSION = "sell-final-hierarchy-onet-2026-07-15-v4";
-const ONTOLOGY_APP_ID = "final-hierarchy-with-o*net";
-const ONTOLOGY_NAME = "Final Hierarchy with O*Net";
+let DATASET_VERSION = "sell-final-hierarchy-onet-2026-07-15-v4";
+let ONTOLOGY_APP_ID = "final-hierarchy-with-o*net";
+let ONTOLOGY_NAME = "Final Hierarchy with O*Net";
 const SOURCE_ARTIFACT =
   "society-of-mind://sell/comprehensive_candidate_audit.json";
 
@@ -154,67 +154,139 @@ const ISSUE_TYPES = [
 
 const ISSUE_BY_ID = new Map(ISSUE_TYPES.map((issue) => [issue.id, issue]));
 
-const PURE_NUMBER_NORMALIZATION_TITLES = new Set([
-  "Market Event",
-  "Market Product",
-  "Sell Beverage",
-  "Sell Bond",
-  "Sell Flower",
-  "Sell Lotion",
-  "Sell Plant",
-  "Sell Refreshment",
-  "Sell Stamp",
-  "Sell Stock",
-  "Sell Supply",
-  "Sell Tonic",
+const REGENERATED_ISSUE_TYPES = new Set([
+  "synonym-enrichment",
+  "description-enrichment",
+  "mistaken-synonym",
+  "duplicate-synonym",
+  "polysemy",
+  "flat-list-grouping",
+  "compound-object-grouping",
+  "collection-design",
+  "placement",
+  "wrong-verb",
+  "sense-relocation",
+  "node-merge",
+  "relocation",
+  "missing-activity",
+  "redundant-node",
 ]);
 
-const PRODUCT_SYNONYM_PAIRS = [
-  ["Sell Product", "Sell Merchandise"],
-  ["Sell Product", "Sell Good"],
-  ["Sell Product", "Sell Item"],
-  ["Sell Product", "Sell Supply"],
+const PURE_NUMBER_NORMALIZATION_TITLES = new Set();
+
+const DUPLICATE_SYNONYM_PAIRS = [
+  {
+    parentTitle: "Sell (Physical Object)",
+    canonicalTitle: "Sell Items",
+    candidateSynonymTitle: "Sell Merchandise",
+    reasoning:
+      "Both titles denote generic tangible goods offered for sale. The evidence does not identify a stable activity-level distinction between an item and merchandise.",
+  },
+  {
+    parentTitle: "Sell (Physical Object)",
+    canonicalTitle: "Sell Cosmetics",
+    candidateSynonymTitle: "Sell Makeup",
+    reasoning:
+      "Makeup is ordinarily a kind of cosmetic product. This review tests whether the two nodes represent the same selling activity or whether the narrower makeup node should remain distinct.",
+  },
 ];
 
-const SERVICE_RELOCATIONS = [
+const PLACEMENT_CANDIDATES = [
   {
-    title: "Sell Contract",
+    title: "Sell Service Contracts",
+    proposedParentTitle: "Sell service",
     reasoning:
-      "A contract is an ongoing legal or service arrangement rather than a standalone information object.",
+      "A service contract is an agreement for ongoing or future service rather than an information object whose recorded form is central.",
   },
   {
     title: "Sell Membership",
+    proposedParentTitle: "Sell service",
     reasoning:
-      "A membership grants continuing access or participation. It is therefore a service or ongoing arrangement rather than a standalone information object.",
+      "A membership grants continuing access or participation, so the ongoing service relationship is more central than the physical or digital credential.",
   },
   {
-    title: "Sell Pass",
+    title: "Sell Admission Passes",
+    proposedParentTitle: "Sell service",
     reasoning:
-      "A pass grants admission or continuing access to an event, facility, or service. The access arrangement is more central than the physical or digital credential that records it.",
+      "An admission pass grants access to an event, facility, or service. The access right is more central than the physical or digital credential.",
   },
   {
     title: "Sell Ticket",
+    proposedParentTitle: "Sell service",
     reasoning:
       "A ticket primarily grants access to transportation, an event, a facility, or another service. Its physical or digital carrier is incidental to the right being sold.",
   },
   {
-    title: "Sell Incentive",
+    title: "Sell Travel Incentives",
+    proposedParentTitle: "Sell service",
     reasoning:
-      "The linked activity concerns a travel incentive or arrangement, so the service being arranged is more central than a standalone information object.",
+      "A travel incentive is an arranged travel offering, so the service being arranged is more central than a standalone information object.",
   },
   {
-    title: "Sell Package",
+    title: "Sell Travel Packages",
+    proposedParentTitle: "Sell service",
     reasoning:
-      "The linked activity concerns a travel package that bundles transportation, lodging, or related services. The package is an arrangement rather than a standalone information object.",
+      "A travel package bundles transportation, lodging, tours, or related services. It is an arrangement rather than a standalone information object.",
+  },
+  {
+    title: "Sell Services",
+    proposedParentTitle: "Sell service",
+    reasoning:
+      "This node explicitly denotes selling services, so it belongs with service activities rather than with information objects.",
+  },
+  {
+    title: "Sell Financial Products",
+    proposedParentTitle: "Sell (Information)",
+    reasoning:
+      "The source evidence names travelers' checks, savings bonds, money orders, and cashier's checks. These are financial instruments or contractual products rather than tangible goods.",
+  },
+  {
+    title: "Sell Products",
+    proposedParentTitle: "Sell (Physical Object)",
+    reasoning:
+      "The generic product-selling node represents selling goods and belongs with the physical-object specializations rather than in the miscellaneous Sell bucket.",
+  },
+  {
+    title: "Sell Alcoholic Beverages",
+    proposedParentTitle: "Sell Beverages",
+    reasoning:
+      "Alcoholic beverages are a narrower kind of beverage. Nesting the specific node under Sell Beverages preserves the specialization instead of keeping both as peers.",
+  },
+  {
+    title: "Sell Lotion",
+    proposedParentTitle: "Sell Cosmetic Supplies",
+    reasoning:
+      "Lotions are a specific kind of cosmetic supply in the shared source evidence.",
+  },
+  {
+    title: "Sell Tonic",
+    proposedParentTitle: "Sell Cosmetic Supplies",
+    reasoning:
+      "Tonics are a specific kind of cosmetic supply in the shared source evidence.",
   },
 ];
 
-const MARKET_TITLES = [
-  "Market Artwork",
-  "Market Casino",
-  "Market Event",
-  "Market Product",
-  "Market Space",
+const WRONG_VERB_RELOCATIONS = [
+  ...[
+    "Market Artwork",
+    "Market Bank Products",
+    "Market Casino",
+    "Market Event",
+    "Market Products",
+    "Market Services",
+    "Market Vacant Space",
+  ].map((title) => ({
+    title,
+    proposedParentTitle: "Advertise",
+    reasoning:
+      "Market here means promoting or creating demand, not completing an exchange for payment. It therefore names a different main action from Sell.",
+  })),
+  {
+    title: "Sell Ideas",
+    proposedParentTitle: "Persuade",
+    reasoning:
+      "Ideas are not transferred for payment in the sense that defines Sell. The source evidence uses selling ideas to mean influencing another person, so it names a different main action.",
+  },
 ];
 
 const TITLE_CLARITY_OVERRIDES = {
@@ -277,32 +349,90 @@ const TITLE_CLARITY_OVERRIDES = {
 
 const EXTRA_GROUPINGS = [
   {
-    title: "Sell Plants and Flowers",
+    issueType: "flat-list-grouping",
+    title: "Sell Food and Beverages",
     parentTitle: "Sell (Physical Object)",
-    children: ["Sell Flower", "Sell Plant"],
+    children: ["Sell Beverages", "Sell Food", "Sell Refreshment"],
     reasoning:
-      "Sell Flower and Sell Plant have the same supporting O*NET task. The proposed group preserves the two narrower activities while giving their shared work a clear home.",
+      "Food, beverages, and refreshments form a coherent family of consumable products. The group shortens the long flat list while preserving each narrower selling activity.",
   },
   {
-    title: "Sell Cosmetic Supplies",
-    parentTitle: "Sell (Physical Object)",
-    children: ["Sell Lotion", "Sell Tonic"],
+    issueType: "flat-list-grouping",
+    title: "Sell Investment Instruments",
+    parentTitle: "Sell (Information)",
+    children: [
+      "Sell Bond",
+      "Sell Commodity Futures",
+      "Sell Financial Derivatives",
+      "Sell Stock",
+    ],
     reasoning:
-      "Sell Lotion and Sell Tonic share the same supporting task, which explicitly covers lotions, tonics, and other cosmetic supplies. The proposed grouping keeps the two narrower activities distinct while representing their common category.",
+      "Bonds, futures, derivatives, and stocks are investment instruments sold through related financial-market practices. The proposed group reduces a long flat list without treating the instruments as synonyms.",
   },
   {
+    issueType: "flat-list-grouping",
+    title: "Sell Payment Instruments",
+    parentTitle: "Sell (Information)",
+    children: ["Sell Foreign Currencies", "Sell Traveler's Checks"],
+    reasoning:
+      "Foreign currencies and traveler's checks share transaction and payment use cases. The group represents that common function while preserving the distinct instruments.",
+  },
+  {
+    issueType: "compound-object-grouping",
     title: "Sell Stamps and Money Orders",
     parentTitle: "Sell (Physical Object)",
-    children: ["Sell Order", "Sell Stamp"],
+    children: ["Sell Money Orders", "Sell Stamp"],
     reasoning:
-      "Sell Order and Sell Stamp share the same source task, Sell stamps and money orders. The proposed grouping represents that combined activity without incorrectly treating stamps and money orders as synonyms.",
+      "Sell Money Orders and Sell Stamp share source evidence that explicitly names selling stamps and money orders. The proposed group represents the compound source activity without treating its objects as synonyms.",
   },
   {
+    issueType: "compound-object-grouping",
     title: "Sell Travel Packages and Incentives",
     parentTitle: "Sell (Information)",
-    children: ["Sell Incentive", "Sell Package"],
+    children: ["Sell Travel Incentives", "Sell Travel Packages"],
     reasoning:
       "The linked evidence describes arranging and selling travel packages and promotional travel incentives together. The proposed grouping retains the two narrower activities and represents their shared travel-offering context.",
+  },
+  {
+    issueType: "compound-object-grouping",
+    title: "Sell Personal Care Products",
+    parentTitle: "Sell (Physical Object)",
+    children: [
+      "Sell Cosmetics",
+      "Sell Hair Care Products",
+      "Sell Makeup",
+      "Sell Nail Care Products",
+    ],
+    reasoning:
+      "The linked evidence combines hair-care products, cosmetics, makeup, and nail-care products. The proposed group represents their shared personal-care context while retaining the narrower product-selling activities.",
+  },
+  {
+    issueType: "compound-object-grouping",
+    title: "Sell Expedition Goods",
+    parentTitle: "Sell (Physical Object)",
+    children: [
+      "Sell Expedition Clothing",
+      "Sell Expedition Equipment",
+      "Sell Expedition Supplies",
+    ],
+    reasoning:
+      "The shared O*NET evidence explicitly combines expedition equipment, clothing, and supplies. The proposed group preserves those object-specific activities under one evidence-grounded family.",
+  },
+  {
+    issueType: "compound-object-grouping",
+    title: "Sell Pet Products and Supplies",
+    parentTitle: "Sell (Physical Object)",
+    children: ["Sell Pet Food", "Sell Pet Supplies"],
+    reasoning:
+      "The shared evidence names pet food and pet supplies together. The proposed group keeps the two narrower activities distinct while representing their common pet-care market.",
+  },
+  {
+    issueType: "compound-object-grouping",
+    title: "Sell Agricultural Products and Supplies",
+    parentTitle: "Sell (Physical Object)",
+    children: ["Sell Agricultural Products", "Sell Agricultural Supplies"],
+    reasoning:
+      "Agricultural products and agricultural supplies are distinct but closely related selling specializations. The proposed group represents that domain without collapsing the two activities.",
   },
 ];
 
@@ -459,6 +589,7 @@ const DESCRIPTION_PROPOSALS = {
     "Sell traveler's checks and related payment instruments to customers.",
   "Sell Products or Ideas":
     "Influence others by selling products or persuading them to accept ideas.",
+  "Sell Ideas": "Persuade others to accept or support ideas or proposals.",
   "Sell Token":
     "Sell casino or gambling tokens to patrons or other workers for resale.",
   "Sell Item": "Sell tickets and other items to customers.",
@@ -549,10 +680,16 @@ function assertDiagnosisIsolation(record) {
     );
   }
   const context = view.context;
+  const placementAdvice = [view.proposedState, view.reasoning]
+    .filter(Boolean)
+    .join(" ");
+  const quotedCandidateHome = context?.candidateHome
+    ? `"${context.candidateHome.toLowerCase()}"`
+    : "";
   if (
     context?.type === "placement-comparison" &&
     context.candidateHome &&
-    visibleText.toLowerCase().includes(context.candidateHome.toLowerCase())
+    placementAdvice.toLowerCase().includes(quotedCandidateHome)
   ) {
     throw new Error(
       `${record.proposalId} exposes a downstream placement target during diagnosis`,
@@ -1024,7 +1161,7 @@ function groupingRecords({ manifest, index, snapshotHash, generatedAt }) {
       index,
       snapshotHash,
       generatedAt,
-      issueType: "compound-object-grouping",
+      issueType: candidate.issueType,
       key: `evidence-grouping:${candidate.title}`,
       subject: {
         title: candidate.title,
@@ -1246,9 +1383,10 @@ function mistakenSynonymRecords(args) {
 
 function duplicateDiagnosticRecords(args) {
   const { manifest, index, snapshotHash, generatedAt } = args;
-  const parentTitle = "Sell (Physical Object)";
-  return PRODUCT_SYNONYM_PAIRS.map(([canonicalTitle, candidateSynonymTitle]) =>
-    makeRecord({
+  return DUPLICATE_SYNONYM_PAIRS.map((candidate) => {
+    const { parentTitle, canonicalTitle, candidateSynonymTitle, reasoning } =
+      candidate;
+    return makeRecord({
       manifest,
       index,
       snapshotHash,
@@ -1264,8 +1402,7 @@ function duplicateDiagnosticRecords(args) {
         question: `Should "${candidateSynonymTitle}" be recorded as a synonym of "${canonicalTitle}"?`,
         currentState: `They are separate sibling nodes under ${parentTitle}.`,
         proposedState: `Treat "${candidateSynonymTitle}" as a synonym of "${canonicalTitle}".`,
-        reasoning:
-          "Both titles are generic names for an item offered for sale. This pairwise review deliberately avoids bundling several uncertain equivalences into one decision.",
+        reasoning,
         context: {
           type: "duplicate-comparison",
           parentTitle,
@@ -1286,58 +1423,7 @@ function duplicateDiagnosticRecords(args) {
         judgeId: "Rob-task-6",
         judgeName: "GenericItemDuplicateExample",
       },
-    }),
-  );
-}
-
-function polysemyRecord(args) {
-  const { manifest, index, snapshotHash, generatedAt } = args;
-  const nodeTitle = "Sell Products or Ideas";
-  return makeRecord({
-    manifest,
-    index,
-    snapshotHash,
-    generatedAt,
-    issueType: "polysemy",
-    key: `polysemy:${nodeTitle}`,
-    subject: {
-      title: nodeTitle,
-      parentTitle: "Sell (Other)",
-      relatedTitles: ["Sell Product", "Persuade"],
-    },
-    reviewerView: {
-      question: `Does "${nodeTitle}" combine two activities that should be represented separately?`,
-      currentState: `One node combines selling products for payment with influencing people about ideas.`,
-      proposedState: `Separate the paid product-sale sense from the idea-persuasion sense.`,
-      reasoning:
-        "Selling requires an exchange for payment, while influencing someone to accept an idea does not. The linked O*NET element explicitly combines selling and influencing, which is evidence of two senses rather than one Sell activity.",
-      context: {
-        type: "polysemy-review",
-        nodeTitle,
-        currentParentTitle: "Sell (Other)",
-        sourceTasks: sourceTasks(index, nodeTitle),
-        proposedSenses: [
-          {
-            title: "Sell Product",
-            meaning: "Transfer a product or its ownership for payment.",
-            destination: "Sell (Physical Object)",
-          },
-          {
-            title: "Persuade",
-            meaning: "Influence another person to accept an idea or position.",
-            destination: "Persuade",
-          },
-        ],
-      },
-    },
-    evidence: {
-      detectorId: "J7",
-      detectorName: "VerbDoctrineGate",
-      detectorConfidence: "high",
-      judgeId: "Rob-task-7",
-      judgeName: "PolysemyExample",
-      judgeConfidence: "high",
-    },
+    });
   });
 }
 
@@ -1391,21 +1477,21 @@ function collectionDesignRecord(args) {
   });
 }
 
-function servicePlacementRecords(args) {
+function placementDiagnosticRecords(args, candidates, issueType) {
   const { manifest, index, snapshotHash, generatedAt } = args;
-  return SERVICE_RELOCATIONS.map((candidate) => {
+  return candidates.map((candidate) => {
     const current = directParent(index, candidate.title);
     return makeRecord({
       manifest,
       index,
       snapshotHash,
       generatedAt,
-      issueType: "placement",
-      key: `placement:${candidate.title}->Sell service`,
+      issueType,
+      key: `${issueType}:${candidate.title}->${candidate.proposedParentTitle}`,
       subject: {
         title: candidate.title,
         parentTitle: current.parentTitle,
-        relatedTitles: ["Sell service"],
+        relatedTitles: [candidate.proposedParentTitle],
       },
       reviewerView: {
         question: `Is "${candidate.title}" currently in the wrong part of the Sell branch?`,
@@ -1417,17 +1503,24 @@ function servicePlacementRecords(args) {
           nodeTitle: candidate.title,
           currentParentTitle: current.parentTitle,
           currentBucket: current.collectionName,
-          candidateHome: "Sell service",
-          placementIssue: "wrong-bucket",
+          candidateHome: candidate.proposedParentTitle,
+          placementIssue:
+            issueType === "wrong-verb" ? "wrong-verb" : "wrong-bucket",
           sourceTasks: sourceTasks(index, candidate.title),
         },
       },
       evidence: {
-        detectorId: "D11",
-        detectorName: "MisplacementScanner",
+        detectorId: issueType === "wrong-verb" ? "D10+J7" : "D11",
+        detectorName:
+          issueType === "wrong-verb"
+            ? "VerbDoctrineMisplacementScanner"
+            : "MisplacementScanner",
         detectorConfidence: "high",
         judgeId: "J1",
-        judgeName: "BucketClassifier",
+        judgeName:
+          issueType === "wrong-verb"
+            ? "VerbBoundaryClassifier"
+            : "BucketClassifier",
         judgeConfidence: "high",
       },
     });
@@ -1491,78 +1584,31 @@ function relocationRecord({
 
 function relocationRecords(args, diagnostics) {
   const records = [];
-  for (const candidate of SERVICE_RELOCATIONS) {
+  for (const candidate of PLACEMENT_CANDIDATES) {
     records.push(
       relocationRecord({
         ...args,
         nodeTitle: candidate.title,
-        proposedParentTitle: "Sell service",
+        proposedParentTitle: candidate.proposedParentTitle,
         reasoning: candidate.reasoning,
         dependencyId: diagnostics.placement.get(candidate.title) || "",
         robTaskId: 11,
       }),
     );
   }
-  for (const nodeTitle of MARKET_TITLES) {
+  for (const candidate of WRONG_VERB_RELOCATIONS) {
     records.push(
       relocationRecord({
         ...args,
-        nodeTitle,
-        proposedParentTitle: "Advertise",
-        reasoning:
-          "The activity uses Market in the promotional sense: attracting attention or demand rather than completing an exchange for payment. Advertise is a verified current ontology node outside the Sell branch.",
-        dependencyId: diagnostics.wrongVerb.get(nodeTitle) || "",
+        nodeTitle: candidate.title,
+        proposedParentTitle: candidate.proposedParentTitle,
+        reasoning: candidate.reasoning,
+        dependencyId: diagnostics.wrongVerb.get(candidate.title) || "",
         robTaskId: 12,
       }),
     );
   }
   return records;
-}
-
-function senseRelocationRecord(args, dependencyId) {
-  const { manifest, index, snapshotHash, generatedAt } = args;
-  const nodeTitle = "Sell Products or Ideas";
-  const current = directParent(index, nodeTitle);
-  return makeRecord({
-    manifest,
-    index,
-    snapshotHash,
-    generatedAt,
-    issueType: "sense-relocation",
-    key: `sense-relocation:${nodeTitle}->Persuade`,
-    subject: {
-      title: nodeTitle,
-      parentTitle: current.parentTitle,
-      relatedTitles: ["Sell Product", "Persuade"],
-    },
-    reviewerView: {
-      question: `After separating its meanings, should the idea-influencing sense of "${nodeTitle}" move to "Persuade"?`,
-      currentState: `The combined node is under "${current.parentTitle}" in Sell.`,
-      proposedState: `Represent product selling through the existing "Sell Product" node and represent the non-sale idea-influencing sense under "Persuade". Retire the combined node after its evidence is reassigned.`,
-      reasoning:
-        "This action implements the boundary already tested by the polysemy review: paid product sales remain in Sell, while influencing another person about an idea follows Persuade.",
-      context: {
-        type: "sense-relocation-action",
-        nodeTitle,
-        currentParentTitle: current.parentTitle,
-        currentCollection: current.collectionName,
-        sourceTasks: sourceTasks(index, nodeTitle),
-        retainedSenseTitle: "Sell Product",
-        retainedParentTitle: "Sell (Physical Object)",
-        movedSenseTitle: "Persuade about an idea",
-        proposedParentTitle: "Persuade",
-      },
-    },
-    workflow: { dependsOnProposalIds: dependencyId ? [dependencyId] : [] },
-    evidence: {
-      detectorId: "W16+J7",
-      detectorName: "PolysemyRelocationProposer",
-      detectorConfidence: "high",
-      judgeId: "Rob-task-13",
-      judgeName: "SenseDestinationReview",
-      judgeConfidence: "high",
-    },
-  });
 }
 
 function mergeRecord({
@@ -1666,13 +1712,18 @@ function mergeRecords(args, diagnostics) {
         ) || "",
     }),
   ];
-  for (const [canonicalTitle, absorbedTitle] of PRODUCT_SYNONYM_PAIRS) {
+  for (const candidate of DUPLICATE_SYNONYM_PAIRS) {
+    const {
+      parentTitle,
+      canonicalTitle,
+      candidateSynonymTitle: absorbedTitle,
+    } = candidate;
     records.push(
       mergeRecord({
         ...args,
         canonicalTitle,
         absorbedTitle,
-        parentTitle: "Sell (Physical Object)",
+        parentTitle,
         reasoning:
           "The preceding pairwise synonym review determines whether these generic item-selling titles denote the same activity. This separate action review shows the exact node and child consolidation before any write is prepared.",
         dependencyId:
@@ -2058,10 +2109,21 @@ function main() {
   );
   const manifestPath = path.join(directory, "manifest.json");
   const manifest = readJson(manifestPath);
-  const generatedAt =
-    args["generated-at"] ||
-    (manifest.datasetVersion === DATASET_VERSION && manifest.generatedAt) ||
-    new Date().toISOString();
+  const rejectedCandidatesPath = path.join(
+    directory,
+    "diagnostics",
+    "rejected_agent_candidates.jsonl",
+  );
+  const historicalRejectedCandidatesPath = path.join(
+    directory,
+    "diagnostics",
+    "pre_split_rejected_agent_candidates.jsonl",
+  );
+  const rejectedCandidates = fs.existsSync(rejectedCandidatesPath)
+    ? readJsonl(rejectedCandidatesPath)
+    : fs.existsSync(historicalRejectedCandidatesPath)
+      ? readJsonl(historicalRejectedCandidatesPath)
+      : [];
   const snapshotPath = path.join(directory, "ontology-snapshot.json");
   const snapshotText = fs.readFileSync(snapshotPath, "utf8");
   const snapshotHash = hash(snapshotText);
@@ -2071,6 +2133,17 @@ function main() {
     );
   }
   const snapshot = JSON.parse(snapshotText);
+  DATASET_VERSION =
+    args["dataset-version"] || manifest.datasetVersion || DATASET_VERSION;
+  ONTOLOGY_APP_ID =
+    snapshot.ontologyAppId ||
+    manifest.sourceSnapshot?.ontologyAppId ||
+    ONTOLOGY_APP_ID;
+  ONTOLOGY_NAME =
+    snapshot.ontologyName ||
+    manifest.sourceSnapshot?.ontologyName ||
+    ONTOLOGY_NAME;
+  const generatedAt = args["generated-at"] || new Date().toISOString();
   const index = buildIndex(snapshot);
 
   const sourceEvidenceForContext = (context) => {
@@ -2205,12 +2278,12 @@ function main() {
     return ISSUE_BY_ID.has(record.issueType);
   };
 
-  const existingProposals = readJsonl(
-    path.join(directory, "all_proposals.jsonl"),
-  )
+  const inputProposals = readJsonl(path.join(directory, "all_proposals.jsonl"));
+  const existingProposals = inputProposals
     .filter((record) => record.provenance?.sourceArtifact !== SOURCE_ARTIFACT)
     .map(normalizeExistingRecord)
-    .filter(keepExistingRecord);
+    .filter(keepExistingRecord)
+    .filter((record) => !REGENERATED_ISSUE_TYPES.has(record.issueType));
   const existingControls = readJsonl(path.join(directory, "all_controls.jsonl"))
     .map(normalizeExistingRecord)
     .filter(keepExistingRecord);
@@ -2229,10 +2302,18 @@ function main() {
     ...metadataRecords(generationArgs),
     ...mistakenSynonymRecords(generationArgs),
     ...duplicateDiagnosticRecords(generationArgs),
-    polysemyRecord(generationArgs),
     ...groupingRecords(generationArgs),
     collectionDesignRecord(generationArgs),
-    ...servicePlacementRecords(generationArgs),
+    ...placementDiagnosticRecords(
+      generationArgs,
+      PLACEMENT_CANDIDATES,
+      "placement",
+    ),
+    ...placementDiagnosticRecords(
+      generationArgs,
+      WRONG_VERB_RELOCATIONS,
+      "wrong-verb",
+    ),
     ...missingActivityRecords(generationArgs),
   ];
 
@@ -2270,23 +2351,20 @@ function main() {
   const generatedActions = [
     ...mergeRecords(generationArgs, diagnostics),
     ...relocationRecords(generationArgs, diagnostics),
-    senseRelocationRecord(
-      generationArgs,
-      diagnostics.polysemy.get("Sell Products or Ideas") || "",
-    ),
   ];
   const generatedProposals = [...generatedDiagnostics, ...generatedActions];
-  const existingKeys = new Set(
-    existingProposals.map((record) => record.proposalId),
+  const generatedIds = new Set(
+    generatedProposals.map((record) => record.proposalId),
   );
-  for (const proposal of generatedProposals) {
-    if (existingKeys.has(proposal.proposalId)) {
-      throw new Error(
-        `Duplicate generated proposal id: ${proposal.proposalId}`,
-      );
-    }
+  if (generatedIds.size !== generatedProposals.length) {
+    throw new Error("Generated proposal IDs are not unique");
   }
-  const proposals = [...existingProposals, ...generatedProposals];
+  const proposals = [
+    ...existingProposals.filter(
+      (record) => !generatedIds.has(record.proposalId),
+    ),
+    ...generatedProposals,
+  ];
 
   for (const record of [...proposals, ...existingControls, ...manualChecks]) {
     assertDiagnosisIsolation(record);
@@ -2356,27 +2434,55 @@ function main() {
   manifest.counts.proposals = proposals.length;
   manifest.counts.controls = existingControls.length;
   manifest.counts.manualChecks = manualChecks.length;
+  manifest.counts.rejectedAgentCandidates = 0;
+  manifest.counts.historicalPreSplitRejectedCandidates =
+    rejectedCandidates.length;
+  const representedRobTaskIds = new Set(
+    proposals.flatMap((record) => record.workflow?.robTaskIds || []),
+  );
+  manifest.regeneration = {
+    ...(manifest.regeneration || {}),
+    expansion: {
+      generator: "scripts/som-review/expand-comprehensive-sell-dataset.mjs",
+      replacedIssueTypes: [...REGENERATED_ISSUE_TYPES].sort(),
+      inputProposalCount: inputProposals.length,
+      retainedProposalCount: existingProposals.length,
+      generatedProposalCount: generatedProposals.length,
+      historicalPreSplitRejectedCandidates: rejectedCandidates.length,
+    },
+  };
   manifest.coverage = {
     snapshotBound: true,
     exhaustiveWithinPackagedDetectorOutputs: true,
     semanticCompletenessGuaranteed: false,
-    robTaskFamiliesRepresented: 13,
+    robTaskFamiliesRepresented: representedRobTaskIds.size,
     robTaskFamiliesTotal: 13,
     exactRelocationsWithVerifiedCurrentTargets: generatedActions.filter(
       (record) => record.issueType === "relocation",
     ).length,
-    note: "Every issue family in Rob's July 9 document has an atomic review contract and at least one snapshot-bound Sell item. Candidate generation is exhaustive only for the packaged scans and deterministic metadata checks; no finite semantic scan can prove that every possible defect has been found.",
+    note: "Every issue family in Rob's July 9 document retains an atomic review contract. This cycle contains only unresolved snapshot-bound candidates after the accepted title splits; resolved or currently inapplicable queues may contain zero items. Candidate generation is exhaustive only for the packaged scans and deterministic metadata checks.",
   };
   manifest.limitations = [
-    "The dataset covers all 13 documented issue families, but it is not proof that every semantic issue in Sell has been discovered.",
-    `The ${PURE_NUMBER_NORMALIZATION_TITLES.size} title proposals that only changed grammatical number are deferred until the team adopts a singular/plural title policy.`,
+    "The app supports all 13 documented issue families, but this regenerated cycle is not proof that every semantic issue in Sell has been discovered.",
+    "The four expert-approved title-split proposals are already applied to the source ontology copy and are intentionally absent from this downstream review set.",
     "Description proposals are deliberately conservative and preserve linked O*NET wording; human reviewers should improve awkward phrasing rather than accepting unsupported detail.",
     "Exact merge and relocation actions remain unavailable to an individual reviewer until that reviewer agrees with the prerequisite diagnosis.",
     "Rent out and Lease out are handled by collection design; the earlier contradictory wrong-verb and immediate-merge actions have been removed.",
-    "Sell Products or Ideas is handled first as a polysemy diagnosis and then as a gated sense-relocation action; it is not moved intact out of Sell.",
+    "The earlier Sell Products or Ideas polysemy was resolved by the approved split into Sell Products and Sell Ideas. The remaining Sell Ideas placement is reviewed as a wrong-verb diagnosis followed by a gated relocation.",
     "Every decision is review-only. Acceptance never writes to Firestore, and accepted actions must be revalidated against a fresh snapshot before implementation.",
   ];
   writeJson(manifestPath, manifest);
+  writeJsonl(
+    historicalRejectedCandidatesPath,
+    rejectedCandidates.map((record) => ({
+      ...record,
+      diagnosticStatus: "historical-pre-split",
+      excludedFromDatasetVersion: DATASET_VERSION,
+    })),
+  );
+  if (fs.existsSync(rejectedCandidatesPath)) {
+    fs.unlinkSync(rejectedCandidatesPath);
+  }
 
   const schemaPath = path.join(
     directory,
@@ -2387,7 +2493,7 @@ function main() {
   writeJson(
     path.join(directory, "diagnostics", "comprehensive_candidate_audit.json"),
     {
-      schemaVersion: "sell-comprehensive-candidate-audit-v1",
+      schemaVersion: "sell-comprehensive-candidate-audit-v2",
       datasetVersion: DATASET_VERSION,
       generatedAt,
       sourceSnapshotSha256: snapshotHash,
@@ -2402,9 +2508,14 @@ function main() {
         mistakenSynonyms: generatedDiagnostics.filter(
           (record) => record.issueType === "mistaken-synonym",
         ).length,
-        duplicatePairs: PRODUCT_SYNONYM_PAIRS.length,
-        polysemyDiagnoses: 1,
-        evidenceConvergenceGroupings: EXTRA_GROUPINGS.length,
+        duplicatePairs: DUPLICATE_SYNONYM_PAIRS.length,
+        polysemyDiagnoses: 0,
+        flatListGroupings: generatedDiagnostics.filter(
+          (record) => record.issueType === "flat-list-grouping",
+        ).length,
+        compoundObjectGroupings: generatedDiagnostics.filter(
+          (record) => record.issueType === "compound-object-grouping",
+        ).length,
         collectionDesigns: 1,
         exactMerges: generatedActions.filter(
           (record) => record.issueType === "node-merge",
@@ -2412,10 +2523,10 @@ function main() {
         exactRelocations: generatedActions.filter(
           (record) => record.issueType === "relocation",
         ).length,
-        senseRelocations: 1,
+        senseRelocations: 0,
         missingActivities: MISSING_ACTIVITIES.length,
         redundantNodes: 0,
-        deferredPureNumberNormalization: PURE_NUMBER_NORMALIZATION_TITLES.size,
+        deferredPureNumberNormalization: 0,
       },
       deferredPolicyCandidates: {
         titleNumberNormalization: [...PURE_NUMBER_NORMALIZATION_TITLES].sort(),
@@ -2426,9 +2537,9 @@ function main() {
         "The 13 tasks in Rob's document are first-class issue queues rather than aliases for ten broader queues.",
         "Flat-list grouping and O*NET compound-object grouping are separate review criteria.",
         "Rent out and Lease out are no longer simultaneously treated as wrong verbs and an immediate merge; collection design is reviewed first.",
-        "Sell Products or Ideas is no longer moved intact when its idea sense is the actual problem.",
+        "The approved title-split cycle has already separated Sell Products from Sell Ideas; the residual Sell Ideas issue is reviewed as a wrong-verb placement.",
         "Exact merges and relocations include prerequisite proposal IDs and are served only after an agreeing diagnosis.",
-        "Pure singular-to-plural title changes are held out until the team sets an ontology-wide title policy.",
+        "Every regenerated semantic proposal references the post-review ontology copy rather than the superseded title snapshot.",
         "All proposed current nodes and current relations are checked against the pinned Firestore snapshot.",
       ],
     },

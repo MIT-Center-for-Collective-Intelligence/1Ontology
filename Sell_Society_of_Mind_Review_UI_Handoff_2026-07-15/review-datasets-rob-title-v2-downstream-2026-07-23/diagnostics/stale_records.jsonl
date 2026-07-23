@@ -1,0 +1,99 @@
+{"proposalId":"som-21c20ead4b036182bc22","issueType":"title-clarity","sourceFile":"all_proposals.jsonl","reason":"Issue type was explicitly excluded after expert completion."}
+{"proposalId":"som-30207373488a8e558ea5","issueType":"title-clarity","sourceFile":"all_proposals.jsonl","reason":"Issue type was explicitly excluded after expert completion."}
+{"proposalId":"som-3e1f049f2776bcc2b92b","issueType":"title-clarity","sourceFile":"all_proposals.jsonl","reason":"Issue type was explicitly excluded after expert completion."}
+{"proposalId":"som-44f9bc3a150e25c45c60","issueType":"title-clarity","sourceFile":"all_proposals.jsonl","reason":"Issue type was explicitly excluded after expert completion."}
+{"proposalId":"som-4ea0c9dda791be4a4870","issueType":"title-clarity","sourceFile":"all_proposals.jsonl","reason":"Issue type was explicitly excluded after expert completion."}
+{"proposalId":"som-51917dd63d7f5ca4fc61","issueType":"title-clarity","sourceFile":"all_proposals.jsonl","reason":"Issue type was explicitly excluded after expert completion."}
+{"proposalId":"som-5c23f66ab9f7449a63e1","issueType":"title-clarity","sourceFile":"all_proposals.jsonl","reason":"Issue type was explicitly excluded after expert completion."}
+{"proposalId":"som-5dbeeaa39b6d532c9dc1","issueType":"title-clarity","sourceFile":"all_proposals.jsonl","reason":"Issue type was explicitly excluded after expert completion."}
+{"proposalId":"som-6a270fcf0f2b530875f5","issueType":"title-clarity","sourceFile":"all_proposals.jsonl","reason":"Issue type was explicitly excluded after expert completion."}
+{"proposalId":"som-6baa81b903210db301ed","issueType":"title-clarity","sourceFile":"all_proposals.jsonl","reason":"Issue type was explicitly excluded after expert completion."}
+{"proposalId":"som-6f807a8986689b96a176","issueType":"title-clarity","sourceFile":"all_proposals.jsonl","reason":"Issue type was explicitly excluded after expert completion."}
+{"proposalId":"som-85ace55865a1290f5867","issueType":"title-clarity","sourceFile":"all_proposals.jsonl","reason":"Issue type was explicitly excluded after expert completion."}
+{"proposalId":"som-895b9806b8331ba3b34f","issueType":"title-clarity","sourceFile":"all_proposals.jsonl","reason":"Issue type was explicitly excluded after expert completion."}
+{"proposalId":"som-adb9f208dab91f2c2111","issueType":"title-clarity","sourceFile":"all_proposals.jsonl","reason":"Issue type was explicitly excluded after expert completion."}
+{"proposalId":"som-be08902d90d5554720cb","issueType":"title-clarity","sourceFile":"all_proposals.jsonl","reason":"Issue type was explicitly excluded after expert completion."}
+{"proposalId":"som-c16e063ee220a05cb104","issueType":"title-clarity","sourceFile":"all_proposals.jsonl","reason":"Issue type was explicitly excluded after expert completion."}
+{"proposalId":"som-c1924c597860a6c360c7","issueType":"title-clarity","sourceFile":"all_proposals.jsonl","reason":"Issue type was explicitly excluded after expert completion."}
+{"proposalId":"som-ca35dca6928b8fc72ce7","issueType":"title-clarity","sourceFile":"all_proposals.jsonl","reason":"Issue type was explicitly excluded after expert completion."}
+{"proposalId":"som-cc2b17d2c0538f6cc131","issueType":"title-clarity","sourceFile":"all_proposals.jsonl","reason":"Issue type was explicitly excluded after expert completion."}
+{"proposalId":"som-d12c761e2357629b4044","issueType":"title-clarity","sourceFile":"all_proposals.jsonl","reason":"Issue type was explicitly excluded after expert completion."}
+{"proposalId":"som-e8e0e127fb7068c0f5b1","issueType":"title-clarity","sourceFile":"all_proposals.jsonl","reason":"Issue type was explicitly excluded after expert completion."}
+{"proposalId":"som-eaa89c13edb5b46e05cf","issueType":"title-clarity","sourceFile":"all_proposals.jsonl","reason":"Issue type was explicitly excluded after expert completion."}
+{"proposalId":"som-f27da2b7e0af7ed39446","issueType":"title-clarity","sourceFile":"all_proposals.jsonl","reason":"Issue type was explicitly excluded after expert completion."}
+{"proposalId":"som-f7dc8818f581c3c17e8b","issueType":"title-clarity","sourceFile":"all_proposals.jsonl","reason":"Issue type was explicitly excluded after expert completion."}
+{"proposalId":"som-144f1802199564991e32","issueType":"title-clarity","sourceFile":"all_controls.jsonl","reason":"Issue type was explicitly excluded after expert completion."}
+{"proposalId":"som-1b416ca2f8105feae10e","issueType":"title-clarity","sourceFile":"all_controls.jsonl","reason":"Issue type was explicitly excluded after expert completion."}
+{"proposalId":"som-3fc843d38409687d3983","issueType":"title-clarity","sourceFile":"all_controls.jsonl","reason":"Issue type was explicitly excluded after expert completion."}
+{"proposalId":"som-42c9b6fe6bae2281000c","issueType":"title-clarity","sourceFile":"all_controls.jsonl","reason":"Issue type was explicitly excluded after expert completion."}
+{"proposalId":"som-61b319cbec7a67fc3494","issueType":"title-clarity","sourceFile":"all_controls.jsonl","reason":"Issue type was explicitly excluded after expert completion."}
+{"proposalId":"som-6f3c916d07f461242ce4","issueType":"title-clarity","sourceFile":"all_controls.jsonl","reason":"Issue type was explicitly excluded after expert completion."}
+{"proposalId":"som-89810f66be074b817f3c","issueType":"title-clarity","sourceFile":"all_controls.jsonl","reason":"Issue type was explicitly excluded after expert completion."}
+{"proposalId":"som-90427f947120d95f4bec","issueType":"title-clarity","sourceFile":"all_controls.jsonl","reason":"Issue type was explicitly excluded after expert completion."}
+{"proposalId":"som-e0871137304b8eef47f1","issueType":"title-clarity","sourceFile":"all_controls.jsonl","reason":"Issue type was explicitly excluded after expert completion."}
+{"proposalId":"som-e9330459376ad02233e7","issueType":"title-clarity","sourceFile":"all_controls.jsonl","reason":"Issue type was explicitly excluded after expert completion."}
+{"proposalId":"som-f8e28aca3be30690b1b7","issueType":"title-clarity","sourceFile":"all_controls.jsonl","reason":"Issue type was explicitly excluded after expert completion."}
+{"proposalId":"som-027e75cc09d3c28e1308","issueType":"wrong-verb","sourceFile":"all_proposals.jsonl","reason":"som-027e75cc09d3c28e1308: Current ontology node does not exist: Market Space"}
+{"proposalId":"som-3bf5fe1ce1fbbe6e3246","issueType":"placement","sourceFile":"all_proposals.jsonl","reason":"som-3bf5fe1ce1fbbe6e3246: Current ontology node does not exist: Sell Service (1)"}
+{"proposalId":"som-ea0735878c3dbbc0ff94","issueType":"wrong-verb","sourceFile":"all_proposals.jsonl","reason":"som-ea0735878c3dbbc0ff94: Current ontology node does not exist: Market Product"}
+{"proposalId":"som-a10ea5aa52b1a785c066","issueType":"flat-list-grouping","sourceFile":"all_proposals.jsonl","reason":"som-a10ea5aa52b1a785c066: Current ontology node does not exist: Sell Beverage"}
+{"proposalId":"som-b05a89beac20ff2b38f0","issueType":"flat-list-grouping","sourceFile":"all_proposals.jsonl","reason":"som-b05a89beac20ff2b38f0: Current ontology node does not exist: Sell Check"}
+{"proposalId":"som-c365810cf27700dd737e","issueType":"flat-list-grouping","sourceFile":"all_proposals.jsonl","reason":"som-c365810cf27700dd737e: Current ontology node does not exist: Sell Tobacco"}
+{"proposalId":"som-d9b95583e82ee7b93013","issueType":"flat-list-grouping","sourceFile":"all_proposals.jsonl","reason":"som-d9b95583e82ee7b93013: Current ontology node does not exist: Sell Accessory"}
+{"proposalId":"som-08c6b005963bf64355bb","issueType":"description-enrichment","sourceFile":"all_proposals.jsonl","reason":"som-08c6b005963bf64355bb: Current ontology node does not exist: Sell Service (1)"}
+{"proposalId":"som-3e84fa5975b26ef09698","issueType":"description-enrichment","sourceFile":"all_proposals.jsonl","reason":"som-3e84fa5975b26ef09698: Current ontology node does not exist: Sell Package"}
+{"proposalId":"som-ac65f95cef82a803e328","issueType":"description-enrichment","sourceFile":"all_proposals.jsonl","reason":"som-ac65f95cef82a803e328: Current ontology node does not exist: Sell Souvenir"}
+{"proposalId":"som-78760e6185162609c93a","issueType":"description-enrichment","sourceFile":"all_proposals.jsonl","reason":"som-78760e6185162609c93a: Current ontology node does not exist: Sell Order"}
+{"proposalId":"som-a77af138df98f46dd988","issueType":"description-enrichment","sourceFile":"all_proposals.jsonl","reason":"som-a77af138df98f46dd988: Current ontology node does not exist: Sell Good"}
+{"proposalId":"som-f4eed29c9a5a0043c555","issueType":"description-enrichment","sourceFile":"all_proposals.jsonl","reason":"som-f4eed29c9a5a0043c555: Current ontology node does not exist: Sell Supply"}
+{"proposalId":"som-f11225e00d8caf78b319","issueType":"description-enrichment","sourceFile":"all_proposals.jsonl","reason":"som-f11225e00d8caf78b319: Current ontology node does not exist: Sell Product"}
+{"proposalId":"som-a5a715aae79612081b35","issueType":"description-enrichment","sourceFile":"all_proposals.jsonl","reason":"som-a5a715aae79612081b35: Current ontology node does not exist: Sell Specialty"}
+{"proposalId":"som-e494863184c95e42610e","issueType":"description-enrichment","sourceFile":"all_proposals.jsonl","reason":"som-e494863184c95e42610e: Current ontology node does not exist: Sell Future"}
+{"proposalId":"som-43cfa1c93a1604b0e78c","issueType":"description-enrichment","sourceFile":"all_proposals.jsonl","reason":"som-43cfa1c93a1604b0e78c: Current ontology node does not exist: Sell Accessory"}
+{"proposalId":"som-004ddfa1cf91fc60777e","issueType":"description-enrichment","sourceFile":"all_proposals.jsonl","reason":"som-004ddfa1cf91fc60777e: Current ontology node does not exist: Sell Policy"}
+{"proposalId":"som-539148301133db2c73a9","issueType":"description-enrichment","sourceFile":"all_proposals.jsonl","reason":"som-539148301133db2c73a9: Current ontology node does not exist: Sell Beverage"}
+{"proposalId":"som-4c417acacca9cef75e70","issueType":"description-enrichment","sourceFile":"all_proposals.jsonl","reason":"som-4c417acacca9cef75e70: Current ontology node does not exist: Sell Derivative"}
+{"proposalId":"som-ef8905fa6c8056cb67e4","issueType":"description-enrichment","sourceFile":"all_proposals.jsonl","reason":"som-ef8905fa6c8056cb67e4: Current ontology node does not exist: Sell Estate"}
+{"proposalId":"som-5cd84ae6c96ba81d291b","issueType":"description-enrichment","sourceFile":"all_proposals.jsonl","reason":"som-5cd84ae6c96ba81d291b: Current ontology node does not exist: Sell Part"}
+{"proposalId":"som-b3d70f5d249c56c8147f","issueType":"description-enrichment","sourceFile":"all_proposals.jsonl","reason":"som-b3d70f5d249c56c8147f: Current ontology node does not exist: Sell Contract"}
+{"proposalId":"som-1348a94c1fcdc3c8167f","issueType":"description-enrichment","sourceFile":"all_proposals.jsonl","reason":"som-1348a94c1fcdc3c8167f: Current ontology node does not exist: Sell Pass"}
+{"proposalId":"som-5410f2454d0847c8b941","issueType":"description-enrichment","sourceFile":"all_proposals.jsonl","reason":"som-5410f2454d0847c8b941: Current ontology node does not exist: Sell Clothing"}
+{"proposalId":"som-635ce82ec22d6ba5d57f","issueType":"description-enrichment","sourceFile":"all_proposals.jsonl","reason":"som-635ce82ec22d6ba5d57f: Current ontology node does not exist: Sell Currency"}
+{"proposalId":"som-2f8e4d83ce41b66baaf2","issueType":"description-enrichment","sourceFile":"all_proposals.jsonl","reason":"som-2f8e4d83ce41b66baaf2: Current ontology node does not exist: Market Space"}
+{"proposalId":"som-8a71797970fe3c2143d6","issueType":"description-enrichment","sourceFile":"all_proposals.jsonl","reason":"som-8a71797970fe3c2143d6: Current ontology node does not exist: Sell Check"}
+{"proposalId":"som-2f0fa9074d9dfe3c03eb","issueType":"description-enrichment","sourceFile":"all_proposals.jsonl","reason":"som-2f0fa9074d9dfe3c03eb: Current ontology node does not exist: Sell Products or Ideas"}
+{"proposalId":"som-f9af93173aad1d130be4","issueType":"description-enrichment","sourceFile":"all_proposals.jsonl","reason":"som-f9af93173aad1d130be4: Current ontology node does not exist: Sell Token"}
+{"proposalId":"som-66ace75654b7209ef341","issueType":"description-enrichment","sourceFile":"all_proposals.jsonl","reason":"som-66ace75654b7209ef341: Current ontology node does not exist: Sell Item"}
+{"proposalId":"som-5ff20726604a0740fa6e","issueType":"description-enrichment","sourceFile":"all_proposals.jsonl","reason":"som-5ff20726604a0740fa6e: Current ontology node does not exist: Sell Tobacco"}
+{"proposalId":"som-9eb75b09ec0925152270","issueType":"description-enrichment","sourceFile":"all_proposals.jsonl","reason":"som-9eb75b09ec0925152270: Current ontology node does not exist: Sell Bicycle"}
+{"proposalId":"som-66e90084e19eb6e198f8","issueType":"description-enrichment","sourceFile":"all_proposals.jsonl","reason":"som-66e90084e19eb6e198f8: Current ontology node does not exist: Sell Incentive"}
+{"proposalId":"som-4114724231e315ca551c","issueType":"description-enrichment","sourceFile":"all_proposals.jsonl","reason":"som-4114724231e315ca551c: Current ontology node does not exist: Sell Chip"}
+{"proposalId":"som-db72cfe2030c06d47cb5","issueType":"description-enrichment","sourceFile":"all_proposals.jsonl","reason":"som-db72cfe2030c06d47cb5: Current ontology node does not exist: Market Product"}
+{"proposalId":"som-15a4025feabb39b71e64","issueType":"mistaken-synonym","sourceFile":"all_proposals.jsonl","reason":"som-15a4025feabb39b71e64: Current ontology node does not exist: Sell Service (1)"}
+{"proposalId":"som-1220ac0648e43ecc6884","issueType":"mistaken-synonym","sourceFile":"all_proposals.jsonl","reason":"som-1220ac0648e43ecc6884: Current ontology node does not exist: Sell Accessory"}
+{"proposalId":"som-82de6f96800943ade6b9","issueType":"duplicate-synonym","sourceFile":"all_proposals.jsonl","reason":"som-82de6f96800943ade6b9: Current ontology node does not exist: Sell Product"}
+{"proposalId":"som-fd0f2d48751b795b2ad5","issueType":"duplicate-synonym","sourceFile":"all_proposals.jsonl","reason":"som-fd0f2d48751b795b2ad5: Current ontology node does not exist: Sell Product"}
+{"proposalId":"som-6b80c087dbdb6c924d50","issueType":"duplicate-synonym","sourceFile":"all_proposals.jsonl","reason":"som-6b80c087dbdb6c924d50: Current ontology node does not exist: Sell Product"}
+{"proposalId":"som-3ebc3a9357ec9cecc130","issueType":"duplicate-synonym","sourceFile":"all_proposals.jsonl","reason":"som-3ebc3a9357ec9cecc130: Current ontology node does not exist: Sell Product"}
+{"proposalId":"som-6ec80fd0712583198b2a","issueType":"polysemy","sourceFile":"all_proposals.jsonl","reason":"som-6ec80fd0712583198b2a: Current ontology node does not exist: Sell Products or Ideas"}
+{"proposalId":"som-a91168cd1c2fa948ffea","issueType":"compound-object-grouping","sourceFile":"all_proposals.jsonl","reason":"som-a91168cd1c2fa948ffea: Current ontology node does not exist: Market Space"}
+{"proposalId":"som-43e0316dcd914af0a7d6","issueType":"compound-object-grouping","sourceFile":"all_proposals.jsonl","reason":"som-43e0316dcd914af0a7d6: Proposed grouping already exists: Sell Cosmetic Supplies"}
+{"proposalId":"som-396cf718966e6790c8fc","issueType":"compound-object-grouping","sourceFile":"all_proposals.jsonl","reason":"som-396cf718966e6790c8fc: Current ontology node does not exist: Sell Order"}
+{"proposalId":"som-5b9ac669e81f28ce8bd2","issueType":"compound-object-grouping","sourceFile":"all_proposals.jsonl","reason":"som-5b9ac669e81f28ce8bd2: Current ontology node does not exist: Sell Incentive"}
+{"proposalId":"som-8347e6ce36c4d8ce81e6","issueType":"placement","sourceFile":"all_proposals.jsonl","reason":"som-8347e6ce36c4d8ce81e6: Current ontology node does not exist: Sell Contract"}
+{"proposalId":"som-9d9c30019424cca40fa5","issueType":"placement","sourceFile":"all_proposals.jsonl","reason":"som-9d9c30019424cca40fa5: Current ontology node does not exist: Sell Pass"}
+{"proposalId":"som-9fa1f70f939a65ca5810","issueType":"placement","sourceFile":"all_proposals.jsonl","reason":"som-9fa1f70f939a65ca5810: Current ontology node does not exist: Sell Incentive"}
+{"proposalId":"som-2a391ec64bc2205feeca","issueType":"placement","sourceFile":"all_proposals.jsonl","reason":"som-2a391ec64bc2205feeca: Current ontology node does not exist: Sell Package"}
+{"proposalId":"som-eb5cf7d6d38fb8cefef9","issueType":"node-merge","sourceFile":"all_proposals.jsonl","reason":"som-eb5cf7d6d38fb8cefef9: Merge proposal for Sell (Information) does not list every current direct child"}
+{"proposalId":"som-fca6ec82b670cad10466","issueType":"node-merge","sourceFile":"all_proposals.jsonl","reason":"som-fca6ec82b670cad10466: Merge proposal for Sell (Physical Object) does not list every current direct child"}
+{"proposalId":"som-def006985b2b8b9f14b5","issueType":"node-merge","sourceFile":"all_proposals.jsonl","reason":"som-def006985b2b8b9f14b5: Current ontology node does not exist: Sell Product"}
+{"proposalId":"som-9e41c7e4298e8d2ccec7","issueType":"node-merge","sourceFile":"all_proposals.jsonl","reason":"som-9e41c7e4298e8d2ccec7: Current ontology node does not exist: Sell Product"}
+{"proposalId":"som-45b5fc17a15ae5c66bfb","issueType":"node-merge","sourceFile":"all_proposals.jsonl","reason":"som-45b5fc17a15ae5c66bfb: Current ontology node does not exist: Sell Product"}
+{"proposalId":"som-22df22840530a089c10b","issueType":"node-merge","sourceFile":"all_proposals.jsonl","reason":"som-22df22840530a089c10b: Current ontology node does not exist: Sell Product"}
+{"proposalId":"som-561d6da5dafa1acf267e","issueType":"relocation","sourceFile":"all_proposals.jsonl","reason":"som-561d6da5dafa1acf267e: Current ontology node does not exist: Sell Contract"}
+{"proposalId":"som-2b6fd0a6236b49a372f9","issueType":"relocation","sourceFile":"all_proposals.jsonl","reason":"som-2b6fd0a6236b49a372f9: Current ontology node does not exist: Sell Pass"}
+{"proposalId":"som-93fa0575133b01aa84d1","issueType":"relocation","sourceFile":"all_proposals.jsonl","reason":"som-93fa0575133b01aa84d1: Current ontology node does not exist: Sell Incentive"}
+{"proposalId":"som-72562053930254d89e2d","issueType":"relocation","sourceFile":"all_proposals.jsonl","reason":"som-72562053930254d89e2d: Current ontology node does not exist: Sell Package"}
+{"proposalId":"som-e0a9a9b50edadb6be9a6","issueType":"relocation","sourceFile":"all_proposals.jsonl","reason":"som-e0a9a9b50edadb6be9a6: Current ontology node does not exist: Market Product"}
+{"proposalId":"som-1fbe0a204dd6b5a04e1a","issueType":"relocation","sourceFile":"all_proposals.jsonl","reason":"som-1fbe0a204dd6b5a04e1a: Current ontology node does not exist: Market Space"}
+{"proposalId":"som-814d25b60ba7dfe6b4cd","issueType":"sense-relocation","sourceFile":"all_proposals.jsonl","reason":"som-814d25b60ba7dfe6b4cd: Current ontology node does not exist: Sell Products or Ideas"}
