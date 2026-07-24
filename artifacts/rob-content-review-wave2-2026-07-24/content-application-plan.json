@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "som-expert-content-application-plan-v1",
+  "createdAt": "2026-07-24",
+  "sourceOntology": {
+    "appId": "final-hierarchy-with-o*net-rob-content-review-2026-07-24",
+    "name": "Final Hierarchy with O*Net - Rob Content Review 2026-07-24"
+  },
+  "targetOntology": {
+    "appId": "final-hierarchy-with-o*net-rob-structure-review-2026-07-24",
+    "name": "Final Hierarchy with O*Net - Rob Structure Review 2026-07-24"
+  },
+  "sourceDataset": {
+    "directory": "Sell_Society_of_Mind_Review_UI_Handoff_2026-07-15/review-datasets-rob-content-wave-2026-07-24",
+    "version": "sell-rob-content-wave-2026-07-24-v1",
+    "manifestSha256": "09594b233d57d3e6620855a4e1c2a97728efb59a6068212e4dd2eb081cc226bb"
+  },
+  "benchmarks": [
+    {
+      "file": "rob-duplicate-synonym-2026-07-24.json",
+      "issueType": "duplicate-synonym",
+      "sha256": "fe5d641bf0837c6d736ce0682982ef064b86df1567f15c6e68bef81aa1278382"
+    },
+    {
+      "file": "rob-node-merge-2026-07-24.json",
+      "issueType": "node-merge",
+      "sha256": "d62402416e53d75755a1af8ab592c4d54ef2f988449fcbe3eb361bfe7134ac10"
+    }
+  ],
+  "metadataEdits": [],
+  "merges": [
+    {
+      "diagnosisProposalId": "som-af5752d64f929944a380",
+      "actionProposalId": "som-9551307c7a40c479a755",
+      "canonicalNodeId": "e2d437a6b9fa95bea904674b47a7",
+      "canonicalTitle": "Rent out",
+      "absorbedNodeId": "896c40f92949506cea6f0fa16ff5",
+      "absorbedTitle": "Lease out",
+      "absorbedBecomesSynonym": true
+    },
+    {
+      "diagnosisProposalId": "som-e4cc4a540efc8a8607f7",
+      "actionProposalId": "som-c0fc3665add4fbaf4b03",
+      "canonicalNodeId": "e8893d200e250b5c5f8406136825",
+      "canonicalTitle": "Sell Products",
+      "absorbedNodeId": "23af148e489e6830f711481c9f5c",
+      "absorbedTitle": "Sell Merchandise",
+      "absorbedBecomesSynonym": true
+    }
+  ],
+  "regenerateFromExpertCorrection": [],
+  "releaseBoundary": {
+    "completedWave": "expert-content-corrections-2026-07-24",
+    "nextWave": "structure-and-placement-2026-07-24",
+    "rule": "Release grouping, collection, and placement proposals only after both approved merges are applied and all downstream proposals are regenerated from the resulting snapshot."
+  }
+}

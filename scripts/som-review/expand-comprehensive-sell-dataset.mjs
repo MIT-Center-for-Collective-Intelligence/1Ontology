@@ -1555,6 +1555,8 @@ function duplicateDiagnosticRecords(args) {
 
 function collectionDesignRecord(args) {
   const { manifest, index, snapshotHash, generatedAt } = args;
+  const temporaryUseTitle = "Rent out";
+  resolveTitle(index, temporaryUseTitle);
   return makeRecord({
     manifest,
     index,
@@ -1565,34 +1567,28 @@ function collectionDesignRecord(args) {
     subject: {
       title: "Sell what kind of usage?",
       parentTitle: "Sell",
-      relatedTitles: ["Lease out", "Rent out"],
+      relatedTitles: [temporaryUseTitle],
     },
     reviewerView: {
       question: `Should Sell distinguish permanent ownership from temporary use in a new collection?`,
-      currentState: `Lease out and Rent out are ungrouped direct children of Sell, while ownership-oriented selling is organized separately.`,
-      proposedState: `Create a collection named "Sell what kind of usage?" with branches for selling ownership (ongoing usage) and selling temporary usage; place Lease out and Rent out under temporary usage.`,
+      currentState: `"${temporaryUseTitle}" is a direct child of Sell, while ownership-oriented selling is organized separately.`,
+      proposedState: `Create a collection named "Sell what kind of usage?" with branches for selling ownership (ongoing usage) and selling temporary usage; place "${temporaryUseTitle}" under temporary usage.`,
       reasoning:
-        "Ownership transfer and temporary-use rights are both exchanges for payment but differ systematically. A dedicated collection captures that dimension without declaring Rent out and Lease out to be the same activity.",
+        'The approved expert merge establishes "Rent out" as the canonical temporary-use activity. Ownership transfer and temporary-use rights are both exchanges for payment but differ systematically, so a dedicated collection may still clarify that dimension.',
       context: {
         type: "collection-design",
         parentTitle: "Sell",
-        currentChildren: ["Lease out", "Rent out"],
+        currentChildren: [temporaryUseTitle],
         proposedCollectionName: "Sell what kind of usage?",
         proposedBranches: [
           { title: "Sell ownership", status: "new", children: [] },
           {
             title: "Sell temporary use",
             status: "new",
-            children: ["Lease out", "Rent out"],
+            children: [temporaryUseTitle],
           },
         ],
-        sourceTasks: [
-          ...new Set(
-            ["Lease out", "Rent out"].flatMap((title) =>
-              sourceTasks(index, title),
-            ),
-          ),
-        ],
+        sourceTasks: sourceTasks(index, temporaryUseTitle),
       },
     },
     evidence: {
@@ -2656,8 +2652,8 @@ function main() {
     "Expert-approved title, synonym, and exact-merge decisions already applied to the source ontology copy are intentionally absent from this downstream review set.",
     "Description proposals are deliberately conservative and preserve linked O*NET wording; human reviewers should improve awkward phrasing rather than accepting unsupported detail.",
     "Exact merge and relocation actions remain unavailable to an individual reviewer until that reviewer agrees with the prerequisite diagnosis.",
-    "Rent out and Lease out now receive a focused identity review in response to expert feedback; collection design remains a separate later structural question.",
-    "Sell Merchandise is compared with the existing Sell Products node in response to the expert's corrected canonical label; Sell Items is not silently merged in the same action.",
+    "The approved Rent out and Lease out merge is already applied to this snapshot; collection design remains a separate structural question about ownership versus temporary use.",
+    "The approved Sell Merchandise and Sell Products merge is already applied to this snapshot; Sell Items remains a separate activity.",
     "The earlier Sell Products or Ideas polysemy was resolved by the approved split into Sell Products and Sell Ideas. The remaining Sell Ideas placement is reviewed as a wrong-verb diagnosis followed by a gated relocation.",
     "Every decision is review-only. Acceptance never writes to Firestore, and accepted actions must be revalidated against a fresh snapshot before implementation.",
   ];
@@ -2688,6 +2684,34 @@ function main() {
       ],
       message:
         "Available after the remaining content decisions are applied and proposals are regenerated from the resulting ontology snapshot.",
+    };
+  } else if (reviewWave === "structure") {
+    manifest.reviewRelease = {
+      strategy: "snapshot-wave",
+      currentWave: "structure-and-placement",
+      releasedIssueTypes: [
+        "title-clarity",
+        "synonym-enrichment",
+        "mistaken-synonym",
+        "duplicate-synonym",
+        "polysemy",
+        "misc-facet-duplicate",
+        "node-merge",
+        "flat-list-grouping",
+        "compound-object-grouping",
+        "collection-design",
+        "placement",
+        "wrong-verb",
+        "relocation",
+        "sense-relocation",
+      ],
+      awaitingRegenerationIssueTypes: [
+        "description-enrichment",
+        "missing-activity",
+        "redundant-node",
+      ],
+      message:
+        "Optional quality checks remain deferred while the regenerated structure and placement proposals are reviewed.",
     };
   } else {
     delete manifest.reviewRelease;
@@ -2770,8 +2794,8 @@ function main() {
       decisions: [
         "The 13 tasks in Rob's document are first-class issue queues rather than aliases for ten broader queues.",
         "Flat-list grouping and O*NET compound-object grouping are separate review criteria.",
-        "Rent out and Lease out receive an expert-requested identity diagnosis and a separate exact merge review; collection design remains a later structural decision.",
-        "Sell Merchandise is compared with Sell Products using the expert's corrected canonical label rather than regenerating the rejected Sell Items proposal.",
+        "The approved Rent out and Lease out merge is applied before regenerating the separate collection-design question.",
+        "The approved Sell Merchandise and Sell Products merge is applied before regenerating grouping and placement proposals; Sell Items remains separate.",
         "The approved title-split cycle has already separated Sell Products from Sell Ideas; the residual Sell Ideas issue is reviewed as a wrong-verb placement.",
         "Exact merges and relocations include prerequisite proposal IDs and are served only after an agreeing diagnosis.",
         "Every regenerated semantic proposal references the post-review ontology copy rather than the superseded title snapshot.",

@@ -63,7 +63,7 @@ const datasetDir = (): string =>
   path.join(
     process.cwd(),
     "Sell_Society_of_Mind_Review_UI_Handoff_2026-07-15",
-    "review-datasets-rob-content-wave-2026-07-24",
+    "review-datasets-rob-structure-wave-2026-07-24",
   );
 
 export const isIssueTypeEnabled = (issueType: SomIssueType): boolean => {

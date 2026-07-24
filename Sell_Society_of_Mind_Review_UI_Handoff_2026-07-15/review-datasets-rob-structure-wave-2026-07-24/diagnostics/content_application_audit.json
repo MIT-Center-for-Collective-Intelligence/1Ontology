@@ -1,0 +1,83 @@
+{
+  "schemaVersion": "som-content-application-audit-v1",
+  "generatedAt": "2026-07-24T21:15:59.712Z",
+  "mode": "apply",
+  "environment": "production",
+  "firestoreProjectId": "ontology-41607",
+  "sourceOntology": {
+    "appId": "final-hierarchy-with-o*net-rob-content-review-2026-07-24",
+    "name": "Final Hierarchy with O*Net - Rob Content Review 2026-07-24"
+  },
+  "targetOntology": {
+    "appId": "final-hierarchy-with-o*net-rob-structure-review-2026-07-24",
+    "name": "Final Hierarchy with O*Net - Rob Structure Review 2026-07-24"
+  },
+  "sourceDataset": {
+    "directory": "Sell_Society_of_Mind_Review_UI_Handoff_2026-07-15/review-datasets-rob-content-wave-2026-07-24",
+    "version": "sell-rob-content-wave-2026-07-24-v1",
+    "manifestSha256": "09594b233d57d3e6620855a4e1c2a97728efb59a6068212e4dd2eb081cc226bb"
+  },
+  "planSha256": "9afc12b6dc7bf7e10f186bfeb4589e89a20388fed558b37216aa89922b71fa5d",
+  "benchmarkFiles": [
+    {
+      "file": "rob-duplicate-synonym-2026-07-24.json",
+      "issueType": "duplicate-synonym",
+      "sha256": "fe5d641bf0837c6d736ce0682982ef064b86df1567f15c6e68bef81aa1278382"
+    },
+    {
+      "file": "rob-node-merge-2026-07-24.json",
+      "issueType": "node-merge",
+      "sha256": "d62402416e53d75755a1af8ab592c4d54ef2f988449fcbe3eb361bfe7134ac10"
+    }
+  ],
+  "sourceDigestBefore": "3a30e8ceb0b79af44ba78f8974b1b76a0e6bc8948d6724c2c4c9b82611807d56",
+  "expectedTargetDigest": "ff83b7f18eee04ae456ce10b346511bc88edc996b3f2445ee922c7c6d9a163fa",
+  "ownedSourceNodeCount": 52298,
+  "clonedOnetEvidenceNodeCount": 0,
+  "unresolvedDirectReferenceCount": 0,
+  "unresolvedDirectReferenceSample": [],
+  "existingTargetNodeCount": 0,
+  "nodesRemainingToWrite": 52298,
+  "resume": false,
+  "sourceNodeCount": 52298,
+  "targetNodeCount": 52298,
+  "metadataEdits": [],
+  "merges": [
+    {
+      "actionProposalId": "som-9551307c7a40c479a755",
+      "diagnosisProposalId": "som-af5752d64f929944a380",
+      "canonicalSourceNodeId": "e2d437a6b9fa95bea904674b47a7",
+      "canonicalTargetNodeId": "0018f95f1b309c8ace5617b56f12",
+      "canonicalTitle": "Rent out",
+      "absorbedSourceNodeId": "896c40f92949506cea6f0fa16ff5",
+      "absorbedTargetNodeId": "13b19a97cfb0f8a9b6ed6c235117",
+      "absorbedTitle": "Lease out",
+      "movedDirectChildCount": 0
+    },
+    {
+      "actionProposalId": "som-c0fc3665add4fbaf4b03",
+      "diagnosisProposalId": "som-e4cc4a540efc8a8607f7",
+      "canonicalSourceNodeId": "e8893d200e250b5c5f8406136825",
+      "canonicalTargetNodeId": "5d0e71853f7601884ca642ab535e",
+      "canonicalTitle": "Sell Products",
+      "absorbedSourceNodeId": "23af148e489e6830f711481c9f5c",
+      "absorbedTargetNodeId": "258567e9f2578bbaeac3ba970f6c",
+      "absorbedTitle": "Sell Merchandise",
+      "movedDirectChildCount": 4
+    }
+  ],
+  "pendingExpertCorrections": [],
+  "integrity": {
+    "activeNodeCount": 39627,
+    "deletedNodeCount": 12671,
+    "checkedReciprocalEdgeCount": 59620
+  },
+  "sourceDigestAfter": "3a30e8ceb0b79af44ba78f8974b1b76a0e6bc8948d6724c2c4c9b82611807d56",
+  "targetDigestAfter": "ff83b7f18eee04ae456ce10b346511bc88edc996b3f2445ee922c7c6d9a163fa",
+  "targetNodeCountAfter": 52298,
+  "verification": {
+    "sourceUnchanged": true,
+    "targetCountMatches": true,
+    "targetDigestMatches": true
+  }
+}
