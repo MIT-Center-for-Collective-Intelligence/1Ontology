@@ -304,6 +304,57 @@ export function applyRemove(
 }
 
 /**
+ * Set a part's optional flag as this node sees it. A stored entry — own,
+ * other-gen, switched or sticky — flips its own flag; a VIRTUAL part records
+ * an override in partsInheritance instead (never auto-cleaned: the node's
+ * flag is authoritative once set). Never breaks attachment.
+ */
+export function applyToggleOptional(
+  nodeId: string,
+  graph: PartsGraph,
+  partId: string,
+  optional: boolean,
+): {
+  parts: PartEntry[];
+  partsInheritance: PartsInheritance;
+  changed: boolean;
+} {
+  const node = graph.get(nodeId);
+  if (!node) {
+    return {
+      parts: [],
+      partsInheritance: { source: null, overrides: {} },
+      changed: false,
+    };
+  }
+  if (node.parts.some((e) => e.id === partId)) {
+    const parts = node.parts.map((e) => {
+      if (e.id !== partId) return e;
+      const copy = { ...e };
+      if (optional) copy.optional = true;
+      else delete copy.optional;
+      return copy;
+    });
+    return { parts, partsInheritance: node.partsInheritance, changed: true };
+  }
+  if (!resolveParts(nodeId, graph).some((p) => p.id === partId)) {
+    return {
+      parts: node.parts,
+      partsInheritance: node.partsInheritance,
+      changed: false,
+    };
+  }
+  return {
+    parts: node.parts,
+    partsInheritance: {
+      source: node.partsInheritance.source,
+      overrides: { ...node.partsInheritance.overrides, [partId]: { optional } },
+    },
+    changed: true,
+  };
+}
+
+/**
  * Replace one resolved part with another node in place, keeping position and
  * the optional flag; the replacement comes out OWNED. Replacing a part the
  * source chain provides — virtual, sticky or switched — BREAKS (materialize +

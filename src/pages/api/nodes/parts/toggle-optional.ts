@@ -5,66 +5,71 @@ import { NODES } from "@components/lib/firestoreClient/collections";
 import { ICollection, INode, NodeChange } from "@components/types/INode";
 import {
   HttpError,
-  getNode,
-  NodeCache,
   recordLogs,
   writeChangeLog,
 } from "@components/lib/server/hierarchy";
+import { asPartsCollections, toParts } from "@components/lib/server/parts";
 import {
-  asPartsCollections,
-  buildGensForAttach,
-  partsInheritanceEntry,
-  taggedPartsAndSource,
-  toParts,
-} from "@components/lib/server/parts";
-import { derivePartsAndRef } from "@components/lib/server/partsModel";
+  applyToggleOptional,
+  toPartsNode,
+  PartsGraph,
+} from "@components/lib/server/partsModel";
+import {
+  computeInheritedPartsDetails,
+  fetchPartsContext,
+  makeResolvedOf,
+} from "@components/lib/server/partsAnnotation";
 
 /**
- * Sets or clears a part's `optional` flag.
+ * Sets or clears a part's `optional` flag as this node sees it: a stored
+ * entry flips its own flag, a virtual part records an override. Never breaks
+ * attachment and never cascades.
  */
-async function applyToggleOptional(ctx: {
+async function applyToggle(ctx: {
   nodeId: string;
   nodeData: INode;
   partId: string;
   optional: boolean;
   uname?: string;
   appName?: string;
-}): Promise<{ ok: true; ref: string | null; parts: ICollection[] }> {
+}): Promise<{ ok: true; parts: ICollection[] }> {
   const { nodeId, nodeData, partId, optional, uname, appName } = ctx;
-  const cache: NodeCache = new Map([[nodeId, nodeData]]);
+
+  const { relatedNodes } = await fetchPartsContext(nodeData);
+  const graph: PartsGraph = new Map(
+    Object.values(relatedNodes).map((n) => [n.id, toPartsNode(n)]),
+  );
+  const { parts, partsInheritance, changed } = applyToggleOptional(
+    nodeId,
+    graph,
+    partId,
+    optional,
+  );
+  if (!changed) throw new HttpError(400, "partId is not a part of this node");
 
   const oldPartsCol = asPartsCollections(nodeData.properties?.parts);
-  const gens = await buildGensForAttach(nodeData, cache);
-  const { tagged, stored } = taggedPartsAndSource(nodeData, gens);
+  const side = toParts(parts);
+  const updatedNode = {
+    ...nodeData,
+    properties: { ...nodeData.properties, parts: side },
+    partsInheritance,
+  } as INode;
+  const updatedRelated = { ...relatedNodes, [nodeId]: updatedNode };
+  const resolvedOfUpdated = makeResolvedOf(updatedRelated);
 
-  const part = tagged.find((p) => p.id === partId);
-  if (!part) throw new HttpError(400, "partId is not a part of this node");
-
-  const edited = tagged.map((p) => {
-    if (p.id !== partId) return p;
-    const node = { ...p };
-    if (optional) node.optional = true;
-    else delete node.optional;
-    return node;
-  });
-
-  const {
-    parts: newParts,
-    sourceId: newSource,
-    ref,
-  } = derivePartsAndRef(edited, gens, { oldParts: tagged, sourceId: stored });
-  const ownerTitle = ref ? ((await getNode(ref, cache))?.title ?? "") : "";
-  const partsEntry = partsInheritanceEntry(
-    ref,
-    ownerTitle,
-    nodeData.inheritance?.parts?.inheritanceType,
-  );
-
-  await db.collection(NODES).doc(nodeId).update({
-    "properties.parts": toParts(newParts),
-    "inheritance.parts": partsEntry,
-    partsOverallSource: newSource,
-  });
+  await db
+    .collection(NODES)
+    .doc(nodeId)
+    .update({
+      "properties.parts": side,
+      partsInheritance,
+      inheritedPartsDetails: computeInheritedPartsDetails({
+        currentNode: updatedNode,
+        relatedNodes: updatedRelated,
+        resolvedOf: resolvedOfUpdated,
+      }),
+      resolvedParts: resolvedOfUpdated(nodeId),
+    });
 
   if (uname) {
     await writeChangeLog({
@@ -72,7 +77,7 @@ async function applyToggleOptional(ctx: {
       modifiedBy: uname,
       modifiedProperty: "parts",
       previousValue: oldPartsCol,
-      newValue: toParts(newParts),
+      newValue: side,
       modifiedAt: new Date(),
       changeType: "modify elements",
       fullNode: nodeData,
@@ -80,7 +85,7 @@ async function applyToggleOptional(ctx: {
     } as NodeChange);
   }
 
-  return { ok: true, ref, parts: toParts(newParts) };
+  return { ok: true, parts: side };
 }
 
 function fail(res: NextApiResponse, status: number, msg: string) {
@@ -118,9 +123,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       return fail(res, 403, "Node does not belong to this app");
     }
 
-    const result = await applyToggleOptional({
+    const result = await applyToggle({
       nodeId,
-      nodeData,
+      nodeData: { ...nodeData, id: nodeId },
       partId,
       optional,
       uname,

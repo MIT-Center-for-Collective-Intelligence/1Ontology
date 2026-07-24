@@ -129,6 +129,11 @@ import {
   removeLinkFromNode,
 } from "@components/lib/utils/instantTreeUpdate";
 import { pendingWrites } from "@components/lib/utils/pendingWrites";
+import {
+  applyToggleOptional,
+  toPartsNode,
+  PartsGraph,
+} from "@components/lib/server/partsModel";
 import SyncedSpinner from "@components/components/SyncedSpinner";
 
 const isInUnclassified = (rootNode: INode | undefined, childId: string) =>
@@ -305,39 +310,50 @@ const LinkNode = ({
     }
   };
 
+  // Instant state via the pure model, persisted through the toggle-optional
+  // endpoint: a stored entry flips its flag, a virtual part records an
+  // override in partsInheritance.
   const makeLinkOptional = useCallback(async () => {
-    const nodeCopy = { ...currentVisibleNode };
-
-    const partsNodes = nodeCopy.properties["parts"]?.[0]?.nodes;
-    if (!partsNodes) return;
-    const currentPartIndx = partsNodes.findIndex((c) => c.id === link.id);
-
-    if (currentPartIndx !== -1) {
-      partsNodes[currentPartIndx].optional =
-        !partsNodes[currentPartIndx].optional;
-
-      const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
-      setCurrentVisibleNode((prev: any) => {
-        const _prev = { ...prev };
-        _prev.properties["parts"].nodes = partsNodes;
-        return _prev;
-      });
-      setEditableProperty([
-        {
-          collectionName: "main",
-          nodes: partsNodes,
-        },
-      ]);
-      updateDoc(nodeRef, {
-        "properties.parts": [
-          {
-            collectionName: "main",
-            nodes: partsNodes,
-          },
-        ],
-      });
+    const nodeId = currentVisibleNode?.id;
+    if (!nodeId) return;
+    const graph: PartsGraph = new Map();
+    let cursor: string | null | undefined = nodeId;
+    while (cursor && !graph.has(cursor)) {
+      const docData =
+        cursor === nodeId ? currentVisibleNode : relatedNodes[cursor];
+      if (!docData) break;
+      const partsNode = toPartsNode(docData);
+      graph.set(cursor, partsNode);
+      cursor = partsNode.partsInheritance.source;
     }
-  }, [currentVisibleNode, relatedNodes, fetchNode]);
+    const optional = !link.optional;
+    const result = applyToggleOptional(nodeId, graph, link.id, optional);
+    if (!result.changed) return;
+    const side = [{ collectionName: "main", nodes: result.parts }];
+    setCurrentVisibleNode((prev: any) =>
+      prev?.id === nodeId
+        ? {
+            ...prev,
+            properties: { ...prev.properties, parts: side },
+            partsInheritance: result.partsInheritance,
+          }
+        : prev,
+    );
+    setEditableProperty(side);
+    pendingWrites.start(nodeId, "properties.parts");
+    pendingWrites.start(nodeId, "partsInheritance");
+    try {
+      await Post("/nodes/parts/toggle-optional", {
+        nodeId,
+        partId: link.id,
+        optional,
+        ...(appName ? { appName } : {}),
+      });
+    } finally {
+      pendingWrites.end(nodeId, "properties.parts");
+      pendingWrites.end(nodeId, "partsInheritance");
+    }
+  }, [currentVisibleNode, relatedNodes, link.id, link.optional, appName]);
 
   const unlinkSpecializationOrGeneralization = async (
     currentNodeId: string,
@@ -447,7 +463,7 @@ const LinkNode = ({
             c.nodes = c.nodes.filter((n: { id: string }) => n.id !== linkId);
           }
         }
-        
+
         onInstantTreeUpdate?.((tree) => tree);
 
         setCurrentVisibleNode((prev: any) =>

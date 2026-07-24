@@ -35,6 +35,7 @@ import {
 import {
   applyRemove,
   applyReplace,
+  applyToggleOptional,
   classifySort,
   toPartsNode,
   PartsGraph,
@@ -937,23 +938,27 @@ const StructuredProperty = ({
     [savePartsDelta, currentVisibleNode?.id, clientPartsGraph],
   );
 
+  // Instant state via the pure model: a stored entry flips its flag, a
+  // virtual part records an override in partsInheritance.
   const togglePartOptional = useCallback(
     async (partId: string, optional: boolean) => {
-      const source = currentVisibleNode?.properties?.parts;
-      if (!Array.isArray(source)) return;
-      const newParts: ICollection[] = JSON.parse(JSON.stringify(source));
-      const part = newParts[0]?.nodes?.find((n: ILinkNode) => n.id === partId);
-      if (!part) return;
-      if (optional) part.optional = true;
-      else delete part.optional;
+      if (!currentVisibleNode?.id) return;
+      const result = applyToggleOptional(
+        currentVisibleNode.id,
+        clientPartsGraph(),
+        partId,
+        optional,
+      );
+      if (!result.changed) return;
       await savePartsDelta(
         "/nodes/parts/toggle-optional",
         { partId, optional },
-        newParts,
+        [{ collectionName: "main", nodes: result.parts }],
         [partId],
+        result.partsInheritance,
       );
     },
-    [currentVisibleNode, savePartsDelta],
+    [currentVisibleNode?.id, clientPartsGraph, savePartsDelta],
   );
 
   // Switch which generalization a part is specifically inherited from. The
