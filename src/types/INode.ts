@@ -108,6 +108,13 @@ export type INode = {
   partsOverallSource?: string | null;
   /** Ref-based parts inheritance state — see {@link IPartsInheritance}. */
   partsInheritance?: IPartsInheritance;
+  /**
+   * DERIVED materialized copy of the resolved parts view (read-repair cache).
+   * Written by write endpoints for their own node, by the annotation endpoint
+   * on repair, and by the backfill sweep — never rendered from directly and
+   * never cascaded; freshness is "as of last write/view/sweep".
+   */
+  resolvedParts?: ILinkNode[];
   specializations: ICollection[];
   generalizations: ICollection[];
   root: string;
