@@ -34,6 +34,7 @@ import {
 } from "@components/types/INode";
 import {
   applyRemove,
+  applyReplace,
   toPartsNode,
   PartsGraph,
 } from "@components/lib/server/partsModel";
@@ -1287,36 +1288,22 @@ const StructuredProperty = ({
         if (!currentVisibleNode?.id || !user?.uname) return;
         if (!oldPartId || !newPartId || oldPartId === newPartId) return;
 
-        // scrollToElement(oldPartId);
-
-        // Following linkNodeRelation and unlinkNodeRelation but updated as a single Function for clarity
-
-        const sourceParts: ICollection[] | undefined =
-          currentVisibleNode.properties?.parts;
-        if (!Array.isArray(sourceParts) || !sourceParts[0]?.nodes) return;
-
-        const updatedParts: ICollection[] = JSON.parse(
-          JSON.stringify(sourceParts),
+        // Instant state via the same pure model the endpoint runs: replacing a
+        // source-provided part breaks; a floating entry swaps in place.
+        const { parts, partsInheritance, replaced } = applyReplace(
+          currentVisibleNode.id,
+          clientPartsGraph(),
+          oldPartId,
+          { id: newPartId, title: relatedNodes[newPartId]?.title || "" },
         );
-        const elementIdx = updatedParts[0].nodes.findIndex(
-          (n: ILinkNode) => n.id === oldPartId,
-        );
-        if (elementIdx === -1) return;
-        if (updatedParts[0].nodes.some((n: ILinkNode) => n.id === newPartId)) {
-          return; // newPartId already in parts
-        }
-
-        // Replace id + title at the same slot (keeps position and optional flag).
-        updatedParts[0].nodes[elementIdx].id = newPartId;
-        updatedParts[0].nodes[elementIdx].title =
-          relatedNodes[newPartId]?.title || "";
-        delete updatedParts[0].nodes[elementIdx].inheritedFrom;
+        if (!replaced) return;
 
         await savePartsDelta(
           "/nodes/parts/replace",
           { fromId: oldPartId, toId: newPartId },
-          updatedParts,
+          [{ collectionName: "main", nodes: parts }],
           [oldPartId, newPartId],
+          partsInheritance,
         );
 
         recordLogs({
@@ -1338,7 +1325,14 @@ const StructuredProperty = ({
         });
       }
     },
-    [currentVisibleNode, relatedNodes, property, user, savePartsDelta],
+    [
+      currentVisibleNode,
+      relatedNodes,
+      property,
+      user,
+      savePartsDelta,
+      clientPartsGraph,
+    ],
   );
 
   if (

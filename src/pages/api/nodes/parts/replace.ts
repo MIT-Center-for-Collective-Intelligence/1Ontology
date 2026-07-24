@@ -2,15 +2,9 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import fbAuth from "@components/middlewares/fbAuth";
 import { db } from "@components/lib/firestoreServer/admin";
 import { NODES, NODES_LOGS } from "@components/lib/firestoreClient/collections";
-import {
-  ICollection,
-  ILinkNode,
-  INode,
-  NodeChange,
-} from "@components/types/INode";
+import { ICollection, INode, NodeChange } from "@components/types/INode";
 import {
   HttpError,
-  getNode,
   NodeCache,
   recordLogs,
   writeChangeLog,
@@ -18,70 +12,81 @@ import {
 import {
   applyIsPartOfOwnerOnly,
   asPartsCollections,
-  buildGensForAttach,
-  partsInheritanceEntry,
-  taggedPartsAndSource,
+  propagateOwnedPartChange,
   toParts,
 } from "@components/lib/server/parts";
 import {
-  derivePartsAndRef,
+  applyReplace,
   isOwnedPart,
+  toPartsNode,
+  PartsGraph,
 } from "@components/lib/server/partsModel";
+import {
+  computeInheritedPartsDetails,
+  fetchPartsContext,
+  makeResolvedOf,
+} from "@components/lib/server/partsAnnotation";
 
 /**
- * Swaps one part for another node of its hierarchy in place, 
- * keeping position and the optional flag. Replacing a part
- * inherited from the overall source BREAKS the overall inheritance, in both
- * directions. Descendants are not touched yet (cascade comes later).
+ * Swaps one resolved part for another node in place, keeping position and the
+ * optional flag; the replacement is OWNED. Replacing a part the source chain
+ * provides BREAKS attachment; an OWNER's replace also morphs descendants'
+ * stored recorders.
  */
-async function applyReplace(ctx: {
+async function applyReplaceParts(ctx: {
   nodeId: string;
   nodeData: INode;
   fromId: string;
   toId: string;
   uname?: string;
   appName?: string;
-}): Promise<{ ok: true; ref: string | null; parts: ICollection[] }> {
+}): Promise<{ ok: true; parts: ICollection[] }> {
   const { nodeId, nodeData, fromId, toId, uname, appName } = ctx;
   const cache: NodeCache = new Map([[nodeId, nodeData]]);
 
-  const oldPartsCol = asPartsCollections(nodeData.properties?.parts);
-  const gens = await buildGensForAttach(nodeData, cache);
-  const { tagged, stored } = taggedPartsAndSource(nodeData, gens);
+  const { relatedNodes } = await fetchPartsContext(nodeData, [toId]);
+  const toNode = relatedNodes[toId];
+  if (!toNode) throw new HttpError(400, "toId does not exist");
 
-  const from = tagged.find((p) => p.id === fromId);
+  const graph: PartsGraph = new Map(
+    Object.values(relatedNodes).map((n) => [n.id, toPartsNode(n)]),
+  );
+  const resolvedBefore = makeResolvedOf(relatedNodes)(nodeId);
+  const from = resolvedBefore.find((p) => p.id === fromId);
   if (!from) throw new HttpError(400, "fromId is not a part of this node");
-  if (tagged.some((p) => p.id === toId)) {
+  if (resolvedBefore.some((p) => p.id === toId)) {
     throw new HttpError(400, "toId is already a part of this node");
   }
-  const toNode = await getNode(toId, cache);
-  if (!toNode || toNode.deleted) {
-    throw new HttpError(400, "toId does not exist");
-  }
 
-  // Swap in place, untagged: derive decides whether the new part is inherited
-  // (a generalization provides it) or owned by this node.
-  const swapped: ILinkNode = { id: toId, title: toNode.title ?? "" };
-  if (from.optional) swapped.optional = true;
-  const edited = tagged.map((p) => (p.id === fromId ? swapped : p));
-
-  const {
-    parts: newParts,
-    sourceId: newSource,
-    ref,
-  } = derivePartsAndRef(edited, gens, { oldParts: tagged, sourceId: stored });
-  const ownerTitle = ref ? ((await getNode(ref, cache))?.title ?? "") : "";
-  const partsEntry = partsInheritanceEntry(
-    ref,
-    ownerTitle,
-    nodeData.inheritance?.parts?.inheritanceType,
-  );
-
-  await db.collection(NODES).doc(nodeId).update({
-    "properties.parts": toParts(newParts),
-    "inheritance.parts": partsEntry,
-    partsOverallSource: newSource,
+  const { parts, partsInheritance } = applyReplace(nodeId, graph, fromId, {
+    id: toId,
+    title: toNode.title ?? "",
   });
+
+  const oldPartsCol = asPartsCollections(nodeData.properties?.parts);
+  const side = toParts(parts);
+  const updatedNode = {
+    ...nodeData,
+    properties: { ...nodeData.properties, parts: side },
+    partsInheritance,
+  } as INode;
+  const updatedRelated = { ...relatedNodes, [nodeId]: updatedNode };
+  const resolvedOfUpdated = makeResolvedOf(updatedRelated);
+
+  await db
+    .collection(NODES)
+    .doc(nodeId)
+    .update({
+      "properties.parts": side,
+      partsInheritance,
+      inheritedPartsDetails: computeInheritedPartsDetails({
+        currentNode: updatedNode,
+        relatedNodes: updatedRelated,
+        resolvedOf: resolvedOfUpdated,
+      }),
+      resolvedParts: resolvedOfUpdated(nodeId),
+    });
+  cache.set(nodeId, updatedNode);
 
   const parentLogId = db.collection(NODES_LOGS).doc().id;
   const parentLog = {
@@ -92,11 +97,10 @@ async function applyReplace(ctx: {
   };
   const childLogs: NodeChange[] = [];
 
-  const newTo = newParts.find((p) => p.id === toId);
   await applyIsPartOfOwnerOnly(
     nodeId,
     nodeData.title ?? "",
-    newTo && isOwnedPart(newTo) ? [toId] : [],
+    [toId],
     [fromId],
     cache,
     parentLog,
@@ -105,6 +109,13 @@ async function applyReplace(ctx: {
     childLogs,
   );
 
+  // An OWNED part's replace morphs descendants' stored recorders in place.
+  if (isOwnedPart(from)) {
+    await propagateOwnedPartChange(nodeId, [
+      { fromId, to: { id: toId, title: toNode.title ?? "" } },
+    ]);
+  }
+
   if (uname) {
     await writeChangeLog(
       {
@@ -112,7 +123,7 @@ async function applyReplace(ctx: {
         modifiedBy: uname,
         modifiedProperty: "parts",
         previousValue: oldPartsCol,
-        newValue: toParts(newParts),
+        newValue: side,
         modifiedAt: new Date(),
         changeType: "modify elements",
         fullNode: nodeData,
@@ -123,7 +134,7 @@ async function applyReplace(ctx: {
   }
   for (const log of childLogs) await writeChangeLog(log);
 
-  return { ok: true, ref, parts: toParts(newParts) };
+  return { ok: true, parts: side };
 }
 
 function fail(res: NextApiResponse, status: number, msg: string) {
@@ -151,6 +162,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!toId || typeof toId !== "string") {
     return fail(res, 400, "toId is required");
   }
+  if (fromId === toId) {
+    return fail(res, 400, "fromId and toId must differ");
+  }
   if (toId === nodeId) {
     return fail(res, 400, "a node cannot be a part of itself");
   }
@@ -164,9 +178,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       return fail(res, 403, "Node does not belong to this app");
     }
 
-    const result = await applyReplace({
+    const result = await applyReplaceParts({
       nodeId,
-      nodeData,
+      nodeData: { ...nodeData, id: nodeId },
       fromId,
       toId,
       uname,

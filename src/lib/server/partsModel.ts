@@ -304,6 +304,67 @@ export function applyRemove(
 }
 
 /**
+ * Replace one resolved part with another node in place, keeping position and
+ * the optional flag; the replacement comes out OWNED. Replacing a part the
+ * source chain provides — virtual, sticky or switched — BREAKS (materialize +
+ * swap); replacing a floating local entry edits it in place, keeping its
+ * anchor. `replaced` = the resolved entry that went away (null = no-op:
+ * fromId absent or to.id already in the view).
+ */
+export function applyReplace(
+  nodeId: string,
+  graph: PartsGraph,
+  fromId: string,
+  to: { id: string; title: string },
+): {
+  parts: PartEntry[];
+  partsInheritance: PartsInheritance;
+  replaced: ILinkNode | null;
+} {
+  const node = graph.get(nodeId);
+  if (!node) {
+    return {
+      parts: [],
+      partsInheritance: { source: null, overrides: {} },
+      replaced: null,
+    };
+  }
+  const resolved = resolveParts(nodeId, graph);
+  const replaced = resolved.find((p) => p.id === fromId) ?? null;
+  if (!replaced || resolved.some((p) => p.id === to.id)) {
+    return {
+      parts: node.parts,
+      partsInheritance: node.partsInheritance,
+      replaced: null,
+    };
+  }
+  const swapped: PartEntry = { id: to.id, title: to.title };
+  if (replaced.optional) swapped.optional = true;
+
+  const { source } = node.partsInheritance;
+  const sourceProvides =
+    source && graph.has(source)
+      ? new Set(resolveParts(source, graph).map((p) => p.id))
+      : new Set<string>();
+
+  if (sourceProvides.has(fromId)) {
+    const broken = materializeBreak(nodeId, graph);
+    return {
+      parts: broken.parts.map((p) => (p.id === fromId ? swapped : p)),
+      partsInheritance: broken.partsInheritance,
+      replaced,
+    };
+  }
+
+  const parts = node.parts.map((e) =>
+    e.id === fromId
+      ? { ...(e.after !== undefined ? { after: e.after } : {}), ...swapped }
+      : e,
+  );
+  return { parts, partsInheritance: node.partsInheritance, replaced };
+}
+
+/**
  * Reattach (or switch the overall source): a HARD RESET of everything the node
  * does not OWN. Only owned entries survive — one the source also provides
  * keeps its slot, the rest are anchored below the source's parts in their
