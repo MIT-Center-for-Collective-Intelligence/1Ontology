@@ -1,4 +1,5 @@
-import { admin } from "@components/lib/firestoreServer/admin";
+import { admin, db } from "@components/lib/firestoreServer/admin";
+import { NODES } from "@components/lib/firestoreClient/collections";
 import {
   ICollection,
   ILinkNode,
@@ -25,6 +26,108 @@ export const makeResolvedOf = (nodes: { [id: string]: INode }) => {
     return memo.get(id)!;
   };
 };
+
+/** One BatchGet RPC per chunk instead of one RPC per document. */
+const fetchNodes = async (
+  nodeIds: string[],
+): Promise<{ [id: string]: INode }> => {
+  if (nodeIds.length === 0) return {};
+  const nodesMap: { [id: string]: INode } = {};
+  const uniqueIds = [...new Set(nodeIds)];
+  const CHUNK = 300;
+  const chunks: string[][] = [];
+  for (let i = 0; i < uniqueIds.length; i += CHUNK) {
+    chunks.push(uniqueIds.slice(i, i + CHUNK));
+  }
+  await Promise.all(
+    chunks.map(async (chunk) => {
+      try {
+        const snaps = await db.getAll(
+          ...chunk.map((id) => db.collection(NODES).doc(id)),
+        );
+        for (const snap of snaps) {
+          if (!snap.exists) continue;
+          const data = snap.data();
+          if (data && !data.deleted) {
+            nodesMap[snap.id] = { id: snap.id, ...data } as INode;
+          }
+        }
+      } catch (error) {
+        console.error(`Error fetching nodes batch:`, error);
+      }
+    }),
+  );
+  return nodesMap;
+};
+
+/**
+ * Fetches the neighborhood computeInheritedPartsDetails needs around
+ * `currentNode` (which may be an in-memory post-edit copy — it wins over the
+ * stored doc) and returns it with a resolver over the full set.
+ */
+export async function fetchPartsContext(currentNode: INode): Promise<{
+  relatedNodes: { [id: string]: INode };
+  resolvedOf: (id: string) => ILinkNode[];
+}> {
+  const generalizations =
+    currentNode.generalizations?.flatMap((c) => c.nodes) || [];
+
+  // pathIds is the primary-parent spine — a prefetch hint that usually covers
+  // the source chains; the frontier loop below is what actually closes them.
+  const pathHint = (currentNode.pathIds ?? []).filter(
+    (id) => id !== currentNode.id,
+  );
+  const relatedNodes = await fetchNodes([
+    ...generalizations.map((g) => g.id),
+    ...pathHint,
+  ]);
+  relatedNodes[currentNode.id] = currentNode;
+
+  const missingSources = () => [
+    ...new Set(
+      Object.values(relatedNodes)
+        .map((n) => n.partsInheritance?.source)
+        .filter((s): s is string => !!s && !relatedNodes[s]),
+    ),
+  ];
+  let frontier = missingSources();
+  while (frontier.length > 0) {
+    const fetched = await fetchNodes(frontier);
+    Object.assign(relatedNodes, fetched);
+    if (Object.keys(fetched).length === 0) break;
+    frontier = missingSources();
+  }
+
+  const chainResolvedOf = makeResolvedOf(relatedNodes);
+  const partIds = chainResolvedOf(currentNode.id).map((p) => p.id);
+
+  const generalizationPartIds = new Set<string>();
+  for (const gen of generalizations) {
+    if (!relatedNodes[gen.id]) continue;
+    chainResolvedOf(gen.id).forEach((p) => generalizationPartIds.add(p.id));
+  }
+
+  const partNodes = await fetchNodes([
+    ...new Set([...partIds, ...generalizationPartIds]),
+  ]);
+  Object.assign(relatedNodes, partNodes);
+
+  const specializationIds = new Set<string>();
+  for (const partId of generalizationPartIds) {
+    const partNode = relatedNodes[partId];
+    partNode?.specializations?.forEach((collection: ICollection) => {
+      collection.nodes?.forEach((n) => specializationIds.add(n.id));
+    });
+  }
+  const specNodes = await fetchNodes([...specializationIds]);
+  Object.assign(relatedNodes, specNodes);
+
+  // A fetch wave may have clobbered the in-memory copy (a node can appear
+  // among its own parts) — the passed copy wins.
+  relatedNodes[currentNode.id] = currentNode;
+
+  return { relatedNodes, resolvedOf: makeResolvedOf(relatedNodes) };
+}
 
 const getPartOptionalStatus = (
   partId: string,

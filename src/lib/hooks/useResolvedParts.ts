@@ -82,20 +82,29 @@ export const useResolvedParts = (
     };
   }, [currentVisibleNode, nodes, fetchedChain]);
 
-  // Fetch a missing ancestor once; drop the result on navigation.
+  // Fetch a missing ancestor once, prefetching the pathIds spine alongside it
+  // as a hint (primary-parent path only — the chain can leave it, so the
+  // per-hop walk stays authoritative). Drop results on navigation.
   useEffect(() => {
-    if (!fetchNode || !missingId || requestedIdsRef.current.has(missingId)) {
-      return;
-    }
-    requestedIdsRef.current.add(missingId);
+    if (!fetchNode || !missingId || !currentVisibleNode) return;
+    const hinted = (currentVisibleNode.pathIds ?? []).filter(
+      (id) => id !== currentVisibleNode.id && !nodes?.[id] && !fetchedChain[id],
+    );
+    const wanted = [missingId, ...hinted].filter(
+      (id) => !requestedIdsRef.current.has(id),
+    );
+    if (wanted.length === 0) return;
+    wanted.forEach((id) => requestedIdsRef.current.add(id));
     const forNodeId = activeNodeIdRef.current;
-    fetchNode(missingId).then((node) => {
-      if (!node || activeNodeIdRef.current !== forNodeId) return;
-      setFetchedChain((prev) =>
-        prev[node.id] ? prev : { ...prev, [node.id]: node },
-      );
-    });
-  }, [missingId, fetchNode]);
+    for (const id of wanted) {
+      fetchNode(id).then((node) => {
+        if (!node || activeNodeIdRef.current !== forNodeId) return;
+        setFetchedChain((prev) =>
+          prev[node.id] ? prev : { ...prev, [node.id]: node },
+        );
+      });
+    }
+  }, [missingId, fetchNode, currentVisibleNode, nodes, fetchedChain]);
 
   // While a chain ancestor is in flight the resolution is PARTIAL — callers
   // must not treat it as the definitive view (e.g. for freshness comparison).

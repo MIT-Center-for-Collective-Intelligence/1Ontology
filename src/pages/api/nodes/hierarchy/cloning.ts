@@ -19,6 +19,10 @@ import {
   recordLogs,
 } from "@components/lib/server/hierarchy";
 import { partsNodes, toParts } from "@components/lib/server/parts";
+import {
+  computeInheritedPartsDetails,
+  fetchPartsContext,
+} from "@components/lib/server/partsAnnotation";
 
 const SCALAR_TYPES = new Set([
   "string",
@@ -209,13 +213,25 @@ async function applyClone(ctx: {
     // append it to the stored entries; appending never breaks attachment.
     sideBefore = asCollections(currentNode.properties?.parts);
     side = toParts([...partsNodes(sideBefore), { id: newNodeId, title }]);
-    await db.collection(NODES).doc(currentNodeId).update({
-      "properties.parts": side,
-    });
-    cache.set(currentNodeId, {
+    const updatedCurrent = {
       ...currentNode,
       properties: { ...currentNode.properties, parts: side },
-    } as INode);
+    } as INode;
+    const { relatedNodes, resolvedOf } =
+      await fetchPartsContext(updatedCurrent);
+    await db
+      .collection(NODES)
+      .doc(currentNodeId)
+      .update({
+        "properties.parts": side,
+        inheritedPartsDetails: computeInheritedPartsDetails({
+          currentNode: updatedCurrent,
+          relatedNodes,
+          resolvedOf,
+        }),
+        resolvedParts: resolvedOf(currentNodeId),
+      });
+    cache.set(currentNodeId, updatedCurrent);
   } else {
     // Generic link property: resolve the value the user saw (through the
     // inheritance ref while inheriting), add the new node, and override if it was
