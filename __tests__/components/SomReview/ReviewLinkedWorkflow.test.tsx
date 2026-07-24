@@ -164,6 +164,7 @@ describe("linked proposal review journey", () => {
               notApplicable: 0,
               total: 1,
               enabled: true,
+              released: true,
             },
             {
               id: "relocation",
@@ -176,6 +177,7 @@ describe("linked proposal review journey", () => {
               notApplicable: 0,
               total: 1,
               enabled: true,
+              released: true,
             },
           ],
         });
@@ -323,6 +325,7 @@ describe("linked proposal review journey", () => {
               notApplicable: 0,
               total: 47,
               enabled: true,
+              released: true,
               activeSession: { cursor: 30, total: 47 },
             },
           ],
@@ -415,6 +418,7 @@ describe("linked proposal review journey", () => {
               notApplicable: 0,
               total: 1,
               enabled: true,
+              released: true,
             },
           ],
         });

@@ -1,7 +1,12 @@
 import { NextApiRequest, NextApiResponse } from "next";
 
 import fbAuth, { CustomNextApiRequest } from "../../../middlewares/fbAuth";
-import { getDataset, isIssueTypeEnabled } from "../../../lib/somReview/dataset";
+import {
+  getDataset,
+  isIssueTypeEnabled,
+  isIssueTypeReleased,
+  issueTypeReleaseMessage,
+} from "../../../lib/somReview/dataset";
 import {
   activeSessionProgress,
   pendingSummary,
@@ -30,6 +35,7 @@ const handler = async (request: NextApiRequest, res: NextApiResponse) => {
           async (issue: any) => {
             const issueType = issue.id as SomIssueType;
             const enabled = isIssueTypeEnabled(issueType);
+            const released = isIssueTypeReleased(dataset, issueType);
             const total = (dataset.orderedIdsByIssue.get(issueType) || [])
               .length;
             const [summary, activeSession] = enabled
@@ -48,6 +54,10 @@ const handler = async (request: NextApiRequest, res: NextApiResponse) => {
               robTaskIds: issue.robTaskIds || [],
               optional: Boolean(issue.optional),
               enabled,
+              released,
+              ...(!released
+                ? { releaseMessage: issueTypeReleaseMessage(dataset) }
+                : {}),
               total,
               prerequisiteIssueTypes: issuePrerequisiteTypes(issueType),
               blockedBy: [],

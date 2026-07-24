@@ -114,6 +114,16 @@ const QueueStatus = ({ issue }: { issue: SomIssueTypeOption }) => {
   if (!issue.enabled) {
     return <Chip label="Unavailable" size="small" variant="outlined" />;
   }
+  if (!issue.released) {
+    return (
+      <Chip
+        icon={<LockOutlinedIcon />}
+        label="Awaiting regenerated proposals"
+        size="small"
+        variant="outlined"
+      />
+    );
+  }
   if (issue.total === 0) {
     return (
       <Chip label="No review items found" size="small" variant="outlined" />
@@ -218,8 +228,27 @@ const ReviewQueueSelector = ({
       >
         Proposal review
       </Typography>
-      <Stack direction="row" alignItems="center" flexWrap="wrap" gap={1}>
-        <Chip label={SELL_ONTOLOGY_NAME} variant="outlined" />
+      <Stack
+        direction="row"
+        alignItems="center"
+        flexWrap="wrap"
+        gap={1}
+        sx={{ width: { xs: "100%", sm: "auto" }, maxWidth: "100%" }}
+      >
+        <Chip
+          label={SELL_ONTOLOGY_NAME}
+          title={SELL_ONTOLOGY_NAME}
+          variant="outlined"
+          sx={{
+            maxWidth: "100%",
+            "& .MuiChip-label": {
+              display: "block",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            },
+          }}
+        />
         {canDeliberate && onOpenDeliberation && (
           <Button
             disableElevation
@@ -278,13 +307,17 @@ const ReviewQueueSelector = ({
                 const blocked = blockers.length > 0 && hasNewItems;
                 const completedOnly = !hasNewItems && hasSavedItems;
                 const available =
-                  issue.enabled && (hasSavedItems || (hasNewItems && !blocked));
+                  issue.enabled &&
+                  issue.released &&
+                  (hasSavedItems || (hasNewItems && !blocked));
                 const blockerPhases = blockingPhaseSummary(blockers);
-                const unavailableLabel = blocked
-                  ? `${issue.label}; complete ${blockerPhases} first`
-                  : issue.waiting
-                    ? `${issue.label}; review its related diagnosis first`
-                    : `${issue.label}, no review items available`;
+                const unavailableLabel = !issue.released
+                  ? `${issue.label}; ${issue.releaseMessage || "waiting for regenerated proposals"}`
+                  : blocked
+                    ? `${issue.label}; complete ${blockerPhases} first`
+                    : issue.waiting
+                      ? `${issue.label}; review its related diagnosis first`
+                      : `${issue.label}, no review items available`;
                 return (
                   <Card
                     key={issue.id}
@@ -402,6 +435,20 @@ const ReviewQueueSelector = ({
                               }}
                             >
                               Complete {blockerPhases} first.
+                            </Typography>
+                          )}
+                          {!issue.released && (
+                            <Typography
+                              sx={{
+                                mt: 0.6,
+                                color: "text.primary",
+                                fontSize: "0.9rem",
+                                fontWeight: 650,
+                                lineHeight: 1.4,
+                              }}
+                            >
+                              {issue.releaseMessage ||
+                                "Available after earlier decisions are applied and this proposal set is regenerated."}
                             </Typography>
                           )}
                         </Box>

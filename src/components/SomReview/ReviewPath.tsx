@@ -21,8 +21,9 @@ const statusForStep = (
   contextual?: boolean,
   optional?: boolean,
 ): StepStatus => {
-  if (optional) return "optional";
   const relevant = issues.filter((issue) => issue.enabled && issue.total > 0);
+  if (relevant.some((issue) => !issue.released)) return "later";
+  if (optional) return "optional";
   if (
     relevant.length === 0 ||
     relevant.every((issue) => issue.pending === 0 && issue.waiting === 0)
@@ -128,6 +129,7 @@ const ReviewPath = ({
     .find(
       (issue) =>
         issue.enabled &&
+        issue.released &&
         issue.pending > 0 &&
         (issue.blockedBy || []).length === 0,
     );
@@ -155,7 +157,8 @@ const ReviewPath = ({
         Guided review path
       </Typography>
       <Typography sx={{ mt: 0.3, color: "text.secondary", lineHeight: 1.45 }}>
-        Finish the current phase to unlock later review work.
+        Complete this phase first. Its approved changes must then be applied and
+        the remaining proposals regenerated before later phases open.
       </Typography>
       <Box
         component="ol"

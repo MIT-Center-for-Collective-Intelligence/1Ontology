@@ -30,6 +30,7 @@ const option = (
   waiting: 0,
   notApplicable: 0,
   enabled: true,
+  released: true,
   prerequisiteIssueTypes: [],
   blockedBy: [],
   ...overrides,
@@ -290,6 +291,35 @@ describe("Society of Mind review queue selector", () => {
     expect(
       screen.getByText("3 reviewed; new items locked"),
     ).toBeInTheDocument();
+  });
+
+  it("explains when a queue is waiting for a regenerated ontology snapshot", () => {
+    const waveIssues = issues.map((issue) =>
+      issue.id === "flat-list-grouping"
+        ? {
+            ...issue,
+            released: false,
+            releaseMessage:
+              "Available after content decisions are applied and proposals are regenerated.",
+          }
+        : issue,
+    );
+
+    render(<ReviewQueueSelector issueTypes={waveIssues} onStart={jest.fn()} />);
+
+    expect(
+      screen.getByText("Awaiting regenerated proposals"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Available after content decisions are applied and proposals are regenerated.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", {
+        name: "7. Group long flat lists; Available after content decisions are applied and proposals are regenerated.",
+      }),
+    ).toBeDisabled();
   });
 
   it("keeps postponed linked actions directly accessible", () => {

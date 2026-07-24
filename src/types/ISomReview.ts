@@ -90,6 +90,8 @@ export type SomReviewContext =
   | {
       type: "duplicate-comparison";
       parentTitle: string;
+      canonicalParentTitle?: string;
+      candidateParentTitle?: string;
       canonicalTitle: string;
       candidateSynonymTitle: string;
       sourceTasks?: string[];
@@ -115,6 +117,8 @@ export type SomReviewContext =
   | {
       type: "merge-action";
       parentTitle: string;
+      canonicalParentTitle?: string;
+      absorbedParentTitle?: string;
       canonicalTitle: string;
       canonicalCollection: string;
       canonicalChildren: string[];
@@ -222,6 +226,8 @@ export interface SomIssueTypeOption {
   notApplicable: number;
   total: number;
   enabled: boolean;
+  released: boolean;
+  releaseMessage?: string;
   optional?: boolean;
   prerequisiteIssueTypes: SomIssueType[];
   blockedBy: SomIssuePrerequisite[];

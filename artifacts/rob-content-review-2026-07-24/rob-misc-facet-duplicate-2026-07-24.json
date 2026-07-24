@@ -1,0 +1,647 @@
+{
+  "schemaVersion": "som-reviewer-benchmark-v1",
+  "exportedAt": "2026-07-24T13:10:34.935Z",
+  "firestoreProjectId": "ontology-41607",
+  "datasetVersion": "sell-rob-title-v2-downstream-2026-07-23-v2",
+  "sourceOntology": "firestore://ontology-41607/final-hierarchy-with-o*net-rob-title-review-v2-2026-07-23",
+  "sourceOntologySha256": "f2a528122af33b89cbf513a733a5733884b7fdabd3786dfede19f80734ebb375",
+  "issueType": "misc-facet-duplicate",
+  "reviewer": {
+    "label": "rob-laubacher"
+  },
+  "counts": {
+    "expected": 2,
+    "reviewed": 2,
+    "agreed": 2,
+    "disagreed": 0,
+    "missing": 0,
+    "orphanedHistoricalResponses": 0
+  },
+  "missingProposalIds": [],
+  "orphanedResponses": [],
+  "sourceNodeEvidence": [
+    {
+      "nodeId": "1e978ef59821773904f76aa1850e",
+      "title": "Sell (Information)",
+      "appName": "final-hierarchy-with-o*net-rob-title-review-v2-2026-07-23",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "81eeb398ab577878bfa5e3270835",
+              "linkTitle": "Market Artwork",
+              "title": "Market Artwork",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell (Information)"
+              ]
+            },
+            {
+              "nodeId": "6bdabc2d2dbca8a342b43902e760",
+              "linkTitle": "Market Casino",
+              "title": "Market Casino",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell (Information)"
+              ]
+            },
+            {
+              "nodeId": "e08d047f6e3ef51be0a360acfa8e",
+              "linkTitle": "Market Event",
+              "title": "Market Event",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell (Information)"
+              ]
+            },
+            {
+              "nodeId": "c85e45c611ab5276d24f08b33fc4",
+              "linkTitle": "Market Products",
+              "title": "Market Products",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell (Information)"
+              ]
+            },
+            {
+              "nodeId": "9ef4376027a49f0fb9f47522711d",
+              "linkTitle": "Market Services",
+              "title": "Market Services",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell (Information)"
+              ]
+            },
+            {
+              "nodeId": "0716dd1677534fbb84a62890ccb8",
+              "linkTitle": "Market Bank Products",
+              "title": "Market Bank Products",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell (Information)"
+              ]
+            },
+            {
+              "nodeId": "fcd987ecdaac0693ffdc372600d7",
+              "linkTitle": "Sell Services",
+              "title": "Sell Services",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell (Information)"
+              ]
+            },
+            {
+              "nodeId": "3980c23ae5a747127dcc0ccbdbbe",
+              "linkTitle": "Sell Bond",
+              "title": "Sell Bond",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell (Information)"
+              ]
+            },
+            {
+              "nodeId": "10fc719b4c033d0062b1309ec001",
+              "linkTitle": "Sell Traveler's Checks",
+              "title": "Sell Traveler's Checks",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell (Information)"
+              ]
+            },
+            {
+              "nodeId": "0db9b45ec1d0d2cf0ed96fa89391",
+              "linkTitle": "Sell Service Contracts",
+              "title": "Sell Service Contracts",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell (Information)"
+              ]
+            },
+            {
+              "nodeId": "ae12610fd4359ea4dc7ed1759bd5",
+              "linkTitle": "Sell Foreign Currencies",
+              "title": "Sell Foreign Currencies",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell (Information)"
+              ]
+            },
+            {
+              "nodeId": "90af6944d54f447d6f1935cef2ef",
+              "linkTitle": "Sell Financial Derivatives",
+              "title": "Sell Financial Derivatives",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell (Information)"
+              ]
+            },
+            {
+              "nodeId": "dec00b7e1aa1ac7b2e6386de13eb",
+              "linkTitle": "Sell Commodity Futures",
+              "title": "Sell Commodity Futures",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell (Information)"
+              ]
+            },
+            {
+              "nodeId": "5163d39d6d711affec4164b232db",
+              "linkTitle": "Sell Travel Incentives",
+              "title": "Sell Travel Incentives",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell (Information)"
+              ]
+            },
+            {
+              "nodeId": "99acd5a9c15edc83ae127a06a935",
+              "linkTitle": "Sell Membership",
+              "title": "Sell Membership",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell (Information)"
+              ]
+            },
+            {
+              "nodeId": "64059ec9f629db0a10b6ee56c6b0",
+              "linkTitle": "Sell Travel Packages",
+              "title": "Sell Travel Packages",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell (Information)"
+              ]
+            },
+            {
+              "nodeId": "73b7a26dadb1dae549f27d926a42",
+              "linkTitle": "Sell Admission Passes",
+              "title": "Sell Admission Passes",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell (Information)"
+              ]
+            },
+            {
+              "nodeId": "8c4bbab1965e8ec3f0c4aeea07e3",
+              "linkTitle": "Sell Insurance Policies",
+              "title": "Sell Insurance Policies",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell (Information)"
+              ]
+            },
+            {
+              "nodeId": "9680100a28fce69eb9696339a034",
+              "linkTitle": "Sell Stock",
+              "title": "Sell Stock",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell (Information)"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "31475befef122f1e6ecf6fc721b4",
+      "title": "Sell (Physical Object)",
+      "appName": "final-hierarchy-with-o*net-rob-title-review-v2-2026-07-23",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "05cbbaded65ea7148d8a3394bdbc",
+              "linkTitle": "Sell Accessories",
+              "title": "Sell Accessories",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell (Physical Object)"
+              ]
+            },
+            {
+              "nodeId": "e6692d87f925c9cfd950152d1d39",
+              "linkTitle": "Market Vacant Space",
+              "title": "Market Vacant Space",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell (Physical Object)"
+              ]
+            },
+            {
+              "nodeId": "ae51356f955e5d7aa1a3c34e68fc",
+              "linkTitle": "Sell Beverages",
+              "title": "Sell Beverages",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell (Physical Object)"
+              ]
+            },
+            {
+              "nodeId": "42424fe702173ece4a2d806e94f5",
+              "linkTitle": "Sell Alcoholic Beverages",
+              "title": "Sell Alcoholic Beverages",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell (Physical Object)"
+              ]
+            },
+            {
+              "nodeId": "d5c1f29cc69fb3e807c1fa3c42ed",
+              "linkTitle": "Sell Bicycles",
+              "title": "Sell Bicycles",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell (Physical Object)"
+              ]
+            },
+            {
+              "nodeId": "aee8946ddbf38225ba0d48049959",
+              "linkTitle": "Sell Bicycle Accessories",
+              "title": "Sell Bicycle Accessories",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell (Physical Object)"
+              ]
+            },
+            {
+              "nodeId": "4d43afb2b91274f502ace2ebbe23",
+              "linkTitle": "Sell Gambling Chips",
+              "title": "Sell Gambling Chips",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell (Physical Object)"
+              ]
+            },
+            {
+              "nodeId": "4dbebbad11fbcb2aa3efedd83156",
+              "linkTitle": "Sell Expedition Clothing",
+              "title": "Sell Expedition Clothing",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell (Physical Object)"
+              ]
+            },
+            {
+              "nodeId": "a4d0f8993965a59d7ec86c35d4f0",
+              "linkTitle": "Sell Equipment",
+              "title": "Sell Equipment",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell (Physical Object)"
+              ]
+            },
+            {
+              "nodeId": "1713c3ff2383a397bd3c469fb872",
+              "linkTitle": "Sell Sporting Equipment",
+              "title": "Sell Sporting Equipment",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell (Physical Object)"
+              ]
+            },
+            {
+              "nodeId": "7b308e77c6ffec289618f2bd8cf9",
+              "linkTitle": "Sell Expedition Equipment",
+              "title": "Sell Expedition Equipment",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell (Physical Object)"
+              ]
+            },
+            {
+              "nodeId": "3c33f62705f85dec07fd5ee97d31",
+              "linkTitle": "Sell Real Estate",
+              "title": "Sell Real Estate",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell (Physical Object)"
+              ]
+            },
+            {
+              "nodeId": "4f63d362c50bf1d5b6ec1316eb9a",
+              "linkTitle": "Sell Flower",
+              "title": "Sell Flower",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell (Physical Object)"
+              ]
+            },
+            {
+              "nodeId": "4515f98429940646a2becc99dc8f",
+              "linkTitle": "Sell Food",
+              "title": "Sell Food",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell (Physical Object)"
+              ]
+            },
+            {
+              "nodeId": "5d08570c55bdb6640016226d6754",
+              "linkTitle": "Sell Pet Food",
+              "title": "Sell Pet Food",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell (Physical Object)"
+              ]
+            },
+            {
+              "nodeId": "fc1754b69c88609036098c4f7c57",
+              "linkTitle": "Sell Eyewear and Eye-Care Products",
+              "title": "Sell Eyewear and Eye-Care Products",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell (Physical Object)"
+              ]
+            },
+            {
+              "nodeId": "68abc9f1523ed453cfed002459b3",
+              "linkTitle": "Sell Items",
+              "title": "Sell Items",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell (Physical Object)"
+              ]
+            },
+            {
+              "nodeId": "c4951773480e01bed940ee257138",
+              "linkTitle": "Sell Jewelry",
+              "title": "Sell Jewelry",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell (Physical Object)"
+              ]
+            },
+            {
+              "nodeId": "2bc64ff942e2f664413603dcc111",
+              "linkTitle": "Sell Lotion",
+              "title": "Sell Lotion",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell (Physical Object)"
+              ]
+            },
+            {
+              "nodeId": "9d85c9ae551e3f2a99c4259d08c7",
+              "linkTitle": "Sell Makeup",
+              "title": "Sell Makeup",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell (Physical Object)"
+              ]
+            },
+            {
+              "nodeId": "7ad1cc41623a9fafd338b4714419",
+              "linkTitle": "Sell Merchandise",
+              "title": "Sell Merchandise",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell (Physical Object)"
+              ]
+            },
+            {
+              "nodeId": "60f240998f6f6f4612c1fc896c23",
+              "linkTitle": "Sell Money Orders",
+              "title": "Sell Money Orders",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell (Physical Object)"
+              ]
+            },
+            {
+              "nodeId": "4a25d303308e20fd6c8f19e93668",
+              "linkTitle": "Sell Parts",
+              "title": "Sell Parts",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell (Physical Object)"
+              ]
+            },
+            {
+              "nodeId": "b87a0b02d6d94e3f578f867c24f1",
+              "linkTitle": "Sell Plant",
+              "title": "Sell Plant",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell (Physical Object)"
+              ]
+            },
+            {
+              "nodeId": "76c8f00c5e11c70fe12464bbb3c5",
+              "linkTitle": "Sell Hair Care Products",
+              "title": "Sell Hair Care Products",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell (Physical Object)"
+              ]
+            },
+            {
+              "nodeId": "0b36ba70d836f5a3e819ddcaf619",
+              "linkTitle": "Sell Technical Products",
+              "title": "Sell Technical Products",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell (Physical Object)"
+              ]
+            },
+            {
+              "nodeId": "7865b1383ae07fba9f91533a8eb5",
+              "linkTitle": "Sell Funeral Products",
+              "title": "Sell Funeral Products",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell (Physical Object)"
+              ]
+            },
+            {
+              "nodeId": "8f71cd705496550f305fca762b49",
+              "linkTitle": "Sell Postal Products",
+              "title": "Sell Postal Products",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell (Physical Object)"
+              ]
+            },
+            {
+              "nodeId": "cba5e3f7aac4f40e3298ed1f44c3",
+              "linkTitle": "Sell Agricultural Products",
+              "title": "Sell Agricultural Products",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell (Physical Object)"
+              ]
+            },
+            {
+              "nodeId": "39ad864009805030eb92bf0f1b73",
+              "linkTitle": "Sell Nail Care Products",
+              "title": "Sell Nail Care Products",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell (Physical Object)"
+              ]
+            },
+            {
+              "nodeId": "679e8d400da222a3481d08e84252",
+              "linkTitle": "Sell Financial Products",
+              "title": "Sell Financial Products",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell (Physical Object)"
+              ]
+            },
+            {
+              "nodeId": "387e11ec79634286f82859ad23ae",
+              "linkTitle": "Sell Cosmetics",
+              "title": "Sell Cosmetics",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell (Physical Object)"
+              ]
+            },
+            {
+              "nodeId": "0d408e5a2d64283208b1022f2c05",
+              "linkTitle": "Sell Refreshment",
+              "title": "Sell Refreshment",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell (Physical Object)"
+              ]
+            },
+            {
+              "nodeId": "7ec5a0756cff2cb043c7674d8e87",
+              "linkTitle": "Sell Tour Souvenirs",
+              "title": "Sell Tour Souvenirs",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell (Physical Object)"
+              ]
+            },
+            {
+              "nodeId": "7dc3199410e90f36bd38216de308",
+              "linkTitle": "Sell Food Specialties",
+              "title": "Sell Food Specialties",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell (Physical Object)"
+              ]
+            },
+            {
+              "nodeId": "add1329c55e8003d74d10e46ada2",
+              "linkTitle": "Sell Stamp",
+              "title": "Sell Stamp",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell (Physical Object)"
+              ]
+            },
+            {
+              "nodeId": "c68ef344af1f8d1742076a70168f",
+              "linkTitle": "Sell Cosmetic Supplies",
+              "title": "Sell Cosmetic Supplies",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell (Physical Object)"
+              ]
+            },
+            {
+              "nodeId": "ef3318805f43692d4f51cd270dd1",
+              "linkTitle": "Sell Agricultural Supplies",
+              "title": "Sell Agricultural Supplies",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell (Physical Object)"
+              ]
+            },
+            {
+              "nodeId": "a29c71f5f776ecba6097f3ea706a",
+              "linkTitle": "Sell Pet Supplies",
+              "title": "Sell Pet Supplies",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell (Physical Object)"
+              ]
+            },
+            {
+              "nodeId": "a52a47203b9de654fe6c222386bb",
+              "linkTitle": "Sell Expedition Supplies",
+              "title": "Sell Expedition Supplies",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell (Physical Object)"
+              ]
+            },
+            {
+              "nodeId": "293e9b3e5dbcc1452a98997fb3de",
+              "linkTitle": "Sell Ticket",
+              "title": "Sell Ticket",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell (Physical Object)"
+              ]
+            },
+            {
+              "nodeId": "a581e705a565853841f0e3934afa",
+              "linkTitle": "Sell Tobacco Products",
+              "title": "Sell Tobacco Products",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell (Physical Object)"
+              ]
+            },
+            {
+              "nodeId": "51a277b915b68b2efa2c07f3f168",
+              "linkTitle": "Sell Gambling Tokens",
+              "title": "Sell Gambling Tokens",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell (Physical Object)"
+              ]
+            },
+            {
+              "nodeId": "5f0b6de25ae181640fbd77b1bb80",
+              "linkTitle": "Sell Tonic",
+              "title": "Sell Tonic",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell (Physical Object)"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "judgments": [
+    {
+      "proposalId": "som-f35bb22b2d46b299c028",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "31475befef122f1e6ecf6fc721b4",
+      "parentNodeId": "8fe5f67aba55d631d7e198d5330b",
+      "currentTitle": "",
+      "proposedTitle": "",
+      "linkedTasks": [],
+      "proposedNodes": [],
+      "agentReasoning": "Their normalized sibling labels both resolve to \"sell physical object\". This deterministic match is only a candidate, not proof of duplication.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-c2eb7d6c6c047b817864",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "1e978ef59821773904f76aa1850e",
+      "parentNodeId": "8fe5f67aba55d631d7e198d5330b",
+      "currentTitle": "",
+      "proposedTitle": "",
+      "linkedTasks": [],
+      "proposedNodes": [],
+      "agentReasoning": "Their normalized sibling labels both resolve to \"sell information\". This deterministic match is only a candidate, not proof of duplication.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    }
+  ]
+}

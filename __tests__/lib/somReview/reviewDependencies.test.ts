@@ -23,6 +23,7 @@ const option = (
   notApplicable: 0,
   total: 1,
   enabled: true,
+  released: true,
   prerequisiteIssueTypes: issuePrerequisiteTypes(id),
   blockedBy: [],
   ...overrides,
@@ -43,6 +44,7 @@ describe("review queue dependencies", () => {
       "duplicate-synonym",
       "polysemy",
       "misc-facet-duplicate",
+      "node-merge",
     ]);
   });
 

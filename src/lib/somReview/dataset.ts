@@ -63,7 +63,7 @@ const datasetDir = (): string =>
   path.join(
     process.cwd(),
     "Sell_Society_of_Mind_Review_UI_Handoff_2026-07-15",
-    "review-datasets-rob-title-v2-downstream-2026-07-23",
+    "review-datasets-rob-content-wave-2026-07-24",
   );
 
 export const isIssueTypeEnabled = (issueType: SomIssueType): boolean => {
@@ -74,6 +74,18 @@ export const isIssueTypeEnabled = (issueType: SomIssueType): boolean => {
     .filter(Boolean);
   return !disabled.includes(issueType);
 };
+
+export const isIssueTypeReleased = (
+  dataset: Pick<SomDataset, "manifest">,
+  issueType: SomIssueType,
+): boolean => {
+  const released = dataset.manifest?.reviewRelease?.releasedIssueTypes;
+  return !Array.isArray(released) || released.includes(issueType);
+};
+
+export const issueTypeReleaseMessage = (
+  dataset: Pick<SomDataset, "manifest">,
+): string => String(dataset.manifest?.reviewRelease?.message || "").trim();
 
 const readJsonl = (filePath: string): any[] =>
   fs

@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "som-reviewer-benchmark-v1",
+  "exportedAt": "2026-07-24T13:10:27.898Z",
+  "firestoreProjectId": "ontology-41607",
+  "datasetVersion": "sell-rob-title-v2-downstream-2026-07-23-v2",
+  "sourceOntology": "firestore://ontology-41607/final-hierarchy-with-o*net-rob-title-review-v2-2026-07-23",
+  "sourceOntologySha256": "f2a528122af33b89cbf513a733a5733884b7fdabd3786dfede19f80734ebb375",
+  "issueType": "synonym-enrichment",
+  "reviewer": {
+    "label": "rob-laubacher"
+  },
+  "counts": {
+    "expected": 1,
+    "reviewed": 1,
+    "agreed": 0,
+    "disagreed": 1,
+    "missing": 0,
+    "orphanedHistoricalResponses": 0
+  },
+  "missingProposalIds": [],
+  "orphanedResponses": [],
+  "sourceNodeEvidence": [
+    {
+      "nodeId": "3ec459d3a4e793c4a46628843560",
+      "title": "Lease out",
+      "appName": "final-hierarchy-with-o*net-rob-title-review-v2-2026-07-23",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": []
+        }
+      ]
+    }
+  ],
+  "judgments": [
+    {
+      "proposalId": "som-b69af6bbb1b51e13100e",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "3ec459d3a4e793c4a46628843560",
+      "parentNodeId": "",
+      "currentTitle": "",
+      "proposedTitle": "",
+      "linkedTasks": [],
+      "proposedNodes": [],
+      "agentReasoning": "These terms are already identified as synonyms in the current human-readable description but are absent from the structured synonym field.",
+      "decision": "disagree",
+      "disagreementReason": "The proposal is not a change; Lease out is listed in Before and also in After.",
+      "suggestedCorrection": "Is it possible that the LLM was trying to merge Rent out and Lease out?",
+      "revisionCount": 1
+    }
+  ]
+}
