@@ -750,7 +750,8 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
     );
     // Rows come from the RESOLVED parts view, so edits show at once. details
     // is just an annotation lookup (from/symbol/switch options); a part with
-    // no entry yet shows no symbol. optional/optionalChange are read live.
+    // no entry yet spins until the annotation covers it. optional/
+    // optionalChange are read live.
     const detailByTo = new Map<string, any>();
     for (const d of details) {
       if (d.to) detailByTo.set(d.to, d);
@@ -787,6 +788,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
         toOptional: liveOptional,
         optionalChange: "none",
         hops: 0,
+        pending: true,
         inheritedFrom: partNode.inheritedFrom,
       };
     });
@@ -1016,6 +1018,20 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                       <ListItemIcon sx={{ minWidth: "auto" }}>
                         {savingPartIds.has(entry.to) ? (
                           <Tooltip title="Linking this part…" placement="top">
+                            <span
+                              style={{
+                                display: "inline-flex",
+                                cursor: "default",
+                              }}
+                            >
+                              <SyncedSpinner size={18} />
+                            </span>
+                          </Tooltip>
+                        ) : entry.pending ? (
+                          <Tooltip
+                            title="Calculating inheritance…"
+                            placement="top"
+                          >
                             <span
                               style={{
                                 display: "inline-flex",

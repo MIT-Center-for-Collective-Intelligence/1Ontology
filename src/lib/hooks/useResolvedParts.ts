@@ -52,9 +52,13 @@ export const useResolvedParts = (
     setFetchedChain({});
   }, [currentVisibleNode?.id]);
 
-  const { resolvedParts, missingId } = useMemo(() => {
+  const { resolvedParts, missingIds, ownChainIncomplete } = useMemo(() => {
     if (!currentVisibleNode?.id) {
-      return { resolvedParts: [] as ILinkNode[], missingId: null };
+      return {
+        resolvedParts: [] as ILinkNode[],
+        missingIds: [] as string[],
+        ownChainIncomplete: false,
+      };
     }
     // The visible node is the freshest copy — it wins over the caches.
     const docOf = (id: string): INode | undefined =>
@@ -62,35 +66,43 @@ export const useResolvedParts = (
         ? currentVisibleNode
         : (nodes?.[id] ?? fetchedChain[id]);
     const graph: PartsGraph = new Map();
-    let missingId: string | null = null;
-    let cursor: string | null = currentVisibleNode.id;
-    const seen = new Set<string>();
-    while (cursor && !seen.has(cursor)) {
-      seen.add(cursor);
-      const doc = docOf(cursor);
-      if (!doc) {
-        missingId = cursor;
-        break;
+    const missing: string[] = [];
+    const walk = (start: string | null | undefined): boolean => {
+      let cursor = start;
+      while (cursor && !graph.has(cursor)) {
+        const doc = docOf(cursor);
+        if (!doc) {
+          missing.push(cursor);
+          return false;
+        }
+        const partsNode = toPartsNode(doc);
+        graph.set(cursor, partsNode);
+        cursor = partsNode.partsInheritance.source;
       }
-      const partsNode = toPartsNode(doc);
-      graph.set(cursor, partsNode);
-      cursor = partsNode.partsInheritance.source;
+      return true;
+    };
+    const ownComplete = walk(currentVisibleNode.id);
+    // The gens' chains feed the provider pickers and captions — a gen that
+    // inherits a part virtually must resolve too.
+    for (const c of currentVisibleNode.generalizations ?? []) {
+      for (const n of c.nodes ?? []) walk(n.id);
     }
     return {
       resolvedParts: resolveParts(currentVisibleNode.id, graph),
-      missingId,
+      missingIds: missing,
+      ownChainIncomplete: !ownComplete,
     };
   }, [currentVisibleNode, nodes, fetchedChain]);
 
-  // Fetch a missing ancestor once, prefetching the pathIds spine alongside it
+  // Fetch missing chain nodes once, prefetching the pathIds spine alongside
   // as a hint (primary-parent path only — the chain can leave it, so the
   // per-hop walk stays authoritative). Drop results on navigation.
   useEffect(() => {
-    if (!fetchNode || !missingId || !currentVisibleNode) return;
+    if (!fetchNode || missingIds.length === 0 || !currentVisibleNode) return;
     const hinted = (currentVisibleNode.pathIds ?? []).filter(
       (id) => id !== currentVisibleNode.id && !nodes?.[id] && !fetchedChain[id],
     );
-    const wanted = [missingId, ...hinted].filter(
+    const wanted = [...missingIds, ...hinted].filter(
       (id) => !requestedIdsRef.current.has(id),
     );
     if (wanted.length === 0) return;
@@ -104,9 +116,10 @@ export const useResolvedParts = (
         );
       });
     }
-  }, [missingId, fetchNode, currentVisibleNode, nodes, fetchedChain]);
+  }, [missingIds, fetchNode, currentVisibleNode, nodes, fetchedChain]);
 
-  // While a chain ancestor is in flight the resolution is PARTIAL — callers
-  // must not treat it as the definitive view (e.g. for freshness comparison).
-  return { resolvedParts, loading: missingId !== null };
+  // While one of the node's OWN chain ancestors is in flight the resolution is
+  // PARTIAL — callers must not treat it as the definitive view (e.g. for the
+  // freshness comparison). A gen's incomplete chain doesn't block it.
+  return { resolvedParts, loading: ownChainIncomplete };
 };

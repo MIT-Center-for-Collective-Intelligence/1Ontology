@@ -16,6 +16,7 @@ interface PartViewerProps {
   currentVisibleNode: any;
   resolvedParts: ILinkNode[];
   resolvedPartsLoading: boolean;
+  partsWriting?: boolean;
   relatedNodes: { [id: string]: any };
   fetchNode: (nodeId: string) => Promise<INode | null>;
   addNodesToCache?: (
@@ -53,6 +54,7 @@ const PartViewer: React.FC<PartViewerProps> = ({
   currentVisibleNode,
   resolvedParts,
   resolvedPartsLoading,
+  partsWriting,
   relatedNodes,
   fetchNode,
   addNodesToCache,
@@ -140,7 +142,7 @@ const PartViewer: React.FC<PartViewerProps> = ({
           savingPartIds={savingPartIds}
           appName={appName}
           inheritedPartsDetails={inheritedPartsDetails}
-          inheritedPartsRepairing={inheritedPartsRepairing}
+          inheritedPartsRepairing={inheritedPartsRepairing || !!partsWriting}
           mutateInheritedPartsDetails={mutateInheritedPartsDetails}
           clonedNodesQueue={clonedNodesQueue}
           approvePendingPart={(queuedId: string) =>
@@ -187,7 +189,7 @@ const PartViewer: React.FC<PartViewerProps> = ({
           navigateToNode={navigateToNode}
           displayDetails={displayDetails}
           inheritedPartsDetails={inheritedPartsDetails}
-          inheritedPartsRepairing={inheritedPartsRepairing}
+          inheritedPartsRepairing={inheritedPartsRepairing || !!partsWriting}
         />
       )}
     </Box>

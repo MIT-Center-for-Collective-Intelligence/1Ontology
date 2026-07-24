@@ -35,8 +35,11 @@ import {
 import {
   applyRemove,
   applyReplace,
+  applySwitchSource,
   applyToggleOptional,
   classifySort,
+  convertToOverlay,
+  resolveParts,
   toPartsNode,
   PartsGraph,
 } from "@components/lib/server/partsModel";
@@ -827,24 +830,35 @@ const StructuredProperty = ({
     return inheritedParts;
   };
   const [savingPartIds, setSavingPartIds] = useState<Set<string>>(new Set());
+  // Count of parts writes in flight — the viewers show the annotation spinner
+  // while the endpoint recomputes the pair server-side.
+  const [partsWriteCount, setPartsWriteCount] = useState(0);
 
   // Chain-only graph over the caches, for running the pure model ops
   // client-side (instant patches mirror what the endpoint will store).
-  const clientPartsGraph = useCallback((): PartsGraph => {
-    const graph: PartsGraph = new Map();
-    let cursor: string | null | undefined = currentVisibleNode?.id;
-    while (cursor && !graph.has(cursor)) {
-      const doc =
-        cursor === currentVisibleNode?.id
-          ? currentVisibleNode
-          : relatedNodes[cursor];
-      if (!doc) break;
-      const partsNode = toPartsNode(doc);
-      graph.set(cursor, partsNode);
-      cursor = partsNode.partsInheritance.source;
-    }
-    return graph;
-  }, [currentVisibleNode, relatedNodes]);
+  // `extraRoots` pulls in another node's chain too (a gen being referenced).
+  const clientPartsGraph = useCallback(
+    (extraRoots: string[] = []): PartsGraph => {
+      const graph: PartsGraph = new Map();
+      const walk = (start: string | null | undefined) => {
+        let cursor = start;
+        while (cursor && !graph.has(cursor)) {
+          const doc =
+            cursor === currentVisibleNode?.id
+              ? currentVisibleNode
+              : relatedNodes[cursor];
+          if (!doc) break;
+          const partsNode = toPartsNode(doc);
+          graph.set(cursor, partsNode);
+          cursor = partsNode.partsInheritance.source;
+        }
+      };
+      walk(currentVisibleNode?.id);
+      for (const root of extraRoots) walk(root);
+      return graph;
+    },
+    [currentVisibleNode, relatedNodes],
+  );
 
   // Delta edits on parts (remove/replace/sort): instant local state + the
   // matching endpoint. On failure it re-fetches so the UI never keeps an
@@ -859,6 +873,7 @@ const StructuredProperty = ({
     ) => {
       const nodeId = currentVisibleNode?.id;
       if (!nodeId) return;
+      setPartsWriteCount((c) => c + 1);
       if (affectedIds.length) {
         setSavingPartIds((prev) => new Set([...prev, ...affectedIds]));
       }
@@ -893,6 +908,7 @@ const StructuredProperty = ({
       } finally {
         pendingWrites.end(nodeId, "properties.parts");
         pendingWrites.end(nodeId, "partsInheritance");
+        setPartsWriteCount((c) => c - 1);
         if (affectedIds.length) {
           setSavingPartIds((prev) => {
             const next = new Set(prev);
@@ -900,6 +916,11 @@ const StructuredProperty = ({
             return next;
           });
         }
+        // The freshness comparison skipped its runs while the write was
+        // pending; a new identity makes it run once more now the gate is open.
+        setCurrentVisibleNode((prev: any) =>
+          prev && prev.id === nodeId ? { ...prev } : prev,
+        );
       }
     },
     [
@@ -965,23 +986,23 @@ const StructuredProperty = ({
   // instant tag mirrors the server: the owner resolved through the picked gen.
   const switchPartSource = useCallback(
     async (partId: string, genId: string) => {
-      const source = currentVisibleNode?.properties?.parts;
-      if (!Array.isArray(source)) return;
-      const newParts: ICollection[] = JSON.parse(JSON.stringify(source));
-      const part = newParts[0]?.nodes?.find((n: ILinkNode) => n.id === partId);
-      if (!part) return;
-      const genPart = (
-        relatedNodes[genId]?.properties?.parts?.[0]?.nodes ?? []
-      ).find((n: ILinkNode) => n.id === partId);
-      part.inheritedFrom = genPart?.inheritedFrom || genId;
+      if (!currentVisibleNode?.id) return;
+      const result = applySwitchSource(
+        currentVisibleNode.id,
+        clientPartsGraph([genId]),
+        partId,
+        genId,
+      );
+      if (!result.changed) return;
       await savePartsDelta(
         "/nodes/parts/switch-source",
         { partId, genId },
-        newParts,
+        [{ collectionName: "main", nodes: result.parts }],
         [partId],
+        result.partsInheritance,
       );
     },
-    [currentVisibleNode, relatedNodes, savePartsDelta],
+    [currentVisibleNode?.id, clientPartsGraph, savePartsDelta],
   );
 
   /**
@@ -993,34 +1014,25 @@ const StructuredProperty = ({
     async (sourceId: string) => {
       const nodeId = currentVisibleNode?.id;
       if (!nodeId || !sourceId) return;
-      if (sourceId === (currentVisibleNode.partsOverallSource ?? "")) return;
+      if (sourceId === (currentVisibleNode.partsInheritance?.source ?? "")) {
+        return;
+      }
 
-      const genPartIds = new Set(
-        (relatedNodes[sourceId]?.properties?.parts?.[0]?.nodes ?? []).map(
-          (n: ILinkNode) => n.id,
-        ),
+      // The same pure reset the endpoint runs names exactly what disappears.
+      const graph = clientPartsGraph([sourceId]);
+      const before = resolveParts(nodeId, graph);
+      const { parts, partsInheritance } = convertToOverlay(
+        nodeId,
+        graph,
+        sourceId,
       );
-      const current: ILinkNode[] =
-        currentVisibleNode.properties?.parts?.[0]?.nodes ?? [];
-      // A never-modeled node carries no tags; mirror the server and treat a
-      // part any generalization provides as inherited (it won't survive).
-      const modeled =
-        currentVisibleNode.partsOverallSource !== undefined ||
-        current.some((p) => !!p.inheritedFrom);
-      const providedByAnyGen = new Set(
-        (currentVisibleNode.generalizations ?? [])
-          .flatMap((c: ICollection) => c.nodes ?? [])
-          .flatMap(
-            (g: ILinkNode) =>
-              relatedNodes[g.id]?.properties?.parts?.[0]?.nodes ?? [],
-          )
-          .map((n: ILinkNode) => n.id),
+      const afterGraph: PartsGraph = new Map(graph);
+      afterGraph.set(nodeId, { id: nodeId, parts, partsInheritance });
+      const afterIds = new Set(
+        resolveParts(nodeId, afterGraph).map((p) => p.id),
       );
-      const discarded = current
-        .filter((p) =>
-          modeled ? !!p.inheritedFrom : providedByAnyGen.has(p.id),
-        )
-        .filter((p) => !genPartIds.has(p.id))
+      const discarded = before
+        .filter((p) => !afterIds.has(p.id))
         .map((p) => p.title || relatedNodes[p.id]?.title || p.id);
 
       const sourceTitle =
@@ -1035,34 +1047,20 @@ const StructuredProperty = ({
       );
       if (!ok) return;
 
-      pendingWrites.start(nodeId, "properties.parts");
-      try {
-        await Post("/nodes/parts/reattach", {
-          nodeId,
-          sourceId,
-          ...(appName ? { appName } : {}),
-        });
-        const fresh = await fetchNode(nodeId, true);
-        setCurrentVisibleNode((prev: any) =>
-          prev?.id === nodeId && fresh ? fresh : prev,
-        );
-      } catch (error: any) {
-        const reason =
-          (typeof error === "string" ? error : error?.message) ||
-          "Please try again.";
-        setSnackbarMessage(`Failed to inherit parts: ${reason}`);
-      } finally {
-        pendingWrites.end(nodeId, "properties.parts");
-      }
+      await savePartsDelta(
+        "/nodes/parts/reattach",
+        { sourceId },
+        [{ collectionName: "main", nodes: parts }],
+        [],
+        partsInheritance,
+      );
     },
     [
       currentVisibleNode,
       relatedNodes,
-      appName,
+      clientPartsGraph,
       confirmIt,
-      setCurrentVisibleNode,
-      fetchNode,
-      setSnackbarMessage,
+      savePartsDelta,
     ],
   );
 
@@ -1791,6 +1789,7 @@ const StructuredProperty = ({
             currentVisibleNode={currentVisibleNode}
             resolvedParts={resolvedParts}
             resolvedPartsLoading={resolvedPartsLoading}
+            partsWriting={partsWriteCount > 0}
             relatedNodes={relatedNodes}
             fetchNode={fetchNode}
             addNodesToCache={addNodesToCache}

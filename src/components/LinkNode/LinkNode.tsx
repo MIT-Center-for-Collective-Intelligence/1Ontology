@@ -352,6 +352,10 @@ const LinkNode = ({
     } finally {
       pendingWrites.end(nodeId, "properties.parts");
       pendingWrites.end(nodeId, "partsInheritance");
+      // Re-run the freshness comparison now the write gate is open.
+      setCurrentVisibleNode((prev: any) =>
+        prev && prev.id === nodeId ? { ...prev } : prev,
+      );
     }
   }, [currentVisibleNode, relatedNodes, link.id, link.optional, appName]);
 

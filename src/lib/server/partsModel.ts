@@ -416,6 +416,62 @@ export function applyReplace(
 }
 
 /**
+ * Switch which generalization a part is SPECIFICALLY inherited from: the part
+ * starts tracking the owner resolved through `genId`. A virtual part mints a
+ * stored entry in its slot (flags fold in, its override moves onto the entry);
+ * an existing entry just repoints. Membership and order don't change, so
+ * attachment is untouched. No-ops (`changed: false`): part absent or owned,
+ * or the gen doesn't provide it.
+ */
+export function applySwitchSource(
+  nodeId: string,
+  graph: PartsGraph,
+  partId: string,
+  genId: string,
+): {
+  parts: PartEntry[];
+  partsInheritance: PartsInheritance;
+  changed: boolean;
+} {
+  const node = graph.get(nodeId);
+  if (!node) {
+    return {
+      parts: [],
+      partsInheritance: { source: null, overrides: {} },
+      changed: false,
+    };
+  }
+  const genPart = resolveParts(genId, graph).find((p) => p.id === partId);
+  const viewed = resolveParts(nodeId, graph).find((p) => p.id === partId);
+  if (!genPart || !viewed || isOwnedPart(viewed)) {
+    return {
+      parts: node.parts,
+      partsInheritance: node.partsInheritance,
+      changed: false,
+    };
+  }
+  const owner = childSourceOf(genPart, genId);
+
+  if (node.parts.some((e) => e.id === partId)) {
+    const parts = node.parts.map((e) =>
+      e.id === partId ? { ...e, inheritedFrom: owner } : e,
+    );
+    return { parts, partsInheritance: node.partsInheritance, changed: true };
+  }
+
+  const minted: PartEntry = { id: partId, inheritedFrom: owner };
+  if (viewed.title !== undefined) minted.title = viewed.title;
+  if (viewed.optional) minted.optional = true;
+  const overrides = { ...node.partsInheritance.overrides };
+  delete overrides[partId];
+  return {
+    parts: [...node.parts, minted],
+    partsInheritance: { source: node.partsInheritance.source, overrides },
+    changed: true,
+  };
+}
+
+/**
  * Reattach (or switch the overall source): a HARD RESET of everything the node
  * does not OWN. Only owned entries survive — one the source also provides
  * keeps its slot, the rest are anchored below the source's parts in their
@@ -628,7 +684,7 @@ export function overallRefThroughGen(gen: {
  * Overall source: the STORED `sourceId` is kept if it is still a generalization
  * and still {@link matchesSource}; otherwise it goes null and STAYS null. Nothing
  * here ever searches the generalizations for a match — a broken node only
- * reattaches when the user says so (see {@link resetOntoSource}).
+ * reattaches when the user says so (see {@link convertToOverlay}).
  */
 export function derivePartsAndRef(
   nodeParts: ILinkNode[],
@@ -761,39 +817,4 @@ export function partsAfterGenChange(params: {
     oldParts: tagged,
     sourceId,
   });
-}
-
-/**
- * Reattach a node to generalization `source`: a HARD RESET of everything the node
- * does not OWN. Parts sourced from any other generalization are discarded, and
- * every adopted part is re-pointed at the source — discarding per-part switches.
- * The source's parts lead, in the source's order; the node's own parts follow, in
- * their current relative order. Also serves an overall-source SWITCH on a node
- * that isn't broken, so it is destructive by design.
- */
-export function resetOntoSource(
-  nodeParts: ILinkNode[],
-  source: Gen,
-): ILinkNode[] {
-  const byId = new Map(nodeParts.map((p) => [p.id, p]));
-  const ownedIds = new Set(nodeParts.filter(isOwnedPart).map((p) => p.id));
-
-  const adopted = source.parts.map((sp) => {
-    const existing = byId.get(sp.id);
-    // A part the node owns stays owned, even where the source also provides it.
-    if (existing && ownedIds.has(sp.id)) return existing;
-    const node: ILinkNode = {
-      id: sp.id,
-      inheritedFrom: childSourceOf(sp, source.id),
-    };
-    const title = existing?.title ?? sp.title;
-    if (title !== undefined) node.title = title;
-    if (existing ? existing.optional : sp.optional) node.optional = true;
-    return node;
-  });
-  const adoptedIds = new Set(source.parts.map((p) => p.id));
-  const own = nodeParts.filter(
-    (p) => ownedIds.has(p.id) && !adoptedIds.has(p.id),
-  );
-  return [...adopted, ...own];
 }

@@ -5,81 +5,91 @@ import { NODES } from "@components/lib/firestoreClient/collections";
 import { ICollection, INode, NodeChange } from "@components/types/INode";
 import {
   HttpError,
-  getNode,
-  NodeCache,
   recordLogs,
   writeChangeLog,
 } from "@components/lib/server/hierarchy";
+import { asPartsCollections, toParts } from "@components/lib/server/parts";
 import {
-  asPartsCollections,
-  buildGensForAttach,
-  partsInheritanceEntry,
-  taggedPartsAndSource,
-  toParts,
-} from "@components/lib/server/parts";
-import {
-  childSourceOf,
-  derivePartsAndRef,
+  applySwitchSource,
   isOwnedPart,
+  toPartsNode,
+  PartsGraph,
 } from "@components/lib/server/partsModel";
+import {
+  computeInheritedPartsDetails,
+  fetchPartsContext,
+  makeResolvedOf,
+} from "@components/lib/server/partsAnnotation";
 
 /**
- * Switches which generalization a part is SPECIFICALLY inherited from. The
- * part's `inheritedFrom` becomes the owner resolved through the picked
- * generalization. Membership and order don't change, so the node's overall
- * inheritance is untouched. No isPartOf changes, no cascade.
+ * Switches which generalization a part is SPECIFICALLY inherited from: the
+ * part starts tracking the owner resolved through the picked gen — a virtual
+ * part mints a stored entry in its slot, an existing entry repoints.
+ * Membership and order don't change, so attachment is untouched.
  */
-async function applySwitchSource(ctx: {
+async function applySwitch(ctx: {
   nodeId: string;
   nodeData: INode;
   partId: string;
   genId: string;
   uname?: string;
   appName?: string;
-}): Promise<{ ok: true; ref: string | null; parts: ICollection[] }> {
+}): Promise<{ ok: true; parts: ICollection[] }> {
   const { nodeId, nodeData, partId, genId, uname, appName } = ctx;
-  const cache: NodeCache = new Map([[nodeId, nodeData]]);
 
-  const oldPartsCol = asPartsCollections(nodeData.properties?.parts);
-  const gens = await buildGensForAttach(nodeData, cache);
-  const { tagged, stored } = taggedPartsAndSource(nodeData, gens);
-
-  const gen = gens.find((g) => g.id === genId);
-  if (!gen) {
+  const nodeGenIds = new Set(
+    (nodeData.generalizations ?? []).flatMap((c) =>
+      (c.nodes ?? []).map((n) => n.id),
+    ),
+  );
+  if (!nodeGenIds.has(genId)) {
     throw new HttpError(400, "genId is not a generalization of this node");
   }
-  const part = tagged.find((p) => p.id === partId);
-  if (!part) throw new HttpError(400, "partId is not a part of this node");
-  if (isOwnedPart(part)) {
+
+  const { relatedNodes } = await fetchPartsContext(nodeData);
+  const graph: PartsGraph = new Map(
+    Object.values(relatedNodes).map((n) => [n.id, toPartsNode(n)]),
+  );
+  const resolvedOf = makeResolvedOf(relatedNodes);
+  const viewed = resolvedOf(nodeId).find((p) => p.id === partId);
+  if (!viewed) throw new HttpError(400, "partId is not a part of this node");
+  if (isOwnedPart(viewed)) {
     throw new HttpError(400, "this node owns the part; nothing to switch");
   }
-  const genPart = gen.parts.find((p) => p.id === partId);
-  if (!genPart) {
+  if (!resolvedOf(genId).some((p) => p.id === partId)) {
     throw new HttpError(400, "the generalization does not provide this part");
   }
 
-  const owner = childSourceOf(genPart, genId);
-  const edited = tagged.map((p) =>
-    p.id === partId ? { ...p, inheritedFrom: owner } : p,
+  const { parts, partsInheritance } = applySwitchSource(
+    nodeId,
+    graph,
+    partId,
+    genId,
   );
 
-  const {
-    parts: newParts,
-    sourceId: newSource,
-    ref,
-  } = derivePartsAndRef(edited, gens, { oldParts: tagged, sourceId: stored });
-  const ownerTitle = ref ? ((await getNode(ref, cache))?.title ?? "") : "";
-  const partsEntry = partsInheritanceEntry(
-    ref,
-    ownerTitle,
-    nodeData.inheritance?.parts?.inheritanceType,
-  );
+  const oldPartsCol = asPartsCollections(nodeData.properties?.parts);
+  const side = toParts(parts);
+  const updatedNode = {
+    ...nodeData,
+    properties: { ...nodeData.properties, parts: side },
+    partsInheritance,
+  } as INode;
+  const updatedRelated = { ...relatedNodes, [nodeId]: updatedNode };
+  const resolvedOfUpdated = makeResolvedOf(updatedRelated);
 
-  await db.collection(NODES).doc(nodeId).update({
-    "properties.parts": toParts(newParts),
-    "inheritance.parts": partsEntry,
-    partsOverallSource: newSource,
-  });
+  await db
+    .collection(NODES)
+    .doc(nodeId)
+    .update({
+      "properties.parts": side,
+      partsInheritance,
+      inheritedPartsDetails: computeInheritedPartsDetails({
+        currentNode: updatedNode,
+        relatedNodes: updatedRelated,
+        resolvedOf: resolvedOfUpdated,
+      }),
+      resolvedParts: resolvedOfUpdated(nodeId),
+    });
 
   if (uname) {
     await writeChangeLog({
@@ -87,7 +97,7 @@ async function applySwitchSource(ctx: {
       modifiedBy: uname,
       modifiedProperty: "parts",
       previousValue: oldPartsCol,
-      newValue: toParts(newParts),
+      newValue: side,
       modifiedAt: new Date(),
       changeType: "modify elements",
       fullNode: nodeData,
@@ -95,7 +105,7 @@ async function applySwitchSource(ctx: {
     } as NodeChange);
   }
 
-  return { ok: true, ref, parts: toParts(newParts) };
+  return { ok: true, parts: side };
 }
 
 function fail(res: NextApiResponse, status: number, msg: string) {
@@ -133,9 +143,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       return fail(res, 403, "Node does not belong to this app");
     }
 
-    const result = await applySwitchSource({
+    const result = await applySwitch({
       nodeId,
-      nodeData,
+      nodeData: { ...nodeData, id: nodeId },
       partId,
       genId,
       uname,

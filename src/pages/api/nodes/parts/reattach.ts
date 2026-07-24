@@ -5,31 +5,27 @@ import { NODES } from "@components/lib/firestoreClient/collections";
 import { ICollection, INode, NodeChange } from "@components/types/INode";
 import {
   HttpError,
-  getNode,
-  NodeCache,
   recordLogs,
   writeChangeLog,
 } from "@components/lib/server/hierarchy";
+import { asPartsCollections, toParts } from "@components/lib/server/parts";
 import {
-  asPartsCollections,
-  buildGensForAttach,
-  partsInheritanceEntry,
-  partsNodes,
-  taggedPartsAndSource,
-  toParts,
-} from "@components/lib/server/parts";
-import {
-  derivePartsAndRef,
-  resetOntoSource,
+  convertToOverlay,
+  toPartsNode,
+  PartsGraph,
 } from "@components/lib/server/partsModel";
+import {
+  computeInheritedPartsDetails,
+  fetchPartsContext,
+  makeResolvedOf,
+} from "@components/lib/server/partsAnnotation";
 
 /**
  * Attaches a node's overall parts inheritance to one of its generalizations —
- * repairing a break, or moving a healthy node to a different source. Both are the
- * same HARD RESET: the node keeps only the parts it OWNS, adopts the source's
- * parts in the source's order, and re-points them at the source. Parts it drew
- * from another generalization are discarded, so this is destructive: the client
- * confirms first. Descendants are not touched yet (cascade comes later).
+ * repairing a break, or moving a healthy node to another source. Both are the
+ * same HARD RESET: only owned entries survive (one the source also provides
+ * keeps its slot), everything else follows the source virtually. Destructive:
+ * the client confirms first. Owned parts survive, so isPartOf is invariant.
  */
 async function applyReattach(ctx: {
   nodeId: string;
@@ -37,43 +33,47 @@ async function applyReattach(ctx: {
   sourceId: string;
   uname?: string;
   appName?: string;
-}): Promise<{ ok: true; ref: string | null; parts: ICollection[] }> {
+}): Promise<{ ok: true; parts: ICollection[] }> {
   const { nodeId, nodeData, sourceId, uname, appName } = ctx;
-  const cache: NodeCache = new Map([[nodeId, nodeData]]);
 
-  const oldPartsCol = asPartsCollections(nodeData.properties?.parts);
-  const oldParts = partsNodes(oldPartsCol);
-
-  const gens = await buildGensForAttach(nodeData, cache);
-  const source = gens.find((g) => g.id === sourceId);
-  if (!source) {
+  const nodeGenIds = new Set(
+    (nodeData.generalizations ?? []).flatMap((c) =>
+      (c.nodes ?? []).map((n) => n.id),
+    ),
+  );
+  if (!nodeGenIds.has(sourceId)) {
     throw new HttpError(400, "sourceId is not a generalization of this node");
   }
 
-  // Bridge a node the model has not written yet (establish ownership tags),
-  // so untagged parts don't all read as owned and survive the reset.
-  const { tagged } = taggedPartsAndSource(nodeData, gens);
-
-  // Reset onto the source, then re-derive: the reset list always matches, so the
-  // node comes back attached with `sourceId` recorded as its stored choice.
-  const reset = resetOntoSource(tagged, source);
-  const {
-    parts: newParts,
-    sourceId: newSource,
-    ref,
-  } = derivePartsAndRef(reset, gens, { oldParts: tagged, sourceId });
-  const ownerTitle = ref ? ((await getNode(ref, cache))?.title ?? "") : "";
-  const partsEntry = partsInheritanceEntry(
-    ref,
-    ownerTitle,
-    nodeData.inheritance?.parts?.inheritanceType,
+  const { relatedNodes } = await fetchPartsContext(nodeData);
+  const graph: PartsGraph = new Map(
+    Object.values(relatedNodes).map((n) => [n.id, toPartsNode(n)]),
   );
+  const { parts, partsInheritance } = convertToOverlay(nodeId, graph, sourceId);
 
-  await db.collection(NODES).doc(nodeId).update({
-    "properties.parts": toParts(newParts),
-    "inheritance.parts": partsEntry,
-    partsOverallSource: newSource,
-  });
+  const oldPartsCol = asPartsCollections(nodeData.properties?.parts);
+  const side = toParts(parts);
+  const updatedNode = {
+    ...nodeData,
+    properties: { ...nodeData.properties, parts: side },
+    partsInheritance,
+  } as INode;
+  const updatedRelated = { ...relatedNodes, [nodeId]: updatedNode };
+  const resolvedOfUpdated = makeResolvedOf(updatedRelated);
+
+  await db
+    .collection(NODES)
+    .doc(nodeId)
+    .update({
+      "properties.parts": side,
+      partsInheritance,
+      inheritedPartsDetails: computeInheritedPartsDetails({
+        currentNode: updatedNode,
+        relatedNodes: updatedRelated,
+        resolvedOf: resolvedOfUpdated,
+      }),
+      resolvedParts: resolvedOfUpdated(nodeId),
+    });
 
   if (uname) {
     await writeChangeLog({
@@ -81,7 +81,7 @@ async function applyReattach(ctx: {
       modifiedBy: uname,
       modifiedProperty: "parts",
       previousValue: oldPartsCol,
-      newValue: toParts(newParts),
+      newValue: side,
       modifiedAt: new Date(),
       changeType: "modify elements",
       fullNode: nodeData,
@@ -89,7 +89,7 @@ async function applyReattach(ctx: {
     } as NodeChange);
   }
 
-  return { ok: true, ref, parts: toParts(newParts) };
+  return { ok: true, parts: side };
 }
 
 function fail(res: NextApiResponse, status: number, msg: string) {
@@ -125,7 +125,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
     const result = await applyReattach({
       nodeId,
-      nodeData,
+      nodeData: { ...nodeData, id: nodeId },
       sourceId,
       uname,
       appName,
