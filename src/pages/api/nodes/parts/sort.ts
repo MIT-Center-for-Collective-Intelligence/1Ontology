@@ -5,24 +5,26 @@ import { NODES } from "@components/lib/firestoreClient/collections";
 import { ICollection, INode, NodeChange } from "@components/types/INode";
 import {
   HttpError,
-  getNode,
-  NodeCache,
   recordLogs,
   writeChangeLog,
 } from "@components/lib/server/hierarchy";
+import { asPartsCollections, toParts } from "@components/lib/server/parts";
 import {
-  asPartsCollections,
-  buildGensForAttach,
-  partsInheritanceEntry,
-  taggedPartsAndSource,
-  toParts,
-} from "@components/lib/server/parts";
-import { derivePartsAndRef } from "@components/lib/server/partsModel";
+  classifySort,
+  toPartsNode,
+  PartsGraph,
+} from "@components/lib/server/partsModel";
+import {
+  computeInheritedPartsDetails,
+  fetchPartsContext,
+  makeResolvedOf,
+} from "@components/lib/server/partsAnnotation";
 
 /**
- * Reorders a node's parts. Ordering inherited parts out of the overall source's
- * relative order BREAKS the overall inheritance but moving own parts around never does. 
- * Pure reorder, there is no isPartOf changes, and descendants are not touched yet.
+ * Reorders the resolved view. Moving only local entries re-anchors them and
+ * never breaks; changing the source parts' relative order BREAKS and stores
+ * the materialized list in the requested order. The "Switch To" pick's details
+ * ride along and seed the fresh annotation's userOverride.
  */
 async function applySort(ctx: {
   nodeId: string;
@@ -31,50 +33,58 @@ async function applySort(ctx: {
   inheritedPartsDetails?: any[];
   uname?: string;
   appName?: string;
-}): Promise<{ ok: true; ref: string | null; parts: ICollection[] }> {
-  const { nodeId, nodeData, orderedIds, inheritedPartsDetails, uname, appName } =
-    ctx;
-  const cache: NodeCache = new Map([[nodeId, nodeData]]);
+}): Promise<{ ok: true; parts: ICollection[] }> {
+  const {
+    nodeId,
+    nodeData,
+    orderedIds,
+    inheritedPartsDetails,
+    uname,
+    appName,
+  } = ctx;
 
-  const oldPartsCol = asPartsCollections(nodeData.properties?.parts);
-  const gens = await buildGensForAttach(nodeData, cache);
-  const { tagged, stored } = taggedPartsAndSource(nodeData, gens);
-
-  const byId = new Map(tagged.map((p) => [p.id, p]));
+  const { relatedNodes } = await fetchPartsContext(nodeData);
+  const graph: PartsGraph = new Map(
+    Object.values(relatedNodes).map((n) => [n.id, toPartsNode(n)]),
+  );
+  const currentIds = makeResolvedOf(relatedNodes)(nodeId).map((p) => p.id);
   const sameMembership =
-    orderedIds.length === tagged.length &&
-    orderedIds.every((id) => byId.has(id)) &&
-    new Set(orderedIds).size === orderedIds.length;
+    orderedIds.length === currentIds.length &&
+    new Set(orderedIds).size === orderedIds.length &&
+    orderedIds.every((id) => currentIds.includes(id));
   if (!sameMembership) {
     throw new HttpError(400, "orderedIds must be a permutation of the parts");
   }
-  const reordered = orderedIds.map((id) => byId.get(id)!);
 
-  const {
-    parts: newParts,
-    sourceId: newSource,
-    ref,
-  } = derivePartsAndRef(reordered, gens, { oldParts: tagged, sourceId: stored });
-  const ownerTitle = ref ? ((await getNode(ref, cache))?.title ?? "") : "";
-  const partsEntry = partsInheritanceEntry(
-    ref,
-    ownerTitle,
-    nodeData.inheritance?.parts?.inheritanceType,
-  );
+  const result = classifySort(nodeId, graph, orderedIds);
+  const side = toParts(result.parts);
+  const partsInheritance = result.breaks
+    ? result.partsInheritance
+    : (nodeData.partsInheritance ?? { source: null, overrides: {} });
 
-  const nodeUpdates: Record<string, any> = {
-    "properties.parts": toParts(newParts),
-    "inheritance.parts": partsEntry,
-    partsOverallSource: newSource,
-  };
-  // The "Switch To" pick rides along with its swap
-  if (Array.isArray(inheritedPartsDetails)) {
-    nodeUpdates.inheritedPartsDetails = inheritedPartsDetails.map((g) => ({
-      ...g,
-      createdAt: new Date(),
-    }));
-  }
-  await db.collection(NODES).doc(nodeId).update(nodeUpdates);
+  const updatedNode = {
+    ...nodeData,
+    properties: { ...nodeData.properties, parts: side },
+    partsInheritance,
+    ...(Array.isArray(inheritedPartsDetails) ? { inheritedPartsDetails } : {}),
+  } as INode;
+  const updatedRelated = { ...relatedNodes, [nodeId]: updatedNode };
+  const resolvedOfUpdated = makeResolvedOf(updatedRelated);
+
+  const oldPartsCol = asPartsCollections(nodeData.properties?.parts);
+  await db
+    .collection(NODES)
+    .doc(nodeId)
+    .update({
+      "properties.parts": side,
+      partsInheritance,
+      inheritedPartsDetails: computeInheritedPartsDetails({
+        currentNode: updatedNode,
+        relatedNodes: updatedRelated,
+        resolvedOf: resolvedOfUpdated,
+      }),
+      resolvedParts: resolvedOfUpdated(nodeId),
+    });
 
   if (uname) {
     await writeChangeLog({
@@ -82,7 +92,7 @@ async function applySort(ctx: {
       modifiedBy: uname,
       modifiedProperty: "parts",
       previousValue: oldPartsCol,
-      newValue: toParts(newParts),
+      newValue: side,
       modifiedAt: new Date(),
       changeType: "sort elements",
       fullNode: nodeData,
@@ -90,7 +100,7 @@ async function applySort(ctx: {
     } as NodeChange);
   }
 
-  return { ok: true, ref, parts: toParts(newParts) };
+  return { ok: true, parts: side };
 }
 
 function fail(res: NextApiResponse, status: number, msg: string) {
@@ -133,7 +143,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
     const result = await applySort({
       nodeId,
-      nodeData,
+      nodeData: { ...nodeData, id: nodeId },
       orderedIds,
       inheritedPartsDetails,
       uname,

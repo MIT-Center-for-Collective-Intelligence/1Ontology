@@ -70,7 +70,7 @@ interface InheritedPartsViewerProps {
   enableEdit: boolean;
   replaceWith: any;
   sortParts: (
-    newParts: ICollection[],
+    orderedIds: string[],
     inheritedPartsDetails?: InheritedPartsDetail[] | null,
   ) => Promise<void>;
   switchPartSource: (partId: string, genId: string) => Promise<void>;
@@ -389,23 +389,15 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
       const newToTitle = allNodes[newTo]?.title || xRow.toTitle || "";
       const oldToTitle = xRow.toTitle || allNodes[oldTo]?.title || "";
 
-      const sourceParts: ICollection[] | undefined =
-        currentVisibleNode.properties?.["parts"];
-      if (!sourceParts?.[0]) return;
-
-      // Swap the parts' positions so the picked part takes the old one's slot:
-      // the generalization row stays put and only its right column flips.
-      const updatedParts: ICollection[] = JSON.parse(
-        JSON.stringify(sourceParts),
-      );
-      const partsNodes = updatedParts[0].nodes;
-      const oldIdx = partsNodes.findIndex((n: any) => n.id === oldTo);
-      const newIdx = partsNodes.findIndex((n: any) => n.id === newTo);
+      // Swap the parts' positions in the RESOLVED view so the picked part
+      // takes the old one's slot: the generalization row stays put and only
+      // its right column flips.
+      const newOrder: string[] = resolvedParts.map((p: ILinkNode) => p.id);
+      const oldIdx = newOrder.indexOf(oldTo);
+      const newIdx = newOrder.indexOf(newTo);
       if (oldIdx === -1 || newIdx === -1) return;
-      const tmp = partsNodes[oldIdx];
-      partsNodes[oldIdx] = partsNodes[newIdx];
-      partsNodes[newIdx] = tmp;
-      const newOrder: string[] = partsNodes.map((n: any) => n.id);
+      newOrder[oldIdx] = newTo;
+      newOrder[newIdx] = oldTo;
 
       // Update details locally for an instant switch; the endpoint's fresh
       // annotation write reconciles.
@@ -479,7 +471,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
       // applies the usual reorder rules. The patched details ride along so
       // the user's pick survives a recompute.
       mutateInheritedPartsDetails?.(updatedDetails);
-      await sortParts(updatedParts, updatedDetails);
+      await sortParts(newOrder, updatedDetails);
 
       recordLogs({
         action: "switch to",
@@ -1713,32 +1705,15 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
         return;
       }
 
-      /* these have index 0 by default since parts don't have collections but that may change in the future */
-      const sourceCollectionIndex = 0;
-      const destinationCollectionIndex = 0;
+      // The rows render the RESOLVED view, so the new order is a move within
+      // its ids. The sort endpoint classifies whether it breaks.
+      const orderedIds = resolvedParts.map((p: ILinkNode) => p.id);
+      const fromIdx = orderedIds.indexOf(draggableId);
+      if (fromIdx === -1) return;
+      orderedIds.splice(fromIdx, 1);
+      orderedIds.splice(destination.index, 0, draggableId);
 
-      const source_ = currentVisibleNode.properties?.["parts"];
-      if (!source_) return;
-
-      // Work on a clone so we never mutate the live node state in place.
-      const newParts: ICollection[] = JSON.parse(JSON.stringify(source_));
-
-      const nodeIdx = newParts[sourceCollectionIndex].nodes.findIndex(
-        (link: ILinkNode) => link.id === draggableId,
-      );
-
-      if (nodeIdx !== -1) {
-        const moveValue = newParts[sourceCollectionIndex].nodes[nodeIdx];
-        newParts[sourceCollectionIndex].nodes.splice(nodeIdx, 1);
-        newParts[destinationCollectionIndex].nodes.splice(
-          destination.index,
-          0,
-          moveValue,
-        );
-      }
-
-      // Persist the reorder through the sort endpoint (may break overall).
-      sortParts(newParts);
+      sortParts(orderedIds);
 
       recordLogs({
         action: "sort elements",

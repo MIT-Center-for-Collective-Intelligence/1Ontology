@@ -35,6 +35,7 @@ import {
 import {
   applyRemove,
   applyReplace,
+  classifySort,
   toPartsNode,
   PartsGraph,
 } from "@components/lib/server/partsModel";
@@ -909,22 +910,31 @@ const StructuredProperty = ({
     ],
   );
 
+  // Reorder of the RESOLVED view; the instant state runs the same classify
+  // the endpoint does (local-entry moves re-anchor, source-order moves break).
   const sortParts = useCallback(
     async (
-      newParts: ICollection[],
+      orderedIds: string[],
       inheritedPartsDetails?: InheritedPartsDetail[] | null,
     ) => {
-      const orderedIds = (newParts[0]?.nodes ?? []).map((n: ILinkNode) => n.id);
+      if (!currentVisibleNode?.id) return;
+      const result = classifySort(
+        currentVisibleNode.id,
+        clientPartsGraph(),
+        orderedIds,
+      );
       await savePartsDelta(
         "/nodes/parts/sort",
         {
           orderedIds,
           ...(inheritedPartsDetails ? { inheritedPartsDetails } : {}),
         },
-        newParts,
+        [{ collectionName: "main", nodes: result.parts }],
+        [],
+        result.breaks ? result.partsInheritance : undefined,
       );
     },
-    [savePartsDelta],
+    [savePartsDelta, currentVisibleNode?.id, clientPartsGraph],
   );
 
   const togglePartOptional = useCallback(

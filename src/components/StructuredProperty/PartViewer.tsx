@@ -25,7 +25,7 @@ interface PartViewerProps {
   linkNodeRelation: any;
   unlinkNodeRelation: any;
   sortParts: (
-    newParts: any[],
+    orderedIds: string[],
     inheritedPartsDetails?: InheritedPartsDetail[] | null,
   ) => Promise<void>;
   switchPartSource: (partId: string, genId: string) => Promise<void>;
