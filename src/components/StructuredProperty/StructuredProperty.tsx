@@ -290,7 +290,7 @@ const StructuredProperty = ({
     [paginationState],
   );
 
-  const { resolvedParts } = useResolvedParts(
+  const { resolvedParts, loading: resolvedPartsLoading } = useResolvedParts(
     property === "parts" ? currentVisibleNode : null,
     relatedNodes,
     fetchNode,
@@ -1743,6 +1743,7 @@ const StructuredProperty = ({
             getAllGeneralizations={getAllGeneralizations}
             currentVisibleNode={currentVisibleNode}
             resolvedParts={resolvedParts}
+            resolvedPartsLoading={resolvedPartsLoading}
             relatedNodes={relatedNodes}
             fetchNode={fetchNode}
             addNodesToCache={addNodesToCache}

@@ -67,6 +67,7 @@ interface InheritedPartsViewerProps {
   setDisplayDetails: any;
   displayDetails: boolean;
   inheritedPartsDetails?: InheritedPartsDetail[] | null;
+  inheritedPartsRepairing?: boolean;
   currentVisibleNode: any;
   resolvedParts: ILinkNode[];
   navigateToNode?: any;
@@ -84,6 +85,7 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
   setDisplayDetails,
   displayDetails,
   inheritedPartsDetails,
+  inheritedPartsRepairing,
   currentVisibleNode,
   resolvedParts,
   triggerSearch,
@@ -775,10 +777,36 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                     transform: "translateX(-50%)",
                   }}
                 >
-                  <ArrowRightAltIcon
-                    sx={{ color: "orange", fontSize: "50px" }}
-                  />
+                  {/* Rows keep rendering; only the arrow hints that the
+                      annotation is recomputing. */}
+                  {inheritedPartsRepairing ? (
+                    <SyncedSpinner size={20} />
+                  ) : (
+                    <ArrowRightAltIcon
+                      sx={{ color: "orange", fontSize: "50px" }}
+                    />
+                  )}
                 </Box>
+
+                {inheritedPartsRepairing && (
+                  <Typography
+                    sx={{
+                      position: "absolute",
+                      top: "100%",
+                      left: "50%",
+                      transform: "translateX(-50%)",
+                      mt: "1px",
+                      fontSize: "0.75rem",
+                      fontWeight: "bold",
+                      fontStyle: "italic",
+                      color: "orange",
+                      whiteSpace: "nowrap",
+                      pointerEvents: "none",
+                    }}
+                  >
+                    Calculating inheritance…
+                  </Typography>
+                )}
 
                 <Box
                   sx={{

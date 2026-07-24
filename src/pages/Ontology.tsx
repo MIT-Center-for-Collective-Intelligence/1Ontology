@@ -133,7 +133,6 @@ import { getDatabase, onValue, ref } from "firebase/database";
 import { recordLogs } from "@components/lib/utils/helpers";
 import { pendingWrites } from "@components/lib/utils/pendingWrites";
 import { useHover } from "@components/lib/hooks/useHover";
-import { useInheritedPartsDetails } from "@components/lib/hooks/useInheritedPartsDetails";
 import { MemoizedToolbarSidebar } from "@components/components/Sidebar/ToolbarSidebar";
 import { NodeChange } from "@components/types/INode";
 import GuidLines from "@components/components/Guidelines/GuideLines";
@@ -1215,7 +1214,8 @@ const Ontology = ({
         for (const field of pending) {
           if (field.startsWith("properties.")) {
             const p = field.slice("properties.".length);
-            merged.properties[p] = prevAny.properties?.[p] ?? snapAny.properties?.[p];
+            merged.properties[p] =
+              prevAny.properties?.[p] ?? snapAny.properties?.[p];
           } else {
             merged[field] = prevAny[field] ?? snapAny[field];
           }
@@ -1603,7 +1603,12 @@ const Ontology = ({
 
       if (!node) {
         // Create minimal node with just id and title for instant highlighting
-        node = { id: nodeId, title: nodeTitle || "", appName, _isMinimal: true } as any;
+        node = {
+          id: nodeId,
+          title: nodeTitle || "",
+          appName,
+          _isMinimal: true,
+        } as any;
         setIsLoadingNodeDetails(true);
       } else {
         setIsLoadingNodeDetails(false);
@@ -1655,7 +1660,12 @@ const Ontology = ({
 
       if (!node) {
         // Create minimal node with just id and title for instant highlighting
-        node = { id: nodeId, title: nodeTitle || "", appName, _isMinimal: true } as any;
+        node = {
+          id: nodeId,
+          title: nodeTitle || "",
+          appName,
+          _isMinimal: true,
+        } as any;
         setIsLoadingNodeDetails(true);
       } else {
         setIsLoadingNodeDetails(false);

@@ -7,62 +7,64 @@ import {
 import { Post } from "@components/lib/utils/Post";
 import { getFirestore, doc, onSnapshot } from "firebase/firestore";
 import { NODES } from "@components/lib/firestoreClient/collections";
+import { pendingWrites } from "@components/lib/utils/pendingWrites";
 
-interface UseInheritedPartsDetailsReturn {
-  data: InheritedPartsDetail[] | null;
-  loading: boolean;
-  error: Error | null;
-  mutateData: (newData: InheritedPartsDetail[] | null) => void;
-  debouncedRefetch: () => void;
-  refetchNow: () => void;
-}
+/**
+ * Read-repair for the parts annotation: the stored pair (inheritedPartsDetails
+ * + resolvedParts) renders immediately; when the fresh resolution disagrees
+ * with the stored copy, ONE silent endpoint call repairs both on the doc.
+ */
+
+// The copy matches the fresh view when ids, order, sources and optional flags
+// all agree. Title drift is an accepted blind spot.
+const sameResolvedView = (
+  fresh: ILinkNode[],
+  stored?: ILinkNode[],
+): boolean => {
+  if (!stored || stored.length !== fresh.length) return false;
+  return fresh.every((p, i) => {
+    const s = stored[i];
+    return (
+      s.id === p.id &&
+      (s.inheritedFrom ?? null) === (p.inheritedFrom ?? null) &&
+      !!s.optional === !!p.optional
+    );
+  });
+};
 
 export const useInheritedPartsDetails = (
   currentVisibleNode?: INode | null,
   resolvedParts?: ILinkNode[],
-): UseInheritedPartsDetailsReturn => {
+  resolvedPartsLoading?: boolean,
+): {
+  data: InheritedPartsDetail[] | null;
+  repairing: boolean;
+  mutateData: (newData: InheritedPartsDetail[] | null) => void;
+} => {
   const [data, setData] = useState<InheritedPartsDetail[] | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
-
-  // Track which generalization IDs have fired their initial snapshot
-  const initialSnapshotFired = useRef<Set<string>>(new Set());
-  // Track the current node ID to discard stale API responses (prevent bugs while navigating nodes)
+  // True while a silent repair call is in flight — UI may hint (arrow spinner)
+  // but rows keep rendering from the resolved view.
+  const [repairing, setRepairing] = useState(false);
+  // Discard stale API responses while navigating nodes.
   const activeNodeIdRef = useRef<string | null>(null);
-  // Hold the debounce timer for refetch
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
-  // Hold a reference to fetchFromApi so debouncedRefetch can call it
-  const fetchFromApiRef = useRef<(() => void) | null>(null);
+  const initialSnapshotFired = useRef<Set<string>>(new Set());
+  const inFlightRef = useRef(false);
+  // One repair attempt per fresh-view state, so a disagreement the endpoint
+  // cannot settle (e.g. a stale chain node in the client cache) never loops.
+  const lastRepairKeyRef = useRef<string | null>(null);
+  const repairRef = useRef<() => void>(() => {});
 
   const mutateData = useCallback((newData: InheritedPartsDetail[] | null) => {
     setData(newData);
   }, []);
 
-  const debouncedRefetch = useCallback(() => {
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
-    }
-    debounceTimerRef.current = setTimeout(() => {
-      fetchFromApiRef.current?.();
-    }, 3000);
-  }, []);
-
-  const refetchNow = useCallback(() => {
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
-      debounceTimerRef.current = null;
-    }
-    fetchFromApiRef.current?.();
-  }, []);
-
   useEffect(() => {
-    setData(null);
-
     if (
       !currentVisibleNode?.id ||
       !currentVisibleNode.generalizations?.length
     ) {
       activeNodeIdRef.current = null;
+      setData(null);
       return;
     }
 
@@ -71,135 +73,82 @@ export const useInheritedPartsDetails = (
     const appName = currentVisibleNode.appName;
     activeNodeIdRef.current = nodeId;
     initialSnapshotFired.current = new Set();
+    lastRepairKeyRef.current = null;
+    setRepairing(false);
+    // Render the stored annotation at once; the comparison below decides
+    // whether it is fresh.
+    setData(currentVisibleNode.inheritedPartsDetails ?? null);
 
-    const fetchFromApi = () => {
-      if (activeNodeIdRef.current !== nodeId) return;
-      setLoading(true);
-      setError(null);
+    const repair = () => {
+      if (activeNodeIdRef.current !== nodeId || inFlightRef.current) return;
+      inFlightRef.current = true;
+      setRepairing(true);
       Post<{ success: boolean; data: InheritedPartsDetail[] }>(
         "/generate-inheritance-part-details",
         { nodeId, appName },
       )
         .then((result) => {
-          // Discard if user navigated away
           if (activeNodeIdRef.current !== nodeId) return;
-
-          if (result.success && result.data) {
-            setData(result.data);
-          } else {
-            console.error("API returned unsuccessful response");
-            setData([]);
-          }
+          if (result.success && result.data) setData(result.data);
         })
         .catch((err) => {
           if (activeNodeIdRef.current !== nodeId) return;
-          console.error("Error fetching inherited parts:", err);
-          setError(err as Error);
-          setData([]);
+          console.error("Error repairing inherited parts:", err);
         })
         .finally(() => {
-          if (activeNodeIdRef.current !== nodeId) return;
-          setLoading(false);
+          inFlightRef.current = false;
+          setRepairing(false);
         });
     };
+    repairRef.current = repair;
 
-    // Store fetchFromApi so debouncedRefetch can call it
-    fetchFromApiRef.current = fetchFromApi;
-
-    // Check if cached data on the node document is fresh
-    const cachedData = currentVisibleNode.inheritedPartsDetails;
-    const FIFTEEN_MINUTES = 15 * 60 * 1000;
-
-    const currentGenIds = currentVisibleNode.generalizations
-      .flatMap((c) => c.nodes)
-      .map((n) => n.id);
-
-    const cachedGenIds =
-      cachedData && Array.isArray(cachedData)
-        ? cachedData.map((calc: any) => calc.generalizationId)
-        : [];
-    const generalizationsMatch =
-      cachedData &&
-      Array.isArray(cachedData) &&
-      cachedData.length > 0 &&
-      currentGenIds.length === cachedGenIds.length &&
-      currentGenIds.every((id) => cachedGenIds.includes(id));
-
-    // If a current part has no annotation in the cached details, its row would
-    // stay stuck on the pending spinner, treat the cache as stale and recompute.
-    // Parts come from the RESOLVED view (ref chain), not the stored overlay.
-    const currentPartIds: string[] = (resolvedParts ?? []).map((n) => n.id);
-    const annotatedToIds = new Set<string>();
-    if (Array.isArray(cachedData)) {
-      for (const calc of cachedData) {
-        for (const d of calc.details ?? []) {
-          if (d.to) annotatedToIds.add(d.to);
-        }
-      }
-    }
-    const cacheCoversAllParts = currentPartIds.every((id) =>
-      annotatedToIds.has(id),
-    );
-
-    const isCacheFresh =
-      generalizationsMatch &&
-      cacheCoversAllParts &&
-      cachedData.every(
-        (calc: any) =>
-          calc.createdAt &&
-          Date.now() - calc.createdAt.toMillis() < FIFTEEN_MINUTES,
-      );
-
-    if (isCacheFresh) {
-      setData(cachedData);
-    } else {
-      fetchFromApi();
-    }
-
-    // Set up listeners on generalization nodes
+    // A gen edit can change the annotation without changing the resolved view
+    // (x rows, titles) — any later snapshot triggers a silent repair.
     const genIds = currentVisibleNode.generalizations
       .flatMap((c) => c.nodes)
       .map((n) => n.id);
-
     const unsubscribes = genIds.map((genId) =>
       onSnapshot(doc(db, NODES, genId), () => {
-        // Skip the first snapshot (initial load)
         if (!initialSnapshotFired.current.has(genId)) {
           initialSnapshotFired.current.add(genId);
           return;
         }
-
-        // Any subsequent change — refetch
-        fetchFromApi();
+        lastRepairKeyRef.current = null;
+        repairRef.current();
       }),
     );
 
     return () => {
       unsubscribes.forEach((unsub) => unsub());
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
     };
   }, [currentVisibleNode?.id, currentVisibleNode?.generalizations?.length]);
 
-  // Refetch only when the set of parts changes (add/remove/replace), not on
-  // reorder or optional toggles. Sorted so order changes don't count. The set
-  // is the RESOLVED view, so a source's edits count too.
-  const partsSignature = [...new Set((resolvedParts ?? []).map((n) => n.id))]
-    .sort()
-    .join(",");
-  const prevPartsSignatureRef = useRef(partsSignature);
-
+  // Freshness check: only when the chain is fully resolved and no parts write
+  // is in flight (the instant patch legitimately diverges from the doc).
   useEffect(() => {
-    // Skip on first render or when node changes
-    if (prevPartsSignatureRef.current === partsSignature) return;
-    prevPartsSignatureRef.current = partsSignature;
-
-    // Parts changed -> refetch
-    if (fetchFromApiRef.current) {
-      debouncedRefetch();
+    const nodeId = currentVisibleNode?.id;
+    if (!nodeId || !currentVisibleNode?.generalizations?.length) return;
+    if (resolvedPartsLoading) return;
+    const pending = pendingWrites.fields(nodeId);
+    if (
+      pending.includes("properties.parts") ||
+      pending.includes("partsInheritance")
+    ) {
+      return;
     }
-  }, [partsSignature, debouncedRefetch]);
 
-  return { data, loading, error, mutateData, debouncedRefetch, refetchNow };
+    const fresh = resolvedParts ?? [];
+    if (sameResolvedView(fresh, currentVisibleNode.resolvedParts)) {
+      setData(currentVisibleNode.inheritedPartsDetails ?? []);
+      return;
+    }
+    const key = `${nodeId}::${fresh
+      .map((p) => `${p.id}|${p.inheritedFrom ?? ""}|${p.optional ? 1 : 0}`)
+      .join(",")}`;
+    if (lastRepairKeyRef.current === key) return;
+    lastRepairKeyRef.current = key;
+    repairRef.current();
+  }, [currentVisibleNode, resolvedParts, resolvedPartsLoading]);
+
+  return { data, repairing, mutateData };
 };

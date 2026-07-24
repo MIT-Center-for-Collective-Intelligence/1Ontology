@@ -15,6 +15,7 @@ interface PartViewerProps {
   getAllGeneralizations: any;
   currentVisibleNode: any;
   resolvedParts: ILinkNode[];
+  resolvedPartsLoading: boolean;
   relatedNodes: { [id: string]: any };
   fetchNode: (nodeId: string) => Promise<INode | null>;
   addNodesToCache?: (
@@ -51,6 +52,7 @@ const PartViewer: React.FC<PartViewerProps> = ({
   getAllGeneralizations,
   currentVisibleNode,
   resolvedParts,
+  resolvedPartsLoading,
   relatedNodes,
   fetchNode,
   addNodesToCache,
@@ -76,10 +78,13 @@ const PartViewer: React.FC<PartViewerProps> = ({
 
   const {
     data: inheritedPartsDetails,
-    loading: inheritedPartsLoading,
+    repairing: inheritedPartsRepairing,
     mutateData: mutateInheritedPartsDetails,
-    refetchNow,
-  } = useInheritedPartsDetails(currentVisibleNode, resolvedParts);
+  } = useInheritedPartsDetails(
+    currentVisibleNode,
+    resolvedParts,
+    resolvedPartsLoading,
+  );
 
   useEffect(() => {
     onDisplayDetailsChange?.(displayDetails);
@@ -135,9 +140,8 @@ const PartViewer: React.FC<PartViewerProps> = ({
           savingPartIds={savingPartIds}
           appName={appName}
           inheritedPartsDetails={inheritedPartsDetails}
-          inheritedPartsLoading={inheritedPartsLoading}
+          inheritedPartsRepairing={inheritedPartsRepairing}
           mutateInheritedPartsDetails={mutateInheritedPartsDetails}
-          refetchNow={refetchNow}
           clonedNodesQueue={clonedNodesQueue}
           approvePendingPart={(queuedId: string) =>
             saveNewSpecialization?.(queuedId, "main")
@@ -183,6 +187,7 @@ const PartViewer: React.FC<PartViewerProps> = ({
           navigateToNode={navigateToNode}
           displayDetails={displayDetails}
           inheritedPartsDetails={inheritedPartsDetails}
+          inheritedPartsRepairing={inheritedPartsRepairing}
         />
       )}
     </Box>

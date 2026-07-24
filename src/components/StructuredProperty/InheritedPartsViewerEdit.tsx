@@ -84,11 +84,10 @@ interface InheritedPartsViewerProps {
   addPart?: any;
   removePart?: any;
   inheritedPartsDetails?: InheritedPartsDetail[] | null;
-  inheritedPartsLoading?: boolean;
+  inheritedPartsRepairing?: boolean;
   mutateInheritedPartsDetails?: (
     newData: InheritedPartsDetail[] | null,
   ) => void;
-  refetchNow?: () => void;
   clonedNodesQueue?: {
     [nodeId: string]: { title: string; id: string; property: string };
   };
@@ -122,9 +121,8 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
   setDisplayDetails,
   appName,
   inheritedPartsDetails,
-  inheritedPartsLoading,
+  inheritedPartsRepairing,
   mutateInheritedPartsDetails,
-  refetchNow,
   clonedNodesQueue,
   approvePendingPart,
   cancelPendingPart,
@@ -409,7 +407,8 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
       partsNodes[newIdx] = tmp;
       const newOrder: string[] = partsNodes.map((n: any) => n.id);
 
-      // Update details locally for an instant switch; refetchNow reconciles.
+      // Update details locally for an instant switch; the endpoint's fresh
+      // annotation write reconciles.
       const updatedDetails: InheritedPartsDetail[] | null =
         inheritedPartsDetails
           ? JSON.parse(JSON.stringify(inheritedPartsDetails))
@@ -481,7 +480,6 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
       // the user's pick survives a recompute.
       mutateInheritedPartsDetails?.(updatedDetails);
       await sortParts(updatedParts, updatedDetails);
-      refetchNow?.();
 
       recordLogs({
         action: "switch to",
@@ -504,9 +502,8 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
     }
   };
 
-  // onAddPart/onRemovePart/onReplacePart route through saveParts. Rows derive
-  // from properties.parts, so they update at once; a new part shows a pending
-  // spinner until the recompute fills its annotation.
+  // Rows derive from the resolved view, so they update at once; a new part
+  // shows no symbol until the endpoint's annotation write lands.
   const onAddPart = (partId: string) => {
     addPart(partId);
   };
@@ -532,7 +529,6 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
       mutateInheritedPartsDetails?.(updated);
     }
     await replaceWith(oldPartId, newPartId);
-    refetchNow?.();
   };
 
   const onApprovePendingPart = async (queuedId: string, title: string) => {
@@ -744,43 +740,15 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
       );
     }
 
+    // No annotation for this gen yet: rows still render from the resolved
+    // view, just without symbols, until the silent repair fills them in.
     const cachedGeneralizationData = inheritedPartsDetails?.find(
       (calc) => calc.generalizationId === generalizationId,
     );
 
-    if (!inheritedPartsDetails || !cachedGeneralizationData) {
-      return (
-        <Box>
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 1,
-              py: 2,
-            }}
-          >
-            <SyncedSpinner size={16} />
-            <Typography
-              variant="body2"
-              sx={{
-                color: (theme) =>
-                  theme.palette.mode === "light" ? "#95a5a6" : "#7f8c8d",
-                fontStyle: "italic",
-                fontSize: "0.75rem",
-              }}
-            >
-              Loading...
-            </Typography>
-          </Box>
-          {pendingRowsList}
-        </Box>
-      );
-    }
-
-    const details = cachedGeneralizationData.details || [];
+    const details = cachedGeneralizationData?.details || [];
     const nonPickedOnes = Object.entries(
-      cachedGeneralizationData.nonPickedOnes || {},
+      cachedGeneralizationData?.nonPickedOnes || {},
     ).reduce(
       (acc, [key, value]) => {
         acc[key] = value.map((item) => item.id);
@@ -790,7 +758,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
     );
     // Rows come from the RESOLVED parts view, so edits show at once. details
     // is just an annotation lookup (from/symbol/switch options); a part with
-    // no entry yet renders `pending`. optional/optionalChange are read live.
+    // no entry yet shows no symbol. optional/optionalChange are read live.
     const detailByTo = new Map<string, any>();
     for (const d of details) {
       if (d.to) detailByTo.set(d.to, d);
@@ -810,7 +778,6 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
           ...entry,
           toOptional: liveOptional,
           optionalChange,
-          pending: false,
           inheritedFrom: partNode.inheritedFrom,
         };
       }
@@ -828,7 +795,6 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
         toOptional: liveOptional,
         optionalChange: "none",
         hops: 0,
-        pending: true,
         inheritedFrom: partNode.inheritedFrom,
       };
     });
@@ -1058,20 +1024,6 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                       <ListItemIcon sx={{ minWidth: "auto" }}>
                         {savingPartIds.has(entry.to) ? (
                           <Tooltip title="Linking this part…" placement="top">
-                            <span
-                              style={{
-                                display: "inline-flex",
-                                cursor: "default",
-                              }}
-                            >
-                              <SyncedSpinner size={18} />
-                            </span>
-                          </Tooltip>
-                        ) : entry.pending ? (
-                          <Tooltip
-                            title="Generating inheritance for this part"
-                            placement="top"
-                          >
                             <span
                               style={{
                                 display: "inline-flex",
@@ -1616,7 +1568,6 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                       sx={{ p: 0.5 }}
                       onClick={async () => {
                         await addPartFromGen(entry.from, generalizationId);
-                        refetchNow?.();
                       }}
                     >
                       <AddIcon
@@ -1753,12 +1704,6 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
   const activeGeneralization = generalizations.find((g) => g.id === activeTab);
   const activeGenId = activeGeneralization?.id;
   const activeGenTitle = activeGeneralization?.title;
-  // Only turn the arrow into a spinner when rows are actually showing. If the
-  // active gen has no details yet, the tab body shows its own "Loading…", so a
-  // second spinner here would be redundant.
-  const showRecomputeSpinner =
-    !!inheritedPartsLoading &&
-    !!inheritedPartsDetails?.some((c) => c.generalizationId === activeGenId);
   const handleSorting = (e: any) => {
     try {
       // draggableId === the part id (see the Draggable above).
@@ -1976,15 +1921,16 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                 whiteSpace: "nowrap",
               }}
             >
-              {/* Spinner + label while the gen→node mapping recomputes. */}
-              {showRecomputeSpinner ? (
+              {/* Rows keep rendering from the resolved view; only the arrow
+                  hints that the annotation is recomputing. */}
+              {inheritedPartsRepairing ? (
                 <SyncedSpinner size={20} />
               ) : (
                 <ArrowRightAltIcon sx={{ color: "orange", fontSize: "50px" }} />
               )}
             </Box>
 
-            {showRecomputeSpinner && (
+            {inheritedPartsRepairing && (
               <Typography
                 sx={{
                   position: "absolute",
@@ -2000,7 +1946,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                   pointerEvents: "none",
                 }}
               >
-                Generating inheritance…
+                Calculating inheritance…
               </Typography>
             )}
 
