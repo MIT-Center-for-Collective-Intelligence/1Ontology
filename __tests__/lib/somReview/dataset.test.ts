@@ -372,71 +372,80 @@ describe("Society of Mind review dataset", () => {
   });
 });
 
-describe("Rob post-content-review wave", () => {
-  const dataset = loadDataset();
+describe("Rob structure-review wave", () => {
+  const datasetRoot = path.join(
+    process.cwd(),
+    "Sell_Society_of_Mind_Review_UI_Handoff_2026-07-15",
+    "review-datasets-rob-structure-wave-2026-07-24",
+  );
+  const dataset = loadDataset(datasetRoot);
+  const source = loadOntologySnapshot(datasetRoot, dataset.manifest);
 
-  it("is pinned to the isolated ontology with Rob's approved content changes", () => {
-    expect(dataset.datasetVersion).toBe("sell-rob-content-wave-2026-07-24-v1");
-    expect(dataset.recordsById.size).toBe(128);
+  it("is pinned to the isolated ontology with both approved merges applied", () => {
+    expect(dataset.datasetVersion).toBe(
+      "sell-rob-structure-wave-2026-07-24-v1",
+    );
+    expect(dataset.recordsById.size).toBe(123);
     expect(dataset.manifest.sourceSnapshot).toMatchObject({
-      ontologyAppId: "final-hierarchy-with-o*net-rob-content-review-2026-07-24",
+      ontologyAppId:
+        "final-hierarchy-with-o*net-rob-structure-review-2026-07-24",
       ontologyName:
-        "Final Hierarchy with O*Net - Rob Content Review 2026-07-24",
+        "Final Hierarchy with O*Net - Rob Structure Review 2026-07-24",
       environment: "production",
-      nodeCount: 130,
-      sellNodeCount: 127,
+      nodeCount: 128,
+      sellNodeCount: 125,
       referenceNodeCount: 3,
-      edgeCount: 165,
+      edgeCount: 163,
     });
     expect(dataset.manifest.appliedReviewCycle).toMatchObject({
       auditFile: "diagnostics/content_application_audit.json",
     });
+
+    expect(source.index.idsByTitle.has("Lease out")).toBe(false);
+    expect(source.index.idsByTitle.has("Sell Merchandise")).toBe(false);
+    const rentOut = source.index.nodesById.get(
+      source.index.idsByTitle.get("Rent out")?.[0] || "",
+    );
+    const sellProducts = source.index.nodesById.get(
+      source.index.idsByTitle.get("Sell Products")?.[0] || "",
+    );
+    expect(rentOut?.actionAlternatives).toContain("Lease out");
+    expect(sellProducts?.actionAlternatives).toContain("Sell Merchandise");
   });
 
-  it("releases only the remaining content corrections", () => {
-    expect(isIssueTypeReleased(dataset, "duplicate-synonym")).toBe(true);
-    expect(isIssueTypeReleased(dataset, "node-merge")).toBe(true);
-    expect(isIssueTypeReleased(dataset, "flat-list-grouping")).toBe(false);
-    expect(isIssueTypeReleased(dataset, "placement")).toBe(false);
+  it("releases structure diagnoses and their gated exact relocations", () => {
+    expect(isIssueTypeReleased(dataset, "flat-list-grouping")).toBe(true);
+    expect(isIssueTypeReleased(dataset, "compound-object-grouping")).toBe(true);
+    expect(isIssueTypeReleased(dataset, "collection-design")).toBe(true);
+    expect(isIssueTypeReleased(dataset, "placement")).toBe(true);
+    expect(isIssueTypeReleased(dataset, "wrong-verb")).toBe(true);
+    expect(isIssueTypeReleased(dataset, "relocation")).toBe(true);
+    expect(isIssueTypeReleased(dataset, "description-enrichment")).toBe(false);
+    expect(isIssueTypeReleased(dataset, "missing-activity")).toBe(false);
     expect(
       [...dataset.recordsById.values()].map(
         (record) => record.reviewerView.context.type,
       ),
-    ).toEqual(expect.arrayContaining(["duplicate-comparison", "merge-action"]));
+    ).toEqual(
+      expect.arrayContaining([
+        "grouping-outline",
+        "collection-design",
+        "placement-comparison",
+        "relocation-action",
+      ]),
+    );
   });
 
-  it("turns Rob's two corrections into focused diagnoses and exact actions", () => {
+  it("removes completed identity proposals and all active absorbed-node references", () => {
     const duplicateRecords = [...dataset.recordsById.values()].filter(
       (record) => record.issueType === "duplicate-synonym",
     );
-    expect(duplicateRecords).toHaveLength(2);
-    expect(
-      duplicateRecords.map((record) => [
-        record.reviewerView.context.canonicalTitle,
-        record.reviewerView.context.candidateSynonymTitle,
-      ]),
-    ).toEqual(
-      expect.arrayContaining([
-        ["Rent out", "Lease out"],
-        ["Sell Products", "Sell Merchandise"],
-      ]),
-    );
-
-    const merchandise = duplicateRecords.find(
-      (record) =>
-        record.reviewerView.context.candidateSynonymTitle ===
-        "Sell Merchandise",
-    );
-    expect(merchandise.reviewerView.context).toMatchObject({
-      canonicalParentTitle: "Sell (Other)",
-      candidateParentTitle: "Sell physical objects",
-    });
+    expect(duplicateRecords).toHaveLength(0);
     expect(
       [...dataset.recordsById.values()].every(
         (record) =>
-          !["Sell Makeup", "Sell (Physical Object)", "Sell (Information)"].some(
-            (title) =>
-              JSON.stringify(record.reviewerView.context).includes(title),
+          !["Lease out", "Sell Merchandise"].some((title) =>
+            JSON.stringify(record.reviewerView.context).includes(title),
           ),
       ),
     ).toBe(true);
@@ -444,12 +453,7 @@ describe("Rob post-content-review wave", () => {
     const mergeActions = [...dataset.recordsById.values()].filter(
       (record) => record.issueType === "node-merge",
     );
-    expect(mergeActions).toHaveLength(2);
-    expect(
-      mergeActions.every(
-        (record) => record.workflow.dependsOnProposalIds.length === 1,
-      ),
-    ).toBe(true);
+    expect(mergeActions).toHaveLength(0);
   });
 
   it("regenerates grouping inputs after the approved Makeup merge", () => {
@@ -464,5 +468,22 @@ describe("Rob post-content-review wave", () => {
       "Sell Hair Care Products",
       "Sell Nail Care Products",
     ]);
+  });
+
+  it("regenerates the collection design around the canonical Rent out node", () => {
+    const collection = [...dataset.recordsById.values()].find(
+      (record) => record.issueType === "collection-design",
+    );
+    expect(collection.reviewerView.context).toMatchObject({
+      currentChildren: ["Rent out"],
+      proposedBranches: [
+        { title: "Sell ownership", status: "new", children: [] },
+        {
+          title: "Sell temporary use",
+          status: "new",
+          children: ["Rent out"],
+        },
+      ],
+    });
   });
 });

@@ -1,0 +1,12 @@
+{"proposalId":"som-53dd3c46064866e4ff6e","issueType":"description-enrichment","sourceFile":"all_proposals.jsonl","reason":"som-53dd3c46064866e4ff6e: Current ontology node does not exist: Sell Merchandise"}
+{"proposalId":"som-af5752d64f929944a380","issueType":"duplicate-synonym","sourceFile":"all_proposals.jsonl","reason":"som-af5752d64f929944a380: Current ontology node does not exist: Lease out"}
+{"proposalId":"som-e4cc4a540efc8a8607f7","issueType":"duplicate-synonym","sourceFile":"all_proposals.jsonl","reason":"som-e4cc4a540efc8a8607f7: Current ontology node does not exist: Sell Merchandise"}
+{"proposalId":"som-46e2f31aa742a0a8a177","issueType":"flat-list-grouping","sourceFile":"all_proposals.jsonl","reason":"som-46e2f31aa742a0a8a177: Current ontology node does not exist: Sell Merchandise"}
+{"proposalId":"som-5ede8dae2628b8b51773","issueType":"compound-object-grouping","sourceFile":"all_proposals.jsonl","reason":"som-5ede8dae2628b8b51773: Current ontology node does not exist: Sell Merchandise"}
+{"proposalId":"som-4521b80df1041cc9c236","issueType":"compound-object-grouping","sourceFile":"all_proposals.jsonl","reason":"som-4521b80df1041cc9c236: Current ontology node does not exist: Sell Merchandise"}
+{"proposalId":"som-bbc140f324cdec1d6a1c","issueType":"compound-object-grouping","sourceFile":"all_proposals.jsonl","reason":"som-bbc140f324cdec1d6a1c: Current ontology node does not exist: Sell Merchandise"}
+{"proposalId":"som-ed320036fe6d1f2604da","issueType":"compound-object-grouping","sourceFile":"all_proposals.jsonl","reason":"som-ed320036fe6d1f2604da: Current ontology node does not exist: Sell Merchandise"}
+{"proposalId":"som-7c859dfb0fe8cb34bb22","issueType":"compound-object-grouping","sourceFile":"all_proposals.jsonl","reason":"som-7c859dfb0fe8cb34bb22: Current ontology node does not exist: Sell Merchandise"}
+{"proposalId":"som-ba43d75c33d7e7b18248","issueType":"collection-design","sourceFile":"all_proposals.jsonl","reason":"som-ba43d75c33d7e7b18248: Current ontology node does not exist: Lease out"}
+{"proposalId":"som-9551307c7a40c479a755","issueType":"node-merge","sourceFile":"all_proposals.jsonl","reason":"som-9551307c7a40c479a755: Current ontology node does not exist: Lease out"}
+{"proposalId":"som-c0fc3665add4fbaf4b03","issueType":"node-merge","sourceFile":"all_proposals.jsonl","reason":"som-c0fc3665add4fbaf4b03: Current ontology node does not exist: Sell Merchandise"}

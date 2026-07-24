@@ -661,10 +661,10 @@ export const ReviewPage = () => {
                   </Stack>
                 </Stack>
                 <Stack
-                  direction="row"
-                  alignItems="baseline"
+                  direction={{ xs: "column", sm: "row" }}
+                  alignItems={{ xs: "flex-start", sm: "baseline" }}
                   justifyContent="space-between"
-                  spacing={2}
+                  spacing={{ xs: 0.25, sm: 2 }}
                 >
                   <Typography
                     component="h1"
@@ -678,6 +678,7 @@ export const ReviewPage = () => {
                       flex: "0 0 auto",
                       color: "text.secondary",
                       fontWeight: 700,
+                      alignSelf: { xs: "flex-end", sm: "auto" },
                     }}
                   >
                     {revisionItem ? (

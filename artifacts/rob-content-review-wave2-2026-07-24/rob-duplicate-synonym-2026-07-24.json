@@ -1,0 +1,131 @@
+{
+  "schemaVersion": "som-reviewer-benchmark-v1",
+  "exportedAt": "2026-07-24T18:04:32.100Z",
+  "firestoreProjectId": "ontology-41607",
+  "datasetVersion": "sell-rob-content-wave-2026-07-24-v1",
+  "sourceOntology": "firestore://ontology-41607/final-hierarchy-with-o*net-rob-content-review-2026-07-24",
+  "sourceOntologySha256": "f0886a5191886155966373396c391eb64ff8cb8e4185e3530207eccea6523613",
+  "issueType": "duplicate-synonym",
+  "reviewer": {
+    "label": "rob-laubacher"
+  },
+  "counts": {
+    "expected": 2,
+    "reviewed": 2,
+    "agreed": 2,
+    "disagreed": 0,
+    "missing": 0,
+    "orphanedHistoricalResponses": 0
+  },
+  "missingProposalIds": [],
+  "orphanedResponses": [],
+  "sourceNodeEvidence": [
+    {
+      "nodeId": "896c40f92949506cea6f0fa16ff5",
+      "title": "Lease out",
+      "appName": "final-hierarchy-with-o*net-rob-content-review-2026-07-24",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": []
+        }
+      ]
+    },
+    {
+      "nodeId": "23af148e489e6830f711481c9f5c",
+      "title": "Sell Merchandise",
+      "appName": "final-hierarchy-with-o*net-rob-content-review-2026-07-24",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "faf7929c884e13d16e970708f03e",
+              "linkTitle": "(O*Net) 13237 - Circulate among potential customers or travel by foot, truck, automobile, or bicycle to deliver or sell merchandise or services.",
+              "title": "(O*Net) 13237 - Circulate among potential customers or travel by foot, truck, automobile, or bicycle to deliver or sell merchandise or services.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Deliver Service",
+                "Deliver Merchandise",
+                "Travel Customer",
+                "Circulate Customer",
+                "Sell Services",
+                "Sell Merchandise"
+              ]
+            },
+            {
+              "nodeId": "fa72f4680c3f540c29c0f343e874",
+              "linkTitle": "(O*Net) 1822 - Manage pharmacy operations, hiring or supervising staff, performing administrative duties, or buying or selling non-pharmaceutical merchandise.",
+              "title": "(O*Net) 1822 - Manage pharmacy operations, hiring or supervising staff, performing administrative duties, or buying or selling non-pharmaceutical merchandise.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Perform Duty",
+                "Buy Merchandise",
+                "Hire Staff",
+                "Sell Merchandise",
+                "Manage Operation",
+                "Oversee Staff"
+              ]
+            },
+            {
+              "nodeId": "f361bbce9e89760aa58e2e816603",
+              "linkTitle": "(O*Net) 18843 - Sell funeral services, products, or merchandise to clients.",
+              "title": "(O*Net) 18843 - Sell funeral services, products, or merchandise to clients.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell Services",
+                "Sell Merchandise",
+                "Sell Funeral Products"
+              ]
+            },
+            {
+              "nodeId": "4c3a40842c5a25db1155aa984a9e",
+              "linkTitle": "(O*Net) 713 - Sell or arrange for delivery, insurance, financing, or service contracts for merchandise.",
+              "title": "(O*Net) 713 - Sell or arrange for delivery, insurance, financing, or service contracts for merchandise.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell Merchandise",
+                "Arrange Delivery",
+                "Arrange Financing",
+                "Arrange Contract",
+                "Arrange Insurance"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "judgments": [
+    {
+      "proposalId": "som-af5752d64f929944a380",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "896c40f92949506cea6f0fa16ff5",
+      "parentNodeId": "f9ffea95e747900da7ab9d22f60e",
+      "currentTitle": "",
+      "proposedTitle": "",
+      "linkedTasks": [],
+      "proposedNodes": [],
+      "agentReasoning": "Both activities grant temporary use of an asset for payment. Lease often suggests a more formal or longer arrangement, but that difference may describe contract terms rather than a distinct work activity.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-e4cc4a540efc8a8607f7",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "23af148e489e6830f711481c9f5c",
+      "parentNodeId": "4b00d4e4e6f681b39f8634f98e2f",
+      "currentTitle": "",
+      "proposedTitle": "",
+      "linkedTasks": [],
+      "proposedNodes": [],
+      "agentReasoning": "Rob's review identified Sell Products as the clearer work-language label for the generic merchandise-selling activity. This revised proposal tests that identity directly without treating Sell Items as the canonical title.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    }
+  ]
+}
