@@ -11,7 +11,6 @@ import {
   asCollections,
   addToMain,
   addToCollection,
-  getNode,
   walkSpecializations,
   buildSpecializationNode,
   removeFromUnclassified,
@@ -19,13 +18,7 @@ import {
   writeChangeLog,
   recordLogs,
 } from "@components/lib/server/hierarchy";
-import {
-  buildGensForAttach,
-  partsInheritanceEntry,
-  taggedPartsAndSource,
-  toParts,
-} from "@components/lib/server/parts";
-import { derivePartsAndRef } from "@components/lib/server/partsModel";
+import { partsNodes, toParts } from "@components/lib/server/parts";
 
 const SCALAR_TYPES = new Set([
   "string",
@@ -174,7 +167,7 @@ async function applyClone(ctx: {
     JSON.stringify(sourceSpecsBefore),
   );
   // When the node has no parent when created from properties other than "specializations",
-  // adds it to "unclassified" collection of the root 
+  // adds it to "unclassified" collection of the root
   addToSide(sourceSpecs, sourceCollectionName, { id: newNodeId, title });
   await db
     .collection(NODES)
@@ -212,36 +205,16 @@ async function applyClone(ctx: {
       [targetProperty]: side,
     } as INode);
   } else if (isParts) {
-    // The new clone is a part no generalization provides, so it is owned by the node
-    // its isPartOf backlink was seeded on the new node above.
+    // The new clone is an owned part (its isPartOf backlink was seeded above):
+    // append it to the stored entries; appending never breaks attachment.
     sideBefore = asCollections(currentNode.properties?.parts);
-    const gens = await buildGensForAttach(currentNode, cache);
-    const { tagged, stored } = taggedPartsAndSource(currentNode, gens);
-    const {
-      parts: newParts,
-      sourceId: newSource,
-      ref,
-    } = derivePartsAndRef([...tagged, { id: newNodeId, title }], gens, {
-      oldParts: tagged,
-      sourceId: stored,
-    });
-    side = toParts(newParts);
-    const ownerTitle = ref ? ((await getNode(ref, cache))?.title ?? "") : "";
-    const partsEntry = partsInheritanceEntry(
-      ref,
-      ownerTitle,
-      currentNode.inheritance?.parts?.inheritanceType,
-    );
+    side = toParts([...partsNodes(sideBefore), { id: newNodeId, title }]);
     await db.collection(NODES).doc(currentNodeId).update({
       "properties.parts": side,
-      "inheritance.parts": partsEntry,
-      partsOverallSource: newSource,
     });
     cache.set(currentNodeId, {
       ...currentNode,
       properties: { ...currentNode.properties, parts: side },
-      inheritance: { ...currentNode.inheritance, parts: partsEntry },
-      partsOverallSource: newSource,
     } as INode);
   } else {
     // Generic link property: resolve the value the user saw (through the
@@ -250,9 +223,9 @@ async function applyClone(ctx: {
     const inheritedRef = currentNode.inheritance?.[targetProperty]?.ref;
     let refData: INode | undefined;
     if (inheritedRef) {
-      refData = (
-        await db.collection(NODES).doc(inheritedRef).get()
-      ).data() as INode | undefined;
+      refData = (await db.collection(NODES).doc(inheritedRef).get()).data() as
+        | INode
+        | undefined;
     }
     const base =
       refData && hasOwn(refData.properties, targetProperty)
@@ -268,7 +241,8 @@ async function applyClone(ctx: {
       updates[`inheritance.${targetProperty}.ref`] = null;
       updates[`inheritance.${targetProperty}.title`] = "";
       if (refData?.textValue && hasOwn(refData.textValue, targetProperty)) {
-        updates[`textValue.${targetProperty}`] = refData.textValue[targetProperty];
+        updates[`textValue.${targetProperty}`] =
+          refData.textValue[targetProperty];
       }
     }
     await db.collection(NODES).doc(currentNodeId).update(updates);
@@ -403,7 +377,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     if (newSnap.exists) return fail(res, 409, "newNodeId already exists");
     const source = sourceSnap.data() as INode | undefined;
     const currentNode = currentSnap.data() as INode | undefined;
-    if (!source || source.deleted) return fail(res, 404, "Source node not found");
+    if (!source || source.deleted)
+      return fail(res, 404, "Source node not found");
     if (!currentNode || currentNode.deleted) {
       return fail(res, 404, "Target node not found");
     }
@@ -438,7 +413,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     });
     return res.status(200).json(result);
   } catch (error: any) {
-    if (error instanceof HttpError) return fail(res, error.status, error.message);
+    if (error instanceof HttpError)
+      return fail(res, error.status, error.message);
     console.error("nodes/hierarchy/cloning error", error);
     recordLogs(
       {

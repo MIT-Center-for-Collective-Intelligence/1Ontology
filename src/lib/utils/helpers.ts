@@ -1,9 +1,4 @@
-import {
-  ICollection,
-  IInheritance,
-  ILinkNode,
-  INode,
-} from "@components/types/INode";
+import { ICollection, IInheritance, INode } from "@components/types/INode";
 import {
   getDoc,
   doc,
@@ -40,10 +35,6 @@ import {
   getOperatingSystem,
 } from "../firestoreClient/errors.firestore";
 import { getAuth } from "firebase/auth";
-import {
-  childSourceOf,
-  overallRefThroughGen,
-} from "@components/lib/server/partsModel";
 import { DISPLAY, SANDBOX_ONTOLOGY_APP_ID } from "../CONSTANTS";
 
 export function userHasOntologyEditAccess(
@@ -880,33 +871,12 @@ export const createNewNode = (
     }
   }
 
-  // Parts don't inherit by ref: the child stores its own list, each part
-  // tagged with the node that OWNS it, and attaches to the parent as its
-  // overall source.
-  const parentParts: ILinkNode[] =
-    (Array.isArray(parentNodeData.properties?.parts) &&
-      parentNodeData.properties.parts[0]?.nodes) ||
-    [];
-  updatedProperties.parts = [
-    {
-      collectionName: "main",
-      nodes: parentParts.map((p) => ({
-        ...p,
-        inheritedFrom: childSourceOf(p, parentNodeData.id),
-      })),
-    },
-  ];
-  const partsRef = overallRefThroughGen({
-    id: parentNodeData.id,
-    ref: parentNodeData.inheritance?.parts?.ref ?? null,
-    parts: parentParts,
-  });
+  // Parts resolve through the ref chain: the child stores no entries and
+  // follows the parent until it breaks. Its inheritance entry stays null.
+  updatedProperties.parts = [{ collectionName: "main", nodes: [] }];
   updatedInheritance.parts = {
-    ref: partsRef,
-    title:
-      partsRef === parentNodeData.id
-        ? (parentNodeData.title ?? "")
-        : (parentNodeData.inheritance?.parts?.title ?? ""),
+    ref: null,
+    title: "",
     inheritanceType:
       parentNodeData.inheritance?.parts?.inheritanceType ??
       "inheritUnlessAlreadyOverRidden",
@@ -914,7 +884,8 @@ export const createNewNode = (
 
   const newNode: any = {
     ...parentNodeData,
-    partsOverallSource: parentNodeData.id,
+    partsInheritance: { source: parentNodeData.id, overrides: {} },
+    inheritedPartsDetails: [],
     contributors: [],
     contributorsByProperty: [],
     textValue: {},
@@ -937,7 +908,7 @@ export const createNewNode = (
             id: generalizationId,
             title:
               generalizationId === parentNodeData.id
-                ? parentNodeData.title ?? ""
+                ? (parentNodeData.title ?? "")
                 : "",
           },
         ],
@@ -958,6 +929,9 @@ export const createNewNode = (
   };
   delete newNode.root;
   delete newNode.oNetTask;
+  delete newNode.resolvedParts;
+  delete newNode.partsOverallSource;
+  delete newNode.inheritanceParts;
   if (newNode?.textValue?.specializations) {
     delete newNode.textValue.specializations;
   }

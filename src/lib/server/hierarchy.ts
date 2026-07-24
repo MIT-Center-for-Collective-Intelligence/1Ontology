@@ -11,14 +11,8 @@ import {
 import { getDoerCreate } from "@components/lib/utils/helpers";
 import { computeDiffValue } from "@components/lib/utils/diffValue";
 import { FieldValue } from "firebase-admin/firestore";
-import {
-  ICollection,
-  ILinkNode,
-  INode,
-  NodeChange,
-} from "@components/types/INode";
+import { ICollection, INode, NodeChange } from "@components/types/INode";
 import { isReachableAlongSpecializations } from "@components/lib/server/updateDerivedPaths";
-import { childSourceOf, overallRefThroughGen } from "./partsModel";
 import { UNCLASSIFIED_COLLECTION } from "../CONSTANTS";
 
 /**
@@ -173,7 +167,10 @@ export async function writeSideOrder(
   side: Side,
   value: ICollection[],
 ): Promise<void> {
-  await db.collection(NODES).doc(nodeId).update({ [side]: value });
+  await db
+    .collection(NODES)
+    .doc(nodeId)
+    .update({ [side]: value });
 }
 
 // ──────── Subtree traversal ────────
@@ -448,7 +445,10 @@ export async function applyReciprocityAdd(
     const after: ICollection[] = JSON.parse(JSON.stringify(before));
     const added =
       collectionName && collectionName !== "main"
-        ? addToCollection(after, collectionName, { id: nodeId, title: nodeTitle })
+        ? addToCollection(after, collectionName, {
+            id: nodeId,
+            title: nodeTitle,
+          })
         : addToMain(after, { id: nodeId, title: nodeTitle });
     if (!added) continue;
     await db
@@ -802,7 +802,8 @@ export function buildSpecializationNode(
 ): INode {
   const inheritance: any = JSON.parse(JSON.stringify(source.inheritance || {}));
   for (const property in inheritance) {
-    if (inheritance[property].title === undefined) inheritance[property].title = "";
+    if (inheritance[property].title === undefined)
+      inheritance[property].title = "";
     if (!inheritance[property].ref && property !== "isPartOf") {
       inheritance[property].ref = source.id;
       inheritance[property].title = source.title ?? "";
@@ -824,33 +825,12 @@ export function buildSpecializationNode(
     }
   }
 
-  // Parts don't inherit by ref: the child stores its own list, each part
-  // tagged with the node that OWNS it, and attaches to `source` as its
-  // overall source.
-  const sourceParts: ILinkNode[] =
-    (Array.isArray(source.properties?.parts) &&
-      source.properties.parts[0]?.nodes) ||
-    [];
-  properties.parts = [
-    {
-      collectionName: "main",
-      nodes: sourceParts.map((p) => ({
-        ...p,
-        inheritedFrom: childSourceOf(p, source.id),
-      })),
-    },
-  ];
-  const partsRef = overallRefThroughGen({
-    id: source.id,
-    ref: source.inheritance?.parts?.ref ?? null,
-    parts: sourceParts,
-  });
+  // Parts resolve through the ref chain: the child stores no entries and
+  // follows `source` until it breaks. Its inheritance entry stays null.
+  properties.parts = [{ collectionName: "main", nodes: [] }];
   inheritance.parts = {
-    ref: partsRef,
-    title:
-      partsRef === source.id
-        ? (source.title ?? "")
-        : (source.inheritance?.parts?.title ?? ""),
+    ref: null,
+    title: "",
     inheritanceType:
       source.inheritance?.parts?.inheritanceType ??
       "inheritUnlessAlreadyOverRidden",
@@ -860,7 +840,8 @@ export function buildSpecializationNode(
     ...source,
     id: newNodeId,
     title,
-    partsOverallSource: source.id,
+    partsInheritance: { source: source.id, overrides: {} },
+    inheritedPartsDetails: [],
     createdBy: uname,
     contributors: [],
     contributorsByProperty: {},
@@ -878,7 +859,10 @@ export function buildSpecializationNode(
     ],
     propertyOf: {},
     numberOfGeneralizations: (source.numberOfGeneralizations || 0) + 1,
-    properties: { ...properties, isPartOf: [{ collectionName: "main", nodes: [] }] },
+    properties: {
+      ...properties,
+      isPartOf: [{ collectionName: "main", nodes: [] }],
+    },
     propertyType: { ...(source.propertyType || {}) },
     nodeType: source.nodeType,
     ...(appName ? { appName } : {}),
@@ -886,8 +870,13 @@ export function buildSpecializationNode(
   };
   delete newNode.root;
   delete newNode.oNetTask;
-  if (newNode?.textValue?.specializations) delete newNode.textValue.specializations;
-  if (newNode?.textValue?.generalizations) delete newNode.textValue.generalizations;
+  delete newNode.resolvedParts;
+  delete newNode.partsOverallSource;
+  delete newNode.inheritanceParts;
+  if (newNode?.textValue?.specializations)
+    delete newNode.textValue.specializations;
+  if (newNode?.textValue?.generalizations)
+    delete newNode.textValue.generalizations;
   if (newNode.properties?.["ONetID"]) {
     delete newNode.properties["ONetID"];
     delete newNode.propertyType?.["ONetID"];
