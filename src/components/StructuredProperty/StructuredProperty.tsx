@@ -55,7 +55,10 @@ import PropertyContributors from "./PropertyContributors";
 import { NODES } from "@components/lib/firestoreClient/collections";
 import { Post } from "@components/lib/utils/Post";
 import { pendingWrites } from "@components/lib/utils/pendingWrites";
-import { useResolvedParts } from "@components/lib/hooks/useResolvedParts";
+import {
+  makeResolvedOf,
+  useResolvedParts,
+} from "@components/lib/hooks/useResolvedParts";
 import InheritedPartsLegend from "../Common/InheritedPartsLegend";
 import EditProperty from "../AddPropertyForm/EditProperty";
 import StructuredPropertySelector from "./StructuredPropertySelector";
@@ -1208,17 +1211,18 @@ const StructuredProperty = ({
         Array.isArray(source) && source.length
           ? JSON.parse(JSON.stringify(source))
           : [{ collectionName: "main", nodes: [] }];
-      if (newParts[0].nodes.some((n: ILinkNode) => n.id === partId)) return;
+      // Present = in the RESOLVED view (virtual parts have no stored entry).
+      if (resolvedParts.some((n: ILinkNode) => n.id === partId)) return;
       const node: ILinkNode = {
         id: partId,
         title: relatedNodes[partId]?.title ?? "",
       };
       if (genId) {
-        const genPart = (
-          relatedNodes[genId]?.properties?.parts?.[0]?.nodes ?? []
-        ).find((n: ILinkNode) => n.id === partId);
+        // The gen's own view is resolved too — the part may be virtual on it.
+        const genPart = makeResolvedOf(relatedNodes)(genId).find(
+          (n: ILinkNode) => n.id === partId,
+        );
         node.inheritedFrom = genPart?.inheritedFrom || genId;
-        // The part node itself may not be loaded; the gen's entry has a title.
         if (!node.title) node.title = genPart?.title ?? "";
       }
       newParts[0].nodes.push(node);

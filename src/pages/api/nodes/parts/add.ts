@@ -10,7 +10,6 @@ import {
 } from "@components/types/INode";
 import {
   HttpError,
-  getNode,
   NodeCache,
   recordLogs,
   writeChangeLog,
@@ -18,23 +17,21 @@ import {
 import {
   applyIsPartOfOwnerOnly,
   asPartsCollections,
-  buildGensForAttach,
-  partsInheritanceEntry,
-  taggedPartsAndSource,
+  partsNodes,
   toParts,
 } from "@components/lib/server/parts";
+import { childSourceOf, isOwnedPart } from "@components/lib/server/partsModel";
 import {
-  childSourceOf,
-  derivePartsAndRef,
-  isOwnedPart,
-} from "@components/lib/server/partsModel";
+  computeInheritedPartsDetails,
+  fetchPartsContext,
+  makeResolvedOf,
+} from "@components/lib/server/partsAnnotation";
 
 /**
- * Adds parts to the end of a node's list. With `genId`, each part is inherited
- * specifically through that generalization; without it, derive decides — a part
- * some generalization provides comes out inherited, anything else owned (and
- * gains an isPartOf backlink). Appending never breaks overall inheritance and a
- * broken node never reattaches. No cascade.
+ * Appends parts to a node's stored entries. With `genId`, each part is
+ * inherited specifically through that generalization; without it the part is
+ * owned (and gains an isPartOf backlink). An absent anchor resolves to the end
+ * of the list, and appending never breaks attachment.
  */
 async function applyAdd(ctx: {
   nodeId: string;
@@ -43,38 +40,45 @@ async function applyAdd(ctx: {
   genId?: string;
   uname?: string;
   appName?: string;
-}): Promise<{ ok: true; ref: string | null; parts: ICollection[] }> {
+}): Promise<{ ok: true; parts: ICollection[] }> {
   const { nodeId, nodeData, partIds, genId, uname, appName } = ctx;
   const cache: NodeCache = new Map([[nodeId, nodeData]]);
 
-  const oldPartsCol = asPartsCollections(nodeData.properties?.parts);
-  const gens = await buildGensForAttach(nodeData, cache);
-  const { tagged, stored } = taggedPartsAndSource(nodeData, gens);
-
-  const gen = genId ? gens.find((g) => g.id === genId) : undefined;
-  if (genId && !gen) {
+  const nodeGenIds = new Set(
+    (nodeData.generalizations ?? []).flatMap((c) =>
+      (c.nodes ?? []).map((n) => n.id),
+    ),
+  );
+  if (genId && !nodeGenIds.has(genId)) {
     throw new HttpError(400, "genId is not a generalization of this node");
   }
 
-  const existing = new Set(tagged.map((p) => p.id));
+  const { relatedNodes } = await fetchPartsContext(nodeData, partIds);
+  const resolvedOf = makeResolvedOf(relatedNodes);
+
+  const oldPartsCol = asPartsCollections(nodeData.properties?.parts);
+  const entries = partsNodes(oldPartsCol);
+  const existing = new Set(resolvedOf(nodeId).map((p) => p.id));
+  const genResolved = genId ? resolvedOf(genId) : [];
+
   const additions: ILinkNode[] = [];
   for (const partId of partIds) {
     if (existing.has(partId)) continue;
     existing.add(partId);
-    const partNode = await getNode(partId, cache);
-    if (!partNode || partNode.deleted) {
+    const partNode = relatedNodes[partId];
+    if (!partNode) {
       throw new HttpError(400, `part ${partId} does not exist`);
     }
     const node: ILinkNode = { id: partId, title: partNode.title ?? "" };
-    if (gen) {
-      const genPart = gen.parts.find((p) => p.id === partId);
+    if (genId) {
+      const genPart = genResolved.find((p) => p.id === partId);
       if (!genPart) {
         throw new HttpError(
           400,
           "the generalization does not provide this part",
         );
       }
-      node.inheritedFrom = childSourceOf(genPart, gen.id);
+      node.inheritedFrom = childSourceOf(genPart, genId);
     }
     additions.push(node);
   }
@@ -82,26 +86,27 @@ async function applyAdd(ctx: {
     throw new HttpError(400, "all of the parts are already on this node");
   }
 
-  const {
-    parts: newParts,
-    sourceId: newSource,
-    ref,
-  } = derivePartsAndRef([...tagged, ...additions], gens, {
-    oldParts: tagged,
-    sourceId: stored,
-  });
-  const ownerTitle = ref ? ((await getNode(ref, cache))?.title ?? "") : "";
-  const partsEntry = partsInheritanceEntry(
-    ref,
-    ownerTitle,
-    nodeData.inheritance?.parts?.inheritanceType,
-  );
+  const side = toParts([...entries, ...additions]);
+  const updatedNode = {
+    ...nodeData,
+    properties: { ...nodeData.properties, parts: side },
+  } as INode;
+  const updatedRelated = { ...relatedNodes, [nodeId]: updatedNode };
+  const resolvedOfUpdated = makeResolvedOf(updatedRelated);
 
-  await db.collection(NODES).doc(nodeId).update({
-    "properties.parts": toParts(newParts),
-    "inheritance.parts": partsEntry,
-    partsOverallSource: newSource,
-  });
+  await db
+    .collection(NODES)
+    .doc(nodeId)
+    .update({
+      "properties.parts": side,
+      inheritedPartsDetails: computeInheritedPartsDetails({
+        currentNode: updatedNode,
+        relatedNodes: updatedRelated,
+        resolvedOf: resolvedOfUpdated,
+      }),
+      resolvedParts: resolvedOfUpdated(nodeId),
+    });
+  cache.set(nodeId, updatedNode);
 
   const parentLogId = db.collection(NODES_LOGS).doc().id;
   const parentLog = {
@@ -112,10 +117,7 @@ async function applyAdd(ctx: {
   };
   const childLogs: NodeChange[] = [];
 
-  const addedIds = new Set(additions.map((p) => p.id));
-  const addedOwn = newParts
-    .filter((p) => addedIds.has(p.id) && isOwnedPart(p))
-    .map((p) => p.id);
+  const addedOwn = additions.filter((p) => isOwnedPart(p)).map((p) => p.id);
   await applyIsPartOfOwnerOnly(
     nodeId,
     nodeData.title ?? "",
@@ -135,7 +137,7 @@ async function applyAdd(ctx: {
         modifiedBy: uname,
         modifiedProperty: "parts",
         previousValue: oldPartsCol,
-        newValue: toParts(newParts),
+        newValue: side,
         modifiedAt: new Date(),
         changeType: "modify elements",
         fullNode: nodeData,
@@ -146,7 +148,7 @@ async function applyAdd(ctx: {
   }
   for (const log of childLogs) await writeChangeLog(log);
 
-  return { ok: true, ref, parts: toParts(newParts) };
+  return { ok: true, parts: side };
 }
 
 function fail(res: NextApiResponse, status: number, msg: string) {
@@ -193,7 +195,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
     const result = await applyAdd({
       nodeId,
-      nodeData,
+      nodeData: { ...nodeData, id: nodeId },
       partIds,
       genId,
       uname,

@@ -63,9 +63,12 @@ const fetchNodes = async (
 /**
  * Fetches the neighborhood computeInheritedPartsDetails needs around
  * `currentNode` (which may be an in-memory post-edit copy — it wins over the
- * stored doc) and returns it with a resolver over the full set.
+ * stored doc) and returns it with a resolver. `extraIds` ride the part wave.
  */
-export async function fetchPartsContext(currentNode: INode): Promise<{
+export async function fetchPartsContext(
+  currentNode: INode,
+  extraIds: string[] = [],
+): Promise<{
   relatedNodes: { [id: string]: INode };
   resolvedOf: (id: string) => ILinkNode[];
 }> {
@@ -108,7 +111,7 @@ export async function fetchPartsContext(currentNode: INode): Promise<{
   }
 
   const partNodes = await fetchNodes([
-    ...new Set([...partIds, ...generalizationPartIds]),
+    ...new Set([...partIds, ...generalizationPartIds, ...extraIds]),
   ]);
   Object.assign(relatedNodes, partNodes);
 
