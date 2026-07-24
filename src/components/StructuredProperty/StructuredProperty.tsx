@@ -55,6 +55,7 @@ import PropertyContributors from "./PropertyContributors";
 import { NODES } from "@components/lib/firestoreClient/collections";
 import { Post } from "@components/lib/utils/Post";
 import { pendingWrites } from "@components/lib/utils/pendingWrites";
+import { useResolvedParts } from "@components/lib/hooks/useResolvedParts";
 import InheritedPartsLegend from "../Common/InheritedPartsLegend";
 import EditProperty from "../AddPropertyForm/EditProperty";
 import StructuredPropertySelector from "./StructuredPropertySelector";
@@ -289,6 +290,12 @@ const StructuredProperty = ({
     [paginationState],
   );
 
+  const { resolvedParts } = useResolvedParts(
+    property === "parts" ? currentVisibleNode : null,
+    relatedNodes,
+    fetchNode,
+  );
+
   const propertyValue: PaginatedCollection[] = useMemo(() => {
     try {
       let result = null;
@@ -296,11 +303,10 @@ const StructuredProperty = ({
         result =
           currentVisibleNode[property as "specializations" | "generalizations"];
       } else {
-        // Parts always reflect this node's `properties.parts` only; do not
-        // substitute the collection from `inheritance.parts.ref` (the UI
-        // still explains inheritance via InheritedPartsViewer / details).
+        // Parts render the RESOLVED view: the ref chain resolved through
+        // `partsInheritance.source` with this node's stored entries spliced in.
         if (property === "parts") {
-          result = currentVisibleNode?.properties?.parts;
+          result = [{ collectionName: "main", nodes: resolvedParts }];
         } else {
           result =
             getPropertyValue(
@@ -424,6 +430,7 @@ const StructuredProperty = ({
     currentVisibleNode,
     relatedNodes,
     property,
+    resolvedParts,
     selectedDiffNode,
     processCollectionData,
     db,
@@ -431,7 +438,9 @@ const StructuredProperty = ({
 
   const isReparenting =
     property === "generalizations" &&
-    !(typeof currentVisibleNode?.root === "boolean" && currentVisibleNode.root) &&
+    !(
+      typeof currentVisibleNode?.root === "boolean" && currentVisibleNode.root
+    ) &&
     (currentVisibleNode?.generalizations || []).flatMap(
       (c: ICollection) => c.nodes,
     ).length === 0;
@@ -886,9 +895,7 @@ const StructuredProperty = ({
       const source = currentVisibleNode?.properties?.parts;
       if (!Array.isArray(source)) return;
       const newParts: ICollection[] = JSON.parse(JSON.stringify(source));
-      const part = newParts[0]?.nodes?.find(
-        (n: ILinkNode) => n.id === partId,
-      );
+      const part = newParts[0]?.nodes?.find((n: ILinkNode) => n.id === partId);
       if (!part) return;
       if (optional) part.optional = true;
       else delete part.optional;
@@ -909,9 +916,7 @@ const StructuredProperty = ({
       const source = currentVisibleNode?.properties?.parts;
       if (!Array.isArray(source)) return;
       const newParts: ICollection[] = JSON.parse(JSON.stringify(source));
-      const part = newParts[0]?.nodes?.find(
-        (n: ILinkNode) => n.id === partId,
-      );
+      const part = newParts[0]?.nodes?.find((n: ILinkNode) => n.id === partId);
       if (!part) return;
       const genPart = (
         relatedNodes[genId]?.properties?.parts?.[0]?.nodes ?? []
@@ -1590,25 +1595,30 @@ const StructuredProperty = ({
                       enableEdit={enableEdit}
                       {...(property === "parts"
                         ? {
-                            value: currentVisibleNode.partsOverallSource ?? "",
+                            value:
+                              currentVisibleNode.partsInheritance?.source ?? "",
                             onChange: reattachOverall,
                           }
                         : {})}
                     />
                   )}
-                {currentVisibleNode.inheritance[property]?.ref &&
-                  (property !== "parts" ||
-                    !!currentVisibleNode.partsOverallSource) &&
+                {(property === "parts"
+                  ? !!currentVisibleNode.partsInheritance?.source
+                  : !!currentVisibleNode.inheritance[property]?.ref) &&
                   !enableEdit && (
                     <Typography
                       sx={{ fontSize: "14px", ml: "9px", color: "gray" }}
                     >
                       {'(Inherited from "'}
-                      {relatedNodes[
-                        currentVisibleNode.inheritance[property].ref
-                      ]?.title ||
-                        currentVisibleNode.inheritance[property].title ||
-                        ""}
+                      {property === "parts"
+                        ? relatedNodes[
+                            currentVisibleNode.partsInheritance!.source!
+                          ]?.title || ""
+                        : relatedNodes[
+                            currentVisibleNode.inheritance[property].ref!
+                          ]?.title ||
+                          currentVisibleNode.inheritance[property].title ||
+                          ""}
                       {'")'}
                     </Typography>
                   )}
@@ -1646,8 +1656,8 @@ const StructuredProperty = ({
               property={property}
               propertyValue={
                 selectedProperty === property
-                  ? editableProperty ?? []
-                  : propertyValue ?? []
+                  ? (editableProperty ?? [])
+                  : (propertyValue ?? [])
               }
               setEditableProperty={setEditableProperty}
               getCategoryStyle={getCategoryStyle}
@@ -1732,6 +1742,7 @@ const StructuredProperty = ({
             property={property}
             getAllGeneralizations={getAllGeneralizations}
             currentVisibleNode={currentVisibleNode}
+            resolvedParts={resolvedParts}
             relatedNodes={relatedNodes}
             fetchNode={fetchNode}
             addNodesToCache={addNodesToCache}

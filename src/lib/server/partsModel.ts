@@ -1,27 +1,57 @@
-import { ILinkNode } from "@components/types/INode";
+import { ILinkNode, IPartsInheritance } from "@components/types/INode";
 
 /**
- * Pure model for parts inheritance (no persistence) which is unit-testable.
+ * Pure model for REF-BASED parts inheritance (no persistence, unit-testable).
  *
- * Each part in `properties.parts` carries `inheritedFrom` = the id of the node
- * that OWNS it (empty ⇒ this node owns it). That per-part field drives the
- * specific source, owner-only isPartOf, and pass-through skipping.
+ * An ATTACHED node stores no inherited parts: `partsInheritance.source` names
+ * the direct generalization it follows (null = broken/root) and viewing
+ * resolves the ref chain. `parts` holds only real local entries — own parts
+ * (no `inheritedFrom`), other-gen parts (`inheritedFrom` = owner) and switched
+ * parts — spliced into the virtual list by their `after` anchor; an entry whose
+ * id the source also provides replaces that slot (sticky ownership).
+ * `overrides` holds optional-toggles on virtual parts only.
  *
- * OVERALL inheritance is separate: the node stores the generalization it draws
- * its arrangement from (`partsOverallSource`). It is never searched for and
- * never auto-reattaches — see {@link derivePartsAndRef}.
+ * A BROKEN node (`source: null`) stores the full materialized list: array order
+ * authoritative, no anchors, overrides folded into the entries.
  */
 
-export type Gen = { id: string; ref: string | null; parts: ILinkNode[] };
+export type PartsInheritance = IPartsInheritance;
+
+/**
+ * A stored `properties.parts` entry. `after` = the resolved part id it sits
+ * behind (null = front; absent = end). Meaningful only while attached; among
+ * same-anchor entries the array order decides.
+ */
+export type PartEntry = ILinkNode;
+
+export type PartsNode = {
+  id: string;
+  parts: PartEntry[];
+  partsInheritance: PartsInheritance;
+};
+
+export type PartsGraph = Map<string, PartsNode>;
+
+/**
+ * Adapt a node doc to the model's shape: stored parts flattened across
+ * collections, missing `partsInheritance` read as broken (post-conversion
+ * every node has the field; the default just keeps this total).
+ */
+export function toPartsNode(node: {
+  id: string;
+  properties?: { parts?: { nodes: ILinkNode[] }[] };
+  partsInheritance?: IPartsInheritance;
+}): PartsNode {
+  return {
+    id: node.id,
+    parts: (node.properties?.parts ?? []).flatMap((c) => c?.nodes ?? []),
+    partsInheritance: node.partsInheritance ?? { source: null, overrides: {} },
+  };
+}
 
 /** A part is OWNED by its node if there is no `inheritedFrom`. */
 export function isOwnedPart(part: ILinkNode): boolean {
   return !part.inheritedFrom;
-}
-
-/** Does this parts list contain at least one own (non-inherited) part? */
-export function ownsAnyPart(parts: ILinkNode[]): boolean {
-  return parts.some(isOwnedPart);
 }
 
 /**
@@ -31,6 +61,334 @@ export function ownsAnyPart(parts: ILinkNode[]): boolean {
  */
 export function childSourceOf(parentPart: ILinkNode, parentId: string): string {
   return parentPart.inheritedFrom ?? parentId;
+}
+
+function toResolved(e: PartEntry): ILinkNode {
+  const p: ILinkNode = { id: e.id };
+  if (e.title !== undefined) p.title = e.title;
+  if (e.optional) p.optional = true;
+  if (e.inheritedFrom) p.inheritedFrom = e.inheritedFrom;
+  return p;
+}
+
+function liftFromSource(
+  p: ILinkNode,
+  sourceId: string,
+  override?: { optional: boolean },
+): ILinkNode {
+  const v: ILinkNode = { id: p.id, inheritedFrom: childSourceOf(p, sourceId) };
+  if (p.title !== undefined) v.title = p.title;
+  if (override ? override.optional : p.optional) v.optional = true;
+  return v;
+}
+
+/**
+ * The node's parts as viewed: the source chain resolved recursively (cycle
+ * guarded), local entries spliced in by anchor, sticky-ownership slot
+ * replacement applied, overrides applied to the virtual parts. A broken node —
+ * or one whose source is missing or cyclic — resolves to its stored entries in
+ * array order. Each resolved part carries `inheritedFrom` = its owner.
+ */
+export function resolveParts(nodeId: string, graph: PartsGraph): ILinkNode[] {
+  return resolveInner(nodeId, graph, new Set());
+}
+
+function resolveInner(
+  nodeId: string,
+  graph: PartsGraph,
+  visiting: Set<string>,
+): ILinkNode[] {
+  const node = graph.get(nodeId);
+  if (!node) return [];
+  const { source, overrides } = node.partsInheritance;
+  const src = source && !visiting.has(source) ? graph.get(source) : undefined;
+  if (!source || !src) return node.parts.map(toResolved);
+
+  visiting.add(nodeId);
+  const inherited = resolveInner(source, graph, visiting);
+
+  const entryById = new Map(node.parts.map((e) => [e.id, e]));
+  const slots = inherited.map((p) => {
+    const e = entryById.get(p.id);
+    return e ? toResolved(e) : liftFromSource(p, source, overrides[p.id]);
+  });
+  const slotIds = new Set(inherited.map((p) => p.id));
+  const floats = node.parts.filter((e) => !slotIds.has(e.id));
+
+  const behind = new Map<string, PartEntry[]>();
+  const front: PartEntry[] = [];
+  for (const f of floats) {
+    if (f.after === null) front.push(f);
+    else if (f.after !== undefined) {
+      if (!behind.has(f.after)) behind.set(f.after, []);
+      behind.get(f.after)!.push(f);
+    }
+  }
+
+  const out: ILinkNode[] = [];
+  const emitted = new Set<string>();
+  const emit = (p: ILinkNode) => {
+    out.push(p);
+    emitted.add(p.id);
+    for (const f of behind.get(p.id) ?? []) emit(toResolved(f));
+  };
+  for (const f of front) emit(toResolved(f));
+  for (const s of slots) emit(s);
+  // Anchor-less entries — and any whose anchor disappeared — land at the end.
+  for (const f of floats) if (!emitted.has(f.id)) emit(toResolved(f));
+  return out;
+}
+
+/**
+ * Break = copy-on-write: the resolved view becomes the stored list (origins
+ * kept, no anchors, overrides folded into the entries), source goes null.
+ */
+export function materializeBreak(
+  nodeId: string,
+  graph: PartsGraph,
+): { parts: PartEntry[]; partsInheritance: PartsInheritance } {
+  return {
+    parts: resolveParts(nodeId, graph),
+    partsInheritance: { source: null, overrides: {} },
+  };
+}
+
+/**
+ * Classify a reorder of the resolved view. Moving only local entries never
+ * breaks: the floats are re-anchored to their nearest preceding source part
+ * and attachment stands. Changing the source parts' relative order — sticky
+ * slot-replacers included — breaks: the result is the materialized list in the
+ * requested order. A broken node just stores the new array order.
+ */
+export function classifySort(
+  nodeId: string,
+  graph: PartsGraph,
+  orderedIds: string[],
+):
+  | { breaks: false; parts: PartEntry[] }
+  | { breaks: true; parts: PartEntry[]; partsInheritance: PartsInheritance } {
+  const node = graph.get(nodeId);
+  if (!node) return { breaks: false, parts: [] };
+  const { source } = node.partsInheritance;
+  const src = source ? graph.get(source) : undefined;
+  const entryById = new Map(node.parts.map((e) => [e.id, e]));
+  const mentioned = new Set(orderedIds);
+
+  if (!source || !src) {
+    const parts: PartEntry[] = [];
+    for (const id of orderedIds) {
+      const e = entryById.get(id);
+      if (e) parts.push({ ...e });
+    }
+    for (const e of node.parts) if (!mentioned.has(e.id)) parts.push({ ...e });
+    return { breaks: false, parts };
+  }
+
+  const arrangement = resolveParts(source, graph).map((p) => p.id);
+  const slotIds = new Set(arrangement);
+  const orderedSlots = orderedIds.filter((id) => slotIds.has(id));
+  const preserved =
+    orderedSlots.length === arrangement.length &&
+    orderedSlots.every((id, i) => id === arrangement[i]);
+
+  if (!preserved) {
+    const resolved = resolveParts(nodeId, graph);
+    const byId = new Map(resolved.map((p) => [p.id, p]));
+    const parts: PartEntry[] = [];
+    for (const id of orderedIds) {
+      const p = byId.get(id);
+      if (p) parts.push(p);
+    }
+    for (const p of resolved) if (!mentioned.has(p.id)) parts.push(p);
+    return {
+      breaks: true,
+      parts,
+      partsInheritance: { source: null, overrides: {} },
+    };
+  }
+
+  const parts: PartEntry[] = [];
+  let lastSlot: string | null = null;
+  for (const id of orderedIds) {
+    if (slotIds.has(id)) {
+      lastSlot = id;
+      const e = entryById.get(id);
+      if (e) parts.push(withoutAnchor(e));
+      continue;
+    }
+    const e = entryById.get(id);
+    if (e) parts.push({ ...withoutAnchor(e), after: lastSlot });
+  }
+  for (const e of node.parts) if (!mentioned.has(e.id)) parts.push({ ...e });
+  return { breaks: false, parts };
+}
+
+function withoutAnchor(e: PartEntry): PartEntry {
+  const { after, ...rest } = e;
+  return rest;
+}
+
+/**
+ * Reattach (or switch the overall source): a HARD RESET of everything the node
+ * does not OWN. Only owned entries survive — one the source also provides
+ * keeps its slot, the rest are anchored below the source's parts in their
+ * current relative order. The node's optional flag on a kept virtual part is
+ * preserved as an override; parts it never had take the source's flag.
+ */
+export function convertToOverlay(
+  nodeId: string,
+  graph: PartsGraph,
+  sourceId: string,
+): { parts: PartEntry[]; partsInheritance: PartsInheritance } {
+  const node = graph.get(nodeId);
+  if (!node) {
+    return { parts: [], partsInheritance: { source: sourceId, overrides: {} } };
+  }
+  const current = resolveParts(nodeId, graph);
+  const sourceResolved = resolveParts(sourceId, graph);
+  const sourceIds = new Set(sourceResolved.map((p) => p.id));
+  const lastSourceId = sourceResolved.length
+    ? sourceResolved[sourceResolved.length - 1].id
+    : null;
+
+  const orderIndex = new Map(current.map((p, i) => [p.id, i]));
+  const owned = node.parts
+    .filter(isOwnedPart)
+    .sort(
+      (a, b) =>
+        (orderIndex.get(a.id) ?? Infinity) - (orderIndex.get(b.id) ?? Infinity),
+    );
+  const ownedIds = new Set(owned.map((e) => e.id));
+  const parts = owned.map((e) =>
+    sourceIds.has(e.id)
+      ? withoutAnchor(e)
+      : { ...withoutAnchor(e), after: lastSourceId },
+  );
+
+  const overrides: PartsInheritance["overrides"] = {};
+  const currentById = new Map(current.map((p) => [p.id, p]));
+  for (const sp of sourceResolved) {
+    if (ownedIds.has(sp.id)) continue;
+    const cur = currentById.get(sp.id);
+    if (!cur) continue;
+    if (!!cur.optional !== !!sp.optional) {
+      overrides[sp.id] = { optional: !!cur.optional };
+    }
+  }
+  return { parts, partsInheritance: { source: sourceId, overrides } };
+}
+
+/**
+ * Update a node when its generalizations change. Call with the graph still
+ * containing the node's PRE-change state and every gen involved. Stored
+ * entries tracked through a removed gen are dropped unless a remaining gen
+ * still resolves (or re-provides) them. When the SOURCE itself is removed the
+ * node re-attaches to the first remaining gen by MERGE: stored entries stay,
+ * the old source's parts survive only where a remaining gen provides them
+ * (minted as stored entries when it isn't the new source), the rest disappear
+ * (5.4). No remaining gens — or an already-broken node — means broken stays.
+ */
+export function applyGenChange(
+  nodeId: string,
+  graph: PartsGraph,
+  removedGenIds: string[],
+  remainingGenIds: string[],
+): { parts: PartEntry[]; partsInheritance: PartsInheritance } {
+  const node = graph.get(nodeId);
+  if (!node) {
+    return { parts: [], partsInheritance: { source: null, overrides: {} } };
+  }
+  const before = resolveParts(nodeId, graph);
+  const asGen = (id: string) => ({ id, parts: resolveParts(id, graph) });
+  const removed = removedGenIds.map(asGen);
+  const remaining = remainingGenIds.map(asGen);
+  const ownerThrough = (
+    g: { id: string; parts: ILinkNode[] },
+    partId: string,
+  ) => {
+    const p = g.parts.find((x) => x.id === partId);
+    return p ? childSourceOf(p, g.id) : null;
+  };
+
+  const kept: PartEntry[] = [];
+  for (const e of node.parts) {
+    if (isOwnedPart(e)) {
+      kept.push({ ...e });
+      continue;
+    }
+    const tracked = removed.some(
+      (g) => ownerThrough(g, e.id) === e.inheritedFrom,
+    );
+    if (!tracked) {
+      kept.push({ ...e });
+      continue;
+    }
+    if (remaining.some((g) => ownerThrough(g, e.id) === e.inheritedFrom)) {
+      kept.push({ ...e });
+      continue;
+    }
+    const provider = remaining.find((g) => g.parts.some((p) => p.id === e.id));
+    if (provider) {
+      kept.push({
+        ...e,
+        inheritedFrom: ownerThrough(provider, e.id) as string,
+      });
+    }
+  }
+
+  const pi = node.partsInheritance;
+  const sourceRemoved = !!pi.source && removedGenIds.includes(pi.source);
+  if (!sourceRemoved) {
+    return {
+      parts: kept,
+      partsInheritance: { source: pi.source, overrides: { ...pi.overrides } },
+    };
+  }
+
+  const next = remaining[0];
+  if (!next) {
+    const idx = new Map(before.map((p, i) => [p.id, i]));
+    const parts = kept
+      .sort((a, b) => (idx.get(a.id) ?? Infinity) - (idx.get(b.id) ?? Infinity))
+      .map(withoutAnchor);
+    return { parts, partsInheritance: { source: null, overrides: {} } };
+  }
+
+  const storedIds = new Set(node.parts.map((e) => e.id));
+  const nextIds = new Set(next.parts.map((p) => p.id));
+  const parts = [...kept];
+  for (const p of before) {
+    if (storedIds.has(p.id) || nextIds.has(p.id)) continue;
+    const provider = remaining.find((g) => g.parts.some((x) => x.id === p.id));
+    if (!provider) continue;
+    const minted: PartEntry = {
+      id: p.id,
+      inheritedFrom: ownerThrough(provider, p.id) as string,
+    };
+    if (p.title !== undefined) minted.title = p.title;
+    if (p.optional) minted.optional = true;
+    parts.push(minted);
+  }
+  const overrides: PartsInheritance["overrides"] = {};
+  for (const [pid, o] of Object.entries(pi.overrides)) {
+    if (nextIds.has(pid) && !parts.some((e) => e.id === pid)) {
+      overrides[pid] = { ...o };
+    }
+  }
+  return { parts, partsInheritance: { source: next.id, overrides } };
+}
+
+/*
+ * Legacy materialize-model API below — still imported by the pre-rebuild
+ * endpoints and seeding paths; each export dies with its caller in the
+ * remaining rebuild slices. No new code should use it.
+ */
+
+export type Gen = { id: string; ref: string | null; parts: ILinkNode[] };
+
+/** Does this parts list contain at least one own (non-inherited) part? */
+export function ownsAnyPart(parts: ILinkNode[]): boolean {
+  return parts.some(isOwnedPart);
 }
 
 /** Do `sub`'s ids appear in `full`, in order (gaps allowed)? */
@@ -175,8 +533,8 @@ export function mergeAgainstParentOrder(
 
 /**
  * Update a node's parts when its generalizations change. A part inherited through
- * a removed gen is dropped, unless another remaining gen still provides it. 
- * If the gen the node was attached to is the one removed, 
+ * a removed gen is dropped, unless another remaining gen still provides it.
+ * If the gen the node was attached to is the one removed,
  * the node re-attaches to the first remaining gen with its  parts merged in;
  * this is the only time attachment happens on its own, and an already-broken node
  * stays broken. Adding a gen only re-derives, nothing else.

@@ -2,7 +2,11 @@ import { Box, Typography } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import InheritedPartsViewerEdit from "./InheritedPartsViewerEdit";
 import InheritedPartsViewer from "./InheritedPartsViewer";
-import { INode, InheritedPartsDetail } from "@components/types/INode";
+import {
+  ILinkNode,
+  INode,
+  InheritedPartsDetail,
+} from "@components/types/INode";
 import { useInheritedPartsDetails } from "@components/lib/hooks/useInheritedPartsDetails";
 
 interface PartViewerProps {
@@ -10,6 +14,7 @@ interface PartViewerProps {
   property: string;
   getAllGeneralizations: any;
   currentVisibleNode: any;
+  resolvedParts: ILinkNode[];
   relatedNodes: { [id: string]: any };
   fetchNode: (nodeId: string) => Promise<INode | null>;
   addNodesToCache?: (
@@ -45,6 +50,7 @@ const PartViewer: React.FC<PartViewerProps> = ({
   property,
   getAllGeneralizations,
   currentVisibleNode,
+  resolvedParts,
   relatedNodes,
   fetchNode,
   addNodesToCache,
@@ -73,7 +79,7 @@ const PartViewer: React.FC<PartViewerProps> = ({
     loading: inheritedPartsLoading,
     mutateData: mutateInheritedPartsDetails,
     refetchNow,
-  } = useInheritedPartsDetails(currentVisibleNode);
+  } = useInheritedPartsDetails(currentVisibleNode, resolvedParts);
 
   useEffect(() => {
     onDisplayDetailsChange?.(displayDetails);
@@ -93,6 +99,7 @@ const PartViewer: React.FC<PartViewerProps> = ({
           addNodesToCache={addNodesToCache}
           readOnly={true}
           currentVisibleNode={currentVisibleNode}
+          resolvedParts={resolvedParts}
           setDisplayDetails={setDisplayDetails}
           enableEdit={enableEdit}
           addPart={
@@ -148,6 +155,7 @@ const PartViewer: React.FC<PartViewerProps> = ({
           fetchNode={fetchNode}
           readOnly={true}
           currentVisibleNode={currentVisibleNode}
+          resolvedParts={resolvedParts}
           setDisplayDetails={setDisplayDetails}
           addPart={
             enableEdit

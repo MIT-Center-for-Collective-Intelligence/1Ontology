@@ -1,5 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { InheritedPartsDetail, INode } from "@components/types/INode";
+import {
+  ILinkNode,
+  InheritedPartsDetail,
+  INode,
+} from "@components/types/INode";
 import { Post } from "@components/lib/utils/Post";
 import { getFirestore, doc, onSnapshot } from "firebase/firestore";
 import { NODES } from "@components/lib/firestoreClient/collections";
@@ -15,6 +19,7 @@ interface UseInheritedPartsDetailsReturn {
 
 export const useInheritedPartsDetails = (
   currentVisibleNode?: INode | null,
+  resolvedParts?: ILinkNode[],
 ): UseInheritedPartsDetailsReturn => {
   const [data, setData] = useState<InheritedPartsDetail[] | null>(null);
   const [loading, setLoading] = useState(false);
@@ -122,10 +127,8 @@ export const useInheritedPartsDetails = (
 
     // If a current part has no annotation in the cached details, its row would
     // stay stuck on the pending spinner, treat the cache as stale and recompute.
-    const currentPartIds: string[] =
-      currentVisibleNode.properties?.parts?.[0]?.nodes?.map(
-        (n: { id: string }) => n.id,
-      ) ?? [];
+    // Parts come from the RESOLVED view (ref chain), not the stored overlay.
+    const currentPartIds: string[] = (resolvedParts ?? []).map((n) => n.id);
     const annotatedToIds = new Set<string>();
     if (Array.isArray(cachedData)) {
       for (const calc of cachedData) {
@@ -180,14 +183,9 @@ export const useInheritedPartsDetails = (
   }, [currentVisibleNode?.id, currentVisibleNode?.generalizations?.length]);
 
   // Refetch only when the set of parts changes (add/remove/replace), not on
-  // reorder or optional toggles. Sorted so order changes don't count.
-  const partsSignature = [
-    ...new Set(
-      currentVisibleNode?.properties?.parts?.[0]?.nodes?.map(
-        (n: any) => n.id,
-      ) ?? [],
-    ),
-  ]
+  // reorder or optional toggles. Sorted so order changes don't count. The set
+  // is the RESOLVED view, so a source's edits count too.
+  const partsSignature = [...new Set((resolvedParts ?? []).map((n) => n.id))]
     .sort()
     .join(",");
   const prevPartsSignatureRef = useRef(partsSignature);

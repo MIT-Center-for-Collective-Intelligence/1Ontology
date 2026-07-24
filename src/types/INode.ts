@@ -43,6 +43,23 @@ export type ILinkNode = {
   /** For a part: the node that OWNS it (empty ⇒ owned here). Drives parts inheritance. */
   inheritedFrom?: string;
   optional?: boolean;
+  /**
+   * For a stored parts entry on an ATTACHED node: the resolved part id this
+   * entry sits behind (null = front; absent = end). Broken nodes store none —
+   * their array order is authoritative.
+   */
+  after?: string | null;
+};
+
+/**
+ * Parts inheritance state. `source` = the direct generalization the node's
+ * parts view resolves through (null = broken/root). `overrides` = optional
+ * toggles on VIRTUAL (non-stored) parts only. Replaces both the old
+ * `partsOverallSource` and the `inheritance.parts` entry (permanently nulled).
+ */
+export type IPartsInheritance = {
+  source: string | null;
+  overrides: { [partId: string]: { optional: boolean } };
 };
 
 export type ICollection = {
@@ -85,8 +102,12 @@ export type INode = {
    * it owns it. A stored CHOICE: it is set at creation and by an explicit user
    * reattach, cleared when the node breaks, and never re-derived.
    * `inheritance.parts.ref` (the owner) is derived from it.
+   * ⚠️ LEGACY (materialize model) — replaced by `partsInheritance`; retired by
+   * the one-time conversion script.
    */
   partsOverallSource?: string | null;
+  /** Ref-based parts inheritance state — see {@link IPartsInheritance}. */
+  partsInheritance?: IPartsInheritance;
   specializations: ICollection[];
   generalizations: ICollection[];
   root: string;

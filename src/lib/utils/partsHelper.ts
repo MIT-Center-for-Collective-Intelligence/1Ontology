@@ -1,4 +1,4 @@
-import { INode } from "@components/types/INode";
+import { ILinkNode, INode } from "@components/types/INode";
 import {
   getFirestore,
   getDoc,
@@ -6,6 +6,11 @@ import {
   doc,
   collection,
 } from "firebase/firestore";
+import {
+  PartsGraph,
+  resolveParts,
+  toPartsNode,
+} from "@components/lib/server/partsModel";
 import { NODES } from "../firestoreClient/collections";
 import { saveNewChangeLog } from "./helpers";
 // import { refreshInheritanceTree } from "./inheritanceTreeBuilder";
@@ -383,59 +388,54 @@ export const breakInheritanceAndCopyParts = async (
   }
 };
 
+// One resolver per nodes-cache object, so per-part calls in a render share
+// it. Converts only each queried node's ref chain — never the whole cache.
+const partsResolvers = new WeakMap<object, (id: string) => ILinkNode[]>();
+const resolvedPartsOf = (
+  nodeId: string,
+  nodes: { [id: string]: INode },
+): ILinkNode[] => {
+  let resolver = partsResolvers.get(nodes);
+  if (!resolver) {
+    const graph: PartsGraph = new Map();
+    const memo = new Map<string, ILinkNode[]>();
+    resolver = (id: string) => {
+      if (!memo.has(id)) {
+        let cursor: string | null = id;
+        const seen = new Set<string>();
+        while (cursor && !seen.has(cursor)) {
+          seen.add(cursor);
+          if (!graph.has(cursor) && nodes[cursor]?.id) {
+            graph.set(cursor, toPartsNode(nodes[cursor]));
+          }
+          cursor = graph.get(cursor)?.partsInheritance.source ?? null;
+        }
+        memo.set(id, resolveParts(id, graph));
+      }
+      return memo.get(id)!;
+    };
+    partsResolvers.set(nodes, resolver);
+  }
+  return resolver(nodeId);
+};
+
 /**
- * Get all parts from a generalization (both direct and inherited)
+ * Get all parts from a generalization — its RESOLVED view (ref chain).
  */
 export const getGeneralizationParts = (
   generalizationId: string,
   nodes: { [nodeId: string]: INode },
 ): { id: string; title: string; isInherited: boolean; optional: boolean }[] => {
-  const generalizationNode = nodes[generalizationId];
-  if (!generalizationNode) return [];
+  if (!nodes[generalizationId]) return [];
 
-  const parts: {
-    id: string;
-    title: string;
-    isInherited: boolean;
-    optional: boolean;
-  }[] = [];
-
-  let genParts = generalizationNode.properties?.parts;
-
-  // Add direct parts
-  if (genParts) {
-    genParts.forEach((collection: any) => {
-      collection.nodes.forEach((part: any) => {
-        if (nodes[part.id]) {
-          parts.push({
-            id: part.id,
-            title: getTitle(nodes, part.id),
-            isInherited: false,
-            optional: part.optional,
-          });
-        }
-      });
-    });
-  }
-
-  // Add inherited parts
-  /*   if (generalizationNode.inheritanceParts) {
-    Object.keys(generalizationNode.inheritanceParts).forEach(
-      (partId: string) => {
-        const partInfo = generalizationNode.inheritanceParts[partId];
-        if (partInfo && nodes[partId]) {
-          parts.push({
-            id: partId,
-            title: getTitle(nodes, partId),
-            isInherited: true,
-            // optional:partInfo.
-          });
-        }
-      },
-    );
-  } */
-
-  return parts;
+  return resolvedPartsOf(generalizationId, nodes)
+    .filter((part) => nodes[part.id])
+    .map((part) => ({
+      id: part.id,
+      title: getTitle(nodes, part.id),
+      isInherited: !!part.inheritedFrom,
+      optional: !!part.optional,
+    }));
 };
 
 /**
@@ -453,8 +453,8 @@ export const getPartGeneralizationSources = (
     [];
   for (const gen of generalizations) {
     const genNode = nodes[gen.id];
-    const genParts = genNode?.properties?.parts?.[0]?.nodes || [];
-    if (genParts.some((p: any) => p.id === partId)) {
+    const genParts = genNode ? resolvedPartsOf(gen.id, nodes) : [];
+    if (genParts.some((p) => p.id === partId)) {
       sources.push({
         generalizationId: gen.id,
         generalizationTitle: gen.title || genNode?.title || "",
@@ -473,13 +473,12 @@ export const getAllGeneralizations = (
 ): { id: string; title: string }[] => {
   if (!currentVisibleNode?.generalizations) return [];
 
-  return currentVisibleNode.generalizations
-    .flatMap((collection: any) =>
-      collection.nodes.map((node: any) => ({
-        id: node.id,
-        title: node.title || getTitle(nodes, node.id) || "Unknown",
-      })),
-    );
+  return currentVisibleNode.generalizations.flatMap((collection: any) =>
+    collection.nodes.map((node: any) => ({
+      id: node.id,
+      title: node.title || getTitle(nodes, node.id) || "Unknown",
+    })),
+  );
 };
 
 export const getEffectiveGeneralizations = (
@@ -489,8 +488,11 @@ export const getEffectiveGeneralizations = (
   const generalizations = getAllGeneralizations(currentVisibleNode, nodes);
   if (generalizations.length > 0) return generalizations;
 
-  const parts = currentVisibleNode.properties?.parts;
-  const hasParts = (parts?.[0]?.nodes?.length ?? 0) > 0;
+  const hasParts =
+    resolvedPartsOf(currentVisibleNode.id, {
+      ...nodes,
+      [currentVisibleNode.id]: currentVisibleNode,
+    }).length > 0;
   if (hasParts) {
     return [
       {
