@@ -1,5 +1,5 @@
 export const SELL_ONTOLOGY_APP_ID =
-  "final-hierarchy-with-o*net-rob-title-review-v2-2026-07-23";
+  "final-hierarchy-with-o*net-rob-content-review-2026-07-24";
 
 export const SELL_ONTOLOGY_NAME =
-  "Final Hierarchy with O*Net - Rob Title Review v2 2026-07-23";
+  "Final Hierarchy with O*Net - Rob Content Review 2026-07-24";

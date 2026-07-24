@@ -152,7 +152,9 @@ describe("Society of Mind context renderers", () => {
       <ContextRenderer
         context={{
           type: "duplicate-comparison",
-          parentTitle: "Sell",
+          parentTitle: "Sell physical objects",
+          canonicalParentTitle: "Sell (Other)",
+          candidateParentTitle: "Sell physical objects",
           canonicalTitle: "Sell Products",
           candidateSynonymTitle: "Sell Merchandise",
           sourceTasks: ["Sell products to customers."],
@@ -161,10 +163,14 @@ describe("Society of Mind context renderers", () => {
     );
     expect(
       screen.getByLabelText("Separate node before synonym change"),
-    ).toHaveTextContent("Sell Merchandise");
+    ).toHaveTextContent(
+      "Sell MerchandiseSeparate node under Sell physical objects",
+    );
     expect(
       screen.getByLabelText("Proposed synonym relationship"),
-    ).toHaveTextContent("Sell Products");
+    ).toHaveTextContent(
+      "Sell ProductsKeep under Sell (Other) and record Sell Merchandise as a synonym",
+    );
     expect(screen.getByText("Sell products to customers.")).toBeInTheDocument();
     expect(
       screen.queryByText(/merge|delete|downstream/i),
@@ -225,6 +231,8 @@ describe("Society of Mind context renderers", () => {
         context={{
           type: "merge-action",
           parentTitle: "Sell",
+          canonicalParentTitle: "Sell what?",
+          absorbedParentTitle: "Sell",
           canonicalTitle: "Sell information",
           canonicalCollection: "Sell what?",
           canonicalChildren: [],
@@ -241,6 +249,12 @@ describe("Society of Mind context renderers", () => {
     );
     expect(screen.getByLabelText("Node after merge")).toHaveTextContent(
       "Synonym: Sell (Information)",
+    );
+    expect(screen.getByLabelText("Nodes before merge")).toHaveTextContent(
+      "Under Sell what?",
+    );
+    expect(screen.getByLabelText("Nodes before merge")).toHaveTextContent(
+      "Under Sell",
     );
     expect(screen.getAllByText("Sell Contract")).toHaveLength(2);
   });

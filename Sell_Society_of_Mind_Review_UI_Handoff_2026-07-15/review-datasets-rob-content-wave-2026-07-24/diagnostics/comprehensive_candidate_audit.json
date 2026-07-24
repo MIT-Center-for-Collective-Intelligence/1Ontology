@@ -1,0 +1,416 @@
+{
+  "schemaVersion": "sell-comprehensive-candidate-audit-v2",
+  "datasetVersion": "sell-rob-content-wave-2026-07-24-v1",
+  "generatedAt": "2026-07-24T13:23:38.190Z",
+  "sourceSnapshotSha256": "f0886a5191886155966373396c391eb64ff8cb8e4185e3530207eccea6523613",
+  "taxonomy": [
+    {
+      "id": "title-clarity",
+      "label": "Clarify unclear titles",
+      "stage": "content",
+      "robTaskIds": [
+        1
+      ],
+      "rolloutStatus": "prototype",
+      "view": "title-comparison"
+    },
+    {
+      "id": "synonym-enrichment",
+      "label": "Add missing synonyms",
+      "stage": "content",
+      "robTaskIds": [
+        2
+      ],
+      "rolloutStatus": "experimental",
+      "view": "metadata-edit"
+    },
+    {
+      "id": "description-enrichment",
+      "label": "Add missing descriptions",
+      "stage": "additional-quality",
+      "robTaskIds": [
+        3
+      ],
+      "optional": true,
+      "rolloutStatus": "experimental",
+      "view": "metadata-edit"
+    },
+    {
+      "id": "misc-facet-duplicate",
+      "label": "Repeated miscellaneous/facet nodes",
+      "stage": "within-branch",
+      "robTaskIds": [
+        4
+      ],
+      "rolloutStatus": "experimental",
+      "view": "overlap-comparison"
+    },
+    {
+      "id": "mistaken-synonym",
+      "label": "Mistaken synonyms",
+      "stage": "content",
+      "robTaskIds": [
+        5
+      ],
+      "rolloutStatus": "experimental",
+      "view": "metadata-edit"
+    },
+    {
+      "id": "duplicate-synonym",
+      "label": "Undetected synonyms",
+      "stage": "content",
+      "robTaskIds": [
+        6
+      ],
+      "rolloutStatus": "experimental",
+      "view": "duplicate-comparison"
+    },
+    {
+      "id": "polysemy",
+      "label": "Undetected double meanings",
+      "stage": "content",
+      "robTaskIds": [
+        7
+      ],
+      "rolloutStatus": "experimental",
+      "view": "polysemy-review"
+    },
+    {
+      "id": "flat-list-grouping",
+      "label": "Group long flat lists",
+      "stage": "within-branch",
+      "robTaskIds": [
+        8
+      ],
+      "rolloutStatus": "prototype",
+      "view": "grouping-outline"
+    },
+    {
+      "id": "compound-object-grouping",
+      "label": "Group compound objects",
+      "stage": "within-branch",
+      "robTaskIds": [
+        9
+      ],
+      "rolloutStatus": "prototype",
+      "view": "grouping-outline"
+    },
+    {
+      "id": "collection-design",
+      "label": "Create warranted collections",
+      "stage": "within-branch",
+      "robTaskIds": [
+        10
+      ],
+      "rolloutStatus": "experimental",
+      "view": "collection-design"
+    },
+    {
+      "id": "placement",
+      "label": "Wrong place within Sub-branch",
+      "stage": "within-branch",
+      "robTaskIds": [
+        11
+      ],
+      "rolloutStatus": "experimental",
+      "view": "placement-comparison"
+    },
+    {
+      "id": "wrong-verb",
+      "label": "Misjudged synonyms within Sub-branch",
+      "stage": "outside-branch",
+      "robTaskIds": [
+        12
+      ],
+      "rolloutStatus": "experimental",
+      "view": "placement-comparison"
+    },
+    {
+      "id": "sense-relocation",
+      "label": "Move a separated non-selling sense",
+      "stage": "outside-branch",
+      "robTaskIds": [
+        13
+      ],
+      "rolloutStatus": "experimental",
+      "view": "sense-relocation-action"
+    },
+    {
+      "id": "node-merge",
+      "label": "Review approved node merges",
+      "stage": "final-action",
+      "robTaskIds": [
+        4,
+        6
+      ],
+      "rolloutStatus": "experimental",
+      "view": "merge-action"
+    },
+    {
+      "id": "relocation",
+      "label": "Review approved relocations",
+      "stage": "final-action",
+      "robTaskIds": [
+        11,
+        12
+      ],
+      "rolloutStatus": "experimental",
+      "view": "relocation-action"
+    },
+    {
+      "id": "missing-activity",
+      "label": "Missing activity",
+      "stage": "additional-quality",
+      "robTaskIds": [],
+      "optional": true,
+      "rolloutStatus": "experimental",
+      "view": "addition-action"
+    },
+    {
+      "id": "redundant-node",
+      "label": "Redundant node",
+      "stage": "additional-quality",
+      "robTaskIds": [],
+      "rolloutStatus": "experimental",
+      "view": "merge-up-action"
+    }
+  ],
+  "generatedCounts": {
+    "synonymEnrichment": 0,
+    "descriptionEnrichment": 64,
+    "mistakenSynonyms": 0,
+    "duplicatePairs": 2,
+    "polysemyDiagnoses": 0,
+    "flatListGroupings": 3,
+    "compoundObjectGroupings": 6,
+    "collectionDesigns": 1,
+    "exactMerges": 2,
+    "exactRelocations": 20,
+    "senseRelocations": 0,
+    "missingActivities": 10,
+    "redundantNodes": 0,
+    "deferredPureNumberNormalization": 0
+  },
+  "deferredPolicyCandidates": {
+    "titleNumberNormalization": []
+  },
+  "evidenceConvergenceGroupings": [
+    {
+      "issueType": "flat-list-grouping",
+      "title": "Sell Food and Beverages",
+      "parentTitle": "Sell physical objects",
+      "children": [
+        "Sell Beverages",
+        "Sell Food",
+        "Sell Refreshment"
+      ],
+      "reasoning": "Food, beverages, and refreshments form a coherent family of consumable products. The group shortens the long flat list while preserving each narrower selling activity."
+    },
+    {
+      "issueType": "flat-list-grouping",
+      "title": "Sell Investment Instruments",
+      "parentTitle": "Sell information",
+      "children": [
+        "Sell Bond",
+        "Sell Commodity Futures",
+        "Sell Financial Derivatives",
+        "Sell Stock"
+      ],
+      "reasoning": "Bonds, futures, derivatives, and stocks are investment instruments sold through related financial-market practices. The proposed group reduces a long flat list without treating the instruments as synonyms."
+    },
+    {
+      "issueType": "flat-list-grouping",
+      "title": "Sell Payment Instruments",
+      "parentTitle": "Sell information",
+      "children": [
+        "Sell Foreign Currencies",
+        "Sell Traveler's Checks"
+      ],
+      "reasoning": "Foreign currencies and traveler's checks share transaction and payment use cases. The group represents that common function while preserving the distinct instruments."
+    },
+    {
+      "issueType": "compound-object-grouping",
+      "title": "Sell Stamps and Money Orders",
+      "parentTitle": "Sell physical objects",
+      "children": [
+        "Sell Money Orders",
+        "Sell Stamp"
+      ],
+      "reasoning": "Sell Money Orders and Sell Stamp share source evidence that explicitly names selling stamps and money orders. The proposed group represents the compound source activity without treating its objects as synonyms."
+    },
+    {
+      "issueType": "compound-object-grouping",
+      "title": "Sell Travel Packages and Incentives",
+      "parentTitle": "Sell information",
+      "children": [
+        "Sell Travel Incentives",
+        "Sell Travel Packages"
+      ],
+      "reasoning": "The linked evidence describes arranging and selling travel packages and promotional travel incentives together. The proposed grouping retains the two narrower activities and represents their shared travel-offering context."
+    },
+    {
+      "issueType": "compound-object-grouping",
+      "title": "Sell Personal Care Products",
+      "parentTitle": "Sell physical objects",
+      "children": [
+        "Sell Cosmetics",
+        "Sell Hair Care Products",
+        "Sell Nail Care Products"
+      ],
+      "reasoning": "The linked evidence combines cosmetics, hair-care products, and nail-care products. The proposed group represents their shared personal-care context while retaining the narrower product-selling activities."
+    },
+    {
+      "issueType": "compound-object-grouping",
+      "title": "Sell Expedition Goods",
+      "parentTitle": "Sell physical objects",
+      "children": [
+        "Sell Expedition Clothing",
+        "Sell Expedition Equipment",
+        "Sell Expedition Supplies"
+      ],
+      "reasoning": "The shared O*NET evidence explicitly combines expedition equipment, clothing, and supplies. The proposed group preserves those object-specific activities under one evidence-grounded family."
+    },
+    {
+      "issueType": "compound-object-grouping",
+      "title": "Sell Pet Products and Supplies",
+      "parentTitle": "Sell physical objects",
+      "children": [
+        "Sell Pet Food",
+        "Sell Pet Supplies"
+      ],
+      "reasoning": "The shared evidence names pet food and pet supplies together. The proposed group keeps the two narrower activities distinct while representing their common pet-care market."
+    },
+    {
+      "issueType": "compound-object-grouping",
+      "title": "Sell Agricultural Products and Supplies",
+      "parentTitle": "Sell physical objects",
+      "children": [
+        "Sell Agricultural Products",
+        "Sell Agricultural Supplies"
+      ],
+      "reasoning": "Agricultural products and agricultural supplies are distinct but closely related selling specializations. The proposed group represents that domain without collapsing the two activities."
+    }
+  ],
+  "missingActivities": [
+    {
+      "title": "Sell Furniture",
+      "parentTitle": "Sell physical objects",
+      "description": "Sell movable furnishings such as tables, chairs, sofas, beds, and cabinets.",
+      "examples": [
+        "a sofa",
+        "a dining table",
+        "a bed frame"
+      ],
+      "reasoning": "Furniture sales are a common specialization with product-fit, showroom, delivery, and assembly requirements. No current Sell node names this activity."
+    },
+    {
+      "title": "Sell Appliance",
+      "parentTitle": "Sell physical objects",
+      "description": "Sell household and commercial appliances such as refrigerators, washing machines, ovens, and dishwashers.",
+      "examples": [
+        "a refrigerator",
+        "a washing machine",
+        "a dishwasher"
+      ],
+      "reasoning": "Appliance sales require sizing, installation, warranty, delivery, and safety knowledge that distinguishes them from generic equipment sales. No current Sell node names this activity."
+    },
+    {
+      "title": "Sell Vehicle",
+      "parentTitle": "Sell physical objects",
+      "description": "Sell transportation vehicles such as cars, motorcycles, trucks, boats, and recreational vehicles.",
+      "examples": [
+        "a car",
+        "a motorcycle",
+        "a recreational vehicle"
+      ],
+      "reasoning": "Vehicle sales are a major specialization involving title transfer, registration, inspection, financing, and dealer regulation. No current Sell node names whole-vehicle sales."
+    },
+    {
+      "title": "Sell Electronics",
+      "parentTitle": "Sell physical objects",
+      "description": "Sell electronic devices such as televisions, computers, cameras, audio systems, and mobile devices.",
+      "examples": [
+        "a television",
+        "a laptop computer",
+        "a digital camera"
+      ],
+      "reasoning": "Electronics sales require product specifications, compatibility, setup, demonstration, warranty, and support knowledge. The current Sell subtree has no electronics-specific activity."
+    },
+    {
+      "title": "Sell Medicine",
+      "parentTitle": "Sell physical objects",
+      "description": "Sell medicinal products such as prescription drugs, over-the-counter medications, and therapeutic supplies.",
+      "examples": [
+        "prescription tablets",
+        "cough syrup",
+        "pain relievers"
+      ],
+      "reasoning": "Medicine sales are a common regulated specialization involving prescription validation, pharmacy licensing, controlled-substance rules, labeling, safety, and storage. No current Sell node names it."
+    },
+    {
+      "title": "Sell Option",
+      "parentTitle": "Sell information",
+      "description": "Sell options contracts that give the holder the right, but not the obligation, to buy or sell an underlying asset at a specified price.",
+      "examples": [
+        "a call option",
+        "a put option",
+        "an equity option"
+      ],
+      "reasoning": "Options are a standard derivative category with strike, expiration, premium, exercise, disclosure, and approval requirements. Sell Derivative is broader, while no current node names options specifically."
+    },
+    {
+      "title": "Sell Loan",
+      "parentTitle": "Sell information",
+      "description": "Sell lending products or loan contracts such as mortgages, auto loans, business loans, and personal loans.",
+      "examples": [
+        "a mortgage loan",
+        "an auto loan",
+        "a small business loan"
+      ],
+      "reasoning": "Loan sales involve borrower qualification, underwriting, disclosures, and lending-specific compliance. The current Sell subtree has no loan-product activity."
+    },
+    {
+      "title": "Sell Deposit Account",
+      "parentTitle": "Sell information",
+      "description": "Sell bank deposit products such as checking accounts, savings accounts, and certificates of deposit.",
+      "examples": [
+        "a checking account",
+        "a savings account",
+        "a certificate of deposit"
+      ],
+      "reasoning": "Deposit-account sales use account-opening, identity-verification, disclosure, and banking-compliance workflows distinct from securities, currency, checks, or insurance. No current Sell node names this activity."
+    },
+    {
+      "title": "Sell License",
+      "parentTitle": "Sell information",
+      "description": "Sell legal permissions or usage rights, such as software, intellectual-property, or operating licenses.",
+      "examples": [
+        "a software license",
+        "a patent license",
+        "a broadcast license"
+      ],
+      "reasoning": "License sales involve rights scope, usage restrictions, renewal, and legal or regulatory compliance. The current Sell subtree has no license-specific activity."
+    },
+    {
+      "title": "Sell Subscription",
+      "parentTitle": "Sell information",
+      "description": "Sell recurring access rights to content, services, software, or publications.",
+      "examples": [
+        "a streaming subscription",
+        "a SaaS subscription",
+        "a magazine subscription"
+      ],
+      "reasoning": "Subscription sales involve recurring billing, provisioning, renewal, cancellation, and auto-renewal rules. The current Sell subtree has no subscription-specific activity."
+    }
+  ],
+  "decisions": [
+    "The 13 tasks in Rob's document are first-class issue queues rather than aliases for ten broader queues.",
+    "Flat-list grouping and O*NET compound-object grouping are separate review criteria.",
+    "Rent out and Lease out receive an expert-requested identity diagnosis and a separate exact merge review; collection design remains a later structural decision.",
+    "Sell Merchandise is compared with Sell Products using the expert's corrected canonical label rather than regenerating the rejected Sell Items proposal.",
+    "The approved title-split cycle has already separated Sell Products from Sell Ideas; the residual Sell Ideas issue is reviewed as a wrong-verb placement.",
+    "Exact merges and relocations include prerequisite proposal IDs and are served only after an agreeing diagnosis.",
+    "Every regenerated semantic proposal references the post-review ontology copy rather than the superseded title snapshot.",
+    "All proposed current nodes and current relations are checked against the pinned Firestore snapshot."
+  ]
+}

@@ -28,6 +28,7 @@ const ISSUE_PREREQUISITES: Partial<Record<SomIssueType, SomIssueType[]>> = {
     "duplicate-synonym",
     "polysemy",
     "misc-facet-duplicate",
+    "node-merge",
   ],
   "compound-object-grouping": [
     "title-clarity",
@@ -36,6 +37,7 @@ const ISSUE_PREREQUISITES: Partial<Record<SomIssueType, SomIssueType[]>> = {
     "duplicate-synonym",
     "polysemy",
     "misc-facet-duplicate",
+    "node-merge",
   ],
   "collection-design": [
     "title-clarity",
@@ -44,6 +46,7 @@ const ISSUE_PREREQUISITES: Partial<Record<SomIssueType, SomIssueType[]>> = {
     "duplicate-synonym",
     "polysemy",
     "misc-facet-duplicate",
+    "node-merge",
   ],
   placement: [
     "title-clarity",
@@ -52,6 +55,7 @@ const ISSUE_PREREQUISITES: Partial<Record<SomIssueType, SomIssueType[]>> = {
     "duplicate-synonym",
     "polysemy",
     "misc-facet-duplicate",
+    "node-merge",
   ],
   "wrong-verb": [
     "title-clarity",
@@ -60,6 +64,7 @@ const ISSUE_PREREQUISITES: Partial<Record<SomIssueType, SomIssueType[]>> = {
     "duplicate-synonym",
     "polysemy",
     "misc-facet-duplicate",
+    "node-merge",
   ],
   "description-enrichment": ["title-clarity"],
   "missing-activity": [
@@ -130,13 +135,14 @@ export const SOM_REVIEW_PATH: SomReviewPathStep[] = [
     number: 2,
     title: "Resolve meaning and identity",
     description:
-      "Review synonym, double-meaning, and duplicate-structure diagnoses.",
+      "Review meaning diagnoses and confirm their exact node merges before structure.",
     issueTypes: [
       "synonym-enrichment",
       "mistaken-synonym",
       "duplicate-synonym",
       "polysemy",
       "misc-facet-duplicate",
+      "node-merge",
     ],
   },
   {
@@ -158,8 +164,8 @@ export const SOM_REVIEW_PATH: SomReviewPathStep[] = [
     number: 4,
     title: "Confirm exact changes",
     description:
-      "Separate merge and move decisions appear as soon as their diagnoses are approved.",
-    issueTypes: ["node-merge", "relocation", "sense-relocation"],
+      "Exact move decisions appear as soon as their structural diagnoses are approved.",
+    issueTypes: ["relocation", "sense-relocation"],
     contextual: true,
   },
   {

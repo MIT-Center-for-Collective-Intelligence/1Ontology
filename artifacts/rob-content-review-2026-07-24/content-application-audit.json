@@ -1,0 +1,163 @@
+{
+  "schemaVersion": "som-content-application-audit-v1",
+  "generatedAt": "2026-07-24T13:39:32.393Z",
+  "mode": "apply",
+  "environment": "production",
+  "firestoreProjectId": "ontology-41607",
+  "sourceOntology": {
+    "appId": "final-hierarchy-with-o*net-rob-title-review-v2-2026-07-23",
+    "name": "Final Hierarchy with O*Net - Rob Title Review v2 2026-07-23"
+  },
+  "targetOntology": {
+    "appId": "final-hierarchy-with-o*net-rob-content-review-2026-07-24",
+    "name": "Final Hierarchy with O*Net - Rob Content Review 2026-07-24"
+  },
+  "sourceDataset": {
+    "directory": "Sell_Society_of_Mind_Review_UI_Handoff_2026-07-15/review-datasets-rob-title-v2-downstream-2026-07-23",
+    "version": "sell-rob-title-v2-downstream-2026-07-23-v2",
+    "manifestSha256": "22d2d486aceb3d55f41c0ddf97b76434f557926ea8138bd75bc5662b20c90170"
+  },
+  "planSha256": "bfd29a5b721ebc1b5e43272f5b2411adf68982dde4121ad7f8dc32b8fdb928c4",
+  "benchmarkFiles": [
+    {
+      "file": "rob-synonym-enrichment-2026-07-24.json",
+      "issueType": "synonym-enrichment",
+      "sha256": "bcdbbd36e58d6e2c39c538edb13d5c0ed9cd98e915c102afcd7827962d3c590a"
+    },
+    {
+      "file": "rob-mistaken-synonym-2026-07-24.json",
+      "issueType": "mistaken-synonym",
+      "sha256": "a3456fbf14d4e532136e5780d8831d2a3f298f33fae82e9536e9df2b6b2ff885"
+    },
+    {
+      "file": "rob-duplicate-synonym-2026-07-24.json",
+      "issueType": "duplicate-synonym",
+      "sha256": "bdb2cc62a94687e65115acb05f0cfbefe5a219488697d8ba90534afb3cf80c48"
+    },
+    {
+      "file": "rob-misc-facet-duplicate-2026-07-24.json",
+      "issueType": "misc-facet-duplicate",
+      "sha256": "41cd85c758471de6ec1d7424db480369ed5f10af1757f29f179e06c37f81f45b"
+    },
+    {
+      "file": "rob-node-merge-2026-07-24.json",
+      "issueType": "node-merge",
+      "sha256": "bd86011b61ba87fc898d78a030fb2e3615420bcf71523b928a44f8111aefcbde"
+    }
+  ],
+  "sourceDigestBefore": "e802d2b280160dfb81c5b0b09945e6c84de9c3f5705d6351e541243ae5c8ccd4",
+  "expectedTargetDigest": "3a30e8ceb0b79af44ba78f8974b1b76a0e6bc8948d6724c2c4c9b82611807d56",
+  "ownedSourceNodeCount": 52298,
+  "clonedOnetEvidenceNodeCount": 0,
+  "unresolvedDirectReferenceCount": 0,
+  "unresolvedDirectReferenceSample": [],
+  "existingTargetNodeCount": 52298,
+  "nodesRemainingToWrite": 0,
+  "resume": true,
+  "sourceNodeCount": 52298,
+  "targetNodeCount": 52298,
+  "metadataEdits": [
+    {
+      "diagnosisProposalId": "som-6bfc3aceb0ef9673fd43",
+      "sourceNodeId": "8fe5f67aba55d631d7e198d5330b",
+      "targetNodeId": "f9ffea95e747900da7ab9d22f60e",
+      "nodeTitle": "Sell",
+      "removed": [
+        "Market"
+      ],
+      "before": [
+        "Market",
+        "Sell"
+      ],
+      "after": [
+        "Sell"
+      ]
+    },
+    {
+      "diagnosisProposalId": "som-5a1a232264a5f4df66a1",
+      "sourceNodeId": "05cbbaded65ea7148d8a3394bdbc",
+      "targetNodeId": "a5f7e10e84334e57f72b3b4d3a02",
+      "nodeTitle": "Sell Accessories",
+      "removed": [
+        "Market Accessory"
+      ],
+      "before": [
+        "Market Accessory"
+      ],
+      "after": []
+    },
+    {
+      "diagnosisProposalId": "som-f290a635750c4f20991d",
+      "sourceNodeId": "fcd987ecdaac0693ffdc372600d7",
+      "targetNodeId": "d10db0c87c948cca0f352e3daa8f",
+      "nodeTitle": "Sell Services",
+      "removed": [
+        "Market Service"
+      ],
+      "before": [
+        "Market Service"
+      ],
+      "after": []
+    }
+  ],
+  "merges": [
+    {
+      "actionProposalId": "som-1398cc863852caf83e95",
+      "diagnosisProposalId": "som-8744c065b29f5a65dd99",
+      "canonicalSourceNodeId": "387e11ec79634286f82859ad23ae",
+      "canonicalTargetNodeId": "7a9b72054df3bb0fec2dde70426a",
+      "canonicalTitle": "Sell Cosmetics",
+      "absorbedSourceNodeId": "9d85c9ae551e3f2a99c4259d08c7",
+      "absorbedTargetNodeId": "690666079cfeed43ad94d7f35ab8",
+      "absorbedTitle": "Sell Makeup",
+      "movedDirectChildCount": 1
+    },
+    {
+      "actionProposalId": "som-e6298e58624553e4e860",
+      "diagnosisProposalId": "som-f35bb22b2d46b299c028",
+      "canonicalSourceNodeId": "9c3f86bf7139e62ce7f405584c10",
+      "canonicalTargetNodeId": "4b00d4e4e6f681b39f8634f98e2f",
+      "canonicalTitle": "Sell physical objects",
+      "absorbedSourceNodeId": "31475befef122f1e6ecf6fc721b4",
+      "absorbedTargetNodeId": "03bd454b9b36d4df17b58d304509",
+      "absorbedTitle": "Sell (Physical Object)",
+      "movedDirectChildCount": 43
+    },
+    {
+      "actionProposalId": "som-e1f593ec7342cbd66fc6",
+      "diagnosisProposalId": "som-c2eb7d6c6c047b817864",
+      "canonicalSourceNodeId": "ae43de677ba8a002f62bd2e1885d",
+      "canonicalTargetNodeId": "9260045a6135577f0844944c5ffc",
+      "canonicalTitle": "Sell information",
+      "absorbedSourceNodeId": "1e978ef59821773904f76aa1850e",
+      "absorbedTargetNodeId": "d023c41c5029573ed9fce3ca2fb1",
+      "absorbedTitle": "Sell (Information)",
+      "movedDirectChildCount": 19
+    }
+  ],
+  "pendingExpertCorrections": [
+    {
+      "proposalId": "som-b69af6bbb1b51e13100e",
+      "suggestedCorrection": "Is it possible that the LLM was trying to merge Rent out and Lease out?",
+      "nextProposal": "Compare Rent out and Lease out as a possible duplicate activity, followed by a separate exact merge decision if approved."
+    },
+    {
+      "proposalId": "som-cb2fb6102e37362d9e0d",
+      "suggestedCorrection": "Sell Products",
+      "nextProposal": "Compare Sell Merchandise with the existing Sell Products node, followed by a separate exact merge decision if approved."
+    }
+  ],
+  "integrity": {
+    "activeNodeCount": 39629,
+    "deletedNodeCount": 12669,
+    "checkedReciprocalEdgeCount": 59622
+  },
+  "sourceDigestAfter": "e802d2b280160dfb81c5b0b09945e6c84de9c3f5705d6351e541243ae5c8ccd4",
+  "targetDigestAfter": "3a30e8ceb0b79af44ba78f8974b1b76a0e6bc8948d6724c2c4c9b82611807d56",
+  "targetNodeCountAfter": 52298,
+  "verification": {
+    "sourceUnchanged": true,
+    "targetCountMatches": true,
+    "targetDigestMatches": true
+  }
+}

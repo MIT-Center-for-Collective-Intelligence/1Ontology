@@ -517,6 +517,10 @@ const MergeAction = ({
   context: Extract<SomReviewContext, { type: "merge-action" }>;
 }) => {
   const movedChildren = new Set(context.absorbedChildren);
+  const canonicalParentTitle =
+    context.canonicalParentTitle || context.parentTitle;
+  const absorbedParentTitle =
+    context.absorbedParentTitle || context.parentTitle;
   return (
     <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
       <Box sx={comparisonPanelSx} aria-label="Nodes before merge">
@@ -524,11 +528,17 @@ const MergeAction = ({
         <Typography sx={{ mt: 1, fontWeight: 750 }}>
           {context.canonicalTitle}
         </Typography>
+        <Typography sx={{ mt: 0.25, color: "text.secondary" }}>
+          Under {canonicalParentTitle}
+        </Typography>
         <CollectionNote value={context.canonicalCollection} />
         <ChildOutline titles={context.canonicalChildren} />
         <Divider sx={{ my: 1.5 }} />
         <Typography sx={{ fontWeight: 750 }}>
           {context.absorbedTitle}
+        </Typography>
+        <Typography sx={{ mt: 0.25, color: "text.secondary" }}>
+          Under {absorbedParentTitle}
         </Typography>
         <CollectionNote value={context.absorbedCollection} />
         <ChildOutline titles={context.absorbedChildren} highlighted />
@@ -537,6 +547,9 @@ const MergeAction = ({
         <Typography sx={sectionLabelSx}>After</Typography>
         <Typography sx={{ mt: 1, fontWeight: 750 }}>
           {context.canonicalTitle}
+        </Typography>
+        <Typography sx={{ mt: 0.25, color: "text.secondary" }}>
+          Remains under {canonicalParentTitle}
         </Typography>
         <CollectionNote value={context.canonicalCollection} />
         {context.absorbedBecomesSynonym && (
@@ -934,7 +947,8 @@ const DuplicateComparison = ({
           {context.candidateSynonymTitle}
         </Typography>
         <Typography sx={{ mt: 0.5, color: "text.secondary" }}>
-          Separate node under {context.parentTitle}
+          Separate node under{" "}
+          {context.candidateParentTitle || context.parentTitle}
         </Typography>
       </Box>
       <Box sx={comparisonPanelSx} aria-label="Proposed synonym relationship">
@@ -943,7 +957,8 @@ const DuplicateComparison = ({
           {context.canonicalTitle}
         </Typography>
         <Typography sx={{ mt: 0.5, color: "text.secondary" }}>
-          Record {context.candidateSynonymTitle} as a synonym
+          Keep under {context.canonicalParentTitle || context.parentTitle} and
+          record {context.candidateSynonymTitle} as a synonym
         </Typography>
       </Box>
     </Stack>

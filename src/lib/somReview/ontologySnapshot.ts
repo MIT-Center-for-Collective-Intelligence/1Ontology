@@ -351,11 +351,17 @@ export const validateProposalAgainstSnapshot = (
       break;
     }
     case "duplicate-comparison": {
-      parentNodeId = addTitle(context.parentTitle);
+      const canonicalParentId = addTitle(
+        context.canonicalParentTitle || context.parentTitle,
+      );
+      const candidateParentId = addTitle(
+        context.candidateParentTitle || context.parentTitle,
+      );
+      parentNodeId = candidateParentId;
       const canonicalId = addTitle(context.canonicalTitle);
       subjectNodeId = addTitle(context.candidateSynonymTitle);
-      requireAnyEdge(index, parentNodeId, canonicalId);
-      requireAnyEdge(index, parentNodeId, subjectNodeId);
+      requireAnyEdge(index, canonicalParentId, canonicalId);
+      requireAnyEdge(index, candidateParentId, subjectNodeId);
       break;
     }
     case "placement-comparison": {
@@ -386,16 +392,27 @@ export const validateProposalAgainstSnapshot = (
       break;
     }
     case "merge-action": {
-      parentNodeId = addTitle(context.parentTitle);
+      const canonicalParentId = addTitle(
+        context.canonicalParentTitle || context.parentTitle,
+      );
+      const absorbedParentId = addTitle(
+        context.absorbedParentTitle || context.parentTitle,
+      );
+      parentNodeId = absorbedParentId;
       const canonicalId = addTitle(context.canonicalTitle);
       const absorbedId = addTitle(context.absorbedTitle);
       requireEdge(
         index,
-        parentNodeId,
+        canonicalParentId,
         canonicalId,
         context.canonicalCollection,
       );
-      requireEdge(index, parentNodeId, absorbedId, context.absorbedCollection);
+      requireEdge(
+        index,
+        absorbedParentId,
+        absorbedId,
+        context.absorbedCollection,
+      );
       const canonicalChildren = [...(context.canonicalChildren || [])].sort(
         (left, right) => left.localeCompare(right, "en"),
       );

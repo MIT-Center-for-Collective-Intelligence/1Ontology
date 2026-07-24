@@ -1,0 +1,70 @@
+{"proposalId":"som-c2eb7d6c6c047b817864","issueType":"misc-facet-duplicate","sourceFile":"all_proposals.jsonl","reason":"som-c2eb7d6c6c047b817864: Current ontology node does not exist: Sell (Information)"}
+{"proposalId":"som-f35bb22b2d46b299c028","issueType":"misc-facet-duplicate","sourceFile":"all_proposals.jsonl","reason":"som-f35bb22b2d46b299c028: Current ontology node does not exist: Sell (Physical Object)"}
+{"proposalId":"som-e2e3a41d766e4bd71516","issueType":"description-enrichment","sourceFile":"all_proposals.jsonl","reason":"som-e2e3a41d766e4bd71516: Description proposal for Sell Accessories is stale"}
+{"proposalId":"som-b7c074b6d969d98b44ad","issueType":"description-enrichment","sourceFile":"all_proposals.jsonl","reason":"som-b7c074b6d969d98b44ad: Current ontology node does not exist: Sell Makeup"}
+{"proposalId":"som-6b42889ea75216f29937","issueType":"description-enrichment","sourceFile":"all_proposals.jsonl","reason":"som-6b42889ea75216f29937: Description proposal for Sell Services is stale"}
+{"proposalId":"som-5a1a232264a5f4df66a1","issueType":"mistaken-synonym","sourceFile":"all_proposals.jsonl","reason":"som-5a1a232264a5f4df66a1: Synonym proposal for Sell Accessories is stale"}
+{"proposalId":"som-6bfc3aceb0ef9673fd43","issueType":"mistaken-synonym","sourceFile":"all_proposals.jsonl","reason":"som-6bfc3aceb0ef9673fd43: Synonym proposal for Sell is stale"}
+{"proposalId":"som-f290a635750c4f20991d","issueType":"mistaken-synonym","sourceFile":"all_proposals.jsonl","reason":"som-f290a635750c4f20991d: Synonym proposal for Sell Services is stale"}
+{"proposalId":"som-cb2fb6102e37362d9e0d","issueType":"duplicate-synonym","sourceFile":"all_proposals.jsonl","reason":"som-cb2fb6102e37362d9e0d: Current ontology node does not exist: Sell (Physical Object)"}
+{"proposalId":"som-8744c065b29f5a65dd99","issueType":"duplicate-synonym","sourceFile":"all_proposals.jsonl","reason":"som-8744c065b29f5a65dd99: Current ontology node does not exist: Sell (Physical Object)"}
+{"proposalId":"som-517f55403d297658c9b8","issueType":"flat-list-grouping","sourceFile":"all_proposals.jsonl","reason":"som-517f55403d297658c9b8: Current ontology node does not exist: Sell (Physical Object)"}
+{"proposalId":"som-3e7befd953114eb41573","issueType":"flat-list-grouping","sourceFile":"all_proposals.jsonl","reason":"som-3e7befd953114eb41573: Current ontology node does not exist: Sell (Information)"}
+{"proposalId":"som-bc5b5d47260db88522c5","issueType":"flat-list-grouping","sourceFile":"all_proposals.jsonl","reason":"som-bc5b5d47260db88522c5: Current ontology node does not exist: Sell (Information)"}
+{"proposalId":"som-1222919dec7594711c26","issueType":"compound-object-grouping","sourceFile":"all_proposals.jsonl","reason":"som-1222919dec7594711c26: Current ontology node does not exist: Sell (Physical Object)"}
+{"proposalId":"som-2b52385d8c896b8a78ed","issueType":"compound-object-grouping","sourceFile":"all_proposals.jsonl","reason":"som-2b52385d8c896b8a78ed: Current ontology node does not exist: Sell (Information)"}
+{"proposalId":"som-610c593e0efeffd51747","issueType":"compound-object-grouping","sourceFile":"all_proposals.jsonl","reason":"som-610c593e0efeffd51747: Current ontology node does not exist: Sell (Physical Object)"}
+{"proposalId":"som-40edce651813e999cbaa","issueType":"compound-object-grouping","sourceFile":"all_proposals.jsonl","reason":"som-40edce651813e999cbaa: Current ontology node does not exist: Sell (Physical Object)"}
+{"proposalId":"som-0fa6d09a5c957e00ce78","issueType":"compound-object-grouping","sourceFile":"all_proposals.jsonl","reason":"som-0fa6d09a5c957e00ce78: Current ontology node does not exist: Sell (Physical Object)"}
+{"proposalId":"som-748c50f8fcb9068570b7","issueType":"compound-object-grouping","sourceFile":"all_proposals.jsonl","reason":"som-748c50f8fcb9068570b7: Current ontology node does not exist: Sell (Physical Object)"}
+{"proposalId":"som-2f082265f5579cc4b456","issueType":"placement","sourceFile":"all_proposals.jsonl","reason":"som-2f082265f5579cc4b456: Current ontology node does not exist: Sell (Information)"}
+{"proposalId":"som-0d12a123ea786edaeccd","issueType":"placement","sourceFile":"all_proposals.jsonl","reason":"som-0d12a123ea786edaeccd: Current ontology node does not exist: Sell (Information)"}
+{"proposalId":"som-867c1c4f9bb3e5e212c9","issueType":"placement","sourceFile":"all_proposals.jsonl","reason":"som-867c1c4f9bb3e5e212c9: Current ontology node does not exist: Sell (Information)"}
+{"proposalId":"som-1fb3b814901d7fcf5403","issueType":"placement","sourceFile":"all_proposals.jsonl","reason":"som-1fb3b814901d7fcf5403: Current ontology node does not exist: Sell (Physical Object)"}
+{"proposalId":"som-281971994f59abab8975","issueType":"placement","sourceFile":"all_proposals.jsonl","reason":"som-281971994f59abab8975: Current ontology node does not exist: Sell (Information)"}
+{"proposalId":"som-aee96503e9e8c5bffdbb","issueType":"placement","sourceFile":"all_proposals.jsonl","reason":"som-aee96503e9e8c5bffdbb: Current ontology node does not exist: Sell (Information)"}
+{"proposalId":"som-e87f4b4e66ac1e3bfa01","issueType":"placement","sourceFile":"all_proposals.jsonl","reason":"som-e87f4b4e66ac1e3bfa01: Current ontology node does not exist: Sell (Information)"}
+{"proposalId":"som-44cbbe82c9b7fcac73a8","issueType":"placement","sourceFile":"all_proposals.jsonl","reason":"som-44cbbe82c9b7fcac73a8: Current ontology node does not exist: Sell (Physical Object)"}
+{"proposalId":"som-a0a28cecec9a6de98b6d","issueType":"placement","sourceFile":"all_proposals.jsonl","reason":"som-a0a28cecec9a6de98b6d: Current ontology node does not exist: Sell (Physical Object)"}
+{"proposalId":"som-ab2fce0ba2c6c161ab93","issueType":"placement","sourceFile":"all_proposals.jsonl","reason":"som-ab2fce0ba2c6c161ab93: Current ontology node does not exist: Sell (Physical Object)"}
+{"proposalId":"som-48b8916ebb5b0bf3c032","issueType":"placement","sourceFile":"all_proposals.jsonl","reason":"som-48b8916ebb5b0bf3c032: Current ontology node does not exist: Sell (Physical Object)"}
+{"proposalId":"som-fe6497effbc07111ed0c","issueType":"wrong-verb","sourceFile":"all_proposals.jsonl","reason":"som-fe6497effbc07111ed0c: Current ontology node does not exist: Sell (Information)"}
+{"proposalId":"som-2934179b6ed61eaa4996","issueType":"wrong-verb","sourceFile":"all_proposals.jsonl","reason":"som-2934179b6ed61eaa4996: Current ontology node does not exist: Sell (Information)"}
+{"proposalId":"som-2518a5d8b764552e2412","issueType":"wrong-verb","sourceFile":"all_proposals.jsonl","reason":"som-2518a5d8b764552e2412: Current ontology node does not exist: Sell (Information)"}
+{"proposalId":"som-ca69d7bb5dde71e6ea7d","issueType":"wrong-verb","sourceFile":"all_proposals.jsonl","reason":"som-ca69d7bb5dde71e6ea7d: Current ontology node does not exist: Sell (Information)"}
+{"proposalId":"som-75543cb7b7d4c3cc8ae1","issueType":"wrong-verb","sourceFile":"all_proposals.jsonl","reason":"som-75543cb7b7d4c3cc8ae1: Current ontology node does not exist: Sell (Information)"}
+{"proposalId":"som-f461a0a52b81bce8f190","issueType":"wrong-verb","sourceFile":"all_proposals.jsonl","reason":"som-f461a0a52b81bce8f190: Current ontology node does not exist: Sell (Information)"}
+{"proposalId":"som-923463b18fd35c8fddb9","issueType":"wrong-verb","sourceFile":"all_proposals.jsonl","reason":"som-923463b18fd35c8fddb9: Current ontology node does not exist: Sell (Physical Object)"}
+{"proposalId":"som-536ee074621d6d9adc65","issueType":"missing-activity","sourceFile":"all_proposals.jsonl","reason":"som-536ee074621d6d9adc65: Current ontology node does not exist: Sell (Physical Object)"}
+{"proposalId":"som-a3a522a9fb58189d7c20","issueType":"missing-activity","sourceFile":"all_proposals.jsonl","reason":"som-a3a522a9fb58189d7c20: Current ontology node does not exist: Sell (Physical Object)"}
+{"proposalId":"som-6fe6d051ad374fdc0ef9","issueType":"missing-activity","sourceFile":"all_proposals.jsonl","reason":"som-6fe6d051ad374fdc0ef9: Current ontology node does not exist: Sell (Physical Object)"}
+{"proposalId":"som-1249d6b310c84049550e","issueType":"missing-activity","sourceFile":"all_proposals.jsonl","reason":"som-1249d6b310c84049550e: Current ontology node does not exist: Sell (Physical Object)"}
+{"proposalId":"som-30f95a471e79ed947d41","issueType":"missing-activity","sourceFile":"all_proposals.jsonl","reason":"som-30f95a471e79ed947d41: Current ontology node does not exist: Sell (Physical Object)"}
+{"proposalId":"som-11b450c79e28d02ad38a","issueType":"missing-activity","sourceFile":"all_proposals.jsonl","reason":"som-11b450c79e28d02ad38a: Current ontology node does not exist: Sell (Information)"}
+{"proposalId":"som-ee76bedc356f84de7a86","issueType":"missing-activity","sourceFile":"all_proposals.jsonl","reason":"som-ee76bedc356f84de7a86: Current ontology node does not exist: Sell (Information)"}
+{"proposalId":"som-a766bfa6695fc1fa9a4c","issueType":"missing-activity","sourceFile":"all_proposals.jsonl","reason":"som-a766bfa6695fc1fa9a4c: Current ontology node does not exist: Sell (Information)"}
+{"proposalId":"som-6e5355fa72992f1a537c","issueType":"missing-activity","sourceFile":"all_proposals.jsonl","reason":"som-6e5355fa72992f1a537c: Current ontology node does not exist: Sell (Information)"}
+{"proposalId":"som-a6ecc363a57a1c1306b2","issueType":"missing-activity","sourceFile":"all_proposals.jsonl","reason":"som-a6ecc363a57a1c1306b2: Current ontology node does not exist: Sell (Information)"}
+{"proposalId":"som-e1f593ec7342cbd66fc6","issueType":"node-merge","sourceFile":"all_proposals.jsonl","reason":"som-e1f593ec7342cbd66fc6: Current ontology node does not exist: Sell (Information)"}
+{"proposalId":"som-e6298e58624553e4e860","issueType":"node-merge","sourceFile":"all_proposals.jsonl","reason":"som-e6298e58624553e4e860: Current ontology node does not exist: Sell (Physical Object)"}
+{"proposalId":"som-63a36a13ca1e026b1f62","issueType":"node-merge","sourceFile":"all_proposals.jsonl","reason":"som-63a36a13ca1e026b1f62: Current ontology node does not exist: Sell (Physical Object)"}
+{"proposalId":"som-1398cc863852caf83e95","issueType":"node-merge","sourceFile":"all_proposals.jsonl","reason":"som-1398cc863852caf83e95: Current ontology node does not exist: Sell (Physical Object)"}
+{"proposalId":"som-c364b288a309b2917214","issueType":"relocation","sourceFile":"all_proposals.jsonl","reason":"som-c364b288a309b2917214: Current ontology node does not exist: Sell (Information)"}
+{"proposalId":"som-c2c7ebd0b3aef599099a","issueType":"relocation","sourceFile":"all_proposals.jsonl","reason":"som-c2c7ebd0b3aef599099a: Current ontology node does not exist: Sell (Information)"}
+{"proposalId":"som-7196ec1c0217fca28c3e","issueType":"relocation","sourceFile":"all_proposals.jsonl","reason":"som-7196ec1c0217fca28c3e: Current ontology node does not exist: Sell (Information)"}
+{"proposalId":"som-9435769afaeffca56407","issueType":"relocation","sourceFile":"all_proposals.jsonl","reason":"som-9435769afaeffca56407: Current ontology node does not exist: Sell (Physical Object)"}
+{"proposalId":"som-2d394b1ac0640b7baed2","issueType":"relocation","sourceFile":"all_proposals.jsonl","reason":"som-2d394b1ac0640b7baed2: Current ontology node does not exist: Sell (Information)"}
+{"proposalId":"som-ef5078fd9f3e77de62c6","issueType":"relocation","sourceFile":"all_proposals.jsonl","reason":"som-ef5078fd9f3e77de62c6: Current ontology node does not exist: Sell (Information)"}
+{"proposalId":"som-b797079dd2761e4f9d58","issueType":"relocation","sourceFile":"all_proposals.jsonl","reason":"som-b797079dd2761e4f9d58: Current ontology node does not exist: Sell (Information)"}
+{"proposalId":"som-e2923b1c2f23cb4a20e8","issueType":"relocation","sourceFile":"all_proposals.jsonl","reason":"som-e2923b1c2f23cb4a20e8: Current ontology node does not exist: Sell (Physical Object)"}
+{"proposalId":"som-fda802c4a6d926a0f285","issueType":"relocation","sourceFile":"all_proposals.jsonl","reason":"som-fda802c4a6d926a0f285: Current ontology node does not exist: Sell (Physical Object)"}
+{"proposalId":"som-abc56fc02d09fefcf266","issueType":"relocation","sourceFile":"all_proposals.jsonl","reason":"som-abc56fc02d09fefcf266: Current ontology node does not exist: Sell (Physical Object)"}
+{"proposalId":"som-1fc3e0b49e5fc902a0dd","issueType":"relocation","sourceFile":"all_proposals.jsonl","reason":"som-1fc3e0b49e5fc902a0dd: Current ontology node does not exist: Sell (Physical Object)"}
+{"proposalId":"som-15e16d5849e6cbc5ff40","issueType":"relocation","sourceFile":"all_proposals.jsonl","reason":"som-15e16d5849e6cbc5ff40: Current ontology node does not exist: Sell (Physical Object)"}
+{"proposalId":"som-dcce0fb07fe25cff23d6","issueType":"relocation","sourceFile":"all_proposals.jsonl","reason":"som-dcce0fb07fe25cff23d6: Current ontology node does not exist: Sell (Information)"}
+{"proposalId":"som-ff03748925ba39ac758d","issueType":"relocation","sourceFile":"all_proposals.jsonl","reason":"som-ff03748925ba39ac758d: Current ontology node does not exist: Sell (Information)"}
+{"proposalId":"som-a45a435a3f1ea1436b18","issueType":"relocation","sourceFile":"all_proposals.jsonl","reason":"som-a45a435a3f1ea1436b18: Current ontology node does not exist: Sell (Information)"}
+{"proposalId":"som-db2d9e0f88bbe98ef671","issueType":"relocation","sourceFile":"all_proposals.jsonl","reason":"som-db2d9e0f88bbe98ef671: Current ontology node does not exist: Sell (Information)"}
+{"proposalId":"som-0349667c110a4d4d093c","issueType":"relocation","sourceFile":"all_proposals.jsonl","reason":"som-0349667c110a4d4d093c: Current ontology node does not exist: Sell (Information)"}
+{"proposalId":"som-ae0d033c2e3d108a9f6d","issueType":"relocation","sourceFile":"all_proposals.jsonl","reason":"som-ae0d033c2e3d108a9f6d: Current ontology node does not exist: Sell (Information)"}
+{"proposalId":"som-717e1cbaf272c5f0beae","issueType":"relocation","sourceFile":"all_proposals.jsonl","reason":"som-717e1cbaf272c5f0beae: Current ontology node does not exist: Sell (Physical Object)"}

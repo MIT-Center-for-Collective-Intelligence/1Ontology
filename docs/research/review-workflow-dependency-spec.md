@@ -74,6 +74,7 @@ Queues:
 - `duplicate-synonym`
 - `polysemy`
 - `misc-facet-duplicate`
+- `node-merge`
 
 Rules:
 
@@ -83,6 +84,9 @@ Rules:
   overlap question after node identity has been considered.
 - The first four meaning queues are otherwise parallel. The current evidence does not
   justify an arbitrary order among them.
+- A node merge remains an atomic follow-up to its approved identity diagnosis,
+  but it belongs in this phase because downstream structure must be generated
+  from the consolidated nodes.
 
 ### Phase 3: review structure and placement
 
@@ -102,6 +106,7 @@ Prerequisites:
 - undetected synonyms
 - double meanings
 - repeated miscellaneous/facet nodes
+- approved node merges
 
 Rationale: grouping and placement assume that reviewers know what each node
 denotes and which nodes should remain distinct.
@@ -110,7 +115,6 @@ denotes and which nodes should remain distinct.
 
 Queues:
 
-- `node-merge`
 - `relocation`
 - `sense-relocation`
 
@@ -145,13 +149,16 @@ The interface implements the following behavior:
    unexplained “waiting” badge for a phase dependency.
 3. A reviewer cannot start unanswered items in a blocked queue through the UI or
    by calling the session API directly.
-4. Previously saved judgments remain accessible, including judgments made before
+4. A queue whose inputs were changed by an earlier phase is labeled **Awaiting
+   regenerated proposals**. Finishing its prerequisite reviews does not
+   prematurely unlock a stale queue.
+5. Previously saved judgments remain accessible, including judgments made before
    phase gating was introduced.
-5. Exact diagnosis-to-action follow-ups bypass queue gates and remain available
+6. Exact diagnosis-to-action follow-ups bypass queue gates and remain available
    immediately after agreement with their source diagnosis.
-6. “Related review required” is reserved for proposal-level action dependencies;
+7. “Related review required” is reserved for proposal-level action dependencies;
    “Earlier phase required” is reserved for queue-level semantic prerequisites.
-7. The app continues to state that review responses are recorded separately from
+8. The app continues to state that review responses are recorded separately from
    ontology changes.
 
 ## 5. Server enforcement
@@ -172,10 +179,10 @@ The overview API returns both:
 
 ## 6. Important scientific limitation
 
-The current implementation enforces **review order within one frozen dataset**.
-It does not apply accepted changes or regenerate downstream proposals. That is
-adequate for interface piloting, but it is not enough for a confirmatory study of
-the full pipeline.
+The implementation now supports an admin-generated **snapshot wave**. Completed
+expert decisions can be validated, applied to an isolated ontology copy, and
+packaged into a new dataset whose downstream queues remain unreleased. It does
+not automatically adjudicate decisions or write to the original ontology.
 
 The production study must use dataset-level waves:
 
@@ -216,5 +223,9 @@ disagreement.
 - [x] Server and client enforce the same queue policy.
 - [x] Focused unit tests cover completion, blocking counts, saved-history access,
       and exact follow-ups.
-- [ ] Before confirmatory data collection, implement admin-controlled wave
-      release and proposal regeneration from adjudicated ontology snapshots.
+- [x] Admin-controlled release metadata prevents stale downstream queues from
+      opening before proposal regeneration.
+- [x] The July 24 content wave was generated from an isolated, integrity-checked
+      ontology copy after applying Rob's approved content decisions.
+- [ ] Before confirmatory data collection, formalize multi-reviewer adjudication
+      and promotion of a completed wave into the next released snapshot.

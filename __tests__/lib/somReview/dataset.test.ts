@@ -4,6 +4,7 @@ import {
   SUPPORTED_ISSUE_TYPES,
   compileResponseValidator,
   isIssueTypeEnabled,
+  isIssueTypeReleased,
   loadDataset,
   proposalAvailability,
 } from "../../../src/lib/somReview/dataset";
@@ -371,51 +372,97 @@ describe("Society of Mind review dataset", () => {
   });
 });
 
-describe("Rob post-title-review pass", () => {
+describe("Rob post-content-review wave", () => {
   const dataset = loadDataset();
 
-  it("serves only the fresh title splits against the isolated ontology", () => {
-    expect(dataset.datasetVersion).toBe(
-      "sell-rob-title-applied-title-pass-2026-07-22-v1",
-    );
-    expect(dataset.recordsById.size).toBe(4);
+  it("is pinned to the isolated ontology with Rob's approved content changes", () => {
+    expect(dataset.datasetVersion).toBe("sell-rob-content-wave-2026-07-24-v1");
+    expect(dataset.recordsById.size).toBe(128);
     expect(dataset.manifest.sourceSnapshot).toMatchObject({
-      ontologyAppId: "final-hierarchy-with-o*net-rob-title-review-2026-07-22",
-      ontologyName: "Final Hierarchy with O*Net - Rob Title Review 2026-07-22",
+      ontologyAppId: "final-hierarchy-with-o*net-rob-content-review-2026-07-24",
+      ontologyName:
+        "Final Hierarchy with O*Net - Rob Content Review 2026-07-24",
       environment: "production",
+      nodeCount: 130,
+      sellNodeCount: 127,
+      referenceNodeCount: 3,
+      edgeCount: 165,
     });
-    expect(dataset.manifest.counts.gatedDownstreamCandidates).toBe(23);
+    expect(dataset.manifest.appliedReviewCycle).toMatchObject({
+      auditFile: "diagnostics/content_application_audit.json",
+    });
+  });
+
+  it("releases only the remaining content corrections", () => {
+    expect(isIssueTypeReleased(dataset, "duplicate-synonym")).toBe(true);
+    expect(isIssueTypeReleased(dataset, "node-merge")).toBe(true);
+    expect(isIssueTypeReleased(dataset, "flat-list-grouping")).toBe(false);
+    expect(isIssueTypeReleased(dataset, "placement")).toBe(false);
     expect(
       [...dataset.recordsById.values()].map(
-        (record) => record.reviewerView.context.currentTitle,
+        (record) => record.reviewerView.context.type,
       ),
+    ).toEqual(expect.arrayContaining(["duplicate-comparison", "merge-action"]));
+  });
+
+  it("turns Rob's two corrections into focused diagnoses and exact actions", () => {
+    const duplicateRecords = [...dataset.recordsById.values()].filter(
+      (record) => record.issueType === "duplicate-synonym",
+    );
+    expect(duplicateRecords).toHaveLength(2);
+    expect(
+      duplicateRecords.map((record) => [
+        record.reviewerView.context.canonicalTitle,
+        record.reviewerView.context.candidateSynonymTitle,
+      ]),
     ).toEqual(
       expect.arrayContaining([
-        "Market Product",
-        "Sell Beverage",
-        "Sell Product",
-        "Sell Supply",
+        ["Rent out", "Lease out"],
+        ["Sell Products", "Sell Merchandise"],
       ]),
     );
+
+    const merchandise = duplicateRecords.find(
+      (record) =>
+        record.reviewerView.context.candidateSynonymTitle ===
+        "Sell Merchandise",
+    );
+    expect(merchandise.reviewerView.context).toMatchObject({
+      canonicalParentTitle: "Sell (Other)",
+      candidateParentTitle: "Sell physical objects",
+    });
     expect(
       [...dataset.recordsById.values()].every(
-        (record) => record.reviewerView.context.type === "title-split",
+        (record) =>
+          !["Sell Makeup", "Sell (Physical Object)", "Sell (Information)"].some(
+            (title) =>
+              JSON.stringify(record.reviewerView.context).includes(title),
+          ),
+      ),
+    ).toBe(true);
+
+    const mergeActions = [...dataset.recordsById.values()].filter(
+      (record) => record.issueType === "node-merge",
+    );
+    expect(mergeActions).toHaveLength(2);
+    expect(
+      mergeActions.every(
+        (record) => record.workflow.dependsOnProposalIds.length === 1,
       ),
     ).toBe(true);
   });
 
-  it("distinguishes existing destinations from new split nodes", () => {
-    const product = [...dataset.recordsById.values()].find(
-      (record) => record.reviewerView.context.currentTitle === "Sell Product",
+  it("regenerates grouping inputs after the approved Makeup merge", () => {
+    const personalCare = [...dataset.recordsById.values()].find(
+      (record) =>
+        record.reviewerView.context.type === "grouping-outline" &&
+        record.reviewerView.context.proposedGroupTitle ===
+          "Sell Personal Care Products",
     );
-    expect(product.reviewerView.context.proposedNodes).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ title: "Sell Products", status: "existing" }),
-        expect.objectContaining({
-          title: "Sell Agricultural Products",
-          status: "new",
-        }),
-      ]),
-    );
+    expect(personalCare.reviewerView.context.proposedChildren).toEqual([
+      "Sell Cosmetics",
+      "Sell Hair Care Products",
+      "Sell Nail Care Products",
+    ]);
   });
 });

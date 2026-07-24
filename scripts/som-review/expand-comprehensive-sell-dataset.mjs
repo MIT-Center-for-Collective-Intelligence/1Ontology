@@ -174,22 +174,7 @@ const REGENERATED_ISSUE_TYPES = new Set([
 
 const PURE_NUMBER_NORMALIZATION_TITLES = new Set();
 
-const DUPLICATE_SYNONYM_PAIRS = [
-  {
-    parentTitle: "Sell (Physical Object)",
-    canonicalTitle: "Sell Items",
-    candidateSynonymTitle: "Sell Merchandise",
-    reasoning:
-      "Both titles denote generic tangible goods offered for sale. The evidence does not identify a stable activity-level distinction between an item and merchandise.",
-  },
-  {
-    parentTitle: "Sell (Physical Object)",
-    canonicalTitle: "Sell Cosmetics",
-    candidateSynonymTitle: "Sell Makeup",
-    reasoning:
-      "Makeup is ordinarily a kind of cosmetic product. This review tests whether the two nodes represent the same selling activity or whether the narrower makeup node should remain distinct.",
-  },
-];
+const EXPERT_SUPPRESSED_SYNONYM_GAPS = new Set(["Lease out|Lease"]);
 
 const PLACEMENT_CANDIDATES = [
   {
@@ -857,6 +842,120 @@ function directParent(index, childTitle) {
   };
 }
 
+function currentFacetTitle(index, legacyTitle, canonicalTitle) {
+  if (index.idByTitle.has(legacyTitle)) return legacyTitle;
+  if (index.idByTitle.has(canonicalTitle)) return canonicalTitle;
+  throw new Error(
+    `Current ontology contains neither ${legacyTitle} nor ${canonicalTitle}`,
+  );
+}
+
+function remapFacetTitle(index, title) {
+  if (title === "Sell (Physical Object)") {
+    return currentFacetTitle(
+      index,
+      "Sell (Physical Object)",
+      "Sell physical objects",
+    );
+  }
+  if (title === "Sell (Information)") {
+    return currentFacetTitle(index, "Sell (Information)", "Sell information");
+  }
+  return title;
+}
+
+function duplicateSynonymPairs(index) {
+  const pairs = [];
+  const addPair = ({ canonicalTitle, candidateSynonymTitle, reasoning }) => {
+    if (
+      !index.idByTitle.has(canonicalTitle) ||
+      !index.idByTitle.has(candidateSynonymTitle)
+    ) {
+      return;
+    }
+    const canonicalParentTitle = directParent(
+      index,
+      canonicalTitle,
+    ).parentTitle;
+    const candidateParentTitle = directParent(
+      index,
+      candidateSynonymTitle,
+    ).parentTitle;
+    pairs.push({
+      parentTitle: candidateParentTitle,
+      canonicalParentTitle,
+      candidateParentTitle,
+      canonicalTitle,
+      candidateSynonymTitle,
+      reasoning,
+    });
+  };
+
+  addPair({
+    canonicalTitle: "Sell Cosmetics",
+    candidateSynonymTitle: "Sell Makeup",
+    reasoning:
+      "Makeup is ordinarily a kind of cosmetic product. This review tests whether the two nodes represent the same selling activity or whether the narrower makeup node should remain distinct.",
+  });
+  addPair({
+    canonicalTitle: "Rent out",
+    candidateSynonymTitle: "Lease out",
+    reasoning:
+      "Both activities grant temporary use of an asset for payment. Lease often suggests a more formal or longer arrangement, but that difference may describe contract terms rather than a distinct work activity.",
+  });
+  addPair({
+    canonicalTitle: "Sell Products",
+    candidateSynonymTitle: "Sell Merchandise",
+    reasoning:
+      "Rob's review identified Sell Products as the clearer work-language label for the generic merchandise-selling activity. This revised proposal tests that identity directly without treating Sell Items as the canonical title.",
+  });
+  return pairs;
+}
+
+function currentGroupingCandidates(index) {
+  return EXTRA_GROUPINGS.flatMap((candidate) => {
+    const parentTitle = remapFacetTitle(index, candidate.parentTitle);
+    if (!index.idByTitle.has(parentTitle)) return [];
+    const parentId = resolveTitle(index, parentTitle);
+    const children = candidate.children.filter((title) => {
+      if (!index.idByTitle.has(title)) return false;
+      const childId = resolveTitle(index, title);
+      return index.edgePairs.has(`${parentId}\u001f${childId}`);
+    });
+    if (children.length < 2 || index.idByTitle.has(candidate.title)) return [];
+    return [
+      {
+        ...candidate,
+        parentTitle,
+        children,
+        reasoning:
+          candidate.title === "Sell Personal Care Products"
+            ? "The linked evidence combines cosmetics, hair-care products, and nail-care products. The proposed group represents their shared personal-care context while retaining the narrower product-selling activities."
+            : candidate.reasoning,
+      },
+    ];
+  });
+}
+
+function remapPlacementCandidates(index, candidates) {
+  return candidates
+    .filter((candidate) => index.idByTitle.has(candidate.title))
+    .map((candidate) => ({
+      ...candidate,
+      proposedParentTitle: remapFacetTitle(
+        index,
+        candidate.proposedParentTitle,
+      ),
+    }));
+}
+
+function remapMissingActivities(index) {
+  return MISSING_ACTIVITIES.map((candidate) => ({
+    ...candidate,
+    parentTitle: remapFacetTitle(index, candidate.parentTitle),
+  }));
+}
+
 function semanticChildren(index, title) {
   return directChildren(index, title).filter(
     (childTitle) => !childTitle.startsWith("(O*Net)"),
@@ -941,11 +1040,17 @@ function deriveRefs(context, index) {
 
   switch (context.type) {
     case "duplicate-comparison": {
-      parentNodeId = addTitle(context.parentTitle);
+      const canonicalParentId = addTitle(
+        context.canonicalParentTitle || context.parentTitle,
+      );
+      const candidateParentId = addTitle(
+        context.candidateParentTitle || context.parentTitle,
+      );
+      parentNodeId = candidateParentId;
       const canonicalId = addTitle(context.canonicalTitle);
       subjectNodeId = addTitle(context.candidateSynonymTitle);
-      requireAnyEdge(index, parentNodeId, canonicalId);
-      requireAnyEdge(index, parentNodeId, subjectNodeId);
+      requireAnyEdge(index, canonicalParentId, canonicalId);
+      requireAnyEdge(index, candidateParentId, subjectNodeId);
       break;
     }
     case "placement-comparison": {
@@ -974,18 +1079,24 @@ function deriveRefs(context, index) {
       break;
     }
     case "merge-action": {
-      parentNodeId = addTitle(context.parentTitle);
+      const canonicalParentId = addTitle(
+        context.canonicalParentTitle || context.parentTitle,
+      );
+      const absorbedParentId = addTitle(
+        context.absorbedParentTitle || context.parentTitle,
+      );
+      parentNodeId = absorbedParentId;
       const canonicalId = addTitle(context.canonicalTitle);
       subjectNodeId = addTitle(context.absorbedTitle);
       requireEdge(
         index,
-        parentNodeId,
+        canonicalParentId,
         canonicalId,
         context.canonicalCollection,
       );
       requireEdge(
         index,
-        parentNodeId,
+        absorbedParentId,
         subjectNodeId,
         context.absorbedCollection,
       );
@@ -1151,8 +1262,11 @@ function makeRecord({
   };
 }
 
-function groupingRecords({ manifest, index, snapshotHash, generatedAt }) {
-  return EXTRA_GROUPINGS.map((candidate) => {
+function groupingRecords(
+  { manifest, index, snapshotHash, generatedAt },
+  candidates,
+) {
+  return candidates.map((candidate) => {
     const unaffectedChildren = directChildren(index, candidate.parentTitle, {
       evidence: false,
     }).filter((title) => !candidate.children.includes(title));
@@ -1233,6 +1347,7 @@ function metadataRecords({
     const proposedSynonyms = explicitDescriptionSynonyms(node).filter(
       (synonym) =>
         !/^market(?:\s|$)/i.test(synonym) &&
+        !EXPERT_SUPPRESSED_SYNONYM_GAPS.has(`${node.title}|${synonym}`) &&
         !structuredSynonyms(node).some(
           (current) => current.toLowerCase() === synonym.toLowerCase(),
         ),
@@ -1382,10 +1497,17 @@ function mistakenSynonymRecords(args) {
 }
 
 function duplicateDiagnosticRecords(args) {
-  const { manifest, index, snapshotHash, generatedAt } = args;
-  return DUPLICATE_SYNONYM_PAIRS.map((candidate) => {
-    const { parentTitle, canonicalTitle, candidateSynonymTitle, reasoning } =
-      candidate;
+  const { manifest, index, snapshotHash, generatedAt, duplicatePairs } = args;
+  return duplicatePairs.map((candidate) => {
+    const {
+      parentTitle,
+      canonicalParentTitle,
+      candidateParentTitle,
+      canonicalTitle,
+      candidateSynonymTitle,
+      reasoning,
+    } = candidate;
+    const sameParent = canonicalParentTitle === candidateParentTitle;
     return makeRecord({
       manifest,
       index,
@@ -1400,12 +1522,16 @@ function duplicateDiagnosticRecords(args) {
       },
       reviewerView: {
         question: `Should "${candidateSynonymTitle}" be recorded as a synonym of "${canonicalTitle}"?`,
-        currentState: `They are separate sibling nodes under ${parentTitle}.`,
+        currentState: sameParent
+          ? `They are separate sibling nodes under ${parentTitle}.`
+          : `"${candidateSynonymTitle}" is under "${candidateParentTitle}", while "${canonicalTitle}" is under "${canonicalParentTitle}".`,
         proposedState: `Treat "${candidateSynonymTitle}" as a synonym of "${canonicalTitle}".`,
         reasoning,
         context: {
           type: "duplicate-comparison",
           parentTitle,
+          canonicalParentTitle,
+          candidateParentTitle,
           canonicalTitle,
           candidateSynonymTitle,
           sourceTasks: [
@@ -1584,7 +1710,7 @@ function relocationRecord({
 
 function relocationRecords(args, diagnostics) {
   const records = [];
-  for (const candidate of PLACEMENT_CANDIDATES) {
+  for (const candidate of args.placementCandidates) {
     records.push(
       relocationRecord({
         ...args,
@@ -1596,7 +1722,7 @@ function relocationRecords(args, diagnostics) {
       }),
     );
   }
-  for (const candidate of WRONG_VERB_RELOCATIONS) {
+  for (const candidate of args.wrongVerbCandidates) {
     records.push(
       relocationRecord({
         ...args,
@@ -1619,12 +1745,22 @@ function mergeRecord({
   canonicalTitle,
   absorbedTitle,
   parentTitle = "Sell",
+  canonicalParentTitle = parentTitle,
+  absorbedParentTitle = parentTitle,
   reasoning,
   evidence,
   dependencyId,
 }) {
-  const canonicalCollection = collectionFor(index, parentTitle, canonicalTitle);
-  const absorbedCollection = collectionFor(index, parentTitle, absorbedTitle);
+  const canonicalCollection = collectionFor(
+    index,
+    canonicalParentTitle,
+    canonicalTitle,
+  );
+  const absorbedCollection = collectionFor(
+    index,
+    absorbedParentTitle,
+    absorbedTitle,
+  );
   const canonicalChildren = directChildren(index, canonicalTitle);
   const absorbedChildren = directChildren(index, absorbedTitle);
   const resultingChildren = [
@@ -1638,6 +1774,8 @@ function mergeRecord({
   const context = {
     type: "merge-action",
     parentTitle,
+    canonicalParentTitle,
+    absorbedParentTitle,
     canonicalTitle,
     canonicalCollection,
     canonicalChildren,
@@ -1656,12 +1794,15 @@ function mergeRecord({
     key: `merge:${absorbedTitle}->${canonicalTitle}`,
     subject: {
       title: absorbedTitle,
-      parentTitle,
+      parentTitle: absorbedParentTitle,
       relatedTitles: [canonicalTitle],
     },
     reviewerView: {
       question: `Should "${absorbedTitle}" be merged into "${canonicalTitle}"?`,
-      currentState: `"${canonicalTitle}" and "${absorbedTitle}" are separate nodes under "${parentTitle}".`,
+      currentState:
+        canonicalParentTitle === absorbedParentTitle
+          ? `"${canonicalTitle}" and "${absorbedTitle}" are separate nodes under "${parentTitle}".`
+          : `"${absorbedTitle}" is under "${absorbedParentTitle}", while "${canonicalTitle}" is under "${canonicalParentTitle}".`,
       proposedState: `Keep "${canonicalTitle}", ${moveSummary}record "${absorbedTitle}" as a synonym, and remove the separate "${absorbedTitle}" node.`,
       reasoning,
       context,
@@ -1674,47 +1815,62 @@ function mergeRecord({
 }
 
 function mergeRecords(args, diagnostics) {
-  const records = [
-    mergeRecord({
-      ...args,
-      canonicalTitle: "Sell information",
-      absorbedTitle: "Sell (Information)",
-      reasoning:
-        "The two titles normalize to the same concept. The surviving node is already in the explicit Sell what? collection; consolidation moves the populated wrapper's current children into that facet and retires the duplicate miscellaneous wrapper.",
-      evidence: {
-        detectorId: "deterministic-overlap-scan",
-        detectorName: "SiblingMiscFacetOverlapScanner",
-        judgeId: "snapshot-action-audit",
-        judgeName: "StructuralConsolidationAuditor",
-        detectorConfidence: "high",
-        judgeConfidence: "high",
-      },
-      dependencyId:
-        diagnostics.overlap.get("Sell (Information)|Sell information") || "",
-    }),
-    mergeRecord({
-      ...args,
-      canonicalTitle: "Sell physical objects",
-      absorbedTitle: "Sell (Physical Object)",
-      reasoning:
-        "The two titles normalize to the same concept. The surviving node is already in the explicit Sell what? collection; consolidation moves the populated wrapper's current children into that facet and retires the duplicate miscellaneous wrapper.",
-      evidence: {
-        detectorId: "deterministic-overlap-scan",
-        detectorName: "SiblingMiscFacetOverlapScanner",
-        judgeId: "snapshot-action-audit",
-        judgeName: "StructuralConsolidationAuditor",
-        detectorConfidence: "high",
-        judgeConfidence: "high",
-      },
-      dependencyId:
-        diagnostics.overlap.get(
-          "Sell (Physical Object)|Sell physical objects",
-        ) || "",
-    }),
-  ];
-  for (const candidate of DUPLICATE_SYNONYM_PAIRS) {
+  const records = [];
+  if (
+    args.index.idByTitle.has("Sell information") &&
+    args.index.idByTitle.has("Sell (Information)")
+  ) {
+    records.push(
+      mergeRecord({
+        ...args,
+        canonicalTitle: "Sell information",
+        absorbedTitle: "Sell (Information)",
+        reasoning:
+          "The two titles normalize to the same concept. The surviving node is already in the explicit Sell what? collection; consolidation moves the populated wrapper's current children into that facet and retires the duplicate miscellaneous wrapper.",
+        evidence: {
+          detectorId: "deterministic-overlap-scan",
+          detectorName: "SiblingMiscFacetOverlapScanner",
+          judgeId: "snapshot-action-audit",
+          judgeName: "StructuralConsolidationAuditor",
+          detectorConfidence: "high",
+          judgeConfidence: "high",
+        },
+        dependencyId:
+          diagnostics.overlap.get("Sell (Information)|Sell information") || "",
+      }),
+    );
+  }
+  if (
+    args.index.idByTitle.has("Sell physical objects") &&
+    args.index.idByTitle.has("Sell (Physical Object)")
+  ) {
+    records.push(
+      mergeRecord({
+        ...args,
+        canonicalTitle: "Sell physical objects",
+        absorbedTitle: "Sell (Physical Object)",
+        reasoning:
+          "The two titles normalize to the same concept. The surviving node is already in the explicit Sell what? collection; consolidation moves the populated wrapper's current children into that facet and retires the duplicate miscellaneous wrapper.",
+        evidence: {
+          detectorId: "deterministic-overlap-scan",
+          detectorName: "SiblingMiscFacetOverlapScanner",
+          judgeId: "snapshot-action-audit",
+          judgeName: "StructuralConsolidationAuditor",
+          detectorConfidence: "high",
+          judgeConfidence: "high",
+        },
+        dependencyId:
+          diagnostics.overlap.get(
+            "Sell (Physical Object)|Sell physical objects",
+          ) || "",
+      }),
+    );
+  }
+  for (const candidate of args.duplicatePairs) {
     const {
       parentTitle,
+      canonicalParentTitle,
+      candidateParentTitle,
       canonicalTitle,
       candidateSynonymTitle: absorbedTitle,
     } = candidate;
@@ -1724,6 +1880,8 @@ function mergeRecords(args, diagnostics) {
         canonicalTitle,
         absorbedTitle,
         parentTitle,
+        canonicalParentTitle,
+        absorbedParentTitle: candidateParentTitle,
         reasoning:
           "The preceding pairwise synonym review determines whether these generic item-selling titles denote the same activity. This separate action review shows the exact node and child consolidation before any write is prepared.",
         dependencyId:
@@ -1747,8 +1905,9 @@ function missingActivityRecords({
   index,
   snapshotHash,
   generatedAt,
+  missingActivities,
 }) {
-  return MISSING_ACTIVITIES.map((candidate) =>
+  return missingActivities.map((candidate) =>
     makeRecord({
       manifest,
       index,
@@ -2086,6 +2245,20 @@ function extendSchema(schema) {
       enum: ["structured-field", "all-recorded"],
     };
   }
+  const duplicateOption = contextOptions.find(
+    (option) => option.properties?.type?.const === "duplicate-comparison",
+  );
+  if (duplicateOption) {
+    duplicateOption.properties.canonicalParentTitle = nonEmpty;
+    duplicateOption.properties.candidateParentTitle = nonEmpty;
+  }
+  const mergeOption = contextOptions.find(
+    (option) => option.properties?.type?.const === "merge-action",
+  );
+  if (mergeOption) {
+    mergeOption.properties.canonicalParentTitle = nonEmpty;
+    mergeOption.properties.absorbedParentTitle = nonEmpty;
+  }
   for (const contextType of [
     "grouping-outline",
     "duplicate-comparison",
@@ -2145,6 +2318,18 @@ function main() {
     ONTOLOGY_NAME;
   const generatedAt = args["generated-at"] || new Date().toISOString();
   const index = buildIndex(snapshot);
+  const duplicatePairs = duplicateSynonymPairs(index);
+  const groupingCandidates = currentGroupingCandidates(index);
+  const placementCandidates = remapPlacementCandidates(
+    index,
+    PLACEMENT_CANDIDATES,
+  );
+  const wrongVerbCandidates = remapPlacementCandidates(
+    index,
+    WRONG_VERB_RELOCATIONS,
+  );
+  const missingActivities = remapMissingActivities(index);
+  const reviewWave = args["review-wave"] || "all";
 
   const sourceEvidenceForContext = (context) => {
     if (!context) return context;
@@ -2297,21 +2482,25 @@ function main() {
     snapshot,
     snapshotHash,
     generatedAt,
+    duplicatePairs,
+    placementCandidates,
+    wrongVerbCandidates,
+    missingActivities,
   };
   const generatedDiagnostics = [
     ...metadataRecords(generationArgs),
     ...mistakenSynonymRecords(generationArgs),
     ...duplicateDiagnosticRecords(generationArgs),
-    ...groupingRecords(generationArgs),
+    ...groupingRecords(generationArgs, groupingCandidates),
     collectionDesignRecord(generationArgs),
     ...placementDiagnosticRecords(
       generationArgs,
-      PLACEMENT_CANDIDATES,
+      placementCandidates,
       "placement",
     ),
     ...placementDiagnosticRecords(
       generationArgs,
-      WRONG_VERB_RELOCATIONS,
+      wrongVerbCandidates,
       "wrong-verb",
     ),
     ...missingActivityRecords(generationArgs),
@@ -2460,17 +2649,62 @@ function main() {
     exactRelocationsWithVerifiedCurrentTargets: generatedActions.filter(
       (record) => record.issueType === "relocation",
     ).length,
-    note: "Every issue family in Rob's July 9 document retains an atomic review contract. This cycle contains only unresolved snapshot-bound candidates after the accepted title splits; resolved or currently inapplicable queues may contain zero items. Candidate generation is exhaustive only for the packaged scans and deterministic metadata checks.",
+    note: "Every issue family in Rob's July 9 document retains an atomic review contract. This cycle contains only snapshot-bound candidates after applying completed expert decisions; resolved or currently inapplicable queues may contain zero items. Candidate generation is exhaustive only for the packaged scans and deterministic metadata checks.",
   };
   manifest.limitations = [
     "The app supports all 13 documented issue families, but this regenerated cycle is not proof that every semantic issue in Sell has been discovered.",
-    "The four expert-approved title-split proposals are already applied to the source ontology copy and are intentionally absent from this downstream review set.",
+    "Expert-approved title, synonym, and exact-merge decisions already applied to the source ontology copy are intentionally absent from this downstream review set.",
     "Description proposals are deliberately conservative and preserve linked O*NET wording; human reviewers should improve awkward phrasing rather than accepting unsupported detail.",
     "Exact merge and relocation actions remain unavailable to an individual reviewer until that reviewer agrees with the prerequisite diagnosis.",
-    "Rent out and Lease out are handled by collection design; the earlier contradictory wrong-verb and immediate-merge actions have been removed.",
+    "Rent out and Lease out now receive a focused identity review in response to expert feedback; collection design remains a separate later structural question.",
+    "Sell Merchandise is compared with the existing Sell Products node in response to the expert's corrected canonical label; Sell Items is not silently merged in the same action.",
     "The earlier Sell Products or Ideas polysemy was resolved by the approved split into Sell Products and Sell Ideas. The remaining Sell Ideas placement is reviewed as a wrong-verb diagnosis followed by a gated relocation.",
     "Every decision is review-only. Acceptance never writes to Firestore, and accepted actions must be revalidated against a fresh snapshot before implementation.",
   ];
+  if (reviewWave === "content-corrections") {
+    manifest.reviewRelease = {
+      strategy: "snapshot-wave",
+      currentWave: "expert-content-corrections",
+      releasedIssueTypes: [
+        "title-clarity",
+        "synonym-enrichment",
+        "mistaken-synonym",
+        "duplicate-synonym",
+        "polysemy",
+        "misc-facet-duplicate",
+        "node-merge",
+      ],
+      awaitingRegenerationIssueTypes: [
+        "flat-list-grouping",
+        "compound-object-grouping",
+        "collection-design",
+        "placement",
+        "wrong-verb",
+        "relocation",
+        "sense-relocation",
+        "description-enrichment",
+        "missing-activity",
+        "redundant-node",
+      ],
+      message:
+        "Available after the remaining content decisions are applied and proposals are regenerated from the resulting ontology snapshot.",
+    };
+  } else {
+    delete manifest.reviewRelease;
+  }
+  if (args["application-audit"]) {
+    const applicationAudit = path.resolve(args["application-audit"]);
+    const packagedAudit = path.join(
+      directory,
+      "diagnostics",
+      "content_application_audit.json",
+    );
+    fs.copyFileSync(applicationAudit, packagedAudit);
+    manifest.appliedReviewCycle = {
+      auditFile: path.relative(directory, packagedAudit),
+      auditSha256: hash(fs.readFileSync(applicationAudit)),
+    };
+  }
   writeJson(manifestPath, manifest);
   writeJsonl(
     historicalRejectedCandidatesPath,
@@ -2508,7 +2742,7 @@ function main() {
         mistakenSynonyms: generatedDiagnostics.filter(
           (record) => record.issueType === "mistaken-synonym",
         ).length,
-        duplicatePairs: DUPLICATE_SYNONYM_PAIRS.length,
+        duplicatePairs: duplicatePairs.length,
         polysemyDiagnoses: 0,
         flatListGroupings: generatedDiagnostics.filter(
           (record) => record.issueType === "flat-list-grouping",
@@ -2524,19 +2758,20 @@ function main() {
           (record) => record.issueType === "relocation",
         ).length,
         senseRelocations: 0,
-        missingActivities: MISSING_ACTIVITIES.length,
+        missingActivities: missingActivities.length,
         redundantNodes: 0,
         deferredPureNumberNormalization: 0,
       },
       deferredPolicyCandidates: {
         titleNumberNormalization: [...PURE_NUMBER_NORMALIZATION_TITLES].sort(),
       },
-      evidenceConvergenceGroupings: EXTRA_GROUPINGS,
-      missingActivities: MISSING_ACTIVITIES,
+      evidenceConvergenceGroupings: groupingCandidates,
+      missingActivities,
       decisions: [
         "The 13 tasks in Rob's document are first-class issue queues rather than aliases for ten broader queues.",
         "Flat-list grouping and O*NET compound-object grouping are separate review criteria.",
-        "Rent out and Lease out are no longer simultaneously treated as wrong verbs and an immediate merge; collection design is reviewed first.",
+        "Rent out and Lease out receive an expert-requested identity diagnosis and a separate exact merge review; collection design remains a later structural decision.",
+        "Sell Merchandise is compared with Sell Products using the expert's corrected canonical label rather than regenerating the rejected Sell Items proposal.",
         "The approved title-split cycle has already separated Sell Products from Sell Ideas; the residual Sell Ideas issue is reviewed as a wrong-verb placement.",
         "Exact merges and relocations include prerequisite proposal IDs and are served only after an agreeing diagnosis.",
         "Every regenerated semantic proposal references the post-review ontology copy rather than the superseded title snapshot.",

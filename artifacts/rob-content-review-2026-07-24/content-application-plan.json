@@ -1,0 +1,110 @@
+{
+  "schemaVersion": "som-expert-content-application-plan-v1",
+  "createdAt": "2026-07-24",
+  "sourceOntology": {
+    "appId": "final-hierarchy-with-o*net-rob-title-review-v2-2026-07-23",
+    "name": "Final Hierarchy with O*Net - Rob Title Review v2 2026-07-23"
+  },
+  "targetOntology": {
+    "appId": "final-hierarchy-with-o*net-rob-content-review-2026-07-24",
+    "name": "Final Hierarchy with O*Net - Rob Content Review 2026-07-24"
+  },
+  "sourceDataset": {
+    "directory": "Sell_Society_of_Mind_Review_UI_Handoff_2026-07-15/review-datasets-rob-title-v2-downstream-2026-07-23",
+    "version": "sell-rob-title-v2-downstream-2026-07-23-v2",
+    "manifestSha256": "22d2d486aceb3d55f41c0ddf97b76434f557926ea8138bd75bc5662b20c90170"
+  },
+  "benchmarks": [
+    {
+      "file": "rob-synonym-enrichment-2026-07-24.json",
+      "issueType": "synonym-enrichment",
+      "sha256": "bcdbbd36e58d6e2c39c538edb13d5c0ed9cd98e915c102afcd7827962d3c590a"
+    },
+    {
+      "file": "rob-mistaken-synonym-2026-07-24.json",
+      "issueType": "mistaken-synonym",
+      "sha256": "a3456fbf14d4e532136e5780d8831d2a3f298f33fae82e9536e9df2b6b2ff885"
+    },
+    {
+      "file": "rob-duplicate-synonym-2026-07-24.json",
+      "issueType": "duplicate-synonym",
+      "sha256": "bdb2cc62a94687e65115acb05f0cfbefe5a219488697d8ba90534afb3cf80c48"
+    },
+    {
+      "file": "rob-misc-facet-duplicate-2026-07-24.json",
+      "issueType": "misc-facet-duplicate",
+      "sha256": "41cd85c758471de6ec1d7424db480369ed5f10af1757f29f179e06c37f81f45b"
+    },
+    {
+      "file": "rob-node-merge-2026-07-24.json",
+      "issueType": "node-merge",
+      "sha256": "bd86011b61ba87fc898d78a030fb2e3615420bcf71523b928a44f8111aefcbde"
+    }
+  ],
+  "metadataEdits": [
+    {
+      "diagnosisProposalId": "som-6bfc3aceb0ef9673fd43",
+      "sourceNodeId": "8fe5f67aba55d631d7e198d5330b",
+      "nodeTitle": "Sell",
+      "remove": ["Market"]
+    },
+    {
+      "diagnosisProposalId": "som-5a1a232264a5f4df66a1",
+      "sourceNodeId": "05cbbaded65ea7148d8a3394bdbc",
+      "nodeTitle": "Sell Accessories",
+      "remove": ["Market Accessory"]
+    },
+    {
+      "diagnosisProposalId": "som-f290a635750c4f20991d",
+      "sourceNodeId": "fcd987ecdaac0693ffdc372600d7",
+      "nodeTitle": "Sell Services",
+      "remove": ["Market Service"]
+    }
+  ],
+  "merges": [
+    {
+      "diagnosisProposalId": "som-8744c065b29f5a65dd99",
+      "actionProposalId": "som-1398cc863852caf83e95",
+      "canonicalNodeId": "387e11ec79634286f82859ad23ae",
+      "canonicalTitle": "Sell Cosmetics",
+      "absorbedNodeId": "9d85c9ae551e3f2a99c4259d08c7",
+      "absorbedTitle": "Sell Makeup",
+      "absorbedBecomesSynonym": true
+    },
+    {
+      "diagnosisProposalId": "som-f35bb22b2d46b299c028",
+      "actionProposalId": "som-e6298e58624553e4e860",
+      "canonicalNodeId": "9c3f86bf7139e62ce7f405584c10",
+      "canonicalTitle": "Sell physical objects",
+      "absorbedNodeId": "31475befef122f1e6ecf6fc721b4",
+      "absorbedTitle": "Sell (Physical Object)",
+      "absorbedBecomesSynonym": true
+    },
+    {
+      "diagnosisProposalId": "som-c2eb7d6c6c047b817864",
+      "actionProposalId": "som-e1f593ec7342cbd66fc6",
+      "canonicalNodeId": "ae43de677ba8a002f62bd2e1885d",
+      "canonicalTitle": "Sell information",
+      "absorbedNodeId": "1e978ef59821773904f76aa1850e",
+      "absorbedTitle": "Sell (Information)",
+      "absorbedBecomesSynonym": true
+    }
+  ],
+  "regenerateFromExpertCorrection": [
+    {
+      "proposalId": "som-b69af6bbb1b51e13100e",
+      "suggestedCorrection": "Is it possible that the LLM was trying to merge Rent out and Lease out?",
+      "nextProposal": "Compare Rent out and Lease out as a possible duplicate activity, followed by a separate exact merge decision if approved."
+    },
+    {
+      "proposalId": "som-cb2fb6102e37362d9e0d",
+      "suggestedCorrection": "Sell Products",
+      "nextProposal": "Compare Sell Merchandise with the existing Sell Products node, followed by a separate exact merge decision if approved."
+    }
+  ],
+  "releaseBoundary": {
+    "completedWave": "meaning-and-identity-2026-07-23",
+    "nextWave": "expert-corrections-2026-07-24",
+    "rule": "Do not release grouping or placement proposals until all approved content merges have been applied and downstream proposals have been regenerated from the resulting snapshot."
+  }
+}

@@ -1,7 +1,11 @@
 import { NextApiRequest, NextApiResponse } from "next";
 
 import fbAuth, { CustomNextApiRequest } from "../../../middlewares/fbAuth";
-import { getDataset, isIssueTypeEnabled } from "../../../lib/somReview/dataset";
+import {
+  getDataset,
+  isIssueTypeEnabled,
+  isIssueTypeReleased,
+} from "../../../lib/somReview/dataset";
 import {
   getOrCreateSession,
   issueResponses,
@@ -32,6 +36,14 @@ const handler = async (request: NextApiRequest, res: NextApiResponse) => {
       return res
         .status(403)
         .json({ error: "This issue type is not enabled yet" });
+    }
+    if (!isIssueTypeReleased(dataset, issueType)) {
+      return res.status(409).json({
+        code: "ONTOLOGY_REGENERATION_REQUIRED",
+        error:
+          dataset.manifest?.reviewRelease?.message ||
+          "This issue type will be available after proposal regeneration",
+      });
     }
     if (preferredProposalId) {
       const preferredRecord = dataset.recordsById.get(preferredProposalId);

@@ -1,0 +1,1757 @@
+{
+  "schemaVersion": "som-ontology-snapshot-v1",
+  "ontologyAppId": "final-hierarchy-with-o*net-rob-content-review-2026-07-24",
+  "ontologyName": "Final Hierarchy with O*Net - Rob Content Review 2026-07-24",
+  "firestoreProjectId": "ontology-41607",
+  "environment": "production",
+  "capturedAt": "2026-07-24T13:23:38.190Z",
+  "sellRootNodeId": "f9ffea95e747900da7ab9d22f60e",
+  "nodes": [
+    {
+      "id": "02d5b476b4f2fd363786b6daaa9a",
+      "title": "Sell Ticket",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "0354b15059e87099367a6a7c5375",
+      "title": "Sell Foreign Currencies",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "037b2c25668a079a0e2ddbfaa505",
+      "title": "Sell Alcoholic Beverages",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "0443116c092f1016b0147e37b73c",
+      "title": "(O*Net) 19828 - Sell technical and scientific products that are environmentally sound or designed for environmental remediation.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "07f152a6e8b3ffa4f516daa73e27",
+      "title": "(O*Net) 721 - Sell various types of insurance policies to businesses and individuals on behalf of insurance companies, including automobile, fire, life, property, medical and dental insurance, or specialized policies, such as marine, farm/crop, and medical malpractice.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "0a99a3c1180b73dd43e3d9ce07d5",
+      "title": "Sell Nail Care Products",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "0af23f4d61bbb028225d178f0947",
+      "title": "(O*Net) 8761 - Promote and sell nail care products.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "0f296248ab6e163a779dbe68bf0e",
+      "title": "(O*Net) 13170 - Sell or rent equipment, clothing, and supplies related to expeditions.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "1318feceae1f13faa3359e4626b1",
+      "title": "Sell Bicycles",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "147c3b5a58b0d186067014526f25",
+      "title": "(O*Net) 23221 - Purchase or sell financial derivatives for customers.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "147ed53f60768b056011f9f12d6c",
+      "title": "Sell Technical Products",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "15047d652bba368fe555692c14ec",
+      "title": "(O*Net) 23376 - Sell and deliver plants and flowers to customers.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "170757ee5c01bacc8ed11019b450",
+      "title": "Sell Beverages",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "1db2f27c68d8ef0ecb0be4ff32d7",
+      "title": "Persuade",
+      "description": "Activities that aim to convince others to adopt a particular belief, attitude, or course of action. As a type of 'Lead' activity, persuasion is distinct from directing or commanding. It seeks to influence the voluntary choices of others through reasoning, argument, or emotional appeal, rather than by exercising formal authority. This includes activities like negotiating a deal, making a sales pitch, or advocating for a new initiative. Persuasion activities are often specialized by their target, such as persuading a customer, a team member, or another stakeholder. Synonyms: Synonyms: Persuade",
+      "synsets": "Persuade.v.02",
+      "actionAlternatives": [],
+      "referenceOnly": true
+    },
+    {
+      "id": "1ddd146dba303d5c1c31ba61257d",
+      "title": "(O*Net) 741 - Plan, describe, arrange, and sell itinerary tour packages and promotional travel incentives offered by various travel carriers.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "1f52a6cf35bc84bdff2f7d26098f",
+      "title": "(O*Net) 13782 - Sell parts and equipment.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "2020ebd8f52e33584b75b22d1ac7",
+      "title": "(O*Net) 5127 - Rent, sell, or issue sporting equipment and supplies, such as bowling shoes, golf balls, swimming suits, or beach chairs.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "2072b4b0000f84d37598262add82",
+      "title": "(O*Net) 4.A.4.a.6.I03.D04 - Market products, services, or events.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "220584ee5b4ef86ac81ca5e72461",
+      "title": "(O*Net) 3165 - Sell food specialties, such as sandwiches and beverages, to office workers and patrons of sports events.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "23af148e489e6830f711481c9f5c",
+      "title": "Sell Merchandise",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "247fdf01a3e15de9f2832bbc27ae",
+      "title": "(O*Net) 2413 - Sell tickets and other items to customers.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "2481792531c8bce0512fa9cfcf8e",
+      "title": "Sell Membership",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "2894309e72fb39ad7a03a3a96dfd",
+      "title": "Sell Gambling Tokens",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "2c4e7e4ac80fabe6fca06af8501d",
+      "title": "Sell Travel Packages",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "2c8087f7c5c2b5ee2c4b94ec1db0",
+      "title": "(O*Net) 13157 - Sell travel packages.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "2dfe97a97bc390d64fd9c5d7e843",
+      "title": "(O*Net) 4551 - Solicit tour patronage and sell souvenirs.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "304ee368e0014055f41d1c4ce303",
+      "title": "Market Event",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "32f3ea44089dc30eb31c129bb683",
+      "title": "Sell Ideas",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "35e12763e65b8fca8c0d43f4e54e",
+      "title": "(O*Net) 9683 - Sell products requiring extensive technical expertise and support for installation and use, such as material handling equipment, numerical-control machinery, or computer systems.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "36f6b0ac41da0b7f0f4a86804425",
+      "title": "(O*Net) 4.A.4.a.6.I02.D02 - Sell agricultural products.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "38031337fa1fe28a2f728fb78043",
+      "title": "Sell Postal Products",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "396b1a6164ad0f6d650a2c4d7517",
+      "title": "(O*Net) 8083 - Sell makeup to clients.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "3ae9e94afd2a3f6f3f8ffea318cc",
+      "title": "(O*Net) 23639 - Buy and sell jewelry, or serve as agents between buyers and sellers.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "3d50127e6d8eb3539eb924e92b98",
+      "title": "(O*Net) 5093 - Sell pet food and supplies.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "3fab7d99d2b047a42cb2abcf908e",
+      "title": "Sell Jewelry",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "41f940b77354948238a654b5038d",
+      "title": "(O*Net) 10725 - Sell and install accessories, such as batteries, windshield wiper blades, fan belts, bulbs, or headlamps.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "421523316fcec6a0cea4a63696b3",
+      "title": "Provide service",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": [],
+      "referenceOnly": true
+    },
+    {
+      "id": "42986afdc642714ef6ac2779b18e",
+      "title": "Sell Stock",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "42bb1948e6e19a9d228f33fdaffb",
+      "title": "Sell Plant",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "47980cc43fc469374a60571d3b3b",
+      "title": "Sell Gambling Chips",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "480c39ed990168885a90341535c1",
+      "title": "Sell Traveler's Checks",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "4af491907d65aed8009da331990d",
+      "title": "Sell Items",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "4b00d4e4e6f681b39f8634f98e2f",
+      "title": "Sell physical objects",
+      "description": "The sale of a tangible, material item in exchange for payment. The defining characteristic of this activity is the physical nature of the object being sold—an item that can be touched, weighed, and moved. This category applies to activities like selling products in a retail store, a used car through a private listing, or handmade crafts on an e-commerce platform. It is distinct from selling intangible items, such as services (e.g., consulting, repairs), digital goods (e.g., software, streaming media), or financial assets (e.g., stocks, bonds).",
+      "synsets": "",
+      "actionAlternatives": [
+        "Sell (Physical Object)"
+      ]
+    },
+    {
+      "id": "4c3a40842c5a25db1155aa984a9e",
+      "title": "(O*Net) 713 - Sell or arrange for delivery, insurance, financing, or service contracts for merchandise.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "4ddd5b4cc9bfa94f3b2bf78c74f9",
+      "title": "Sell Eyewear and Eye-Care Products",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "4ee97af6c75dceb65ca4a1d21c74",
+      "title": "Sell Pet Supplies",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "51a4765fdb3f8069d0222dbb5056",
+      "title": "Sell Cosmetic Supplies",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "591ed99e774874e1c5dafd0863b6",
+      "title": "(O*Net) 20917 - Sell bicycles and accessories.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "5bb5894cb5e3d037be43e6e6a264",
+      "title": "(O*Net) 11361 - Sell stamps and money orders.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "611b3df4d377add8b46e9486ae68",
+      "title": "Sell Real Estate",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "627126448e7e15b9af4b1a040edd",
+      "title": "Sell Expedition Supplies",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "62a9b9b076d7f147ae1fb01338d6",
+      "title": "Sell Hair Care Products",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "6644f6ad00b6ec258af9be56e536",
+      "title": "Sell Money Orders",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "673af453d7228f5bf664f53d8fd6",
+      "title": "(O*Net) 4.A.4.a.6.I02 - Sell products or services.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "6d8fb5d7f878c3b472784cf7fcc4",
+      "title": "(O*Net) 8065 - Recommend and sell lotions, tonics, or other cosmetic supplies.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "7095a78e6ad2a4bef2667fb9805d",
+      "title": "Sell Food Specialties",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "710b9f1ac9485840469589eeb2fb",
+      "title": "(O*Net) 13194 - Sell products being promoted and keep records of sales.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "726d0362665788c9b281c51429b6",
+      "title": "Sell Financial Products",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "72973cdced421b69ff1b86cebd4c",
+      "title": "(O*Net) 5132 - Sell and serve refreshments to customers.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "76dc30d15afd3e9b1aa7c68a3209",
+      "title": "Sell Admission Passes",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "7a9b72054df3bb0fec2dde70426a",
+      "title": "Sell Cosmetics",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": [
+        "Sell Makeup"
+      ]
+    },
+    {
+      "id": "7afb808c86a56c388babc0ebfaaa",
+      "title": "(O*Net) 11325 - Sell and collect payment for products such as stamps, prepaid mail envelopes, and money orders.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "7b0c9a9eeb171af534823e3a3933",
+      "title": "Market Artwork",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "7cbabb8291e3de55cb85a4429c08",
+      "title": "Sell Tobacco Products",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "7ff9112985c6bc35c596bedc5cd7",
+      "title": "(O*Net) 5119 - Sell tickets and collect fees from customers.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "810045b5330f6e957f1ce7f62e73",
+      "title": "(O*Net) 20764 - Sell or collect admission tickets, passes, or facility memberships from patrons at entertainment events.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "8142e79a31bae34c2456e37a1cf2",
+      "title": "Sell Funeral Products",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "81b3a51fd07cd82db43f5286d4d8",
+      "title": "Sell Commodity Futures",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "84c605d9b33a1573c57ffb2878c6",
+      "title": "Sell Bicycle Accessories",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "896c40f92949506cea6f0fa16ff5",
+      "title": "Lease out",
+      "description": "A type of 'Sell' activity where the actor, as the owner or provider (the lessor), sells the right for another party (the lessee) to use an asset for a specified period. Unlike other 'Sell' activities, this does not transfer permanent ownership of the asset itself. This category covers granting temporary use of property, equipment, or other assets in exchange for regular payments. It includes both formal, long-term arrangements, often called 'leasing', and more informal, short-term arrangements, often called 'renting'. Synonyms: Lease",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "8a0e1704e2abce775b22abae8641",
+      "title": "(O*Net) 4.A.4.a.6 - Selling or Influencing Others",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "8bfa480bed401e99b29817c27ecb",
+      "title": "Sell Tour Souvenirs",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "8ca43b80731b3b7aa0cbaf3ecb01",
+      "title": "(O*Net) 23202 - Sell services or equipment, such as trusts, investments, or check processing services.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "8efa41fd116ea53355c10dcab6de",
+      "title": "(O*Net) 7231 - Market vacant space to prospective tenants through leasing agents, advertising, or other methods.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "8fed2d8d9c8776152e6879485cdd",
+      "title": "Market Vacant Space",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "924be2bb5b22ecfa5e07fa4f89cc",
+      "title": "(O*Net) 20616 - Sell service contracts for technical or scientific products.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "9260045a6135577f0844944c5ffc",
+      "title": "Sell information",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": [
+        "Sell (Information)"
+      ]
+    },
+    {
+      "id": "950320c7d8f0839ccbed0e518bb5",
+      "title": "Sell Insurance Policies",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "97e49ee3e6bc7dd3f5a577259da2",
+      "title": "Market Products",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "97f431957160e6406f3ee6b7bf06",
+      "title": "Advertise",
+      "description": "An activity that involves making a public announcement with the specific intention of promoting or selling something. It includes creating and disseminating messages designed to persuade an audience to take a particular action, such as purchasing a product, using a service, attending an event, or forming a favorable view of an organization or individual. Unlike a general 'Announce' activity, which primarily informs, an 'Advertise' activity is inherently persuasive. For example, stating a store's hours is an announcement, while encouraging customers to visit during those hours for a special sale is an advertisement. Activities in this category are often distinguished by what is being advertised, such as an event, an organization, or a product. Synonyms: advertize, promote, push, Advertise",
+      "synsets": "Advertise.v.02",
+      "actionAlternatives": [],
+      "referenceOnly": true
+    },
+    {
+      "id": "995201018d2911c0194e53045a49",
+      "title": "(O*Net) 20472 - Market or promote the casino to bring in business.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "9b9c4400ece7a8478e3b7fcb3d31",
+      "title": "(O*Net) 20990 - Market artwork through brochures, mailings, or Web sites.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "9ea639b19721277a26c2c1d2d5e1",
+      "title": "Sell Expedition Equipment",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "a17015a1fc1418b3c2705239e4f1",
+      "title": "Sell Stamp",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "a190143a1cd7ea03b2befeb313e0",
+      "title": "Sell Equipment",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "a1d20f78c221dfad70ac9e07848d",
+      "title": "Sell Travel Incentives",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "a22b8d0ab01d9fc544c7c09866ab",
+      "title": "(O*Net) 4599 - Sell, for a fee, real estate owned by others.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "a5f7e10e84334e57f72b3b4d3a02",
+      "title": "Sell Accessories",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "a8f612186f0c8711e7201dc1c4fd",
+      "title": "(O*Net) 4734 - Perform foreign currency transactions and sell traveler's checks.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "a910247616086a7758189312690c",
+      "title": "(O*Net) 643 - Demonstrate and sell hair care products and cosmetics.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "a9513fb02ec80ec63b596e4da28e",
+      "title": "Sell Lotion",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "b0b4ec140752b522d5dae60c6061",
+      "title": "Sell Sporting Equipment",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "b280d51659f1faa71519f97573c5",
+      "title": "Sell Tonic",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "b48bfc6044df50e68bc847a0e811",
+      "title": "(O*Net) 9659 - Sell alcoholic beverages to passengers.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "b54a91643a5132e552a0bb67131c",
+      "title": "(O*Net) 7006 - Sell gambling chips, tokens, or tickets to patrons, or to other workers for resale to patrons.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "b5e3c0f665bd5902e64738d9c029",
+      "title": "Sell Expedition Clothing",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "b86803ec23afea1a4afe4734ebc2",
+      "title": "(O*Net) 4669 - Sell gambling chips, tokens, or tickets to patrons or to other workers for resale to patrons.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "b97cb692a538b2052cd2402c0d61",
+      "title": "Sell Agricultural Supplies",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "bd38ba8d79c6e6746312cb8a4d60",
+      "title": "(O*Net) 12887 - Sell supplies, such as seed, feed, fertilizers, or insecticides, arranging for loans or financing as necessary.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "c074565f17d8221c2643c8546ae7",
+      "title": "Market Casino",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "c2594e197a8f841f6802614c47ae",
+      "title": "(O*Net) 8026 - Sell food, beverages, or tobacco to players.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "c2e0a2ebcf2997caadc34b0854a9",
+      "title": "Market Bank Products",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "c577a708483eb2ee912b9a836148",
+      "title": "(O*Net) 4332 - Sell pet food or supplies to customers.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "c6e581d3d0eaefc4f8ffbf882351",
+      "title": "(O*Net) 13286 - Sell mail products, and accept payment for products and mailing charges.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "c8956c2176ef57bcd02ff3e9e006",
+      "title": "Sell service",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "ca2310a1a68f5453580e0e9f4d3f",
+      "title": "Sell Flower",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "cfd7c0e9048970614a0cd5f5a7cc",
+      "title": "(O*Net) 2561 - Explain, promote, or sell products or services, such as travelers' checks, savings bonds, money orders, and cashier's checks, using computerized information about customers to tailor recommendations.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "d07a0839ed0355e2155cd92770a4",
+      "title": "Sell Refreshment",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "d10db0c87c948cca0f352e3daa8f",
+      "title": "Sell Services",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "d1e2e6452144a9b2ec94e6db14e6",
+      "title": "(O*Net) 4.A.4.a.6.I02.D05 - Sell products or services.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "d2298e04737e79f81bdb781ff473",
+      "title": "(O*Net) 3421 - Market bank products to individuals and firms, promoting bank services that may meet customers' needs.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "d3d1c99c721e91f0c9845cc19d9d",
+      "title": "Market Services",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "d5f36bacedd115f37599fff6f35e",
+      "title": "Sell Food",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "da53491b7331d6d5f3476bc9b9f9",
+      "title": "Sell Bond",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "e1ceaf02a1812b0607fe2df0ea62",
+      "title": "(O*Net) 4208 - Sell goods such as contact lenses, spectacles, sunglasses, and goods related to eyes, in general.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "e26a345519d2d1969e0ab6e9a601",
+      "title": "(O*Net) 13028 - Develop a group of products or accessories, and market them through venues such as boutiques or mail-order catalogs.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "e2d437a6b9fa95bea904674b47a7",
+      "title": "Rent out",
+      "description": "A type of selling activity where the temporary use of a property, asset, or good is provided to another party in exchange for payment, known as rent. Unlike other selling activities that permanently transfer ownership, renting out involves the owner retaining ownership while granting the user the right to use the asset for an agreed-upon period. Examples include leasing a vehicle, letting a residential property, or hiring out equipment.",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "e36d26dc2a4387eac696e4ee5956",
+      "title": "Sell (Other)",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "e780b669e36f6b5f9a4401c46217",
+      "title": "Sell Service Contracts",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "e8893d200e250b5c5f8406136825",
+      "title": "Sell Products",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "e9638362a442e8202471951db58e",
+      "title": "Sell Agricultural Products",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "ec8eeca5c9bdbc1c0f5ed01d139b",
+      "title": "Sell Pet Food",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "f361bbce9e89760aa58e2e816603",
+      "title": "(O*Net) 18843 - Sell funeral services, products, or merchandise to clients.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "f5dbdc80492556d44e034730e2ce",
+      "title": "Sell Parts",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "f6708098ae88409db4dca017157f",
+      "title": "(O*Net) 23196 - Buy or sell stocks, bonds, commodity futures, foreign currencies, or other securities on behalf of investment dealers.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "f9ffea95e747900da7ab9d22f60e",
+      "title": "Sell",
+      "description": "An activity of transferring ownership of, or the right to use, a good, service, or asset to another party in exchange for money or an equivalent form of payment. The defining characteristic of selling is the transaction for payment. This distinguishes it from other forms of provision or transfer, such as 'Give' (a gift) or 'Trade' (barter). The scope of this activity is broad, encompassing the entire process of making something available for purchase, including not only the final exchange but also preparatory activities like marketing and advertising. What is sold can be the permanent ownership of an item (e.g., a physical object or information) or the temporary right to use an asset (e.g., leasing or renting). Synonyms: Sell",
+      "synsets": "Sell.v.01",
+      "actionAlternatives": []
+    },
+    {
+      "id": "fa32a7df0696d7b3fb834d3abbbf",
+      "title": "Sell Financial Derivatives",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "fa72f4680c3f540c29c0f343e874",
+      "title": "(O*Net) 1822 - Manage pharmacy operations, hiring or supervising staff, performing administrative duties, or buying or selling non-pharmaceutical merchandise.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "faf7929c884e13d16e970708f03e",
+      "title": "(O*Net) 13237 - Circulate among potential customers or travel by foot, truck, automobile, or bicycle to deliver or sell merchandise or services.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "fbd5edef336a685a604c86d1f118",
+      "title": "(O*Net) 17620 - Sell products, services, or memberships.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    }
+  ],
+  "edges": [
+    {
+      "parentId": "02d5b476b4f2fd363786b6daaa9a",
+      "childId": "247fdf01a3e15de9f2832bbc27ae",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "02d5b476b4f2fd363786b6daaa9a",
+      "childId": "7ff9112985c6bc35c596bedc5cd7",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "02d5b476b4f2fd363786b6daaa9a",
+      "childId": "810045b5330f6e957f1ce7f62e73",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "02d5b476b4f2fd363786b6daaa9a",
+      "childId": "b54a91643a5132e552a0bb67131c",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "02d5b476b4f2fd363786b6daaa9a",
+      "childId": "b86803ec23afea1a4afe4734ebc2",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "0354b15059e87099367a6a7c5375",
+      "childId": "f6708098ae88409db4dca017157f",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "037b2c25668a079a0e2ddbfaa505",
+      "childId": "b48bfc6044df50e68bc847a0e811",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "0a99a3c1180b73dd43e3d9ce07d5",
+      "childId": "0af23f4d61bbb028225d178f0947",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "1318feceae1f13faa3359e4626b1",
+      "childId": "591ed99e774874e1c5dafd0863b6",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "147ed53f60768b056011f9f12d6c",
+      "childId": "0443116c092f1016b0147e37b73c",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "147ed53f60768b056011f9f12d6c",
+      "childId": "35e12763e65b8fca8c0d43f4e54e",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "170757ee5c01bacc8ed11019b450",
+      "childId": "c2594e197a8f841f6802614c47ae",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "23af148e489e6830f711481c9f5c",
+      "childId": "4c3a40842c5a25db1155aa984a9e",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "23af148e489e6830f711481c9f5c",
+      "childId": "f361bbce9e89760aa58e2e816603",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "23af148e489e6830f711481c9f5c",
+      "childId": "fa72f4680c3f540c29c0f343e874",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "23af148e489e6830f711481c9f5c",
+      "childId": "faf7929c884e13d16e970708f03e",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "2481792531c8bce0512fa9cfcf8e",
+      "childId": "810045b5330f6e957f1ce7f62e73",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "2481792531c8bce0512fa9cfcf8e",
+      "childId": "fbd5edef336a685a604c86d1f118",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "2894309e72fb39ad7a03a3a96dfd",
+      "childId": "b54a91643a5132e552a0bb67131c",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "2894309e72fb39ad7a03a3a96dfd",
+      "childId": "b86803ec23afea1a4afe4734ebc2",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "2c4e7e4ac80fabe6fca06af8501d",
+      "childId": "1ddd146dba303d5c1c31ba61257d",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "2c4e7e4ac80fabe6fca06af8501d",
+      "childId": "2c8087f7c5c2b5ee2c4b94ec1db0",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "304ee368e0014055f41d1c4ce303",
+      "childId": "2072b4b0000f84d37598262add82",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "32f3ea44089dc30eb31c129bb683",
+      "childId": "8a0e1704e2abce775b22abae8641",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "38031337fa1fe28a2f728fb78043",
+      "childId": "7afb808c86a56c388babc0ebfaaa",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "38031337fa1fe28a2f728fb78043",
+      "childId": "c6e581d3d0eaefc4f8ffbf882351",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "3fab7d99d2b047a42cb2abcf908e",
+      "childId": "3ae9e94afd2a3f6f3f8ffea318cc",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "42986afdc642714ef6ac2779b18e",
+      "childId": "f6708098ae88409db4dca017157f",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "42bb1948e6e19a9d228f33fdaffb",
+      "childId": "15047d652bba368fe555692c14ec",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "47980cc43fc469374a60571d3b3b",
+      "childId": "b54a91643a5132e552a0bb67131c",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "47980cc43fc469374a60571d3b3b",
+      "childId": "b86803ec23afea1a4afe4734ebc2",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "480c39ed990168885a90341535c1",
+      "childId": "a8f612186f0c8711e7201dc1c4fd",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "4af491907d65aed8009da331990d",
+      "childId": "247fdf01a3e15de9f2832bbc27ae",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "4b00d4e4e6f681b39f8634f98e2f",
+      "childId": "02d5b476b4f2fd363786b6daaa9a",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "4b00d4e4e6f681b39f8634f98e2f",
+      "childId": "037b2c25668a079a0e2ddbfaa505",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "4b00d4e4e6f681b39f8634f98e2f",
+      "childId": "0a99a3c1180b73dd43e3d9ce07d5",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "4b00d4e4e6f681b39f8634f98e2f",
+      "childId": "1318feceae1f13faa3359e4626b1",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "4b00d4e4e6f681b39f8634f98e2f",
+      "childId": "147ed53f60768b056011f9f12d6c",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "4b00d4e4e6f681b39f8634f98e2f",
+      "childId": "170757ee5c01bacc8ed11019b450",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "4b00d4e4e6f681b39f8634f98e2f",
+      "childId": "23af148e489e6830f711481c9f5c",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "4b00d4e4e6f681b39f8634f98e2f",
+      "childId": "2894309e72fb39ad7a03a3a96dfd",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "4b00d4e4e6f681b39f8634f98e2f",
+      "childId": "38031337fa1fe28a2f728fb78043",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "4b00d4e4e6f681b39f8634f98e2f",
+      "childId": "3fab7d99d2b047a42cb2abcf908e",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "4b00d4e4e6f681b39f8634f98e2f",
+      "childId": "42bb1948e6e19a9d228f33fdaffb",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "4b00d4e4e6f681b39f8634f98e2f",
+      "childId": "47980cc43fc469374a60571d3b3b",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "4b00d4e4e6f681b39f8634f98e2f",
+      "childId": "4af491907d65aed8009da331990d",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "4b00d4e4e6f681b39f8634f98e2f",
+      "childId": "4ddd5b4cc9bfa94f3b2bf78c74f9",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "4b00d4e4e6f681b39f8634f98e2f",
+      "childId": "4ee97af6c75dceb65ca4a1d21c74",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "4b00d4e4e6f681b39f8634f98e2f",
+      "childId": "51a4765fdb3f8069d0222dbb5056",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "4b00d4e4e6f681b39f8634f98e2f",
+      "childId": "611b3df4d377add8b46e9486ae68",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "4b00d4e4e6f681b39f8634f98e2f",
+      "childId": "627126448e7e15b9af4b1a040edd",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "4b00d4e4e6f681b39f8634f98e2f",
+      "childId": "62a9b9b076d7f147ae1fb01338d6",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "4b00d4e4e6f681b39f8634f98e2f",
+      "childId": "6644f6ad00b6ec258af9be56e536",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "4b00d4e4e6f681b39f8634f98e2f",
+      "childId": "7095a78e6ad2a4bef2667fb9805d",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "4b00d4e4e6f681b39f8634f98e2f",
+      "childId": "726d0362665788c9b281c51429b6",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "4b00d4e4e6f681b39f8634f98e2f",
+      "childId": "7a9b72054df3bb0fec2dde70426a",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "4b00d4e4e6f681b39f8634f98e2f",
+      "childId": "7cbabb8291e3de55cb85a4429c08",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "4b00d4e4e6f681b39f8634f98e2f",
+      "childId": "8142e79a31bae34c2456e37a1cf2",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "4b00d4e4e6f681b39f8634f98e2f",
+      "childId": "84c605d9b33a1573c57ffb2878c6",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "4b00d4e4e6f681b39f8634f98e2f",
+      "childId": "8bfa480bed401e99b29817c27ecb",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "4b00d4e4e6f681b39f8634f98e2f",
+      "childId": "8fed2d8d9c8776152e6879485cdd",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "4b00d4e4e6f681b39f8634f98e2f",
+      "childId": "9ea639b19721277a26c2c1d2d5e1",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "4b00d4e4e6f681b39f8634f98e2f",
+      "childId": "a17015a1fc1418b3c2705239e4f1",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "4b00d4e4e6f681b39f8634f98e2f",
+      "childId": "a190143a1cd7ea03b2befeb313e0",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "4b00d4e4e6f681b39f8634f98e2f",
+      "childId": "a5f7e10e84334e57f72b3b4d3a02",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "4b00d4e4e6f681b39f8634f98e2f",
+      "childId": "a9513fb02ec80ec63b596e4da28e",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "4b00d4e4e6f681b39f8634f98e2f",
+      "childId": "b0b4ec140752b522d5dae60c6061",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "4b00d4e4e6f681b39f8634f98e2f",
+      "childId": "b280d51659f1faa71519f97573c5",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "4b00d4e4e6f681b39f8634f98e2f",
+      "childId": "b5e3c0f665bd5902e64738d9c029",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "4b00d4e4e6f681b39f8634f98e2f",
+      "childId": "b97cb692a538b2052cd2402c0d61",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "4b00d4e4e6f681b39f8634f98e2f",
+      "childId": "ca2310a1a68f5453580e0e9f4d3f",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "4b00d4e4e6f681b39f8634f98e2f",
+      "childId": "d07a0839ed0355e2155cd92770a4",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "4b00d4e4e6f681b39f8634f98e2f",
+      "childId": "d5f36bacedd115f37599fff6f35e",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "4b00d4e4e6f681b39f8634f98e2f",
+      "childId": "e9638362a442e8202471951db58e",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "4b00d4e4e6f681b39f8634f98e2f",
+      "childId": "ec8eeca5c9bdbc1c0f5ed01d139b",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "4b00d4e4e6f681b39f8634f98e2f",
+      "childId": "f5dbdc80492556d44e034730e2ce",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "4ddd5b4cc9bfa94f3b2bf78c74f9",
+      "childId": "e1ceaf02a1812b0607fe2df0ea62",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "4ee97af6c75dceb65ca4a1d21c74",
+      "childId": "3d50127e6d8eb3539eb924e92b98",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "4ee97af6c75dceb65ca4a1d21c74",
+      "childId": "c577a708483eb2ee912b9a836148",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "51a4765fdb3f8069d0222dbb5056",
+      "childId": "6d8fb5d7f878c3b472784cf7fcc4",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "611b3df4d377add8b46e9486ae68",
+      "childId": "a22b8d0ab01d9fc544c7c09866ab",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "627126448e7e15b9af4b1a040edd",
+      "childId": "0f296248ab6e163a779dbe68bf0e",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "62a9b9b076d7f147ae1fb01338d6",
+      "childId": "a910247616086a7758189312690c",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "6644f6ad00b6ec258af9be56e536",
+      "childId": "5bb5894cb5e3d037be43e6e6a264",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "7095a78e6ad2a4bef2667fb9805d",
+      "childId": "220584ee5b4ef86ac81ca5e72461",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "726d0362665788c9b281c51429b6",
+      "childId": "cfd7c0e9048970614a0cd5f5a7cc",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "76dc30d15afd3e9b1aa7c68a3209",
+      "childId": "810045b5330f6e957f1ce7f62e73",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "7a9b72054df3bb0fec2dde70426a",
+      "childId": "396b1a6164ad0f6d650a2c4d7517",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "7a9b72054df3bb0fec2dde70426a",
+      "childId": "a910247616086a7758189312690c",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "7b0c9a9eeb171af534823e3a3933",
+      "childId": "9b9c4400ece7a8478e3b7fcb3d31",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "7cbabb8291e3de55cb85a4429c08",
+      "childId": "c2594e197a8f841f6802614c47ae",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "8142e79a31bae34c2456e37a1cf2",
+      "childId": "f361bbce9e89760aa58e2e816603",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "81b3a51fd07cd82db43f5286d4d8",
+      "childId": "f6708098ae88409db4dca017157f",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "84c605d9b33a1573c57ffb2878c6",
+      "childId": "591ed99e774874e1c5dafd0863b6",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "8bfa480bed401e99b29817c27ecb",
+      "childId": "2dfe97a97bc390d64fd9c5d7e843",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "8fed2d8d9c8776152e6879485cdd",
+      "childId": "8efa41fd116ea53355c10dcab6de",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9260045a6135577f0844944c5ffc",
+      "childId": "0354b15059e87099367a6a7c5375",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9260045a6135577f0844944c5ffc",
+      "childId": "2481792531c8bce0512fa9cfcf8e",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9260045a6135577f0844944c5ffc",
+      "childId": "2c4e7e4ac80fabe6fca06af8501d",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9260045a6135577f0844944c5ffc",
+      "childId": "304ee368e0014055f41d1c4ce303",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9260045a6135577f0844944c5ffc",
+      "childId": "42986afdc642714ef6ac2779b18e",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9260045a6135577f0844944c5ffc",
+      "childId": "480c39ed990168885a90341535c1",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9260045a6135577f0844944c5ffc",
+      "childId": "76dc30d15afd3e9b1aa7c68a3209",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9260045a6135577f0844944c5ffc",
+      "childId": "7b0c9a9eeb171af534823e3a3933",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9260045a6135577f0844944c5ffc",
+      "childId": "81b3a51fd07cd82db43f5286d4d8",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9260045a6135577f0844944c5ffc",
+      "childId": "950320c7d8f0839ccbed0e518bb5",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9260045a6135577f0844944c5ffc",
+      "childId": "97e49ee3e6bc7dd3f5a577259da2",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9260045a6135577f0844944c5ffc",
+      "childId": "a1d20f78c221dfad70ac9e07848d",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9260045a6135577f0844944c5ffc",
+      "childId": "c074565f17d8221c2643c8546ae7",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9260045a6135577f0844944c5ffc",
+      "childId": "c2e0a2ebcf2997caadc34b0854a9",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9260045a6135577f0844944c5ffc",
+      "childId": "d10db0c87c948cca0f352e3daa8f",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9260045a6135577f0844944c5ffc",
+      "childId": "d3d1c99c721e91f0c9845cc19d9d",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9260045a6135577f0844944c5ffc",
+      "childId": "da53491b7331d6d5f3476bc9b9f9",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9260045a6135577f0844944c5ffc",
+      "childId": "e780b669e36f6b5f9a4401c46217",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9260045a6135577f0844944c5ffc",
+      "childId": "fa32a7df0696d7b3fb834d3abbbf",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "950320c7d8f0839ccbed0e518bb5",
+      "childId": "07f152a6e8b3ffa4f516daa73e27",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "97e49ee3e6bc7dd3f5a577259da2",
+      "childId": "2072b4b0000f84d37598262add82",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "97e49ee3e6bc7dd3f5a577259da2",
+      "childId": "e26a345519d2d1969e0ab6e9a601",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9ea639b19721277a26c2c1d2d5e1",
+      "childId": "0f296248ab6e163a779dbe68bf0e",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "a17015a1fc1418b3c2705239e4f1",
+      "childId": "5bb5894cb5e3d037be43e6e6a264",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "a190143a1cd7ea03b2befeb313e0",
+      "childId": "1f52a6cf35bc84bdff2f7d26098f",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "a190143a1cd7ea03b2befeb313e0",
+      "childId": "8ca43b80731b3b7aa0cbaf3ecb01",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "a1d20f78c221dfad70ac9e07848d",
+      "childId": "1ddd146dba303d5c1c31ba61257d",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "a5f7e10e84334e57f72b3b4d3a02",
+      "childId": "41f940b77354948238a654b5038d",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "a5f7e10e84334e57f72b3b4d3a02",
+      "childId": "591ed99e774874e1c5dafd0863b6",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "a5f7e10e84334e57f72b3b4d3a02",
+      "childId": "e26a345519d2d1969e0ab6e9a601",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "a9513fb02ec80ec63b596e4da28e",
+      "childId": "6d8fb5d7f878c3b472784cf7fcc4",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "b0b4ec140752b522d5dae60c6061",
+      "childId": "2020ebd8f52e33584b75b22d1ac7",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "b280d51659f1faa71519f97573c5",
+      "childId": "6d8fb5d7f878c3b472784cf7fcc4",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "b5e3c0f665bd5902e64738d9c029",
+      "childId": "0f296248ab6e163a779dbe68bf0e",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "b97cb692a538b2052cd2402c0d61",
+      "childId": "bd38ba8d79c6e6746312cb8a4d60",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "c074565f17d8221c2643c8546ae7",
+      "childId": "995201018d2911c0194e53045a49",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "c2e0a2ebcf2997caadc34b0854a9",
+      "childId": "d2298e04737e79f81bdb781ff473",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "ca2310a1a68f5453580e0e9f4d3f",
+      "childId": "15047d652bba368fe555692c14ec",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "d07a0839ed0355e2155cd92770a4",
+      "childId": "72973cdced421b69ff1b86cebd4c",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "d10db0c87c948cca0f352e3daa8f",
+      "childId": "2072b4b0000f84d37598262add82",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "d10db0c87c948cca0f352e3daa8f",
+      "childId": "673af453d7228f5bf664f53d8fd6",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "d10db0c87c948cca0f352e3daa8f",
+      "childId": "8ca43b80731b3b7aa0cbaf3ecb01",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "d10db0c87c948cca0f352e3daa8f",
+      "childId": "cfd7c0e9048970614a0cd5f5a7cc",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "d10db0c87c948cca0f352e3daa8f",
+      "childId": "d1e2e6452144a9b2ec94e6db14e6",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "d10db0c87c948cca0f352e3daa8f",
+      "childId": "f361bbce9e89760aa58e2e816603",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "d10db0c87c948cca0f352e3daa8f",
+      "childId": "faf7929c884e13d16e970708f03e",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "d10db0c87c948cca0f352e3daa8f",
+      "childId": "fbd5edef336a685a604c86d1f118",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "d3d1c99c721e91f0c9845cc19d9d",
+      "childId": "2072b4b0000f84d37598262add82",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "d5f36bacedd115f37599fff6f35e",
+      "childId": "c2594e197a8f841f6802614c47ae",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "da53491b7331d6d5f3476bc9b9f9",
+      "childId": "f6708098ae88409db4dca017157f",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "e36d26dc2a4387eac696e4ee5956",
+      "childId": "32f3ea44089dc30eb31c129bb683",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "e36d26dc2a4387eac696e4ee5956",
+      "childId": "e8893d200e250b5c5f8406136825",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "e780b669e36f6b5f9a4401c46217",
+      "childId": "924be2bb5b22ecfa5e07fa4f89cc",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "e8893d200e250b5c5f8406136825",
+      "childId": "673af453d7228f5bf664f53d8fd6",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "e8893d200e250b5c5f8406136825",
+      "childId": "710b9f1ac9485840469589eeb2fb",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "e8893d200e250b5c5f8406136825",
+      "childId": "8a0e1704e2abce775b22abae8641",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "e8893d200e250b5c5f8406136825",
+      "childId": "d1e2e6452144a9b2ec94e6db14e6",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "e8893d200e250b5c5f8406136825",
+      "childId": "fbd5edef336a685a604c86d1f118",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "e9638362a442e8202471951db58e",
+      "childId": "36f6b0ac41da0b7f0f4a86804425",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "ec8eeca5c9bdbc1c0f5ed01d139b",
+      "childId": "3d50127e6d8eb3539eb924e92b98",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "ec8eeca5c9bdbc1c0f5ed01d139b",
+      "childId": "c577a708483eb2ee912b9a836148",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "f5dbdc80492556d44e034730e2ce",
+      "childId": "1f52a6cf35bc84bdff2f7d26098f",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "f9ffea95e747900da7ab9d22f60e",
+      "childId": "896c40f92949506cea6f0fa16ff5",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "f9ffea95e747900da7ab9d22f60e",
+      "childId": "e2d437a6b9fa95bea904674b47a7",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "f9ffea95e747900da7ab9d22f60e",
+      "childId": "e36d26dc2a4387eac696e4ee5956",
+      "collectionName": "Sell -- miscellaneous"
+    },
+    {
+      "parentId": "f9ffea95e747900da7ab9d22f60e",
+      "childId": "4b00d4e4e6f681b39f8634f98e2f",
+      "collectionName": "Sell what?"
+    },
+    {
+      "parentId": "f9ffea95e747900da7ab9d22f60e",
+      "childId": "9260045a6135577f0844944c5ffc",
+      "collectionName": "Sell what?"
+    },
+    {
+      "parentId": "f9ffea95e747900da7ab9d22f60e",
+      "childId": "c8956c2176ef57bcd02ff3e9e006",
+      "collectionName": "Sell what?"
+    },
+    {
+      "parentId": "fa32a7df0696d7b3fb834d3abbbf",
+      "childId": "147c3b5a58b0d186067014526f25",
+      "collectionName": "main"
+    }
+  ]
+}

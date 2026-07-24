@@ -198,6 +198,10 @@ const sanitizeContext = (context: any): SomReviewContext => {
       return {
         type: "duplicate-comparison",
         parentTitle: context.parentTitle,
+        canonicalParentTitle:
+          context.canonicalParentTitle || context.parentTitle,
+        candidateParentTitle:
+          context.candidateParentTitle || context.parentTitle,
         canonicalTitle: context.canonicalTitle,
         candidateSynonymTitle: context.candidateSynonymTitle,
         sourceTasks: context.sourceTasks || [],
@@ -228,6 +232,9 @@ const sanitizeContext = (context: any): SomReviewContext => {
       return {
         type: "merge-action",
         parentTitle: context.parentTitle,
+        canonicalParentTitle:
+          context.canonicalParentTitle || context.parentTitle,
+        absorbedParentTitle: context.absorbedParentTitle || context.parentTitle,
         canonicalTitle: context.canonicalTitle,
         canonicalCollection: context.canonicalCollection || "main",
         canonicalChildren: context.canonicalChildren || [],
