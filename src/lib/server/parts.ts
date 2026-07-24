@@ -7,7 +7,7 @@ import {
   INode,
   NodeChange,
 } from "@components/types/INode";
-import { NodeCache, getNode } from "./hierarchy";
+import { NodeCache, getNode, walkSpecializations } from "./hierarchy";
 import {
   derivePartsAndRef,
   matchesSource,
@@ -142,11 +142,14 @@ export async function applyPartsForGenChange(
     ownerTitle,
     node.inheritance?.parts?.inheritanceType,
   );
-  await db.collection(NODES).doc(nodeId).update({
-    "properties.parts": toParts(newParts),
-    "inheritance.parts": partsEntry,
-    partsOverallSource: newSource,
-  });
+  await db
+    .collection(NODES)
+    .doc(nodeId)
+    .update({
+      "properties.parts": toParts(newParts),
+      "inheritance.parts": partsEntry,
+      partsOverallSource: newSource,
+    });
   cache.set(nodeId, {
     ...node,
     properties: { ...node.properties, parts: toParts(newParts) },
@@ -292,4 +295,53 @@ export async function buildGensForAttach(
     });
   }
   return gens;
+}
+
+/**
+ * v1 truth propagation for an OWNER's remove/replace: walk the spec subtree
+ * and update stored entries that track `ownerId` — broken-node and switched
+ * recorders — dropping them, or morphing them when `to` is given. Resolved
+ * copies are left stale on purpose; the read-repair path refreshes per node.
+ */
+export async function propagateOwnedPartChange(
+  ownerId: string,
+  changes: { fromId: string; to?: { id: string; title: string } }[],
+): Promise<void> {
+  await walkSpecializations(ownerId, (node) => {
+    const entries = partsNodes(asPartsCollections(node.properties?.parts));
+    const presentIds = new Set(entries.map((e) => e.id));
+    const droppedIds = new Set<string>();
+    let touched = false;
+    const next: ILinkNode[] = [];
+    for (const e of entries) {
+      const change = changes.find(
+        (c) => c.fromId === e.id && e.inheritedFrom === ownerId,
+      );
+      if (!change) {
+        next.push(e);
+        continue;
+      }
+      touched = true;
+      // Morph keeps the recorder; a collision with an existing entry drops it.
+      if (change.to && !presentIds.has(change.to.id)) {
+        next.push({ ...e, id: change.to.id, title: change.to.title });
+      } else {
+        droppedIds.add(e.id);
+      }
+    }
+    if (!touched) return null;
+    const byId = new Map(entries.map((e) => [e.id, e]));
+    const rePointed = next.map((e) => {
+      if (e.after == null || !droppedIds.has(e.after)) return e;
+      let cursor: string | null | undefined = e.after;
+      while (cursor != null && droppedIds.has(cursor)) {
+        cursor = byId.get(cursor)?.after;
+      }
+      const copy = { ...e };
+      if (cursor === undefined) delete copy.after;
+      else copy.after = cursor;
+      return copy;
+    });
+    return { "properties.parts": toParts(rePointed) };
+  });
 }

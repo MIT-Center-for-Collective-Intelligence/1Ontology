@@ -30,7 +30,13 @@ import {
   ILinkNode,
   InheritedPartsDetail,
   INode,
+  IPartsInheritance,
 } from "@components/types/INode";
+import {
+  applyRemove,
+  toPartsNode,
+  PartsGraph,
+} from "@components/lib/server/partsModel";
 import { DISPLAY, UNCLASSIFIED } from "@components/lib/CONSTANTS";
 import {
   collection,
@@ -819,7 +825,25 @@ const StructuredProperty = ({
   };
   const [savingPartIds, setSavingPartIds] = useState<Set<string>>(new Set());
 
-  // Delta edits on parts (remove/replace/sort): instant local list + the
+  // Chain-only graph over the caches, for running the pure model ops
+  // client-side (instant patches mirror what the endpoint will store).
+  const clientPartsGraph = useCallback((): PartsGraph => {
+    const graph: PartsGraph = new Map();
+    let cursor: string | null | undefined = currentVisibleNode?.id;
+    while (cursor && !graph.has(cursor)) {
+      const doc =
+        cursor === currentVisibleNode?.id
+          ? currentVisibleNode
+          : relatedNodes[cursor];
+      if (!doc) break;
+      const partsNode = toPartsNode(doc);
+      graph.set(cursor, partsNode);
+      cursor = partsNode.partsInheritance.source;
+    }
+    return graph;
+  }, [currentVisibleNode, relatedNodes]);
+
+  // Delta edits on parts (remove/replace/sort): instant local state + the
   // matching endpoint. On failure it re-fetches so the UI never keeps an
   // unsaved change.
   const savePartsDelta = useCallback(
@@ -828,6 +852,7 @@ const StructuredProperty = ({
       payload: Record<string, any>,
       instantParts: ICollection[],
       affectedIds: string[] = [],
+      instantInheritance?: IPartsInheritance,
     ) => {
       const nodeId = currentVisibleNode?.id;
       if (!nodeId) return;
@@ -836,10 +861,17 @@ const StructuredProperty = ({
       }
       setCurrentVisibleNode((prev: any) =>
         prev && prev.id === nodeId
-          ? { ...prev, properties: { ...prev.properties, parts: instantParts } }
+          ? {
+              ...prev,
+              properties: { ...prev.properties, parts: instantParts },
+              ...(instantInheritance
+                ? { partsInheritance: instantInheritance }
+                : {}),
+            }
           : prev,
       );
       pendingWrites.start(nodeId, "properties.parts");
+      pendingWrites.start(nodeId, "partsInheritance");
       try {
         await Post(endpoint, {
           nodeId,
@@ -857,6 +889,7 @@ const StructuredProperty = ({
         setSnackbarMessage(`Failed to update parts: ${reason}`);
       } finally {
         pendingWrites.end(nodeId, "properties.parts");
+        pendingWrites.end(nodeId, "partsInheritance");
         if (affectedIds.length) {
           setSavingPartIds((prev) => {
             const next = new Set(prev);
@@ -1025,20 +1058,21 @@ const StructuredProperty = ({
     fromModel: boolean = false,
   ) => {
     try {
-      // Parts: drop the id from the node's own parts and persist via endpoint.
+      // Parts: instant state via the same pure model the endpoint runs — a
+      // removal the source provides breaks and materializes the view.
       if (property === "parts") {
-        const source = currentVisibleNode?.properties?.parts;
-        const newParts: ICollection[] = Array.isArray(source)
-          ? JSON.parse(JSON.stringify(source))
-          : [{ collectionName: "main", nodes: [] }];
-        for (const c of newParts) {
-          c.nodes = (c.nodes || []).filter((n: ILinkNode) => n.id !== linkId);
-        }
+        if (!currentVisibleNode) return;
+        const { parts, partsInheritance } = applyRemove(
+          currentVisibleNode.id,
+          clientPartsGraph(),
+          [linkId],
+        );
         await savePartsDelta(
           "/nodes/parts/remove",
           { removeIds: [linkId] },
-          newParts,
+          [{ collectionName: "main", nodes: parts }],
           [linkId],
+          partsInheritance,
         );
         return;
       }

@@ -5,7 +5,6 @@ import { NODES, NODES_LOGS } from "@components/lib/firestoreClient/collections";
 import { ICollection, INode, NodeChange } from "@components/types/INode";
 import {
   HttpError,
-  getNode,
   NodeCache,
   recordLogs,
   writeChangeLog,
@@ -13,58 +12,74 @@ import {
 import {
   applyIsPartOfOwnerOnly,
   asPartsCollections,
-  buildGensForAttach,
-  partsInheritanceEntry,
-  taggedPartsAndSource,
+  propagateOwnedPartChange,
   toParts,
 } from "@components/lib/server/parts";
-import { derivePartsAndRef } from "@components/lib/server/partsModel";
+import {
+  applyRemove,
+  isOwnedPart,
+  toPartsNode,
+  PartsGraph,
+} from "@components/lib/server/partsModel";
+import {
+  computeInheritedPartsDetails,
+  fetchPartsContext,
+  makeResolvedOf,
+} from "@components/lib/server/partsAnnotation";
 
 /**
- * Removes parts from a node. Removing a part the node inherits from its overall
- * source BREAKS the overall inheritance. 
- * The removed parts lose this node from their isPartOf.
- * Descendants are not touched yet (cascade comes later).
+ * Removes parts from a node's resolved view. Removing a part the source chain
+ * provides BREAKS attachment (the view materializes without it); removing a
+ * floating local entry just drops it. Removed parts lose this node from their
+ * isPartOf, and an OWNER's removal also drops descendants' stored recorders.
  */
-async function applyRemove(ctx: {
+async function applyRemoveParts(ctx: {
   nodeId: string;
   nodeData: INode;
   removeIds: string[];
   uname?: string;
   appName?: string;
-}): Promise<{ ok: true; ref: string | null; parts: ICollection[] }> {
+}): Promise<{ ok: true; parts: ICollection[] }> {
   const { nodeId, nodeData, removeIds, uname, appName } = ctx;
   const cache: NodeCache = new Map([[nodeId, nodeData]]);
 
-  const oldPartsCol = asPartsCollections(nodeData.properties?.parts);
-  const gens = await buildGensForAttach(nodeData, cache);
-  const { tagged, stored } = taggedPartsAndSource(nodeData, gens);
-
-  const toRemove = new Set(removeIds);
-  const present = tagged.filter((p) => toRemove.has(p.id)).map((p) => p.id);
-  if (present.length === 0) {
+  const { relatedNodes } = await fetchPartsContext(nodeData);
+  const graph: PartsGraph = new Map(
+    Object.values(relatedNodes).map((n) => [n.id, toPartsNode(n)]),
+  );
+  const { parts, partsInheritance, removed } = applyRemove(
+    nodeId,
+    graph,
+    removeIds,
+  );
+  if (removed.length === 0) {
     throw new HttpError(400, "none of the parts are on this node");
   }
-  const presentSet = new Set(present);
-  const remaining = tagged.filter((p) => !presentSet.has(p.id));
 
-  const {
-    parts: newParts,
-    sourceId: newSource,
-    ref,
-  } = derivePartsAndRef(remaining, gens, { oldParts: tagged, sourceId: stored });
-  const ownerTitle = ref ? ((await getNode(ref, cache))?.title ?? "") : "";
-  const partsEntry = partsInheritanceEntry(
-    ref,
-    ownerTitle,
-    nodeData.inheritance?.parts?.inheritanceType,
-  );
+  const oldPartsCol = asPartsCollections(nodeData.properties?.parts);
+  const side = toParts(parts);
+  const updatedNode = {
+    ...nodeData,
+    properties: { ...nodeData.properties, parts: side },
+    partsInheritance,
+  } as INode;
+  const updatedRelated = { ...relatedNodes, [nodeId]: updatedNode };
+  const resolvedOfUpdated = makeResolvedOf(updatedRelated);
 
-  await db.collection(NODES).doc(nodeId).update({
-    "properties.parts": toParts(newParts),
-    "inheritance.parts": partsEntry,
-    partsOverallSource: newSource,
-  });
+  await db
+    .collection(NODES)
+    .doc(nodeId)
+    .update({
+      "properties.parts": side,
+      partsInheritance,
+      inheritedPartsDetails: computeInheritedPartsDetails({
+        currentNode: updatedNode,
+        relatedNodes: updatedRelated,
+        resolvedOf: resolvedOfUpdated,
+      }),
+      resolvedParts: resolvedOfUpdated(nodeId),
+    });
+  cache.set(nodeId, updatedNode);
 
   const parentLogId = db.collection(NODES_LOGS).doc().id;
   const parentLog = {
@@ -79,13 +94,22 @@ async function applyRemove(ctx: {
     nodeId,
     nodeData.title ?? "",
     [],
-    present,
+    removed.map((p) => p.id),
     cache,
     parentLog,
     uname,
     appName,
     childLogs,
   );
+
+  // Removals of OWNED parts follow the tracked source into the subtree.
+  const ownedRemoved = removed.filter((p) => isOwnedPart(p)).map((p) => p.id);
+  if (ownedRemoved.length > 0) {
+    await propagateOwnedPartChange(
+      nodeId,
+      ownedRemoved.map((fromId) => ({ fromId })),
+    );
+  }
 
   if (uname) {
     await writeChangeLog(
@@ -94,7 +118,7 @@ async function applyRemove(ctx: {
         modifiedBy: uname,
         modifiedProperty: "parts",
         previousValue: oldPartsCol,
-        newValue: toParts(newParts),
+        newValue: side,
         modifiedAt: new Date(),
         changeType: "modify elements",
         fullNode: nodeData,
@@ -105,7 +129,7 @@ async function applyRemove(ctx: {
   }
   for (const log of childLogs) await writeChangeLog(log);
 
-  return { ok: true, ref, parts: toParts(newParts) };
+  return { ok: true, parts: side };
 }
 
 function fail(res: NextApiResponse, status: number, msg: string) {
@@ -143,9 +167,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       return fail(res, 403, "Node does not belong to this app");
     }
 
-    const result = await applyRemove({
+    const result = await applyRemoveParts({
       nodeId,
-      nodeData,
+      nodeData: { ...nodeData, id: nodeId },
       removeIds,
       uname,
       appName,

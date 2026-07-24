@@ -229,6 +229,81 @@ function withoutAnchor(e: PartEntry): PartEntry {
 }
 
 /**
+ * Remove parts from the resolved view. Removing a part the source chain
+ * provides — virtual, sticky-owned or switched alike — BREAKS: the view
+ * materializes without those parts. Removing only floating local entries just
+ * drops them, re-pointing anchors that hung off a dropped entry. `removed` =
+ * the resolved entries that matched (their `inheritedFrom` is the owner a
+ * descendant's recorder tracks).
+ */
+export function applyRemove(
+  nodeId: string,
+  graph: PartsGraph,
+  removeIds: string[],
+): {
+  parts: PartEntry[];
+  partsInheritance: PartsInheritance;
+  removed: ILinkNode[];
+} {
+  const node = graph.get(nodeId);
+  if (!node) {
+    return {
+      parts: [],
+      partsInheritance: { source: null, overrides: {} },
+      removed: [],
+    };
+  }
+  const resolved = resolveParts(nodeId, graph);
+  const toRemove = new Set(removeIds);
+  const removed = resolved.filter((p) => toRemove.has(p.id));
+  const removedIds = new Set(removed.map((p) => p.id));
+  if (removed.length === 0) {
+    return {
+      parts: node.parts,
+      partsInheritance: node.partsInheritance,
+      removed,
+    };
+  }
+
+  const { source } = node.partsInheritance;
+  const sourceProvides =
+    source && graph.has(source)
+      ? new Set(resolveParts(source, graph).map((p) => p.id))
+      : new Set<string>();
+
+  if ([...removedIds].some((id) => sourceProvides.has(id))) {
+    const broken = materializeBreak(nodeId, graph);
+    return {
+      parts: broken.parts.filter((p) => !removedIds.has(p.id)),
+      partsInheritance: broken.partsInheritance,
+      removed,
+    };
+  }
+
+  const entryById = new Map(node.parts.map((e) => [e.id, e]));
+  const anchorPast = (
+    a: string | null | undefined,
+  ): string | null | undefined => {
+    let cursor = a;
+    while (cursor != null && removedIds.has(cursor)) {
+      cursor = entryById.get(cursor)?.after;
+    }
+    return cursor;
+  };
+  const parts = node.parts
+    .filter((e) => !removedIds.has(e.id))
+    .map((e) => {
+      if (e.after == null || !removedIds.has(e.after)) return e;
+      const next = anchorPast(e.after);
+      const copy = { ...e };
+      if (next === undefined) delete copy.after;
+      else copy.after = next;
+      return copy;
+    });
+  return { parts, partsInheritance: node.partsInheritance, removed };
+}
+
+/**
  * Reattach (or switch the overall source): a HARD RESET of everything the node
  * does not OWN. Only owned entries survive — one the source also provides
  * keeps its slot, the rest are anchored below the source's parts in their
