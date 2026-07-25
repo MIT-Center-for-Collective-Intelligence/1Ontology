@@ -1,0 +1,442 @@
+{
+  "schemaVersion": "som-structure-application-plan-v1",
+  "sourceDataset": {
+    "directory": "Sell_Society_of_Mind_Review_UI_Handoff_2026-07-15/review-datasets-rob-structure-wave-2026-07-24",
+    "version": "sell-rob-structure-wave-2026-07-24-v1",
+    "manifestSha256": "348230d26a62e7ba3d200f459a3cc93ce68f033ec959f17b12bb1dcd6119790a"
+  },
+  "sourceOntology": {
+    "appId": "final-hierarchy-with-o*net-rob-structure-review-2026-07-24",
+    "name": "Final Hierarchy with O*Net - Rob Structure Review 2026-07-24"
+  },
+  "targetOntology": {
+    "appId": "final-hierarchy-with-o*net-rob-structure-applied-2026-07-25",
+    "name": "Final Hierarchy with O*Net - Rob Structure Applied 2026-07-25"
+  },
+  "benchmarks": [
+    {
+      "file": "rob-flat-list-grouping-2026-07-25.json",
+      "issueType": "flat-list-grouping",
+      "sha256": "fc2e07358016c32aa2f8580baaf28bb99e36db38efe9180abaf0cf0fd60b1ec9"
+    },
+    {
+      "file": "rob-compound-object-grouping-2026-07-25.json",
+      "issueType": "compound-object-grouping",
+      "sha256": "784b24de7d00c99c4eb96d61390cada47b57421eaf6f2a1ec2895adcc60b3cd7"
+    },
+    {
+      "file": "rob-collection-design-2026-07-25.json",
+      "issueType": "collection-design",
+      "sha256": "e5ffce866906ae7a3d5c78baf2420146cdaafbb9a0a292ec21e29efb9a684b43"
+    },
+    {
+      "file": "rob-placement-2026-07-25.json",
+      "issueType": "placement",
+      "sha256": "af95ad2efb3fa53c0bb801edd2371eeae2ff4c8b109ff2281bb40f71bb25b040"
+    },
+    {
+      "file": "rob-wrong-verb-2026-07-25.json",
+      "issueType": "wrong-verb",
+      "sha256": "5e8a3da11a8f718a4602fa635dac892ddf31920fc9b47398bdf8808df953cef1"
+    },
+    {
+      "file": "rob-relocation-2026-07-25.json",
+      "issueType": "relocation",
+      "sha256": "5dcb1615c32017218fbbdba7fb8c47ed7b28fc9a92b275eab0b4b708b73516eb"
+    }
+  ],
+  "createdNodes": [
+    {
+      "title": "Promote",
+      "parentTitle": "Persuade",
+      "parentCollection": "main",
+      "description": "Make a product, service, event, place, or idea better known or more desirable.",
+      "seed": "expert-correction-promote-2026-07-25",
+      "decisionSource": "expert-correction",
+      "expertCorrections": [
+        {
+          "proposalId": "som-1177b7d3f80b528555f7",
+          "suggestedCorrection": "Change Advertise to Promote"
+        },
+        {
+          "proposalId": "som-022bcc9c39000014d9aa",
+          "suggestedCorrection": "Change Advertise to Promote"
+        },
+        {
+          "proposalId": "som-f7bdbdb6a7d4359afa36",
+          "suggestedCorrection": "Change Advertise to Promote"
+        },
+        {
+          "proposalId": "som-5412336134c10eedc343",
+          "suggestedCorrection": "Replace Advertise with Promote"
+        },
+        {
+          "proposalId": "som-3cbd3b1753852903901b",
+          "suggestedCorrection": "Change Advertise to Promote"
+        },
+        {
+          "proposalId": "som-74f0843be5bbc05bc594",
+          "suggestedCorrection": "Change Advertise to Promote"
+        },
+        {
+          "proposalId": "som-2bd64d9c6838173cbf40",
+          "suggestedCorrection": "Change Advertise to Promote"
+        }
+      ]
+    }
+  ],
+  "groupings": [
+    {
+      "proposalId": "som-7d37de5f387b928cf0b6",
+      "diagnosisProposalId": "som-7d37de5f387b928cf0b6",
+      "decisionSource": "accepted-proposal",
+      "proposedGroupTitle": "Sell Food and Beverages",
+      "appliedGroupTitle": "Sell Food and Beverages",
+      "parentTitle": "Sell physical objects",
+      "currentChildrenParentTitle": "Sell physical objects",
+      "parentCollection": "main",
+      "children": ["Sell Beverages", "Sell Food", "Sell Refreshment"],
+      "description": "Sell food, beverages, or refreshments."
+    },
+    {
+      "proposalId": "som-b13a9b0e6c5ed1230689",
+      "diagnosisProposalId": "som-b13a9b0e6c5ed1230689",
+      "decisionSource": "accepted-proposal",
+      "proposedGroupTitle": "Sell Investment Instruments",
+      "appliedGroupTitle": "Sell Investment Instruments",
+      "parentTitle": "Sell information",
+      "currentChildrenParentTitle": "Sell information",
+      "parentCollection": "main",
+      "children": [
+        "Sell Bond",
+        "Sell Commodity Futures",
+        "Sell Financial Derivatives",
+        "Sell Stock"
+      ],
+      "description": "Sell investment instruments such as bonds, commodity futures, financial derivatives, or stock."
+    },
+    {
+      "proposalId": "som-443776db38865c17d781",
+      "diagnosisProposalId": "som-443776db38865c17d781",
+      "decisionSource": "accepted-proposal",
+      "proposedGroupTitle": "Sell Payment Instruments",
+      "appliedGroupTitle": "Sell Payment Instruments",
+      "parentTitle": "Sell information",
+      "currentChildrenParentTitle": "Sell information",
+      "parentCollection": "main",
+      "children": ["Sell Foreign Currencies", "Sell Traveler's Checks"],
+      "description": "Sell payment instruments such as foreign currencies or traveler's checks."
+    },
+    {
+      "proposalId": "som-989e952c255d97c5425c",
+      "diagnosisProposalId": "som-989e952c255d97c5425c",
+      "decisionSource": "expert-correction",
+      "expertSuggestedCorrection": "Grouping should be named: Sell expedition products",
+      "proposedGroupTitle": "Sell Expedition Goods",
+      "appliedGroupTitle": "Sell Expedition Products",
+      "parentTitle": "Sell physical objects",
+      "currentChildrenParentTitle": "Sell physical objects",
+      "parentCollection": "main",
+      "children": [
+        "Sell Expedition Clothing",
+        "Sell Expedition Equipment",
+        "Sell Expedition Supplies"
+      ],
+      "description": "Sell clothing, equipment, or supplies used for expeditions."
+    },
+    {
+      "proposalId": "som-44a6d341d9882a3ad704",
+      "diagnosisProposalId": "som-44a6d341d9882a3ad704",
+      "decisionSource": "expert-correction",
+      "expertSuggestedCorrection": "Sell postal supplies",
+      "proposedGroupTitle": "Sell Stamps and Money Orders",
+      "appliedGroupTitle": "Sell Postal Supplies",
+      "parentTitle": "Sell physical objects",
+      "currentChildrenParentTitle": "Sell physical objects",
+      "parentCollection": "main",
+      "children": ["Sell Money Orders", "Sell Stamp"],
+      "description": "Sell postal supplies such as stamps or money orders."
+    },
+    {
+      "proposalId": "som-2906a9e857331c06392f",
+      "diagnosisProposalId": "som-2906a9e857331c06392f",
+      "decisionSource": "expert-correction",
+      "expertSuggestedCorrection": "Grouping shuould be named: Pet products",
+      "proposedGroupTitle": "Sell Pet Products and Supplies",
+      "appliedGroupTitle": "Sell Pet Products",
+      "parentTitle": "Sell physical objects",
+      "currentChildrenParentTitle": "Sell physical objects",
+      "parentCollection": "main",
+      "children": ["Sell Pet Food", "Sell Pet Supplies"],
+      "description": "Sell pet food or other products for pets."
+    },
+    {
+      "proposalId": "som-cb71693d66e0170be91d",
+      "diagnosisProposalId": "som-cb71693d66e0170be91d",
+      "decisionSource": "expert-correction-combined-with-approved-relocations",
+      "expertSuggestedCorrection": "Group should be named: Sell travel services",
+      "proposedGroupTitle": "Sell Travel Packages and Incentives",
+      "appliedGroupTitle": "Sell Travel Services",
+      "parentTitle": "Sell service",
+      "currentChildrenParentTitle": "Sell information",
+      "parentCollection": "main",
+      "children": ["Sell Travel Incentives", "Sell Travel Packages"],
+      "description": "Sell travel services such as travel packages or promotional travel incentives."
+    },
+    {
+      "proposalId": "som-547f35987964c443c614",
+      "diagnosisProposalId": "som-547f35987964c443c614",
+      "decisionSource": "accepted-proposal",
+      "proposedGroupTitle": "Sell Personal Care Products",
+      "appliedGroupTitle": "Sell Personal Care Products",
+      "parentTitle": "Sell physical objects",
+      "currentChildrenParentTitle": "Sell physical objects",
+      "parentCollection": "main",
+      "children": [
+        "Sell Cosmetics",
+        "Sell Hair Care Products",
+        "Sell Nail Care Products"
+      ],
+      "description": "Sell cosmetics, hair-care products, or nail-care products."
+    }
+  ],
+  "rejectedGroupings": [
+    {
+      "proposalId": "som-425a7ef6c2a84e67d7dd",
+      "proposedGroupTitle": "Sell Agricultural Products and Supplies",
+      "expertSuggestedCorrection": "Two separate nodes, not grouped: Agricultural supplies, Agricultural products"
+    }
+  ],
+  "collectionDesigns": [
+    {
+      "proposalId": "som-f0464db076534dd0bde0",
+      "parentTitle": "Sell",
+      "collectionName": "Sell what kind of usage?",
+      "branches": [
+        {
+          "title": "Sell ownership",
+          "description": "Transfer ownership of something in exchange for payment.",
+          "children": []
+        },
+        {
+          "title": "Sell temporary use",
+          "description": "Transfer temporary use of something in exchange for payment.",
+          "children": ["Rent out"]
+        }
+      ]
+    }
+  ],
+  "relocations": [
+    {
+      "proposalId": "som-8421587a7b59a1c0c8ab",
+      "diagnosisProposalId": "som-a8f636633a576f993a48",
+      "decisionSource": "accepted-proposal",
+      "sourceNodeId": "69f750313b7a42f83e7bf29c54e1",
+      "nodeTitle": "Sell Service Contracts",
+      "currentParentTitle": "Sell information",
+      "proposedParentTitle": "Sell service",
+      "finalParentTitle": "Sell service"
+    },
+    {
+      "proposalId": "som-9160468879d2022fe226",
+      "diagnosisProposalId": "som-b7dba5868f5a9d71fdc7",
+      "decisionSource": "accepted-proposal",
+      "sourceNodeId": "5f624fc2312be2d9daab86c94c5a",
+      "nodeTitle": "Sell Membership",
+      "currentParentTitle": "Sell information",
+      "proposedParentTitle": "Sell service",
+      "finalParentTitle": "Sell service"
+    },
+    {
+      "proposalId": "som-24775b6961c25acadd1a",
+      "diagnosisProposalId": "som-f2e1b3bfaeb565258152",
+      "decisionSource": "accepted-proposal",
+      "sourceNodeId": "c9cedc83f3cddb3895604d8d6586",
+      "nodeTitle": "Sell Admission Passes",
+      "currentParentTitle": "Sell information",
+      "proposedParentTitle": "Sell service",
+      "finalParentTitle": "Sell service"
+    },
+    {
+      "proposalId": "som-9eaa61f4020457bcbe41",
+      "diagnosisProposalId": "som-26289b558db6425a9dcd",
+      "decisionSource": "accepted-proposal",
+      "sourceNodeId": "f678716e003268b08842285d7c10",
+      "nodeTitle": "Sell Ticket",
+      "currentParentTitle": "Sell physical objects",
+      "proposedParentTitle": "Sell service",
+      "finalParentTitle": "Sell service"
+    },
+    {
+      "proposalId": "som-8751def3af618d107d56",
+      "diagnosisProposalId": "som-6e5cf95399931bf3bf5b",
+      "decisionSource": "accepted-proposal",
+      "sourceNodeId": "c8f3336bc22031865e24d2a8b4e0",
+      "nodeTitle": "Sell Travel Incentives",
+      "currentParentTitle": "Sell information",
+      "proposedParentTitle": "Sell service",
+      "finalParentTitle": "Sell Travel Services",
+      "satisfiedByGrouping": "Sell Travel Services"
+    },
+    {
+      "proposalId": "som-b1ea28409ca483d8ffdc",
+      "diagnosisProposalId": "som-f5b16c676663225e9cb2",
+      "decisionSource": "accepted-proposal",
+      "sourceNodeId": "eb9984ff92271a70ed0818991b15",
+      "nodeTitle": "Sell Travel Packages",
+      "currentParentTitle": "Sell information",
+      "proposedParentTitle": "Sell service",
+      "finalParentTitle": "Sell Travel Services",
+      "satisfiedByGrouping": "Sell Travel Services"
+    },
+    {
+      "proposalId": "som-e10d8e10053e5294671a",
+      "diagnosisProposalId": "som-b160acd8f24f4633585e",
+      "decisionSource": "accepted-proposal",
+      "sourceNodeId": "cbfabd175db0172dfaa27d02d177",
+      "nodeTitle": "Sell Services",
+      "currentParentTitle": "Sell information",
+      "proposedParentTitle": "Sell service",
+      "finalParentTitle": "Sell service"
+    },
+    {
+      "proposalId": "som-2649258bc231def3a745",
+      "diagnosisProposalId": "som-009cc90c1521a15aada8",
+      "decisionSource": "expert-correction",
+      "expertSuggestedCorrection": "Parent name: Sell Service",
+      "sourceNodeId": "4d951b45590941f1dc519fe314ae",
+      "nodeTitle": "Sell Financial Products",
+      "currentParentTitle": "Sell physical objects",
+      "proposedParentTitle": "Sell information",
+      "finalParentTitle": "Sell service"
+    },
+    {
+      "proposalId": "som-0c9bb17b91bd994b2e47",
+      "diagnosisProposalId": "som-50f1e92cd8700c4f9ad4",
+      "decisionSource": "expert-correction",
+      "expertSuggestedCorrection": "Parent should be \"Sell\"",
+      "sourceNodeId": "5d0e71853f7601884ca642ab535e",
+      "nodeTitle": "Sell Products",
+      "currentParentTitle": "Sell (Other)",
+      "proposedParentTitle": "Sell physical objects",
+      "finalParentTitle": "Sell"
+    },
+    {
+      "proposalId": "som-1efc46c7e351ac3f2c70",
+      "diagnosisProposalId": "som-561e3bf8b15ad8b66c61",
+      "decisionSource": "accepted-proposal",
+      "sourceNodeId": "a5c1904e41409f0055bcb09e60e5",
+      "nodeTitle": "Sell Alcoholic Beverages",
+      "currentParentTitle": "Sell physical objects",
+      "proposedParentTitle": "Sell Beverages",
+      "finalParentTitle": "Sell Beverages"
+    },
+    {
+      "proposalId": "som-7046ef6d15ed5162f3c4",
+      "diagnosisProposalId": "som-cb88f0783026ae169278",
+      "decisionSource": "accepted-proposal",
+      "sourceNodeId": "7b9d963fbc8b725edaf5a795151f",
+      "nodeTitle": "Sell Lotion",
+      "currentParentTitle": "Sell physical objects",
+      "proposedParentTitle": "Sell Cosmetic Supplies",
+      "finalParentTitle": "Sell Cosmetic Supplies"
+    },
+    {
+      "proposalId": "som-89f0ff9982ed177ef062",
+      "diagnosisProposalId": "som-9473ee54d9e4d9da85e5",
+      "decisionSource": "accepted-proposal",
+      "sourceNodeId": "ff51d9139c5242124772e081cec1",
+      "nodeTitle": "Sell Tonic",
+      "currentParentTitle": "Sell physical objects",
+      "proposedParentTitle": "Sell Cosmetic Supplies",
+      "finalParentTitle": "Sell Cosmetic Supplies"
+    },
+    {
+      "proposalId": "som-74f0843be5bbc05bc594",
+      "diagnosisProposalId": "som-f0c72fc5d394f235e0c7",
+      "decisionSource": "expert-correction",
+      "expertSuggestedCorrection": "Change Advertise to Promote",
+      "sourceNodeId": "9c25ae149239759069535b366ae2",
+      "nodeTitle": "Market Artwork",
+      "currentParentTitle": "Sell information",
+      "proposedParentTitle": "Advertise",
+      "finalParentTitle": "Promote"
+    },
+    {
+      "proposalId": "som-1177b7d3f80b528555f7",
+      "diagnosisProposalId": "som-d6a0280646de62d553a5",
+      "decisionSource": "expert-correction",
+      "expertSuggestedCorrection": "Change Advertise to Promote",
+      "sourceNodeId": "f6e699acdd7f8fa15ae74065154b",
+      "nodeTitle": "Market Bank Products",
+      "currentParentTitle": "Sell information",
+      "proposedParentTitle": "Advertise",
+      "finalParentTitle": "Promote"
+    },
+    {
+      "proposalId": "som-f7bdbdb6a7d4359afa36",
+      "diagnosisProposalId": "som-6b1b04e2aff07fd66761",
+      "decisionSource": "expert-correction",
+      "expertSuggestedCorrection": "Change Advertise to Promote",
+      "sourceNodeId": "569f7333eaf0a6fee615108a9807",
+      "nodeTitle": "Market Casino",
+      "currentParentTitle": "Sell information",
+      "proposedParentTitle": "Advertise",
+      "finalParentTitle": "Promote"
+    },
+    {
+      "proposalId": "som-2bd64d9c6838173cbf40",
+      "diagnosisProposalId": "som-22344b0eb2e44544ab63",
+      "decisionSource": "expert-correction",
+      "expertSuggestedCorrection": "Change Advertise to Promote",
+      "sourceNodeId": "7572478f091ce3ab1dc4b20a20da",
+      "nodeTitle": "Market Event",
+      "currentParentTitle": "Sell information",
+      "proposedParentTitle": "Advertise",
+      "finalParentTitle": "Promote"
+    },
+    {
+      "proposalId": "som-5412336134c10eedc343",
+      "diagnosisProposalId": "som-7df545760230ae108cc7",
+      "decisionSource": "expert-correction",
+      "expertSuggestedCorrection": "Replace Advertise with Promote",
+      "sourceNodeId": "7fd7ae18e5cff5d40e5b2a887bd6",
+      "nodeTitle": "Market Products",
+      "currentParentTitle": "Sell information",
+      "proposedParentTitle": "Advertise",
+      "finalParentTitle": "Promote"
+    },
+    {
+      "proposalId": "som-022bcc9c39000014d9aa",
+      "diagnosisProposalId": "som-67f6c0e971c1a7fbb687",
+      "decisionSource": "expert-correction",
+      "expertSuggestedCorrection": "Change Advertise to Promote",
+      "sourceNodeId": "34282d8e328b647ad70b60abd9fb",
+      "nodeTitle": "Market Services",
+      "currentParentTitle": "Sell information",
+      "proposedParentTitle": "Advertise",
+      "finalParentTitle": "Promote"
+    },
+    {
+      "proposalId": "som-3cbd3b1753852903901b",
+      "diagnosisProposalId": "som-a93658d2186f708ca51c",
+      "decisionSource": "expert-correction",
+      "expertSuggestedCorrection": "Change Advertise to Promote",
+      "sourceNodeId": "28f5917b9f92d874f2c9ed14fa56",
+      "nodeTitle": "Market Vacant Space",
+      "currentParentTitle": "Sell physical objects",
+      "proposedParentTitle": "Advertise",
+      "finalParentTitle": "Promote"
+    },
+    {
+      "proposalId": "som-4168bfbb6b200d4a9542",
+      "diagnosisProposalId": "som-4d9e1e7f083266f8df41",
+      "decisionSource": "accepted-proposal",
+      "sourceNodeId": "bf4787b9dc842022253d939a8df2",
+      "nodeTitle": "Sell Ideas",
+      "currentParentTitle": "Sell (Other)",
+      "proposedParentTitle": "Persuade",
+      "finalParentTitle": "Persuade"
+    }
+  ]
+}

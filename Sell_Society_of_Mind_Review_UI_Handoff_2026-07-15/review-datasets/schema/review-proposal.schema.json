@@ -42,19 +42,11 @@
         },
         "reviewMode": {
           "type": "string",
-          "enum": [
-            "proposed-change",
-            "status-quo-audit",
-            "manual-check"
-          ]
+          "enum": ["proposed-change", "status-quo-audit", "manual-check"]
         },
         "rolloutStatus": {
           "type": "string",
-          "enum": [
-            "prototype",
-            "experimental",
-            "control"
-          ]
+          "enum": ["prototype", "experimental", "control"]
         },
         "subject": {
           "type": "object",
@@ -81,9 +73,7 @@
               "default": []
             }
           },
-          "required": [
-            "title"
-          ],
+          "required": ["title"],
           "additionalProperties": false
         },
         "reviewerView": {
@@ -124,10 +114,7 @@
                       "default": []
                     }
                   },
-                  "required": [
-                    "type",
-                    "currentTitle"
-                  ],
+                  "required": ["type", "currentTitle"],
                   "additionalProperties": false
                 },
                 {
@@ -142,10 +129,7 @@
                     },
                     "structure": {
                       "type": "string",
-                      "enum": [
-                        "intermediate",
-                        "facet-collection"
-                      ]
+                      "enum": ["intermediate", "facet-collection"]
                     },
                     "proposedGroupTitle": {
                       "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
@@ -198,11 +182,7 @@
                       "minItems": 2
                     }
                   },
-                  "required": [
-                    "type",
-                    "parentTitle",
-                    "currentChildren"
-                  ],
+                  "required": ["type", "parentTitle", "currentChildren"],
                   "additionalProperties": false
                 },
                 {
@@ -257,13 +237,39 @@
                       "type": "string",
                       "default": ""
                     },
+                    "sharedAction": {
+                      "type": "string",
+                      "default": ""
+                    },
+                    "affectedNodes": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "nodeTitle": {
+                            "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+                          },
+                          "currentParentTitle": {
+                            "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+                          },
+                          "currentBucket": {
+                            "type": "string",
+                            "default": ""
+                          },
+                          "sourceTasks": {
+                            "type": "array",
+                            "items": {
+                              "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
+                            }
+                          }
+                        },
+                        "required": ["nodeTitle", "currentParentTitle"],
+                        "additionalProperties": false
+                      }
+                    },
                     "placementIssue": {
                       "type": "string",
-                      "enum": [
-                        "wrong-bucket",
-                        "wrong-parent",
-                        "wrong-verb"
-                      ]
+                      "enum": ["wrong-bucket", "wrong-parent", "wrong-verb"]
                     },
                     "sourceTasks": {
                       "type": "array",
@@ -494,10 +500,7 @@
                     },
                     "field": {
                       "type": "string",
-                      "enum": [
-                        "synonyms",
-                        "description"
-                      ]
+                      "enum": ["synonyms", "description"]
                     },
                     "currentText": {
                       "type": "string"
@@ -525,17 +528,10 @@
                     },
                     "synonymScope": {
                       "type": "string",
-                      "enum": [
-                        "structured-field",
-                        "all-recorded"
-                      ]
+                      "enum": ["structured-field", "all-recorded"]
                     }
                   },
-                  "required": [
-                    "type",
-                    "nodeTitle",
-                    "field"
-                  ],
+                  "required": ["type", "nodeTitle", "field"],
                   "additionalProperties": false
                 },
                 {
@@ -573,11 +569,7 @@
                             "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
                           }
                         },
-                        "required": [
-                          "title",
-                          "meaning",
-                          "destination"
-                        ],
+                        "required": ["title", "meaning", "destination"],
                         "additionalProperties": false
                       }
                     }
@@ -622,10 +614,7 @@
                           },
                           "status": {
                             "type": "string",
-                            "enum": [
-                              "existing",
-                              "new"
-                            ]
+                            "enum": ["existing", "new"]
                           },
                           "children": {
                             "type": "array",
@@ -634,11 +623,7 @@
                             }
                           }
                         },
-                        "required": [
-                          "title",
-                          "status",
-                          "children"
-                        ],
+                        "required": ["title", "status", "children"],
                         "additionalProperties": false
                       }
                     },
@@ -779,11 +764,7 @@
               "const": false
             }
           },
-          "required": [
-            "detectorId",
-            "detectorName",
-            "reviewerVisible"
-          ],
+          "required": ["detectorId", "detectorName", "reviewerVisible"],
           "additionalProperties": false
         },
         "provenance": {
@@ -866,11 +847,7 @@
             },
             "proposalKind": {
               "type": "string",
-              "enum": [
-                "diagnosis",
-                "design",
-                "action"
-              ]
+              "enum": ["diagnosis", "design", "action"]
             },
             "dependsOnProposalIds": {
               "type": "array",

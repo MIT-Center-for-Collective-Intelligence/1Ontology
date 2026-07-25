@@ -251,16 +251,22 @@ const ReviewCard = ({
   const placementContext =
     view.context.type === "placement-comparison" ? view.context : null;
   const wrongVerb = placementContext?.placementIssue === "wrong-verb";
-  const agreeLabel = wrongVerb
-    ? "Yes, different action"
-    : placementContext
-      ? "Yes, misplaced"
-      : view.agreeLabel;
-  const disagreeLabel = wrongVerb
-    ? "No, it belongs here"
-    : placementContext
-      ? "No, keep here"
-      : view.disagreeLabel;
+  const affectedPlacementNodes = placementContext?.affectedNodes || [];
+  const groupedPlacement = affectedPlacementNodes.length > 1;
+  const agreeLabel = groupedPlacement
+    ? view.agreeLabel
+    : wrongVerb
+      ? "Yes, different action"
+      : placementContext
+        ? "Yes, misplaced"
+        : view.agreeLabel;
+  const disagreeLabel = groupedPlacement
+    ? view.disagreeLabel
+    : wrongVerb
+      ? "No, it belongs here"
+      : placementContext
+        ? "No, keep here"
+        : view.disagreeLabel;
 
   return (
     <Box
@@ -298,10 +304,17 @@ const ReviewCard = ({
           >
             {placementContext ? (
               <Stack spacing={1.5}>
-                <PanelField
-                  label="Current parent"
-                  value={placementContext.currentParentTitle}
-                />
+                {groupedPlacement ? (
+                  <PanelField
+                    label="Current scope"
+                    value={`${affectedPlacementNodes.length} activities across the Sell branch`}
+                  />
+                ) : (
+                  <PanelField
+                    label="Current parent"
+                    value={placementContext.currentParentTitle}
+                  />
+                )}
                 {placementContext.currentBucket && (
                   <PanelField
                     label="Current category"
@@ -325,13 +338,36 @@ const ReviewCard = ({
             accent="primary"
           >
             {placementContext ? (
-              <Typography
-                sx={{ fontSize: "1.05rem", fontWeight: 700, lineHeight: 1.5 }}
-              >
-                &quot;{placementContext.nodeTitle}&quot;{" "}
-                {wrongVerb ? "is not a kind of selling and " : ""}does not
-                belong under &quot;{placementContext.currentParentTitle}&quot;.
-              </Typography>
+              <Stack spacing={1}>
+                <Typography
+                  sx={{ fontSize: "1.05rem", fontWeight: 700, lineHeight: 1.5 }}
+                >
+                  {groupedPlacement ? (
+                    <>
+                      These activities{" "}
+                      {wrongVerb
+                        ? `appear to use "${
+                            placementContext.sharedAction ||
+                            "their leading verb"
+                          }" as a different action from selling.`
+                        : "appear to share the same placement issue."}
+                    </>
+                  ) : (
+                    <>
+                      &quot;{placementContext.nodeTitle}&quot;{" "}
+                      {wrongVerb
+                        ? "is not a kind of selling."
+                        : "is under a parent that is too broad."}
+                    </>
+                  )}
+                </Typography>
+                {placementContext.candidateHome && (
+                  <PanelField
+                    label="Suggested category"
+                    value={placementContext.candidateHome}
+                  />
+                )}
+              </Stack>
             ) : titleDiff ? (
               <DiffedTitle
                 title={titleDiff.proposed}
@@ -455,8 +491,12 @@ const ReviewCard = ({
               label={
                 placementContext
                   ? wrongVerb
-                    ? `Why is "${placementContext.nodeTitle}" still a kind of selling?`
-                    : `Why should "${placementContext.nodeTitle}" stay under "${placementContext.currentParentTitle}"?`
+                    ? groupedPlacement
+                      ? "Which activities should be handled differently, and why?"
+                      : `Why is "${placementContext.nodeTitle}" still a kind of selling?`
+                    : groupedPlacement
+                      ? "Which activities should be handled differently, and why?"
+                      : `Why should "${placementContext.nodeTitle}" stay under "${placementContext.currentParentTitle}"?`
                   : "Why do you disagree?"
               }
               required

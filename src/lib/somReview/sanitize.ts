@@ -42,9 +42,24 @@ export const reviewerQuestion = (context: SomReviewContext): string => {
     case "duplicate-comparison":
       return `Should "${context.candidateSynonymTitle}" be recorded as a synonym of "${context.canonicalTitle}"?`;
     case "placement-comparison":
+      if ((context.affectedNodes || []).length > 1) {
+        return context.placementIssue === "wrong-verb"
+          ? `Do these ${context.affectedNodes?.length} activities use "${
+              context.sharedAction || "their leading verb"
+            }" as a different main action from "Sell"?`
+          : `Should these ${
+              context.affectedNodes?.length
+            } activities be placed under ${
+              context.candidateHome
+                ? `the more specific category "${context.candidateHome}"`
+                : "a more specific category"
+            }?`;
+      }
       return context.placementIssue === "wrong-verb"
         ? `Does "${context.nodeTitle}" use a different main action than "Sell"?`
-        : `Is "${context.nodeTitle}" misplaced under "${context.currentParentTitle}"?`;
+        : context.candidateHome
+          ? `Is "${context.nodeTitle}" better placed under the more specific category "${context.candidateHome}" than under "${context.currentParentTitle}"?`
+          : `Is "${context.nodeTitle}" misplaced under "${context.currentParentTitle}"?`;
     case "overlap-comparison":
       return `Could "${context.firstTitle}" and "${context.secondTitle}" represent the same concept?`;
     case "merge-action":
@@ -87,14 +102,48 @@ const placementReviewerText = (
   context: Extract<SomReviewContext, { type: "placement-comparison" }>,
 ) => {
   const category = cleanText(context.currentBucket);
+  const affectedNodes = context.affectedNodes || [];
+  if (affectedNodes.length > 1) {
+    return {
+      currentState: `${affectedNodes.length} activities beginning with "${
+        context.sharedAction || "the same verb"
+      }" currently appear within the Sell branch.`,
+      proposedState:
+        context.placementIssue === "wrong-verb"
+          ? `These activities appear to use "${
+              context.sharedAction || "their leading verb"
+            }" as a different action from selling${
+              context.candidateHome
+                ? `; "${context.candidateHome}" is the suggested category`
+                : ""
+            }.`
+          : `These activities appear to belong under "${
+              context.candidateHome || "a more specific category"
+            }".`,
+      agreeLabel:
+        context.placementIssue === "wrong-verb"
+          ? "Yes, different action"
+          : "Yes, move together",
+      disagreeLabel:
+        context.placementIssue === "wrong-verb"
+          ? "No, review separately"
+          : "No, review separately",
+    };
+  }
   return {
     currentState: `"${context.nodeTitle}" is currently under "${
       context.currentParentTitle
     }"${category ? ` in the "${category}" category` : ""}.`,
     proposedState:
       context.placementIssue === "wrong-verb"
-        ? `"${context.nodeTitle}" is not a kind of selling and does not belong under "${context.currentParentTitle}".`
-        : `"${context.nodeTitle}" does not belong under "${context.currentParentTitle}".`,
+        ? `"${context.nodeTitle}" is not a kind of selling${
+            context.candidateHome
+              ? `; "${context.candidateHome}" is the suggested category`
+              : ` and does not belong under "${context.currentParentTitle}"`
+          }.`
+        : context.candidateHome
+          ? `"${context.nodeTitle}" appears to belong under the more specific category "${context.candidateHome}".`
+          : `"${context.nodeTitle}" does not belong under "${context.currentParentTitle}".`,
     agreeLabel:
       context.placementIssue === "wrong-verb"
         ? "Yes, different action"
@@ -215,6 +264,17 @@ const sanitizeContext = (context: any): SomReviewContext => {
           context.currentBucket && context.currentBucket !== "main"
             ? context.currentBucket
             : "",
+        candidateHome: cleanText(context.candidateHome),
+        sharedAction: cleanText(context.sharedAction),
+        affectedNodes: (context.affectedNodes || []).map((node: any) => ({
+          nodeTitle: cleanText(node.nodeTitle),
+          currentParentTitle: cleanText(node.currentParentTitle),
+          currentBucket:
+            node.currentBucket && node.currentBucket !== "main"
+              ? cleanText(node.currentBucket)
+              : "",
+          sourceTasks: (node.sourceTasks || []).map(cleanText).filter(Boolean),
+        })),
         placementIssue: context.placementIssue,
         sourceTasks: context.sourceTasks || [],
       };

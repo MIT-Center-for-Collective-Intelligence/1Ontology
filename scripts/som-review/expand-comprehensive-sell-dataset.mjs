@@ -176,7 +176,9 @@ const PURE_NUMBER_NORMALIZATION_TITLES = new Set();
 
 const EXPERT_SUPPRESSED_SYNONYM_GAPS = new Set(["Lease out|Lease"]);
 
-const PLACEMENT_CANDIDATES = [
+// These are review-seeding cases derived from prior expert analysis. They are
+// not independent model detections and must not be reused as evaluation items.
+const SEEDED_PLACEMENT_CANDIDATES = [
   {
     title: "Sell Service Contracts",
     proposedParentTitle: "Sell service",
@@ -251,7 +253,7 @@ const PLACEMENT_CANDIDATES = [
   },
 ];
 
-const WRONG_VERB_RELOCATIONS = [
+const SEEDED_WRONG_VERB_RELOCATIONS = [
   ...[
     "Market Artwork",
     "Market Bank Products",
@@ -262,7 +264,7 @@ const WRONG_VERB_RELOCATIONS = [
     "Market Vacant Space",
   ].map((title) => ({
     title,
-    proposedParentTitle: "Advertise",
+    proposedParentTitle: "Promote",
     reasoning:
       "Market here means promoting or creating demand, not completing an exchange for payment. It therefore names a different main action from Sell.",
   })),
@@ -764,13 +766,25 @@ function buildIndex(snapshot) {
     snapshot.edges.map((edge) => `${edge.parentId}\u001f${edge.childId}`),
   );
   const childrenByParent = new Map();
+  const parentsByChild = new Map();
   for (const edge of snapshot.edges) {
     childrenByParent.set(edge.parentId, [
       ...(childrenByParent.get(edge.parentId) || []),
       edge,
     ]);
+    parentsByChild.set(edge.childId, [
+      ...(parentsByChild.get(edge.childId) || []),
+      edge,
+    ]);
   }
-  return { nodesById, idByTitle, edgeKeys, edgePairs, childrenByParent };
+  return {
+    nodesById,
+    idByTitle,
+    edgeKeys,
+    edgePairs,
+    childrenByParent,
+    parentsByChild,
+  };
 }
 
 function resolveTitle(index, title) {
@@ -937,16 +951,48 @@ function currentGroupingCandidates(index) {
   });
 }
 
-function remapPlacementCandidates(index, candidates) {
+function isAtOrBelow(index, nodeTitle, ancestorTitle) {
+  if (!index.idByTitle.has(nodeTitle) || !index.idByTitle.has(ancestorTitle)) {
+    return false;
+  }
+  const nodeId = resolveTitle(index, nodeTitle);
+  const ancestorId = resolveTitle(index, ancestorTitle);
+  const visited = new Set();
+  const queue = [nodeId];
+  while (queue.length) {
+    const currentId = queue.shift();
+    if (!currentId || visited.has(currentId)) continue;
+    if (currentId === ancestorId) return true;
+    visited.add(currentId);
+    for (const edge of index.parentsByChild.get(currentId) || []) {
+      queue.push(edge.parentId);
+    }
+  }
+  return false;
+}
+
+function remapPlacementCandidates(
+  index,
+  candidates,
+  { resolvedTitles = new Set() } = {},
+) {
   return candidates
-    .filter((candidate) => index.idByTitle.has(candidate.title))
+    .filter(
+      (candidate) =>
+        index.idByTitle.has(candidate.title) &&
+        !resolvedTitles.has(candidate.title),
+    )
     .map((candidate) => ({
       ...candidate,
       proposedParentTitle: remapFacetTitle(
         index,
         candidate.proposedParentTitle,
       ),
-    }));
+    }))
+    .filter(
+      (candidate) =>
+        !isAtOrBelow(index, candidate.title, candidate.proposedParentTitle),
+    );
 }
 
 function remapMissingActivities(index) {
@@ -1054,9 +1100,20 @@ function deriveRefs(context, index) {
       break;
     }
     case "placement-comparison": {
-      parentNodeId = addTitle(context.currentParentTitle);
-      subjectNodeId = addTitle(context.nodeTitle);
-      requireAnyEdge(index, parentNodeId, subjectNodeId);
+      const affectedNodes = context.affectedNodes || [];
+      if (affectedNodes.length > 1) {
+        for (const affected of affectedNodes) {
+          const affectedParentId = addTitle(affected.currentParentTitle);
+          const affectedNodeId = addTitle(affected.nodeTitle);
+          requireAnyEdge(index, affectedParentId, affectedNodeId);
+          if (!parentNodeId) parentNodeId = affectedParentId;
+          if (!subjectNodeId) subjectNodeId = affectedNodeId;
+        }
+      } else {
+        parentNodeId = addTitle(context.currentParentTitle);
+        subjectNodeId = addTitle(context.nodeTitle);
+        requireAnyEdge(index, parentNodeId, subjectNodeId);
+      }
       if (context.candidateHome && index.idByTitle.has(context.candidateHome)) {
         addTitle(context.candidateHome);
       }
@@ -1557,6 +1614,12 @@ function collectionDesignRecord(args) {
   const { manifest, index, snapshotHash, generatedAt } = args;
   const temporaryUseTitle = "Rent out";
   resolveTitle(index, temporaryUseTitle);
+  const collectionAlreadyApplied =
+    index.idByTitle.has("Sell ownership") &&
+    index.idByTitle.has("Sell temporary use") &&
+    isAtOrBelow(index, temporaryUseTitle, "Sell temporary use");
+  if (collectionAlreadyApplied) return null;
+  if (!isAtOrBelow(index, temporaryUseTitle, "Sell")) return null;
   return makeRecord({
     manifest,
     index,
@@ -1601,34 +1664,84 @@ function collectionDesignRecord(args) {
 
 function placementDiagnosticRecords(args, candidates, issueType) {
   const { manifest, index, snapshotHash, generatedAt } = args;
-  return candidates.map((candidate) => {
-    const current = directParent(index, candidate.title);
+  const groupedCandidates = [];
+  const remainingCandidates = [...candidates];
+  if (issueType === "wrong-verb") {
+    const marketCandidates = remainingCandidates.filter((candidate) =>
+      /^Market\b/i.test(candidate.title),
+    );
+    if (marketCandidates.length > 1) {
+      groupedCandidates.push({
+        ...marketCandidates[0],
+        groupKey: "shared-action:Market",
+        sharedAction: "Market",
+        affectedCandidates: marketCandidates,
+      });
+      for (const candidate of marketCandidates) {
+        remainingCandidates.splice(remainingCandidates.indexOf(candidate), 1);
+      }
+    }
+  }
+
+  return [...groupedCandidates, ...remainingCandidates].map((candidate) => {
+    const affectedCandidates = candidate.affectedCandidates || [candidate];
+    const affectedNodes = affectedCandidates.map((affected) => {
+      const current = directParent(index, affected.title);
+      return {
+        nodeTitle: affected.title,
+        currentParentTitle: current.parentTitle,
+        currentBucket: current.collectionName,
+        sourceTasks: sourceTasks(index, affected.title),
+      };
+    });
+    const current = affectedNodes[0];
+    const grouped = affectedNodes.length > 1;
+    const sourceEvidence = [
+      ...new Set(affectedNodes.flatMap((node) => node.sourceTasks || [])),
+    ];
     return makeRecord({
       manifest,
       index,
       snapshotHash,
       generatedAt,
       issueType,
-      key: `${issueType}:${candidate.title}->${candidate.proposedParentTitle}`,
+      key: `${issueType}:${
+        candidate.groupKey || candidate.title
+      }->${candidate.proposedParentTitle}`,
       subject: {
-        title: candidate.title,
-        parentTitle: current.parentTitle,
-        relatedTitles: [candidate.proposedParentTitle],
+        title: affectedCandidates[0].title,
+        parentTitle: current.currentParentTitle,
+        relatedTitles: [
+          candidate.proposedParentTitle,
+          ...affectedCandidates.slice(1).map((affected) => affected.title),
+        ],
       },
       reviewerView: {
-        question: `Is "${candidate.title}" currently in the wrong part of the Sell branch?`,
-        currentState: `"${candidate.title}" is currently under "${current.parentTitle}".`,
-        proposedState: `"${candidate.title}" does not belong under "${current.parentTitle}".`,
+        question: grouped
+          ? `Do these ${affectedNodes.length} activities share the same wrong-verb diagnosis?`
+          : `Is "${candidate.title}" currently in the wrong part of the Sell branch?`,
+        currentState: grouped
+          ? `${affectedNodes.length} activities beginning with "${candidate.sharedAction}" currently appear in the Sell branch.`
+          : `"${candidate.title}" is currently under "${current.currentParentTitle}".`,
+        proposedState: grouped
+          ? `Treat "${candidate.sharedAction}" as a different main action from Sell for all listed activities.`
+          : `"${candidate.title}" does not belong under "${current.currentParentTitle}".`,
         reasoning: candidate.reasoning,
         context: {
           type: "placement-comparison",
-          nodeTitle: candidate.title,
-          currentParentTitle: current.parentTitle,
-          currentBucket: current.collectionName,
+          nodeTitle: affectedCandidates[0].title,
+          currentParentTitle: current.currentParentTitle,
+          currentBucket: current.currentBucket,
           candidateHome: candidate.proposedParentTitle,
+          ...(grouped
+            ? {
+                sharedAction: candidate.sharedAction,
+                affectedNodes,
+              }
+            : {}),
           placementIssue:
             issueType === "wrong-verb" ? "wrong-verb" : "wrong-bucket",
-          sourceTasks: sourceTasks(index, candidate.title),
+          sourceTasks: sourceEvidence,
         },
       },
       evidence: {
@@ -2302,6 +2415,22 @@ function main() {
     );
   }
   const snapshot = JSON.parse(snapshotText);
+  const applicationAuditPath = args["application-audit"]
+    ? path.resolve(args["application-audit"])
+    : "";
+  const applicationAudit = applicationAuditPath
+    ? readJson(applicationAuditPath)
+    : null;
+  const resolvedRelocationTitles = new Set(
+    (applicationAudit?.relocations || []).map((relocation) =>
+      String(relocation.nodeTitle || "").trim(),
+    ),
+  );
+  const rejectedGroupingTitles = new Set(
+    (applicationAudit?.rejectedGroupings || []).map((grouping) =>
+      String(grouping.proposedGroupTitle || "").trim(),
+    ),
+  );
   DATASET_VERSION =
     args["dataset-version"] || manifest.datasetVersion || DATASET_VERSION;
   ONTOLOGY_APP_ID =
@@ -2315,14 +2444,18 @@ function main() {
   const generatedAt = args["generated-at"] || new Date().toISOString();
   const index = buildIndex(snapshot);
   const duplicatePairs = duplicateSynonymPairs(index);
-  const groupingCandidates = currentGroupingCandidates(index);
+  const groupingCandidates = currentGroupingCandidates(index).filter(
+    (candidate) => !rejectedGroupingTitles.has(candidate.title),
+  );
   const placementCandidates = remapPlacementCandidates(
     index,
-    PLACEMENT_CANDIDATES,
+    SEEDED_PLACEMENT_CANDIDATES,
+    { resolvedTitles: resolvedRelocationTitles },
   );
   const wrongVerbCandidates = remapPlacementCandidates(
     index,
-    WRONG_VERB_RELOCATIONS,
+    SEEDED_WRONG_VERB_RELOCATIONS,
+    { resolvedTitles: resolvedRelocationTitles },
   );
   const missingActivities = remapMissingActivities(index);
   const reviewWave = args["review-wave"] || "all";
@@ -2500,7 +2633,7 @@ function main() {
       "wrong-verb",
     ),
     ...missingActivityRecords(generationArgs),
-  ];
+  ].filter(Boolean);
 
   const diagnosticRecords = [...existingProposals, ...generatedDiagnostics];
   const diagnostics = {
@@ -2527,7 +2660,12 @@ function main() {
         record.issueType === "wrong-verb"
           ? diagnostics.wrongVerb
           : diagnostics.placement;
-      target.set(context.nodeTitle, record.proposalId);
+      const nodeTitles = context.affectedNodes?.length
+        ? context.affectedNodes.map((node) => node.nodeTitle)
+        : [context.nodeTitle];
+      for (const nodeTitle of nodeTitles) {
+        target.set(nodeTitle, record.proposalId);
+      }
     } else if (context?.type === "polysemy-review") {
       diagnostics.polysemy.set(context.nodeTitle, record.proposalId);
     }
@@ -2649,12 +2787,11 @@ function main() {
   };
   manifest.limitations = [
     "The app supports all 13 documented issue families, but this regenerated cycle is not proof that every semantic issue in Sell has been discovered.",
-    "Expert-approved title, synonym, and exact-merge decisions already applied to the source ontology copy are intentionally absent from this downstream review set.",
+    "Expert-approved decisions already applied to the source ontology copy are intentionally absent from this downstream review set.",
+    "Candidates explicitly rejected by the expert are retained in the application audit and suppressed rather than repeatedly presented in later waves.",
+    "The named Sell placement cases in this generator are documented seeded candidates, not evidence of independent LLM discovery. They are removed once resolved and must not be used as evaluation examples.",
     "Description proposals are deliberately conservative and preserve linked O*NET wording; human reviewers should improve awkward phrasing rather than accepting unsupported detail.",
     "Exact merge and relocation actions remain unavailable to an individual reviewer until that reviewer agrees with the prerequisite diagnosis.",
-    "The approved Rent out and Lease out merge is already applied to this snapshot; collection design remains a separate structural question about ownership versus temporary use.",
-    "The approved Sell Merchandise and Sell Products merge is already applied to this snapshot; Sell Items remains a separate activity.",
-    "The earlier Sell Products or Ideas polysemy was resolved by the approved split into Sell Products and Sell Ideas. The remaining Sell Ideas placement is reviewed as a wrong-verb diagnosis followed by a gated relocation.",
     "Every decision is review-only. Acceptance never writes to Firestore, and accepted actions must be revalidated against a fresh snapshot before implementation.",
   ];
   if (reviewWave === "content-corrections") {
@@ -2713,20 +2850,27 @@ function main() {
       message:
         "Optional quality checks remain deferred while the regenerated structure and placement proposals are reviewed.",
     };
+  } else if (reviewWave === "quality") {
+    manifest.reviewRelease = {
+      strategy: "snapshot-wave",
+      currentWave: "optional-quality-checks",
+      releasedIssueTypes: ISSUE_TYPES.map((issue) => issue.id),
+      awaitingRegenerationIssueTypes: [],
+      message:
+        "The approved structure and placement decisions have been propagated. Optional descriptions, missing activities, and redundant-node checks are now available.",
+    };
   } else {
     delete manifest.reviewRelease;
   }
-  if (args["application-audit"]) {
-    const applicationAudit = path.resolve(args["application-audit"]);
-    const packagedAudit = path.join(
-      directory,
-      "diagnostics",
-      "content_application_audit.json",
-    );
-    fs.copyFileSync(applicationAudit, packagedAudit);
+  if (applicationAuditPath) {
+    const auditLabel = applicationAudit?.schemaVersion?.includes("structure")
+      ? "structure_application_audit.json"
+      : "content_application_audit.json";
+    const packagedAudit = path.join(directory, "diagnostics", auditLabel);
+    fs.copyFileSync(applicationAuditPath, packagedAudit);
     manifest.appliedReviewCycle = {
       auditFile: path.relative(directory, packagedAudit),
-      auditSha256: hash(fs.readFileSync(applicationAudit)),
+      auditSha256: hash(fs.readFileSync(applicationAuditPath)),
     };
   }
   writeJson(manifestPath, manifest);
@@ -2794,9 +2938,10 @@ function main() {
       decisions: [
         "The 13 tasks in Rob's document are first-class issue queues rather than aliases for ten broader queues.",
         "Flat-list grouping and O*NET compound-object grouping are separate review criteria.",
-        "The approved Rent out and Lease out merge is applied before regenerating the separate collection-design question.",
-        "The approved Sell Merchandise and Sell Products merge is applied before regenerating grouping and placement proposals; Sell Items remains separate.",
-        "The approved title-split cycle has already separated Sell Products from Sell Ideas; the residual Sell Ideas issue is reviewed as a wrong-verb placement.",
+        "Completed expert decisions are applied to an isolated ontology copy before downstream candidates are regenerated.",
+        "Applied relocation cases and explicitly rejected grouping proposals are suppressed in later review waves.",
+        "Repeated wrong-verb cases with the same leading action can share one diagnosis while retaining separate exact relocation actions.",
+        "Seeded Sell examples are documented as expert-derived development cases and are not counted as independent model detections.",
         "Exact merges and relocations include prerequisite proposal IDs and are served only after an agreeing diagnosis.",
         "Every regenerated semantic proposal references the post-review ontology copy rather than the superseded title snapshot.",
         "All proposed current nodes and current relations are checked against the pinned Firestore snapshot.",

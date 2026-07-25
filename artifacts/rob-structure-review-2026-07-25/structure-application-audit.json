@@ -1,0 +1,771 @@
+{
+  "schemaVersion": "som-structure-application-audit-v1",
+  "generatedAt": "2026-07-25T15:29:44.295Z",
+  "mode": "apply",
+  "environment": "production",
+  "firestoreProjectId": "ontology-41607",
+  "sourceOntology": {
+    "appId": "final-hierarchy-with-o*net-rob-structure-review-2026-07-24",
+    "name": "Final Hierarchy with O*Net - Rob Structure Review 2026-07-24"
+  },
+  "targetOntology": {
+    "appId": "final-hierarchy-with-o*net-rob-structure-applied-2026-07-25",
+    "name": "Final Hierarchy with O*Net - Rob Structure Applied 2026-07-25"
+  },
+  "sourceDataset": {
+    "directory": "Sell_Society_of_Mind_Review_UI_Handoff_2026-07-15/review-datasets-rob-structure-wave-2026-07-24",
+    "version": "sell-rob-structure-wave-2026-07-24-v1",
+    "manifestSha256": "348230d26a62e7ba3d200f459a3cc93ce68f033ec959f17b12bb1dcd6119790a"
+  },
+  "planSha256": "64f5051a0074bcc5b54a3cb5a2c2759200ca56ce31dba202d445f9b5270a643c",
+  "benchmarkFiles": [
+    {
+      "file": "rob-flat-list-grouping-2026-07-25.json",
+      "issueType": "flat-list-grouping",
+      "sha256": "fc2e07358016c32aa2f8580baaf28bb99e36db38efe9180abaf0cf0fd60b1ec9"
+    },
+    {
+      "file": "rob-compound-object-grouping-2026-07-25.json",
+      "issueType": "compound-object-grouping",
+      "sha256": "784b24de7d00c99c4eb96d61390cada47b57421eaf6f2a1ec2895adcc60b3cd7"
+    },
+    {
+      "file": "rob-collection-design-2026-07-25.json",
+      "issueType": "collection-design",
+      "sha256": "e5ffce866906ae7a3d5c78baf2420146cdaafbb9a0a292ec21e29efb9a684b43"
+    },
+    {
+      "file": "rob-placement-2026-07-25.json",
+      "issueType": "placement",
+      "sha256": "af95ad2efb3fa53c0bb801edd2371eeae2ff4c8b109ff2281bb40f71bb25b040"
+    },
+    {
+      "file": "rob-wrong-verb-2026-07-25.json",
+      "issueType": "wrong-verb",
+      "sha256": "5e8a3da11a8f718a4602fa635dac892ddf31920fc9b47398bdf8808df953cef1"
+    },
+    {
+      "file": "rob-relocation-2026-07-25.json",
+      "issueType": "relocation",
+      "sha256": "5dcb1615c32017218fbbdba7fb8c47ed7b28fc9a92b275eab0b4b708b73516eb"
+    }
+  ],
+  "sourceDigestBefore": "ff83b7f18eee04ae456ce10b346511bc88edc996b3f2445ee922c7c6d9a163fa",
+  "expectedTargetDigest": "af8a59ec1f49672b634842142299b1e7e844137eb9bcdbc6f64edd9b30b32786",
+  "ownedSourceNodeCount": 52298,
+  "clonedOnetEvidenceNodeCount": 0,
+  "unresolvedDirectReferenceCount": 0,
+  "unresolvedDirectReferenceSample": [],
+  "existingTargetNodeCount": 52309,
+  "nodesRemainingToWrite": 0,
+  "resume": true,
+  "sourceNodeCount": 52298,
+  "targetNodeCount": 52309,
+  "createdNodes": [
+    {
+      "title": "Promote",
+      "nodeId": "61dc98263f0187802fa6278fde72",
+      "parentTitle": "Persuade",
+      "parentId": "65ab3261c6af6ec267d70d4b0f10",
+      "decisionSource": "expert-correction",
+      "expertCorrections": [
+        {
+          "proposalId": "som-1177b7d3f80b528555f7",
+          "suggestedCorrection": "Change Advertise to Promote"
+        },
+        {
+          "proposalId": "som-022bcc9c39000014d9aa",
+          "suggestedCorrection": "Change Advertise to Promote"
+        },
+        {
+          "proposalId": "som-f7bdbdb6a7d4359afa36",
+          "suggestedCorrection": "Change Advertise to Promote"
+        },
+        {
+          "proposalId": "som-5412336134c10eedc343",
+          "suggestedCorrection": "Replace Advertise with Promote"
+        },
+        {
+          "proposalId": "som-3cbd3b1753852903901b",
+          "suggestedCorrection": "Change Advertise to Promote"
+        },
+        {
+          "proposalId": "som-74f0843be5bbc05bc594",
+          "suggestedCorrection": "Change Advertise to Promote"
+        },
+        {
+          "proposalId": "som-2bd64d9c6838173cbf40",
+          "suggestedCorrection": "Change Advertise to Promote"
+        }
+      ]
+    }
+  ],
+  "groupings": [
+    {
+      "diagnosisProposalId": "som-7d37de5f387b928cf0b6",
+      "decisionSource": "accepted-proposal",
+      "proposedGroupTitle": "Sell Food and Beverages",
+      "appliedGroupTitle": "Sell Food and Beverages",
+      "groupNodeId": "485fe8b113203bfe54cb37413cb0",
+      "parentTitle": "Sell physical objects",
+      "movedChildren": [
+        {
+          "nodeId": "bc79143256196ddced5c6094082f",
+          "nodeTitle": "Sell Beverages",
+          "fromParentId": "da8b4b175d8e1475f595d880d34b",
+          "fromParentTitle": "Sell physical objects",
+          "toParentId": "485fe8b113203bfe54cb37413cb0",
+          "toParentTitle": "Sell Food and Beverages",
+          "proposedCollection": "main"
+        },
+        {
+          "nodeId": "bab1e5f5d5b391e8bf14e9bb4b68",
+          "nodeTitle": "Sell Food",
+          "fromParentId": "da8b4b175d8e1475f595d880d34b",
+          "fromParentTitle": "Sell physical objects",
+          "toParentId": "485fe8b113203bfe54cb37413cb0",
+          "toParentTitle": "Sell Food and Beverages",
+          "proposedCollection": "main"
+        },
+        {
+          "nodeId": "50ce4d3e1440faf9d79c488400fa",
+          "nodeTitle": "Sell Refreshment",
+          "fromParentId": "da8b4b175d8e1475f595d880d34b",
+          "fromParentTitle": "Sell physical objects",
+          "toParentId": "485fe8b113203bfe54cb37413cb0",
+          "toParentTitle": "Sell Food and Beverages",
+          "proposedCollection": "main"
+        }
+      ]
+    },
+    {
+      "diagnosisProposalId": "som-b13a9b0e6c5ed1230689",
+      "decisionSource": "accepted-proposal",
+      "proposedGroupTitle": "Sell Investment Instruments",
+      "appliedGroupTitle": "Sell Investment Instruments",
+      "groupNodeId": "6222f2046dcc8c83a7616cb3ab20",
+      "parentTitle": "Sell information",
+      "movedChildren": [
+        {
+          "nodeId": "360108fb0ed30e5d6da150ede291",
+          "nodeTitle": "Sell Bond",
+          "fromParentId": "64a0dfd908529ee455e1c0aed2e7",
+          "fromParentTitle": "Sell information",
+          "toParentId": "6222f2046dcc8c83a7616cb3ab20",
+          "toParentTitle": "Sell Investment Instruments",
+          "proposedCollection": "main"
+        },
+        {
+          "nodeId": "cc4e354132e05179e517806f92a5",
+          "nodeTitle": "Sell Commodity Futures",
+          "fromParentId": "64a0dfd908529ee455e1c0aed2e7",
+          "fromParentTitle": "Sell information",
+          "toParentId": "6222f2046dcc8c83a7616cb3ab20",
+          "toParentTitle": "Sell Investment Instruments",
+          "proposedCollection": "main"
+        },
+        {
+          "nodeId": "08b9c2ed99d275db31ec6e503649",
+          "nodeTitle": "Sell Financial Derivatives",
+          "fromParentId": "64a0dfd908529ee455e1c0aed2e7",
+          "fromParentTitle": "Sell information",
+          "toParentId": "6222f2046dcc8c83a7616cb3ab20",
+          "toParentTitle": "Sell Investment Instruments",
+          "proposedCollection": "main"
+        },
+        {
+          "nodeId": "0a0ebe0276ec78aa9bff5fa179b0",
+          "nodeTitle": "Sell Stock",
+          "fromParentId": "64a0dfd908529ee455e1c0aed2e7",
+          "fromParentTitle": "Sell information",
+          "toParentId": "6222f2046dcc8c83a7616cb3ab20",
+          "toParentTitle": "Sell Investment Instruments",
+          "proposedCollection": "main"
+        }
+      ]
+    },
+    {
+      "diagnosisProposalId": "som-443776db38865c17d781",
+      "decisionSource": "accepted-proposal",
+      "proposedGroupTitle": "Sell Payment Instruments",
+      "appliedGroupTitle": "Sell Payment Instruments",
+      "groupNodeId": "a4f4a31adb8b88148f39c9c247ba",
+      "parentTitle": "Sell information",
+      "movedChildren": [
+        {
+          "nodeId": "a338b59545ddb338cda0f800320e",
+          "nodeTitle": "Sell Foreign Currencies",
+          "fromParentId": "64a0dfd908529ee455e1c0aed2e7",
+          "fromParentTitle": "Sell information",
+          "toParentId": "a4f4a31adb8b88148f39c9c247ba",
+          "toParentTitle": "Sell Payment Instruments",
+          "proposedCollection": "main"
+        },
+        {
+          "nodeId": "9c6f1405850e668cc47191d64207",
+          "nodeTitle": "Sell Traveler's Checks",
+          "fromParentId": "64a0dfd908529ee455e1c0aed2e7",
+          "fromParentTitle": "Sell information",
+          "toParentId": "a4f4a31adb8b88148f39c9c247ba",
+          "toParentTitle": "Sell Payment Instruments",
+          "proposedCollection": "main"
+        }
+      ]
+    },
+    {
+      "diagnosisProposalId": "som-989e952c255d97c5425c",
+      "decisionSource": "expert-correction",
+      "proposedGroupTitle": "Sell Expedition Goods",
+      "appliedGroupTitle": "Sell Expedition Products",
+      "groupNodeId": "1d05e5e4b9089d60b71d3882a278",
+      "parentTitle": "Sell physical objects",
+      "movedChildren": [
+        {
+          "nodeId": "dbc1cef253731b84729a9f4eecd7",
+          "nodeTitle": "Sell Expedition Clothing",
+          "fromParentId": "da8b4b175d8e1475f595d880d34b",
+          "fromParentTitle": "Sell physical objects",
+          "toParentId": "1d05e5e4b9089d60b71d3882a278",
+          "toParentTitle": "Sell Expedition Products",
+          "proposedCollection": "main"
+        },
+        {
+          "nodeId": "e167348ecd3dfaa82d8471ff3a65",
+          "nodeTitle": "Sell Expedition Equipment",
+          "fromParentId": "da8b4b175d8e1475f595d880d34b",
+          "fromParentTitle": "Sell physical objects",
+          "toParentId": "1d05e5e4b9089d60b71d3882a278",
+          "toParentTitle": "Sell Expedition Products",
+          "proposedCollection": "main"
+        },
+        {
+          "nodeId": "90dd08829331d0d97232338fcbf1",
+          "nodeTitle": "Sell Expedition Supplies",
+          "fromParentId": "da8b4b175d8e1475f595d880d34b",
+          "fromParentTitle": "Sell physical objects",
+          "toParentId": "1d05e5e4b9089d60b71d3882a278",
+          "toParentTitle": "Sell Expedition Products",
+          "proposedCollection": "main"
+        }
+      ]
+    },
+    {
+      "diagnosisProposalId": "som-44a6d341d9882a3ad704",
+      "decisionSource": "expert-correction",
+      "proposedGroupTitle": "Sell Stamps and Money Orders",
+      "appliedGroupTitle": "Sell Postal Supplies",
+      "groupNodeId": "067424357e90bdcd0ad60c81f1c6",
+      "parentTitle": "Sell physical objects",
+      "movedChildren": [
+        {
+          "nodeId": "ce269cdbada8adce60e9ee90cb0b",
+          "nodeTitle": "Sell Money Orders",
+          "fromParentId": "da8b4b175d8e1475f595d880d34b",
+          "fromParentTitle": "Sell physical objects",
+          "toParentId": "067424357e90bdcd0ad60c81f1c6",
+          "toParentTitle": "Sell Postal Supplies",
+          "proposedCollection": "main"
+        },
+        {
+          "nodeId": "4252b306936f8e0d895b3b56d7ba",
+          "nodeTitle": "Sell Stamp",
+          "fromParentId": "da8b4b175d8e1475f595d880d34b",
+          "fromParentTitle": "Sell physical objects",
+          "toParentId": "067424357e90bdcd0ad60c81f1c6",
+          "toParentTitle": "Sell Postal Supplies",
+          "proposedCollection": "main"
+        }
+      ]
+    },
+    {
+      "diagnosisProposalId": "som-2906a9e857331c06392f",
+      "decisionSource": "expert-correction",
+      "proposedGroupTitle": "Sell Pet Products and Supplies",
+      "appliedGroupTitle": "Sell Pet Products",
+      "groupNodeId": "d830158b8892b2dd21092351eb7a",
+      "parentTitle": "Sell physical objects",
+      "movedChildren": [
+        {
+          "nodeId": "8c5e829f80d323057433cb3bd3b5",
+          "nodeTitle": "Sell Pet Food",
+          "fromParentId": "da8b4b175d8e1475f595d880d34b",
+          "fromParentTitle": "Sell physical objects",
+          "toParentId": "d830158b8892b2dd21092351eb7a",
+          "toParentTitle": "Sell Pet Products",
+          "proposedCollection": "main"
+        },
+        {
+          "nodeId": "d4198a9c970a6663cf9a35b87285",
+          "nodeTitle": "Sell Pet Supplies",
+          "fromParentId": "da8b4b175d8e1475f595d880d34b",
+          "fromParentTitle": "Sell physical objects",
+          "toParentId": "d830158b8892b2dd21092351eb7a",
+          "toParentTitle": "Sell Pet Products",
+          "proposedCollection": "main"
+        }
+      ]
+    },
+    {
+      "diagnosisProposalId": "som-cb71693d66e0170be91d",
+      "decisionSource": "expert-correction-combined-with-approved-relocations",
+      "proposedGroupTitle": "Sell Travel Packages and Incentives",
+      "appliedGroupTitle": "Sell Travel Services",
+      "groupNodeId": "79bae71eb459878456f97306619f",
+      "parentTitle": "Sell service",
+      "movedChildren": [
+        {
+          "nodeId": "7e0a2badc11ddd10b96996245f3c",
+          "nodeTitle": "Sell Travel Incentives",
+          "fromParentId": "64a0dfd908529ee455e1c0aed2e7",
+          "fromParentTitle": "Sell information",
+          "toParentId": "79bae71eb459878456f97306619f",
+          "toParentTitle": "Sell Travel Services",
+          "proposedCollection": "main"
+        },
+        {
+          "nodeId": "2a8ce3c206e68b1afe1e7ae2748d",
+          "nodeTitle": "Sell Travel Packages",
+          "fromParentId": "64a0dfd908529ee455e1c0aed2e7",
+          "fromParentTitle": "Sell information",
+          "toParentId": "79bae71eb459878456f97306619f",
+          "toParentTitle": "Sell Travel Services",
+          "proposedCollection": "main"
+        }
+      ]
+    },
+    {
+      "diagnosisProposalId": "som-547f35987964c443c614",
+      "decisionSource": "accepted-proposal",
+      "proposedGroupTitle": "Sell Personal Care Products",
+      "appliedGroupTitle": "Sell Personal Care Products",
+      "groupNodeId": "141a15bdc07f6e2894894a9b2c7a",
+      "parentTitle": "Sell physical objects",
+      "movedChildren": [
+        {
+          "nodeId": "4ad1cc6489e1d3f48c5ce7a68f48",
+          "nodeTitle": "Sell Cosmetics",
+          "fromParentId": "da8b4b175d8e1475f595d880d34b",
+          "fromParentTitle": "Sell physical objects",
+          "toParentId": "141a15bdc07f6e2894894a9b2c7a",
+          "toParentTitle": "Sell Personal Care Products",
+          "proposedCollection": "main"
+        },
+        {
+          "nodeId": "96df2d0add7804058de6a753c6cd",
+          "nodeTitle": "Sell Hair Care Products",
+          "fromParentId": "da8b4b175d8e1475f595d880d34b",
+          "fromParentTitle": "Sell physical objects",
+          "toParentId": "141a15bdc07f6e2894894a9b2c7a",
+          "toParentTitle": "Sell Personal Care Products",
+          "proposedCollection": "main"
+        },
+        {
+          "nodeId": "dc2d01d18e5deecd6765b1a772f8",
+          "nodeTitle": "Sell Nail Care Products",
+          "fromParentId": "da8b4b175d8e1475f595d880d34b",
+          "fromParentTitle": "Sell physical objects",
+          "toParentId": "141a15bdc07f6e2894894a9b2c7a",
+          "toParentTitle": "Sell Personal Care Products",
+          "proposedCollection": "main"
+        }
+      ]
+    }
+  ],
+  "rejectedGroupings": [
+    {
+      "proposalId": "som-425a7ef6c2a84e67d7dd",
+      "proposedGroupTitle": "Sell Agricultural Products and Supplies",
+      "expertSuggestedCorrection": "Two separate nodes, not grouped: Agricultural supplies, Agricultural products"
+    }
+  ],
+  "collectionDesigns": [
+    {
+      "proposalId": "som-f0464db076534dd0bde0",
+      "parentTitle": "Sell",
+      "collectionName": "Sell what kind of usage?",
+      "branches": [
+        {
+          "title": "Sell ownership",
+          "nodeId": "2dfe6a4a3194a23d73d3681eb844",
+          "movedChildren": []
+        },
+        {
+          "title": "Sell temporary use",
+          "nodeId": "bc3a0d85a3dcd1e3ea729857acc3",
+          "movedChildren": [
+            {
+              "nodeId": "df319ef0372ddc12e45ccbd4b4b0",
+              "nodeTitle": "Rent out",
+              "fromParentId": "9c347b3345120c1df2554b834c13",
+              "fromParentTitle": "Sell",
+              "toParentId": "bc3a0d85a3dcd1e3ea729857acc3",
+              "toParentTitle": "Sell temporary use",
+              "proposedCollection": "main"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "relocations": [
+    {
+      "proposalId": "som-8421587a7b59a1c0c8ab",
+      "diagnosisProposalId": "som-a8f636633a576f993a48",
+      "decisionSource": "accepted-proposal",
+      "sourceNodeId": "69f750313b7a42f83e7bf29c54e1",
+      "nodeTitle": "Sell Service Contracts",
+      "currentParentTitle": "Sell information",
+      "proposedParentTitle": "Sell service",
+      "finalParentTitle": "Sell service",
+      "nodeId": "9a4ee11bedc5385d5325a7128145",
+      "fromParentId": "64a0dfd908529ee455e1c0aed2e7",
+      "fromParentTitle": "Sell information",
+      "toParentId": "c578ae350a21084904b779a83dca",
+      "toParentTitle": "Sell service",
+      "proposedCollection": "main",
+      "applicationMode": "direct-relocation"
+    },
+    {
+      "proposalId": "som-9160468879d2022fe226",
+      "diagnosisProposalId": "som-b7dba5868f5a9d71fdc7",
+      "decisionSource": "accepted-proposal",
+      "sourceNodeId": "5f624fc2312be2d9daab86c94c5a",
+      "nodeTitle": "Sell Membership",
+      "currentParentTitle": "Sell information",
+      "proposedParentTitle": "Sell service",
+      "finalParentTitle": "Sell service",
+      "nodeId": "99bc63bd07ca06e8c48b6e9d0873",
+      "fromParentId": "64a0dfd908529ee455e1c0aed2e7",
+      "fromParentTitle": "Sell information",
+      "toParentId": "c578ae350a21084904b779a83dca",
+      "toParentTitle": "Sell service",
+      "proposedCollection": "main",
+      "applicationMode": "direct-relocation"
+    },
+    {
+      "proposalId": "som-24775b6961c25acadd1a",
+      "diagnosisProposalId": "som-f2e1b3bfaeb565258152",
+      "decisionSource": "accepted-proposal",
+      "sourceNodeId": "c9cedc83f3cddb3895604d8d6586",
+      "nodeTitle": "Sell Admission Passes",
+      "currentParentTitle": "Sell information",
+      "proposedParentTitle": "Sell service",
+      "finalParentTitle": "Sell service",
+      "nodeId": "6690211e26818c323dd1cae8ff37",
+      "fromParentId": "64a0dfd908529ee455e1c0aed2e7",
+      "fromParentTitle": "Sell information",
+      "toParentId": "c578ae350a21084904b779a83dca",
+      "toParentTitle": "Sell service",
+      "proposedCollection": "main",
+      "applicationMode": "direct-relocation"
+    },
+    {
+      "proposalId": "som-9eaa61f4020457bcbe41",
+      "diagnosisProposalId": "som-26289b558db6425a9dcd",
+      "decisionSource": "accepted-proposal",
+      "sourceNodeId": "f678716e003268b08842285d7c10",
+      "nodeTitle": "Sell Ticket",
+      "currentParentTitle": "Sell physical objects",
+      "proposedParentTitle": "Sell service",
+      "finalParentTitle": "Sell service",
+      "nodeId": "54ddf7f8e5f93a08b04a69ce36ec",
+      "fromParentId": "da8b4b175d8e1475f595d880d34b",
+      "fromParentTitle": "Sell physical objects",
+      "toParentId": "c578ae350a21084904b779a83dca",
+      "toParentTitle": "Sell service",
+      "proposedCollection": "main",
+      "applicationMode": "direct-relocation"
+    },
+    {
+      "proposalId": "som-8751def3af618d107d56",
+      "diagnosisProposalId": "som-6e5cf95399931bf3bf5b",
+      "decisionSource": "accepted-proposal",
+      "sourceNodeId": "c8f3336bc22031865e24d2a8b4e0",
+      "nodeTitle": "Sell Travel Incentives",
+      "currentParentTitle": "Sell information",
+      "proposedParentTitle": "Sell service",
+      "finalParentTitle": "Sell Travel Services",
+      "satisfiedByGrouping": "Sell Travel Services",
+      "nodeId": "7e0a2badc11ddd10b96996245f3c",
+      "finalParentId": "79bae71eb459878456f97306619f",
+      "applicationMode": "satisfied-by-grouping"
+    },
+    {
+      "proposalId": "som-b1ea28409ca483d8ffdc",
+      "diagnosisProposalId": "som-f5b16c676663225e9cb2",
+      "decisionSource": "accepted-proposal",
+      "sourceNodeId": "eb9984ff92271a70ed0818991b15",
+      "nodeTitle": "Sell Travel Packages",
+      "currentParentTitle": "Sell information",
+      "proposedParentTitle": "Sell service",
+      "finalParentTitle": "Sell Travel Services",
+      "satisfiedByGrouping": "Sell Travel Services",
+      "nodeId": "2a8ce3c206e68b1afe1e7ae2748d",
+      "finalParentId": "79bae71eb459878456f97306619f",
+      "applicationMode": "satisfied-by-grouping"
+    },
+    {
+      "proposalId": "som-e10d8e10053e5294671a",
+      "diagnosisProposalId": "som-b160acd8f24f4633585e",
+      "decisionSource": "accepted-proposal",
+      "sourceNodeId": "cbfabd175db0172dfaa27d02d177",
+      "nodeTitle": "Sell Services",
+      "currentParentTitle": "Sell information",
+      "proposedParentTitle": "Sell service",
+      "finalParentTitle": "Sell service",
+      "nodeId": "2bdf7edf2a4a6cb8ab52781f59f8",
+      "fromParentId": "64a0dfd908529ee455e1c0aed2e7",
+      "fromParentTitle": "Sell information",
+      "toParentId": "c578ae350a21084904b779a83dca",
+      "toParentTitle": "Sell service",
+      "proposedCollection": "main",
+      "applicationMode": "direct-relocation"
+    },
+    {
+      "proposalId": "som-2649258bc231def3a745",
+      "diagnosisProposalId": "som-009cc90c1521a15aada8",
+      "decisionSource": "expert-correction",
+      "expertSuggestedCorrection": "Parent name: Sell Service",
+      "sourceNodeId": "4d951b45590941f1dc519fe314ae",
+      "nodeTitle": "Sell Financial Products",
+      "currentParentTitle": "Sell physical objects",
+      "proposedParentTitle": "Sell information",
+      "finalParentTitle": "Sell service",
+      "nodeId": "122d6e0f404cde255c416f630627",
+      "fromParentId": "da8b4b175d8e1475f595d880d34b",
+      "fromParentTitle": "Sell physical objects",
+      "toParentId": "c578ae350a21084904b779a83dca",
+      "toParentTitle": "Sell service",
+      "proposedCollection": "main",
+      "applicationMode": "direct-relocation"
+    },
+    {
+      "proposalId": "som-0c9bb17b91bd994b2e47",
+      "diagnosisProposalId": "som-50f1e92cd8700c4f9ad4",
+      "decisionSource": "expert-correction",
+      "expertSuggestedCorrection": "Parent should be \"Sell\"",
+      "sourceNodeId": "5d0e71853f7601884ca642ab535e",
+      "nodeTitle": "Sell Products",
+      "currentParentTitle": "Sell (Other)",
+      "proposedParentTitle": "Sell physical objects",
+      "finalParentTitle": "Sell",
+      "nodeId": "126b0f1051d40fabc1a06aa627c7",
+      "fromParentId": "ad1be9f1b47666a180ce7ee2b96c",
+      "fromParentTitle": "Sell (Other)",
+      "toParentId": "9c347b3345120c1df2554b834c13",
+      "toParentTitle": "Sell",
+      "proposedCollection": "main",
+      "applicationMode": "direct-relocation"
+    },
+    {
+      "proposalId": "som-1efc46c7e351ac3f2c70",
+      "diagnosisProposalId": "som-561e3bf8b15ad8b66c61",
+      "decisionSource": "accepted-proposal",
+      "sourceNodeId": "a5c1904e41409f0055bcb09e60e5",
+      "nodeTitle": "Sell Alcoholic Beverages",
+      "currentParentTitle": "Sell physical objects",
+      "proposedParentTitle": "Sell Beverages",
+      "finalParentTitle": "Sell Beverages",
+      "nodeId": "0504085dd7eb072976fd2e7995b6",
+      "fromParentId": "da8b4b175d8e1475f595d880d34b",
+      "fromParentTitle": "Sell physical objects",
+      "toParentId": "bc79143256196ddced5c6094082f",
+      "toParentTitle": "Sell Beverages",
+      "proposedCollection": "main",
+      "applicationMode": "direct-relocation"
+    },
+    {
+      "proposalId": "som-7046ef6d15ed5162f3c4",
+      "diagnosisProposalId": "som-cb88f0783026ae169278",
+      "decisionSource": "accepted-proposal",
+      "sourceNodeId": "7b9d963fbc8b725edaf5a795151f",
+      "nodeTitle": "Sell Lotion",
+      "currentParentTitle": "Sell physical objects",
+      "proposedParentTitle": "Sell Cosmetic Supplies",
+      "finalParentTitle": "Sell Cosmetic Supplies",
+      "nodeId": "fe06c485df4413ab1d207fd11cda",
+      "fromParentId": "da8b4b175d8e1475f595d880d34b",
+      "fromParentTitle": "Sell physical objects",
+      "toParentId": "9ce31605077ad5cc0aa13bb71b56",
+      "toParentTitle": "Sell Cosmetic Supplies",
+      "proposedCollection": "main",
+      "applicationMode": "direct-relocation"
+    },
+    {
+      "proposalId": "som-89f0ff9982ed177ef062",
+      "diagnosisProposalId": "som-9473ee54d9e4d9da85e5",
+      "decisionSource": "accepted-proposal",
+      "sourceNodeId": "ff51d9139c5242124772e081cec1",
+      "nodeTitle": "Sell Tonic",
+      "currentParentTitle": "Sell physical objects",
+      "proposedParentTitle": "Sell Cosmetic Supplies",
+      "finalParentTitle": "Sell Cosmetic Supplies",
+      "nodeId": "2c2991d73ac14d024e85e0d659c1",
+      "fromParentId": "da8b4b175d8e1475f595d880d34b",
+      "fromParentTitle": "Sell physical objects",
+      "toParentId": "9ce31605077ad5cc0aa13bb71b56",
+      "toParentTitle": "Sell Cosmetic Supplies",
+      "proposedCollection": "main",
+      "applicationMode": "direct-relocation"
+    },
+    {
+      "proposalId": "som-74f0843be5bbc05bc594",
+      "diagnosisProposalId": "som-f0c72fc5d394f235e0c7",
+      "decisionSource": "expert-correction",
+      "expertSuggestedCorrection": "Change Advertise to Promote",
+      "sourceNodeId": "9c25ae149239759069535b366ae2",
+      "nodeTitle": "Market Artwork",
+      "currentParentTitle": "Sell information",
+      "proposedParentTitle": "Advertise",
+      "finalParentTitle": "Promote",
+      "nodeId": "61c3d9dcc5e98216c26b4be5eab5",
+      "fromParentId": "64a0dfd908529ee455e1c0aed2e7",
+      "fromParentTitle": "Sell information",
+      "toParentId": "61dc98263f0187802fa6278fde72",
+      "toParentTitle": "Promote",
+      "proposedCollection": "main",
+      "applicationMode": "direct-relocation"
+    },
+    {
+      "proposalId": "som-1177b7d3f80b528555f7",
+      "diagnosisProposalId": "som-d6a0280646de62d553a5",
+      "decisionSource": "expert-correction",
+      "expertSuggestedCorrection": "Change Advertise to Promote",
+      "sourceNodeId": "f6e699acdd7f8fa15ae74065154b",
+      "nodeTitle": "Market Bank Products",
+      "currentParentTitle": "Sell information",
+      "proposedParentTitle": "Advertise",
+      "finalParentTitle": "Promote",
+      "nodeId": "faa20fc1fb0192697d39f4ff10bd",
+      "fromParentId": "64a0dfd908529ee455e1c0aed2e7",
+      "fromParentTitle": "Sell information",
+      "toParentId": "61dc98263f0187802fa6278fde72",
+      "toParentTitle": "Promote",
+      "proposedCollection": "main",
+      "applicationMode": "direct-relocation"
+    },
+    {
+      "proposalId": "som-f7bdbdb6a7d4359afa36",
+      "diagnosisProposalId": "som-6b1b04e2aff07fd66761",
+      "decisionSource": "expert-correction",
+      "expertSuggestedCorrection": "Change Advertise to Promote",
+      "sourceNodeId": "569f7333eaf0a6fee615108a9807",
+      "nodeTitle": "Market Casino",
+      "currentParentTitle": "Sell information",
+      "proposedParentTitle": "Advertise",
+      "finalParentTitle": "Promote",
+      "nodeId": "e555395d8b5934d4c67ee0eb4637",
+      "fromParentId": "64a0dfd908529ee455e1c0aed2e7",
+      "fromParentTitle": "Sell information",
+      "toParentId": "61dc98263f0187802fa6278fde72",
+      "toParentTitle": "Promote",
+      "proposedCollection": "main",
+      "applicationMode": "direct-relocation"
+    },
+    {
+      "proposalId": "som-2bd64d9c6838173cbf40",
+      "diagnosisProposalId": "som-22344b0eb2e44544ab63",
+      "decisionSource": "expert-correction",
+      "expertSuggestedCorrection": "Change Advertise to Promote",
+      "sourceNodeId": "7572478f091ce3ab1dc4b20a20da",
+      "nodeTitle": "Market Event",
+      "currentParentTitle": "Sell information",
+      "proposedParentTitle": "Advertise",
+      "finalParentTitle": "Promote",
+      "nodeId": "c256cfd39c3385e62f868cbd3a3b",
+      "fromParentId": "64a0dfd908529ee455e1c0aed2e7",
+      "fromParentTitle": "Sell information",
+      "toParentId": "61dc98263f0187802fa6278fde72",
+      "toParentTitle": "Promote",
+      "proposedCollection": "main",
+      "applicationMode": "direct-relocation"
+    },
+    {
+      "proposalId": "som-5412336134c10eedc343",
+      "diagnosisProposalId": "som-7df545760230ae108cc7",
+      "decisionSource": "expert-correction",
+      "expertSuggestedCorrection": "Replace Advertise with Promote",
+      "sourceNodeId": "7fd7ae18e5cff5d40e5b2a887bd6",
+      "nodeTitle": "Market Products",
+      "currentParentTitle": "Sell information",
+      "proposedParentTitle": "Advertise",
+      "finalParentTitle": "Promote",
+      "nodeId": "69855f6fc0a39ce095afdea5f492",
+      "fromParentId": "64a0dfd908529ee455e1c0aed2e7",
+      "fromParentTitle": "Sell information",
+      "toParentId": "61dc98263f0187802fa6278fde72",
+      "toParentTitle": "Promote",
+      "proposedCollection": "main",
+      "applicationMode": "direct-relocation"
+    },
+    {
+      "proposalId": "som-022bcc9c39000014d9aa",
+      "diagnosisProposalId": "som-67f6c0e971c1a7fbb687",
+      "decisionSource": "expert-correction",
+      "expertSuggestedCorrection": "Change Advertise to Promote",
+      "sourceNodeId": "34282d8e328b647ad70b60abd9fb",
+      "nodeTitle": "Market Services",
+      "currentParentTitle": "Sell information",
+      "proposedParentTitle": "Advertise",
+      "finalParentTitle": "Promote",
+      "nodeId": "7d0aa30f79761d51a68684d48c6f",
+      "fromParentId": "64a0dfd908529ee455e1c0aed2e7",
+      "fromParentTitle": "Sell information",
+      "toParentId": "61dc98263f0187802fa6278fde72",
+      "toParentTitle": "Promote",
+      "proposedCollection": "main",
+      "applicationMode": "direct-relocation"
+    },
+    {
+      "proposalId": "som-3cbd3b1753852903901b",
+      "diagnosisProposalId": "som-a93658d2186f708ca51c",
+      "decisionSource": "expert-correction",
+      "expertSuggestedCorrection": "Change Advertise to Promote",
+      "sourceNodeId": "28f5917b9f92d874f2c9ed14fa56",
+      "nodeTitle": "Market Vacant Space",
+      "currentParentTitle": "Sell physical objects",
+      "proposedParentTitle": "Advertise",
+      "finalParentTitle": "Promote",
+      "nodeId": "23f46f2516aa754a8b147d9dbb23",
+      "fromParentId": "da8b4b175d8e1475f595d880d34b",
+      "fromParentTitle": "Sell physical objects",
+      "toParentId": "61dc98263f0187802fa6278fde72",
+      "toParentTitle": "Promote",
+      "proposedCollection": "main",
+      "applicationMode": "direct-relocation"
+    },
+    {
+      "proposalId": "som-4168bfbb6b200d4a9542",
+      "diagnosisProposalId": "som-4d9e1e7f083266f8df41",
+      "decisionSource": "accepted-proposal",
+      "sourceNodeId": "bf4787b9dc842022253d939a8df2",
+      "nodeTitle": "Sell Ideas",
+      "currentParentTitle": "Sell (Other)",
+      "proposedParentTitle": "Persuade",
+      "finalParentTitle": "Persuade",
+      "nodeId": "6f275883891a39cb88a6ff5a04ea",
+      "fromParentId": "ad1be9f1b47666a180ce7ee2b96c",
+      "fromParentTitle": "Sell (Other)",
+      "toParentId": "65ab3261c6af6ec267d70d4b0f10",
+      "toParentTitle": "Persuade",
+      "proposedCollection": "main",
+      "applicationMode": "direct-relocation"
+    }
+  ],
+  "hierarchy": {
+    "affectedNodeCount": 143
+  },
+  "integrity": {
+    "activeNodeCount": 39638,
+    "deletedNodeCount": 12671,
+    "checkedReciprocalEdgeCount": 59631
+  },
+  "sourceDigestAfter": "ff83b7f18eee04ae456ce10b346511bc88edc996b3f2445ee922c7c6d9a163fa",
+  "targetDigestAfter": "af8a59ec1f49672b634842142299b1e7e844137eb9bcdbc6f64edd9b30b32786",
+  "targetNodeCountAfter": 52309,
+  "verification": {
+    "sourceUnchanged": true,
+    "targetCountMatches": true,
+    "targetDigestMatches": true
+  }
+}

@@ -1,0 +1,339 @@
+{
+  "schemaVersion": "som-reviewer-benchmark-v1",
+  "exportedAt": "2026-07-25T14:59:53.833Z",
+  "firestoreProjectId": "ontology-41607",
+  "datasetVersion": "sell-rob-structure-wave-2026-07-24-v1",
+  "sourceOntology": "firestore://ontology-41607/final-hierarchy-with-o*net-rob-structure-review-2026-07-24",
+  "sourceOntologySha256": "e73fb96f991161a403be1f634d42718af1f3fd872719be2c215399c50965c6ee",
+  "issueType": "wrong-verb",
+  "reviewer": {
+    "label": "Rob Laubacher"
+  },
+  "counts": {
+    "expected": 8,
+    "reviewed": 8,
+    "agreed": 8,
+    "disagreed": 0,
+    "missing": 0,
+    "orphanedHistoricalResponses": 0
+  },
+  "missingProposalIds": [],
+  "orphanedResponses": [],
+  "sourceNodeEvidence": [
+    {
+      "nodeId": "9c25ae149239759069535b366ae2",
+      "title": "Market Artwork",
+      "appName": "final-hierarchy-with-o*net-rob-structure-review-2026-07-24",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "0f614155bffc19ed5374404db3c3",
+              "linkTitle": "(O*Net) 20990 - Market artwork through brochures, mailings, or Web sites.",
+              "title": "(O*Net) 20990 - Market artwork through brochures, mailings, or Web sites.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Market Artwork"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "f6e699acdd7f8fa15ae74065154b",
+      "title": "Market Bank Products",
+      "appName": "final-hierarchy-with-o*net-rob-structure-review-2026-07-24",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "28c452b7199516585ac81d95ed36",
+              "linkTitle": "(O*Net) 3421 - Market bank products to individuals and firms, promoting bank services that may meet customers' needs.",
+              "title": "(O*Net) 3421 - Market bank products to individuals and firms, promoting bank services that may meet customers' needs.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Advertise Service",
+                "Market Bank Products"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "569f7333eaf0a6fee615108a9807",
+      "title": "Market Casino",
+      "appName": "final-hierarchy-with-o*net-rob-structure-review-2026-07-24",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "95aaacd5566288b40d675a05f76a",
+              "linkTitle": "(O*Net) 20472 - Market or promote the casino to bring in business.",
+              "title": "(O*Net) 20472 - Market or promote the casino to bring in business.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Promote Casino",
+                "Market Casino"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "7572478f091ce3ab1dc4b20a20da",
+      "title": "Market Event",
+      "appName": "final-hierarchy-with-o*net-rob-structure-review-2026-07-24",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "d24cd95c9e42aa2440dc63240f92",
+              "linkTitle": "(O*Net) 4.A.4.a.6.I03.D04 - Market products, services, or events.",
+              "title": "(O*Net) 4.A.4.a.6.I03.D04 - Market products, services, or events.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Market Event",
+                "Market Products",
+                "Market Services",
+                "Sell Services"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "7fd7ae18e5cff5d40e5b2a887bd6",
+      "title": "Market Products",
+      "appName": "final-hierarchy-with-o*net-rob-structure-review-2026-07-24",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "017c3dc14cd872e66b7373e6e1c3",
+              "linkTitle": "(O*Net) 13028 - Develop a group of products or accessories, and market them through venues such as boutiques or mail-order catalogs.",
+              "title": "(O*Net) 13028 - Develop a group of products or accessories, and market them through venues such as boutiques or mail-order catalogs.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Develop Product",
+                "Develop Accessory",
+                "Market Products",
+                "Sell Accessories"
+              ]
+            },
+            {
+              "nodeId": "d24cd95c9e42aa2440dc63240f92",
+              "linkTitle": "(O*Net) 4.A.4.a.6.I03.D04 - Market products, services, or events.",
+              "title": "(O*Net) 4.A.4.a.6.I03.D04 - Market products, services, or events.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Market Event",
+                "Market Products",
+                "Market Services",
+                "Sell Services"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "34282d8e328b647ad70b60abd9fb",
+      "title": "Market Services",
+      "appName": "final-hierarchy-with-o*net-rob-structure-review-2026-07-24",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "d24cd95c9e42aa2440dc63240f92",
+              "linkTitle": "(O*Net) 4.A.4.a.6.I03.D04 - Market products, services, or events.",
+              "title": "(O*Net) 4.A.4.a.6.I03.D04 - Market products, services, or events.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Market Event",
+                "Market Products",
+                "Market Services",
+                "Sell Services"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "28f5917b9f92d874f2c9ed14fa56",
+      "title": "Market Vacant Space",
+      "appName": "final-hierarchy-with-o*net-rob-structure-review-2026-07-24",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "d8e9c89daee1e7708b7589f093cd",
+              "linkTitle": "(O*Net) 7231 - Market vacant space to prospective tenants through leasing agents, advertising, or other methods.",
+              "title": "(O*Net) 7231 - Market vacant space to prospective tenants through leasing agents, advertising, or other methods.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Market Vacant Space"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "bf4787b9dc842022253d939a8df2",
+      "title": "Sell Ideas",
+      "appName": "final-hierarchy-with-o*net-rob-structure-review-2026-07-24",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "31bd71c1a0631b7c8388a3331dff",
+              "linkTitle": "(O*Net) 4.A.4.a.6 - Selling or Influencing Others",
+              "title": "(O*Net) 4.A.4.a.6 - Selling or Influencing Others",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell Products",
+                "Sell Ideas",
+                "Influence People"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "judgments": [
+    {
+      "proposalId": "som-7df545760230ae108cc7",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "7fd7ae18e5cff5d40e5b2a887bd6",
+      "parentNodeId": "94d6a01d0bab70d2b00c62421a7e",
+      "currentTitle": "",
+      "proposedTitle": "",
+      "linkedTasks": [],
+      "proposedNodes": [],
+      "agentReasoning": "Market here means promoting or creating demand, not completing an exchange for payment. It therefore names a different main action from Sell.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-67f6c0e971c1a7fbb687",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "34282d8e328b647ad70b60abd9fb",
+      "parentNodeId": "94d6a01d0bab70d2b00c62421a7e",
+      "currentTitle": "",
+      "proposedTitle": "",
+      "linkedTasks": [],
+      "proposedNodes": [],
+      "agentReasoning": "Market here means promoting or creating demand, not completing an exchange for payment. It therefore names a different main action from Sell.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-f0c72fc5d394f235e0c7",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "9c25ae149239759069535b366ae2",
+      "parentNodeId": "94d6a01d0bab70d2b00c62421a7e",
+      "currentTitle": "",
+      "proposedTitle": "",
+      "linkedTasks": [],
+      "proposedNodes": [],
+      "agentReasoning": "Market here means promoting or creating demand, not completing an exchange for payment. It therefore names a different main action from Sell.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-4d9e1e7f083266f8df41",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "bf4787b9dc842022253d939a8df2",
+      "parentNodeId": "8bf1156fe3a24275319ff3b9f0fa",
+      "currentTitle": "",
+      "proposedTitle": "",
+      "linkedTasks": [],
+      "proposedNodes": [],
+      "agentReasoning": "Ideas are not transferred for payment in the sense that defines Sell. The source evidence uses selling ideas to mean influencing another person, so it names a different main action.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-a93658d2186f708ca51c",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "28f5917b9f92d874f2c9ed14fa56",
+      "parentNodeId": "71711ec4c7b3cc0db68cf9614714",
+      "currentTitle": "",
+      "proposedTitle": "",
+      "linkedTasks": [],
+      "proposedNodes": [],
+      "agentReasoning": "Market here means promoting or creating demand, not completing an exchange for payment. It therefore names a different main action from Sell.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-6b1b04e2aff07fd66761",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "569f7333eaf0a6fee615108a9807",
+      "parentNodeId": "94d6a01d0bab70d2b00c62421a7e",
+      "currentTitle": "",
+      "proposedTitle": "",
+      "linkedTasks": [],
+      "proposedNodes": [],
+      "agentReasoning": "Market here means promoting or creating demand, not completing an exchange for payment. It therefore names a different main action from Sell.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-d6a0280646de62d553a5",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "f6e699acdd7f8fa15ae74065154b",
+      "parentNodeId": "94d6a01d0bab70d2b00c62421a7e",
+      "currentTitle": "",
+      "proposedTitle": "",
+      "linkedTasks": [],
+      "proposedNodes": [],
+      "agentReasoning": "Market here means promoting or creating demand, not completing an exchange for payment. It therefore names a different main action from Sell.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-22344b0eb2e44544ab63",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "7572478f091ce3ab1dc4b20a20da",
+      "parentNodeId": "94d6a01d0bab70d2b00c62421a7e",
+      "currentTitle": "",
+      "proposedTitle": "",
+      "linkedTasks": [],
+      "proposedNodes": [],
+      "agentReasoning": "Market here means promoting or creating demand, not completing an exchange for payment. It therefore names a different main action from Sell.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    }
+  ]
+}

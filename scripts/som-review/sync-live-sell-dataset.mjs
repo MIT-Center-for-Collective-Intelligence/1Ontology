@@ -15,7 +15,12 @@ const { getFirestore } = require("firebase-admin/firestore");
 let ONTOLOGY_APP_ID = "final-hierarchy-with-o*net";
 let ONTOLOGY_NAME = "Final Hierarchy with O*Net";
 const SNAPSHOT_SCHEMA_VERSION = "som-ontology-snapshot-v1";
-const REFERENCE_TITLES = new Set(["Advertise", "Persuade", "Provide service"]);
+const REFERENCE_TITLES = new Set([
+  "Advertise",
+  "Persuade",
+  "Promote",
+  "Provide service",
+]);
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(SCRIPT_DIR, "../..");
 
