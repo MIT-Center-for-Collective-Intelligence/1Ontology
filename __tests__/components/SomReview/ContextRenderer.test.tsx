@@ -177,7 +177,7 @@ describe("Society of Mind context renderers", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("keeps the destination out of a placement diagnosis", () => {
+  it("shows the suggested destination while preserving a separate move step", () => {
     render(
       <ContextRenderer
         context={{
@@ -193,15 +193,49 @@ describe("Society of Mind context renderers", () => {
     );
     expect(
       screen.getByText(
-        "If you agree that this activity is misplaced, its appropriate location will be reviewed in a separate step.",
+        'The suggested category is "Rent out". Agreeing confirms that the current parent is too broad. The exact move remains a separate review step.',
       ),
     ).toBeInTheDocument();
-    expect(screen.queryByText("Rent out")).not.toBeInTheDocument();
+    expect(screen.getByText(/Rent out/)).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Hide source O*NET evidence" }),
     ).toBeInTheDocument();
     expect(
       screen.getByText("Rent merchandise to customers."),
+    ).toBeInTheDocument();
+  });
+
+  it("lists every activity covered by a grouped wrong-verb diagnosis", () => {
+    render(
+      <ContextRenderer
+        context={{
+          type: "placement-comparison",
+          nodeTitle: "Market Artwork",
+          currentParentTitle: "Sell information",
+          candidateHome: "Promote",
+          sharedAction: "Market",
+          affectedNodes: [
+            {
+              nodeTitle: "Market Artwork",
+              currentParentTitle: "Sell information",
+            },
+            {
+              nodeTitle: "Market Vacant Space",
+              currentParentTitle: "Sell physical objects",
+            },
+          ],
+          placementIssue: "wrong-verb",
+        }}
+      />,
+    );
+
+    expect(screen.getByText("Affected activities")).toBeInTheDocument();
+    expect(screen.getByText("Market Artwork")).toBeInTheDocument();
+    expect(screen.getByText("Market Vacant Space")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /Agreeing confirms the shared diagnosis.*Each exact move remains a separate review step/,
+      ),
     ).toBeInTheDocument();
   });
 

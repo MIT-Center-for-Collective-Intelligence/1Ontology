@@ -99,7 +99,7 @@ describe("Society of Mind reviewer card blinding", () => {
     );
   });
 
-  it("replaces ambiguous placement copy with a clear current-parent decision", () => {
+  it("shows a clear finer-grained destination while keeping the move separate", () => {
     const card = toReviewerCard({
       proposalId: "placement-example",
       datasetVersion: dataset.datasetVersion,
@@ -122,21 +122,70 @@ describe("Society of Mind reviewer card blinding", () => {
     });
 
     expect(card.reviewerView).toMatchObject({
-      question: 'Is "Sell Service" misplaced under "Sell (Information)"?',
+      question:
+        'Is "Sell Service" better placed under the more specific category "Actors and Activities" than under "Sell (Information)"?',
       currentState: '"Sell Service" is currently under "Sell (Information)".',
       proposedState:
-        '"Sell Service" does not belong under "Sell (Information)".',
+        '"Sell Service" appears to belong under the more specific category "Actors and Activities".',
       agreeLabel: "Yes, misplaced",
       disagreeLabel: "No, keep here",
     });
     expect(JSON.stringify(card)).not.toMatch(
-      /advisory candidate home|exact move remains|separate human decision|actors and activities|H1/i,
+      /advisory candidate home|exact move remains|separate human decision|H1/i,
     );
     expect(card.reviewerView.reasoning).toBe(
       "A service is an activity rather than information.",
     );
-    expect(card.reviewerView.context).not.toHaveProperty("candidateHome");
-    expect(card.reviewerView.context).toMatchObject({ currentBucket: "" });
+    expect(card.reviewerView.context).toMatchObject({
+      currentBucket: "",
+      candidateHome: "Actors and Activities",
+    });
+  });
+
+  it("consolidates a shared wrong-verb diagnosis without losing node detail", () => {
+    const card = toReviewerCard({
+      proposalId: "market-family",
+      datasetVersion: dataset.datasetVersion,
+      issueType: "wrong-verb",
+      reviewerView: {
+        reasoning: "Market means promote in these source tasks.",
+        context: {
+          type: "placement-comparison",
+          nodeTitle: "Market Artwork",
+          currentParentTitle: "Sell information",
+          candidateHome: "Promote",
+          sharedAction: "Market",
+          affectedNodes: [
+            {
+              nodeTitle: "Market Artwork",
+              currentParentTitle: "Sell information",
+            },
+            {
+              nodeTitle: "Market Vacant Space",
+              currentParentTitle: "Sell physical objects",
+            },
+          ],
+          placementIssue: "wrong-verb",
+        },
+      },
+    });
+
+    expect(card.reviewerView).toMatchObject({
+      question:
+        'Do these 2 activities use "Market" as a different main action from "Sell"?',
+      proposedState:
+        'These activities appear to use "Market" as a different action from selling; "Promote" is the suggested category.',
+      agreeLabel: "Yes, different action",
+      disagreeLabel: "No, review separately",
+    });
+    expect(card.reviewerView.context).toMatchObject({
+      candidateHome: "Promote",
+      sharedAction: "Market",
+      affectedNodes: [
+        { nodeTitle: "Market Artwork" },
+        { nodeTitle: "Market Vacant Space" },
+      ],
+    });
   });
 
   it("removes proposed destinations from a polysemy diagnosis", () => {

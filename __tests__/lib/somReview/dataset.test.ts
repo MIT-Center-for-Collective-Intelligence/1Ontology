@@ -487,3 +487,80 @@ describe("Rob structure-review wave", () => {
     });
   });
 });
+
+describe("Rob post-structure review wave", () => {
+  const datasetRoot = path.join(
+    process.cwd(),
+    "Sell_Society_of_Mind_Review_UI_Handoff_2026-07-15",
+    "review-datasets-rob-post-structure-2026-07-25",
+  );
+  const dataset = loadDataset(datasetRoot);
+  const source = loadOntologySnapshot(datasetRoot, dataset.manifest);
+  const oneId = (title: string): string => {
+    const ids = source.index.idsByTitle.get(title) || [];
+    expect(ids).toHaveLength(1);
+    return ids[0];
+  };
+  const hasEdge = (parentTitle: string, childTitle: string): boolean =>
+    source.index.edgePairs.has(
+      `${oneId(parentTitle)}\u001f${oneId(childTitle)}`,
+    );
+
+  it("is pinned to the verified isolated post-structure ontology", () => {
+    expect(dataset.datasetVersion).toBe(
+      "sell-rob-post-structure-2026-07-25-v1",
+    );
+    expect(dataset.recordsById.size).toBe(65);
+    expect(dataset.manifest.sourceSnapshot).toMatchObject({
+      ontologyAppId:
+        "final-hierarchy-with-o*net-rob-structure-applied-2026-07-25",
+      ontologyName:
+        "Final Hierarchy with O*Net - Rob Structure Applied 2026-07-25",
+      environment: "production",
+      nodeCount: 127,
+      sellNodeCount: 123,
+      referenceNodeCount: 4,
+      edgeCount: 156,
+    });
+    expect(dataset.manifest.appliedReviewCycle).toMatchObject({
+      auditFile: "diagnostics/structure_application_audit.json",
+    });
+  });
+
+  it("contains Rob's accepted groupings and corrected destinations", () => {
+    expect(hasEdge("Sell physical objects", "Sell Food and Beverages")).toBe(
+      true,
+    );
+    expect(hasEdge("Sell Food and Beverages", "Sell Beverages")).toBe(true);
+    expect(hasEdge("Sell service", "Sell Travel Services")).toBe(true);
+    expect(hasEdge("Sell Travel Services", "Sell Travel Packages")).toBe(true);
+    expect(hasEdge("Sell Travel Services", "Sell Travel Incentives")).toBe(
+      true,
+    );
+    expect(hasEdge("Sell service", "Sell Financial Products")).toBe(true);
+    expect(hasEdge("Sell", "Sell Products")).toBe(true);
+  });
+
+  it("does not repeat resolved or rejected structure proposals", () => {
+    const issueCounts = new Map<string, number>();
+    for (const record of dataset.recordsById.values()) {
+      issueCounts.set(
+        record.issueType,
+        (issueCounts.get(record.issueType) || 0) + 1,
+      );
+    }
+    expect(issueCounts).toEqual(
+      new Map([
+        ["description-enrichment", 55],
+        ["missing-activity", 10],
+      ]),
+    );
+    expect(
+      [...dataset.recordsById.values()].some((record) =>
+        JSON.stringify(record.reviewerView.context).includes(
+          "Sell Agricultural Products and Supplies",
+        ),
+      ),
+    ).toBe(false);
+  });
+});

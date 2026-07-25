@@ -365,9 +365,20 @@ export const validateProposalAgainstSnapshot = (
       break;
     }
     case "placement-comparison": {
-      parentNodeId = addTitle(context.currentParentTitle);
-      subjectNodeId = addTitle(context.nodeTitle);
-      requireAnyEdge(index, parentNodeId, subjectNodeId);
+      const affectedNodes = context.affectedNodes || [];
+      if (affectedNodes.length > 1) {
+        for (const affected of affectedNodes) {
+          const affectedParentId = addTitle(affected.currentParentTitle);
+          const affectedNodeId = addTitle(affected.nodeTitle);
+          requireAnyEdge(index, affectedParentId, affectedNodeId);
+          if (!parentNodeId) parentNodeId = affectedParentId;
+          if (!subjectNodeId) subjectNodeId = affectedNodeId;
+        }
+      } else {
+        parentNodeId = addTitle(context.currentParentTitle);
+        subjectNodeId = addTitle(context.nodeTitle);
+        requireAnyEdge(index, parentNodeId, subjectNodeId);
+      }
       if (
         context.candidateHome &&
         (index.idsByTitle.get(context.candidateHome) || []).length === 1

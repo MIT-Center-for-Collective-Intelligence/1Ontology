@@ -14,7 +14,12 @@ const { getFirestore } = require("firebase-admin/firestore");
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(SCRIPT_DIR, "../..");
-const REFERENCE_TITLES = new Set(["Advertise", "Persuade", "Provide service"]);
+const REFERENCE_TITLES = new Set([
+  "Advertise",
+  "Persuade",
+  "Promote",
+  "Provide service",
+]);
 
 function parseArgs() {
   const values = {};
@@ -71,9 +76,9 @@ function sha256(value) {
 function isOnetEvidence(node) {
   return Boolean(
     node &&
-      (node.oNet === true ||
-        node.oNetTask ||
-        /^\(O\*Net\)\s+[^-]+\s*-\s*/i.test(String(node.title || ""))),
+    (node.oNet === true ||
+      node.oNetTask ||
+      /^\(O\*Net\)\s+[^-]+\s*-\s*/i.test(String(node.title || ""))),
   );
 }
 
@@ -112,7 +117,9 @@ async function main() {
       { id: document.id, ...document.data() },
     ]),
   );
-  const sellRoots = [...allNodes.values()].filter((node) => node.title === "Sell");
+  const sellRoots = [...allNodes.values()].filter(
+    (node) => node.title === "Sell",
+  );
   if (sellRoots.length !== 1) {
     throw new Error(`Expected one active Sell root, found ${sellRoots.length}`);
   }
@@ -151,7 +158,11 @@ async function main() {
     for (const collection of evidence.generalizations || []) {
       for (const link of collection.nodes || []) {
         const parentId = linkId(link);
-        if (!parentId || descendantIds.has(parentId) || !allNodes.has(parentId)) {
+        if (
+          !parentId ||
+          descendantIds.has(parentId) ||
+          !allNodes.has(parentId)
+        ) {
           continue;
         }
         evidenceParentIds.add(parentId);
@@ -163,9 +174,7 @@ async function main() {
       }
     }
   }
-  const allReferenceIds = [
-    ...new Set([...referenceIds, ...evidenceParentIds]),
-  ];
+  const allReferenceIds = [...new Set([...referenceIds, ...evidenceParentIds])];
   const nodes = [...descendantIds, ...allReferenceIds]
     .map((id) => {
       const node = allNodes.get(id);
@@ -195,7 +204,9 @@ async function main() {
     capturedAt,
     sellRootNodeId: sellRoot.id,
     nodes,
-    edges: uniqueEdges.sort((left, right) => edgeKey(left).localeCompare(edgeKey(right))),
+    edges: uniqueEdges.sort((left, right) =>
+      edgeKey(left).localeCompare(edgeKey(right)),
+    ),
   };
   const serialized = `${JSON.stringify(snapshot, null, 2)}\n`;
   fs.mkdirSync(path.dirname(outputFile), { recursive: true });

@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "som-reviewer-benchmark-v1",
+  "exportedAt": "2026-07-25T14:59:49.341Z",
+  "firestoreProjectId": "ontology-41607",
+  "datasetVersion": "sell-rob-structure-wave-2026-07-24-v1",
+  "sourceOntology": "firestore://ontology-41607/final-hierarchy-with-o*net-rob-structure-review-2026-07-24",
+  "sourceOntologySha256": "e73fb96f991161a403be1f634d42718af1f3fd872719be2c215399c50965c6ee",
+  "issueType": "collection-design",
+  "reviewer": {
+    "label": "Rob Laubacher"
+  },
+  "counts": {
+    "expected": 1,
+    "reviewed": 1,
+    "agreed": 1,
+    "disagreed": 0,
+    "missing": 0,
+    "orphanedHistoricalResponses": 0
+  },
+  "missingProposalIds": [],
+  "orphanedResponses": [],
+  "sourceNodeEvidence": [],
+  "judgments": [
+    {
+      "proposalId": "som-f0464db076534dd0bde0",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "",
+      "parentNodeId": "73d219f242c1f5c5435da7af82a8",
+      "currentTitle": "",
+      "proposedTitle": "",
+      "linkedTasks": [],
+      "proposedNodes": [],
+      "agentReasoning": "The approved expert merge establishes \"Rent out\" as the canonical temporary-use activity. Ownership transfer and temporary-use rights are both exchanges for payment but differ systematically, so a dedicated collection may still clarify that dimension.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    }
+  ]
+}

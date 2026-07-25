@@ -215,7 +215,7 @@ describe("Society of Mind review card", () => {
     );
   });
 
-  it("keeps downstream placement details out of the diagnosis", () => {
+  it("shows a finer-grained destination without authorizing the move", () => {
     const placementCard: SomReviewCard = {
       proposalId: "placement-1",
       datasetVersion: "dataset-1",
@@ -251,10 +251,10 @@ describe("Society of Mind review card", () => {
     expect(screen.getByText("Recommended finding")).toBeInTheDocument();
     expect(
       screen.getByText(
-        "If you agree that this activity is misplaced, its appropriate location will be reviewed in a separate step.",
+        'The suggested category is "Actors and Activities". Agreeing confirms that the current parent is too broad. The exact move remains a separate review step.',
       ),
     ).toBeInTheDocument();
-    expect(screen.queryByText("Actors and Activities")).not.toBeInTheDocument();
+    expect(screen.getAllByText("Actors and Activities")).not.toHaveLength(0);
     expect(
       screen.getByRole("button", { name: "Yes, misplaced" }),
     ).toBeInTheDocument();
@@ -265,11 +265,8 @@ describe("Society of Mind review card", () => {
       screen.queryByText(/advisory candidate home/i),
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByText(/exact move remains a separate human decision/i),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByText(/agreeing only marks the current placement/i),
-    ).not.toBeInTheDocument();
+      screen.getByText(/exact move remains a separate review step/i),
+    ).toBeInTheDocument();
   });
 
   it("does not repeat generic state panels when the context has before and after panels", () => {

@@ -1,0 +1,736 @@
+{
+  "schemaVersion": "som-reviewer-benchmark-v1",
+  "exportedAt": "2026-07-25T14:59:51.656Z",
+  "firestoreProjectId": "ontology-41607",
+  "datasetVersion": "sell-rob-structure-wave-2026-07-24-v1",
+  "sourceOntology": "firestore://ontology-41607/final-hierarchy-with-o*net-rob-structure-review-2026-07-24",
+  "sourceOntologySha256": "e73fb96f991161a403be1f634d42718af1f3fd872719be2c215399c50965c6ee",
+  "issueType": "placement",
+  "reviewer": {
+    "label": "Rob Laubacher"
+  },
+  "counts": {
+    "expected": 12,
+    "reviewed": 12,
+    "agreed": 12,
+    "disagreed": 0,
+    "missing": 0,
+    "orphanedHistoricalResponses": 0
+  },
+  "missingProposalIds": [],
+  "orphanedResponses": [],
+  "sourceNodeEvidence": [
+    {
+      "nodeId": "c9cedc83f3cddb3895604d8d6586",
+      "title": "Sell Admission Passes",
+      "appName": "final-hierarchy-with-o*net-rob-structure-review-2026-07-24",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "959db2b894f117ed4ca3bb4948ba",
+              "linkTitle": "(O*Net) 20764 - Sell or collect admission tickets, passes, or facility memberships from patrons at entertainment events.",
+              "title": "(O*Net) 20764 - Sell or collect admission tickets, passes, or facility memberships from patrons at entertainment events.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Collect Membership",
+                "Collect Pass",
+                "Collect Ticket",
+                "Sell Membership",
+                "Sell Admission Passes",
+                "Sell Ticket"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "a5c1904e41409f0055bcb09e60e5",
+      "title": "Sell Alcoholic Beverages",
+      "appName": "final-hierarchy-with-o*net-rob-structure-review-2026-07-24",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "0e7374ea0c9b0c9fe09199256e2c",
+              "linkTitle": "(O*Net) 9659 - Sell alcoholic beverages to passengers.",
+              "title": "(O*Net) 9659 - Sell alcoholic beverages to passengers.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell Alcoholic Beverages"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "4d951b45590941f1dc519fe314ae",
+      "title": "Sell Financial Products",
+      "appName": "final-hierarchy-with-o*net-rob-structure-review-2026-07-24",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "faef10bfa3b10042a0d6ea124d79",
+              "linkTitle": "(O*Net) 2561 - Explain, promote, or sell products or services, such as travelers' checks, savings bonds, money orders, and cashier's checks, using computerized information about customers to tailor recommendations.",
+              "title": "(O*Net) 2561 - Explain, promote, or sell products or services, such as travelers' checks, savings bonds, money orders, and cashier's checks, using computerized information about customers to tailor recommendations.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Advertise Product",
+                "Advertise Service",
+                "Explain Product",
+                "Explain Service",
+                "Sell Services",
+                "Sell Financial Products"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "7b9d963fbc8b725edaf5a795151f",
+      "title": "Sell Lotion",
+      "appName": "final-hierarchy-with-o*net-rob-structure-review-2026-07-24",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "dbee18a81f4c5ea5be24479f992e",
+              "linkTitle": "(O*Net) 8065 - Recommend and sell lotions, tonics, or other cosmetic supplies.",
+              "title": "(O*Net) 8065 - Recommend and sell lotions, tonics, or other cosmetic supplies.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Recommend Supply",
+                "Recommend Lotion",
+                "Recommend Tonic",
+                "Sell Lotion",
+                "Sell Cosmetic Supplies",
+                "Sell Tonic"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "5f624fc2312be2d9daab86c94c5a",
+      "title": "Sell Membership",
+      "appName": "final-hierarchy-with-o*net-rob-structure-review-2026-07-24",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "d6a72893dfc41de6b7bd2069e5fd",
+              "linkTitle": "(O*Net) 17620 - Sell products, services, or memberships.",
+              "title": "(O*Net) 17620 - Sell products, services, or memberships.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell Services",
+                "Sell Membership",
+                "Sell Products"
+              ]
+            },
+            {
+              "nodeId": "959db2b894f117ed4ca3bb4948ba",
+              "linkTitle": "(O*Net) 20764 - Sell or collect admission tickets, passes, or facility memberships from patrons at entertainment events.",
+              "title": "(O*Net) 20764 - Sell or collect admission tickets, passes, or facility memberships from patrons at entertainment events.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Collect Membership",
+                "Collect Pass",
+                "Collect Ticket",
+                "Sell Membership",
+                "Sell Admission Passes",
+                "Sell Ticket"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "5d0e71853f7601884ca642ab535e",
+      "title": "Sell Products",
+      "appName": "final-hierarchy-with-o*net-rob-structure-review-2026-07-24",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "31bd71c1a0631b7c8388a3331dff",
+              "linkTitle": "(O*Net) 4.A.4.a.6 - Selling or Influencing Others",
+              "title": "(O*Net) 4.A.4.a.6 - Selling or Influencing Others",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell Products",
+                "Sell Ideas",
+                "Influence People"
+              ]
+            },
+            {
+              "nodeId": "03d573967e2501df299c291c380f",
+              "linkTitle": "(O*Net) 13194 - Sell products being promoted and keep records of sales.",
+              "title": "(O*Net) 13194 - Sell products being promoted and keep records of sales.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Document Record",
+                "Sell Products"
+              ]
+            },
+            {
+              "nodeId": "d6a72893dfc41de6b7bd2069e5fd",
+              "linkTitle": "(O*Net) 17620 - Sell products, services, or memberships.",
+              "title": "(O*Net) 17620 - Sell products, services, or memberships.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell Services",
+                "Sell Membership",
+                "Sell Products"
+              ]
+            },
+            {
+              "nodeId": "7f126e394f7fee3fc38ee345552e",
+              "linkTitle": "(O*Net) 4.A.4.a.6.I02.D05 - Sell products or services.",
+              "title": "(O*Net) 4.A.4.a.6.I02.D05 - Sell products or services.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell Services",
+                "Sell Products"
+              ]
+            },
+            {
+              "nodeId": "2dddd585cd9761075aa019441d75",
+              "linkTitle": "(O*Net) 4.A.4.a.6.I02 - Sell products or services.",
+              "title": "(O*Net) 4.A.4.a.6.I02 - Sell products or services.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell Services",
+                "Sell Products"
+              ]
+            },
+            {
+              "nodeId": "4ea14aadb12e94c78faff1509d96",
+              "linkTitle": "(O*Net) 13237 - Circulate among potential customers or travel by foot, truck, automobile, or bicycle to deliver or sell merchandise or services.",
+              "title": "(O*Net) 13237 - Circulate among potential customers or travel by foot, truck, automobile, or bicycle to deliver or sell merchandise or services.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Deliver Service",
+                "Deliver Merchandise",
+                "Travel Customer",
+                "Circulate Customer",
+                "Sell Services",
+                "Sell Products"
+              ]
+            },
+            {
+              "nodeId": "1afb610065f53aba9541c0092b6b",
+              "linkTitle": "(O*Net) 1822 - Manage pharmacy operations, hiring or supervising staff, performing administrative duties, or buying or selling non-pharmaceutical merchandise.",
+              "title": "(O*Net) 1822 - Manage pharmacy operations, hiring or supervising staff, performing administrative duties, or buying or selling non-pharmaceutical merchandise.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Perform Duty",
+                "Buy Merchandise",
+                "Hire Staff",
+                "Sell Products",
+                "Manage Operation",
+                "Oversee Staff"
+              ]
+            },
+            {
+              "nodeId": "7d93bda772220831095db72df661",
+              "linkTitle": "(O*Net) 18843 - Sell funeral services, products, or merchandise to clients.",
+              "title": "(O*Net) 18843 - Sell funeral services, products, or merchandise to clients.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell Services",
+                "Sell Products",
+                "Sell Funeral Products"
+              ]
+            },
+            {
+              "nodeId": "2e0223dc987fd860f67423d7f39e",
+              "linkTitle": "(O*Net) 713 - Sell or arrange for delivery, insurance, financing, or service contracts for merchandise.",
+              "title": "(O*Net) 713 - Sell or arrange for delivery, insurance, financing, or service contracts for merchandise.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell Products",
+                "Arrange Delivery",
+                "Arrange Financing",
+                "Arrange Contract",
+                "Arrange Insurance"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "69f750313b7a42f83e7bf29c54e1",
+      "title": "Sell Service Contracts",
+      "appName": "final-hierarchy-with-o*net-rob-structure-review-2026-07-24",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "625f6d66d0cf51171235667df694",
+              "linkTitle": "(O*Net) 20616 - Sell service contracts for technical or scientific products.",
+              "title": "(O*Net) 20616 - Sell service contracts for technical or scientific products.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell Service Contracts"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "cbfabd175db0172dfaa27d02d177",
+      "title": "Sell Services",
+      "appName": "final-hierarchy-with-o*net-rob-structure-review-2026-07-24",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "4ea14aadb12e94c78faff1509d96",
+              "linkTitle": "(O*Net) 13237 - Circulate among potential customers or travel by foot, truck, automobile, or bicycle to deliver or sell merchandise or services.",
+              "title": "(O*Net) 13237 - Circulate among potential customers or travel by foot, truck, automobile, or bicycle to deliver or sell merchandise or services.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Deliver Service",
+                "Deliver Merchandise",
+                "Travel Customer",
+                "Circulate Customer",
+                "Sell Services",
+                "Sell Products"
+              ]
+            },
+            {
+              "nodeId": "d6a72893dfc41de6b7bd2069e5fd",
+              "linkTitle": "(O*Net) 17620 - Sell products, services, or memberships.",
+              "title": "(O*Net) 17620 - Sell products, services, or memberships.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell Services",
+                "Sell Membership",
+                "Sell Products"
+              ]
+            },
+            {
+              "nodeId": "7d93bda772220831095db72df661",
+              "linkTitle": "(O*Net) 18843 - Sell funeral services, products, or merchandise to clients.",
+              "title": "(O*Net) 18843 - Sell funeral services, products, or merchandise to clients.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell Services",
+                "Sell Products",
+                "Sell Funeral Products"
+              ]
+            },
+            {
+              "nodeId": "96652699636b69a29c52d19e4a93",
+              "linkTitle": "(O*Net) 23202 - Sell services or equipment, such as trusts, investments, or check processing services.",
+              "title": "(O*Net) 23202 - Sell services or equipment, such as trusts, investments, or check processing services.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell Services",
+                "Sell Equipment"
+              ]
+            },
+            {
+              "nodeId": "faef10bfa3b10042a0d6ea124d79",
+              "linkTitle": "(O*Net) 2561 - Explain, promote, or sell products or services, such as travelers' checks, savings bonds, money orders, and cashier's checks, using computerized information about customers to tailor recommendations.",
+              "title": "(O*Net) 2561 - Explain, promote, or sell products or services, such as travelers' checks, savings bonds, money orders, and cashier's checks, using computerized information about customers to tailor recommendations.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Advertise Product",
+                "Advertise Service",
+                "Explain Product",
+                "Explain Service",
+                "Sell Services",
+                "Sell Financial Products"
+              ]
+            },
+            {
+              "nodeId": "7f126e394f7fee3fc38ee345552e",
+              "linkTitle": "(O*Net) 4.A.4.a.6.I02.D05 - Sell products or services.",
+              "title": "(O*Net) 4.A.4.a.6.I02.D05 - Sell products or services.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell Services",
+                "Sell Products"
+              ]
+            },
+            {
+              "nodeId": "2dddd585cd9761075aa019441d75",
+              "linkTitle": "(O*Net) 4.A.4.a.6.I02 - Sell products or services.",
+              "title": "(O*Net) 4.A.4.a.6.I02 - Sell products or services.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell Services",
+                "Sell Products"
+              ]
+            },
+            {
+              "nodeId": "d24cd95c9e42aa2440dc63240f92",
+              "linkTitle": "(O*Net) 4.A.4.a.6.I03.D04 - Market products, services, or events.",
+              "title": "(O*Net) 4.A.4.a.6.I03.D04 - Market products, services, or events.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Market Event",
+                "Market Products",
+                "Market Services",
+                "Sell Services"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "f678716e003268b08842285d7c10",
+      "title": "Sell Ticket",
+      "appName": "final-hierarchy-with-o*net-rob-structure-review-2026-07-24",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "959db2b894f117ed4ca3bb4948ba",
+              "linkTitle": "(O*Net) 20764 - Sell or collect admission tickets, passes, or facility memberships from patrons at entertainment events.",
+              "title": "(O*Net) 20764 - Sell or collect admission tickets, passes, or facility memberships from patrons at entertainment events.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Collect Membership",
+                "Collect Pass",
+                "Collect Ticket",
+                "Sell Membership",
+                "Sell Admission Passes",
+                "Sell Ticket"
+              ]
+            },
+            {
+              "nodeId": "ca2a79c36357c45e21f55ecab658",
+              "linkTitle": "(O*Net) 2413 - Sell tickets and other items to customers.",
+              "title": "(O*Net) 2413 - Sell tickets and other items to customers.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell Items",
+                "Sell Ticket"
+              ]
+            },
+            {
+              "nodeId": "0b82abd843ad875f5e3e80a2d723",
+              "linkTitle": "(O*Net) 4669 - Sell gambling chips, tokens, or tickets to patrons or to other workers for resale to patrons.",
+              "title": "(O*Net) 4669 - Sell gambling chips, tokens, or tickets to patrons or to other workers for resale to patrons.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell Gambling Chips",
+                "Sell Ticket",
+                "Sell Gambling Tokens"
+              ]
+            },
+            {
+              "nodeId": "04a15a1dc586508b7d8b14842a60",
+              "linkTitle": "(O*Net) 5119 - Sell tickets and collect fees from customers.",
+              "title": "(O*Net) 5119 - Sell tickets and collect fees from customers.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Collect Fee",
+                "Sell Ticket"
+              ]
+            },
+            {
+              "nodeId": "8798db2d54bd25a49abbfb039ff6",
+              "linkTitle": "(O*Net) 7006 - Sell gambling chips, tokens, or tickets to patrons, or to other workers for resale to patrons.",
+              "title": "(O*Net) 7006 - Sell gambling chips, tokens, or tickets to patrons, or to other workers for resale to patrons.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell Gambling Chips",
+                "Sell Ticket",
+                "Sell Gambling Tokens"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "ff51d9139c5242124772e081cec1",
+      "title": "Sell Tonic",
+      "appName": "final-hierarchy-with-o*net-rob-structure-review-2026-07-24",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "dbee18a81f4c5ea5be24479f992e",
+              "linkTitle": "(O*Net) 8065 - Recommend and sell lotions, tonics, or other cosmetic supplies.",
+              "title": "(O*Net) 8065 - Recommend and sell lotions, tonics, or other cosmetic supplies.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Recommend Supply",
+                "Recommend Lotion",
+                "Recommend Tonic",
+                "Sell Lotion",
+                "Sell Cosmetic Supplies",
+                "Sell Tonic"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "c8f3336bc22031865e24d2a8b4e0",
+      "title": "Sell Travel Incentives",
+      "appName": "final-hierarchy-with-o*net-rob-structure-review-2026-07-24",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "fbe67d8005b35d3afb58d3985feb",
+              "linkTitle": "(O*Net) 741 - Plan, describe, arrange, and sell itinerary tour packages and promotional travel incentives offered by various travel carriers.",
+              "title": "(O*Net) 741 - Plan, describe, arrange, and sell itinerary tour packages and promotional travel incentives offered by various travel carriers.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Plan Package",
+                "Describe Package",
+                "Sell Travel Incentives",
+                "Sell Travel Packages",
+                "Arrange Package"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "eb9984ff92271a70ed0818991b15",
+      "title": "Sell Travel Packages",
+      "appName": "final-hierarchy-with-o*net-rob-structure-review-2026-07-24",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "4e71a01c9970f80469d8b1f2d23e",
+              "linkTitle": "(O*Net) 13157 - Sell travel packages.",
+              "title": "(O*Net) 13157 - Sell travel packages.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Sell Travel Packages"
+              ]
+            },
+            {
+              "nodeId": "fbe67d8005b35d3afb58d3985feb",
+              "linkTitle": "(O*Net) 741 - Plan, describe, arrange, and sell itinerary tour packages and promotional travel incentives offered by various travel carriers.",
+              "title": "(O*Net) 741 - Plan, describe, arrange, and sell itinerary tour packages and promotional travel incentives offered by various travel carriers.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Plan Package",
+                "Describe Package",
+                "Sell Travel Incentives",
+                "Sell Travel Packages",
+                "Arrange Package"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "judgments": [
+    {
+      "proposalId": "som-6e5cf95399931bf3bf5b",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "c8f3336bc22031865e24d2a8b4e0",
+      "parentNodeId": "94d6a01d0bab70d2b00c62421a7e",
+      "currentTitle": "",
+      "proposedTitle": "",
+      "linkedTasks": [],
+      "proposedNodes": [],
+      "agentReasoning": "A travel incentive is an arranged travel offering, so the service being arranged is more central than a standalone information object.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-9473ee54d9e4d9da85e5",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "ff51d9139c5242124772e081cec1",
+      "parentNodeId": "71711ec4c7b3cc0db68cf9614714",
+      "currentTitle": "",
+      "proposedTitle": "",
+      "linkedTasks": [],
+      "proposedNodes": [],
+      "agentReasoning": "Tonics are a specific kind of cosmetic supply in the shared source evidence.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-f5b16c676663225e9cb2",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "eb9984ff92271a70ed0818991b15",
+      "parentNodeId": "94d6a01d0bab70d2b00c62421a7e",
+      "currentTitle": "",
+      "proposedTitle": "",
+      "linkedTasks": [],
+      "proposedNodes": [],
+      "agentReasoning": "A travel package bundles transportation, lodging, tours, or related services. It is an arrangement rather than a standalone information object.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-cb88f0783026ae169278",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "7b9d963fbc8b725edaf5a795151f",
+      "parentNodeId": "71711ec4c7b3cc0db68cf9614714",
+      "currentTitle": "",
+      "proposedTitle": "",
+      "linkedTasks": [],
+      "proposedNodes": [],
+      "agentReasoning": "Lotions are a specific kind of cosmetic supply in the shared source evidence.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-26289b558db6425a9dcd",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "f678716e003268b08842285d7c10",
+      "parentNodeId": "71711ec4c7b3cc0db68cf9614714",
+      "currentTitle": "",
+      "proposedTitle": "",
+      "linkedTasks": [],
+      "proposedNodes": [],
+      "agentReasoning": "A ticket primarily grants access to transportation, an event, a facility, or another service. Its physical or digital carrier is incidental to the right being sold.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-a8f636633a576f993a48",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "69f750313b7a42f83e7bf29c54e1",
+      "parentNodeId": "94d6a01d0bab70d2b00c62421a7e",
+      "currentTitle": "",
+      "proposedTitle": "",
+      "linkedTasks": [],
+      "proposedNodes": [],
+      "agentReasoning": "A service contract is an agreement for ongoing or future service rather than an information object whose recorded form is central.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-b7dba5868f5a9d71fdc7",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "5f624fc2312be2d9daab86c94c5a",
+      "parentNodeId": "94d6a01d0bab70d2b00c62421a7e",
+      "currentTitle": "",
+      "proposedTitle": "",
+      "linkedTasks": [],
+      "proposedNodes": [],
+      "agentReasoning": "A membership grants continuing access or participation, so the ongoing service relationship is more central than the physical or digital credential.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-50f1e92cd8700c4f9ad4",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "5d0e71853f7601884ca642ab535e",
+      "parentNodeId": "8bf1156fe3a24275319ff3b9f0fa",
+      "currentTitle": "",
+      "proposedTitle": "",
+      "linkedTasks": [],
+      "proposedNodes": [],
+      "agentReasoning": "The generic product-selling node represents selling goods and belongs with the physical-object specializations rather than in the miscellaneous Sell bucket.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-561e3bf8b15ad8b66c61",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "a5c1904e41409f0055bcb09e60e5",
+      "parentNodeId": "71711ec4c7b3cc0db68cf9614714",
+      "currentTitle": "",
+      "proposedTitle": "",
+      "linkedTasks": [],
+      "proposedNodes": [],
+      "agentReasoning": "Alcoholic beverages are a narrower kind of beverage. Nesting the specific node under Sell Beverages preserves the specialization instead of keeping both as peers.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-b160acd8f24f4633585e",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "cbfabd175db0172dfaa27d02d177",
+      "parentNodeId": "94d6a01d0bab70d2b00c62421a7e",
+      "currentTitle": "",
+      "proposedTitle": "",
+      "linkedTasks": [],
+      "proposedNodes": [],
+      "agentReasoning": "This node explicitly denotes selling services, so it belongs with service activities rather than with information objects.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-009cc90c1521a15aada8",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "4d951b45590941f1dc519fe314ae",
+      "parentNodeId": "71711ec4c7b3cc0db68cf9614714",
+      "currentTitle": "",
+      "proposedTitle": "",
+      "linkedTasks": [],
+      "proposedNodes": [],
+      "agentReasoning": "The source evidence names travelers' checks, savings bonds, money orders, and cashier's checks. These are financial instruments or contractual products rather than tangible goods.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-f2e1b3bfaeb565258152",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "c9cedc83f3cddb3895604d8d6586",
+      "parentNodeId": "94d6a01d0bab70d2b00c62421a7e",
+      "currentTitle": "",
+      "proposedTitle": "",
+      "linkedTasks": [],
+      "proposedNodes": [],
+      "agentReasoning": "An admission pass grants access to an event, facility, or service. The access right is more central than the physical or digital credential.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    }
+  ]
+}

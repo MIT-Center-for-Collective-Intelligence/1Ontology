@@ -499,15 +499,46 @@ const PlacementNote = ({
 }: {
   context: Extract<SomReviewContext, { type: "placement-comparison" }>;
 }) => {
+  const affectedNodes = context.affectedNodes || [];
   return (
-    <Box>
+    <Stack spacing={2}>
+      {affectedNodes.length > 1 && (
+        <Box>
+          <Typography sx={sectionLabelSx}>Affected activities</Typography>
+          <List dense disablePadding sx={{ mt: 0.5 }}>
+            {affectedNodes.map((node) => (
+              <ListItem
+                key={node.nodeTitle}
+                disableGutters
+                alignItems="flex-start"
+              >
+                <SubdirectoryArrowRightIcon
+                  aria-hidden="true"
+                  fontSize="small"
+                  sx={{ mt: 0.35, mr: 1, color: "text.secondary" }}
+                />
+                <ListItemText
+                  primary={node.nodeTitle}
+                  secondary={`Currently under ${node.currentParentTitle}`}
+                  primaryTypographyProps={{ sx: { fontWeight: 700 } }}
+                />
+              </ListItem>
+            ))}
+          </List>
+        </Box>
+      )}
       <SourceTasks tasks={context.sourceTasks || []} />
       <BoundaryNote>
-        {context.placementIssue === "wrong-verb"
-          ? "If you agree that this is not a selling activity, its appropriate location will be reviewed in a separate step."
-          : "If you agree that this activity is misplaced, its appropriate location will be reviewed in a separate step."}
+        {context.candidateHome
+          ? `The suggested category is "${context.candidateHome}". `
+          : ""}
+        {affectedNodes.length > 1
+          ? "Agreeing confirms the shared diagnosis for these activities. Each exact move remains a separate review step."
+          : context.placementIssue === "wrong-verb"
+            ? "Agreeing confirms that this is not a selling activity. The exact move remains a separate review step."
+            : "Agreeing confirms that the current parent is too broad. The exact move remains a separate review step."}
       </BoundaryNote>
-    </Box>
+    </Stack>
   );
 };
 

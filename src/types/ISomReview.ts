@@ -102,6 +102,13 @@ export type SomReviewContext =
       currentParentTitle: string;
       currentBucket?: string;
       candidateHome?: string;
+      sharedAction?: string;
+      affectedNodes?: Array<{
+        nodeTitle: string;
+        currentParentTitle: string;
+        currentBucket?: string;
+        sourceTasks?: string[];
+      }>;
       placementIssue: "wrong-bucket" | "wrong-parent" | "wrong-verb";
       sourceTasks?: string[];
     }

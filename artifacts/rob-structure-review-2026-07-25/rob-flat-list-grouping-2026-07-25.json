@@ -1,0 +1,70 @@
+{
+  "schemaVersion": "som-reviewer-benchmark-v1",
+  "exportedAt": "2026-07-25T14:59:45.952Z",
+  "firestoreProjectId": "ontology-41607",
+  "datasetVersion": "sell-rob-structure-wave-2026-07-24-v1",
+  "sourceOntology": "firestore://ontology-41607/final-hierarchy-with-o*net-rob-structure-review-2026-07-24",
+  "sourceOntologySha256": "e73fb96f991161a403be1f634d42718af1f3fd872719be2c215399c50965c6ee",
+  "issueType": "flat-list-grouping",
+  "reviewer": {
+    "label": "Rob Laubacher"
+  },
+  "counts": {
+    "expected": 3,
+    "reviewed": 3,
+    "agreed": 3,
+    "disagreed": 0,
+    "missing": 0,
+    "orphanedHistoricalResponses": 0
+  },
+  "missingProposalIds": [],
+  "orphanedResponses": [],
+  "sourceNodeEvidence": [],
+  "judgments": [
+    {
+      "proposalId": "som-443776db38865c17d781",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "",
+      "parentNodeId": "94d6a01d0bab70d2b00c62421a7e",
+      "currentTitle": "",
+      "proposedTitle": "",
+      "linkedTasks": [],
+      "proposedNodes": [],
+      "agentReasoning": "Foreign currencies and traveler's checks share transaction and payment use cases. The group represents that common function while preserving the distinct instruments.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-b13a9b0e6c5ed1230689",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "",
+      "parentNodeId": "94d6a01d0bab70d2b00c62421a7e",
+      "currentTitle": "",
+      "proposedTitle": "",
+      "linkedTasks": [],
+      "proposedNodes": [],
+      "agentReasoning": "Bonds, futures, derivatives, and stocks are investment instruments sold through related financial-market practices. The proposed group reduces a long flat list without treating the instruments as synonyms.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-7d37de5f387b928cf0b6",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "",
+      "parentNodeId": "71711ec4c7b3cc0db68cf9614714",
+      "currentTitle": "",
+      "proposedTitle": "",
+      "linkedTasks": [],
+      "proposedNodes": [],
+      "agentReasoning": "Food, beverages, and refreshments form a coherent family of consumable products. The group shortens the long flat list while preserving each narrower selling activity.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    }
+  ]
+}
