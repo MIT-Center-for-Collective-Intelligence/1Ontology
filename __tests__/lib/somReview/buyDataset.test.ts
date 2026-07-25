@@ -31,9 +31,17 @@ describe("Buy exploratory Society of Mind dataset", () => {
     expect(isIssueTypeReleased(dataset, "title-clarity")).toBe(true);
     expect(isIssueTypeReleased(dataset, "mistaken-synonym")).toBe(false);
     expect(isIssueTypeReleased(dataset, "flat-list-grouping")).toBe(false);
-    expect(
-      dataset.orderedIdsByIssue.get("title-clarity"),
-    ).toHaveLength(10);
+    expect(dataset.orderedIdsByIssue.get("title-clarity")).toHaveLength(10);
+    for (const proposalId of dataset.orderedIdsByIssue.get("title-clarity") ||
+      []) {
+      const card = toReviewerCard(dataset.recordsById.get(proposalId));
+      expect(card.reviewerView.context.type).toBe("title-comparison");
+      if (card.reviewerView.context.type === "title-comparison") {
+        expect(card.reviewerView.context.linkedTasks?.length).toBeGreaterThan(
+          0,
+        );
+      }
+    }
   });
 
   it("serves Buy-specific reviewer language without leaking Sell copy", () => {
@@ -56,9 +64,7 @@ describe("Buy exploratory Society of Mind dataset", () => {
     expect(actions.length).toBeGreaterThan(0);
     for (const action of actions) {
       expect(action.workflow.dependsOnProposalIds).toHaveLength(1);
-      expect(
-        proposalAvailability(action, new Map()),
-      ).toBe("waiting");
+      expect(proposalAvailability(action, new Map())).toBe("waiting");
       expect(
         proposalAvailability(
           action,

@@ -152,7 +152,16 @@ const readyFollowUp: SomLinkedFollowUp = {
 
 describe("Society of Mind review queue selector", () => {
   it("shows every task and action queue in its workflow stage", () => {
-    render(<ReviewQueueSelector issueTypes={issues} onStart={jest.fn()} />);
+    render(
+      <ReviewQueueSelector
+        issueTypes={issues}
+        branch="Buy"
+        ontologyName="Test Ontology"
+        onStart={jest.fn()}
+      />,
+    );
+    expect(screen.getByText("Buy sub-branch")).toBeInTheDocument();
+    expect(screen.getByText("Test Ontology")).toBeInTheDocument();
     for (const issue of issues) {
       expect(screen.getByText(issue.label)).toBeInTheDocument();
     }
@@ -307,9 +316,7 @@ describe("Society of Mind review queue selector", () => {
 
     render(<ReviewQueueSelector issueTypes={waveIssues} onStart={jest.fn()} />);
 
-    expect(
-      screen.getByText("Awaiting regenerated proposals"),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Awaiting regeneration")).toBeInTheDocument();
     expect(
       screen.getByText(
         "Available after content decisions are applied and proposals are regenerated.",
@@ -317,7 +324,7 @@ describe("Society of Mind review queue selector", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByRole("button", {
-        name: "7. Group long flat lists; Available after content decisions are applied and proposals are regenerated.",
+        name: "7. Group long flat lists; awaiting regeneration after the current phase",
       }),
     ).toBeDisabled();
   });

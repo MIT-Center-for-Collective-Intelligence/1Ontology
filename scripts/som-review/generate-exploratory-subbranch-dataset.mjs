@@ -26,8 +26,20 @@ const MODEL = "gemini-3.1-pro-preview";
 const DETECTOR_PASSES = 2;
 
 const ISSUE_DEFINITIONS = [
-  ["title-clarity", "Clarify unclear titles", "content", [1], "title-comparison"],
-  ["synonym-enrichment", "Add missing synonyms", "content", [2], "metadata-edit"],
+  [
+    "title-clarity",
+    "Clarify unclear titles",
+    "content",
+    [1],
+    "title-comparison",
+  ],
+  [
+    "synonym-enrichment",
+    "Add missing synonyms",
+    "content",
+    [2],
+    "metadata-edit",
+  ],
   [
     "description-enrichment",
     "Add missing descriptions",
@@ -136,15 +148,13 @@ const ISSUE_DEFINITIONS = [
 const DETECTORS = [
   {
     id: "title-evidence-agent",
-    role:
-      "Systematically inspect every non-evidence title against its description and source tasks. Return every high-confidence title-clarity candidate, while preserving every meaning expressed by the evidence.",
+    role: "Systematically inspect every non-evidence title against its description and source tasks. Return every high-confidence title-clarity candidate, while preserving every meaning expressed by the evidence.",
     schema: `
 title-clarity: {nodeTitle,currentParentTitle,proposedTitle,rationale}`,
   },
   {
     id: "identity-agent",
-    role:
-      "Inspect structured synonyms, identity, and polysemy. Pay special attention to whether a root synonym has introduced descendants that perform a related but different action. Return only synonym-enrichment, mistaken-synonym, duplicate-synonym, or polysemy candidates.",
+    role: "Inspect structured synonyms, identity, and polysemy. Pay special attention to whether a root synonym has introduced descendants that perform a related but different action. Return only synonym-enrichment, mistaken-synonym, duplicate-synonym, or polysemy candidates.",
     schema: `
 synonym-enrichment: {nodeTitle,proposedSynonyms:[...],rationale}
 mistaken-synonym: {nodeTitle,removeSynonyms:[...],rationale}
@@ -153,8 +163,7 @@ polysemy: {nodeTitle,currentParentTitle,proposedSenses:[{title,meaning}],rationa
   },
   {
     id: "structure-agent",
-    role:
-      "Inspect sibling structure, long flat lists, compound objects, and genuinely distinct specialization dimensions. Return only flat-list-grouping, compound-object-grouping, or collection-design candidates.",
+    role: "Inspect sibling structure, long flat lists, compound objects, and genuinely distinct specialization dimensions. Return only flat-list-grouping, compound-object-grouping, or collection-design candidates.",
     schema: `
 flat-list-grouping or compound-object-grouping:
   {parentTitle,proposedGroupTitle,proposedChildren:[at least 2 exact direct child titles],rationale}
@@ -163,8 +172,7 @@ collection-design:
   },
   {
     id: "placement-boundary-agent",
-    role:
-      "Inspect whether nodes sit under an overly broad or semantically wrong current parent, and whether a node actually expresses a different main action. Return only placement or wrong-verb candidates.",
+    role: "Inspect whether nodes sit under an overly broad or semantically wrong current parent, and whether a node actually expresses a different main action. Return only placement or wrong-verb candidates.",
     schema: `
 placement or wrong-verb:
   {nodeTitle,currentParentTitle,candidateHome,rationale}`,
@@ -268,9 +276,9 @@ function structuredSynonyms(node) {
 
 function allRecordedSynonyms(node) {
   const values = new Set(structuredSynonyms(node));
-  const match = clean(
-    node?.description || node?.properties?.description,
-  ).match(/Synonyms?:\s*([^.;]+)/i);
+  const match = clean(node?.description || node?.properties?.description).match(
+    /Synonyms?:\s*([^.;]+)/i,
+  );
   if (match) {
     for (const value of match[1].split(/,|\bor\b/i)) {
       if (clean(value)) values.add(clean(value));
@@ -331,7 +339,13 @@ async function readOntology({ environment, ontologyAppId, branch }) {
       }
     }
   }
-  return { allNodes, root, descendants, edges, projectId: serviceAccount.projectId };
+  return {
+    allNodes,
+    root,
+    descendants,
+    edges,
+    projectId: serviceAccount.projectId,
+  };
 }
 
 function buildWorkingIndex(rootId, allNodes, descendantIds, edges) {
@@ -356,9 +370,7 @@ function buildWorkingIndex(rootId, allNodes, descendantIds, edges) {
     ]);
   }
 
-  const pathsById = new Map([
-    [rootId, [clean(nodesById.get(rootId)?.title)]],
-  ]);
+  const pathsById = new Map([[rootId, [clean(nodesById.get(rootId)?.title)]]]);
   const queue = [rootId];
   while (queue.length) {
     const parentId = queue.shift();
@@ -367,9 +379,7 @@ function buildWorkingIndex(rootId, allNodes, descendantIds, edges) {
       if (pathsById.has(edge.childId)) continue;
       const pathParts = [
         ...parentPath,
-        ...(edge.collectionName === "main"
-          ? []
-          : [`[${edge.collectionName}]`]),
+        ...(edge.collectionName === "main" ? [] : [`[${edge.collectionName}]`]),
         clean(nodesById.get(edge.childId)?.title),
       ];
       pathsById.set(edge.childId, pathParts);
@@ -390,7 +400,9 @@ function buildWorkingIndex(rootId, allNodes, descendantIds, edges) {
         edgeKey(edge.parentId, edge.childId, edge.collectionName),
       ),
     ),
-    edgePairs: new Set(edges.map((edge) => edgePair(edge.parentId, edge.childId))),
+    edgePairs: new Set(
+      edges.map((edge) => edgePair(edge.parentId, edge.childId)),
+    ),
   };
 }
 
@@ -428,6 +440,17 @@ function sourceTasksForNode(index, nodeTitle) {
   return (index.edgesByParent.get(nodeId) || [])
     .filter((edge) => isEvidence(index.nodesById.get(edge.childId)))
     .map((edge) => evidenceText(titleFor(index, edge.childId)));
+}
+
+function sourceTasksForNodes(index, nodeTitles) {
+  return [
+    ...new Set(
+      nodeTitles
+        .flatMap((nodeTitle) => sourceTasksForNode(index, nodeTitle))
+        .map(clean)
+        .filter(Boolean),
+    ),
+  ];
 }
 
 function sourceEdge(index, parentTitle, childTitle) {
@@ -619,9 +642,7 @@ async function runDetectors(ai, branch, facts, externalDestinations) {
       const prompt = `${commonPrompt(
         branch,
         facts,
-        detector.id === "placement-boundary-agent"
-          ? externalDestinations
-          : [],
+        detector.id === "placement-boundary-agent" ? externalDestinations : [],
       )}
 
 Your role:
@@ -681,8 +702,9 @@ function deterministicOverlapCandidates(index, branch) {
     if (counterpartIds.length !== 1 || counterpartIds[0] === edge.childId) {
       continue;
     }
-    const counterpartEdge = (index.parentEdgesByChild.get(counterpartIds[0]) || [])
-      .find((candidate) => candidate.parentId === index.rootId);
+    const counterpartEdge = (
+      index.parentEdgesByChild.get(counterpartIds[0]) || []
+    ).find((candidate) => candidate.parentId === index.rootId);
     if (!counterpartEdge) continue;
     const candidate = {
       issueType: "misc-facet-duplicate",
@@ -772,12 +794,17 @@ function preflightCandidate(candidate, index) {
       }
     }
     if (issueType === "synonym-enrichment") {
-      if (!Array.isArray(candidate.proposedSynonyms) || !candidate.proposedSynonyms.length) {
+      if (
+        !Array.isArray(candidate.proposedSynonyms) ||
+        !candidate.proposedSynonyms.length
+      ) {
         return "no proposed synonyms";
       }
     }
     if (issueType === "mistaken-synonym") {
-      const node = index.nodesById.get(uniqueIdForTitle(index, candidate.nodeTitle));
+      const node = index.nodesById.get(
+        uniqueIdForTitle(index, candidate.nodeTitle),
+      );
       const recorded = new Set(allRecordedSynonyms(node));
       if (
         !Array.isArray(candidate.removeSynonyms) ||
@@ -791,8 +818,16 @@ function preflightCandidate(candidate, index) {
       if (candidate.canonicalTitle === candidate.candidateTitle) {
         return "duplicate candidate compares a node with itself";
       }
-      sourceEdge(index, candidate.canonicalParentTitle, candidate.canonicalTitle);
-      sourceEdge(index, candidate.candidateParentTitle, candidate.candidateTitle);
+      sourceEdge(
+        index,
+        candidate.canonicalParentTitle,
+        candidate.canonicalTitle,
+      );
+      sourceEdge(
+        index,
+        candidate.candidateParentTitle,
+        candidate.candidateTitle,
+      );
     }
     if (issueType === "polysemy") {
       sourceEdge(index, candidate.currentParentTitle, candidate.nodeTitle);
@@ -817,7 +852,8 @@ function preflightCandidate(candidate, index) {
       const direct = new Set(currentChildren(index, candidate.parentTitle));
       if (
         !clean(candidate.proposedGroupTitle) ||
-        (index.idsByTitle.get(clean(candidate.proposedGroupTitle)) || []).length ||
+        (index.idsByTitle.get(clean(candidate.proposedGroupTitle)) || [])
+          .length ||
         !Array.isArray(candidate.proposedChildren) ||
         new Set(candidate.proposedChildren).size < 2 ||
         candidate.proposedChildren.some((title) => !direct.has(clean(title)))
@@ -854,13 +890,7 @@ function preflightCandidate(candidate, index) {
   return "";
 }
 
-async function runCritic(
-  ai,
-  branch,
-  facts,
-  externalDestinations,
-  candidates,
-) {
+async function runCritic(ai, branch, facts, externalDestinations, candidates) {
   if (!candidates.length) return { raw: "", assessments: [] };
   const prompt = `${commonPrompt(branch, facts, externalDestinations)}
 
@@ -963,7 +993,11 @@ Return JSON:
 {"assessments":[{"candidateId":"exact id","decision":"accept"|"reject"|"revise","rationale":"brief reason","revisedFields":{}}]}
 For a revised title, revisedFields may contain only {"proposedTitle":"..."}.
 Include exactly one assessment per candidate and no other text.`;
-  const response = await callAgent(ai, "content-verification-specialist", prompt);
+  const response = await callAgent(
+    ai,
+    "content-verification-specialist",
+    prompt,
+  );
   return {
     raw: response.text,
     assessments: Array.isArray(response.parsed?.assessments)
@@ -1021,10 +1055,9 @@ function normalizePlacementCandidates(candidates, index, branch) {
       });
       return [];
     }
-    const targetIsExternal =
-      !index.pathsById.has(
-        (index.idsByTitle.get(candidate.candidateHome) || [])[0],
-      );
+    const targetIsExternal = !index.pathsById.has(
+      (index.idsByTitle.get(candidate.candidateHome) || [])[0],
+    );
     if (
       targetIsExternal &&
       /(?:^|\s)perform\b|\(action\)|^provide service(?:\s*\(\d+\))?$/i.test(
@@ -1156,9 +1189,7 @@ function deriveRefs(context, index, subject) {
             .slice(0, collectionIndex)
             .reverse()
             .find(
-              (part) =>
-                typeof part === "string" &&
-                !/^\[[^\]]+\]$/.test(part),
+              (part) => typeof part === "string" && !/^\[[^\]]+\]$/.test(part),
             );
           if (!actualParentTitle) {
             throw new Error(
@@ -1202,7 +1233,10 @@ function deriveRefs(context, index, subject) {
       subjectNodeId = addTitle(context.candidateSynonymTitle);
       if (
         !index.edgePairs.has(
-          edgePair(canonicalParentId, uniqueIdForTitle(index, context.canonicalTitle)),
+          edgePair(
+            canonicalParentId,
+            uniqueIdForTitle(index, context.canonicalTitle),
+          ),
         ) ||
         !index.edgePairs.has(edgePair(parentNodeId, subjectNodeId))
       ) {
@@ -1287,7 +1321,9 @@ function deriveRefs(context, index, subject) {
 }
 
 function issueDefinition(issueType) {
-  const issue = ISSUE_DEFINITIONS.find((candidate) => candidate.id === issueType);
+  const issue = ISSUE_DEFINITIONS.find(
+    (candidate) => candidate.id === issueType,
+  );
   if (!issue) throw new Error(`Unknown issue type: ${issueType}`);
   return issue;
 }
@@ -1397,9 +1433,13 @@ function recordForCandidate(candidate, config) {
       type: "title-comparison",
       currentTitle: candidate.nodeTitle,
       proposedTitle: candidate.proposedTitle,
-      linkedTasks: [],
+      linkedTasks: sourceTasksForNode(index, candidate.nodeTitle),
     };
-    subject = nodeSubject(index, candidate.nodeTitle, candidate.currentParentTitle);
+    subject = nodeSubject(
+      index,
+      candidate.nodeTitle,
+      candidate.currentParentTitle,
+    );
     reviewerView = {
       question: `Is "${candidate.proposedTitle}" clearer than "${candidate.nodeTitle}"?`,
       currentState: candidate.nodeTitle,
@@ -1410,7 +1450,9 @@ function recordForCandidate(candidate, config) {
     issueType === "synonym-enrichment" ||
     issueType === "mistaken-synonym"
   ) {
-    const node = index.nodesById.get(uniqueIdForTitle(index, candidate.nodeTitle));
+    const node = index.nodesById.get(
+      uniqueIdForTitle(index, candidate.nodeTitle),
+    );
     const currentValues =
       issueType === "mistaken-synonym"
         ? allRecordedSynonyms(node)
@@ -1436,10 +1478,8 @@ function recordForCandidate(candidate, config) {
       currentValues,
       proposedValues,
       synonymScope:
-        issueType === "mistaken-synonym"
-          ? "all-recorded"
-          : "structured-field",
-      sourceTasks: [],
+        issueType === "mistaken-synonym" ? "all-recorded" : "structured-field",
+      sourceTasks: sourceTasksForNode(index, candidate.nodeTitle),
     };
     subject = nodeSubject(index, candidate.nodeTitle);
     reviewerView = {
@@ -1458,7 +1498,10 @@ function recordForCandidate(candidate, config) {
       candidateParentTitle: candidate.candidateParentTitle,
       canonicalTitle: candidate.canonicalTitle,
       candidateSynonymTitle: candidate.candidateTitle,
-      sourceTasks: [],
+      sourceTasks: sourceTasksForNodes(index, [
+        candidate.canonicalTitle,
+        candidate.candidateTitle,
+      ]),
     };
     subject = nodeSubject(
       index,
@@ -1477,17 +1520,22 @@ function recordForCandidate(candidate, config) {
       type: "polysemy-review",
       nodeTitle: candidate.nodeTitle,
       currentParentTitle: candidate.currentParentTitle,
-      sourceTasks: [],
+      sourceTasks: sourceTasksForNode(index, candidate.nodeTitle),
       proposedSenses: candidate.proposedSenses.map((sense) => ({
         title: clean(sense.title),
         meaning: clean(sense.meaning),
       })),
     };
-    subject = nodeSubject(index, candidate.nodeTitle, candidate.currentParentTitle);
+    subject = nodeSubject(
+      index,
+      candidate.nodeTitle,
+      candidate.currentParentTitle,
+    );
     reviewerView = {
       question: `Does "${candidate.nodeTitle}" combine meanings that should be represented separately?`,
       currentState: `"${candidate.nodeTitle}" currently represents one node.`,
-      proposedState: "Represent the distinct meanings as separate activity nodes.",
+      proposedState:
+        "Represent the distinct meanings as separate activity nodes.",
       reasoning: rationale,
     };
   } else if (issueType === "misc-facet-duplicate") {
@@ -1498,18 +1546,25 @@ function recordForCandidate(candidate, config) {
       firstTitle: candidate.firstTitle,
       secondCollection: candidate.secondCollection,
       secondTitle: candidate.secondTitle,
-      sourceTasks: [],
+      sourceTasks: sourceTasksForNodes(index, [
+        candidate.firstTitle,
+        candidate.secondTitle,
+      ]),
     };
     subject = {
       title: candidate.firstTitle,
       parentTitle: candidate.parentTitle,
-      path: index.pathsById.get(uniqueIdForTitle(index, candidate.firstTitle)) || [],
+      path:
+        index.pathsById.get(uniqueIdForTitle(index, candidate.firstTitle)) ||
+        [],
       relatedTitles: [candidate.secondTitle],
     };
     reviewerView = {
       question: `Could "${candidate.firstTitle}" and "${candidate.secondTitle}" represent the same concept?`,
-      currentState: "The concepts appear in separate specialization collections.",
-      proposedState: "Treat them as a possible overlap; review any exact merge separately.",
+      currentState:
+        "The concepts appear in separate specialization collections.",
+      proposedState:
+        "Treat them as a possible overlap; review any exact merge separately.",
       reasoning: rationale,
     };
   } else if (
@@ -1526,12 +1581,14 @@ function recordForCandidate(candidate, config) {
       unaffectedChildren: direct.filter(
         (title) => !candidate.proposedChildren.map(clean).includes(title),
       ),
-      sourceTasks: [],
+      sourceTasks: sourceTasksForNodes(index, candidate.proposedChildren),
     };
     subject = {
       title: candidate.proposedGroupTitle,
       parentTitle: candidate.parentTitle,
-      path: index.pathsById.get(uniqueIdForTitle(index, candidate.parentTitle)) || [],
+      path:
+        index.pathsById.get(uniqueIdForTitle(index, candidate.parentTitle)) ||
+        [],
       relatedTitles: context.proposedChildren,
     };
     reviewerView = {
@@ -1551,17 +1608,23 @@ function recordForCandidate(candidate, config) {
         status: branch.status,
         children: [...new Set((branch.children || []).map(clean))],
       })),
-      sourceTasks: [],
+      sourceTasks: sourceTasksForNodes(
+        index,
+        candidate.proposedBranches.flatMap((item) => item.children || []),
+      ),
     };
     subject = {
       title: candidate.proposedCollectionName,
       parentTitle: candidate.parentTitle,
-      path: index.pathsById.get(uniqueIdForTitle(index, candidate.parentTitle)) || [],
+      path:
+        index.pathsById.get(uniqueIdForTitle(index, candidate.parentTitle)) ||
+        [],
       relatedTitles: context.proposedBranches.flatMap((item) => item.children),
     };
     reviewerView = {
       question: `Should "${candidate.parentTitle}" use the proposed "${candidate.proposedCollectionName}" collection?`,
-      currentState: "The current direct children are not organized along this dimension.",
+      currentState:
+        "The current direct children are not organized along this dimension.",
       proposedState: "Create the proposed collection and branches.",
       reasoning: rationale,
     };
@@ -1576,10 +1639,15 @@ function recordForCandidate(candidate, config) {
         candidate.nodeTitle,
       ).collectionName,
       candidateHome: candidate.candidateHome,
-      placementIssue: issueType === "wrong-verb" ? "wrong-verb" : "wrong-parent",
-      sourceTasks: [],
+      placementIssue:
+        issueType === "wrong-verb" ? "wrong-verb" : "wrong-parent",
+      sourceTasks: sourceTasksForNode(index, candidate.nodeTitle),
     };
-    subject = nodeSubject(index, candidate.nodeTitle, candidate.currentParentTitle);
+    subject = nodeSubject(
+      index,
+      candidate.nodeTitle,
+      candidate.currentParentTitle,
+    );
     subject.relatedTitles = [candidate.candidateHome];
     reviewerView = {
       question: `Is "${candidate.nodeTitle}" better placed under "${candidate.candidateHome}"?`,
@@ -1611,7 +1679,8 @@ function ancestorOf(index, ancestorTitle, descendantTitle) {
     if (!id || visited.has(id)) continue;
     visited.add(id);
     if (id === targetId) return true;
-    for (const edge of index.edgesByParent.get(id) || []) queue.push(edge.childId);
+    for (const edge of index.edgesByParent.get(id) || [])
+      queue.push(edge.childId);
   }
   return false;
 }
@@ -1676,9 +1745,9 @@ function exactActionRecords(diagnosisRecords, candidates, config) {
         absorbedTitle,
         absorbedCollection: absorbedEdge.collectionName,
         absorbedChildren,
-        resultingChildren: [...new Set([...canonicalChildren, ...absorbedChildren])].sort(
-          (left, right) => left.localeCompare(right, "en"),
-        ),
+        resultingChildren: [
+          ...new Set([...canonicalChildren, ...absorbedChildren]),
+        ].sort((left, right) => left.localeCompare(right, "en")),
         absorbedBecomesSynonym: true,
       };
       records.push(
@@ -1701,7 +1770,8 @@ function exactActionRecords(diagnosisRecords, candidates, config) {
           },
           reviewerView: {
             question: `Should "${absorbedTitle}" be merged into "${canonicalTitle}"?`,
-            currentState: "The two nodes and their current direct children remain separate.",
+            currentState:
+              "The two nodes and their current direct children remain separate.",
             proposedState: `Keep "${canonicalTitle}", record "${absorbedTitle}" as a synonym, and move every direct child from the absorbed node.`,
             reasoning:
               "This exact action is available only after the reviewer agrees with the related identity diagnosis.",
@@ -1830,9 +1900,13 @@ function writeDataset({
   rejected,
 }) {
   fs.mkdirSync(outputDir, { recursive: true });
-  fs.cpSync(path.join(BASE_DATASET_DIR, "schema"), path.join(outputDir, "schema"), {
-    recursive: true,
-  });
+  fs.cpSync(
+    path.join(BASE_DATASET_DIR, "schema"),
+    path.join(outputDir, "schema"),
+    {
+      recursive: true,
+    },
+  );
   writeJson(path.join(outputDir, "ontology-snapshot.json"), snapshot);
   writeJsonl(path.join(outputDir, "all_proposals.jsonl"), records);
   writeJsonl(path.join(outputDir, "all_controls.jsonl"), []);
@@ -1850,10 +1924,7 @@ function writeDataset({
       path.join(outputDir, "proposals", `${issue.id}.jsonl`),
       records.filter((record) => record.issueType === issue.id),
     );
-    writeJsonl(
-      path.join(outputDir, "controls", `${issue.id}.jsonl`),
-      [],
-    );
+    writeJsonl(path.join(outputDir, "controls", `${issue.id}.jsonl`), []);
   }
 
   const issueTypes = ISSUE_DEFINITIONS.map((issue) => ({
@@ -1891,8 +1962,7 @@ function writeDataset({
       manualChecks: "manual_checks.jsonl",
       proposalsByIssue: "proposals/<issue-type>.jsonl",
       controlsByIssue: "controls/<issue-type>.jsonl",
-      rejectedAgentCandidates:
-        "diagnostics/rejected_agent_candidates.jsonl",
+      rejectedAgentCandidates: "diagnostics/rejected_agent_candidates.jsonl",
       proposalSchema: "schema/review-proposal.schema.json",
       responseSchema: "schema/review-response.schema.json",
       schemaSource: "src/agents/review-proposal-contract.ts",
@@ -1922,8 +1992,10 @@ function writeDataset({
       branchRootNodeId: snapshot.branchRootNodeId,
       branchRootTitle: branch,
       nodeCount: snapshot.nodes.length,
-      branchNodeCount: snapshot.nodes.filter((node) => !node.referenceOnly).length,
-      referenceNodeCount: snapshot.nodes.filter((node) => node.referenceOnly).length,
+      branchNodeCount: snapshot.nodes.filter((node) => !node.referenceOnly)
+        .length,
+      referenceNodeCount: snapshot.nodes.filter((node) => node.referenceOnly)
+        .length,
       edgeCount: snapshot.edges.length,
     },
     coverage: {
@@ -1932,8 +2004,7 @@ function writeDataset({
       semanticCompletenessGuaranteed: false,
       detectorAgents: DETECTORS.map((detector) => detector.id),
       criticAgents: ["independent-critic"],
-      note:
-        "The run combines deterministic structural checks with four independent detector roles and one conservative critic. Zero candidates in an issue family means no surviving candidate was found, not that the branch is proven error-free.",
+      note: "The run combines deterministic structural checks with four independent detector roles and one conservative critic. Zero candidates in an issue family means no surviving candidate was found, not that the branch is proven error-free.",
     },
     reviewRelease: {
       strategy: "dependency-gated-exploratory-wave",
@@ -2126,9 +2197,7 @@ async function main() {
   );
   const contentRejected = [];
   const accepted = placementNormalization.normalized.flatMap((candidate) => {
-    if (
-      !["title-clarity", "duplicate-synonym"].includes(candidate.issueType)
-    ) {
+    if (!["title-clarity", "duplicate-synonym"].includes(candidate.issueType)) {
       return [candidate];
     }
     const assessment = contentAssessmentById.get(candidate.candidateId);
@@ -2206,11 +2275,7 @@ async function main() {
   const diagnosisRecords = accepted.map((candidate) =>
     recordForCandidate(candidate, config),
   );
-  const actionRecords = exactActionRecords(
-    diagnosisRecords,
-    accepted,
-    config,
-  );
+  const actionRecords = exactActionRecords(diagnosisRecords, accepted, config);
   const records = [...diagnosisRecords, ...actionRecords].sort((left, right) =>
     `${left.issueType}|${left.proposalId}`.localeCompare(
       `${right.issueType}|${right.proposalId}`,
