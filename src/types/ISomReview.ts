@@ -296,12 +296,61 @@ export interface SomLinkedFollowUp {
 }
 
 export interface SomOverviewResponse {
+  datasetId: string;
   datasetVersion: string;
+  workspaceId: string;
+  roundLabel: string;
+  currentRound: boolean;
+  workspaces: SomReviewWorkspaceOption[];
   branch: string;
   ontologyName: string;
   issueTypes: SomIssueTypeOption[];
   readyFollowUps: SomLinkedFollowUp[];
   canDeliberate: boolean;
+}
+
+export interface SomReviewRoundOption {
+  id: string;
+  datasetVersion: string;
+  label: string;
+  current: boolean;
+}
+
+export interface SomReviewWorkspaceOption {
+  id: string;
+  label: string;
+  activeDatasetId: string;
+  rounds: SomReviewRoundOption[];
+}
+
+export interface SomOntologyOutlineNode {
+  id: string;
+  title: string;
+  evidence: boolean;
+}
+
+export interface SomOntologyOutlineEdge {
+  parentId: string;
+  childId: string;
+  collectionName: string;
+}
+
+export interface SomOntologyOutlineSnapshot {
+  ontologyName: string;
+  capturedAt: string;
+  rootNodeId: string;
+  rootTitle: string;
+  nodes: SomOntologyOutlineNode[];
+  edges: SomOntologyOutlineEdge[];
+}
+
+export interface SomOntologyOutlineResponse {
+  datasetId: string;
+  workspaceId: string;
+  branch: string;
+  currentRound: boolean;
+  selected: SomOntologyOutlineSnapshot;
+  original: SomOntologyOutlineSnapshot;
 }
 
 export interface SomRespondResult {

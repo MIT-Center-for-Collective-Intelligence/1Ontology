@@ -7,9 +7,16 @@ import addFormats from "ajv-formats";
 import { SomIssueType } from "../../types/ISomReview";
 import {
   loadOntologySnapshot,
+  SomOntologySnapshot,
   validateProposalAgainstSnapshot,
 } from "./ontologySnapshot";
 import { numberedIssueLabelMap } from "./reviewTaxonomy";
+import {
+  DEFAULT_REVIEW_DATASET_ID,
+  reviewDatasetConfig,
+  reviewDatasetConfigByVersion,
+  reviewDatasetDir,
+} from "./reviewWorkspaces";
 
 const EXPECTED_SCHEMA_VERSION = "som-review-v1";
 
@@ -51,20 +58,18 @@ export const proposalAvailability = (
 };
 
 export interface SomDataset {
+  datasetId: string;
   datasetVersion: string;
+  rootDir: string;
   manifest: any;
+  snapshot: SomOntologySnapshot;
   recordsById: Map<string, any>;
   orderedIdsByIssue: Map<SomIssueType, string[]>;
   issueLabels: Map<SomIssueType, string>;
 }
 
 const datasetDir = (): string =>
-  process.env.SOM_REVIEW_DATASET_DIR ||
-  path.join(
-    process.cwd(),
-    "Buy_Society_of_Mind_Title_Followup_2026-07-25",
-    "review-datasets-title-followup-v1",
-  );
+  reviewDatasetDir(reviewDatasetConfig(DEFAULT_REVIEW_DATASET_ID));
 
 export const isIssueTypeEnabled = (issueType: SomIssueType): boolean => {
   if (!SUPPORTED_ISSUE_TYPES.includes(issueType)) return false;
@@ -130,7 +135,7 @@ const orderKey = (record: any): string =>
     .update(`${record.datasetVersion}|${record.issueType}|${record.proposalId}`)
     .digest("hex");
 
-export const loadDataset = (dir?: string): SomDataset => {
+export const loadDataset = (dir?: string, datasetId = "custom"): SomDataset => {
   const root = dir || datasetDir();
   const manifest = JSON.parse(
     fs.readFileSync(path.join(root, "manifest.json"), "utf8"),
@@ -230,17 +235,31 @@ export const loadDataset = (dir?: string): SomDataset => {
   }
 
   return {
+    datasetId,
     datasetVersion: manifest.datasetVersion,
+    rootDir: root,
     manifest,
+    snapshot: ontologySource.snapshot,
     recordsById,
     orderedIdsByIssue,
     issueLabels,
   };
 };
 
-let cached: SomDataset | null = null;
+const cachedById = new Map<string, SomDataset>();
 
-export const getDataset = (): SomDataset => {
-  if (!cached) cached = loadDataset();
-  return cached;
+export const getDataset = (
+  datasetId = DEFAULT_REVIEW_DATASET_ID,
+): SomDataset => {
+  const config = reviewDatasetConfig(datasetId);
+  const cached = cachedById.get(config.id);
+  if (cached) return cached;
+  const dataset = loadDataset(reviewDatasetDir(config), config.id);
+  cachedById.set(config.id, dataset);
+  return dataset;
+};
+
+export const getDatasetByVersion = (datasetVersion: string): SomDataset => {
+  const config = reviewDatasetConfigByVersion(datasetVersion);
+  return getDataset(config.id);
 };

@@ -24,7 +24,9 @@ const handler = async (request: NextApiRequest, res: NextApiResponse) => {
   try {
     requireDeliberationAccess(req.user);
     const data = reviewRequestData(req.body);
-    const dataset = getDataset();
+    const dataset = getDataset(
+      typeof data.datasetId === "string" ? data.datasetId : undefined,
+    );
     const proposalId =
       typeof data.proposalId === "string" ? data.proposalId : "";
     if (!dataset.recordsById.has(proposalId)) {

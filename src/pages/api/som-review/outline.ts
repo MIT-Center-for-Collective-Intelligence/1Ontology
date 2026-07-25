@@ -2,32 +2,36 @@ import { NextApiRequest, NextApiResponse } from "next";
 
 import fbAuth, { CustomNextApiRequest } from "../../../middlewares/fbAuth";
 import { getDataset } from "../../../lib/somReview/dataset";
-import { undoPrevious } from "../../../lib/somReview/store";
 import { reviewRequestData } from "../../../lib/somReview/request";
-import { SomIssueType, SomUndoResult } from "../../../types/ISomReview";
+import {
+  reviewDatasetConfig,
+  reviewWorkspaceConfig,
+} from "../../../lib/somReview/reviewWorkspaces";
+import { toOutlineSnapshot } from "../../../lib/somReview/outline";
+import { SomOntologyOutlineResponse } from "../../../types/ISomReview";
 
 const handler = async (request: NextApiRequest, res: NextApiResponse) => {
   const req = request as CustomNextApiRequest;
-  if (req.method !== "POST")
+  if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
+  }
   try {
     const data = reviewRequestData(req.body);
-    const issueType = data.issueType as SomIssueType;
-    const sessionId = typeof data.sessionId === "string" ? data.sessionId : "";
-    if (!sessionId) return res.status(400).json({ error: "Missing sessionId" });
     const dataset = getDataset(
       typeof data.datasetId === "string" ? data.datasetId : undefined,
     );
-    if (!dataset.orderedIdsByIssue.has(issueType)) {
-      return res.status(400).json({ error: "Unknown issue type" });
-    }
-    const { cursor } = await undoPrevious(
-      sessionId,
-      dataset.datasetVersion,
-      issueType,
-      req.user.uid,
-    );
-    const body: SomUndoResult = { ok: true, cursor };
+    const datasetConfig = reviewDatasetConfig(dataset.datasetId);
+    const workspace = reviewWorkspaceConfig(datasetConfig.workspaceId);
+    const originalDataset = getDataset(workspace.originalDatasetId);
+
+    const body: SomOntologyOutlineResponse = {
+      datasetId: dataset.datasetId,
+      workspaceId: workspace.id,
+      branch: workspace.label,
+      currentRound: datasetConfig.current,
+      selected: toOutlineSnapshot(dataset),
+      original: toOutlineSnapshot(originalDataset),
+    };
     return res.status(200).json(body);
   } catch (error: any) {
     console.error(error);

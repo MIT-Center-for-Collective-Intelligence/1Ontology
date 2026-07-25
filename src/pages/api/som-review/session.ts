@@ -28,7 +28,9 @@ const handler = async (request: NextApiRequest, res: NextApiResponse) => {
         ? data.preferredProposalId
         : undefined;
     const historyOnly = data.historyOnly === true;
-    const dataset = getDataset();
+    const dataset = getDataset(
+      typeof data.datasetId === "string" ? data.datasetId : undefined,
+    );
     if (!dataset.orderedIdsByIssue.has(issueType)) {
       return res.status(400).json({ error: "Unknown issue type" });
     }

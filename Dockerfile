@@ -59,7 +59,6 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
-ENV SOM_REVIEW_DATASET_DIR="/app/Buy_Society_of_Mind_Title_Followup_2026-07-25/review-datasets-title-followup-v1"
 
 RUN apk add --no-cache libc6-compat
 
@@ -80,7 +79,9 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 # Society of Mind review dataset, read from process.cwd() at request time
 # by src/lib/somReview/dataset.ts
+COPY --chown=nextjs:nodejs Buy_Society_of_Mind_Exploratory_2026-07-25/review-datasets-exploratory-v1 ./Buy_Society_of_Mind_Exploratory_2026-07-25/review-datasets-exploratory-v1
 COPY --chown=nextjs:nodejs Buy_Society_of_Mind_Title_Followup_2026-07-25/review-datasets-title-followup-v1 ./Buy_Society_of_Mind_Title_Followup_2026-07-25/review-datasets-title-followup-v1
+COPY --chown=nextjs:nodejs Sell_Society_of_Mind_Review_UI_Handoff_2026-07-15 ./Sell_Society_of_Mind_Review_UI_Handoff_2026-07-15
 
 EXPOSE 3000
 CMD ["node", "server.js"]

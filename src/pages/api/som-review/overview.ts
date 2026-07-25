@@ -20,13 +20,22 @@ import {
   blockingIssuePrerequisites,
   issuePrerequisiteTypes,
 } from "../../../lib/somReview/reviewDependencies";
+import { reviewRequestData } from "../../../lib/somReview/request";
+import {
+  reviewDatasetConfig,
+  reviewWorkspaceOptions,
+} from "../../../lib/somReview/reviewWorkspaces";
 
 const handler = async (request: NextApiRequest, res: NextApiResponse) => {
   const req = request as CustomNextApiRequest;
   if (req.method !== "POST")
     return res.status(405).json({ error: "Method not allowed" });
   try {
-    const dataset = getDataset();
+    const data = reviewRequestData(req.body);
+    const requestedDatasetId =
+      typeof data.datasetId === "string" ? data.datasetId : undefined;
+    const dataset = getDataset(requestedDatasetId);
+    const datasetConfig = reviewDatasetConfig(dataset.datasetId);
     const reviewerId = req.user.uid;
 
     const [baseIssueTypes, readyFollowUpRecords] = await Promise.all([
@@ -78,7 +87,12 @@ const handler = async (request: NextApiRequest, res: NextApiResponse) => {
     }));
 
     const body: SomOverviewResponse = {
+      datasetId: dataset.datasetId,
       datasetVersion: dataset.datasetVersion,
+      workspaceId: datasetConfig.workspaceId,
+      roundLabel: datasetConfig.label,
+      currentRound: datasetConfig.current,
+      workspaces: reviewWorkspaceOptions(),
       branch: String(dataset.manifest.branch || "Sell"),
       ontologyName: String(
         dataset.manifest.sourceSnapshot?.ontologyName ||
