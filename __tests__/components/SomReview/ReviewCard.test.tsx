@@ -11,6 +11,7 @@ import { SomReviewCard } from "../../../src/types/ISomReview";
 const card: SomReviewCard = {
   proposalId: "title-1",
   datasetVersion: "dataset-1",
+  branch: "Sell",
   issueType: "title-clarity",
   reviewerView: {
     question: 'Is "Sell Supplies" clearer than "Sell Supply"?',
@@ -219,6 +220,7 @@ describe("Society of Mind review card", () => {
     const placementCard: SomReviewCard = {
       proposalId: "placement-1",
       datasetVersion: "dataset-1",
+      branch: "Sell",
       issueType: "placement",
       reviewerView: {
         question: 'Is "Sell Service" misplaced under "Sell (Information)"?',
@@ -273,6 +275,7 @@ describe("Society of Mind review card", () => {
     const metadataCard: SomReviewCard = {
       proposalId: "metadata-1",
       datasetVersion: "dataset-1",
+      branch: "Sell",
       issueType: "description-enrichment",
       reviewerView: {
         question: "Should this description be added?",

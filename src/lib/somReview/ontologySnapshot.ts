@@ -11,7 +11,11 @@ export interface SomOntologySnapshot {
   firestoreProjectId: string;
   environment: "development" | "production";
   capturedAt: string;
-  sellRootNodeId: string;
+  /** Root metadata for branch-neutral review datasets. */
+  branchRootNodeId?: string;
+  branchRootTitle?: string;
+  /** Retained for previously released Sell snapshots. */
+  sellRootNodeId?: string;
   nodes: Array<{
     id: string;
     title: string;
@@ -111,8 +115,19 @@ export const buildSnapshotIndex = (
     childrenByParent.set(edge.parentId, children);
   }
 
-  if (!nodesById.has(snapshot.sellRootNodeId)) {
-    throw new Error("Ontology snapshot is missing its Sell root node");
+  const rootNodeId = snapshot.branchRootNodeId || snapshot.sellRootNodeId || "";
+  if (!rootNodeId || !nodesById.has(rootNodeId)) {
+    throw new Error("Ontology snapshot is missing its branch root node");
+  }
+  const rootTitle =
+    snapshot.branchRootTitle || nodesById.get(rootNodeId)?.title || "";
+  if (!rootTitle) {
+    throw new Error("Ontology snapshot is missing its branch root title");
+  }
+  if (nodesById.get(rootNodeId)?.title !== rootTitle) {
+    throw new Error(
+      `Ontology snapshot branch root mismatch: ${rootTitle} does not identify ${rootNodeId}`,
+    );
   }
 
   return {
@@ -175,8 +190,14 @@ const requireAnyEdge = (
 
 const validatePath = (index: SnapshotIndex, sourcePath: unknown): void => {
   if (!Array.isArray(sourcePath)) return;
-  const sellIndex = sourcePath.findIndex((part) => part === "Sell");
-  const parts = sourcePath.slice(Math.max(0, sellIndex));
+  const rootNodeId =
+    index.snapshot.branchRootNodeId || index.snapshot.sellRootNodeId || "";
+  const rootTitle =
+    index.snapshot.branchRootTitle ||
+    index.nodesById.get(rootNodeId)?.title ||
+    "";
+  const rootIndex = sourcePath.findIndex((part) => part === rootTitle);
+  const parts = sourcePath.slice(Math.max(0, rootIndex));
   let parentId = "";
   let collectionName = "main";
 

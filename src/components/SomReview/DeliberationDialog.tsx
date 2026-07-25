@@ -354,7 +354,10 @@ const DeliberationDialog = ({
                 </Typography>
               </Box>
               <Box sx={{ mt: 2.5 }}>
-                <ContextRenderer context={detail.card.reviewerView.context} />
+                <ContextRenderer
+                  context={detail.card.reviewerView.context}
+                  branch={detail.card.branch}
+                />
               </Box>
             </Box>
 

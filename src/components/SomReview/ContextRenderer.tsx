@@ -57,7 +57,13 @@ const comparisonPanelSx = {
   backgroundColor: "background.paper",
 };
 
-const ContextRenderer = ({ context }: { context: SomReviewContext }) => {
+const ContextRenderer = ({
+  context,
+  branch = "Sell",
+}: {
+  context: SomReviewContext;
+  branch?: string;
+}) => {
   switch (context.type) {
     case "title-comparison":
       return <TitleComparison context={context} />;
@@ -70,7 +76,7 @@ const ContextRenderer = ({ context }: { context: SomReviewContext }) => {
     case "duplicate-comparison":
       return <DuplicateComparison context={context} />;
     case "placement-comparison":
-      return <PlacementNote context={context} />;
+      return <PlacementNote context={context} branch={branch} />;
     case "overlap-comparison":
       return <OverlapComparison context={context} />;
     case "merge-action":
@@ -496,8 +502,10 @@ const ChildOutline = ({
 
 const PlacementNote = ({
   context,
+  branch,
 }: {
   context: Extract<SomReviewContext, { type: "placement-comparison" }>;
+  branch: string;
 }) => {
   const affectedNodes = context.affectedNodes || [];
   return (
@@ -535,7 +543,7 @@ const PlacementNote = ({
         {affectedNodes.length > 1
           ? "Agreeing confirms the shared diagnosis for these activities. Each exact move remains a separate review step."
           : context.placementIssue === "wrong-verb"
-            ? "Agreeing confirms that this is not a selling activity. The exact move remains a separate review step."
+            ? `Agreeing confirms that this activity does not belong in the ${branch} sub-branch. The exact move remains a separate review step.`
             : "Agreeing confirms that the current parent is too broad. The exact move remains a separate review step."}
       </BoundaryNote>
     </Stack>

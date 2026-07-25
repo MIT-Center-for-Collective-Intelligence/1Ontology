@@ -172,9 +172,9 @@ describe("Society of Mind reviewer card blinding", () => {
 
     expect(card.reviewerView).toMatchObject({
       question:
-        'Do these 2 activities use "Market" as a different main action from "Sell"?',
+        'Do these 2 activities use "Market" as a different main action from the "Sell" action?',
       proposedState:
-        'These activities appear to use "Market" as a different action from selling; "Promote" is the suggested category.',
+        'These activities appear to use "Market" as a different main action from the "Sell" action; "Promote" is the suggested category.',
       agreeLabel: "Yes, different action",
       disagreeLabel: "No, review separately",
     });
@@ -186,6 +186,34 @@ describe("Society of Mind reviewer card blinding", () => {
         { nodeTitle: "Market Vacant Space" },
       ],
     });
+  });
+
+  it("derives action-boundary copy from the dataset branch", () => {
+    const card = toReviewerCard({
+      proposalId: "buy-boundary",
+      datasetVersion: "buy-v1",
+      branch: "Buy",
+      issueType: "wrong-verb",
+      reviewerView: {
+        reasoning: "Cashing is a different financial action.",
+        context: {
+          type: "placement-comparison",
+          nodeTitle: "Cash Check",
+          currentParentTitle: "Buy information",
+          candidateHome: "Convert",
+          placementIssue: "wrong-verb",
+        },
+      },
+    });
+
+    expect(card.branch).toBe("Buy");
+    expect(card.reviewerView.question).toBe(
+      'Does "Cash Check" use a different main action than the "Buy" action?',
+    );
+    expect(card.reviewerView.proposedState).toContain(
+      'does not express the "Buy" action',
+    );
+    expect(JSON.stringify(card)).not.toMatch(/\bSell\b|selling/i);
   });
 
   it("removes proposed destinations from a polysemy diagnosis", () => {

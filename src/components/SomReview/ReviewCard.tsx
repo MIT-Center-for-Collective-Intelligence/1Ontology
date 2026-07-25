@@ -236,6 +236,7 @@ const ReviewCard = ({
   };
 
   const view = card.reviewerView;
+  const branch = card.branch || "Sell";
   const reasonValid = reason.trim().length > 0;
   const titleDiff =
     view.context.type === "title-comparison" &&
@@ -307,7 +308,7 @@ const ReviewCard = ({
                 {groupedPlacement ? (
                   <PanelField
                     label="Current scope"
-                    value={`${affectedPlacementNodes.length} activities across the Sell branch`}
+                    value={`${affectedPlacementNodes.length} activities across the ${branch} sub-branch`}
                   />
                 ) : (
                   <PanelField
@@ -346,17 +347,17 @@ const ReviewCard = ({
                     <>
                       These activities{" "}
                       {wrongVerb
-                        ? `appear to use "${
+                          ? `appear to use "${
                             placementContext.sharedAction ||
                             "their leading verb"
-                          }" as a different action from selling.`
+                          }" as a different action from "${branch}".`
                         : "appear to share the same placement issue."}
                     </>
                   ) : (
                     <>
                       &quot;{placementContext.nodeTitle}&quot;{" "}
                       {wrongVerb
-                        ? "is not a kind of selling."
+                        ? `does not express the "${branch}" action.`
                         : "is under a parent that is too broad."}
                     </>
                   )}
@@ -400,7 +401,7 @@ const ReviewCard = ({
         </Typography>
       </Box>
 
-      <ContextRenderer context={view.context} />
+      <ContextRenderer context={view.context} branch={branch} />
 
       <Box
         sx={{
@@ -493,7 +494,7 @@ const ReviewCard = ({
                   ? wrongVerb
                     ? groupedPlacement
                       ? "Which activities should be handled differently, and why?"
-                      : `Why is "${placementContext.nodeTitle}" still a kind of selling?`
+                      : `Why does "${placementContext.nodeTitle}" belong in the ${branch} sub-branch?`
                     : groupedPlacement
                       ? "Which activities should be handled differently, and why?"
                       : `Why should "${placementContext.nodeTitle}" stay under "${placementContext.currentParentTitle}"?`

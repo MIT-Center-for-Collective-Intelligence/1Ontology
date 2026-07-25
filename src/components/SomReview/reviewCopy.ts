@@ -20,7 +20,7 @@ export const ISSUE_DESCRIPTIONS: Record<SomIssueType, string> = {
   placement: "Judge whether an activity is under the wrong parent.",
   "wrong-verb": "Assess whether misjudged synonyms should be moved.",
   "sense-relocation":
-    "Move only the non-selling sense after a polysemy decision.",
+    "Move only the separated sense that belongs outside this sub-branch.",
   "node-merge":
     "Review an exact consolidation, including the survivor and moved children.",
   relocation:
@@ -57,7 +57,7 @@ export const ISSUE_INTRODUCTIONS: Record<SomIssueType, string> = {
   "wrong-verb":
     "Assess whether a synonym was misjudged because the activity uses a different main action. Decide whether it belongs in the current sub-branch; a specific destination will be reviewed separately.",
   "sense-relocation":
-    "Review the exact separation and relocation proposed after a polysemy diagnosis. The before-and-after view shows which sense remains in Sell and which sense moves elsewhere.",
+    "Review the exact separation and relocation proposed after a polysemy diagnosis. The before-and-after view shows which sense remains in the current sub-branch and which sense moves elsewhere.",
   "node-merge":
     "Review an exact consolidation after a related overlap or synonym diagnosis. The before-and-after view shows the surviving node, synonym, and every direct child that would move.",
   relocation:

@@ -33,7 +33,6 @@ import {
 } from "../../types/ISomReview";
 import { SOM_REVIEW_STAGES } from "../../lib/somReview/reviewTaxonomy";
 import { SOM_REVIEW_PATH } from "../../lib/somReview/reviewDependencies";
-import { SELL_ONTOLOGY_NAME } from "../../lib/somReview/ontologyConfig";
 import { ISSUE_DESCRIPTIONS } from "./reviewCopy";
 import { reviewAccentColor, reviewIconColor } from "./reviewStyles";
 import ReviewFollowUpPanel from "./ReviewFollowUpPanel";
@@ -199,6 +198,7 @@ const QueueStatus = ({ issue }: { issue: SomIssueTypeOption }) => {
 
 const ReviewQueueSelector = ({
   issueTypes,
+  ontologyName = "Ontology",
   onStart,
   canDeliberate = false,
   onOpenDeliberation,
@@ -207,6 +207,7 @@ const ReviewQueueSelector = ({
   onStartFollowUp,
 }: {
   issueTypes: SomIssueTypeOption[];
+  ontologyName?: string;
   onStart: (issueType: SomIssueType) => void;
   canDeliberate?: boolean;
   onOpenDeliberation?: () => void;
@@ -236,8 +237,8 @@ const ReviewQueueSelector = ({
         sx={{ width: { xs: "100%", sm: "auto" }, maxWidth: "100%" }}
       >
         <Chip
-          label={SELL_ONTOLOGY_NAME}
-          title={SELL_ONTOLOGY_NAME}
+          label={ontologyName}
+          title={ontologyName}
           variant="outlined"
           sx={{
             maxWidth: "100%",
