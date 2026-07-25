@@ -113,6 +113,11 @@ const QueueStatus = ({ issue }: { issue: SomIssueTypeOption }) => {
   if (!issue.enabled) {
     return <Chip label="Unavailable" size="small" variant="outlined" />;
   }
+  if (issue.total === 0) {
+    return (
+      <Chip label="No review items found" size="small" variant="outlined" />
+    );
+  }
   if (!issue.released) {
     return (
       <Chip
@@ -121,11 +126,6 @@ const QueueStatus = ({ issue }: { issue: SomIssueTypeOption }) => {
         size="small"
         variant="outlined"
       />
-    );
-  }
-  if (issue.total === 0) {
-    return (
-      <Chip label="No review items found" size="small" variant="outlined" />
     );
   }
   if ((issue.blockedBy || []).length > 0 && issue.pending > 0) {
@@ -331,13 +331,16 @@ const ReviewQueueSelector = ({
                     issue.released &&
                     (hasSavedItems || (hasNewItems && !blocked));
                   const blockerPhases = blockingPhaseSummary(blockers);
-                  const unavailableLabel = !issue.released
-                    ? `${issue.label}; awaiting regeneration after the current phase`
-                    : blocked
-                      ? `${issue.label}; complete ${blockerPhases} first`
-                      : issue.waiting
-                        ? `${issue.label}; review its related diagnosis first`
-                        : `${issue.label}, no review items available`;
+                  const unavailableLabel =
+                    issue.total === 0
+                      ? `${issue.label}; no review items found`
+                      : !issue.released
+                        ? `${issue.label}; awaiting regeneration after the current phase`
+                        : blocked
+                          ? `${issue.label}; complete ${blockerPhases} first`
+                          : issue.waiting
+                            ? `${issue.label}; review its related diagnosis first`
+                            : `${issue.label}, no review items available`;
                   return (
                     <Card
                       key={issue.id}

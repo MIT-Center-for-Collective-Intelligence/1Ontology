@@ -220,7 +220,7 @@ describe("Society of Mind review queue selector", () => {
     ).toBeDisabled();
     expect(
       screen.getByRole("button", {
-        name: "2. Add missing synonyms, no review items available",
+        name: "2. Add missing synonyms; no review items found",
       }),
     ).toBeDisabled();
   });
@@ -325,6 +325,27 @@ describe("Society of Mind review queue selector", () => {
     expect(
       screen.getByRole("button", {
         name: "7. Group long flat lists; awaiting regeneration after the current phase",
+      }),
+    ).toBeDisabled();
+  });
+
+  it("reports an unreleased zero-item queue as empty, not awaiting regeneration", () => {
+    const waveIssues = issues.map((issue) =>
+      issue.id === "synonym-enrichment"
+        ? {
+            ...issue,
+            released: false,
+            releaseMessage:
+              "Content proposals were regenerated from the revised snapshot.",
+          }
+        : issue,
+    );
+
+    render(<ReviewQueueSelector issueTypes={waveIssues} onStart={jest.fn()} />);
+
+    expect(
+      screen.getByRole("button", {
+        name: "2. Add missing synonyms; no review items found",
       }),
     ).toBeDisabled();
   });

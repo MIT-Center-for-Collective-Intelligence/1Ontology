@@ -7,3 +7,4 @@ Dockerfile
 *.md
 *.env
 tests
+**/.stage-cache/

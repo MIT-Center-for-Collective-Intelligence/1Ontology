@@ -1,0 +1,84 @@
+{
+  "schemaVersion": "som-expert-title-application-plan-v1",
+  "createdAt": "2026-07-25",
+  "sourceOntology": {
+    "appId": "final-hierarchy-with-o*net-rob-structure-applied-2026-07-25",
+    "name": "Final Hierarchy with O*Net - Rob Structure Applied 2026-07-25"
+  },
+  "targetOntology": {
+    "appId": "final-hierarchy-with-o*net-rob-buy-titles-applied-2026-07-25",
+    "name": "Final Hierarchy with O*Net - Rob Buy Titles Applied 2026-07-25"
+  },
+  "benchmark": {
+    "file": "rob-buy-title-benchmark.json",
+    "sha256": "567c29e1aa3465d263030d9ff7d0e8b4aa2466b972b63010070aec36f7e6ad02",
+    "reviewerLabel": "rob-laubacher",
+    "reviewed": 10,
+    "agreed": 10,
+    "disagreed": 0
+  },
+  "renames": [
+    {
+      "sourceNodeId": "81f60eb561fa9b1114badb262a3a",
+      "from": "Cash Order",
+      "to": "Cash Money Order",
+      "decisionSource": "acceptedProposal"
+    },
+    {
+      "sourceNodeId": "e8b0e09ac89bc4852eeb1c77c7d1",
+      "from": "Purchase Address",
+      "to": "Purchase Web Address",
+      "decisionSource": "acceptedProposal"
+    },
+    {
+      "sourceNodeId": "e54f15a83824272e741e31d26b19",
+      "from": "Purchase Finish",
+      "to": "Purchase Surface Finish",
+      "decisionSource": "acceptedProposal"
+    },
+    {
+      "sourceNodeId": "3ac1c704b0753c1bc34b478a7a78",
+      "from": "Purchase Necessity",
+      "to": "Purchase Wardrobe Necessity",
+      "decisionSource": "acceptedProposal"
+    },
+    {
+      "sourceNodeId": "8f2c4c3f18e58b5c8096a9e68aef",
+      "from": "Purchase Space",
+      "to": "Purchase Advertising Space",
+      "decisionSource": "acceptedProposal"
+    },
+    {
+      "sourceNodeId": "f6eb55a2aa8a9beb240e505306e5",
+      "from": "Purchase Time",
+      "to": "Purchase Advertising Time",
+      "decisionSource": "acceptedProposal"
+    },
+    {
+      "sourceNodeId": "1684624e8d338c701b3df0b0f09c",
+      "from": "Purchase Work",
+      "to": "Purchase Artwork",
+      "decisionSource": "acceptedProposal"
+    },
+    {
+      "sourceNodeId": "7376d070263ea7068c8e69aa1ce5",
+      "from": "Rent Necessity",
+      "to": "Rent Wardrobe Necessity",
+      "decisionSource": "acceptedProposal"
+    },
+    {
+      "sourceNodeId": "a9aadd58ff575db27629f5649815",
+      "from": "Shop Meal",
+      "to": "Shop for Meals",
+      "decisionSource": "acceptedProposal"
+    },
+    {
+      "sourceNodeId": "135fc351227c9e9cb1b51a0f1342",
+      "from": "Staffing Unit",
+      "to": "Staff Organizational Unit",
+      "decisionSource": "acceptedProposal"
+    }
+  ],
+  "splits": [],
+  "regenerateWithoutApplying": []
+}

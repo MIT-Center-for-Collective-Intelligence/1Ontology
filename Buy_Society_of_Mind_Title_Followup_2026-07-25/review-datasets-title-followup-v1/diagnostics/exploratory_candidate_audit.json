@@ -1,0 +1,3990 @@
+{
+  "datasetVersion": "buy-title-followup-after-initial-review-2026-07-25-v1",
+  "branch": "Buy",
+  "generatedAt": "2026-07-25T23:06:11.227Z",
+  "ontologyAppId": "final-hierarchy-with-o*net-rob-buy-titles-applied-2026-07-25",
+  "model": "gemini-3.1-pro-preview",
+  "learnedConstraints": "Content and identity precede structure; exact actions are separately gated; no Sell examples were supplied.",
+  "priorExpertTitleLocks": {
+    "benchmarkFile": "rob-buy-title-benchmark.json",
+    "benchmarkSha256": "57b5dba0ce2286508b9628428c11b5cde603f9bacac1b0e9e1233df1f16b8d44",
+    "count": 10
+  },
+  "detectorOutputs": [
+    {
+      "detectorId": "title-evidence-agent",
+      "pass": 1,
+      "raw": "{\n  \"candidates\": [\n    {\n      \"issueType\": \"title-clarity\",\n      \"nodeTitle\": \"Shop for Meals\",\n      \"currentParentTitle\": \"Buy (Information)\",\n      \"proposedTitle\": \"Shop for Meal Ingredients\",\n      \"rationale\": \"The source task 'Plan, shop for, or prepare nutritious meals...' implies shopping for groceries/ingredients to prepare meals, not buying pre-made meals as information. Also, it is currently under 'Buy (Information)' which is incorrect for physical food.\"\n    },\n    {\n      \"issueType\": \"title-clarity\",\n      \"nodeTitle\": \"Purchase Listing\",\n      \"currentParentTitle\": \"Buy (Information)\",\n      \"proposedTitle\": \"Purchase Directory Listing\",\n      \"rationale\": \"The source task specifies 'listings in local search engines, directories, or digital mapping technologies', making 'Purchase Directory Listing' more precise.\"\n    },\n    {\n      \"issueType\": \"title-clarity\",\n      \"nodeTitle\": \"Purchase Wardrobe Necessity\",\n      \"currentParentTitle\": \"Buy (Physical Object)\",\n      \"proposedTitle\": \"Purchase Wardrobe Item\",\n      \"rationale\": \"'Wardrobe Necessity' is an awkward phrasing derived from 'costumes or other wardrobe necessities'. 'Wardrobe Item' or 'Wardrobe Supply' is more natural.\"\n    },\n    {\n      \"issueType\": \"title-clarity\",\n      \"nodeTitle\": \"Rent Wardrobe Necessity\",\n      \"currentParentTitle\": \"Lease (Physical Object)\",\n      \"proposedTitle\": \"Rent Wardrobe Item\",\n      \"rationale\": \"Similar to Purchase Wardrobe Necessity, 'Wardrobe Item' is a more natural phrasing for renting costumes and wardrobe pieces.\"\n    },\n    {\n      \"issueType\": \"title-clarity\",\n      \"nodeTitle\": \"Subcontract Arrangement\",\n      \"currentParentTitle\": \"Subcontract (Activity)\",\n      \"proposedTitle\": \"Subcontract Interior Arrangement\",\n      \"rationale\": \"The source task refers to 'arrangement of carpeting, fixtures, accessories, draperies...'. 'Subcontract Arrangement' is too vague without context.\"\n    },\n    {\n      \"issueType\": \"title-clarity\",\n      \"nodeTitle\": \"Subcontract Fabrication\",\n      \"currentParentTitle\": \"Subcontract (Activity)\",\n      \"proposedTitle\": \"Subcontract Interior Fabrication\",\n      \"rationale\": \"The source task refers to fabrication of interior design elements (carpeting, fixtures, etc.). Adding 'Interior' clarifies the scope.\"\n    },\n    {\n      \"issueType\": \"title-clarity\",\n      \"nodeTitle\": \"Subcontract Installation\",\n      \"currentParentTitle\": \"Subcontract (Activity)\",\n      \"proposedTitle\": \"Subcontract Interior Installation\",\n      \"rationale\": \"The source task refers to installation of interior design elements. Adding 'Interior' clarifies the scope.\"\n    }\n  ]\n}",
+      "candidates": [
+        {
+          "issueType": "title-clarity",
+          "nodeTitle": "Shop for Meals",
+          "currentParentTitle": "Buy (Information)",
+          "proposedTitle": "Shop for Meal Ingredients",
+          "rationale": "The source task 'Plan, shop for, or prepare nutritious meals...' implies shopping for groceries/ingredients to prepare meals, not buying pre-made meals as information. Also, it is currently under 'Buy (Information)' which is incorrect for physical food.",
+          "candidateId": "title-evidence-agent-673c07612928",
+          "detectorId": "title-evidence-agent"
+        },
+        {
+          "issueType": "title-clarity",
+          "nodeTitle": "Purchase Listing",
+          "currentParentTitle": "Buy (Information)",
+          "proposedTitle": "Purchase Directory Listing",
+          "rationale": "The source task specifies 'listings in local search engines, directories, or digital mapping technologies', making 'Purchase Directory Listing' more precise.",
+          "candidateId": "title-evidence-agent-2111ce13e359",
+          "detectorId": "title-evidence-agent"
+        },
+        {
+          "issueType": "title-clarity",
+          "nodeTitle": "Purchase Wardrobe Necessity",
+          "currentParentTitle": "Buy (Physical Object)",
+          "proposedTitle": "Purchase Wardrobe Item",
+          "rationale": "'Wardrobe Necessity' is an awkward phrasing derived from 'costumes or other wardrobe necessities'. 'Wardrobe Item' or 'Wardrobe Supply' is more natural.",
+          "candidateId": "title-evidence-agent-3054cedb5def",
+          "detectorId": "title-evidence-agent"
+        },
+        {
+          "issueType": "title-clarity",
+          "nodeTitle": "Rent Wardrobe Necessity",
+          "currentParentTitle": "Lease (Physical Object)",
+          "proposedTitle": "Rent Wardrobe Item",
+          "rationale": "Similar to Purchase Wardrobe Necessity, 'Wardrobe Item' is a more natural phrasing for renting costumes and wardrobe pieces.",
+          "candidateId": "title-evidence-agent-5628899e4892",
+          "detectorId": "title-evidence-agent"
+        },
+        {
+          "issueType": "title-clarity",
+          "nodeTitle": "Subcontract Arrangement",
+          "currentParentTitle": "Subcontract (Activity)",
+          "proposedTitle": "Subcontract Interior Arrangement",
+          "rationale": "The source task refers to 'arrangement of carpeting, fixtures, accessories, draperies...'. 'Subcontract Arrangement' is too vague without context.",
+          "candidateId": "title-evidence-agent-437d78d9f2f8",
+          "detectorId": "title-evidence-agent"
+        },
+        {
+          "issueType": "title-clarity",
+          "nodeTitle": "Subcontract Fabrication",
+          "currentParentTitle": "Subcontract (Activity)",
+          "proposedTitle": "Subcontract Interior Fabrication",
+          "rationale": "The source task refers to fabrication of interior design elements (carpeting, fixtures, etc.). Adding 'Interior' clarifies the scope.",
+          "candidateId": "title-evidence-agent-97fdf98a97f6",
+          "detectorId": "title-evidence-agent"
+        },
+        {
+          "issueType": "title-clarity",
+          "nodeTitle": "Subcontract Installation",
+          "currentParentTitle": "Subcontract (Activity)",
+          "proposedTitle": "Subcontract Interior Installation",
+          "rationale": "The source task refers to installation of interior design elements. Adding 'Interior' clarifies the scope.",
+          "candidateId": "title-evidence-agent-5f67a3289772",
+          "detectorId": "title-evidence-agent"
+        }
+      ]
+    },
+    {
+      "detectorId": "title-evidence-agent",
+      "pass": 2,
+      "raw": "{\n  \"candidates\": [\n    {\n      \"issueType\": \"title-clarity\",\n      \"nodeTitle\": \"Shop for Meals\",\n      \"currentParentTitle\": \"Buy (Information)\",\n      \"proposedTitle\": \"Shop for Meal Ingredients\",\n      \"rationale\": \"The source task 'Plan, shop for, or prepare nutritious meals...' implies shopping for groceries/ingredients to prepare meals, not buying pre-made meals as information. Also, it is currently under 'Buy (Information)' which is incorrect for physical food.\"\n    },\n    {\n      \"issueType\": \"title-clarity\",\n      \"nodeTitle\": \"Purchase Listing\",\n      \"currentParentTitle\": \"Buy (Information)\",\n      \"proposedTitle\": \"Purchase Directory Listing\",\n      \"rationale\": \"The source task specifies 'listings in local search engines, directories, or digital mapping technologies', making 'Purchase Directory Listing' more precise.\"\n    },\n    {\n      \"issueType\": \"title-clarity\",\n      \"nodeTitle\": \"Purchase Wardrobe Necessity\",\n      \"currentParentTitle\": \"Buy (Physical Object)\",\n      \"proposedTitle\": \"Purchase Wardrobe Item\",\n      \"rationale\": \"'Wardrobe Necessity' is an awkward phrasing derived from 'costumes or other wardrobe necessities'. 'Wardrobe Item' or 'Wardrobe Supply' is more natural.\"\n    },\n    {\n      \"issueType\": \"title-clarity\",\n      \"nodeTitle\": \"Rent Wardrobe Necessity\",\n      \"currentParentTitle\": \"Lease (Physical Object)\",\n      \"proposedTitle\": \"Rent Wardrobe Item\",\n      \"rationale\": \"Similar to Purchase Wardrobe Necessity, 'Wardrobe Item' is a more natural phrasing for renting costumes and wardrobe pieces.\"\n    },\n    {\n      \"issueType\": \"title-clarity\",\n      \"nodeTitle\": \"Subcontract Arrangement\",\n      \"currentParentTitle\": \"Subcontract (Activity)\",\n      \"proposedTitle\": \"Subcontract Interior Arrangement\",\n      \"rationale\": \"The source task refers to 'arrangement of carpeting, fixtures, accessories, draperies...'. 'Subcontract Arrangement' is too vague without context.\"\n    },\n    {\n      \"issueType\": \"title-clarity\",\n      \"nodeTitle\": \"Subcontract Fabrication\",\n      \"currentParentTitle\": \"Subcontract (Activity)\",\n      \"proposedTitle\": \"Subcontract Interior Fabrication\",\n      \"rationale\": \"The source task refers to fabrication of interior design elements (carpeting, fixtures, etc.). Adding 'Interior' clarifies the scope.\"\n    },\n    {\n      \"issueType\": \"title-clarity\",\n      \"nodeTitle\": \"Subcontract Installation\",\n      \"currentParentTitle\": \"Subcontract (Activity)\",\n      \"proposedTitle\": \"Subcontract Interior Installation\",\n      \"rationale\": \"The source task refers to installation of interior design elements. Adding 'Interior' clarifies the scope.\"\n    }\n  ]\n}",
+      "candidates": [
+        {
+          "issueType": "title-clarity",
+          "nodeTitle": "Shop for Meals",
+          "currentParentTitle": "Buy (Information)",
+          "proposedTitle": "Shop for Meal Ingredients",
+          "rationale": "The source task 'Plan, shop for, or prepare nutritious meals...' implies shopping for groceries/ingredients to prepare meals, not buying pre-made meals as information. Also, it is currently under 'Buy (Information)' which is incorrect for physical food.",
+          "candidateId": "title-evidence-agent-673c07612928",
+          "detectorId": "title-evidence-agent"
+        },
+        {
+          "issueType": "title-clarity",
+          "nodeTitle": "Purchase Listing",
+          "currentParentTitle": "Buy (Information)",
+          "proposedTitle": "Purchase Directory Listing",
+          "rationale": "The source task specifies 'listings in local search engines, directories, or digital mapping technologies', making 'Purchase Directory Listing' more precise.",
+          "candidateId": "title-evidence-agent-2111ce13e359",
+          "detectorId": "title-evidence-agent"
+        },
+        {
+          "issueType": "title-clarity",
+          "nodeTitle": "Purchase Wardrobe Necessity",
+          "currentParentTitle": "Buy (Physical Object)",
+          "proposedTitle": "Purchase Wardrobe Item",
+          "rationale": "'Wardrobe Necessity' is an awkward phrasing derived from 'costumes or other wardrobe necessities'. 'Wardrobe Item' or 'Wardrobe Supply' is more natural.",
+          "candidateId": "title-evidence-agent-3054cedb5def",
+          "detectorId": "title-evidence-agent"
+        },
+        {
+          "issueType": "title-clarity",
+          "nodeTitle": "Rent Wardrobe Necessity",
+          "currentParentTitle": "Lease (Physical Object)",
+          "proposedTitle": "Rent Wardrobe Item",
+          "rationale": "Similar to Purchase Wardrobe Necessity, 'Wardrobe Item' is a more natural phrasing for renting costumes and wardrobe pieces.",
+          "candidateId": "title-evidence-agent-5628899e4892",
+          "detectorId": "title-evidence-agent"
+        },
+        {
+          "issueType": "title-clarity",
+          "nodeTitle": "Subcontract Arrangement",
+          "currentParentTitle": "Subcontract (Activity)",
+          "proposedTitle": "Subcontract Interior Arrangement",
+          "rationale": "The source task refers to 'arrangement of carpeting, fixtures, accessories, draperies...'. 'Subcontract Arrangement' is too vague without context.",
+          "candidateId": "title-evidence-agent-437d78d9f2f8",
+          "detectorId": "title-evidence-agent"
+        },
+        {
+          "issueType": "title-clarity",
+          "nodeTitle": "Subcontract Fabrication",
+          "currentParentTitle": "Subcontract (Activity)",
+          "proposedTitle": "Subcontract Interior Fabrication",
+          "rationale": "The source task refers to fabrication of interior design elements (carpeting, fixtures, etc.). Adding 'Interior' clarifies the scope.",
+          "candidateId": "title-evidence-agent-97fdf98a97f6",
+          "detectorId": "title-evidence-agent"
+        },
+        {
+          "issueType": "title-clarity",
+          "nodeTitle": "Subcontract Installation",
+          "currentParentTitle": "Subcontract (Activity)",
+          "proposedTitle": "Subcontract Interior Installation",
+          "rationale": "The source task refers to installation of interior design elements. Adding 'Interior' clarifies the scope.",
+          "candidateId": "title-evidence-agent-5f67a3289772",
+          "detectorId": "title-evidence-agent"
+        }
+      ]
+    },
+    {
+      "detectorId": "identity-agent",
+      "pass": 1,
+      "raw": "{\n  \"candidates\": [\n    {\n      \"issueType\": \"mistaken-synonym\",\n      \"nodeTitle\": \"Buy\",\n      \"removeSynonyms\": [\n        \"Cash\"\n      ],\n      \"rationale\": \"'Cash' (as in cashing a check or money order) is a financial exchange, but not typically synonymous with 'Buy' (purchasing an asset or good). It represents a different type of transaction.\"\n    },\n    {\n      \"issueType\": \"polysemy\",\n      \"nodeTitle\": \"Cash Check\",\n      \"currentParentTitle\": \"Buy (Information)\",\n      \"proposedSenses\": [\n        {\n          \"title\": \"Cash Check (Exchange for Currency)\",\n          \"meaning\": \"To exchange a check for its equivalent value in currency.\"\n        },\n        {\n          \"title\": \"Process Check Payment\",\n          \"meaning\": \"To accept a check as payment for goods or services.\"\n        }\n      ],\n      \"rationale\": \"Cashing a check is not buying information. It is a currency exchange or payment processing activity, which does not fit well under 'Buy (Information)'.\"\n    },\n    {\n      \"issueType\": \"polysemy\",\n      \"nodeTitle\": \"Cash Money Order\",\n      \"currentParentTitle\": \"Buy (Physical Object)\",\n      \"proposedSenses\": [\n        {\n          \"title\": \"Cash Money Order (Exchange for Currency)\",\n          \"meaning\": \"To exchange a money order for its equivalent value in currency.\"\n        }\n      ],\n      \"rationale\": \"Cashing a money order is a financial exchange, not buying a physical object. It is misplaced under 'Buy (Physical Object)'.\"\n    },\n    {\n      \"issueType\": \"polysemy\",\n      \"nodeTitle\": \"Shop for Meals\",\n      \"currentParentTitle\": \"Buy (Information)\",\n      \"proposedSenses\": [\n        {\n          \"title\": \"Shop for Groceries\",\n          \"meaning\": \"To purchase food ingredients or prepared meals.\"\n        }\n      ],\n      \"rationale\": \"Shopping for meals involves buying physical food items, not information. It is misplaced under 'Buy (Information)'.\"\n    }\n  ]\n}",
+      "candidates": [
+        {
+          "issueType": "mistaken-synonym",
+          "nodeTitle": "Buy",
+          "removeSynonyms": [
+            "Cash"
+          ],
+          "rationale": "'Cash' (as in cashing a check or money order) is a financial exchange, but not typically synonymous with 'Buy' (purchasing an asset or good). It represents a different type of transaction.",
+          "candidateId": "identity-agent-18b5d72bd807",
+          "detectorId": "identity-agent"
+        },
+        {
+          "issueType": "polysemy",
+          "nodeTitle": "Cash Check",
+          "currentParentTitle": "Buy (Information)",
+          "proposedSenses": [
+            {
+              "title": "Cash Check (Exchange for Currency)",
+              "meaning": "To exchange a check for its equivalent value in currency."
+            },
+            {
+              "title": "Process Check Payment",
+              "meaning": "To accept a check as payment for goods or services."
+            }
+          ],
+          "rationale": "Cashing a check is not buying information. It is a currency exchange or payment processing activity, which does not fit well under 'Buy (Information)'.",
+          "candidateId": "identity-agent-f5f4a9d600bf",
+          "detectorId": "identity-agent"
+        },
+        {
+          "issueType": "polysemy",
+          "nodeTitle": "Cash Money Order",
+          "currentParentTitle": "Buy (Physical Object)",
+          "proposedSenses": [
+            {
+              "title": "Cash Money Order (Exchange for Currency)",
+              "meaning": "To exchange a money order for its equivalent value in currency."
+            }
+          ],
+          "rationale": "Cashing a money order is a financial exchange, not buying a physical object. It is misplaced under 'Buy (Physical Object)'.",
+          "candidateId": "identity-agent-8310ab147fc4",
+          "detectorId": "identity-agent"
+        },
+        {
+          "issueType": "polysemy",
+          "nodeTitle": "Shop for Meals",
+          "currentParentTitle": "Buy (Information)",
+          "proposedSenses": [
+            {
+              "title": "Shop for Groceries",
+              "meaning": "To purchase food ingredients or prepared meals."
+            }
+          ],
+          "rationale": "Shopping for meals involves buying physical food items, not information. It is misplaced under 'Buy (Information)'.",
+          "candidateId": "identity-agent-5a133a07b3d6",
+          "detectorId": "identity-agent"
+        }
+      ]
+    },
+    {
+      "detectorId": "identity-agent",
+      "pass": 2,
+      "raw": "{\n  \"candidates\": [\n    {\n      \"issueType\": \"mistaken-synonym\",\n      \"nodeTitle\": \"Buy\",\n      \"removeSynonyms\": [\n        \"Cash\"\n      ],\n      \"rationale\": \"'Cash' (as in cashing a check or money order) is a financial exchange, but not typically synonymous with 'Buy' (purchasing an asset or good). It represents a different action.\"\n    },\n    {\n      \"issueType\": \"polysemy\",\n      \"nodeTitle\": \"Cash Check\",\n      \"currentParentTitle\": \"Buy (Information)\",\n      \"proposedSenses\": [\n        {\n          \"title\": \"Cash Check (Exchange for Currency)\",\n          \"meaning\": \"To exchange a check for its equivalent value in cash.\"\n        },\n        {\n          \"title\": \"Process Check Payment\",\n          \"meaning\": \"To accept a check as payment for goods or services.\"\n        }\n      ],\n      \"rationale\": \"Cashing a check is not buying information; it is a financial transaction exchanging one form of money for another. It is misplaced under 'Buy (Information)'.\"\n    },\n    {\n      \"issueType\": \"polysemy\",\n      \"nodeTitle\": \"Cash Money Order\",\n      \"currentParentTitle\": \"Buy (Physical Object)\",\n      \"proposedSenses\": [\n        {\n          \"title\": \"Cash Money Order (Exchange for Currency)\",\n          \"meaning\": \"To exchange a money order for its equivalent value in cash.\"\n        }\n      ],\n      \"rationale\": \"Cashing a money order is a financial exchange, not buying a physical object. It is misplaced under 'Buy (Physical Object)'.\"\n    },\n    {\n      \"issueType\": \"polysemy\",\n      \"nodeTitle\": \"Shop for Meals\",\n      \"currentParentTitle\": \"Buy (Information)\",\n      \"proposedSenses\": [\n        {\n          \"title\": \"Shop for Groceries\",\n          \"meaning\": \"To purchase food ingredients for meals.\"\n        }\n      ],\n      \"rationale\": \"Shopping for meals involves buying physical food items, not information. It is misplaced under 'Buy (Information)'.\"\n    }\n  ]\n}",
+      "candidates": [
+        {
+          "issueType": "mistaken-synonym",
+          "nodeTitle": "Buy",
+          "removeSynonyms": [
+            "Cash"
+          ],
+          "rationale": "'Cash' (as in cashing a check or money order) is a financial exchange, but not typically synonymous with 'Buy' (purchasing an asset or good). It represents a different action.",
+          "candidateId": "identity-agent-18b5d72bd807",
+          "detectorId": "identity-agent"
+        },
+        {
+          "issueType": "polysemy",
+          "nodeTitle": "Cash Check",
+          "currentParentTitle": "Buy (Information)",
+          "proposedSenses": [
+            {
+              "title": "Cash Check (Exchange for Currency)",
+              "meaning": "To exchange a check for its equivalent value in cash."
+            },
+            {
+              "title": "Process Check Payment",
+              "meaning": "To accept a check as payment for goods or services."
+            }
+          ],
+          "rationale": "Cashing a check is not buying information; it is a financial transaction exchanging one form of money for another. It is misplaced under 'Buy (Information)'.",
+          "candidateId": "identity-agent-f5f4a9d600bf",
+          "detectorId": "identity-agent"
+        },
+        {
+          "issueType": "polysemy",
+          "nodeTitle": "Cash Money Order",
+          "currentParentTitle": "Buy (Physical Object)",
+          "proposedSenses": [
+            {
+              "title": "Cash Money Order (Exchange for Currency)",
+              "meaning": "To exchange a money order for its equivalent value in cash."
+            }
+          ],
+          "rationale": "Cashing a money order is a financial exchange, not buying a physical object. It is misplaced under 'Buy (Physical Object)'.",
+          "candidateId": "identity-agent-8310ab147fc4",
+          "detectorId": "identity-agent"
+        },
+        {
+          "issueType": "polysemy",
+          "nodeTitle": "Shop for Meals",
+          "currentParentTitle": "Buy (Information)",
+          "proposedSenses": [
+            {
+              "title": "Shop for Groceries",
+              "meaning": "To purchase food ingredients for meals."
+            }
+          ],
+          "rationale": "Shopping for meals involves buying physical food items, not information. It is misplaced under 'Buy (Information)'.",
+          "candidateId": "identity-agent-5a133a07b3d6",
+          "detectorId": "identity-agent"
+        }
+      ]
+    },
+    {
+      "detectorId": "structure-agent",
+      "pass": 1,
+      "raw": "{\n  \"candidates\": [\n    {\n      \"issueType\": \"flat-list-grouping\",\n      \"parentTitle\": \"Buy (Information)\",\n      \"proposedGroupTitle\": \"Buy Financial Instrument\",\n      \"proposedChildren\": [\n        \"Buy Bond\",\n        \"Buy Currency\",\n        \"Buy Future\",\n        \"Buy Stock\",\n        \"Purchase Derivative\",\n        \"Purchase Investment\"\n      ],\n      \"rationale\": \"Groups activities related to purchasing financial instruments and investments.\"\n    },\n    {\n      \"issueType\": \"flat-list-grouping\",\n      \"parentTitle\": \"Buy (Information)\",\n      \"proposedGroupTitle\": \"Purchase Advertising\",\n      \"proposedChildren\": [\n        \"Purchase Advertising Space\",\n        \"Purchase Advertising Time\"\n      ],\n      \"rationale\": \"Groups activities related to buying advertising.\"\n    },\n    {\n      \"issueType\": \"flat-list-grouping\",\n      \"parentTitle\": \"Buy (Information)\",\n      \"proposedGroupTitle\": \"Purchase Web Domain\",\n      \"proposedChildren\": [\n        \"Purchase Domain\",\n        \"Purchase Web Address\"\n      ],\n      \"rationale\": \"Groups activities related to acquiring internet domains and web addresses.\"\n    },\n    {\n      \"issueType\": \"flat-list-grouping\",\n      \"parentTitle\": \"Buy (Physical Object)\",\n      \"proposedGroupTitle\": \"Purchase Equipment and Machinery\",\n      \"proposedChildren\": [\n        \"Purchase Equipment\",\n        \"Purchase Machinery\",\n        \"Purchase Technology\",\n        \"Purchase Tool\"\n      ],\n      \"rationale\": \"Groups activities related to buying tools, equipment, and machinery.\"\n    },\n    {\n      \"issueType\": \"flat-list-grouping\",\n      \"parentTitle\": \"Buy (Physical Object)\",\n      \"proposedGroupTitle\": \"Purchase Material and Supply\",\n      \"proposedChildren\": [\n        \"Purchase Hardware\",\n        \"Purchase Lumber\",\n        \"Purchase Material\",\n        \"Purchase Part\",\n        \"Purchase Resource\",\n        \"Purchase Supply\"\n      ],\n      \"rationale\": \"Groups activities related to buying raw materials, parts, and supplies.\"\n    },\n    {\n      \"issueType\": \"flat-list-grouping\",\n      \"parentTitle\": \"Buy (Physical Object)\",\n      \"proposedGroupTitle\": \"Purchase Furniture and Furnishing\",\n      \"proposedChildren\": [\n        \"Purchase Furnishing\",\n        \"Purchase Furniture\"\n      ],\n      \"rationale\": \"Groups activities related to buying furniture and furnishings.\"\n    },\n    {\n      \"issueType\": \"flat-list-grouping\",\n      \"parentTitle\": \"Buy (Physical Object)\",\n      \"proposedGroupTitle\": \"Purchase Food and Meal\",\n      \"proposedChildren\": [\n        \"Purchase Food\",\n        \"Purchase Meal\"\n      ],\n      \"rationale\": \"Groups activities related to buying food and meals.\"\n    },\n    {\n      \"issueType\": \"flat-list-grouping\",\n      \"parentTitle\": \"Buy (Physical Object)\",\n      \"proposedGroupTitle\": \"Purchase Merchandise and Good\",\n      \"proposedChildren\": [\n        \"Buy Commodity\",\n        \"Buy Merchandise\",\n        \"Purchase Good\",\n        \"Purchase Item\",\n        \"Purchase Product\",\n        \"Purchase Stock\"\n      ],\n      \"rationale\": \"Groups activities related to buying general merchandise, goods, and products for resale or general use.\"\n    },\n    {\n      \"issueType\": \"flat-list-grouping\",\n      \"parentTitle\": \"Hire (Actor)\",\n      \"proposedGroupTitle\": \"Hire General Staff\",\n      \"proposedChildren\": [\n        \"Hire Associate\",\n        \"Hire Crew\",\n        \"Hire Employee\",\n        \"Hire Member\",\n        \"Hire Personnel\",\n        \"Hire Staff\",\n        \"Hire Worker\"\n      ],\n      \"rationale\": \"Groups activities related to hiring general employees, staff, and workers.\"\n    },\n    {\n      \"issueType\": \"flat-list-grouping\",\n      \"parentTitle\": \"Hire (Actor)\",\n      \"proposedGroupTitle\": \"Hire Specific Role\",\n      \"proposedChildren\": [\n        \"Employ Foreman\",\n        \"Hire Buyer\",\n        \"Hire Clerk\",\n        \"Hire Coach\",\n        \"Hire Collector\",\n        \"Hire Expediter\",\n        \"Hire Faculty\",\n        \"Hire Recruiter\",\n        \"Hire Reporter\",\n        \"Hire Trainer\",\n        \"Hire Writer\"\n      ],\n      \"rationale\": \"Groups activities related to hiring specific professional roles.\"\n    },\n    {\n      \"issueType\": \"flat-list-grouping\",\n      \"parentTitle\": \"Recruit (Actor)\",\n      \"proposedGroupTitle\": \"Recruit General Staff\",\n      \"proposedChildren\": [\n        \"Recruit Employee\",\n        \"Recruit Member\",\n        \"Recruit Personnel\",\n        \"Recruit Staff\",\n        \"Recruit Worker\"\n      ],\n      \"rationale\": \"Groups activities related to recruiting general employees and staff.\"\n    },\n    {\n      \"issueType\": \"flat-list-grouping\",\n      \"parentTitle\": \"Recruit (Actor)\",\n      \"proposedGroupTitle\": \"Recruit Contractor\",\n      \"proposedChildren\": [\n        \"Recruit Contractor\",\n        \"Recruit Subcontractor\"\n      ],\n      \"rationale\": \"Groups activities related to recruiting contractors and subcontractors.\"\n    }\n  ]\n}",
+      "candidates": [
+        {
+          "issueType": "flat-list-grouping",
+          "parentTitle": "Buy (Information)",
+          "proposedGroupTitle": "Buy Financial Instrument",
+          "proposedChildren": [
+            "Buy Bond",
+            "Buy Currency",
+            "Buy Future",
+            "Buy Stock",
+            "Purchase Derivative",
+            "Purchase Investment"
+          ],
+          "rationale": "Groups activities related to purchasing financial instruments and investments.",
+          "candidateId": "structure-agent-59c2a9e8964a",
+          "detectorId": "structure-agent"
+        },
+        {
+          "issueType": "flat-list-grouping",
+          "parentTitle": "Buy (Information)",
+          "proposedGroupTitle": "Purchase Advertising",
+          "proposedChildren": [
+            "Purchase Advertising Space",
+            "Purchase Advertising Time"
+          ],
+          "rationale": "Groups activities related to buying advertising.",
+          "candidateId": "structure-agent-8fa999d6cdd2",
+          "detectorId": "structure-agent"
+        },
+        {
+          "issueType": "flat-list-grouping",
+          "parentTitle": "Buy (Information)",
+          "proposedGroupTitle": "Purchase Web Domain",
+          "proposedChildren": [
+            "Purchase Domain",
+            "Purchase Web Address"
+          ],
+          "rationale": "Groups activities related to acquiring internet domains and web addresses.",
+          "candidateId": "structure-agent-17e58a606df7",
+          "detectorId": "structure-agent"
+        },
+        {
+          "issueType": "flat-list-grouping",
+          "parentTitle": "Buy (Physical Object)",
+          "proposedGroupTitle": "Purchase Equipment and Machinery",
+          "proposedChildren": [
+            "Purchase Equipment",
+            "Purchase Machinery",
+            "Purchase Technology",
+            "Purchase Tool"
+          ],
+          "rationale": "Groups activities related to buying tools, equipment, and machinery.",
+          "candidateId": "structure-agent-6d681dabd0ee",
+          "detectorId": "structure-agent"
+        },
+        {
+          "issueType": "flat-list-grouping",
+          "parentTitle": "Buy (Physical Object)",
+          "proposedGroupTitle": "Purchase Material and Supply",
+          "proposedChildren": [
+            "Purchase Hardware",
+            "Purchase Lumber",
+            "Purchase Material",
+            "Purchase Part",
+            "Purchase Resource",
+            "Purchase Supply"
+          ],
+          "rationale": "Groups activities related to buying raw materials, parts, and supplies.",
+          "candidateId": "structure-agent-81826b858edd",
+          "detectorId": "structure-agent"
+        },
+        {
+          "issueType": "flat-list-grouping",
+          "parentTitle": "Buy (Physical Object)",
+          "proposedGroupTitle": "Purchase Furniture and Furnishing",
+          "proposedChildren": [
+            "Purchase Furnishing",
+            "Purchase Furniture"
+          ],
+          "rationale": "Groups activities related to buying furniture and furnishings.",
+          "candidateId": "structure-agent-9f98ca48da5e",
+          "detectorId": "structure-agent"
+        },
+        {
+          "issueType": "flat-list-grouping",
+          "parentTitle": "Buy (Physical Object)",
+          "proposedGroupTitle": "Purchase Food and Meal",
+          "proposedChildren": [
+            "Purchase Food",
+            "Purchase Meal"
+          ],
+          "rationale": "Groups activities related to buying food and meals.",
+          "candidateId": "structure-agent-38bb036ef64a",
+          "detectorId": "structure-agent"
+        },
+        {
+          "issueType": "flat-list-grouping",
+          "parentTitle": "Buy (Physical Object)",
+          "proposedGroupTitle": "Purchase Merchandise and Good",
+          "proposedChildren": [
+            "Buy Commodity",
+            "Buy Merchandise",
+            "Purchase Good",
+            "Purchase Item",
+            "Purchase Product",
+            "Purchase Stock"
+          ],
+          "rationale": "Groups activities related to buying general merchandise, goods, and products for resale or general use.",
+          "candidateId": "structure-agent-3949971b583a",
+          "detectorId": "structure-agent"
+        },
+        {
+          "issueType": "flat-list-grouping",
+          "parentTitle": "Hire (Actor)",
+          "proposedGroupTitle": "Hire General Staff",
+          "proposedChildren": [
+            "Hire Associate",
+            "Hire Crew",
+            "Hire Employee",
+            "Hire Member",
+            "Hire Personnel",
+            "Hire Staff",
+            "Hire Worker"
+          ],
+          "rationale": "Groups activities related to hiring general employees, staff, and workers.",
+          "candidateId": "structure-agent-58a354611b54",
+          "detectorId": "structure-agent"
+        },
+        {
+          "issueType": "flat-list-grouping",
+          "parentTitle": "Hire (Actor)",
+          "proposedGroupTitle": "Hire Specific Role",
+          "proposedChildren": [
+            "Employ Foreman",
+            "Hire Buyer",
+            "Hire Clerk",
+            "Hire Coach",
+            "Hire Collector",
+            "Hire Expediter",
+            "Hire Faculty",
+            "Hire Recruiter",
+            "Hire Reporter",
+            "Hire Trainer",
+            "Hire Writer"
+          ],
+          "rationale": "Groups activities related to hiring specific professional roles.",
+          "candidateId": "structure-agent-3127b762d55a",
+          "detectorId": "structure-agent"
+        },
+        {
+          "issueType": "flat-list-grouping",
+          "parentTitle": "Recruit (Actor)",
+          "proposedGroupTitle": "Recruit General Staff",
+          "proposedChildren": [
+            "Recruit Employee",
+            "Recruit Member",
+            "Recruit Personnel",
+            "Recruit Staff",
+            "Recruit Worker"
+          ],
+          "rationale": "Groups activities related to recruiting general employees and staff.",
+          "candidateId": "structure-agent-54163dbebe40",
+          "detectorId": "structure-agent"
+        },
+        {
+          "issueType": "flat-list-grouping",
+          "parentTitle": "Recruit (Actor)",
+          "proposedGroupTitle": "Recruit Contractor",
+          "proposedChildren": [
+            "Recruit Contractor",
+            "Recruit Subcontractor"
+          ],
+          "rationale": "Groups activities related to recruiting contractors and subcontractors.",
+          "candidateId": "structure-agent-0b6a3e40b886",
+          "detectorId": "structure-agent"
+        }
+      ]
+    },
+    {
+      "detectorId": "structure-agent",
+      "pass": 2,
+      "raw": "{\n  \"candidates\": [\n    {\n      \"issueType\": \"flat-list-grouping\",\n      \"parentTitle\": \"Buy (Information)\",\n      \"proposedGroupTitle\": \"Purchase Investment\",\n      \"proposedChildren\": [\n        \"Buy Bond\",\n        \"Buy Currency\",\n        \"Buy Future\",\n        \"Buy Stock\",\n        \"Purchase Derivative\"\n      ],\n      \"rationale\": \"Groups specific financial instruments and investments under the broader 'Purchase Investment' node.\"\n    },\n    {\n      \"issueType\": \"flat-list-grouping\",\n      \"parentTitle\": \"Buy (Information)\",\n      \"proposedGroupTitle\": \"Purchase Advertising Space\",\n      \"proposedChildren\": [\n        \"Purchase Advertising Time\"\n      ],\n      \"rationale\": \"Groups related advertising purchases.\"\n    },\n    {\n      \"issueType\": \"flat-list-grouping\",\n      \"parentTitle\": \"Buy (Information)\",\n      \"proposedGroupTitle\": \"Purchase Domain\",\n      \"proposedChildren\": [\n        \"Purchase Web Address\"\n      ],\n      \"rationale\": \"A web address is synonymous with a domain in this context.\"\n    },\n    {\n      \"issueType\": \"flat-list-grouping\",\n      \"parentTitle\": \"Buy (Physical Object)\",\n      \"proposedGroupTitle\": \"Purchase Food\",\n      \"proposedChildren\": [\n        \"Purchase Meal\"\n      ],\n      \"rationale\": \"Meals are a type of food.\"\n    },\n    {\n      \"issueType\": \"flat-list-grouping\",\n      \"parentTitle\": \"Buy (Physical Object)\",\n      \"proposedGroupTitle\": \"Purchase Furniture\",\n      \"proposedChildren\": [\n        \"Purchase Furnishing\"\n      ],\n      \"rationale\": \"Furnishings and furniture are highly related physical objects.\"\n    },\n    {\n      \"issueType\": \"flat-list-grouping\",\n      \"parentTitle\": \"Buy (Physical Object)\",\n      \"proposedGroupTitle\": \"Purchase Equipment\",\n      \"proposedChildren\": [\n        \"Purchase Machinery\",\n        \"Purchase Tool\",\n        \"Purchase Hardware\"\n      ],\n      \"rationale\": \"Machinery, tools, and hardware are types of equipment.\"\n    },\n    {\n      \"issueType\": \"flat-list-grouping\",\n      \"parentTitle\": \"Buy (Physical Object)\",\n      \"proposedGroupTitle\": \"Purchase Material\",\n      \"proposedChildren\": [\n        \"Purchase Lumber\",\n        \"Purchase Surface Finish\"\n      ],\n      \"rationale\": \"Lumber and surface finishes are types of materials.\"\n    },\n    {\n      \"issueType\": \"flat-list-grouping\",\n      \"parentTitle\": \"Hire (Actor)\",\n      \"proposedGroupTitle\": \"Hire Employee\",\n      \"proposedChildren\": [\n        \"Hire Staff\",\n        \"Hire Personnel\",\n        \"Hire Worker\",\n        \"Hire Associate\"\n      ],\n      \"rationale\": \"Groups general employment terms under 'Hire Employee'.\"\n    },\n    {\n      \"issueType\": \"flat-list-grouping\",\n      \"parentTitle\": \"Hire (Actor)\",\n      \"proposedGroupTitle\": \"Hire Trainer\",\n      \"proposedChildren\": [\n        \"Hire Coach\"\n      ],\n      \"rationale\": \"Coaches are a type of trainer.\"\n    },\n    {\n      \"issueType\": \"flat-list-grouping\",\n      \"parentTitle\": \"Hire (Actor)\",\n      \"proposedGroupTitle\": \"Hire Writer\",\n      \"proposedChildren\": [\n        \"Hire Reporter\"\n      ],\n      \"rationale\": \"Reporters are a type of writer.\"\n    },\n    {\n      \"issueType\": \"flat-list-grouping\",\n      \"parentTitle\": \"Recruit (Actor)\",\n      \"proposedGroupTitle\": \"Recruit Employee\",\n      \"proposedChildren\": [\n        \"Recruit Staff\",\n        \"Recruit Personnel\",\n        \"Recruit Worker\",\n        \"Recruit Applicant\"\n      ],\n      \"rationale\": \"Groups general employment recruitment terms under 'Recruit Employee'.\"\n    },\n    {\n      \"issueType\": \"flat-list-grouping\",\n      \"parentTitle\": \"Recruit (Actor)\",\n      \"proposedGroupTitle\": \"Recruit Contractor\",\n      \"proposedChildren\": [\n        \"Recruit Subcontractor\"\n      ],\n      \"rationale\": \"Subcontractors are a type of contractor.\"\n    }\n  ]\n}",
+      "candidates": [
+        {
+          "issueType": "flat-list-grouping",
+          "parentTitle": "Buy (Information)",
+          "proposedGroupTitle": "Purchase Investment",
+          "proposedChildren": [
+            "Buy Bond",
+            "Buy Currency",
+            "Buy Future",
+            "Buy Stock",
+            "Purchase Derivative"
+          ],
+          "rationale": "Groups specific financial instruments and investments under the broader 'Purchase Investment' node.",
+          "candidateId": "structure-agent-7a9f9d939647",
+          "detectorId": "structure-agent"
+        },
+        {
+          "issueType": "flat-list-grouping",
+          "parentTitle": "Buy (Information)",
+          "proposedGroupTitle": "Purchase Advertising Space",
+          "proposedChildren": [
+            "Purchase Advertising Time"
+          ],
+          "rationale": "Groups related advertising purchases.",
+          "candidateId": "structure-agent-44e096264b9c",
+          "detectorId": "structure-agent"
+        },
+        {
+          "issueType": "flat-list-grouping",
+          "parentTitle": "Buy (Information)",
+          "proposedGroupTitle": "Purchase Domain",
+          "proposedChildren": [
+            "Purchase Web Address"
+          ],
+          "rationale": "A web address is synonymous with a domain in this context.",
+          "candidateId": "structure-agent-70a837b44e5a",
+          "detectorId": "structure-agent"
+        },
+        {
+          "issueType": "flat-list-grouping",
+          "parentTitle": "Buy (Physical Object)",
+          "proposedGroupTitle": "Purchase Food",
+          "proposedChildren": [
+            "Purchase Meal"
+          ],
+          "rationale": "Meals are a type of food.",
+          "candidateId": "structure-agent-9bb3c4a64787",
+          "detectorId": "structure-agent"
+        },
+        {
+          "issueType": "flat-list-grouping",
+          "parentTitle": "Buy (Physical Object)",
+          "proposedGroupTitle": "Purchase Furniture",
+          "proposedChildren": [
+            "Purchase Furnishing"
+          ],
+          "rationale": "Furnishings and furniture are highly related physical objects.",
+          "candidateId": "structure-agent-8368c24090ea",
+          "detectorId": "structure-agent"
+        },
+        {
+          "issueType": "flat-list-grouping",
+          "parentTitle": "Buy (Physical Object)",
+          "proposedGroupTitle": "Purchase Equipment",
+          "proposedChildren": [
+            "Purchase Machinery",
+            "Purchase Tool",
+            "Purchase Hardware"
+          ],
+          "rationale": "Machinery, tools, and hardware are types of equipment.",
+          "candidateId": "structure-agent-097b86763f1a",
+          "detectorId": "structure-agent"
+        },
+        {
+          "issueType": "flat-list-grouping",
+          "parentTitle": "Buy (Physical Object)",
+          "proposedGroupTitle": "Purchase Material",
+          "proposedChildren": [
+            "Purchase Lumber",
+            "Purchase Surface Finish"
+          ],
+          "rationale": "Lumber and surface finishes are types of materials.",
+          "candidateId": "structure-agent-4ec48300bb74",
+          "detectorId": "structure-agent"
+        },
+        {
+          "issueType": "flat-list-grouping",
+          "parentTitle": "Hire (Actor)",
+          "proposedGroupTitle": "Hire Employee",
+          "proposedChildren": [
+            "Hire Staff",
+            "Hire Personnel",
+            "Hire Worker",
+            "Hire Associate"
+          ],
+          "rationale": "Groups general employment terms under 'Hire Employee'.",
+          "candidateId": "structure-agent-11ca8374a5cb",
+          "detectorId": "structure-agent"
+        },
+        {
+          "issueType": "flat-list-grouping",
+          "parentTitle": "Hire (Actor)",
+          "proposedGroupTitle": "Hire Trainer",
+          "proposedChildren": [
+            "Hire Coach"
+          ],
+          "rationale": "Coaches are a type of trainer.",
+          "candidateId": "structure-agent-6107ae3be848",
+          "detectorId": "structure-agent"
+        },
+        {
+          "issueType": "flat-list-grouping",
+          "parentTitle": "Hire (Actor)",
+          "proposedGroupTitle": "Hire Writer",
+          "proposedChildren": [
+            "Hire Reporter"
+          ],
+          "rationale": "Reporters are a type of writer.",
+          "candidateId": "structure-agent-6bd3c5bbd223",
+          "detectorId": "structure-agent"
+        },
+        {
+          "issueType": "flat-list-grouping",
+          "parentTitle": "Recruit (Actor)",
+          "proposedGroupTitle": "Recruit Employee",
+          "proposedChildren": [
+            "Recruit Staff",
+            "Recruit Personnel",
+            "Recruit Worker",
+            "Recruit Applicant"
+          ],
+          "rationale": "Groups general employment recruitment terms under 'Recruit Employee'.",
+          "candidateId": "structure-agent-3017f08fafd9",
+          "detectorId": "structure-agent"
+        },
+        {
+          "issueType": "flat-list-grouping",
+          "parentTitle": "Recruit (Actor)",
+          "proposedGroupTitle": "Recruit Contractor",
+          "proposedChildren": [
+            "Recruit Subcontractor"
+          ],
+          "rationale": "Subcontractors are a type of contractor.",
+          "candidateId": "structure-agent-4bb208f416bf",
+          "detectorId": "structure-agent"
+        }
+      ]
+    },
+    {
+      "detectorId": "placement-boundary-agent",
+      "pass": 1,
+      "raw": "{\n  \"candidates\": [\n    {\n      \"issueType\": \"placement\",\n      \"nodeTitle\": \"Shop for Meals\",\n      \"currentParentTitle\": \"Buy (Information)\",\n      \"candidateHome\": \"Buy (Physical Object)\",\n      \"rationale\": \"Meals are physical objects, not information, and should be classified accordingly.\"\n    },\n    {\n      \"issueType\": \"placement\",\n      \"nodeTitle\": \"Purchase Service\",\n      \"currentParentTitle\": \"Buy (Information)\",\n      \"candidateHome\": \"Buy service\",\n      \"rationale\": \"Purchasing a service belongs under the dedicated 'Buy service' category rather than 'Buy (Information)'.\"\n    },\n    {\n      \"issueType\": \"placement\",\n      \"nodeTitle\": \"Purchase Artwork\",\n      \"currentParentTitle\": \"Buy (Information)\",\n      \"candidateHome\": \"Buy (Physical Object)\",\n      \"rationale\": \"Artwork is typically a physical object (e.g., paintings, sculptures) rather than information.\"\n    },\n    {\n      \"issueType\": \"wrong-verb\",\n      \"nodeTitle\": \"Cash Check\",\n      \"currentParentTitle\": \"Buy (Information)\",\n      \"candidateHome\": \"Perform (action) (Information)\",\n      \"rationale\": \"Cashing a check for a customer is processing a financial transaction or providing a service, not buying information.\"\n    },\n    {\n      \"issueType\": \"wrong-verb\",\n      \"nodeTitle\": \"Cash Money Order\",\n      \"currentParentTitle\": \"Buy (Physical Object)\",\n      \"candidateHome\": \"Perform (action) (Information)\",\n      \"rationale\": \"Cashing a money order is processing a financial transaction, not buying a physical object.\"\n    }\n  ]\n}",
+      "candidates": [
+        {
+          "issueType": "placement",
+          "nodeTitle": "Shop for Meals",
+          "currentParentTitle": "Buy (Information)",
+          "candidateHome": "Buy (Physical Object)",
+          "rationale": "Meals are physical objects, not information, and should be classified accordingly.",
+          "candidateId": "placement-boundary-agent-e791a62de086",
+          "detectorId": "placement-boundary-agent"
+        },
+        {
+          "issueType": "placement",
+          "nodeTitle": "Purchase Service",
+          "currentParentTitle": "Buy (Information)",
+          "candidateHome": "Buy service",
+          "rationale": "Purchasing a service belongs under the dedicated 'Buy service' category rather than 'Buy (Information)'.",
+          "candidateId": "placement-boundary-agent-4b38490bf1ff",
+          "detectorId": "placement-boundary-agent"
+        },
+        {
+          "issueType": "placement",
+          "nodeTitle": "Purchase Artwork",
+          "currentParentTitle": "Buy (Information)",
+          "candidateHome": "Buy (Physical Object)",
+          "rationale": "Artwork is typically a physical object (e.g., paintings, sculptures) rather than information.",
+          "candidateId": "placement-boundary-agent-92026b8b8d4e",
+          "detectorId": "placement-boundary-agent"
+        },
+        {
+          "issueType": "wrong-verb",
+          "nodeTitle": "Cash Check",
+          "currentParentTitle": "Buy (Information)",
+          "candidateHome": "Perform (action) (Information)",
+          "rationale": "Cashing a check for a customer is processing a financial transaction or providing a service, not buying information.",
+          "candidateId": "placement-boundary-agent-bf177a2cffa1",
+          "detectorId": "placement-boundary-agent"
+        },
+        {
+          "issueType": "wrong-verb",
+          "nodeTitle": "Cash Money Order",
+          "currentParentTitle": "Buy (Physical Object)",
+          "candidateHome": "Perform (action) (Information)",
+          "rationale": "Cashing a money order is processing a financial transaction, not buying a physical object.",
+          "candidateId": "placement-boundary-agent-c9c9bdb9d243",
+          "detectorId": "placement-boundary-agent"
+        }
+      ]
+    },
+    {
+      "detectorId": "placement-boundary-agent",
+      "pass": 2,
+      "raw": "{\n  \"candidates\": [\n    {\n      \"issueType\": \"placement\",\n      \"nodeTitle\": \"Shop for Meals\",\n      \"currentParentTitle\": \"Buy (Information)\",\n      \"candidateHome\": \"Buy (Physical Object)\",\n      \"rationale\": \"Meals are physical objects, not information, and should be classified accordingly.\"\n    },\n    {\n      \"issueType\": \"placement\",\n      \"nodeTitle\": \"Purchase Service\",\n      \"currentParentTitle\": \"Buy (Information)\",\n      \"candidateHome\": \"Buy service\",\n      \"rationale\": \"Purchasing a service belongs under the dedicated 'Buy service' category rather than 'Buy (Information)'.\"\n    },\n    {\n      \"issueType\": \"placement\",\n      \"nodeTitle\": \"Purchase Artwork\",\n      \"currentParentTitle\": \"Buy (Information)\",\n      \"candidateHome\": \"Buy (Physical Object)\",\n      \"rationale\": \"Artwork is typically a physical object (e.g., paintings, sculptures) rather than information.\"\n    },\n    {\n      \"issueType\": \"wrong-verb\",\n      \"nodeTitle\": \"Cash Check\",\n      \"currentParentTitle\": \"Buy (Information)\",\n      \"candidateHome\": \"Perform (action) (Information)\",\n      \"rationale\": \"Cashing a check for a customer is processing a financial transaction or providing a service, not buying information.\"\n    },\n    {\n      \"issueType\": \"wrong-verb\",\n      \"nodeTitle\": \"Cash Money Order\",\n      \"currentParentTitle\": \"Buy (Physical Object)\",\n      \"candidateHome\": \"Perform (action) (Information)\",\n      \"rationale\": \"Cashing a money order is processing a financial transaction, not buying a physical object.\"\n    }\n  ]\n}",
+      "candidates": [
+        {
+          "issueType": "placement",
+          "nodeTitle": "Shop for Meals",
+          "currentParentTitle": "Buy (Information)",
+          "candidateHome": "Buy (Physical Object)",
+          "rationale": "Meals are physical objects, not information, and should be classified accordingly.",
+          "candidateId": "placement-boundary-agent-e791a62de086",
+          "detectorId": "placement-boundary-agent"
+        },
+        {
+          "issueType": "placement",
+          "nodeTitle": "Purchase Service",
+          "currentParentTitle": "Buy (Information)",
+          "candidateHome": "Buy service",
+          "rationale": "Purchasing a service belongs under the dedicated 'Buy service' category rather than 'Buy (Information)'.",
+          "candidateId": "placement-boundary-agent-4b38490bf1ff",
+          "detectorId": "placement-boundary-agent"
+        },
+        {
+          "issueType": "placement",
+          "nodeTitle": "Purchase Artwork",
+          "currentParentTitle": "Buy (Information)",
+          "candidateHome": "Buy (Physical Object)",
+          "rationale": "Artwork is typically a physical object (e.g., paintings, sculptures) rather than information.",
+          "candidateId": "placement-boundary-agent-92026b8b8d4e",
+          "detectorId": "placement-boundary-agent"
+        },
+        {
+          "issueType": "wrong-verb",
+          "nodeTitle": "Cash Check",
+          "currentParentTitle": "Buy (Information)",
+          "candidateHome": "Perform (action) (Information)",
+          "rationale": "Cashing a check for a customer is processing a financial transaction or providing a service, not buying information.",
+          "candidateId": "placement-boundary-agent-bf177a2cffa1",
+          "detectorId": "placement-boundary-agent"
+        },
+        {
+          "issueType": "wrong-verb",
+          "nodeTitle": "Cash Money Order",
+          "currentParentTitle": "Buy (Physical Object)",
+          "candidateHome": "Perform (action) (Information)",
+          "rationale": "Cashing a money order is processing a financial transaction, not buying a physical object.",
+          "candidateId": "placement-boundary-agent-c9c9bdb9d243",
+          "detectorId": "placement-boundary-agent"
+        }
+      ]
+    }
+  ],
+  "externalDestinations": [
+    {
+      "title": "Analyze (Information)",
+      "description": "",
+      "childCount": 229
+    },
+    {
+      "title": "Measure (Information)",
+      "description": "",
+      "childCount": 220
+    },
+    {
+      "title": "Maintain Record",
+      "description": "",
+      "childCount": 216
+    },
+    {
+      "title": "Prepare Report",
+      "description": "",
+      "childCount": 211
+    },
+    {
+      "title": "Operate Equipment",
+      "description": "Synonyms: Control Equipment",
+      "childCount": 203
+    },
+    {
+      "title": "Create (Information)",
+      "description": "",
+      "childCount": 202
+    },
+    {
+      "title": "Determine (Information)",
+      "description": "",
+      "childCount": 198
+    },
+    {
+      "title": "Prepare (information) (Information)",
+      "description": "",
+      "childCount": 172
+    },
+    {
+      "title": "Inspect (Physical Object)",
+      "description": "",
+      "childCount": 163
+    },
+    {
+      "title": "Review (Information)",
+      "description": "",
+      "childCount": 163
+    },
+    {
+      "title": "Maintain Equipment",
+      "description": "",
+      "childCount": 159
+    },
+    {
+      "title": "Perform (action) (Activity)",
+      "description": "",
+      "childCount": 141
+    },
+    {
+      "title": "Analyze Datum",
+      "description": "Synonyms: Examine Datum, Study Datum",
+      "childCount": 140
+    },
+    {
+      "title": "Create Plan",
+      "description": "Synonyms: Develop Plan, Make Plan",
+      "childCount": 138
+    },
+    {
+      "title": "Conduct Research",
+      "description": "",
+      "childCount": 133
+    },
+    {
+      "title": "Direct Activity",
+      "description": "",
+      "childCount": 125
+    },
+    {
+      "title": "Perform Duty",
+      "description": "",
+      "childCount": 125
+    },
+    {
+      "title": "Record (Information)",
+      "description": "",
+      "childCount": 119
+    },
+    {
+      "title": "Identify (Information)",
+      "description": "",
+      "childCount": 116
+    },
+    {
+      "title": "Provide Assistance",
+      "description": "",
+      "childCount": 115
+    },
+    {
+      "title": "Coordinate Activity",
+      "description": "Synonyms: Devise Activity",
+      "childCount": 114
+    },
+    {
+      "title": "Calculate (Information)",
+      "description": "",
+      "childCount": 109
+    },
+    {
+      "title": "Supply Information",
+      "description": "Synonyms: Furnish Information, Provide Information",
+      "childCount": 108
+    },
+    {
+      "title": "Analyze (Physical Object)",
+      "description": "",
+      "childCount": 106
+    },
+    {
+      "title": "Monitor (Information)",
+      "description": "",
+      "childCount": 103
+    },
+    {
+      "title": "Validate (Information)",
+      "description": "",
+      "childCount": 101
+    },
+    {
+      "title": "Inspect Equipment",
+      "description": "",
+      "childCount": 99
+    },
+    {
+      "title": "Explain (Information)",
+      "description": "",
+      "childCount": 97
+    },
+    {
+      "title": "Maintain (information) (Information)",
+      "description": "",
+      "childCount": 97
+    },
+    {
+      "title": "Direct (Activity)",
+      "description": "",
+      "childCount": 95
+    },
+    {
+      "title": "Confer (Actor)",
+      "description": "",
+      "childCount": 94
+    },
+    {
+      "title": "Create Procedure",
+      "description": "Synonyms: Develop Procedure",
+      "childCount": 94
+    },
+    {
+      "title": "Select (Physical Object)",
+      "description": "",
+      "childCount": 94
+    },
+    {
+      "title": "Put (Physical Object)",
+      "description": "",
+      "childCount": 91
+    },
+    {
+      "title": "Clean Equipment",
+      "description": "",
+      "childCount": 90
+    },
+    {
+      "title": "Collect Datum",
+      "description": "Synonyms: Compile Datum",
+      "childCount": 89
+    },
+    {
+      "title": "Assemble (Physical Object)",
+      "description": "",
+      "childCount": 88
+    },
+    {
+      "title": "Conduct (Activity)",
+      "description": "",
+      "childCount": 84
+    },
+    {
+      "title": "Supply (Information)",
+      "description": "",
+      "childCount": 84
+    },
+    {
+      "title": "Fasten (Physical Object)",
+      "description": "",
+      "childCount": 83
+    },
+    {
+      "title": "Preach (Information)",
+      "description": "",
+      "childCount": 83
+    },
+    {
+      "title": "Research (Information)",
+      "description": "",
+      "childCount": 83
+    },
+    {
+      "title": "Oversee (Activity)",
+      "description": "",
+      "childCount": 82
+    },
+    {
+      "title": "Record Datum",
+      "description": "",
+      "childCount": 82
+    },
+    {
+      "title": "Measure (Physical Object)",
+      "description": "",
+      "childCount": 81
+    },
+    {
+      "title": "Write (Information)",
+      "description": "",
+      "childCount": 81
+    },
+    {
+      "title": "Prepare Material",
+      "description": "Synonyms: Set_Up Material",
+      "childCount": 80
+    },
+    {
+      "title": "Document (Information)",
+      "description": "",
+      "childCount": 78
+    },
+    {
+      "title": "Repair Equipment",
+      "description": "",
+      "childCount": 77
+    },
+    {
+      "title": "Operate Machine",
+      "description": "Synonyms: Control Machine",
+      "childCount": 76
+    },
+    {
+      "title": "Inform (Actor)",
+      "description": "",
+      "childCount": 75
+    },
+    {
+      "title": "Oversee Work",
+      "description": "Synonyms: Supervise Work",
+      "childCount": 75
+    },
+    {
+      "title": "Select Material",
+      "description": "",
+      "childCount": 75
+    },
+    {
+      "title": "Create Program",
+      "description": "Synonyms: Develop Program, Produce Program",
+      "childCount": 74
+    },
+    {
+      "title": "Create (Physical Object)",
+      "description": "",
+      "childCount": 73
+    },
+    {
+      "title": "Participate (Activity)",
+      "description": "",
+      "childCount": 73
+    },
+    {
+      "title": "Write Report",
+      "description": "Synonyms: Compile Report, Compose Report",
+      "childCount": 73
+    },
+    {
+      "title": "Plan (Activity)",
+      "description": "",
+      "childCount": 70
+    },
+    {
+      "title": "Advise (Actor)",
+      "description": "",
+      "childCount": 69
+    },
+    {
+      "title": "Assist (Actor)",
+      "description": "",
+      "childCount": 69
+    },
+    {
+      "title": "Coach (Actor)",
+      "description": "",
+      "childCount": 69
+    },
+    {
+      "title": "Design (Information)",
+      "description": "",
+      "childCount": 69
+    },
+    {
+      "title": "Select (Information)",
+      "description": "",
+      "childCount": 68
+    },
+    {
+      "title": "Collaborate (Actor)",
+      "description": "",
+      "childCount": 67
+    },
+    {
+      "title": "Participate Activity",
+      "description": "",
+      "childCount": 67
+    },
+    {
+      "title": "Monitor (Activity)",
+      "description": "",
+      "childCount": 66
+    },
+    {
+      "title": "Move (Physical Object)",
+      "description": "",
+      "childCount": 66
+    },
+    {
+      "title": "Plan Activity",
+      "description": "Synonyms: Organize Activity",
+      "childCount": 66
+    },
+    {
+      "title": "Provide Service (1)",
+      "description": "",
+      "childCount": 66
+    },
+    {
+      "title": "Clean Area",
+      "description": "",
+      "childCount": 64
+    },
+    {
+      "title": "Prepare Equipment",
+      "description": "Synonyms: Set_Up Equipment",
+      "childCount": 64
+    },
+    {
+      "title": "Transform (Physical Object)",
+      "description": "",
+      "childCount": 63
+    },
+    {
+      "title": "Attend Meeting",
+      "description": "",
+      "childCount": 62
+    },
+    {
+      "title": "Get (Information)",
+      "description": "",
+      "childCount": 62
+    },
+    {
+      "title": "Install Equipment",
+      "description": "",
+      "childCount": 62
+    },
+    {
+      "title": "Record Information",
+      "description": "",
+      "childCount": 62
+    },
+    {
+      "title": "Design (Physical Object)",
+      "description": "",
+      "childCount": 61
+    },
+    {
+      "title": "Design System",
+      "description": "",
+      "childCount": 61
+    },
+    {
+      "title": "Use (Information)",
+      "description": "",
+      "childCount": 60
+    },
+    {
+      "title": "Document Record",
+      "description": "Synonyms: Keep Record",
+      "childCount": 59
+    },
+    {
+      "title": "Advise Student",
+      "description": "Synonyms: Counsel Student",
+      "childCount": 58
+    },
+    {
+      "title": "Order Supply",
+      "description": "",
+      "childCount": 58
+    },
+    {
+      "title": "Perform Repair",
+      "description": "Synonyms: Make Repair",
+      "childCount": 58
+    },
+    {
+      "title": "Plan Program",
+      "description": "",
+      "childCount": 58
+    },
+    {
+      "title": "Oversee (Actor)",
+      "description": "",
+      "childCount": 57
+    },
+    {
+      "title": "Present (Information)",
+      "description": "",
+      "childCount": 57
+    },
+    {
+      "title": "Monitor Operation",
+      "description": "",
+      "childCount": 56
+    },
+    {
+      "title": "Serve Committee",
+      "description": "",
+      "childCount": 56
+    },
+    {
+      "title": "Teach Student",
+      "description": "Synonyms: Instruct Student, Prepare Student",
+      "childCount": 56
+    },
+    {
+      "title": "Answer Question",
+      "description": "Synonyms: Respond Question",
+      "childCount": 55
+    },
+    {
+      "title": "Conduct Test",
+      "description": "",
+      "childCount": 55
+    },
+    {
+      "title": "Plan (Information)",
+      "description": "",
+      "childCount": 55
+    },
+    {
+      "title": "Provide Support",
+      "description": "",
+      "childCount": 55
+    },
+    {
+      "title": "Compare (Information)",
+      "description": "",
+      "childCount": 54
+    },
+    {
+      "title": "Debate (Information)",
+      "description": "",
+      "childCount": 54
+    },
+    {
+      "title": "Reach (Actor)",
+      "description": "",
+      "childCount": 54
+    },
+    {
+      "title": "Oversee Activity",
+      "description": "Synonyms: Supervise Activity",
+      "childCount": 53
+    },
+    {
+      "title": "Assign Work",
+      "description": "",
+      "childCount": 52
+    },
+    {
+      "title": "Replace Part",
+      "description": "",
+      "childCount": 52
+    },
+    {
+      "title": "Test Equipment",
+      "description": "",
+      "childCount": 52
+    },
+    {
+      "title": "Adjust Control",
+      "description": "",
+      "childCount": 51
+    },
+    {
+      "title": "Measure Performance",
+      "description": "Synonyms: Assess Performance, Evaluate Performance",
+      "childCount": 51
+    },
+    {
+      "title": "Oversee Staff",
+      "description": "Synonyms: Supervise Staff",
+      "childCount": 51
+    },
+    {
+      "title": "Report (Information)",
+      "description": "",
+      "childCount": 51
+    },
+    {
+      "title": "Write Proposal",
+      "description": "",
+      "childCount": 51
+    },
+    {
+      "title": "Create Strategy",
+      "description": "Synonyms: Develop Strategy",
+      "childCount": 50
+    },
+    {
+      "title": "Develop Method",
+      "description": "",
+      "childCount": 50
+    },
+    {
+      "title": "Manage (Information)",
+      "description": "",
+      "childCount": 50
+    },
+    {
+      "title": "Create Model",
+      "description": "Synonyms: Develop Model, Produce Model",
+      "childCount": 49
+    },
+    {
+      "title": "Schedule (Activity)",
+      "description": "",
+      "childCount": 49
+    },
+    {
+      "title": "Adjust Equipment",
+      "description": "",
+      "childCount": 48
+    },
+    {
+      "title": "Perform Maintenance",
+      "description": "",
+      "childCount": 48
+    },
+    {
+      "title": "Select Supply",
+      "description": "",
+      "childCount": 48
+    },
+    {
+      "title": "Test (Information)",
+      "description": "",
+      "childCount": 48
+    },
+    {
+      "title": "Analyze Information",
+      "description": "Synonyms: Examine Information, Study Information",
+      "childCount": 47
+    },
+    {
+      "title": "Determine (Physical Object)",
+      "description": "",
+      "childCount": 47
+    },
+    {
+      "title": "Fabricate (Physical Object)",
+      "description": "",
+      "childCount": 47
+    },
+    {
+      "title": "Ask (Information)",
+      "description": "",
+      "childCount": 46
+    },
+    {
+      "title": "Direct (Actor)",
+      "description": "",
+      "childCount": 46
+    },
+    {
+      "title": "Implement (Information)",
+      "description": "",
+      "childCount": 46
+    },
+    {
+      "title": "Implement Program",
+      "description": "",
+      "childCount": 46
+    },
+    {
+      "title": "Review Report",
+      "description": "",
+      "childCount": 46
+    },
+    {
+      "title": "Estimate Cost",
+      "description": "",
+      "childCount": 45
+    },
+    {
+      "title": "Interview (Actor)",
+      "description": "",
+      "childCount": 45
+    },
+    {
+      "title": "Collect Sample",
+      "description": "",
+      "childCount": 44
+    },
+    {
+      "title": "Perform Task",
+      "description": "",
+      "childCount": 44
+    },
+    {
+      "title": "Repair Part",
+      "description": "",
+      "childCount": 44
+    },
+    {
+      "title": "Acquire Material",
+      "description": "Synonyms: Obtain Material, Procure Material",
+      "childCount": 43
+    },
+    {
+      "title": "Evaluate Work",
+      "description": "",
+      "childCount": 43
+    },
+    {
+      "title": "Perform (action) (Information)",
+      "description": "",
+      "childCount": 43
+    },
+    {
+      "title": "Teach (Actor)",
+      "description": "",
+      "childCount": 43
+    },
+    {
+      "title": "Train Staff",
+      "description": "",
+      "childCount": 43
+    },
+    {
+      "title": "Assist (Activity)",
+      "description": "",
+      "childCount": 42
+    },
+    {
+      "title": "Confer (Information)",
+      "description": "",
+      "childCount": 42
+    },
+    {
+      "title": "Monitor (Physical Object)",
+      "description": "",
+      "childCount": 42
+    },
+    {
+      "title": "Perform Activity",
+      "description": "Synonyms: Engage Activity, Execute Activity",
+      "childCount": 42
+    },
+    {
+      "title": "Start (Physical Object)",
+      "description": "",
+      "childCount": 42
+    },
+    {
+      "title": "Administer Test",
+      "description": "",
+      "childCount": 41
+    },
+    {
+      "title": "Enforce Rule",
+      "description": "",
+      "childCount": 41
+    },
+    {
+      "title": "Keep Abreast",
+      "description": "",
+      "childCount": 41
+    },
+    {
+      "title": "Meet (Actor)",
+      "description": "",
+      "childCount": 41
+    },
+    {
+      "title": "Receive (Physical Object)",
+      "description": "",
+      "childCount": 41
+    },
+    {
+      "title": "Advise Client",
+      "description": "Synonyms: Counsel Client",
+      "childCount": 40
+    },
+    {
+      "title": "Collect Information",
+      "description": "Synonyms: Compile Information",
+      "childCount": 40
+    },
+    {
+      "title": "Confer Personnel",
+      "description": "Synonyms: Consult Personnel",
+      "childCount": 40
+    },
+    {
+      "title": "Create Material",
+      "description": "Synonyms: Develop Material, Produce Material",
+      "childCount": 40
+    },
+    {
+      "title": "Grade Work",
+      "description": "",
+      "childCount": 40
+    },
+    {
+      "title": "Maintain Inventory",
+      "description": "",
+      "childCount": 40
+    },
+    {
+      "title": "Prepare Document",
+      "description": "",
+      "childCount": 40
+    },
+    {
+      "title": "Conduct Study",
+      "description": "",
+      "childCount": 39
+    },
+    {
+      "title": "Create Policy",
+      "description": "Synonyms: Develop Policy",
+      "childCount": 39
+    },
+    {
+      "title": "Get Information (1)",
+      "description": "Synonyms: Obtain Information, Procure Information",
+      "childCount": 39
+    },
+    {
+      "title": "Spray (Physical Object)",
+      "description": "",
+      "childCount": 39
+    },
+    {
+      "title": "Supply (Physical Object)",
+      "description": "",
+      "childCount": 39
+    },
+    {
+      "title": "Acquire Supply",
+      "description": "Synonyms: Obtain Supply",
+      "childCount": 38
+    },
+    {
+      "title": "Authorize (Information)",
+      "description": "",
+      "childCount": 38
+    },
+    {
+      "title": "Participate Event",
+      "description": "",
+      "childCount": 38
+    },
+    {
+      "title": "Polish (Physical Object)",
+      "description": "",
+      "childCount": 38
+    },
+    {
+      "title": "Select Equipment",
+      "description": "",
+      "childCount": 38
+    },
+    {
+      "title": "Store (Physical Object)",
+      "description": "",
+      "childCount": 38
+    },
+    {
+      "title": "Update (Information)",
+      "description": "",
+      "childCount": 38
+    },
+    {
+      "title": "Disassemble (Physical Object)",
+      "description": "",
+      "childCount": 37
+    },
+    {
+      "title": "Explain Procedure",
+      "description": "Synonyms: Interpret Procedure",
+      "childCount": 37
+    },
+    {
+      "title": "Revise Material",
+      "description": "",
+      "childCount": 37
+    },
+    {
+      "title": "Advise Other",
+      "description": "Synonyms: Counsel Other",
+      "childCount": 36
+    },
+    {
+      "title": "Compile Bibliography",
+      "description": "",
+      "childCount": 36
+    },
+    {
+      "title": "Grade Assignment",
+      "description": "",
+      "childCount": 36
+    },
+    {
+      "title": "Implement Procedure",
+      "description": "",
+      "childCount": 36
+    },
+    {
+      "title": "Perform Test",
+      "description": "Synonyms: Execute Test",
+      "childCount": 36
+    },
+    {
+      "title": "Read Order",
+      "description": "",
+      "childCount": 36
+    },
+    {
+      "title": "Administer Examination",
+      "description": "",
+      "childCount": 35
+    },
+    {
+      "title": "Attend Conference",
+      "description": "",
+      "childCount": 35
+    },
+    {
+      "title": "Collaborate Issue",
+      "description": "",
+      "childCount": 35
+    },
+    {
+      "title": "Collect (information) (Information)",
+      "description": "",
+      "childCount": 35
+    },
+    {
+      "title": "Establish (Information)",
+      "description": "",
+      "childCount": 35
+    },
+    {
+      "title": "Estimate (Information)",
+      "description": "",
+      "childCount": 35
+    },
+    {
+      "title": "Evaluate Curricula",
+      "description": "",
+      "childCount": 35
+    },
+    {
+      "title": "Explain Result",
+      "description": "Synonyms: Interpret Result",
+      "childCount": 35
+    },
+    {
+      "title": "Grade Examination",
+      "description": "",
+      "childCount": 35
+    },
+    {
+      "title": "Maintain Hour",
+      "description": "",
+      "childCount": 35
+    },
+    {
+      "title": "Mount (Physical Object)",
+      "description": "",
+      "childCount": 35
+    },
+    {
+      "title": "Plan Curricula",
+      "description": "",
+      "childCount": 35
+    },
+    {
+      "title": "Publish Finding",
+      "description": "",
+      "childCount": 35
+    },
+    {
+      "title": "Shape (Physical Object)",
+      "description": "",
+      "childCount": 35
+    },
+    {
+      "title": "Turn Valve",
+      "description": "",
+      "childCount": 35
+    },
+    {
+      "title": "Wash (Physical Object)",
+      "description": "",
+      "childCount": 35
+    },
+    {
+      "title": "Act_As Adviser",
+      "description": "",
+      "childCount": 34
+    },
+    {
+      "title": "Compile Examination",
+      "description": "",
+      "childCount": 34
+    },
+    {
+      "title": "Facilitate Discussion",
+      "description": "",
+      "childCount": 34
+    },
+    {
+      "title": "Initiate Discussion",
+      "description": "",
+      "childCount": 34
+    },
+    {
+      "title": "Maintain Knowledge",
+      "description": "",
+      "childCount": 34
+    },
+    {
+      "title": "Moderate Discussion",
+      "description": "",
+      "childCount": 34
+    },
+    {
+      "title": "Perform Adjustment",
+      "description": "Synonyms: Make Adjustment",
+      "childCount": 34
+    },
+    {
+      "title": "Revise Content",
+      "description": "",
+      "childCount": 34
+    },
+    {
+      "title": "Revise Curricula",
+      "description": "",
+      "childCount": 34
+    },
+    {
+      "title": "Revise Method",
+      "description": "",
+      "childCount": 34
+    },
+    {
+      "title": "Transport (Physical Object)",
+      "description": "",
+      "childCount": 34
+    },
+    {
+      "title": "Confer Customer",
+      "description": "Synonyms: Consult Customer",
+      "childCount": 33
+    },
+    {
+      "title": "Deliver Lecture",
+      "description": "",
+      "childCount": 33
+    },
+    {
+      "title": "Direct Worker",
+      "description": "",
+      "childCount": 33
+    },
+    {
+      "title": "Furnish Advice",
+      "description": "Synonyms: Provide Advice",
+      "childCount": 33
+    },
+    {
+      "title": "Inspect Facility",
+      "description": "",
+      "childCount": 33
+    },
+    {
+      "title": "Observe (Information)",
+      "description": "",
+      "childCount": 33
+    },
+    {
+      "title": "Perform Analysis",
+      "description": "",
+      "childCount": 33
+    },
+    {
+      "title": "Prepare Lecture",
+      "description": "",
+      "childCount": 33
+    },
+    {
+      "title": "Resolve Problem",
+      "description": "",
+      "childCount": 33
+    },
+    {
+      "title": "Transform (Information)",
+      "description": "",
+      "childCount": 33
+    },
+    {
+      "title": "Bore Hole",
+      "description": "Synonyms: Drill Hole",
+      "childCount": 32
+    },
+    {
+      "title": "Observe (Physical Object)",
+      "description": "",
+      "childCount": 32
+    },
+    {
+      "title": "Observe Operation",
+      "description": "Synonyms: Detect Operation",
+      "childCount": 32
+    },
+    {
+      "title": "Perform Procedure",
+      "description": "",
+      "childCount": 32
+    },
+    {
+      "title": "Refer Patient",
+      "description": "",
+      "childCount": 32
+    },
+    {
+      "title": "Specify (Information)",
+      "description": "",
+      "childCount": 32
+    },
+    {
+      "title": "Teach (Information)",
+      "description": "",
+      "childCount": 32
+    },
+    {
+      "title": "Advise Patient",
+      "description": "Synonyms: Counsel Patient",
+      "childCount": 31
+    },
+    {
+      "title": "Assess Need",
+      "description": "Synonyms: Evaluate Need",
+      "childCount": 31
+    },
+    {
+      "title": "Complete (activity) (Information)",
+      "description": "",
+      "childCount": 31
+    },
+    {
+      "title": "Connect (physical)",
+      "description": "Synonyms: Affix, Attach, Connect, Join",
+      "childCount": 31
+    },
+    {
+      "title": "Disinfect (Physical Object)",
+      "description": "",
+      "childCount": 31
+    },
+    {
+      "title": "Install System",
+      "description": "",
+      "childCount": 31
+    },
+    {
+      "title": "Monitor Activity",
+      "description": "",
+      "childCount": 31
+    },
+    {
+      "title": "Operate System",
+      "description": "",
+      "childCount": 31
+    },
+    {
+      "title": "Order Equipment",
+      "description": "Synonyms: Prescribe Equipment",
+      "childCount": 31
+    },
+    {
+      "title": "Organize Program",
+      "description": "Synonyms: Coordinate Program",
+      "childCount": 31
+    },
+    {
+      "title": "Propose (Information)",
+      "description": "",
+      "childCount": 31
+    },
+    {
+      "title": "Supply (Activity)",
+      "description": "",
+      "childCount": 31
+    },
+    {
+      "title": "Analyze Record",
+      "description": "Synonyms: Examine Record, Study Record",
+      "childCount": 30
+    },
+    {
+      "title": "Gather Information",
+      "description": "",
+      "childCount": 30
+    },
+    {
+      "title": "Inspect Product",
+      "description": "",
+      "childCount": 30
+    },
+    {
+      "title": "Lubricate (Physical Object)",
+      "description": "",
+      "childCount": 30
+    },
+    {
+      "title": "Manage (Activity)",
+      "description": "",
+      "childCount": 30
+    },
+    {
+      "title": "Mark (information) (Information)",
+      "description": "",
+      "childCount": 30
+    },
+    {
+      "title": "Prepare Documentation",
+      "description": "",
+      "childCount": 30
+    },
+    {
+      "title": "Prepare Machine",
+      "description": "Synonyms: Set_Up Machine",
+      "childCount": 30
+    },
+    {
+      "title": "Process (information) (Information)",
+      "description": "",
+      "childCount": 30
+    },
+    {
+      "title": "Start Machine",
+      "description": "Synonyms: Activate Machine",
+      "childCount": 30
+    },
+    {
+      "title": "Train Personnel",
+      "description": "",
+      "childCount": 30
+    },
+    {
+      "title": "Train Worker",
+      "description": "",
+      "childCount": 30
+    },
+    {
+      "title": "Evaluate Assignment",
+      "description": "",
+      "childCount": 29
+    },
+    {
+      "title": "Implement Plan",
+      "description": "",
+      "childCount": 29
+    },
+    {
+      "title": "Maintain System",
+      "description": "",
+      "childCount": 29
+    },
+    {
+      "title": "Provide Training",
+      "description": "",
+      "childCount": 29
+    },
+    {
+      "title": "Recommend Change",
+      "description": "",
+      "childCount": 29
+    },
+    {
+      "title": "Spread (Physical Object)",
+      "description": "",
+      "childCount": 29
+    },
+    {
+      "title": "Test System",
+      "description": "Synonyms: Pretest System",
+      "childCount": 29
+    },
+    {
+      "title": "Weigh (Physical Object)",
+      "description": "",
+      "childCount": 29
+    },
+    {
+      "title": "Administer Medication",
+      "description": "Synonyms: Dispense Medication",
+      "childCount": 28
+    },
+    {
+      "title": "Answer Inquiry",
+      "description": "Synonyms: Respond Inquiry",
+      "childCount": 28
+    },
+    {
+      "title": "Assist (Information)",
+      "description": "",
+      "childCount": 28
+    },
+    {
+      "title": "Assist (Physical Object)",
+      "description": "",
+      "childCount": 28
+    },
+    {
+      "title": "Create Standard",
+      "description": "Synonyms: Develop Standard",
+      "childCount": 28
+    },
+    {
+      "title": "Disassemble Equipment",
+      "description": "Synonyms: Dismantle Equipment",
+      "childCount": 28
+    },
+    {
+      "title": "Get (Physical Object)",
+      "description": "",
+      "childCount": 28
+    },
+    {
+      "title": "Inspect System",
+      "description": "",
+      "childCount": 28
+    },
+    {
+      "title": "Monitor Performance",
+      "description": "",
+      "childCount": 28
+    },
+    {
+      "title": "Prepare Budget",
+      "description": "",
+      "childCount": 28
+    },
+    {
+      "title": "Read Literature",
+      "description": "",
+      "childCount": 28
+    },
+    {
+      "title": "Sell physical objects",
+      "description": "The sale of a tangible, material item in exchange for payment. The defining characteristic of this activity is the physical nature of the object being sold—an item that can be touched, weighed, and moved. This category applies to activities like selling products in a retail store, a used car through a private listing, or handmade crafts on an e-commerce platform. It is distinct from selling intangible items, such as services (e.g., consulting, repairs), digital goods (e.g., software, streaming media), or financial assets (e.g., stocks, bonds).",
+      "childCount": 28
+    },
+    {
+      "title": "Transform physical objects",
+      "description": "An activity that alters the intrinsic properties, state, or form of a physical object. As a type of 'Modify physical objects', this category focuses on changes *to* an object itself, distinguishing it from activities that change an object's location ('Move physical objects') or its relationship with other objects ('Assemble', 'Disassemble'). The scope is broad, encompassing transformations such as changing an object's physical or chemical state ('Heat', 'Develop (chemically)'), its shape ('Shape'), its surface ('Change surface', 'Clean'), or its operational condition ('Service', 'Adjust'). Examples include cleaning a window, shaping clay, heating a meal, servicing a machine, or painting a fence. Synonyms: Change, Transform, Work, Rework",
+      "childCount": 28
+    },
+    {
+      "title": "Unload (Physical Object)",
+      "description": "",
+      "childCount": 28
+    },
+    {
+      "title": "Adjust (information) (Information)",
+      "description": "",
+      "childCount": 27
+    },
+    {
+      "title": "Classify (Physical Object)",
+      "description": "",
+      "childCount": 27
+    },
+    {
+      "title": "Clean Part",
+      "description": "",
+      "childCount": 27
+    },
+    {
+      "title": "Conduct Analysis",
+      "description": "",
+      "childCount": 27
+    },
+    {
+      "title": "Deliver (Physical Object)",
+      "description": "",
+      "childCount": 27
+    },
+    {
+      "title": "Direct Operation",
+      "description": "",
+      "childCount": 27
+    },
+    {
+      "title": "Find (Physical Object)",
+      "description": "",
+      "childCount": 27
+    },
+    {
+      "title": "Install Component",
+      "description": "",
+      "childCount": 27
+    },
+    {
+      "title": "Order Material",
+      "description": "Synonyms: Ordering Material",
+      "childCount": 27
+    },
+    {
+      "title": "Oversee Worker",
+      "description": "Synonyms: Supervise Worker",
+      "childCount": 27
+    },
+    {
+      "title": "Repair Component",
+      "description": "",
+      "childCount": 27
+    },
+    {
+      "title": "Review Plan",
+      "description": "",
+      "childCount": 27
+    },
+    {
+      "title": "Review Record",
+      "description": "",
+      "childCount": 27
+    },
+    {
+      "title": "Conduct Program",
+      "description": "",
+      "childCount": 26
+    },
+    {
+      "title": "Create System",
+      "description": "Synonyms: Develop System",
+      "childCount": 26
+    },
+    {
+      "title": "Design Equipment",
+      "description": "",
+      "childCount": 26
+    },
+    {
+      "title": "Establish Procedure",
+      "description": "",
+      "childCount": 26
+    },
+    {
+      "title": "Grind (Physical Object)",
+      "description": "",
+      "childCount": 26
+    },
+    {
+      "title": "Issue Instruction",
+      "description": "Synonyms: Provide Instruction",
+      "childCount": 26
+    },
+    {
+      "title": "Load Material",
+      "description": "",
+      "childCount": 26
+    },
+    {
+      "title": "Maintain File",
+      "description": "",
+      "childCount": 26
+    },
+    {
+      "title": "Maintain Log",
+      "description": "",
+      "childCount": 26
+    },
+    {
+      "title": "Read Blueprint",
+      "description": "",
+      "childCount": 26
+    },
+    {
+      "title": "Requisition Supply",
+      "description": "",
+      "childCount": 26
+    },
+    {
+      "title": "Send (Information)",
+      "description": "",
+      "childCount": 26
+    },
+    {
+      "title": "Assemble Equipment",
+      "description": "",
+      "childCount": 25
+    },
+    {
+      "title": "Determine Method",
+      "description": "",
+      "childCount": 25
+    },
+    {
+      "title": "Direct Program",
+      "description": "",
+      "childCount": 25
+    },
+    {
+      "title": "Grade Paper",
+      "description": "",
+      "childCount": 25
+    },
+    {
+      "title": "Maintain Area",
+      "description": "Synonyms: Keep Area",
+      "childCount": 25
+    },
+    {
+      "title": "Maintain Database",
+      "description": "",
+      "childCount": 25
+    },
+    {
+      "title": "Pass (over) (Information)",
+      "description": "",
+      "childCount": 25
+    },
+    {
+      "title": "Pour (Physical Object)",
+      "description": "",
+      "childCount": 25
+    },
+    {
+      "title": "Prepare Record",
+      "description": "",
+      "childCount": 25
+    },
+    {
+      "title": "Prepare Schedule",
+      "description": "Synonyms: Set_Up Schedule",
+      "childCount": 25
+    },
+    {
+      "title": "Provide Care",
+      "description": "",
+      "childCount": 25
+    },
+    {
+      "title": "Remove Material",
+      "description": "",
+      "childCount": 25
+    },
+    {
+      "title": "Scratch (Physical Object)",
+      "description": "",
+      "childCount": 25
+    },
+    {
+      "title": "Use Equipment",
+      "description": "",
+      "childCount": 25
+    },
+    {
+      "title": "Conduct Survey",
+      "description": "",
+      "childCount": 24
+    },
+    {
+      "title": "Confer Staff",
+      "description": "Synonyms: Consult Staff",
+      "childCount": 24
+    },
+    {
+      "title": "Drive Vehicle",
+      "description": "",
+      "childCount": 24
+    },
+    {
+      "title": "Evaluate Paper",
+      "description": "",
+      "childCount": 24
+    },
+    {
+      "title": "Inform",
+      "description": "The activity of making an actor aware of some fact, event, or state of affairs. Unlike the more general 'Send information', which may only cover the transmission of data, 'Inform' activities are characterized by the intent that the recipient receives and comprehends the information, resulting in new awareness or understanding. This is a broad category that includes many different methods of imparting knowledge, ranging in formality and purpose. For example, one can inform by 'Describing' details, 'Explaining' concepts, 'Announcing' news to a wide audience, issuing an 'Alert' about an urgent matter, casually 'Mentioning' a fact, or formally 'Testifying' in a legal setting. A primary way these activities are further categorized is by the subject of the informing action, such as another actor ('Inform Actor') or a piece of information ('Inform Information'). Synonyms: Advise, Inform",
+      "childCount": 24
+    },
+    {
+      "title": "Interpret Datum",
+      "description": "",
+      "childCount": 24
+    },
+    {
+      "title": "Measure (Actor)",
+      "description": "",
+      "childCount": 24
+    },
+    {
+      "title": "Monitor Condition",
+      "description": "",
+      "childCount": 24
+    },
+    {
+      "title": "Monitor Equipment",
+      "description": "",
+      "childCount": 24
+    },
+    {
+      "title": "Receive (Information)",
+      "description": "",
+      "childCount": 24
+    },
+    {
+      "title": "Receive Payment",
+      "description": "Synonyms: Accept Payment",
+      "childCount": 24
+    },
+    {
+      "title": "Recommend Action",
+      "description": "",
+      "childCount": 24
+    },
+    {
+      "title": "Remove (physical)",
+      "description": "Synonyms: Remove",
+      "childCount": 24
+    },
+    {
+      "title": "Revise (Information)",
+      "description": "",
+      "childCount": 24
+    },
+    {
+      "title": "Seal (Physical Object)",
+      "description": "",
+      "childCount": 24
+    },
+    {
+      "title": "Steer (Physical Object)",
+      "description": "",
+      "childCount": 24
+    },
+    {
+      "title": "Stock (Physical Object)",
+      "description": "",
+      "childCount": 24
+    },
+    {
+      "title": "Analyze Blueprint",
+      "description": "Synonyms: Examine Blueprint, Study Blueprint",
+      "childCount": 23
+    },
+    {
+      "title": "Attend Workshop",
+      "description": "",
+      "childCount": 23
+    },
+    {
+      "title": "Change surface",
+      "description": "A type of 'Transform physical objects' activity that alters the properties of an object's outermost layer—its surface—without changing its fundamental shape, structure, or assembly. These changes can affect appearance (such as color, pattern, or shininess), texture (such as smoothness or roughness), or protective qualities. This category includes activities that add a substance to the surface (e.g., 'Paint', 'Oil', 'Decorate'), modify the existing surface (e.g., 'Smooth', 'Polish', 'Refinish'), or create marks or indentations (e.g., 'Mark (physical)', 'Impress'). The key distinction is that the transformation is superficial; it does not alter the object's underlying form or assembly, which would be classified under activities like 'Change shape' or 'Assemble'. Synonyms: Change_surface",
+      "childCount": 23
+    },
+    {
+      "title": "Collect Payment",
+      "description": "",
+      "childCount": 23
+    },
+    {
+      "title": "Cut Material",
+      "description": "",
+      "childCount": 23
+    },
+    {
+      "title": "Drive Truck",
+      "description": "",
+      "childCount": 23
+    },
+    {
+      "title": "Evaluate Program",
+      "description": "",
+      "childCount": 23
+    },
+    {
+      "title": "Explain Policy",
+      "description": "Synonyms: Interpret Policy",
+      "childCount": 23
+    },
+    {
+      "title": "Implement (Activity)",
+      "description": "",
+      "childCount": 23
+    },
+    {
+      "title": "Make Recommendation",
+      "description": "",
+      "childCount": 23
+    },
+    {
+      "title": "Plan Project",
+      "description": "",
+      "childCount": 23
+    },
+    {
+      "title": "Prepare (information) (Activity)",
+      "description": "",
+      "childCount": 23
+    },
+    {
+      "title": "Schedule Appointment",
+      "description": "",
+      "childCount": 23
+    },
+    {
+      "title": "Start (Activity)",
+      "description": "",
+      "childCount": 23
+    },
+    {
+      "title": "Teach Skill",
+      "description": "",
+      "childCount": 23
+    },
+    {
+      "title": "Track (Information)",
+      "description": "",
+      "childCount": 23
+    },
+    {
+      "title": "Adjust (physical)",
+      "description": "Synonyms: Adjust",
+      "childCount": 22
+    },
+    {
+      "title": "Ask (Activity)",
+      "description": "",
+      "childCount": 22
+    },
+    {
+      "title": "Authorize (Activity)",
+      "description": "",
+      "childCount": 22
+    },
+    {
+      "title": "Classify (Information)",
+      "description": "",
+      "childCount": 22
+    },
+    {
+      "title": "Communicate Information",
+      "description": "",
+      "childCount": 22
+    },
+    {
+      "title": "Identify (Physical Object)",
+      "description": "",
+      "childCount": 22
+    },
+    {
+      "title": "Learn (Information)",
+      "description": "",
+      "childCount": 22
+    },
+    {
+      "title": "Lubricate Equipment",
+      "description": "",
+      "childCount": 22
+    },
+    {
+      "title": "Measure Product",
+      "description": "Synonyms: Evaluate Product",
+      "childCount": 22
+    },
+    {
+      "title": "Negotiate Contract",
+      "description": "",
+      "childCount": 22
+    },
+    {
+      "title": "Observe Gauge",
+      "description": "",
+      "childCount": 22
+    },
+    {
+      "title": "Plan Material",
+      "description": "Synonyms: Organize Material",
+      "childCount": 22
+    },
+    {
+      "title": "Remove Part",
+      "description": "",
+      "childCount": 22
+    },
+    {
+      "title": "Repair System",
+      "description": "",
+      "childCount": 22
+    },
+    {
+      "title": "Select (Actor)",
+      "description": "",
+      "childCount": 22
+    },
+    {
+      "title": "Shape",
+      "description": "An activity that alters the physical form, structure, or configuration of an object. This type of transformation focuses on changing an object's geometric properties—its outline, surface, or internal arrangement—as distinct from changing its location, chemical composition, or state of matter (e.g., from solid to liquid). Shaping includes a wide variety of actions, from simple modifications like bending a wire, folding paper, or sharpening a blade, to more comprehensive processes like hammering metal or molding clay. This category covers both modifying an existing shape (e.g., 'Straighten' a bent rod) and creating a new shape from raw or pliable material (e.g., 'Form' a pot from clay). Synonyms: form, Change_shape, Shape",
+      "childCount": 22
+    },
+    {
+      "title": "Smooth Surface",
+      "description": "",
+      "childCount": 22
+    },
+    {
+      "title": "Talk Colleague",
+      "description": "",
+      "childCount": 22
+    },
+    {
+      "title": "Administer (treat) (Information)",
+      "description": "",
+      "childCount": 21
+    },
+    {
+      "title": "Assign (Information)",
+      "description": "",
+      "childCount": 21
+    },
+    {
+      "title": "Calibrate Equipment",
+      "description": "",
+      "childCount": 21
+    },
+    {
+      "title": "Comply (Information)",
+      "description": "",
+      "childCount": 21
+    },
+    {
+      "title": "Conduct Activity",
+      "description": "",
+      "childCount": 21
+    },
+    {
+      "title": "Confer Client",
+      "description": "Synonyms: Consult Client",
+      "childCount": 21
+    },
+    {
+      "title": "Draft (Information)",
+      "description": "",
+      "childCount": 21
+    },
+    {
+      "title": "Explain Information",
+      "description": "Synonyms: Interpret Information",
+      "childCount": 21
+    },
+    {
+      "title": "Find (Information)",
+      "description": "",
+      "childCount": 21
+    },
+    {
+      "title": "Guide Student",
+      "description": "",
+      "childCount": 21
+    },
+    {
+      "title": "Hold (Physical Object)",
+      "description": "",
+      "childCount": 21
+    },
+    {
+      "title": "Identify Opportunity",
+      "description": "",
+      "childCount": 21
+    },
+    {
+      "title": "Inspect Site",
+      "description": "",
+      "childCount": 21
+    },
+    {
+      "title": "Maintain Report",
+      "description": "",
+      "childCount": 21
+    },
+    {
+      "title": "Measure Material",
+      "description": "Synonyms: Assess Material",
+      "childCount": 21
+    },
+    {
+      "title": "Order (authoritative) (Information)",
+      "description": "",
+      "childCount": 21
+    },
+    {
+      "title": "Perform Action",
+      "description": "Synonyms: Execute Action, Take Action",
+      "childCount": 21
+    },
+    {
+      "title": "Prepare Plan",
+      "description": "",
+      "childCount": 21
+    },
+    {
+      "title": "Provide Consultation",
+      "description": "",
+      "childCount": 21
+    },
+    {
+      "title": "Push (Physical Object)",
+      "description": "",
+      "childCount": 21
+    },
+    {
+      "title": "Put physical objects",
+      "description": "The activity of placing a physical object or actor in a specific location or position. As a type of 'Move physical objects', this activity focuses on the final act of placement at a destination, distinguishing it from 'Take physical objects' (which focuses on the origin) and 'Carry physical objects' (which focuses on the transit between origin and destination). As a type of 'Put', it is concerned exclusively with tangible entities, in contrast to 'Put information'. This is a broad category that encompasses many specific methods of placement, which are reflected in its specializations. These methods include actions defined by their specific context or manner, such as 'Load' (placing into or onto a carrier), 'Raise' and 'Lower' (changing vertical position), 'Arrange' (placing in a specific order), 'Insert' (placing within another object), 'Install' (placing for operational use), and 'Hold' (maintaining a static position). The activity can also be specialized by what is being put, such as an inanimate object ('Position Physical Object') or an actor ('Position Actor'). Synonyms: Put",
+      "childCount": 21
+    },
+    {
+      "title": "Replace Component",
+      "description": "",
+      "childCount": 21
+    },
+    {
+      "title": "Review Specification",
+      "description": "",
+      "childCount": 21
+    },
+    {
+      "title": "Supply Equipment",
+      "description": "Synonyms: Issue Equipment, Provide Equipment",
+      "childCount": 21
+    },
+    {
+      "title": "Tend Machine",
+      "description": "",
+      "childCount": 21
+    },
+    {
+      "title": "Transform information",
+      "description": "An activity that changes the content, structure, format, or state of existing information. The core of this activity is taking existing information as input and producing a modified version as output. This distinguishes it from 'Create information', which brings new information into existence, and 'Analyze information', which seeks to understand information without altering it. The scope of transformation is broad, ranging from minor adjustments to substantial overhauls. It includes activities that alter the substance of the information, such as correcting, updating, or enhancing it ('Revise', 'Improve', 'Clean'); change its form or representation, such as reformatting its appearance ('Change Apperance') or converting it to a different system ('Encode'); or advance its state, such as moving it through a workflow ('Process'), preparing it for a specific use ('Prepare'), or bringing it to completion ('Finish'). Synonyms: Change, Transform, Work, Rework",
+      "childCount": 21
+    },
+    {
+      "title": "Weld (Physical Object)",
+      "description": "",
+      "childCount": 21
+    },
+    {
+      "title": "Wrap (Physical Object)",
+      "description": "",
+      "childCount": 21
+    },
+    {
+      "title": "Analyze Sample",
+      "description": "Synonyms: Examine Sample",
+      "childCount": 20
+    },
+    {
+      "title": "Assemble Component",
+      "description": "",
+      "childCount": 20
+    },
+    {
+      "title": "Clean Machine",
+      "description": "",
+      "childCount": 20
+    },
+    {
+      "title": "Collaborate (Information)",
+      "description": "",
+      "childCount": 20
+    },
+    {
+      "title": "Conduct Assessment",
+      "description": "",
+      "childCount": 20
+    },
+    {
+      "title": "Create Budget",
+      "description": "Synonyms: Develop Budget, Generate Budget",
+      "childCount": 20
+    },
+    {
+      "title": "Create Specification",
+      "description": "Synonyms: Develop Specification",
+      "childCount": 20
+    },
+    {
+      "title": "Draw (drawing) (Information)",
+      "description": "",
+      "childCount": 20
+    },
+    {
+      "title": "Incorporate (information) (Information)",
+      "description": "",
+      "childCount": 20
+    },
+    {
+      "title": "Inform Supervisor",
+      "description": "Synonyms: Notify Supervisor",
+      "childCount": 20
+    },
+    {
+      "title": "Inspect (Information)",
+      "description": "",
+      "childCount": 20
+    },
+    {
+      "title": "Lower (Physical Object)",
+      "description": "",
+      "childCount": 20
+    },
+    {
+      "title": "Maintain Documentation",
+      "description": "",
+      "childCount": 20
+    },
+    {
+      "title": "Maintain Tool",
+      "description": "Synonyms: Hold Tool",
+      "childCount": 20
+    },
+    {
+      "title": "Move Control",
+      "description": "",
+      "childCount": 20
+    },
+    {
+      "title": "Move Material",
+      "description": "",
+      "childCount": 20
+    },
+    {
+      "title": "Negotiate (Information)",
+      "description": "",
+      "childCount": 20
+    },
+    {
+      "title": "Oversee Project",
+      "description": "Synonyms: Supervise Project",
+      "childCount": 20
+    },
+    {
+      "title": "Participate Conference",
+      "description": "",
+      "childCount": 20
+    },
+    {
+      "title": "Perform Work",
+      "description": "",
+      "childCount": 20
+    },
+    {
+      "title": "Read Specification",
+      "description": "",
+      "childCount": 20
+    },
+    {
+      "title": "Submit Report",
+      "description": "",
+      "childCount": 20
+    },
+    {
+      "title": "Supervise Personnel",
+      "description": "",
+      "childCount": 20
+    },
+    {
+      "title": "Supervise Technician",
+      "description": "",
+      "childCount": 20
+    },
+    {
+      "title": "Teach Course",
+      "description": "",
+      "childCount": 20
+    },
+    {
+      "title": "Teach Patient",
+      "description": "Synonyms: Instruct Patient",
+      "childCount": 20
+    },
+    {
+      "title": "Use Technique",
+      "description": "Synonyms: Apply Technique, Employ Technique",
+      "childCount": 20
+    },
+    {
+      "title": "Administer Treatment",
+      "description": "",
+      "childCount": 19
+    },
+    {
+      "title": "Analyze Report",
+      "description": "Synonyms: Examine Report, Study Report",
+      "childCount": 19
+    },
+    {
+      "title": "Bolt (Physical Object)",
+      "description": "",
+      "childCount": 19
+    },
+    {
+      "title": "Check (Physical Object)",
+      "description": "",
+      "childCount": 19
+    },
+    {
+      "title": "Collaborate Program",
+      "description": "",
+      "childCount": 19
+    },
+    {
+      "title": "Conduct Audit",
+      "description": "",
+      "childCount": 19
+    },
+    {
+      "title": "Conduct Session",
+      "description": "",
+      "childCount": 19
+    },
+    {
+      "title": "Confer Professional",
+      "description": "Synonyms: Consult Professional",
+      "childCount": 19
+    },
+    {
+      "title": "Count (Physical Object)",
+      "description": "",
+      "childCount": 19
+    },
+    {
+      "title": "Cover (Physical Object)",
+      "description": "",
+      "childCount": 19
+    },
+    {
+      "title": "Create Database",
+      "description": "Synonyms: Develop Database",
+      "childCount": 19
+    },
+    {
+      "title": "Cut (physical)",
+      "description": "Synonyms: Cut",
+      "childCount": 19
+    },
+    {
+      "title": "Document Procedure",
+      "description": "",
+      "childCount": 19
+    },
+    {
+      "title": "Enter Datum",
+      "description": "",
+      "childCount": 19
+    },
+    {
+      "title": "Enter Information",
+      "description": "",
+      "childCount": 19
+    },
+    {
+      "title": "Establish Objective",
+      "description": "",
+      "childCount": 19
+    },
+    {
+      "title": "Fabricate Part",
+      "description": "",
+      "childCount": 19
+    },
+    {
+      "title": "Inspect Area",
+      "description": "",
+      "childCount": 19
+    },
+    {
+      "title": "Install Fixture",
+      "description": "",
+      "childCount": 19
+    },
+    {
+      "title": "Inventory Supply",
+      "description": "Synonyms: Keep Supply",
+      "childCount": 19
+    },
+    {
+      "title": "Measure Datum",
+      "description": "Synonyms: Assess Datum, Evaluate Datum",
+      "childCount": 19
+    },
+    {
+      "title": "Mention (Information)",
+      "description": "",
+      "childCount": 19
+    },
+    {
+      "title": "Monitor System",
+      "description": "",
+      "childCount": 19
+    },
+    {
+      "title": "Participate Organization",
+      "description": "",
+      "childCount": 19
+    },
+    {
+      "title": "Prescribe Medication",
+      "description": "",
+      "childCount": 19
+    },
+    {
+      "title": "Present Information",
+      "description": "",
+      "childCount": 19
+    },
+    {
+      "title": "Program (computer) (Information)",
+      "description": "",
+      "childCount": 19
+    },
+    {
+      "title": "Receive Supply",
+      "description": "Synonyms: Stock Supply",
+      "childCount": 19
+    },
+    {
+      "title": "Review Order",
+      "description": "",
+      "childCount": 19
+    },
+    {
+      "title": "Select",
+      "description": "Choosing one or more options from a pre-existing set of alternatives. This focus on a pre-existing set distinguishes 'Select' from the more general 'Decide', which can also include generating new options before making a choice. The core of a 'Select' activity is the evaluation of and commitment to one or more items within a defined choice-space. The method of selection can vary widely, from systematic processes like analytical evaluation or applying explicit rules, to more subjective approaches like holistic intuition, social influence, negotiation, or even random chance. The object of selection is also a key dimension, and can be anything from information and events to actors (e.g., hiring a person). Importantly, this category also includes activities where the goal is not to choose an item itself, but to choose a label or make a judgment about it from a set of possible outcomes. Examples include 'Categorize' (choosing a folder for a file), 'Diagnose' (choosing an explanation for symptoms), and 'Validate' (choosing between 'valid' and 'invalid'). Synonyms: Choose",
+      "childCount": 19
+    },
+    {
+      "title": "Send information",
+      "description": "The activity of transmitting information from a sender to one or more recipients. As a type of 'Provide information', this category focuses on the active transmission of information, distinguishing it from more passive ways of making it available, such as simply storing it where others might find it. This is a very broad category that encompasses any act of communication where information is conveyed from one party to another. The specific types of 'Send information' activities can be distinguished by many factors, including: - The communicative intent: such as to 'Inform' someone of a fact, 'Request' an action, 'Advise' on a decision, 'Propose' an idea, or make a 'Promise'. - The medium or modality: such as through spoken language ('Talk'), visual display ('Show'), or digital transfer ('Upload'). - The social context or role in a conversation: such as to 'Greet' someone, 'Answer' a question, or 'Relay' a message from another source. Synonyms: Send, Transmit",
+      "childCount": 19
+    },
+    {
+      "title": "Store Equipment",
+      "description": "",
+      "childCount": 19
+    },
+    {
+      "title": "Supply Direction",
+      "description": "Synonyms: Issue Direction, Provide Direction",
+      "childCount": 19
+    },
+    {
+      "title": "Transport Material",
+      "description": "Synonyms: Transfer Material",
+      "childCount": 19
+    },
+    {
+      "title": "Analyze Result",
+      "description": "",
+      "childCount": 18
+    },
+    {
+      "title": "Assist Patient",
+      "description": "Synonyms: Aid Patient, Help Patient",
+      "childCount": 18
+    },
+    {
+      "title": "Blend Ingredient",
+      "description": "Synonyms: Combine Ingredient, Mix Ingredient",
+      "childCount": 18
+    },
+    {
+      "title": "Calibrate (Physical Object)",
+      "description": "",
+      "childCount": 18
+    },
+    {
+      "title": "Close (Physical Object)",
+      "description": "",
+      "childCount": 18
+    },
+    {
+      "title": "Confer Member",
+      "description": "",
+      "childCount": 18
+    },
+    {
+      "title": "Coordinate Work",
+      "description": "",
+      "childCount": 18
+    },
+    {
+      "title": "Create (Activity)",
+      "description": "",
+      "childCount": 18
+    },
+    {
+      "title": "Design (Activity)",
+      "description": "",
+      "childCount": 18
+    },
+    {
+      "title": "Diagnose Condition",
+      "description": "",
+      "childCount": 18
+    },
+    {
+      "title": "Disinfect Equipment",
+      "description": "Synonyms: Sterilize Equipment",
+      "childCount": 18
+    },
+    {
+      "title": "Enter (information) (Information)",
+      "description": "",
+      "childCount": 18
+    },
+    {
+      "title": "Escort (Actor)",
+      "description": "",
+      "childCount": 18
+    },
+    {
+      "title": "Estimate Requirement",
+      "description": "",
+      "childCount": 18
+    },
+    {
+      "title": "Measure Characteristic",
+      "description": "Synonyms: Assess Characteristic, Evaluate Characteristic",
+      "childCount": 18
+    },
+    {
+      "title": "Measure Condition",
+      "description": "Synonyms: Assess Condition, Evaluate Condition",
+      "childCount": 18
+    },
+    {
+      "title": "Observe Performance",
+      "description": "",
+      "childCount": 18
+    },
+    {
+      "title": "Prepare Drawing",
+      "description": "",
+      "childCount": 18
+    },
+    {
+      "title": "Prepare Estimate",
+      "description": "",
+      "childCount": 18
+    },
+    {
+      "title": "Prepare Presentation",
+      "description": "",
+      "childCount": 18
+    },
+    {
+      "title": "Refer (Actor)",
+      "description": "",
+      "childCount": 18
+    },
+    {
+      "title": "Resolve Complaint",
+      "description": "",
+      "childCount": 18
+    },
+    {
+      "title": "Store Supply",
+      "description": "",
+      "childCount": 18
+    },
+    {
+      "title": "Supervise Student",
+      "description": "",
+      "childCount": 18
+    },
+    {
+      "title": "Test Component",
+      "description": "",
+      "childCount": 18
+    },
+    {
+      "title": "Test Product",
+      "description": "",
+      "childCount": 18
+    },
+    {
+      "title": "Weigh Material",
+      "description": "",
+      "childCount": 18
+    },
+    {
+      "title": "Administer (manage) (Information)",
+      "description": "",
+      "childCount": 17
+    },
+    {
+      "title": "Administer (treat) (Activity)",
+      "description": "",
+      "childCount": 17
+    },
+    {
+      "title": "Carry (Physical Object)",
+      "description": "",
+      "childCount": 17
+    },
+    {
+      "title": "Clean Facility",
+      "description": "",
+      "childCount": 17
+    },
+    {
+      "title": "Comply Procedure",
+      "description": "Synonyms: Adhere Procedure, Follow Procedure",
+      "childCount": 17
+    },
+    {
+      "title": "Connect Hose",
+      "description": "Synonyms: Attach Hose",
+      "childCount": 17
+    },
+    {
+      "title": "Control (Information)",
+      "description": "",
+      "childCount": 17
+    },
+    {
+      "title": "Create Process",
+      "description": "Synonyms: Develop Process",
+      "childCount": 17
+    },
+    {
+      "title": "Design Program",
+      "description": "",
+      "childCount": 17
+    },
+    {
+      "title": "Direct Work",
+      "description": "",
+      "childCount": 17
+    },
+    {
+      "title": "Distribute Material",
+      "description": "",
+      "childCount": 17
+    },
+    {
+      "title": "Equip (Physical Object)",
+      "description": "",
+      "childCount": 17
+    },
+    {
+      "title": "Examine Product",
+      "description": "",
+      "childCount": 17
+    },
+    {
+      "title": "Issue Device",
+      "description": "Synonyms: Provide Device",
+      "childCount": 17
+    },
+    {
+      "title": "Keep (Physical Object)",
+      "description": "",
+      "childCount": 17
+    },
+    {
+      "title": "Make (Information)",
+      "description": "",
+      "childCount": 17
+    },
+    {
+      "title": "Manage (Physical Object)",
+      "description": "",
+      "childCount": 17
+    },
+    {
+      "title": "Observe (Activity)",
+      "description": "",
+      "childCount": 17
+    },
+    {
+      "title": "Oversee Program",
+      "description": "Synonyms: Supervise Program",
+      "childCount": 17
+    },
+    {
+      "title": "Provide Technology",
+      "description": "",
+      "childCount": 17
+    },
+    {
+      "title": "Sew (Physical Object)",
+      "description": "",
+      "childCount": 17
+    },
+    {
+      "title": "Smooth (Physical Object)",
+      "description": "",
+      "childCount": 17
+    },
+    {
+      "title": "Store Material",
+      "description": "",
+      "childCount": 17
+    },
+    {
+      "title": "Supply Material",
+      "description": "Synonyms: Issue Material",
+      "childCount": 17
+    },
+    {
+      "title": "Adapt (information) (Information)",
+      "description": "",
+      "childCount": 16
+    },
+    {
+      "title": "Administer Program",
+      "description": "",
+      "childCount": 16
+    },
+    {
+      "title": "Advise Group",
+      "description": "Synonyms: Counsel Group",
+      "childCount": 16
+    },
+    {
+      "title": "Assemble Part",
+      "description": "",
+      "childCount": 16
+    },
+    {
+      "title": "Attend Seminar",
+      "description": "",
+      "childCount": 16
+    },
+    {
+      "title": "Complete Form",
+      "description": "",
+      "childCount": 16
+    },
+    {
+      "title": "Conduct Investigation",
+      "description": "",
+      "childCount": 16
+    },
+    {
+      "title": "Control",
+      "description": "Activities that involve exercising direct influence, power, or authority to determine or regulate the state, behavior, or outcome of something. As a form of 'Lead', control is characterized by its direct and often binding nature, as opposed to more indirect forms of guidance or persuasion. This category encompasses a wide range of actions, from hands-on manipulation (e.g., 'Operate' a machine, 'Steer' a vehicle) to the exercise of formal authority (e.g., 'Authorize' a transaction, 'Manage' a team, 'Order' a subordinate). The nature of control can be proactive ('Start', 'Organize'), reactive ('Punish'), permissive ('Authorize'), restrictive ('Prevent'), or involve ongoing oversight ('Manage'). The object of control can be tangible or abstract, including information, physical objects, events, or other actors. Synonyms: Synonyms: Control",
+      "childCount": 16
+    },
+    {
+      "title": "Cook Food",
+      "description": "Synonyms: Prepare Food",
+      "childCount": 16
+    },
+    {
+      "title": "Create Design",
+      "description": "Synonyms: Develop Design, Produce Design",
+      "childCount": 16
+    },
+    {
+      "title": "Create Image",
+      "description": "Synonyms: Develop Image, Generate Image, Make Image, Produce Image",
+      "childCount": 16
+    },
+    {
+      "title": "Create Tool",
+      "description": "Synonyms: Develop Tool",
+      "childCount": 16
+    },
+    {
+      "title": "Diagnose Problem",
+      "description": "",
+      "childCount": 16
+    },
+    {
+      "title": "Edit (Information)",
+      "description": "",
+      "childCount": 16
+    },
+    {
+      "title": "Establish Rule",
+      "description": "",
+      "childCount": 16
+    },
+    {
+      "title": "Evaluate Technology",
+      "description": "",
+      "childCount": 16
+    },
+    {
+      "title": "Fit (Physical Object)",
+      "description": "",
+      "childCount": 16
+    },
+    {
+      "title": "Inspect Work",
+      "description": "",
+      "childCount": 16
+    },
+    {
+      "title": "Inventory Equipment",
+      "description": "",
+      "childCount": 16
+    },
+    {
+      "title": "Investigate Complaint",
+      "description": "",
+      "childCount": 16
+    },
+    {
+      "title": "Issue Supply",
+      "description": "",
+      "childCount": 16
+    },
+    {
+      "title": "Lead (Activity)",
+      "description": "",
+      "childCount": 16
+    },
+    {
+      "title": "Maintain (information) (Activity)",
+      "description": "",
+      "childCount": 16
+    },
+    {
+      "title": "Make (Physical Object)",
+      "description": "",
+      "childCount": 16
+    },
+    {
+      "title": "Measure (Activity)",
+      "description": "",
+      "childCount": 16
+    },
+    {
+      "title": "Monitor (Actor)",
+      "description": "",
+      "childCount": 16
+    },
+    {
+      "title": "Move Lever",
+      "description": "",
+      "childCount": 16
+    },
+    {
+      "title": "Overhaul (Physical Object)",
+      "description": "",
+      "childCount": 16
+    },
+    {
+      "title": "Oversee Employee",
+      "description": "Synonyms: Supervise Employee",
+      "childCount": 16
+    },
+    {
+      "title": "Oversee Operation",
+      "description": "Synonyms: Supervise Operation",
+      "childCount": 16
+    },
+    {
+      "title": "Prepare Classroom",
+      "description": "Synonyms: Set_Up Classroom",
+      "childCount": 16
+    },
+    {
+      "title": "Prepare Contract",
+      "description": "",
+      "childCount": 16
+    },
+    {
+      "title": "Prepare Outline",
+      "description": "",
+      "childCount": 16
+    },
+    {
+      "title": "Rebuild (Physical Object)",
+      "description": "",
+      "childCount": 16
+    },
+    {
+      "title": "Record Result",
+      "description": "",
+      "childCount": 16
+    },
+    {
+      "title": "Review Datum",
+      "description": "",
+      "childCount": 16
+    },
+    {
+      "title": "Separate physical objects",
+      "description": "An activity that modifies physical objects by dividing a single entity into multiple parts or by detaching connected entities. As a type of 'Modify physical objects', the defining outcome is an increase in the number of distinct physical objects or a reduction in their physical connections. This is the conceptual opposite of 'Combine physical objects'. This category covers a wide range of methods. These can be forceful actions that alter an object's integrity, such as 'Cut' with a sharp tool or 'Break' through impact. They can also be methodical processes that undo existing connections, such as 'Disassemble' equipment, 'Disconnect' cables, 'Unpack' items from a container, or 'Remove' one object from another. Synonyms: Separate, Divide",
+      "childCount": 16
+    },
+    {
+      "title": "Serve (role) (Actor)",
+      "description": "",
+      "childCount": 16
+    },
+    {
+      "title": "Take Order",
+      "description": "",
+      "childCount": 16
+    },
+    {
+      "title": "Tend (Physical Object)",
+      "description": "",
+      "childCount": 16
+    },
+    {
+      "title": "Tighten (Physical Object)",
+      "description": "",
+      "childCount": 16
+    },
+    {
+      "title": "Train (Actor)",
+      "description": "",
+      "childCount": 16
+    },
+    {
+      "title": "Train Employee",
+      "description": "",
+      "childCount": 16
+    },
+    {
+      "title": "Type (Information)",
+      "description": "",
+      "childCount": 16
+    },
+    {
+      "title": "Use Computer",
+      "description": "",
+      "childCount": 16
+    },
+    {
+      "title": "Write Material",
+      "description": "Synonyms: Compile Material",
+      "childCount": 16
+    },
+    {
+      "title": "Adjust (information)",
+      "description": "Activities that involve making modifications to existing information to bring it into a more desirable or effective state, such as to correct it, improve its fit for a purpose, or align it with a standard. This type of transformation is distinct from creating a new representation of the information (e.g., summarizing, translating). Instead, it focuses on incremental changes to the original. Common types of adjustment include altering, adapting, aligning, customizing, or regulating information to meet specific requirements. Synonyms: Adjust",
+      "childCount": 15
+    },
+    {
+      "title": "Adjust Component",
+      "description": "Synonyms: Set Component",
+      "childCount": 15
+    },
+    {
+      "title": "Advise Customer",
+      "description": "",
+      "childCount": 15
+    },
+    {
+      "title": "Answer Complaint",
+      "description": "Synonyms: Respond Complaint",
+      "childCount": 15
+    },
+    {
+      "title": "Bend (Physical Object)",
+      "description": "",
+      "childCount": 15
+    },
+    {
+      "title": "Calculate Cost",
+      "description": "Synonyms: Compute Cost, Forecast Cost",
+      "childCount": 15
+    },
+    {
+      "title": "Coach Other",
+      "description": "Synonyms: Develop Other, Train Other",
+      "childCount": 15
+    },
+    {
+      "title": "Conduct Inspection",
+      "description": "",
+      "childCount": 15
+    },
+    {
+      "title": "Copy (information) (Information)",
+      "description": "",
+      "childCount": 15
+    },
+    {
+      "title": "Cover",
+      "description": "An activity that involves placing one object over, on, or around another, typically to protect, conceal, decorate, or contain it. As a type of 'Combine physical objects', covering is distinct from activities like 'Attach' or 'Assemble' because it does not necessarily create a permanent or structural bond. For example, putting a lid on a jar is an act of covering, while welding two metal plates together is not. The specific manner of covering can vary, such as by completely enclosing something ('Envelop'), placing an item on a surface ('Put On'), or distributing a substance across an area ('Spread'). The entity being covered can be an inanimate object or an actor, such as a person. Synonyms: Synonyms: Cover",
+      "childCount": 15
+    },
+    {
+      "title": "Develop Relationship",
+      "description": "",
+      "childCount": 15
+    },
+    {
+      "title": "Discard (Physical Object)",
+      "description": "",
+      "childCount": 15
+    },
+    {
+      "title": "Document (Physical Object)",
+      "description": "",
+      "childCount": 15
+    },
+    {
+      "title": "Evaluate Method",
+      "description": "",
+      "childCount": 15
+    },
+    {
+      "title": "Examine Material",
+      "description": "",
+      "childCount": 15
+    },
+    {
+      "title": "Examine Patient",
+      "description": "",
+      "childCount": 15
+    },
+    {
+      "title": "Implement Strategy",
+      "description": "",
+      "childCount": 15
+    },
+    {
+      "title": "Inspect Part",
+      "description": "",
+      "childCount": 15
+    },
+    {
+      "title": "Lead (Actor)",
+      "description": "",
+      "childCount": 15
+    },
+    {
+      "title": "Maintain Information",
+      "description": "",
+      "childCount": 15
+    },
+    {
+      "title": "Manage Activity",
+      "description": "",
+      "childCount": 15
+    },
+    {
+      "title": "Monitor Progress",
+      "description": "",
+      "childCount": 15
+    },
+    {
+      "title": "Order (authoritative) (Activity)",
+      "description": "",
+      "childCount": 15
+    },
+    {
+      "title": "Organize (analytically) (Information)",
+      "description": "",
+      "childCount": 15
+    },
+    {
+      "title": "Position Equipment",
+      "description": "",
+      "childCount": 15
+    },
+    {
+      "title": "Prepare Specification",
+      "description": "",
+      "childCount": 15
+    },
+    {
+      "title": "Provide Guidance",
+      "description": "",
+      "childCount": 15
+    },
+    {
+      "title": "Recommend Procedure",
+      "description": "",
+      "childCount": 15
+    },
+    {
+      "title": "Review Document",
+      "description": "",
+      "childCount": 15
+    },
+    {
+      "title": "Select Tool",
+      "description": "",
+      "childCount": 15
+    },
+    {
+      "title": "Teach Class",
+      "description": "",
+      "childCount": 15
+    },
+    {
+      "title": "Validate (Physical Object)",
+      "description": "",
+      "childCount": 15
+    },
+    {
+      "title": "Write Letter",
+      "description": "Synonyms: Compose Letter",
+      "childCount": 15
+    },
+    {
+      "title": "Adjust Part",
+      "description": "",
+      "childCount": 14
+    },
+    {
+      "title": "Assist",
+      "description": "Synonyms: Help, Support",
+      "childCount": 14
+    },
+    {
+      "title": "Assist Customer",
+      "description": "Synonyms: Help Customer, Serve Customer",
+      "childCount": 14
+    },
+    {
+      "title": "Box (Physical Object)",
+      "description": "",
+      "childCount": 14
+    },
+    {
+      "title": "Brush (Physical Object)",
+      "description": "",
+      "childCount": 14
+    },
+    {
+      "title": "Clean Tool",
+      "description": "",
+      "childCount": 14
+    },
+    {
+      "title": "Compile Record",
+      "description": "",
+      "childCount": 14
+    },
+    {
+      "title": "Confer Official",
+      "description": "Synonyms: Consult Official",
+      "childCount": 14
+    },
+    {
+      "title": "Cook (Physical Object)",
+      "description": "",
+      "childCount": 14
+    },
+    {
+      "title": "Create Report",
+      "description": "Synonyms: Develop Report, Generate Report, Produce Report",
+      "childCount": 14
+    },
+    {
+      "title": "Deliver (Information)",
+      "description": "",
+      "childCount": 14
+    },
+    {
+      "title": "Demonstrate Equipment",
+      "description": "",
+      "childCount": 14
+    },
+    {
+      "title": "Determine Equipment",
+      "description": "Synonyms: Check Equipment",
+      "childCount": 14
+    },
+    {
+      "title": "Determine Location",
+      "description": "Synonyms: Check Location",
+      "childCount": 14
+    },
+    {
+      "title": "Determine Requirement",
+      "description": "",
+      "childCount": 14
+    },
+    {
+      "title": "Direct (Information)",
+      "description": "",
+      "childCount": 14
+    },
+    {
+      "title": "Educate Patient",
+      "description": "",
+      "childCount": 14
+    },
+    {
+      "title": "Establish Policy",
+      "description": "Synonyms: Set_Up Policy",
+      "childCount": 14
+    },
+    {
+      "title": "Explain Regulation",
+      "description": "Synonyms: Interpret Regulation",
+      "childCount": 14
+    },
+    {
+      "title": "Implement Policy",
+      "description": "",
+      "childCount": 14
+    },
+    {
+      "title": "Inspect (Activity)",
+      "description": "",
+      "childCount": 14
+    },
+    {
+      "title": "Inspect Vehicle",
+      "description": "",
+      "childCount": 14
+    },
+    {
+      "title": "Level (Physical Object)",
+      "description": "",
+      "childCount": 14
+    },
+    {
+      "title": "Maintain Relationship",
+      "description": "",
+      "childCount": 14
+    },
+    {
+      "title": "Mark Material",
+      "description": "Synonyms: Label Material, Tag Material",
+      "childCount": 14
+    },
+    {
+      "title": "Measure Dimension",
+      "description": "",
+      "childCount": 14
+    },
+    {
+      "title": "Measure Ingredient",
+      "description": "",
+      "childCount": 14
+    },
+    {
+      "title": "Meet Parent",
+      "description": "",
+      "childCount": 14
+    },
+    {
+      "title": "Monitor Student",
+      "description": "",
+      "childCount": 14
+    },
+    {
+      "title": "Order Test",
+      "description": "",
+      "childCount": 14
+    },
+    {
+      "title": "Order Treatment",
+      "description": "Synonyms: Prescribe Treatment",
+      "childCount": 14
+    }
+  ],
+  "deterministicCandidates": [
+    {
+      "issueType": "misc-facet-duplicate",
+      "parentTitle": "Buy",
+      "firstTitle": "Buy (Information)",
+      "firstCollection": "Buy -- miscellaneous",
+      "secondTitle": "Buy information",
+      "secondCollection": "Buy what kind of input?",
+      "rationale": "\"Buy (Information)\" and \"Buy information\" differ only in facet notation and appear under separate specialization collections of the same parent.",
+      "detectorId": "deterministic-facet-overlap-scan",
+      "candidateId": "deterministic-facet-overlap-scan-08d145902699"
+    },
+    {
+      "issueType": "misc-facet-duplicate",
+      "parentTitle": "Buy",
+      "firstTitle": "Buy (Physical Object)",
+      "firstCollection": "Buy -- miscellaneous",
+      "secondTitle": "Buy physical object",
+      "secondCollection": "Buy what kind of input?",
+      "rationale": "\"Buy (Physical Object)\" and \"Buy physical object\" differ only in facet notation and appear under separate specialization collections of the same parent.",
+      "detectorId": "deterministic-facet-overlap-scan",
+      "candidateId": "deterministic-facet-overlap-scan-c9b9029776fb"
+    }
+  ],
+  "criticRaw": "{\n  \"assessments\": [\n    {\n      \"candidateId\": \"deterministic-facet-overlap-scan-08d145902699\",\n      \"decision\": \"accept\",\n      \"rationale\": \"The nodes 'Buy (Information)' and 'Buy information' are duplicates differing only in facet notation.\"\n    },\n    {\n      \"candidateId\": \"deterministic-facet-overlap-scan-c9b9029776fb\",\n      \"decision\": \"accept\",\n      \"rationale\": \"The nodes 'Buy (Physical Object)' and 'Buy physical object' are duplicates differing only in facet notation.\"\n    },\n    {\n      \"candidateId\": \"title-evidence-agent-2111ce13e359\",\n      \"decision\": \"accept\",\n      \"rationale\": \"The source task specifies 'listings in local search engines, directories...', making 'Purchase Directory Listing' more precise.\"\n    },\n    {\n      \"candidateId\": \"title-evidence-agent-437d78d9f2f8\",\n      \"decision\": \"accept\",\n      \"rationale\": \"The source task refers to arrangement of interior elements, making 'Subcontract Interior Arrangement' more precise.\"\n    },\n    {\n      \"candidateId\": \"title-evidence-agent-97fdf98a97f6\",\n      \"decision\": \"accept\",\n      \"rationale\": \"The source task refers to fabrication of interior elements, making 'Subcontract Interior Fabrication' more precise.\"\n    },\n    {\n      \"candidateId\": \"title-evidence-agent-5f67a3289772\",\n      \"decision\": \"accept\",\n      \"rationale\": \"The source task refers to installation of interior elements, making 'Subcontract Interior Installation' more precise.\"\n    },\n    {\n      \"candidateId\": \"identity-agent-18b5d72bd807\",\n      \"decision\": \"accept\",\n      \"rationale\": \"'Cash' is not a synonym for 'Buy' in this context; it refers to a different type of financial transaction.\"\n    },\n    {\n      \"candidateId\": \"identity-agent-f5f4a9d600bf\",\n      \"decision\": \"reject\",\n      \"rationale\": \"Polysemy proposals are not supported; the node should simply be moved to a more appropriate parent.\"\n    },\n    {\n      \"candidateId\": \"structure-agent-59c2a9e8964a\",\n      \"decision\": \"accept\",\n      \"rationale\": \"Groups related financial instrument purchases into a coherent category.\"\n    },\n    {\n      \"candidateId\": \"structure-agent-8fa999d6cdd2\",\n      \"decision\": \"reject\",\n      \"rationale\": \"The proposed group has fewer than three members.\"\n    },\n    {\n      \"candidateId\": \"structure-agent-17e58a606df7\",\n      \"decision\": \"reject\",\n      \"rationale\": \"The proposed group has fewer than three members.\"\n    },\n    {\n      \"candidateId\": \"structure-agent-6d681dabd0ee\",\n      \"decision\": \"accept\",\n      \"rationale\": \"Groups related equipment and machinery purchases into a coherent category.\"\n    },\n    {\n      \"candidateId\": \"structure-agent-81826b858edd\",\n      \"decision\": \"accept\",\n      \"rationale\": \"Groups related material and supply purchases into a coherent category.\"\n    },\n    {\n      \"candidateId\": \"structure-agent-9f98ca48da5e\",\n      \"decision\": \"reject\",\n      \"rationale\": \"The proposed group has fewer than three members.\"\n    },\n    {\n      \"candidateId\": \"structure-agent-38bb036ef64a\",\n      \"decision\": \"reject\",\n      \"rationale\": \"The proposed group has fewer than three members.\"\n    },\n    {\n      \"candidateId\": \"structure-agent-3949971b583a\",\n      \"decision\": \"accept\",\n      \"rationale\": \"Groups related merchandise and goods purchases into a coherent category.\"\n    },\n    {\n      \"candidateId\": \"structure-agent-58a354611b54\",\n      \"decision\": \"accept\",\n      \"rationale\": \"Groups general staff hiring activities into a coherent category.\"\n    },\n    {\n      \"candidateId\": \"structure-agent-3127b762d55a\",\n      \"decision\": \"accept\",\n      \"rationale\": \"Groups specific role hiring activities into a coherent category.\"\n    },\n    {\n      \"candidateId\": \"structure-agent-54163dbebe40\",\n      \"decision\": \"accept\",\n      \"rationale\": \"Groups general staff recruiting activities into a coherent category.\"\n    },\n    {\n      \"candidateId\": \"placement-boundary-agent-e791a62de086\",\n      \"decision\": \"accept\",\n      \"rationale\": \"Meals are physical objects, so 'Shop for Meals' belongs under 'Buy (Physical Object)'.\"\n    },\n    {\n      \"candidateId\": \"placement-boundary-agent-4b38490bf1ff\",\n      \"decision\": \"accept\",\n      \"rationale\": \"'Purchase Service' belongs under the dedicated 'Buy service' category.\"\n    },\n    {\n      \"candidateId\": \"placement-boundary-agent-92026b8b8d4e\",\n      \"decision\": \"accept\",\n      \"rationale\": \"Artwork is a physical object, so 'Purchase Artwork' belongs under 'Buy (Physical Object)'.\"\n    },\n    {\n      \"candidateId\": \"placement-boundary-agent-bf177a2cffa1\",\n      \"decision\": \"revise\",\n      \"rationale\": \"Cashing a check is a financial transaction, not buying information. 'Perform (action) (Information)' is not a valid destination, but 'Process (information) (Information)' is.\",\n      \"revisedFields\": {\n        \"candidateHome\": \"Process (information) (Information)\"\n      }\n    },\n    {\n      \"candidateId\": \"placement-boundary-agent-c9c9bdb9d243\",\n      \"decision\": \"revise\",\n      \"rationale\": \"Cashing a money order is a financial transaction, not buying a physical object. 'Perform (action) (Information)' is not a valid destination, but 'Process (information) (Information)' is.\",\n      \"revisedFields\": {\n        \"candidateHome\": \"Process (information) (Information)\"\n      }\n    }\n  ]\n}",
+  "contentVerifierRaw": "{\"assessments\":[{\"candidateId\":\"title-evidence-agent-2111ce13e359\",\"decision\":\"reject\",\"rationale\":\"The proposed title narrows the scope by excluding search engines and digital mapping technologies mentioned in the evidence.\"},{\"candidateId\":\"title-evidence-agent-437d78d9f2f8\",\"decision\":\"accept\",\"rationale\":\"The addition of interior accurately reflects the list of items in the evidence without narrowing the specific action of arrangement.\"},{\"candidateId\":\"title-evidence-agent-97fdf98a97f6\",\"decision\":\"accept\",\"rationale\":\"The addition of interior accurately reflects the list of items in the evidence without narrowing the specific action of fabrication.\"},{\"candidateId\":\"title-evidence-agent-5f67a3289772\",\"decision\":\"accept\",\"rationale\":\"The addition of interior accurately reflects the list of items in the evidence without narrowing the specific action of installation.\"}]}",
+  "acceptedCandidates": [
+    {
+      "issueType": "misc-facet-duplicate",
+      "parentTitle": "Buy",
+      "firstTitle": "Buy (Information)",
+      "firstCollection": "Buy -- miscellaneous",
+      "secondTitle": "Buy information",
+      "secondCollection": "Buy what kind of input?",
+      "rationale": "\"Buy (Information)\" and \"Buy information\" differ only in facet notation and appear under separate specialization collections of the same parent.",
+      "detectorId": "deterministic-facet-overlap-scan",
+      "candidateId": "deterministic-facet-overlap-scan-08d145902699",
+      "criticRationale": "The nodes 'Buy (Information)' and 'Buy information' are duplicates differing only in facet notation."
+    },
+    {
+      "issueType": "misc-facet-duplicate",
+      "parentTitle": "Buy",
+      "firstTitle": "Buy (Physical Object)",
+      "firstCollection": "Buy -- miscellaneous",
+      "secondTitle": "Buy physical object",
+      "secondCollection": "Buy what kind of input?",
+      "rationale": "\"Buy (Physical Object)\" and \"Buy physical object\" differ only in facet notation and appear under separate specialization collections of the same parent.",
+      "detectorId": "deterministic-facet-overlap-scan",
+      "candidateId": "deterministic-facet-overlap-scan-c9b9029776fb",
+      "criticRationale": "The nodes 'Buy (Physical Object)' and 'Buy physical object' are duplicates differing only in facet notation."
+    },
+    {
+      "issueType": "title-clarity",
+      "nodeTitle": "Subcontract Arrangement",
+      "currentParentTitle": "Subcontract (Activity)",
+      "proposedTitle": "Subcontract Interior Arrangement",
+      "rationale": "The source task refers to 'arrangement of carpeting, fixtures, accessories, draperies...'. 'Subcontract Arrangement' is too vague without context.",
+      "candidateId": "title-evidence-agent-437d78d9f2f8",
+      "detectorId": "title-evidence-agent",
+      "criticRationale": "The addition of interior accurately reflects the list of items in the evidence without narrowing the specific action of arrangement."
+    },
+    {
+      "issueType": "title-clarity",
+      "nodeTitle": "Subcontract Fabrication",
+      "currentParentTitle": "Subcontract (Activity)",
+      "proposedTitle": "Subcontract Interior Fabrication",
+      "rationale": "The source task refers to fabrication of interior design elements (carpeting, fixtures, etc.). Adding 'Interior' clarifies the scope.",
+      "candidateId": "title-evidence-agent-97fdf98a97f6",
+      "detectorId": "title-evidence-agent",
+      "criticRationale": "The addition of interior accurately reflects the list of items in the evidence without narrowing the specific action of fabrication."
+    },
+    {
+      "issueType": "title-clarity",
+      "nodeTitle": "Subcontract Installation",
+      "currentParentTitle": "Subcontract (Activity)",
+      "proposedTitle": "Subcontract Interior Installation",
+      "rationale": "The source task refers to installation of interior design elements. Adding 'Interior' clarifies the scope.",
+      "candidateId": "title-evidence-agent-5f67a3289772",
+      "detectorId": "title-evidence-agent",
+      "criticRationale": "The addition of interior accurately reflects the list of items in the evidence without narrowing the specific action of installation."
+    },
+    {
+      "issueType": "mistaken-synonym",
+      "nodeTitle": "Buy",
+      "removeSynonyms": [
+        "Cash"
+      ],
+      "rationale": "'Cash' (as in cashing a check or money order) is a financial exchange, but not typically synonymous with 'Buy' (purchasing an asset or good). It represents a different type of transaction.",
+      "candidateId": "identity-agent-18b5d72bd807",
+      "detectorId": "identity-agent",
+      "criticRationale": "'Cash' is not a synonym for 'Buy' in this context; it refers to a different type of financial transaction."
+    },
+    {
+      "issueType": "flat-list-grouping",
+      "parentTitle": "Buy (Information)",
+      "proposedGroupTitle": "Buy Financial Instrument",
+      "proposedChildren": [
+        "Buy Bond",
+        "Buy Currency",
+        "Buy Future",
+        "Buy Stock",
+        "Purchase Derivative",
+        "Purchase Investment"
+      ],
+      "rationale": "Groups activities related to purchasing financial instruments and investments.",
+      "candidateId": "structure-agent-59c2a9e8964a",
+      "detectorId": "structure-agent",
+      "criticRationale": "Groups related financial instrument purchases into a coherent category."
+    },
+    {
+      "issueType": "flat-list-grouping",
+      "parentTitle": "Buy (Physical Object)",
+      "proposedGroupTitle": "Purchase Equipment and Machinery",
+      "proposedChildren": [
+        "Purchase Equipment",
+        "Purchase Machinery",
+        "Purchase Technology",
+        "Purchase Tool"
+      ],
+      "rationale": "Groups activities related to buying tools, equipment, and machinery.",
+      "candidateId": "structure-agent-6d681dabd0ee",
+      "detectorId": "structure-agent",
+      "criticRationale": "Groups related equipment and machinery purchases into a coherent category."
+    },
+    {
+      "issueType": "flat-list-grouping",
+      "parentTitle": "Buy (Physical Object)",
+      "proposedGroupTitle": "Purchase Material and Supply",
+      "proposedChildren": [
+        "Purchase Hardware",
+        "Purchase Lumber",
+        "Purchase Material",
+        "Purchase Part",
+        "Purchase Resource",
+        "Purchase Supply"
+      ],
+      "rationale": "Groups activities related to buying raw materials, parts, and supplies.",
+      "candidateId": "structure-agent-81826b858edd",
+      "detectorId": "structure-agent",
+      "criticRationale": "Groups related material and supply purchases into a coherent category."
+    },
+    {
+      "issueType": "flat-list-grouping",
+      "parentTitle": "Buy (Physical Object)",
+      "proposedGroupTitle": "Purchase Merchandise and Good",
+      "proposedChildren": [
+        "Buy Commodity",
+        "Buy Merchandise",
+        "Purchase Good",
+        "Purchase Item",
+        "Purchase Product",
+        "Purchase Stock"
+      ],
+      "rationale": "Groups activities related to buying general merchandise, goods, and products for resale or general use.",
+      "candidateId": "structure-agent-3949971b583a",
+      "detectorId": "structure-agent",
+      "criticRationale": "Groups related merchandise and goods purchases into a coherent category."
+    },
+    {
+      "issueType": "flat-list-grouping",
+      "parentTitle": "Hire (Actor)",
+      "proposedGroupTitle": "Hire General Staff",
+      "proposedChildren": [
+        "Hire Associate",
+        "Hire Crew",
+        "Hire Employee",
+        "Hire Member",
+        "Hire Personnel",
+        "Hire Staff",
+        "Hire Worker"
+      ],
+      "rationale": "Groups activities related to hiring general employees, staff, and workers.",
+      "candidateId": "structure-agent-58a354611b54",
+      "detectorId": "structure-agent",
+      "criticRationale": "Groups general staff hiring activities into a coherent category."
+    },
+    {
+      "issueType": "flat-list-grouping",
+      "parentTitle": "Hire (Actor)",
+      "proposedGroupTitle": "Hire Specific Role",
+      "proposedChildren": [
+        "Employ Foreman",
+        "Hire Buyer",
+        "Hire Clerk",
+        "Hire Coach",
+        "Hire Collector",
+        "Hire Expediter",
+        "Hire Faculty",
+        "Hire Recruiter",
+        "Hire Reporter",
+        "Hire Trainer",
+        "Hire Writer"
+      ],
+      "rationale": "Groups activities related to hiring specific professional roles.",
+      "candidateId": "structure-agent-3127b762d55a",
+      "detectorId": "structure-agent",
+      "criticRationale": "Groups specific role hiring activities into a coherent category."
+    },
+    {
+      "issueType": "flat-list-grouping",
+      "parentTitle": "Recruit (Actor)",
+      "proposedGroupTitle": "Recruit General Staff",
+      "proposedChildren": [
+        "Recruit Employee",
+        "Recruit Member",
+        "Recruit Personnel",
+        "Recruit Staff",
+        "Recruit Worker"
+      ],
+      "rationale": "Groups activities related to recruiting general employees and staff.",
+      "candidateId": "structure-agent-54163dbebe40",
+      "detectorId": "structure-agent",
+      "criticRationale": "Groups general staff recruiting activities into a coherent category."
+    },
+    {
+      "issueType": "placement",
+      "nodeTitle": "Shop for Meals",
+      "currentParentTitle": "Buy (Information)",
+      "candidateHome": "Buy (Physical Object)",
+      "rationale": "Meals are physical objects, not information, and should be classified accordingly.",
+      "candidateId": "placement-boundary-agent-e791a62de086",
+      "detectorId": "placement-boundary-agent",
+      "criticRationale": "Meals are physical objects, so 'Shop for Meals' belongs under 'Buy (Physical Object)'."
+    },
+    {
+      "issueType": "placement",
+      "nodeTitle": "Purchase Service",
+      "currentParentTitle": "Buy (Information)",
+      "candidateHome": "Buy service",
+      "rationale": "Purchasing a service belongs under the dedicated 'Buy service' category rather than 'Buy (Information)'.",
+      "candidateId": "placement-boundary-agent-4b38490bf1ff",
+      "detectorId": "placement-boundary-agent",
+      "criticRationale": "'Purchase Service' belongs under the dedicated 'Buy service' category."
+    },
+    {
+      "issueType": "placement",
+      "nodeTitle": "Purchase Artwork",
+      "currentParentTitle": "Buy (Information)",
+      "candidateHome": "Buy (Physical Object)",
+      "rationale": "Artwork is typically a physical object (e.g., paintings, sculptures) rather than information.",
+      "candidateId": "placement-boundary-agent-92026b8b8d4e",
+      "detectorId": "placement-boundary-agent",
+      "criticRationale": "Artwork is a physical object, so 'Purchase Artwork' belongs under 'Buy (Physical Object)'."
+    }
+  ],
+  "rejectedCandidateCount": 26,
+  "generatedProposalIds": [
+    "som-137342d1b688e054c087",
+    "som-20698f3f2fae5fcbe4e8",
+    "som-27dca6ca552c80e0cd4b",
+    "som-2f5a72708e3ec625a931",
+    "som-3e38461ab23b85842f38",
+    "som-6d34ed5b48cef2409b07",
+    "som-c7645929773008dd8280",
+    "som-3237a28bc976fa2f4005",
+    "som-b89358bee45c7231dce5",
+    "som-2ea1462610f84dcfc75d",
+    "som-12f639a99d59e2c50c70",
+    "som-2183402f36fbec707f21",
+    "som-2c7a8e515a11d9a1ad93",
+    "som-ebffb3f42aa76d25ae21",
+    "som-f93c4436e960a0f9b35b",
+    "som-020cb8437637d2f1a15a",
+    "som-065487302d60bdfc4ad2",
+    "som-80e59d2b9804ea3b3596",
+    "som-4376db2c113bf2e876c5",
+    "som-9fe541fdf526dc87258c",
+    "som-f36f0ceb888e838017d0"
+  ]
+}
