@@ -1,0 +1,149 @@
+{
+  "schemaVersion": "som-title-application-audit-v1",
+  "generatedAt": "2026-07-25T22:40:00.657Z",
+  "mode": "dry-run",
+  "environment": "production",
+  "firestoreProjectId": "ontology-41607",
+  "sourceOntology": {
+    "appId": "final-hierarchy-with-o*net-rob-structure-applied-2026-07-25",
+    "name": "Final Hierarchy with O*Net - Rob Structure Applied 2026-07-25"
+  },
+  "targetOntology": {
+    "appId": "final-hierarchy-with-o*net-rob-buy-titles-applied-2026-07-25",
+    "name": "Final Hierarchy with O*Net - Rob Buy Titles Applied 2026-07-25"
+  },
+  "planSha256": "ab6d17a844e6a1bf725f699a600b9ae45c2a136744adf112e82affa347f1fd62",
+  "benchmarkSha256": "567c29e1aa3465d263030d9ff7d0e8b4aa2466b972b63010070aec36f7e6ad02",
+  "resume": false,
+  "existingTargetNodeCount": 0,
+  "nodesRemainingToWrite": 52309,
+  "sourceDigestBefore": "af8a59ec1f49672b634842142299b1e7e844137eb9bcdbc6f64edd9b30b32786",
+  "expectedTargetDigest": "7d86884c49d59c3334c0436c341010419380d70aec2b570acde2ac8671c858a5",
+  "ownedSourceNodeCount": 52309,
+  "clonedOnetEvidenceNodeCount": 0,
+  "unresolvedDirectReferenceCount": 0,
+  "unresolvedDirectReferenceSample": [],
+  "nonOnetExternalReferenceCount": 0,
+  "nonOnetExternalReferenceSample": [],
+  "sourceNodeCount": 52309,
+  "targetNodeCount": 52309,
+  "newNodeCount": 0,
+  "renames": [
+    {
+      "sourceNodeId": "81f60eb561fa9b1114badb262a3a",
+      "targetNodeId": "703da089530344c4e777b336e742",
+      "from": "Cash Order",
+      "to": "Cash Money Order",
+      "decisionSource": "acceptedProposal"
+    },
+    {
+      "sourceNodeId": "e8b0e09ac89bc4852eeb1c77c7d1",
+      "targetNodeId": "a41011c65f0fd8b5c0f1d73cea80",
+      "from": "Purchase Address",
+      "to": "Purchase Web Address",
+      "decisionSource": "acceptedProposal"
+    },
+    {
+      "sourceNodeId": "e54f15a83824272e741e31d26b19",
+      "targetNodeId": "68da1267e950b3ab8fcd48796ccb",
+      "from": "Purchase Finish",
+      "to": "Purchase Surface Finish",
+      "decisionSource": "acceptedProposal"
+    },
+    {
+      "sourceNodeId": "3ac1c704b0753c1bc34b478a7a78",
+      "targetNodeId": "624af001344887c7b423507875e5",
+      "from": "Purchase Necessity",
+      "to": "Purchase Wardrobe Necessity",
+      "decisionSource": "acceptedProposal"
+    },
+    {
+      "sourceNodeId": "8f2c4c3f18e58b5c8096a9e68aef",
+      "targetNodeId": "44e1ed16ee409001f446d9aa2c72",
+      "from": "Purchase Space",
+      "to": "Purchase Advertising Space",
+      "decisionSource": "acceptedProposal"
+    },
+    {
+      "sourceNodeId": "f6eb55a2aa8a9beb240e505306e5",
+      "targetNodeId": "9705a021585d1207194daff37dd9",
+      "from": "Purchase Time",
+      "to": "Purchase Advertising Time",
+      "decisionSource": "acceptedProposal"
+    },
+    {
+      "sourceNodeId": "1684624e8d338c701b3df0b0f09c",
+      "targetNodeId": "52dbf219cf41a975c455e8a17756",
+      "from": "Purchase Work",
+      "to": "Purchase Artwork",
+      "decisionSource": "acceptedProposal"
+    },
+    {
+      "sourceNodeId": "7376d070263ea7068c8e69aa1ce5",
+      "targetNodeId": "b153e0cc7d4a33dd4e7edd9cf39d",
+      "from": "Rent Necessity",
+      "to": "Rent Wardrobe Necessity",
+      "decisionSource": "acceptedProposal"
+    },
+    {
+      "sourceNodeId": "a9aadd58ff575db27629f5649815",
+      "targetNodeId": "134c8aa24e3ff99f888518b8f066",
+      "from": "Shop Meal",
+      "to": "Shop for Meals",
+      "decisionSource": "acceptedProposal"
+    },
+    {
+      "sourceNodeId": "135fc351227c9e9cb1b51a0f1342",
+      "targetNodeId": "fd928999e4f197d8b921198f9960",
+      "from": "Staffing Unit",
+      "to": "Staff Organizational Unit",
+      "decisionSource": "acceptedProposal"
+    }
+  ],
+  "splits": [],
+  "pendingRegeneration": [],
+  "externalReferenceCount": 0,
+  "externalReferenceSample": [],
+  "originalTitlesOfChangedNodes": [
+    {
+      "id": "703da089530344c4e777b336e742",
+      "title": "Cash Order"
+    },
+    {
+      "id": "a41011c65f0fd8b5c0f1d73cea80",
+      "title": "Purchase Address"
+    },
+    {
+      "id": "68da1267e950b3ab8fcd48796ccb",
+      "title": "Purchase Finish"
+    },
+    {
+      "id": "624af001344887c7b423507875e5",
+      "title": "Purchase Necessity"
+    },
+    {
+      "id": "44e1ed16ee409001f446d9aa2c72",
+      "title": "Purchase Space"
+    },
+    {
+      "id": "9705a021585d1207194daff37dd9",
+      "title": "Purchase Time"
+    },
+    {
+      "id": "52dbf219cf41a975c455e8a17756",
+      "title": "Purchase Work"
+    },
+    {
+      "id": "b153e0cc7d4a33dd4e7edd9cf39d",
+      "title": "Rent Necessity"
+    },
+    {
+      "id": "134c8aa24e3ff99f888518b8f066",
+      "title": "Shop Meal"
+    },
+    {
+      "id": "fd928999e4f197d8b921198f9960",
+      "title": "Staffing Unit"
+    }
+  ]
+}

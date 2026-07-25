@@ -145,6 +145,83 @@ const ISSUE_DEFINITIONS = [
   ...(optional ? { optional: true } : {}),
 }));
 
+const REVIEW_WAVES = {
+  "title-clarity": {
+    currentWave: "title-clarity",
+    releasedIssueTypes: ["title-clarity"],
+    message: (branch) =>
+      `${branch} is an exploratory transfer run. Complete title review first; then apply those decisions and regenerate content and identity proposals from the revised snapshot.`,
+  },
+  "title-followup": {
+    currentWave: "title-clarity-followup",
+    releasedIssueTypes: ["title-clarity"],
+    message: (branch) =>
+      `${branch}'s initial title decisions have been applied. Complete this short follow-up of newly detected title items; then apply those decisions and regenerate content and identity proposals from the revised snapshot.`,
+  },
+  "content-identity": {
+    currentWave: "content-and-identity",
+    releasedIssueTypes: [
+      "title-clarity",
+      "synonym-enrichment",
+      "mistaken-synonym",
+      "duplicate-synonym",
+      "polysemy",
+      "node-merge",
+    ],
+    message: (branch) =>
+      `${branch} title decisions have been applied. Complete any newly detected title items, then review content and identity proposals and their exact merge follow-ups. Apply those decisions before regenerating structure and placement proposals.`,
+  },
+};
+
+function reviewReleaseForWave(reviewWave, branch) {
+  const wave = REVIEW_WAVES[reviewWave];
+  if (!wave) {
+    throw new Error(
+      `Unknown review wave "${reviewWave}". Expected one of: ${Object.keys(
+        REVIEW_WAVES,
+      ).join(", ")}`,
+    );
+  }
+  const releasedIssueTypes = [...wave.releasedIssueTypes];
+  return {
+    strategy: "dependency-gated-exploratory-wave",
+    currentWave: wave.currentWave,
+    releasedIssueTypes,
+    awaitingRegenerationIssueTypes: ISSUE_DEFINITIONS.map(
+      (issue) => issue.id,
+    ).filter((issueType) => !releasedIssueTypes.includes(issueType)),
+    message: wave.message(branch),
+  };
+}
+
+const ASSESSMENT_RESPONSE_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  required: ["assessments"],
+  properties: {
+    assessments: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["candidateId", "decision", "rationale"],
+        properties: {
+          candidateId: { type: "string" },
+          decision: {
+            type: "string",
+            enum: ["accept", "reject", "revise"],
+          },
+          rationale: { type: "string" },
+          revisedFields: {
+            type: "object",
+            additionalProperties: true,
+          },
+        },
+      },
+    },
+  },
+};
+
 const DETECTORS = [
   {
     id: "title-evidence-agent",
@@ -219,6 +296,104 @@ function sha256(value) {
 function writeJson(file, value) {
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, `${JSON.stringify(value, null, 2)}\n`, "utf8");
+}
+
+async function runCachedStage({
+  cacheFile,
+  inputSha256,
+  resume,
+  validate,
+  run,
+}) {
+  if (resume && fs.existsSync(cacheFile)) {
+    const cached = JSON.parse(fs.readFileSync(cacheFile, "utf8"));
+    if (
+      cached.schemaVersion === "som-exploratory-stage-cache-v1" &&
+      cached.inputSha256 === inputSha256
+    ) {
+      if (validate) validate(cached.output);
+      return cached.output;
+    }
+  }
+
+  const output = await run();
+  if (validate) validate(output);
+  writeJson(cacheFile, {
+    schemaVersion: "som-exploratory-stage-cache-v1",
+    createdAt: new Date().toISOString(),
+    inputSha256,
+    output,
+  });
+  return output;
+}
+
+function approvedTitleLocksFromBenchmark(benchmarkFile) {
+  if (!benchmarkFile) {
+    return {
+      benchmarkFile: "",
+      benchmarkSha256: "",
+      byTitle: new Map(),
+    };
+  }
+  const resolvedFile = path.resolve(benchmarkFile);
+  const benchmark = JSON.parse(fs.readFileSync(resolvedFile, "utf8"));
+  const byTitle = new Map();
+  for (const judgment of benchmark.judgments || []) {
+    if (judgment.decision !== "agree" || !clean(judgment.proposedTitle)) {
+      continue;
+    }
+    byTitle.set(clean(judgment.proposedTitle), {
+      proposalId: clean(judgment.proposalId),
+      evidence: [...new Set((judgment.linkedTasks || []).map(clean))]
+        .filter(Boolean)
+        .sort((left, right) => left.localeCompare(right, "en")),
+    });
+  }
+  return {
+    benchmarkFile: path.basename(resolvedFile),
+    benchmarkSha256: sha256(fs.readFileSync(resolvedFile)),
+    byTitle,
+  };
+}
+
+function expertTitleLockReason(candidate, index, approvedTitleLocks) {
+  if (candidate.issueType !== "title-clarity") return "";
+  const lock = approvedTitleLocks.byTitle.get(clean(candidate.nodeTitle));
+  if (!lock) return "";
+  const currentEvidence = sourceTasksForNode(index, candidate.nodeTitle)
+    .map(clean)
+    .filter(Boolean)
+    .sort((left, right) => left.localeCompare(right, "en"));
+  if (JSON.stringify(currentEvidence) !== JSON.stringify(lock.evidence)) {
+    return "";
+  }
+  return `The current title was approved in proposal ${lock.proposalId}, and its source evidence is unchanged.`;
+}
+
+function validateCompleteAssessments(label, candidates, output) {
+  const expectedIds = candidates.map((candidate) => candidate.candidateId);
+  const assessments = Array.isArray(output?.assessments)
+    ? output.assessments
+    : [];
+  const returnedIds = assessments.map((assessment) =>
+    clean(assessment.candidateId),
+  );
+  const duplicateIds = returnedIds.filter(
+    (candidateId, index) => returnedIds.indexOf(candidateId) !== index,
+  );
+  const missingIds = expectedIds.filter(
+    (candidateId) => !returnedIds.includes(candidateId),
+  );
+  const unexpectedIds = returnedIds.filter(
+    (candidateId) => !expectedIds.includes(candidateId),
+  );
+  if (duplicateIds.length || missingIds.length || unexpectedIds.length) {
+    throw new Error(
+      `${label} returned an invalid assessment set: ` +
+        `${missingIds.length} missing, ${duplicateIds.length} duplicate, ` +
+        `${unexpectedIds.length} unexpected candidate IDs`,
+    );
+  }
 }
 
 function writeJsonl(file, values) {
@@ -532,7 +707,7 @@ ${JSON.stringify(facts)}
 `;
 }
 
-async function callAgent(ai, label, prompt) {
+async function callAgent(ai, label, prompt, responseJsonSchema) {
   let lastError;
   for (let attempt = 1; attempt <= 3; attempt += 1) {
     try {
@@ -542,6 +717,9 @@ async function callAgent(ai, label, prompt) {
         config: {
           temperature: 0,
           responseMimeType: "application/json",
+          ...(responseJsonSchema
+            ? { maxOutputTokens: 16384, responseJsonSchema }
+            : {}),
           thinkingConfig: { thinkingLevel: "LOW" },
         },
       });
@@ -634,7 +812,13 @@ function stableCandidateId(detectorId, candidate) {
   return `${detectorId}-${sha256(candidateKey(candidate)).slice(0, 12)}`;
 }
 
-async function runDetectors(ai, branch, facts, externalDestinations) {
+async function runDetectors(
+  ai,
+  branch,
+  facts,
+  externalDestinations,
+  { cacheDir, resume },
+) {
   const outputs = [];
   for (const detector of DETECTORS) {
     let successfulPasses = 0;
@@ -655,25 +839,40 @@ ${detector.schema}
 Return at most 30 high-confidence candidates. Do not include commentary outside
 the JSON object.`;
       try {
-        const response = await callAgent(
-          ai,
-          `${detector.id}-pass-${pass}`,
-          prompt,
-        );
-        const candidates = Array.isArray(response.parsed?.candidates)
-          ? response.parsed.candidates
-          : [];
-        successfulPasses += 1;
-        outputs.push({
-          detectorId: detector.id,
-          pass,
-          raw: response.text,
-          candidates: candidates.map((candidate) => ({
-            ...candidate,
-            candidateId: stableCandidateId(detector.id, candidate),
-            detectorId: detector.id,
-          })),
+        const output = await runCachedStage({
+          cacheFile: path.join(cacheDir, `${detector.id}-pass-${pass}.json`),
+          inputSha256: sha256(
+            JSON.stringify({
+              stage: detector.id,
+              pass,
+              model: MODEL,
+              prompt,
+            }),
+          ),
+          resume,
+          run: async () => {
+            const response = await callAgent(
+              ai,
+              `${detector.id}-pass-${pass}`,
+              prompt,
+            );
+            const candidates = Array.isArray(response.parsed?.candidates)
+              ? response.parsed.candidates
+              : [];
+            return {
+              detectorId: detector.id,
+              pass,
+              raw: response.text,
+              candidates: candidates.map((candidate) => ({
+                ...candidate,
+                candidateId: stableCandidateId(detector.id, candidate),
+                detectorId: detector.id,
+              })),
+            };
+          },
         });
+        successfulPasses += 1;
+        outputs.push(output);
       } catch (error) {
         outputs.push({
           detectorId: detector.id,
@@ -685,7 +884,12 @@ the JSON object.`;
       }
     }
     if (successfulPasses === 0) {
-      throw new Error(`Every ${detector.id} pass failed`);
+      const failures = outputs
+        .filter((output) => output.detectorId === detector.id && output.error)
+        .map((output) => `pass ${output.pass}: ${output.error}`);
+      throw new Error(
+        `Every ${detector.id} pass failed. ${failures.join(" | ")}`,
+      );
     }
   }
   return outputs;
@@ -920,7 +1124,12 @@ ${JSON.stringify(candidates)}
 Return JSON:
 {"assessments":[{"candidateId":"exact id","decision":"accept"|"reject"|"revise","rationale":"brief evidence-based reason","revisedFields":{}}]}
 Include exactly one assessment for every candidateId and no other text.`;
-  const response = await callAgent(ai, "independent-critic", prompt);
+  const response = await callAgent(
+    ai,
+    "independent-critic",
+    prompt,
+    ASSESSMENT_RESPONSE_SCHEMA,
+  );
   return {
     raw: response.text,
     assessments: Array.isArray(response.parsed?.assessments)
@@ -997,6 +1206,7 @@ Include exactly one assessment per candidate and no other text.`;
     ai,
     "content-verification-specialist",
     prompt,
+    ASSESSMENT_RESPONSE_SCHEMA,
   );
   return {
     raw: response.text,
@@ -1896,6 +2106,7 @@ function writeDataset({
   ontologyAppId,
   ontologyName,
   sourceOntology,
+  reviewRelease,
   audit,
   rejected,
 }) {
@@ -1978,6 +2189,11 @@ function writeDataset({
       `This is a provisional transfer run on ${branch}; it must be regenerated if the source ontology or learned process constraints change.`,
       "The independent critic is conservative, but accepted candidates remain hypotheses for expert review rather than validated ontology changes.",
       "No Sell-specific examples or expert answers were supplied to the detector agents.",
+      ...(audit.priorExpertTitleLocks?.count
+        ? [
+            `${audit.priorExpertTitleLocks.count} previously approved titles are locked while their source evidence remains unchanged.`,
+          ]
+        : []),
       "Deterministic facet-overlap checks identify structural equivalence candidates, not automatic merges.",
       "Every exact merge or relocation is separately gated by the corresponding diagnosis.",
       "This dataset is review-only and neither generation nor review acceptance writes to Firestore.",
@@ -2006,15 +2222,7 @@ function writeDataset({
       criticAgents: ["independent-critic"],
       note: "The run combines deterministic structural checks with four independent detector roles and one conservative critic. Zero candidates in an issue family means no surviving candidate was found, not that the branch is proven error-free.",
     },
-    reviewRelease: {
-      strategy: "dependency-gated-exploratory-wave",
-      currentWave: "title-clarity",
-      releasedIssueTypes: ["title-clarity"],
-      awaitingRegenerationIssueTypes: ISSUE_DEFINITIONS.map(
-        (issue) => issue.id,
-      ).filter((issueType) => issueType !== "title-clarity"),
-      message: `${branch} is an exploratory transfer run. Complete title review first; then apply those decisions and regenerate content and identity proposals from the revised snapshot.`,
-    },
+    reviewRelease,
   };
   writeJson(path.join(outputDir, "manifest.json"), manifest);
 }
@@ -2036,6 +2244,8 @@ async function main() {
     args["dataset-version"] ||
       `${branch.toLowerCase()}-exploratory-transfer-2026-07-25-v1`,
   );
+  const reviewWave = clean(args["review-wave"] || "title-clarity");
+  const reviewRelease = reviewReleaseForWave(reviewWave, branch);
   const outputDir = path.resolve(
     args.output ||
       path.join(
@@ -2044,6 +2254,13 @@ async function main() {
         "review-datasets-exploratory-v1",
       ),
   );
+  const resume = ["1", "true", "yes"].includes(
+    clean(args.resume).toLowerCase(),
+  );
+  const approvedTitleLocks = approvedTitleLocksFromBenchmark(
+    clean(args["approved-title-benchmark"]),
+  );
+  const stageCacheDir = path.join(outputDir, ".stage-cache");
   const generatedAt = new Date().toISOString();
   const apiKey = required(
     process.env.MIT_CCI_GEMINI_API_KEY || process.env.GEMINI_API_KEY,
@@ -2083,6 +2300,10 @@ async function main() {
     branch,
     facts,
     externalDestinations,
+    {
+      cacheDir: path.join(stageCacheDir, "detectors"),
+      resume,
+    },
   );
   const detectedByKey = new Map();
   for (const candidate of detectorOutputs.flatMap(
@@ -2104,25 +2325,43 @@ async function main() {
   });
   const preflightRejected = [];
   const preflightReady = allCandidates.filter((candidate) => {
-    const reason = preflightCandidate(candidate, index);
+    const expertLockReason = expertTitleLockReason(
+      candidate,
+      index,
+      approvedTitleLocks,
+    );
+    const reason = expertLockReason || preflightCandidate(candidate, index);
     if (!reason) return true;
     preflightRejected.push({
       candidateId: candidate.candidateId,
       detectorId: candidate.detectorId,
       decision: "reject",
-      stage: "deterministic-preflight",
+      stage: expertLockReason
+        ? "prior-expert-title-lock"
+        : "deterministic-preflight",
       reason,
       candidate,
     });
     return false;
   });
-  const critic = await runCritic(
-    ai,
-    branch,
-    facts,
-    externalDestinations,
-    preflightReady,
-  );
+  const critic = await runCachedStage({
+    cacheFile: path.join(stageCacheDir, "critic.json"),
+    inputSha256: sha256(
+      JSON.stringify({
+        stage: "independent-critic",
+        model: MODEL,
+        branch,
+        facts,
+        externalDestinations,
+        candidates: preflightReady,
+      }),
+    ),
+    resume,
+    validate: (output) =>
+      validateCompleteAssessments("independent-critic", preflightReady, output),
+    run: () =>
+      runCritic(ai, branch, facts, externalDestinations, preflightReady),
+  });
   const assessmentById = new Map(
     critic.assessments.map((assessment) => [
       clean(assessment.candidateId),
@@ -2183,12 +2422,30 @@ async function main() {
     index,
     branch,
   );
-  const contentVerifier = await runContentVerifier(
-    ai,
-    branch,
-    index,
-    placementNormalization.normalized,
-  );
+  const contentVerificationCandidates =
+    placementNormalization.normalized.filter((candidate) =>
+      ["title-clarity", "duplicate-synonym"].includes(candidate.issueType),
+    );
+  const contentVerifier = await runCachedStage({
+    cacheFile: path.join(stageCacheDir, "content-verifier.json"),
+    inputSha256: sha256(
+      JSON.stringify({
+        stage: "content-verification-specialist",
+        model: MODEL,
+        branch,
+        candidates: contentVerificationCandidates,
+      }),
+    ),
+    resume,
+    validate: (output) =>
+      validateCompleteAssessments(
+        "content-verification-specialist",
+        contentVerificationCandidates,
+        output,
+      ),
+    run: () =>
+      runContentVerifier(ai, branch, index, placementNormalization.normalized),
+  });
   const contentAssessmentById = new Map(
     contentVerifier.assessments.map((assessment) => [
       clean(assessment.candidateId),
@@ -2295,6 +2552,11 @@ async function main() {
     model: MODEL,
     learnedConstraints:
       "Content and identity precede structure; exact actions are separately gated; no Sell examples were supplied.",
+    priorExpertTitleLocks: {
+      benchmarkFile: approvedTitleLocks.benchmarkFile,
+      benchmarkSha256: approvedTitleLocks.benchmarkSha256,
+      count: approvedTitleLocks.byTitle.size,
+    },
     detectorOutputs,
     externalDestinations,
     deterministicCandidates: deterministic,
@@ -2315,6 +2577,7 @@ async function main() {
     ontologyAppId,
     ontologyName,
     sourceOntology,
+    reviewRelease,
     audit,
     rejected,
   });

@@ -1,0 +1,430 @@
+{
+  "schemaVersion": "som-reviewer-benchmark-v1",
+  "exportedAt": "2026-07-25T22:38:09.729Z",
+  "firestoreProjectId": "ontology-41607",
+  "datasetVersion": "buy-exploratory-transfer-2026-07-25-v1",
+  "sourceOntology": "firestore://ontology-41607/final-hierarchy-with-o*net-rob-structure-applied-2026-07-25",
+  "sourceOntologySha256": "8dd42bffe05d8d00689427ea1e2071b65d11f4335d9a19315ce2bf9714f252f6",
+  "issueType": "title-clarity",
+  "reviewer": {
+    "label": "rob-laubacher"
+  },
+  "counts": {
+    "expected": 10,
+    "reviewed": 10,
+    "agreed": 10,
+    "disagreed": 0,
+    "missing": 0,
+    "orphanedHistoricalResponses": 0
+  },
+  "missingProposalIds": [],
+  "orphanedResponses": [],
+  "sourceNodeEvidence": [
+    {
+      "nodeId": "81f60eb561fa9b1114badb262a3a",
+      "title": "Cash Order",
+      "appName": "final-hierarchy-with-o*net-rob-structure-applied-2026-07-25",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "9a4ba5c7f1598330a616289ca391",
+              "linkTitle": "(O*Net) 11331 - Cash money orders.",
+              "title": "(O*Net) 11331 - Cash money orders.",
+              "oNet": false,
+              "generalizationTitles": ["Cash Order"]
+            },
+            {
+              "nodeId": "840535838e4f82607735831f6dc1",
+              "linkTitle": "(O*Net) 5268 - Issue and cash money orders.",
+              "title": "(O*Net) 5268 - Issue and cash money orders.",
+              "oNet": false,
+              "generalizationTitles": ["Cash Order", "Issue Order"]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "e8b0e09ac89bc4852eeb1c77c7d1",
+      "title": "Purchase Address",
+      "appName": "final-hierarchy-with-o*net-rob-structure-applied-2026-07-25",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "e29bad77a8a5b19561fc74f28bdf",
+              "linkTitle": "(O*Net) 15724 - Devise, select, or purchase domain name and web address.",
+              "title": "(O*Net) 15724 - Devise, select, or purchase domain name and web address.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Select Address",
+                "Select Domain",
+                "Purchase Address",
+                "Purchase Domain",
+                "Devise Address",
+                "Devise Domain"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "e54f15a83824272e741e31d26b19",
+      "title": "Purchase Finish",
+      "appName": "final-hierarchy-with-o*net-rob-structure-applied-2026-07-25",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "b600c03deef559454af71c07965e",
+              "linkTitle": "(O*Net) 11522 - Select and purchase tools or finishes for surfaces to be covered, considering durability, ease of handling, methods of application, and customers' wishes.",
+              "title": "(O*Net) 11522 - Select and purchase tools or finishes for surfaces to be covered, considering durability, ease of handling, methods of application, and customers' wishes.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Select Finish",
+                "Select Tool",
+                "Purchase Finish",
+                "Purchase Tool"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "3ac1c704b0753c1bc34b478a7a78",
+      "title": "Purchase Necessity",
+      "appName": "final-hierarchy-with-o*net-rob-structure-applied-2026-07-25",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "640cbdd96ad3613ca6a60a5a0a03",
+              "linkTitle": "(O*Net) 9622 - Purchase, rent, or requisition costumes or other wardrobe necessities.",
+              "title": "(O*Net) 9622 - Purchase, rent, or requisition costumes or other wardrobe necessities.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Requisition Costume",
+                "Requisition Necessity",
+                "Purchase Costume",
+                "Purchase Necessity",
+                "Rent Costume",
+                "Rent Necessity"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "8f2c4c3f18e58b5c8096a9e68aef",
+      "title": "Purchase Space",
+      "appName": "final-hierarchy-with-o*net-rob-structure-applied-2026-07-25",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "2e6d9d29a95a41d0025aef47d5c6",
+              "linkTitle": "(O*Net) 1774 - Purchase advertising space or time as required to promote client's product or agenda.",
+              "title": "(O*Net) 1774 - Purchase advertising space or time as required to promote client's product or agenda.",
+              "oNet": false,
+              "generalizationTitles": ["Purchase Space", "Purchase Time"]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "f6eb55a2aa8a9beb240e505306e5",
+      "title": "Purchase Time",
+      "appName": "final-hierarchy-with-o*net-rob-structure-applied-2026-07-25",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "2e6d9d29a95a41d0025aef47d5c6",
+              "linkTitle": "(O*Net) 1774 - Purchase advertising space or time as required to promote client's product or agenda.",
+              "title": "(O*Net) 1774 - Purchase advertising space or time as required to promote client's product or agenda.",
+              "oNet": false,
+              "generalizationTitles": ["Purchase Space", "Purchase Time"]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "1684624e8d338c701b3df0b0f09c",
+      "title": "Purchase Work",
+      "appName": "final-hierarchy-with-o*net-rob-structure-applied-2026-07-25",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "8e5b59a854d6ec2ba4dc8177df05",
+              "linkTitle": "(O*Net) 1737 - Select or design, and purchase furnishings, art work, and accessories.",
+              "title": "(O*Net) 1737 - Select or design, and purchase furnishings, art work, and accessories.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Select Work",
+                "Select Accessory",
+                "Select Furnishing",
+                "Design Furnishing",
+                "Design Work",
+                "Design Accessory",
+                "Purchase Work",
+                "Purchase Accessory",
+                "Purchase Furnishing"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "7376d070263ea7068c8e69aa1ce5",
+      "title": "Rent Necessity",
+      "appName": "final-hierarchy-with-o*net-rob-structure-applied-2026-07-25",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "640cbdd96ad3613ca6a60a5a0a03",
+              "linkTitle": "(O*Net) 9622 - Purchase, rent, or requisition costumes or other wardrobe necessities.",
+              "title": "(O*Net) 9622 - Purchase, rent, or requisition costumes or other wardrobe necessities.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Requisition Costume",
+                "Requisition Necessity",
+                "Purchase Costume",
+                "Purchase Necessity",
+                "Rent Costume",
+                "Rent Necessity"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "a9aadd58ff575db27629f5649815",
+      "title": "Shop Meal",
+      "appName": "final-hierarchy-with-o*net-rob-structure-applied-2026-07-25",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "b43dc851ec421c300f578a8cce75",
+              "linkTitle": "(O*Net) 2375 - Plan, shop for, or prepare nutritious meals or assist families in planning, shopping for, or preparing nutritious meals.",
+              "title": "(O*Net) 2375 - Plan, shop for, or prepare nutritious meals or assist families in planning, shopping for, or preparing nutritious meals.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Plan Meal",
+                "Prepare Meal",
+                "Shop Meal",
+                "Assist Family"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "135fc351227c9e9cb1b51a0f1342",
+      "title": "Staffing Unit",
+      "appName": "final-hierarchy-with-o*net-rob-structure-applied-2026-07-25",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "4108222acd35277b434e8e01e227",
+              "linkTitle": "(O*Net) 4.A.4.c.2 - Staffing Organizational Units",
+              "title": "(O*Net) 4.A.4.c.2 - Staffing Organizational Units",
+              "oNet": false,
+              "generalizationTitles": ["Staffing Unit"]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "judgments": [
+    {
+      "proposalId": "som-9c79b8cd3f2df078cfb4",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "81f60eb561fa9b1114badb262a3a",
+      "parentNodeId": "e8cf68072517c6038c6b0d9e8a33",
+      "currentTitle": "Cash Order",
+      "proposedTitle": "Cash Money Order",
+      "linkedTasks": ["Issue and cash money orders.", "Cash money orders."],
+      "proposedNodes": [],
+      "agentReasoning": "The evidence specifies cashing money orders. 'Cash Money Order' is the most concise and idiomatic phrasing.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-f8f26bcdf40ae4c21679",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "e8b0e09ac89bc4852eeb1c77c7d1",
+      "parentNodeId": "96c2dd64157937f10ff78b709d22",
+      "currentTitle": "Purchase Address",
+      "proposedTitle": "Purchase Web Address",
+      "linkedTasks": [
+        "Devise, select, or purchase domain name and web address."
+      ],
+      "proposedNodes": [],
+      "agentReasoning": "The proposed title accurately reflects the evidence of purchasing a web address.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-c1859c2590d10f45d076",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "e54f15a83824272e741e31d26b19",
+      "parentNodeId": "e8cf68072517c6038c6b0d9e8a33",
+      "currentTitle": "Purchase Finish",
+      "proposedTitle": "Purchase Surface Finish",
+      "linkedTasks": [
+        "Select and purchase tools or finishes for surfaces to be covered, considering durability, ease of handling, methods of application, and customers' wishes."
+      ],
+      "proposedNodes": [],
+      "agentReasoning": "The proposed title accurately reflects the evidence of purchasing finishes for surfaces.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-10ce38f4036082ba8f05",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "3ac1c704b0753c1bc34b478a7a78",
+      "parentNodeId": "e8cf68072517c6038c6b0d9e8a33",
+      "currentTitle": "Purchase Necessity",
+      "proposedTitle": "Purchase Wardrobe Necessity",
+      "linkedTasks": [
+        "Purchase, rent, or requisition costumes or other wardrobe necessities."
+      ],
+      "proposedNodes": [],
+      "agentReasoning": "The proposed title accurately reflects the evidence of purchasing wardrobe necessities.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-bd65947da3c07699c392",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "8f2c4c3f18e58b5c8096a9e68aef",
+      "parentNodeId": "96c2dd64157937f10ff78b709d22",
+      "currentTitle": "Purchase Space",
+      "proposedTitle": "Purchase Advertising Space",
+      "linkedTasks": [
+        "Purchase advertising space or time as required to promote client's product or agenda."
+      ],
+      "proposedNodes": [],
+      "agentReasoning": "The proposed title accurately reflects the evidence of purchasing advertising space.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-90f88886a87c057b921f",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "f6eb55a2aa8a9beb240e505306e5",
+      "parentNodeId": "96c2dd64157937f10ff78b709d22",
+      "currentTitle": "Purchase Time",
+      "proposedTitle": "Purchase Advertising Time",
+      "linkedTasks": [
+        "Purchase advertising space or time as required to promote client's product or agenda."
+      ],
+      "proposedNodes": [],
+      "agentReasoning": "The proposed title accurately reflects the evidence of purchasing advertising time.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-e14831bf1afa58d1ac13",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "1684624e8d338c701b3df0b0f09c",
+      "parentNodeId": "96c2dd64157937f10ff78b709d22",
+      "currentTitle": "Purchase Work",
+      "proposedTitle": "Purchase Artwork",
+      "linkedTasks": [
+        "Select or design, and purchase furnishings, art work, and accessories."
+      ],
+      "proposedNodes": [],
+      "agentReasoning": "'Artwork' is the standard spelling as a single word.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-96f63c45224920cc5b3a",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "7376d070263ea7068c8e69aa1ce5",
+      "parentNodeId": "412f9a026c089649ff3f27dfd9f6",
+      "currentTitle": "Rent Necessity",
+      "proposedTitle": "Rent Wardrobe Necessity",
+      "linkedTasks": [
+        "Purchase, rent, or requisition costumes or other wardrobe necessities."
+      ],
+      "proposedNodes": [],
+      "agentReasoning": "The proposed title accurately reflects the evidence of renting wardrobe necessities.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-6b565b28d1ba39ec78d5",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "a9aadd58ff575db27629f5649815",
+      "parentNodeId": "96c2dd64157937f10ff78b709d22",
+      "currentTitle": "Shop Meal",
+      "proposedTitle": "Shop for Meals",
+      "linkedTasks": [
+        "Plan, shop for, or prepare nutritious meals or assist families in planning, shopping for, or preparing nutritious meals."
+      ],
+      "proposedNodes": [],
+      "agentReasoning": "The evidence states 'shop for... nutritious meals'. Adding 'Ingredients' introduces unsupported specificity.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-a61df941718a4c825525",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "135fc351227c9e9cb1b51a0f1342",
+      "parentNodeId": "f0b1345fc7d9edbbfaf74958eb36",
+      "currentTitle": "Staffing Unit",
+      "proposedTitle": "Staff Organizational Unit",
+      "linkedTasks": ["Staffing Organizational Units"],
+      "proposedNodes": [],
+      "agentReasoning": "The proposed title accurately reflects the evidence of staffing organizational units.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    }
+  ]
+}
