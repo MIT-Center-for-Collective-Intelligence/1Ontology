@@ -29,6 +29,12 @@ const handler = async (request: NextApiRequest, res: NextApiResponse) => {
     const deliberation = await loadDeliberationOverview(dataset, req.user.uid);
     const body: SomDeliberationOverviewResponse = {
       datasetVersion: dataset.datasetVersion,
+      branch: String(dataset.manifest.branch || "Sell"),
+      ontologyName: String(
+        dataset.manifest.sourceSnapshot?.ontologyName ||
+          dataset.manifest.sourceOntology ||
+          "Ontology",
+      ),
       access,
       remainingIndependentReviews: deliberation.remainingIndependentReviews,
       roleWeights: roles.map((role) => ({

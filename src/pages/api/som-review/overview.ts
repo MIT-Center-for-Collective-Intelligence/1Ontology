@@ -79,6 +79,12 @@ const handler = async (request: NextApiRequest, res: NextApiResponse) => {
 
     const body: SomOverviewResponse = {
       datasetVersion: dataset.datasetVersion,
+      branch: String(dataset.manifest.branch || "Sell"),
+      ontologyName: String(
+        dataset.manifest.sourceSnapshot?.ontologyName ||
+          dataset.manifest.sourceOntology ||
+          "Ontology",
+      ),
       issueTypes,
       readyFollowUps: toLinkedFollowUps(dataset, readyFollowUpRecords),
       canDeliberate:

@@ -43,7 +43,7 @@ const ISSUE_LABELS: Record<SomIssueType, string> = {
   "flat-list-grouping": "8. Flat-list grouping",
   "compound-object-grouping": "9. Compound-object grouping",
   "collection-design": "10. Collection design",
-  placement: "11. Placement within Sell",
+  placement: "11. Placement within sub-branch",
   "wrong-verb": "12. Wrong main action",
   "sense-relocation": "13. Sense relocation",
   "node-merge": "Approved node merges",
@@ -208,7 +208,7 @@ const DeliberationDashboard = ({
             Group deliberation
           </Typography>
           <Typography sx={{ mt: 0.5, color: "text.secondary" }}>
-            Sell ontology proposals
+            {overview.branch} ontology proposals
           </Typography>
         </Box>
         <Chip

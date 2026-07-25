@@ -22,6 +22,8 @@ const aggregate = {
 
 const overview: SomDeliberationOverviewResponse = {
   datasetVersion: "dataset-1",
+  branch: "Sell",
+  ontologyName: "Test ontology",
   access: {
     role: "researcher",
     roleLabel: "Research team",

@@ -26,7 +26,10 @@ const firstSentence = (value: string): string => {
   return (match?.[0] || value).trim();
 };
 
-export const reviewerQuestion = (context: SomReviewContext): string => {
+export const reviewerQuestion = (
+  context: SomReviewContext,
+  branch = "Sell",
+): string => {
   switch (context.type) {
     case "title-comparison":
       return context.proposedTitle &&
@@ -46,7 +49,7 @@ export const reviewerQuestion = (context: SomReviewContext): string => {
         return context.placementIssue === "wrong-verb"
           ? `Do these ${context.affectedNodes?.length} activities use "${
               context.sharedAction || "their leading verb"
-            }" as a different main action from "Sell"?`
+            }" as a different main action from the "${branch}" action?`
           : `Should these ${
               context.affectedNodes?.length
             } activities be placed under ${
@@ -56,7 +59,7 @@ export const reviewerQuestion = (context: SomReviewContext): string => {
             }?`;
       }
       return context.placementIssue === "wrong-verb"
-        ? `Does "${context.nodeTitle}" use a different main action than "Sell"?`
+        ? `Does "${context.nodeTitle}" use a different main action than the "${branch}" action?`
         : context.candidateHome
           ? `Is "${context.nodeTitle}" better placed under the more specific category "${context.candidateHome}" than under "${context.currentParentTitle}"?`
           : `Is "${context.nodeTitle}" misplaced under "${context.currentParentTitle}"?`;
@@ -94,12 +97,13 @@ export const reviewerQuestion = (context: SomReviewContext): string => {
     case "collection-design":
       return `Should "${context.parentTitle}" use the proposed "${context.proposedCollectionName}" collection?`;
     case "sense-relocation-action":
-      return `Should the non-selling sense of "${context.nodeTitle}" move to "${context.proposedParentTitle}"?`;
+      return `Should the sense of "${context.nodeTitle}" that does not belong in the ${branch} sub-branch move to "${context.proposedParentTitle}"?`;
   }
 };
 
 const placementReviewerText = (
   context: Extract<SomReviewContext, { type: "placement-comparison" }>,
+  branch: string,
 ) => {
   const category = cleanText(context.currentBucket);
   const affectedNodes = context.affectedNodes || [];
@@ -107,12 +111,12 @@ const placementReviewerText = (
     return {
       currentState: `${affectedNodes.length} activities beginning with "${
         context.sharedAction || "the same verb"
-      }" currently appear within the Sell branch.`,
+      }" currently appear within the ${branch} sub-branch.`,
       proposedState:
         context.placementIssue === "wrong-verb"
           ? `These activities appear to use "${
               context.sharedAction || "their leading verb"
-            }" as a different action from selling${
+            }" as a different main action from the "${branch}" action${
               context.candidateHome
                 ? `; "${context.candidateHome}" is the suggested category`
                 : ""
@@ -136,7 +140,7 @@ const placementReviewerText = (
     }"${category ? ` in the "${category}" category` : ""}.`,
     proposedState:
       context.placementIssue === "wrong-verb"
-        ? `"${context.nodeTitle}" is not a kind of selling${
+        ? `"${context.nodeTitle}" does not express the "${branch}" action${
             context.candidateHome
               ? `; "${context.candidateHome}" is the suggested category`
               : ` and does not belong under "${context.currentParentTitle}"`
@@ -169,9 +173,10 @@ const duplicateReviewerText = (
 export const toReviewerCard = (record: any): SomReviewCard => {
   const view = record.reviewerView;
   const context = sanitizeContext(view.context);
+  const branch = cleanText(record.branch) || "Sell";
   const placementText =
     context.type === "placement-comparison"
-      ? placementReviewerText(context)
+      ? placementReviewerText(context, branch)
       : null;
   const duplicateText =
     context.type === "duplicate-comparison"
@@ -180,9 +185,10 @@ export const toReviewerCard = (record: any): SomReviewCard => {
   return {
     proposalId: record.proposalId,
     datasetVersion: record.datasetVersion,
+    branch,
     issueType: record.issueType as SomIssueType,
     reviewerView: {
-      question: reviewerQuestion(context),
+      question: reviewerQuestion(context, branch),
       currentState: placementText?.currentState || cleanText(view.currentState),
       proposedState:
         placementText?.proposedState ||

@@ -72,6 +72,7 @@ export const ReviewPage = () => {
   const router = useRouter();
   const [phase, setPhase] = useState<Phase>("loading");
   const [datasetVersion, setDatasetVersion] = useState("");
+  const [ontologyName, setOntologyName] = useState("Ontology");
   const [issueTypes, setIssueTypes] = useState<SomIssueTypeOption[]>([]);
   const [readyFollowUps, setReadyFollowUps] = useState<SomLinkedFollowUp[]>([]);
   const [issueType, setIssueType] = useState<SomIssueType | null>(null);
@@ -101,6 +102,7 @@ export const ReviewPage = () => {
     try {
       const overview = await Post<SomOverviewResponse>("/som-review/overview");
       setDatasetVersion(overview.datasetVersion);
+      setOntologyName(overview.ontologyName);
       setIssueTypes(overview.issueTypes);
       setReadyFollowUps(overview.readyFollowUps || []);
       setCanDeliberate(overview.canDeliberate);
@@ -574,6 +576,7 @@ export const ReviewPage = () => {
           {phase === "select" && (
             <ReviewQueueSelector
               issueTypes={issueTypes}
+              ontologyName={ontologyName}
               onStart={chooseIssueType}
               readyFollowUps={readyFollowUps}
               onStartFollowUp={(followUp) => startLinkedFollowUp(followUp)}

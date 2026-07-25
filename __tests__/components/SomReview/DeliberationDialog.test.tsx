@@ -18,6 +18,7 @@ const detail: SomDeliberationProposalResponse = {
   card: {
     proposalId: "proposal-1",
     datasetVersion: "dataset-1",
+    branch: "Sell",
     issueType: "title-clarity",
     reviewerView: {
       question: 'Is "Sell Supplies" clearer than "Sell Supply"?',

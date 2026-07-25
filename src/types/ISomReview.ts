@@ -208,6 +208,7 @@ export type SomReviewContext =
 export interface SomReviewCard {
   proposalId: string;
   datasetVersion: string;
+  branch: string;
   issueType: SomIssueType;
   /** Zero-based position within the complete issue-type queue. */
   proposalIndex?: number;
@@ -296,6 +297,8 @@ export interface SomLinkedFollowUp {
 
 export interface SomOverviewResponse {
   datasetVersion: string;
+  branch: string;
+  ontologyName: string;
   issueTypes: SomIssueTypeOption[];
   readyFollowUps: SomLinkedFollowUp[];
   canDeliberate: boolean;
@@ -367,6 +370,8 @@ export interface SomDeliberationAccess {
 
 export interface SomDeliberationOverviewResponse {
   datasetVersion: string;
+  branch: string;
+  ontologyName: string;
   access: SomDeliberationAccess;
   remainingIndependentReviews: number;
   roleWeights: Array<{

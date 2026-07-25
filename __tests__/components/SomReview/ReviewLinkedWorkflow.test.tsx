@@ -81,6 +81,7 @@ const card = (
 ): SomReviewCard => ({
   proposalId,
   datasetVersion: "dataset-1",
+  branch: "Sell",
   issueType,
   proposalIndex,
   reviewerView: {
