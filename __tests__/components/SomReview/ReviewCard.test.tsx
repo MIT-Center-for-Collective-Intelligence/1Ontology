@@ -115,6 +115,7 @@ describe("Society of Mind review card", () => {
           decision: "disagree",
           disagreementReason: "The original title is more precise.",
           suggestedCorrection: "Keep Sell Supply.",
+          reviewedAt: "2026-07-24T12:00:00.000Z",
         }}
         onSubmit={jest.fn()}
       />,
@@ -134,9 +135,84 @@ describe("Society of Mind review card", () => {
     ).toBeInTheDocument();
     expect(
       window.sessionStorage.getItem(
-        "som-review-draft-reviewer-1-dataset-1-title-1",
+        "som-review-draft-reviewer-1-dataset-1-title-1-revise",
       ),
     ).toBeNull();
+  });
+
+  it("does not let a stale revision draft replace the saved response", async () => {
+    window.sessionStorage.setItem(
+      "som-review-draft-reviewer-1-dataset-1-title-1-revise",
+      JSON.stringify({
+        open: false,
+        reason: "",
+        correction: "",
+      }),
+    );
+
+    render(
+      <ReviewCard
+        card={card}
+        reviewerId="reviewer-1"
+        mode="revise"
+        initialResponse={{
+          decision: "disagree",
+          disagreementReason: "The saved rationale must remain visible.",
+          suggestedCorrection: "Keep the current title.",
+          reviewedAt: "2026-07-24T12:00:00.000Z",
+        }}
+        onSubmit={jest.fn()}
+      />,
+    );
+
+    expect(await screen.findByLabelText(/Why do you disagree/i)).toHaveValue(
+      "The saved rationale must remain visible.",
+    );
+    expect(screen.getByLabelText(/Suggested correction/i)).toHaveValue(
+      "Keep the current title.",
+    );
+    expect(
+      window.sessionStorage.getItem(
+        "som-review-draft-reviewer-1-dataset-1-title-1-revise",
+      ),
+    ).toBeNull();
+  });
+
+  it("restores an unfinished revision only for the same saved response", () => {
+    const initialResponse = {
+      decision: "disagree" as const,
+      disagreementReason: "The saved rationale.",
+      suggestedCorrection: "The saved suggestion.",
+      reviewedAt: "2026-07-24T12:00:00.000Z",
+    };
+    const firstRender = render(
+      <ReviewCard
+        card={card}
+        reviewerId="reviewer-1"
+        mode="revise"
+        initialResponse={initialResponse}
+        onSubmit={jest.fn()}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText(/Why do you disagree/i), {
+      target: { value: "An unfinished revision." },
+    });
+    firstRender.unmount();
+
+    render(
+      <ReviewCard
+        card={card}
+        reviewerId="reviewer-1"
+        mode="revise"
+        initialResponse={initialResponse}
+        onSubmit={jest.fn()}
+      />,
+    );
+
+    expect(screen.getByLabelText(/Why do you disagree/i)).toHaveValue(
+      "An unfinished revision.",
+    );
   });
 
   it("keeps downstream placement details out of the diagnosis", () => {

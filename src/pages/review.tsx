@@ -27,6 +27,7 @@ import ReviewQueueSelector from "@components/components/SomReview/ReviewQueueSel
 import ReviewTaskIntro from "@components/components/SomReview/ReviewTaskIntro";
 import ThemeModeToggle from "@components/components/SomReview/ThemeModeToggle";
 import { reviewInteractiveSurfaceSx } from "@components/components/SomReview/reviewStyles";
+import { clearReviewDraft } from "@components/lib/somReview/reviewDraft";
 import {
   SomIssueType,
   SomIssueTypeOption,
@@ -458,6 +459,14 @@ export const ReviewPage = () => {
   );
 
   const cancelRevision = useCallback(() => {
+    if (revisionCard && user?.userId) {
+      clearReviewDraft({
+        reviewerId: user.userId,
+        datasetVersion: revisionCard.datasetVersion,
+        proposalId: revisionCard.proposalId,
+        mode: "revise",
+      });
+    }
     setRevisionProposalId("");
     setPhase(
       cards.length === 0
@@ -466,7 +475,7 @@ export const ReviewPage = () => {
           ? "complete"
           : "session",
     );
-  }, [cards.length, cursor]);
+  }, [cards.length, cursor, revisionCard, user?.userId]);
 
   const exitToSelector = useCallback(() => {
     setIssueType(null);
@@ -763,12 +772,51 @@ export const ReviewPage = () => {
                     </Button>
                   }
                 >
-                  Saved answer:{" "}
-                  <strong>
-                    {revisionItem.decision === "agree" ? "Agreed" : "Disagreed"}
-                  </strong>
-                  . Submit a revised answer to replace it, or keep the saved
-                  answer to return to your current review position.
+                  <Stack spacing={0.5}>
+                    <Typography component="div">
+                      Saved answer:{" "}
+                      <strong>
+                        {revisionItem.decision === "agree"
+                          ? "Agreed"
+                          : "Disagreed"}
+                      </strong>
+                      .
+                    </Typography>
+                    {revisionItem.decision === "disagree" && (
+                      <>
+                        <Typography
+                          component="div"
+                          sx={{
+                            whiteSpace: "pre-wrap",
+                            overflowWrap: "anywhere",
+                          }}
+                        >
+                          Saved rationale:{" "}
+                          <strong>
+                            {revisionItem.disagreementReason ||
+                              "No written rationale was saved."}
+                          </strong>
+                        </Typography>
+                        {revisionItem.suggestedCorrection && (
+                          <Typography
+                            component="div"
+                            sx={{
+                              whiteSpace: "pre-wrap",
+                              overflowWrap: "anywhere",
+                            }}
+                          >
+                            Saved suggestion:{" "}
+                            <strong>{revisionItem.suggestedCorrection}</strong>
+                          </Typography>
+                        )}
+                      </>
+                    )}
+                    <Typography component="div">
+                      The form below starts with this saved response. Submit a
+                      revision to replace it, or keep the saved answer to return
+                      to your current review position.
+                    </Typography>
+                  </Stack>
                 </Alert>
               )}
               {!revisionItem &&
@@ -798,6 +846,7 @@ export const ReviewPage = () => {
                           revisionItem.disagreementReason || "",
                         suggestedCorrection:
                           revisionItem.suggestedCorrection || "",
+                        reviewedAt: revisionItem.reviewedAt,
                       }
                     : undefined
                 }
