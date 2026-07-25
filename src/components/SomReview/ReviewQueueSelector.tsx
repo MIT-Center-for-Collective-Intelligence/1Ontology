@@ -117,7 +117,7 @@ const QueueStatus = ({ issue }: { issue: SomIssueTypeOption }) => {
     return (
       <Chip
         icon={<LockOutlinedIcon />}
-        label="Awaiting regenerated proposals"
+        label="Awaiting regeneration"
         size="small"
         variant="outlined"
       />
@@ -198,6 +198,7 @@ const QueueStatus = ({ issue }: { issue: SomIssueTypeOption }) => {
 
 const ReviewQueueSelector = ({
   issueTypes,
+  branch = "Sell",
   ontologyName = "Ontology",
   onStart,
   canDeliberate = false,
@@ -207,6 +208,7 @@ const ReviewQueueSelector = ({
   onStartFollowUp,
 }: {
   issueTypes: SomIssueTypeOption[];
+  branch?: string;
   ontologyName?: string;
   onStart: (issueType: SomIssueType) => void;
   canDeliberate?: boolean;
@@ -214,302 +216,308 @@ const ReviewQueueSelector = ({
   headerAction?: React.ReactNode;
   readyFollowUps?: SomLinkedFollowUp[];
   onStartFollowUp?: (followUp: SomLinkedFollowUp) => void;
-}) => (
-  <Box>
-    <Stack
-      direction={{ xs: "column", sm: "row" }}
-      alignItems={{ xs: "flex-start", sm: "center" }}
-      justifyContent="space-between"
-      spacing={1}
-      sx={{ mb: 1.5 }}
-    >
-      <Typography
-        component="h1"
-        sx={{ fontSize: "1.75rem", fontWeight: 800, letterSpacing: 0 }}
-      >
-        Proposal review
-      </Typography>
+}) => {
+  const releaseMessage = issueTypes.find(
+    (issue) => !issue.released && issue.releaseMessage,
+  )?.releaseMessage;
+
+  return (
+    <Box>
       <Stack
-        direction="row"
-        alignItems="center"
-        flexWrap="wrap"
-        gap={1}
-        sx={{ width: { xs: "100%", sm: "auto" }, maxWidth: "100%" }}
+        direction={{ xs: "column", sm: "row" }}
+        alignItems={{ xs: "flex-start", sm: "center" }}
+        justifyContent="space-between"
+        spacing={1}
+        sx={{ mb: 1.5 }}
       >
-        <Chip
-          label={ontologyName}
-          title={ontologyName}
-          variant="outlined"
-          sx={{
-            maxWidth: "100%",
-            "& .MuiChip-label": {
-              display: "block",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            },
-          }}
-        />
-        {canDeliberate && onOpenDeliberation && (
-          <Button
-            disableElevation
+        <Typography
+          component="h1"
+          sx={{ fontSize: "1.75rem", fontWeight: 800, letterSpacing: 0 }}
+        >
+          Proposal review
+        </Typography>
+        <Stack
+          direction="row"
+          alignItems="center"
+          flexWrap="wrap"
+          gap={1}
+          sx={{ width: { xs: "100%", sm: "auto" }, maxWidth: "100%" }}
+        >
+          <Chip
+            label={`${branch} sub-branch`}
+            color="primary"
             variant="outlined"
-            startIcon={<GroupsOutlinedIcon />}
-            onClick={onOpenDeliberation}
-            sx={{ minHeight: 46, fontWeight: 750 }}
-          >
-            Group deliberation
-          </Button>
-        )}
-        {headerAction}
-      </Stack>
-    </Stack>
-    <Typography sx={{ mb: 3.5, color: "text.secondary", lineHeight: 1.55 }}>
-      Reviews are recorded separately from ontology changes. Choose one type of
-      issue to review.
-    </Typography>
-
-    <ReviewPath issueTypes={issueTypes} onStart={onStart} />
-
-    {onStartFollowUp && (
-      <ReviewFollowUpPanel
-        followUps={readyFollowUps}
-        onReview={onStartFollowUp}
-      />
-    )}
-
-    <Stack spacing={4}>
-      {SOM_REVIEW_STAGES.map((stage) => {
-        const stageIssues = issueTypes.filter(
-          (issue) => issue.stage === stage.id,
-        );
-        if (!stageIssues.length) return null;
-        return (
-          <Box
-            key={stage.id}
-            component="section"
-            aria-labelledby={`${stage.id}-heading`}
-          >
-            <Typography
-              id={`${stage.id}-heading`}
-              component="h2"
-              sx={{ fontSize: "1.2rem", fontWeight: 800 }}
+            sx={{ fontWeight: 750 }}
+          />
+          <Chip
+            label={ontologyName}
+            title={ontologyName}
+            variant="outlined"
+            sx={{
+              maxWidth: "100%",
+              "& .MuiChip-label": {
+                display: "block",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              },
+            }}
+          />
+          {canDeliberate && onOpenDeliberation && (
+            <Button
+              disableElevation
+              variant="outlined"
+              startIcon={<GroupsOutlinedIcon />}
+              onClick={onOpenDeliberation}
+              sx={{ minHeight: 46, fontWeight: 750 }}
             >
-              {stage.title}
-            </Typography>
-            <Typography sx={{ mt: 0.35, mb: 1.5, color: "text.secondary" }}>
-              {stage.description}
-            </Typography>
-            <Stack spacing={1.25}>
-              {stageIssues.map((issue) => {
-                const hasNewItems = issue.pending > 0;
-                const hasSavedItems = issue.reviewed > 0;
-                const blockers = issue.blockedBy || [];
-                const blocked = blockers.length > 0 && hasNewItems;
-                const completedOnly = !hasNewItems && hasSavedItems;
-                const available =
-                  issue.enabled &&
-                  issue.released &&
-                  (hasSavedItems || (hasNewItems && !blocked));
-                const blockerPhases = blockingPhaseSummary(blockers);
-                const unavailableLabel = !issue.released
-                  ? `${issue.label}; ${issue.releaseMessage || "waiting for regenerated proposals"}`
-                  : blocked
-                    ? `${issue.label}; complete ${blockerPhases} first`
-                    : issue.waiting
-                      ? `${issue.label}; review its related diagnosis first`
-                      : `${issue.label}, no review items available`;
-                return (
-                  <Card
-                    key={issue.id}
-                    variant="outlined"
-                    sx={{
-                      borderRadius: 2,
-                      overflow: "hidden",
-                      backgroundColor: available
-                        ? "background.paper"
-                        : "action.hover",
-                      "& .MuiCardActionArea-root.Mui-disabled": {
-                        opacity: 1,
-                      },
-                    }}
-                  >
-                    <CardActionArea
-                      disabled={!available}
-                      onClick={() => onStart(issue.id)}
-                      aria-label={
-                        blocked && hasSavedItems
-                          ? `Review completed items in ${issue.label}, ${issue.reviewed} saved; complete ${blockerPhases} before new items`
-                          : completedOnly
-                            ? `Review completed items in ${issue.label}, ${issue.reviewed} saved`
-                            : available
-                              ? `${issue.activeSession ? "Resume" : "Start"} ${issue.label} review, ${issue.pending} remaining`
-                              : unavailableLabel
-                      }
-                      sx={{ p: { xs: 1.75, sm: 2 }, minHeight: 92 }}
+              Group deliberation
+            </Button>
+          )}
+          {headerAction}
+        </Stack>
+      </Stack>
+      <Typography sx={{ mb: 3.5, color: "text.secondary", lineHeight: 1.55 }}>
+        Reviews are recorded separately from ontology changes. Choose one type
+        of issue to review.
+      </Typography>
+
+      <ReviewPath issueTypes={issueTypes} onStart={onStart} />
+
+      {releaseMessage && (
+        <Alert severity="info" sx={{ mb: 3 }}>
+          {releaseMessage}
+        </Alert>
+      )}
+
+      {onStartFollowUp && (
+        <ReviewFollowUpPanel
+          followUps={readyFollowUps}
+          onReview={onStartFollowUp}
+        />
+      )}
+
+      <Stack spacing={4}>
+        {SOM_REVIEW_STAGES.map((stage) => {
+          const stageIssues = issueTypes.filter(
+            (issue) => issue.stage === stage.id,
+          );
+          if (!stageIssues.length) return null;
+          return (
+            <Box
+              key={stage.id}
+              component="section"
+              aria-labelledby={`${stage.id}-heading`}
+            >
+              <Typography
+                id={`${stage.id}-heading`}
+                component="h2"
+                sx={{ fontSize: "1.2rem", fontWeight: 800 }}
+              >
+                {stage.title}
+              </Typography>
+              <Typography sx={{ mt: 0.35, mb: 1.5, color: "text.secondary" }}>
+                {stage.description}
+              </Typography>
+              <Stack spacing={1.25}>
+                {stageIssues.map((issue) => {
+                  const hasNewItems = issue.pending > 0;
+                  const hasSavedItems = issue.reviewed > 0;
+                  const blockers = issue.blockedBy || [];
+                  const blocked = blockers.length > 0 && hasNewItems;
+                  const completedOnly = !hasNewItems && hasSavedItems;
+                  const available =
+                    issue.enabled &&
+                    issue.released &&
+                    (hasSavedItems || (hasNewItems && !blocked));
+                  const blockerPhases = blockingPhaseSummary(blockers);
+                  const unavailableLabel = !issue.released
+                    ? `${issue.label}; awaiting regeneration after the current phase`
+                    : blocked
+                      ? `${issue.label}; complete ${blockerPhases} first`
+                      : issue.waiting
+                        ? `${issue.label}; review its related diagnosis first`
+                        : `${issue.label}, no review items available`;
+                  return (
+                    <Card
+                      key={issue.id}
+                      variant="outlined"
+                      sx={{
+                        borderRadius: 2,
+                        overflow: "hidden",
+                        backgroundColor: available
+                          ? "background.paper"
+                          : "action.hover",
+                        "& .MuiCardActionArea-root.Mui-disabled": {
+                          opacity: 1,
+                        },
+                      }}
                     >
-                      <Box
-                        sx={{
-                          display: "grid",
-                          gridTemplateColumns: {
-                            xs: "48px minmax(0, 1fr)",
-                            sm: "48px minmax(0, 1fr) auto",
-                          },
-                          alignItems: "center",
-                          columnGap: 2,
-                          rowGap: 1.25,
-                        }}
+                      <CardActionArea
+                        disabled={!available}
+                        onClick={() => onStart(issue.id)}
+                        aria-label={
+                          blocked && hasSavedItems
+                            ? `Review completed items in ${issue.label}, ${issue.reviewed} saved; complete ${blockerPhases} before new items`
+                            : completedOnly
+                              ? `Review completed items in ${issue.label}, ${issue.reviewed} saved`
+                              : available
+                                ? `${issue.activeSession ? "Resume" : "Start"} ${issue.label} review, ${issue.pending} remaining`
+                                : unavailableLabel
+                        }
+                        sx={{ p: { xs: 1.75, sm: 2 }, minHeight: 92 }}
                       >
                         <Box
                           sx={{
-                            width: 48,
-                            height: 48,
                             display: "grid",
-                            placeItems: "center",
-                            borderRadius: 1.5,
-                            color: available
-                              ? reviewIconColor
-                              : "text.secondary",
-                            backgroundColor: "action.hover",
+                            gridTemplateColumns: {
+                              xs: "48px minmax(0, 1fr)",
+                              sm: "48px minmax(0, 1fr) auto",
+                            },
+                            alignItems: "center",
+                            columnGap: 2,
+                            rowGap: 1.25,
                           }}
                         >
-                          <IssueIcon issueType={issue.id} />
-                        </Box>
-                        <Box sx={{ minWidth: 0 }}>
-                          <Stack
-                            direction="row"
-                            alignItems="center"
-                            flexWrap="wrap"
-                            useFlexGap
-                            spacing={1}
-                          >
-                            <Typography
-                              sx={{
-                                fontSize: "1.05rem",
-                                fontWeight: 750,
-                                lineHeight: 1.35,
-                              }}
-                            >
-                              {issue.label}
-                            </Typography>
-                            {issue.optional && (
-                              <Chip
-                                label="Optional for initial restructuring"
-                                size="small"
-                                variant="outlined"
-                              />
-                            )}
-                          </Stack>
-                          <Typography
+                          <Box
                             sx={{
-                              mt: 0.35,
-                              color: "text.secondary",
-                              fontSize: "0.95rem",
-                              lineHeight: 1.45,
+                              width: 48,
+                              height: 48,
+                              display: "grid",
+                              placeItems: "center",
+                              borderRadius: 1.5,
+                              color: available
+                                ? reviewIconColor
+                                : "text.secondary",
+                              backgroundColor: "action.hover",
                             }}
                           >
-                            {ISSUE_DESCRIPTIONS[issue.id]}
-                          </Typography>
-                          {issue.pending === 0 && issue.waiting > 0 && (
-                            <Typography
-                              sx={{
-                                mt: 0.6,
-                                color: "text.primary",
-                                fontSize: "0.9rem",
-                                fontWeight: 650,
-                                lineHeight: 1.4,
-                              }}
-                            >
-                              {hasSavedItems
-                                ? "No new items are ready. You can revisit your saved judgments; related actions require their diagnoses first."
-                                : "Review its related diagnosis first. If you agree, this action will become available."}
-                            </Typography>
-                          )}
-                          {blocked && (
-                            <Typography
-                              sx={{
-                                mt: 0.6,
-                                color: "text.primary",
-                                fontSize: "0.9rem",
-                                fontWeight: 650,
-                                lineHeight: 1.4,
-                              }}
-                            >
-                              Complete {blockerPhases} first.
-                            </Typography>
-                          )}
-                          {!issue.released && (
-                            <Typography
-                              sx={{
-                                mt: 0.6,
-                                color: "text.primary",
-                                fontSize: "0.9rem",
-                                fontWeight: 650,
-                                lineHeight: 1.4,
-                              }}
-                            >
-                              {issue.releaseMessage ||
-                                "Available after earlier decisions are applied and this proposal set is regenerated."}
-                            </Typography>
-                          )}
-                        </Box>
-                        <Stack
-                          direction="row"
-                          alignItems="center"
-                          spacing={1}
-                          useFlexGap
-                          flexWrap="wrap"
-                          sx={{
-                            gridColumn: { xs: "2", sm: "3" },
-                            justifySelf: { xs: "start", sm: "end" },
-                          }}
-                        >
-                          <QueueStatus issue={issue} />
-                          {completedOnly ? (
+                            <IssueIcon issueType={issue.id} />
+                          </Box>
+                          <Box sx={{ minWidth: 0 }}>
                             <Stack
                               direction="row"
                               alignItems="center"
-                              spacing={0.6}
-                              sx={{ color: "text.primary" }}
+                              flexWrap="wrap"
+                              useFlexGap
+                              spacing={1}
                             >
-                              <HistoryOutlinedIcon
-                                aria-hidden="true"
-                                sx={{ fontSize: 20 }}
-                              />
                               <Typography
                                 sx={{
-                                  fontSize: "0.9rem",
+                                  fontSize: "1.05rem",
                                   fontWeight: 750,
+                                  lineHeight: 1.35,
                                 }}
                               >
-                                Review completed items
+                                {issue.label}
                               </Typography>
+                              {issue.optional && (
+                                <Chip
+                                  label="Optional for initial restructuring"
+                                  size="small"
+                                  variant="outlined"
+                                />
+                              )}
+                            </Stack>
+                            <Typography
+                              sx={{
+                                mt: 0.35,
+                                color: "text.secondary",
+                                fontSize: "0.95rem",
+                                lineHeight: 1.45,
+                              }}
+                            >
+                              {ISSUE_DESCRIPTIONS[issue.id]}
+                            </Typography>
+                            {issue.pending === 0 && issue.waiting > 0 && (
+                              <Typography
+                                sx={{
+                                  mt: 0.6,
+                                  color: "text.primary",
+                                  fontSize: "0.9rem",
+                                  fontWeight: 650,
+                                  lineHeight: 1.4,
+                                }}
+                              >
+                                {hasSavedItems
+                                  ? "No new items are ready. You can revisit your saved judgments; related actions require their diagnoses first."
+                                  : "Review its related diagnosis first. If you agree, this action will become available."}
+                              </Typography>
+                            )}
+                            {blocked && issue.released && (
+                              <Typography
+                                sx={{
+                                  mt: 0.6,
+                                  color: "text.primary",
+                                  fontSize: "0.9rem",
+                                  fontWeight: 650,
+                                  lineHeight: 1.4,
+                                }}
+                              >
+                                Complete {blockerPhases} first.
+                              </Typography>
+                            )}
+                          </Box>
+                          <Stack
+                            direction="row"
+                            alignItems="center"
+                            spacing={1}
+                            useFlexGap
+                            flexWrap="wrap"
+                            sx={{
+                              gridColumn: { xs: "2", sm: "3" },
+                              justifySelf: { xs: "start", sm: "end" },
+                            }}
+                          >
+                            <QueueStatus issue={issue} />
+                            {completedOnly ? (
+                              <Stack
+                                direction="row"
+                                alignItems="center"
+                                spacing={0.6}
+                                sx={{ color: "text.primary" }}
+                              >
+                                <HistoryOutlinedIcon
+                                  aria-hidden="true"
+                                  sx={{ fontSize: 20 }}
+                                />
+                                <Typography
+                                  sx={{
+                                    fontSize: "0.9rem",
+                                    fontWeight: 750,
+                                  }}
+                                >
+                                  Review completed items
+                                </Typography>
+                                <ArrowForwardIcon
+                                  aria-hidden="true"
+                                  sx={{ color: "text.secondary" }}
+                                />
+                              </Stack>
+                            ) : available ? (
                               <ArrowForwardIcon
                                 aria-hidden="true"
                                 sx={{ color: "text.secondary" }}
                               />
-                            </Stack>
-                          ) : available ? (
-                            <ArrowForwardIcon
-                              aria-hidden="true"
-                              sx={{ color: "text.secondary" }}
-                            />
-                          ) : null}
-                        </Stack>
-                      </Box>
-                    </CardActionArea>
-                  </Card>
-                );
-              })}
-            </Stack>
-          </Box>
-        );
-      })}
-      {issueTypes.length === 0 && (
-        <Alert severity="info">No review queues are available right now.</Alert>
-      )}
-    </Stack>
-  </Box>
-);
+                            ) : null}
+                          </Stack>
+                        </Box>
+                      </CardActionArea>
+                    </Card>
+                  );
+                })}
+              </Stack>
+            </Box>
+          );
+        })}
+        {issueTypes.length === 0 && (
+          <Alert severity="info">
+            No review queues are available right now.
+          </Alert>
+        )}
+      </Stack>
+    </Box>
+  );
+};
 
 export default ReviewQueueSelector;

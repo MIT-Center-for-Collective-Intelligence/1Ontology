@@ -3,6 +3,7 @@ import {
   Alert,
   Box,
   Button,
+  Chip,
   CircularProgress,
   Container,
   LinearProgress,
@@ -72,6 +73,7 @@ export const ReviewPage = () => {
   const router = useRouter();
   const [phase, setPhase] = useState<Phase>("loading");
   const [datasetVersion, setDatasetVersion] = useState("");
+  const [branch, setBranch] = useState("Sell");
   const [ontologyName, setOntologyName] = useState("Ontology");
   const [issueTypes, setIssueTypes] = useState<SomIssueTypeOption[]>([]);
   const [readyFollowUps, setReadyFollowUps] = useState<SomLinkedFollowUp[]>([]);
@@ -102,6 +104,7 @@ export const ReviewPage = () => {
     try {
       const overview = await Post<SomOverviewResponse>("/som-review/overview");
       setDatasetVersion(overview.datasetVersion);
+      setBranch(overview.branch);
       setOntologyName(overview.ontologyName);
       setIssueTypes(overview.issueTypes);
       setReadyFollowUps(overview.readyFollowUps || []);
@@ -576,6 +579,7 @@ export const ReviewPage = () => {
           {phase === "select" && (
             <ReviewQueueSelector
               issueTypes={issueTypes}
+              branch={branch}
               ontologyName={ontologyName}
               onStart={chooseIssueType}
               readyFollowUps={readyFollowUps}
@@ -623,6 +627,7 @@ export const ReviewPage = () => {
           {phase === "intro" && selectedIssue && (
             <ReviewTaskIntro
               issueType={selectedIssue.id}
+              branch={branch}
               label={selectedIssue.label}
               itemCount={selectedIssue.pending}
               resuming={Boolean(selectedIssue.activeSession)}
@@ -678,12 +683,27 @@ export const ReviewPage = () => {
                   justifyContent="space-between"
                   spacing={{ xs: 0.25, sm: 2 }}
                 >
-                  <Typography
-                    component="h1"
-                    sx={{ fontSize: "1rem", fontWeight: 750 }}
+                  <Stack
+                    direction="row"
+                    alignItems="center"
+                    flexWrap="wrap"
+                    useFlexGap
+                    spacing={1}
                   >
-                    {issueLabel}
-                  </Typography>
+                    <Typography
+                      component="h1"
+                      sx={{ fontSize: "1rem", fontWeight: 750 }}
+                    >
+                      {issueLabel}
+                    </Typography>
+                    <Chip
+                      label={`${branch} sub-branch`}
+                      color="primary"
+                      size="small"
+                      variant="outlined"
+                      sx={{ fontWeight: 750 }}
+                    />
+                  </Stack>
                   <Typography
                     aria-live="polite"
                     sx={{

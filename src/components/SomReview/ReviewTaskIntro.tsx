@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, Button, Stack, Typography } from "@mui/material";
+import { Box, Button, Chip, Stack, Typography } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 
@@ -8,6 +8,7 @@ import { ISSUE_INTRODUCTIONS } from "./reviewCopy";
 
 const ReviewTaskIntro = ({
   issueType,
+  branch = "Sell",
   label,
   itemCount,
   resuming,
@@ -16,6 +17,7 @@ const ReviewTaskIntro = ({
   headerAction,
 }: {
   issueType: SomIssueType;
+  branch?: string;
   label: string;
   itemCount: number;
   resuming: boolean;
@@ -44,12 +46,27 @@ const ReviewTaskIntro = ({
     </Stack>
 
     <Box sx={{ maxWidth: 720, pt: { xs: 6, sm: 9 }, pb: 8 }}>
-      <Typography
-        component="p"
-        sx={{ color: "text.secondary", fontWeight: 750 }}
+      <Stack
+        direction="row"
+        alignItems="center"
+        flexWrap="wrap"
+        useFlexGap
+        spacing={1}
       >
-        Before you begin
-      </Typography>
+        <Typography
+          component="p"
+          sx={{ color: "text.secondary", fontWeight: 750 }}
+        >
+          Before you begin
+        </Typography>
+        <Chip
+          label={`${branch} sub-branch`}
+          color="primary"
+          size="small"
+          variant="outlined"
+          sx={{ fontWeight: 750 }}
+        />
+      </Stack>
       <Typography
         component="h1"
         sx={{ mt: 1, fontSize: { xs: "1.65rem", sm: "2rem" }, fontWeight: 800 }}
