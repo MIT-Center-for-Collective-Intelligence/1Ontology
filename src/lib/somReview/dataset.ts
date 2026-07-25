@@ -62,8 +62,8 @@ const datasetDir = (): string =>
   process.env.SOM_REVIEW_DATASET_DIR ||
   path.join(
     process.cwd(),
-    "Sell_Society_of_Mind_Review_UI_Handoff_2026-07-15",
-    "review-datasets-rob-post-structure-2026-07-25",
+    "Buy_Society_of_Mind_Exploratory_2026-07-25",
+    "review-datasets-exploratory-v1",
   );
 
 export const isIssueTypeEnabled = (issueType: SomIssueType): boolean => {
