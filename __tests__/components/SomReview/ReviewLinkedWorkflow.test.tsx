@@ -138,6 +138,7 @@ const followUp: SomLinkedFollowUp = {
 describe("linked proposal review journey", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    window.sessionStorage.clear();
     window.localStorage.setItem(
       "som-review-task-intro-dataset-1-placement",
       "seen",
@@ -301,9 +302,11 @@ describe("linked proposal review journey", () => {
       proposalId: savedCard.proposalId,
       proposalIndex: index,
       question: savedCard.reviewerView.question,
-      decision: "agree" as const,
-      disagreementReason: "",
-      suggestedCorrection: "",
+      decision: index === 1 ? ("disagree" as const) : ("agree" as const),
+      disagreementReason:
+        index === 1 ? "Market means promotion rather than selling." : "",
+      suggestedCorrection:
+        index === 1 ? "Move this activity to Advertise." : "",
       reviewedAt: `2026-07-16T10:${String(index).padStart(2, "0")}:00.000Z`,
     }));
 
@@ -365,6 +368,14 @@ describe("linked proposal review journey", () => {
       screen.getByRole("button", { name: "Open saved answer 2" }),
     );
 
+    window.sessionStorage.setItem(
+      "som-review-draft-reviewer-1-dataset-1-placement-2-revise",
+      JSON.stringify({
+        open: true,
+        reason: "Unfinished replacement",
+        correction: "",
+      }),
+    );
     expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
     expect(screen.getByText("Saved item 2 of 47")).toBeInTheDocument();
     expect(
@@ -379,6 +390,19 @@ describe("linked proposal review journey", () => {
     expect(
       screen.getByRole("button", { name: "Keep saved answer" }),
     ).toBeInTheDocument();
+    expect(
+      screen.getByText("Market means promotion rather than selling."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Move this activity to Advertise."),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Keep saved answer" }));
+    expect(
+      window.sessionStorage.getItem(
+        "som-review-draft-reviewer-1-dataset-1-placement-2-revise",
+      ),
+    ).toBeNull();
   });
 
   it("opens a completed review type from the main menu for revision", async () => {

@@ -19,6 +19,10 @@ import ContextRenderer, {
   DiffedTitle,
 } from "./ContextRenderer";
 import { reviewAccentColor } from "./reviewStyles";
+import {
+  clearReviewDraft,
+  reviewDraftStorageKey,
+} from "../../lib/somReview/reviewDraft";
 
 export interface ReviewSubmission {
   decision: "agree" | "disagree";
@@ -31,6 +35,7 @@ export interface ExistingReviewResponse {
   decision: "agree" | "disagree";
   disagreementReason: string;
   suggestedCorrection: string;
+  reviewedAt: string;
 }
 
 const stripStatePrefix = (text: string): string =>
@@ -117,22 +122,30 @@ const ReviewCard = ({
   const [saveError, setSaveError] = useState(false);
   const headingRef = useRef<HTMLHeadingElement | null>(null);
   const shownAtRef = useRef<number>(Date.now());
-  const draftKey = useMemo(
-    () =>
-      [
-        "som-review-draft",
-        reviewerId,
-        card.datasetVersion,
-        card.proposalId,
-        mode === "revise" ? "revise" : null,
-      ]
-        .filter(Boolean)
-        .join("-"),
+  const draftIdentity = useMemo(
+    () => ({
+      reviewerId,
+      datasetVersion: card.datasetVersion,
+      proposalId: card.proposalId,
+      mode,
+    }),
     [card.datasetVersion, card.proposalId, mode, reviewerId],
+  );
+  const draftKey = useMemo(
+    () => reviewDraftStorageKey(draftIdentity),
+    [draftIdentity],
   );
   const initialDecision = initialResponse?.decision;
   const initialReason = initialResponse?.disagreementReason || "";
   const initialCorrection = initialResponse?.suggestedCorrection || "";
+  const initialResponseFingerprint = useMemo(
+    () =>
+      JSON.stringify([
+        initialDecision || "",
+        initialResponse?.reviewedAt || "",
+      ]),
+    [initialDecision, initialResponse?.reviewedAt],
+  );
 
   useEffect(() => {
     shownAtRef.current = Date.now();
@@ -147,19 +160,35 @@ const ReviewCard = ({
       const draft = window.sessionStorage.getItem(draftKey);
       if (draft) {
         const parsed = JSON.parse(draft);
-        setDisagreeing(Boolean(parsed.open));
-        setReason(typeof parsed.reason === "string" ? parsed.reason : "");
-        setCorrection(
-          typeof parsed.correction === "string" ? parsed.correction : "",
-        );
+        const matchesSavedResponse =
+          mode !== "revise" ||
+          parsed.baseResponseFingerprint === initialResponseFingerprint;
+        if (matchesSavedResponse) {
+          setDisagreeing(Boolean(parsed.open));
+          setReason(typeof parsed.reason === "string" ? parsed.reason : "");
+          setCorrection(
+            typeof parsed.correction === "string" ? parsed.correction : "",
+          );
+        } else {
+          clearReviewDraft(draftIdentity);
+        }
       }
     } catch {
       // A malformed local draft should never block the review queue.
+      clearReviewDraft(draftIdentity);
     }
 
     const focusTimer = window.setTimeout(() => headingRef.current?.focus(), 0);
     return () => window.clearTimeout(focusTimer);
-  }, [draftKey, initialCorrection, initialDecision, initialReason, mode]);
+  }, [
+    draftIdentity,
+    draftKey,
+    initialCorrection,
+    initialDecision,
+    initialReason,
+    initialResponseFingerprint,
+    mode,
+  ]);
 
   const persistDraft = (
     open: boolean,
@@ -173,6 +202,9 @@ const ReviewCard = ({
           open,
           reason: nextReason,
           correction: nextCorrection,
+          ...(mode === "revise"
+            ? { baseResponseFingerprint: initialResponseFingerprint }
+            : {}),
         }),
       );
     } catch {
@@ -181,11 +213,7 @@ const ReviewCard = ({
   };
 
   const clearDraft = () => {
-    try {
-      window.sessionStorage.removeItem(draftKey);
-    } catch {
-      // The saved response is authoritative even if local cleanup fails.
-    }
+    clearReviewDraft(draftIdentity);
   };
 
   const submit = async (decision: "agree" | "disagree") => {
