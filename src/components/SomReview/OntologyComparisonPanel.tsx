@@ -135,11 +135,19 @@ const OutlineNode = ({
           {groups.map((group) => (
             <Box key={`${nodeId}-${group.collectionName}`}>
               <Typography
+                component="div"
+                aria-label={`Collection: ${group.collectionName}`}
+                data-outline-kind="collection"
                 sx={{
                   ml: `${Math.min(depth + 1, 9) * 14 + 30}px`,
                   mt: 0.4,
                   mb: 0.15,
-                  color: "text.secondary",
+                  pl: 0.75,
+                  borderLeft: "2px solid",
+                  borderColor: (theme) =>
+                    theme.palette.mode === "dark" ? "#80CBC4" : "#00695C",
+                  color: (theme) =>
+                    theme.palette.mode === "dark" ? "#80CBC4" : "#00695C",
                   fontSize: "0.72rem",
                   fontWeight: 800,
                   lineHeight: 1.3,
