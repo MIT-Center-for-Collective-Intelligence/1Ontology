@@ -133,4 +133,43 @@ describe("ontology comparison panel", () => {
       await screen.findByText("(O*Net) Purchase task"),
     ).toBeInTheDocument();
   });
+
+  it("collapses collections independently and renders parent guide lines", async () => {
+    render(
+      <OntologyComparisonPanel
+        datasetId="buy-current"
+        branch="Buy"
+        roundLabel="Current Buy round"
+        currentRound
+      />,
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: /Compare Buy hierarchy/i }),
+    );
+
+    const collapseCollectionButtons = await screen.findAllByRole("button", {
+      name: "Collapse collection commerce",
+    });
+
+    expect(collapseCollectionButtons).toHaveLength(2);
+    expect(
+      document.querySelectorAll('[data-outline-guide="node"]'),
+    ).toHaveLength(2);
+    expect(
+      document.querySelectorAll('[data-outline-guide="collection"]'),
+    ).toHaveLength(2);
+    expect(screen.getByText("Purchase product")).toBeInTheDocument();
+    expect(screen.getByText("Purchase goods")).toBeInTheDocument();
+
+    fireEvent.click(collapseCollectionButtons[0]);
+
+    expect(screen.queryByText("Purchase product")).not.toBeInTheDocument();
+    expect(screen.getByText("Purchase goods")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Expand collection commerce" }),
+    ).toBeInTheDocument();
+    expect(
+      document.querySelectorAll('[data-outline-guide="collection"]'),
+    ).toHaveLength(1);
+  });
 });
