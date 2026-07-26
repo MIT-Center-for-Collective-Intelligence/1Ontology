@@ -67,9 +67,11 @@ describe("Buy content and identity Society of Mind dataset", () => {
     for (const title of [
       "Cash Money Order",
       "Purchase Advertising Space",
+      "Purchase Advertising Time",
       "Purchase Artwork",
       "Purchase Surface Finish",
       "Purchase Wardrobe Necessity",
+      "Purchase Web Address",
       "Rent Wardrobe Necessity",
       "Shop for Meals",
       "Staff Organizational Unit",

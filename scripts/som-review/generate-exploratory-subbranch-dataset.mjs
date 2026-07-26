@@ -2499,6 +2499,7 @@ async function main() {
         model: MODEL,
         promptVersion: CONTENT_VERIFIER_PROMPT_VERSION,
         branch,
+        sourceFactsSha256: sha256(JSON.stringify(facts)),
         candidates: contentVerificationCandidates,
       }),
     ),
