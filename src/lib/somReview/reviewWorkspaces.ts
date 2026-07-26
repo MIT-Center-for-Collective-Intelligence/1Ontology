@@ -19,6 +19,17 @@ export interface SomReviewWorkspaceConfig {
 
 const buyDatasets: SomReviewDatasetConfig[] = [
   {
+    id: "buy-content-identity",
+    datasetVersion: "buy-content-identity-after-title-followup-2026-07-26-v1",
+    workspaceId: "buy",
+    label: "Content and identity review",
+    relativeDir: [
+      "Buy_Society_of_Mind_Content_Identity_2026-07-26",
+      "review-datasets-content-identity-v1",
+    ],
+    current: true,
+  },
+  {
     id: "buy-title-followup",
     datasetVersion: "buy-title-followup-after-initial-review-2026-07-25-v1",
     workspaceId: "buy",
@@ -27,7 +38,7 @@ const buyDatasets: SomReviewDatasetConfig[] = [
       "Buy_Society_of_Mind_Title_Followup_2026-07-25",
       "review-datasets-title-followup-v1",
     ],
-    current: true,
+    current: false,
   },
   {
     id: "buy-initial-title-review",
@@ -115,7 +126,7 @@ export const SOM_REVIEW_WORKSPACES: SomReviewWorkspaceConfig[] = [
   {
     id: "buy",
     label: "Buy",
-    activeDatasetId: "buy-title-followup",
+    activeDatasetId: "buy-content-identity",
     originalDatasetId: "buy-initial-title-review",
     datasets: buyDatasets,
   },
@@ -129,7 +140,7 @@ export const SOM_REVIEW_WORKSPACES: SomReviewWorkspaceConfig[] = [
 ];
 
 export const DEFAULT_REVIEW_DATASET_ID =
-  process.env.SOM_REVIEW_DEFAULT_DATASET_ID || "buy-title-followup";
+  process.env.SOM_REVIEW_DEFAULT_DATASET_ID || "buy-content-identity";
 
 const datasets = SOM_REVIEW_WORKSPACES.flatMap(
   (workspace) => workspace.datasets,

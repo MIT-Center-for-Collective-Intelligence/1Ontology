@@ -23,7 +23,15 @@ const BASE_DATASET_DIR = path.join(
 const SNAPSHOT_SCHEMA_VERSION = "som-ontology-snapshot-v1";
 const REVIEW_SCHEMA_VERSION = "som-review-v1";
 const MODEL = "gemini-3.1-pro-preview";
+const PIPELINE_PROMPT_VERSION = "buy-transfer-v2";
+const CONTENT_VERIFIER_PROMPT_VERSION = "buy-content-verifier-v3";
 const DETECTOR_PASSES = 2;
+const CONTENT_VERIFICATION_ISSUE_TYPES = new Set([
+  "title-clarity",
+  "synonym-enrichment",
+  "mistaken-synonym",
+  "duplicate-synonym",
+]);
 
 const ISSUE_DEFINITIONS = [
   [
@@ -166,6 +174,7 @@ const REVIEW_WAVES = {
       "mistaken-synonym",
       "duplicate-synonym",
       "polysemy",
+      "misc-facet-duplicate",
       "node-merge",
     ],
     message: (branch) =>
@@ -231,7 +240,7 @@ title-clarity: {nodeTitle,currentParentTitle,proposedTitle,rationale}`,
   },
   {
     id: "identity-agent",
-    role: "Inspect structured synonyms, identity, and polysemy. Pay special attention to whether a root synonym has introduced descendants that perform a related but different action. Return only synonym-enrichment, mistaken-synonym, duplicate-synonym, or polysemy candidates.",
+    role: "Inspect structured synonyms, identity, and polysemy. A synonym is useful when it provides an alternative lexicalization of the same activity, so never remove one merely because it is a close or trivial wording variation. Propose mistaken-synonym only when the term changes the activity's meaning and is not substitutable in the evidence context. Pay special attention to whether a root synonym has introduced descendants that perform a related but different action. Return only synonym-enrichment, mistaken-synonym, duplicate-synonym, or polysemy candidates.",
     schema: `
 synonym-enrichment: {nodeTitle,proposedSynonyms:[...],rationale}
 mistaken-synonym: {nodeTitle,removeSynonyms:[...],rationale}
@@ -610,6 +619,12 @@ function currentChildren(index, nodeTitle) {
     .sort((left, right) => left.localeCompare(right, "en"));
 }
 
+function allCurrentChildren(index, nodeTitle) {
+  return directChildEdges(index, nodeTitle)
+    .map((edge) => titleFor(index, edge.childId))
+    .sort((left, right) => left.localeCompare(right, "en"));
+}
+
 function sourceTasksForNode(index, nodeTitle) {
   const nodeId = uniqueIdForTitle(index, nodeTitle);
   return (index.edgesByParent.get(nodeId) || [])
@@ -697,6 +712,10 @@ Learned process constraints:
 7. Prefer no candidate to a weak, aesthetic, or speculative candidate.
 8. Use only exact titles from the supplied branch for current nodes and parents.
 9. Do not use named examples or answers from another ontology branch.
+10. Synonym fields intentionally preserve alternative verbs and wording for
+    the same activity. A close lexical or morphological variation is evidence
+    for keeping a synonym, not removing it. Remove a synonym only when it names
+    a meaningfully different activity.
 
 Existing external destination categories that may be used only when a node
 truly expresses a different main action:
@@ -1104,6 +1123,12 @@ provide clear evidence, the distinction is operationally useful, and the
 proposal obeys every learned process constraint. Reject aesthetic regrouping,
 mere word similarity, unsupported destinations, and duplicate proposals.
 
+For synonym changes, remember that the synonym field exists to retain
+alternative wording for the same activity. Reject a mistaken-synonym candidate
+whose only rationale is that the synonym is a trivial, close, or morphological
+variation of the title. Accept removal only when the candidate term denotes a
+different action or meaning in the supplied context.
+
 For grouping proposals, reducing a long flat sibling list is itself an
 operational benefit when the proposed group is semantically coherent, uses a
 stable category, has at least three members, and does not overlap another
@@ -1140,7 +1165,7 @@ Include exactly one assessment for every candidateId and no other text.`;
 
 async function runContentVerifier(ai, branch, index, candidates) {
   const relevant = candidates.filter((candidate) =>
-    ["title-clarity", "duplicate-synonym"].includes(candidate.issueType),
+    CONTENT_VERIFICATION_ISSUE_TYPES.has(candidate.issueType),
   );
   if (!relevant.length) return { raw: "", assessments: [] };
   const packets = relevant.map((candidate) => {
@@ -1157,25 +1182,42 @@ async function runContentVerifier(ai, branch, index, candidates) {
         sourceTasks: sourceTasksForNode(index, candidate.nodeTitle),
       };
     }
-    const canonicalNode = index.nodesById.get(
-      uniqueIdForTitle(index, candidate.canonicalTitle),
-    );
-    const candidateNode = index.nodesById.get(
-      uniqueIdForTitle(index, candidate.candidateTitle),
+    if (candidate.issueType === "duplicate-synonym") {
+      const canonicalNode = index.nodesById.get(
+        uniqueIdForTitle(index, candidate.canonicalTitle),
+      );
+      const candidateNode = index.nodesById.get(
+        uniqueIdForTitle(index, candidate.candidateTitle),
+      );
+      return {
+        candidateId: candidate.candidateId,
+        issueType: candidate.issueType,
+        canonical: {
+          title: candidate.canonicalTitle,
+          description: clean(canonicalNode?.properties?.description),
+          sourceTasks: sourceTasksForNode(index, candidate.canonicalTitle),
+        },
+        candidate: {
+          title: candidate.candidateTitle,
+          description: clean(candidateNode?.properties?.description),
+          sourceTasks: sourceTasksForNode(index, candidate.candidateTitle),
+        },
+      };
+    }
+    const node = index.nodesById.get(
+      uniqueIdForTitle(index, candidate.nodeTitle),
     );
     return {
       candidateId: candidate.candidateId,
       issueType: candidate.issueType,
-      canonical: {
-        title: candidate.canonicalTitle,
-        description: clean(canonicalNode?.properties?.description),
-        sourceTasks: sourceTasksForNode(index, candidate.canonicalTitle),
+      node: {
+        title: candidate.nodeTitle,
+        description: clean(node?.properties?.description),
+        sourceTasks: sourceTasksForNode(index, candidate.nodeTitle),
+        structuredSynonyms: structuredSynonyms(node),
       },
-      candidate: {
-        title: candidate.candidateTitle,
-        description: clean(candidateNode?.properties?.description),
-        sourceTasks: sourceTasksForNode(index, candidate.candidateTitle),
-      },
+      proposedSynonyms: candidate.proposedSynonyms || [],
+      removeSynonyms: candidate.removeSynonyms || [],
     };
   });
   const prompt = `
@@ -1191,9 +1233,26 @@ For title-clarity candidates:
 
 For duplicate-synonym candidates:
 - Accept only if the nodes name the same activity and are substitutable in
-  their evidence contexts.
+  every supplied evidence context.
 - A prerequisite, search step, planning step, broader category, narrower
   category, or adjacent action is not a synonym of completing a transaction.
+- Treat terms coordinated by "and", "or", or "other" in one source task as
+  evidence that the source distinguishes them, unless separate evidence clearly
+  establishes substitutability.
+- Reject pairs where one is a subtype, component, input, outcome, or
+  preparatory shopping/search activity relative to the other.
+
+For synonym-enrichment candidates:
+- Accept only additions that name the same activity and are not already
+  represented in the structured synonym field.
+- Reject related activities, broader or narrower activities, and no-op edits.
+
+For mistaken-synonym candidates:
+- Accept removal only when the recorded synonym names a meaningfully different
+  activity and is not substitutable for the node title in the evidence context.
+- Reject removal based merely on a close lexical, morphological, or verb
+  variation. Such alternatives are the purpose of the synonym field.
+- A rationale that calls a term a "trivial variation" supports keeping it.
 
 Candidates with evidence:
 ${JSON.stringify(packets)}
@@ -1201,6 +1260,8 @@ ${JSON.stringify(packets)}
 Return JSON:
 {"assessments":[{"candidateId":"exact id","decision":"accept"|"reject"|"revise","rationale":"brief reason","revisedFields":{}}]}
 For a revised title, revisedFields may contain only {"proposedTitle":"..."}.
+For a revised synonym change, revisedFields may contain only
+{"proposedSynonyms":[...]} or {"removeSynonyms":[...]}.
 Include exactly one assessment per candidate and no other text.`;
   const response = await callAgent(
     ai,
@@ -1594,10 +1655,10 @@ function makeRecord({
     internalModelEvidence: {
       detectorId: candidate.detectorId,
       detectorName: candidate.detectorId,
-      detectorPromptVersion: "buy-transfer-v1",
+      detectorPromptVersion: PIPELINE_PROMPT_VERSION,
       judgeId: "independent-critic",
       judgeName: "IndependentConservativeCritic",
-      judgePromptVersion: "buy-transfer-v1",
+      judgePromptVersion: PIPELINE_PROMPT_VERSION,
       detectorConfidence: "high",
       judgeConfidence: "high",
       reviewerVisible: false,
@@ -1942,8 +2003,11 @@ function exactActionRecords(diagnosisRecords, candidates, config) {
         absorbedParentTitle,
         absorbedTitle,
       );
-      const canonicalChildren = currentChildren(config.index, canonicalTitle);
-      const absorbedChildren = currentChildren(config.index, absorbedTitle);
+      const canonicalChildren = allCurrentChildren(
+        config.index,
+        canonicalTitle,
+      );
+      const absorbedChildren = allCurrentChildren(config.index, absorbedTitle);
       const context = {
         type: "merge-action",
         parentTitle: absorbedParentTitle,
@@ -2016,7 +2080,7 @@ function exactActionRecords(diagnosisRecords, candidates, config) {
         currentCollection: source.collectionName,
         proposedParentTitle: candidate.candidateHome,
         proposedCollection: "main",
-        childTitles: currentChildren(config.index, candidate.nodeTitle),
+        childTitles: allCurrentChildren(config.index, candidate.nodeTitle),
       };
       records.push(
         makeRecord({
@@ -2350,6 +2414,7 @@ async function main() {
       JSON.stringify({
         stage: "independent-critic",
         model: MODEL,
+        promptVersion: PIPELINE_PROMPT_VERSION,
         branch,
         facts,
         externalDestinations,
@@ -2424,7 +2489,7 @@ async function main() {
   );
   const contentVerificationCandidates =
     placementNormalization.normalized.filter((candidate) =>
-      ["title-clarity", "duplicate-synonym"].includes(candidate.issueType),
+      CONTENT_VERIFICATION_ISSUE_TYPES.has(candidate.issueType),
     );
   const contentVerifier = await runCachedStage({
     cacheFile: path.join(stageCacheDir, "content-verifier.json"),
@@ -2432,6 +2497,7 @@ async function main() {
       JSON.stringify({
         stage: "content-verification-specialist",
         model: MODEL,
+        promptVersion: CONTENT_VERIFIER_PROMPT_VERSION,
         branch,
         candidates: contentVerificationCandidates,
       }),
@@ -2454,7 +2520,7 @@ async function main() {
   );
   const contentRejected = [];
   const accepted = placementNormalization.normalized.flatMap((candidate) => {
-    if (!["title-clarity", "duplicate-synonym"].includes(candidate.issueType)) {
+    if (!CONTENT_VERIFICATION_ISSUE_TYPES.has(candidate.issueType)) {
       return [candidate];
     }
     const assessment = contentAssessmentById.get(candidate.candidateId);

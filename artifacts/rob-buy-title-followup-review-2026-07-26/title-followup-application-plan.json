@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "som-expert-title-application-plan-v1",
+  "createdAt": "2026-07-26",
+  "sourceOntology": {
+    "appId": "final-hierarchy-with-o*net-rob-buy-titles-applied-2026-07-25",
+    "name": "Final Hierarchy with O*Net - Rob Buy Titles Applied 2026-07-25"
+  },
+  "targetOntology": {
+    "appId": "final-hierarchy-with-o*net-rob-buy-title-followup-applied-2026-07-26",
+    "name": "Final Hierarchy with O*Net - Rob Buy Title Follow-up Applied 2026-07-26"
+  },
+  "benchmark": {
+    "file": "rob-buy-title-followup-benchmark.json",
+    "sha256": "fb92c352a73441e942fe1e20667e3b8b598c5c2570b5bd1304696b648c9ac48b",
+    "reviewerLabel": "Rob-Laubacher",
+    "reviewed": 3,
+    "agreed": 3,
+    "disagreed": 0
+  },
+  "renames": [
+    {
+      "sourceNodeId": "486b36c1fbc279a221308e88f260",
+      "from": "Subcontract Arrangement",
+      "to": "Subcontract Interior Arrangement",
+      "decisionSource": "acceptedProposal"
+    },
+    {
+      "sourceNodeId": "d0e7649ff1008ba26878c05709ba",
+      "from": "Subcontract Fabrication",
+      "to": "Subcontract Interior Fabrication",
+      "decisionSource": "acceptedProposal"
+    },
+    {
+      "sourceNodeId": "26257aedc7763ebd329be0903859",
+      "from": "Subcontract Installation",
+      "to": "Subcontract Interior Installation",
+      "decisionSource": "acceptedProposal"
+    }
+  ],
+  "splits": [],
+  "regenerateWithoutApplying": []
+}

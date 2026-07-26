@@ -81,6 +81,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 # by src/lib/somReview/dataset.ts
 COPY --chown=nextjs:nodejs Buy_Society_of_Mind_Exploratory_2026-07-25/review-datasets-exploratory-v1 ./Buy_Society_of_Mind_Exploratory_2026-07-25/review-datasets-exploratory-v1
 COPY --chown=nextjs:nodejs Buy_Society_of_Mind_Title_Followup_2026-07-25/review-datasets-title-followup-v1 ./Buy_Society_of_Mind_Title_Followup_2026-07-25/review-datasets-title-followup-v1
+COPY --chown=nextjs:nodejs Buy_Society_of_Mind_Content_Identity_2026-07-26/review-datasets-content-identity-v1 ./Buy_Society_of_Mind_Content_Identity_2026-07-26/review-datasets-content-identity-v1
 COPY --chown=nextjs:nodejs Sell_Society_of_Mind_Review_UI_Handoff_2026-07-15 ./Sell_Society_of_Mind_Review_UI_Handoff_2026-07-15
 
 EXPOSE 3000
