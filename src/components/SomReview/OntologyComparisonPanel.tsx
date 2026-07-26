@@ -33,7 +33,11 @@ interface OutlineChild {
 
 const normalizeCollection = (value: string): string => {
   const normalized = value.trim().replace(/^\[/, "").replace(/\]$/, "");
-  return !normalized || normalized === "default" ? "main" : normalized;
+  return !normalized ||
+    normalized.toLowerCase() === "default" ||
+    normalized.toLowerCase() === "main"
+    ? "main"
+    : normalized;
 };
 
 const getCollectionKey = (
@@ -42,10 +46,8 @@ const getCollectionKey = (
 ): string =>
   JSON.stringify([parentNodeId, normalizeCollection(collectionName)]);
 
-const getNodeIndentLevel = (depth: number): number => Math.min(depth * 2, 16);
-
-const getCollectionIndentLevel = (depth: number): number =>
-  Math.min(depth * 2 + 1, 17);
+const getOutlineIndentLevel = (indentLevel: number): number =>
+  Math.min(indentLevel, 20);
 
 const OutlineNode = ({
   nodeId,
@@ -57,7 +59,7 @@ const OutlineNode = ({
   ancestors,
   onToggle,
   onToggleCollection,
-  depth,
+  indentLevel,
 }: {
   nodeId: string;
   nodesById: Map<string, SomOntologyOutlineSnapshot["nodes"][number]>;
@@ -68,7 +70,7 @@ const OutlineNode = ({
   ancestors: Set<string>;
   onToggle: (nodeId: string) => void;
   onToggleCollection: (collectionKey: string) => void;
-  depth: number;
+  indentLevel: number;
 }) => {
   const node = nodesById.get(nodeId);
   if (!node || (!showEvidence && node.evidence)) return null;
@@ -98,15 +100,64 @@ const OutlineNode = ({
     .sort((left, right) =>
       left.collectionName.localeCompare(right.collectionName, "en"),
     );
-  const hasChildren = groups.length > 0;
+  const mainChildren =
+    groups.find((group) => group.collectionName === "main")?.entries || [];
+  const collectionGroups = groups.filter(
+    (group) => group.collectionName !== "main",
+  );
+  const hasChildren = mainChildren.length > 0 || collectionGroups.length > 0;
   const isExpanded = expanded.has(nodeId);
   const nextAncestors = new Set(ancestors);
   nextAncestors.add(nodeId);
-  const nodeIndentLevel = getNodeIndentLevel(depth);
-  const collectionIndentLevel = getCollectionIndentLevel(depth);
+  const nodeIndentLevel = getOutlineIndentLevel(indentLevel);
+  const collectionIndentLevel = getOutlineIndentLevel(indentLevel + 1);
+  const renderChild = (
+    child: OutlineChild,
+    childIndentLevel: number,
+    keyPrefix: string,
+  ) => {
+    const childKey = `${keyPrefix}-${child.childId}`;
+    if (nextAncestors.has(child.childId)) {
+      return (
+        <Typography
+          key={childKey}
+          sx={{
+            ml: `${getOutlineIndentLevel(childIndentLevel) * 14 + 30}px`,
+            py: 0.5,
+            color: "warning.main",
+            fontSize: "0.85rem",
+          }}
+        >
+          {nodesById.get(child.childId)?.title} (circular reference)
+        </Typography>
+      );
+    }
+
+    return (
+      <OutlineNode
+        key={childKey}
+        nodeId={child.childId}
+        nodesById={nodesById}
+        childrenByParent={childrenByParent}
+        expanded={expanded}
+        expandedCollections={expandedCollections}
+        showEvidence={showEvidence}
+        ancestors={nextAncestors}
+        onToggle={onToggle}
+        onToggleCollection={onToggleCollection}
+        indentLevel={childIndentLevel}
+      />
+    );
+  };
 
   return (
-    <Box role="treeitem" aria-expanded={hasChildren ? isExpanded : undefined}>
+    <Box
+      role="treeitem"
+      aria-label={`Node: ${node.title}`}
+      aria-expanded={hasChildren ? isExpanded : undefined}
+      data-outline-kind="node"
+      data-outline-indent-level={nodeIndentLevel}
+    >
       <Stack
         direction="row"
         alignItems="flex-start"
@@ -138,7 +189,7 @@ const OutlineNode = ({
             minWidth: 0,
             pt: 0.45,
             fontSize: "0.9rem",
-            fontWeight: depth === 0 ? 800 : 600,
+            fontWeight: indentLevel === 0 ? 800 : 600,
             lineHeight: 1.35,
             overflowWrap: "anywhere",
           }}
@@ -169,7 +220,10 @@ const OutlineNode = ({
             },
           }}
         >
-          {groups.map((group) => {
+          {mainChildren.map((child) =>
+            renderChild(child, indentLevel + 1, `${nodeId}-main`),
+          )}
+          {collectionGroups.map((group) => {
             const collectionKey = getCollectionKey(
               nodeId,
               group.collectionName,
@@ -183,6 +237,7 @@ const OutlineNode = ({
                 aria-label={`Collection: ${group.collectionName}`}
                 aria-expanded={isCollectionExpanded}
                 data-outline-kind="collection"
+                data-outline-indent-level={collectionIndentLevel}
               >
                 <Stack
                   direction="row"
@@ -256,34 +311,7 @@ const OutlineNode = ({
                     }}
                   >
                     {group.entries.map((child) =>
-                      nextAncestors.has(child.childId) ? (
-                        <Typography
-                          key={`${collectionKey}-${child.childId}`}
-                          sx={{
-                            ml: `${getNodeIndentLevel(depth + 1) * 14 + 30}px`,
-                            py: 0.5,
-                            color: "warning.main",
-                            fontSize: "0.85rem",
-                          }}
-                        >
-                          {nodesById.get(child.childId)?.title} (circular
-                          reference)
-                        </Typography>
-                      ) : (
-                        <OutlineNode
-                          key={`${collectionKey}-${child.childId}`}
-                          nodeId={child.childId}
-                          nodesById={nodesById}
-                          childrenByParent={childrenByParent}
-                          expanded={expanded}
-                          expandedCollections={expandedCollections}
-                          showEvidence={showEvidence}
-                          ancestors={nextAncestors}
-                          onToggle={onToggle}
-                          onToggleCollection={onToggleCollection}
-                          depth={depth + 1}
-                        />
-                      ),
+                      renderChild(child, indentLevel + 2, collectionKey),
                     )}
                   </Box>
                 )}
@@ -340,7 +368,11 @@ const OutlineColumn = ({
     for (const [parentNodeId, children] of childrenByParent.entries()) {
       for (const child of children) {
         const childNode = nodesById.get(child.childId);
-        if (childNode && (showEvidence || !childNode.evidence)) {
+        if (
+          normalizeCollection(child.collectionName) !== "main" &&
+          childNode &&
+          (showEvidence || !childNode.evidence)
+        ) {
           result.add(getCollectionKey(parentNodeId, child.collectionName));
         }
       }
@@ -470,7 +502,7 @@ const OutlineColumn = ({
               return next;
             })
           }
-          depth={0}
+          indentLevel={0}
         />
       </Box>
     </Box>

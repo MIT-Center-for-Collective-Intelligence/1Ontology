@@ -27,6 +27,11 @@ const outlineResponse: SomOntologyOutlineResponse = {
       { id: "original-root", title: "Buy", evidence: false },
       { id: "original-child", title: "Purchase product", evidence: false },
       {
+        id: "original-main-child",
+        title: "Purchase directly",
+        evidence: false,
+      },
+      {
         id: "original-evidence",
         title: "(O*Net) Purchase task",
         evidence: true,
@@ -37,6 +42,11 @@ const outlineResponse: SomOntologyOutlineResponse = {
         parentId: "original-root",
         childId: "original-child",
         collectionName: "commerce",
+      },
+      {
+        parentId: "original-root",
+        childId: "original-main-child",
+        collectionName: "Main",
       },
       {
         parentId: "original-root",
@@ -53,12 +63,22 @@ const outlineResponse: SomOntologyOutlineResponse = {
     nodes: [
       { id: "current-root", title: "Buy", evidence: false },
       { id: "current-child", title: "Purchase goods", evidence: false },
+      {
+        id: "current-main-child",
+        title: "Acquire directly",
+        evidence: false,
+      },
     ],
     edges: [
       {
         parentId: "current-root",
         childId: "current-child",
         collectionName: "commerce",
+      },
+      {
+        parentId: "current-root",
+        childId: "current-main-child",
+        collectionName: "default",
       },
     ],
   },
@@ -132,6 +152,51 @@ describe("ontology comparison panel", () => {
     expect(
       await screen.findByText("(O*Net) Purchase task"),
     ).toBeInTheDocument();
+  });
+
+  it("renders Main collection children directly beneath their parent", async () => {
+    render(
+      <OntologyComparisonPanel
+        datasetId="buy-current"
+        branch="Buy"
+        roundLabel="Current Buy round"
+        currentRound
+      />,
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: /Compare Buy hierarchy/i }),
+    );
+
+    const originalDirectChild = await screen.findByRole("treeitem", {
+      name: "Node: Purchase directly",
+    });
+    const currentDirectChild = screen.getByRole("treeitem", {
+      name: "Node: Acquire directly",
+    });
+    const namedCollection = screen.getAllByRole("treeitem", {
+      name: "Collection: commerce",
+    })[0];
+    const namedCollectionChild = screen.getByRole("treeitem", {
+      name: "Node: Purchase product",
+    });
+
+    expect(screen.queryByLabelText("Collection: main")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /collection (main|default)/i }),
+    ).not.toBeInTheDocument();
+    expect(originalDirectChild).toHaveAttribute(
+      "data-outline-indent-level",
+      "1",
+    );
+    expect(currentDirectChild).toHaveAttribute(
+      "data-outline-indent-level",
+      "1",
+    );
+    expect(namedCollection).toHaveAttribute("data-outline-indent-level", "1");
+    expect(namedCollectionChild).toHaveAttribute(
+      "data-outline-indent-level",
+      "2",
+    );
   });
 
   it("collapses collections independently and renders parent guide lines", async () => {
