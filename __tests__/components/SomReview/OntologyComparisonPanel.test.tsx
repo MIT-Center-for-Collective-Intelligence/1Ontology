@@ -99,6 +99,15 @@ describe("ontology comparison panel", () => {
       screen.getByRole("region", { name: "Current ontology outline" }),
     ).toBeInTheDocument();
     expect(screen.getAllByText("commerce")).toHaveLength(2);
+    expect(screen.getAllByLabelText("Collection: commerce")).toHaveLength(2);
+    expect(
+      screen
+        .getAllByLabelText("Collection: commerce")
+        .every(
+          (collection) =>
+            collection.getAttribute("data-outline-kind") === "collection",
+        ),
+    ).toBe(true);
     expect(screen.queryByText("(O*Net) Purchase task")).not.toBeInTheDocument();
   });
 
