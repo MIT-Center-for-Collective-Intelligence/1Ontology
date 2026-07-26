@@ -30,6 +30,8 @@ import {
 export const DeliberationAdminPage = () => {
   const [{ user }] = useAuth();
   const router = useRouter();
+  const datasetId =
+    typeof router.query.dataset === "string" ? router.query.dataset : "";
   const [overview, setOverview] =
     useState<SomDeliberationOverviewResponse | null>(null);
   const [loadingOverview, setLoadingOverview] = useState(true);
@@ -48,7 +50,7 @@ export const DeliberationAdminPage = () => {
     try {
       const result = await Post<SomDeliberationOverviewResponse>(
         "/som-review/admin/overview",
-        {},
+        datasetId ? { datasetId } : {},
         false,
       );
       setOverview(result);
@@ -62,37 +64,40 @@ export const DeliberationAdminPage = () => {
     } finally {
       setLoadingOverview(false);
     }
-  }, []);
+  }, [datasetId]);
 
   useEffect(() => {
-    if (user) loadOverview();
-  }, [loadOverview, user]);
+    if (user && router.isReady) loadOverview();
+  }, [loadOverview, router.isReady, user]);
 
-  const loadProposal = useCallback(async (proposalId: string) => {
-    if (!proposalId) return;
-    const requestSequence = ++detailRequestSequence.current;
-    setLoadingDetail(true);
-    setDetailError("");
-    try {
-      const result = await Post<SomDeliberationProposalResponse>(
-        "/som-review/admin/proposal",
-        { proposalId },
-        false,
-      );
-      if (requestSequence !== detailRequestSequence.current) return;
-      setDetail(result);
-    } catch (error: any) {
-      if (requestSequence !== detailRequestSequence.current) return;
-      setDetailError(
-        error?.response?.data?.error ||
-          "This deliberation could not be loaded. Please try again.",
-      );
-    } finally {
-      if (requestSequence === detailRequestSequence.current) {
-        setLoadingDetail(false);
+  const loadProposal = useCallback(
+    async (proposalId: string) => {
+      if (!proposalId) return;
+      const requestSequence = ++detailRequestSequence.current;
+      setLoadingDetail(true);
+      setDetailError("");
+      try {
+        const result = await Post<SomDeliberationProposalResponse>(
+          "/som-review/admin/proposal",
+          { proposalId, ...(datasetId ? { datasetId } : {}) },
+          false,
+        );
+        if (requestSequence !== detailRequestSequence.current) return;
+        setDetail(result);
+      } catch (error: any) {
+        if (requestSequence !== detailRequestSequence.current) return;
+        setDetailError(
+          error?.response?.data?.error ||
+            "This deliberation could not be loaded. Please try again.",
+        );
+      } finally {
+        if (requestSequence === detailRequestSequence.current) {
+          setLoadingDetail(false);
+        }
       }
-    }
-  }, []);
+    },
+    [datasetId],
+  );
 
   const openProposal = useCallback(
     (proposalId: string) => {
@@ -116,12 +121,16 @@ export const DeliberationAdminPage = () => {
       if (!selectedProposalId) throw new Error("No proposal is selected");
       await Post<SomDeliberationMutationResult>(
         endpoint,
-        { proposalId: selectedProposalId, ...data },
+        {
+          proposalId: selectedProposalId,
+          ...(datasetId ? { datasetId } : {}),
+          ...data,
+        },
         false,
       );
       await Promise.all([loadProposal(selectedProposalId), loadOverview()]);
     },
-    [loadOverview, loadProposal, selectedProposalId],
+    [datasetId, loadOverview, loadProposal, selectedProposalId],
   );
 
   return (
@@ -152,7 +161,12 @@ export const DeliberationAdminPage = () => {
               disableElevation
               color="inherit"
               startIcon={<ArrowBackIcon />}
-              onClick={() => router.push("/review")}
+              onClick={() =>
+                router.push({
+                  pathname: "/review",
+                  ...(datasetId ? { query: { dataset: datasetId } } : {}),
+                })
+              }
               sx={{ minHeight: 46, fontWeight: 700 }}
             >
               Individual review

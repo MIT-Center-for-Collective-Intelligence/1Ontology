@@ -22,7 +22,12 @@ jest.mock("../../../src/components/context/AuthContext", () => {
 });
 
 jest.mock("next/router", () => ({
-  useRouter: () => ({ push: jest.fn() }),
+  useRouter: () => ({
+    isReady: true,
+    query: {},
+    push: jest.fn(),
+    replace: jest.fn().mockResolvedValue(true),
+  }),
 }));
 
 jest.mock("../../../src/components/hoc/withAuthUser", () => ({
@@ -136,6 +141,31 @@ const followUp: SomLinkedFollowUp = {
   ],
 };
 
+const overviewMetadata = {
+  datasetId: "buy-title-followup",
+  datasetVersion: "dataset-1",
+  workspaceId: "buy",
+  roundLabel: "Title follow-up",
+  currentRound: true,
+  workspaces: [
+    {
+      id: "buy",
+      label: "Buy",
+      activeDatasetId: "buy-title-followup",
+      rounds: [
+        {
+          id: "buy-title-followup",
+          datasetVersion: "dataset-1",
+          label: "Title follow-up",
+          current: true,
+        },
+      ],
+    },
+  ],
+  branch: "Buy",
+  ontologyName: "Test ontology",
+};
+
 describe("linked proposal review journey", () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -151,7 +181,7 @@ describe("linked proposal review journey", () => {
     postMock.mockImplementation((url: string, body: any) => {
       if (url === "/som-review/overview") {
         return Promise.resolve({
-          datasetVersion: "dataset-1",
+          ...overviewMetadata,
           canDeliberate: false,
           readyFollowUps: [],
           issueTypes: [
@@ -247,6 +277,7 @@ describe("linked proposal review journey", () => {
     );
     await waitFor(() =>
       expect(postMock).toHaveBeenCalledWith("/som-review/session", {
+        datasetId: "buy-title-followup",
         issueType: "placement",
       }),
     );
@@ -265,6 +296,7 @@ describe("linked proposal review journey", () => {
 
     await waitFor(() =>
       expect(postMock).toHaveBeenCalledWith("/som-review/session", {
+        datasetId: "buy-title-followup",
         issueType: "relocation",
         preferredProposalId: "relocation-1",
       }),
@@ -284,6 +316,7 @@ describe("linked proposal review journey", () => {
 
     await waitFor(() =>
       expect(postMock).toHaveBeenLastCalledWith("/som-review/session", {
+        datasetId: "buy-title-followup",
         issueType: "placement",
       }),
     );
@@ -314,7 +347,7 @@ describe("linked proposal review journey", () => {
     postMock.mockImplementation((url: string, body: any) => {
       if (url === "/som-review/overview") {
         return Promise.resolve({
-          datasetVersion: "dataset-1",
+          ...overviewMetadata,
           canDeliberate: false,
           readyFollowUps: [],
           issueTypes: [
@@ -428,7 +461,7 @@ describe("linked proposal review journey", () => {
     postMock.mockImplementation((url: string, body: any) => {
       if (url === "/som-review/overview") {
         return Promise.resolve({
-          datasetVersion: "dataset-1",
+          ...overviewMetadata,
           canDeliberate: false,
           readyFollowUps: [],
           issueTypes: [
@@ -468,6 +501,7 @@ describe("linked proposal review journey", () => {
 
     await waitFor(() =>
       expect(postMock).toHaveBeenLastCalledWith("/som-review/session", {
+        datasetId: "buy-title-followup",
         issueType: "placement",
       }),
     );

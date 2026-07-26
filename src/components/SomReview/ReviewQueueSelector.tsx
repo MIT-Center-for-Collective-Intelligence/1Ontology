@@ -204,6 +204,7 @@ const ReviewQueueSelector = ({
   canDeliberate = false,
   onOpenDeliberation,
   headerAction,
+  workspaceControls,
   readyFollowUps = [],
   onStartFollowUp,
 }: {
@@ -214,6 +215,7 @@ const ReviewQueueSelector = ({
   canDeliberate?: boolean;
   onOpenDeliberation?: () => void;
   headerAction?: React.ReactNode;
+  workspaceControls?: React.ReactNode;
   readyFollowUps?: SomLinkedFollowUp[];
   onStartFollowUp?: (followUp: SomLinkedFollowUp) => void;
 }) => {
@@ -281,6 +283,8 @@ const ReviewQueueSelector = ({
         Reviews are recorded separately from ontology changes. Choose one type
         of issue to review.
       </Typography>
+
+      {workspaceControls}
 
       <ReviewPath issueTypes={issueTypes} onStart={onStart} />
 

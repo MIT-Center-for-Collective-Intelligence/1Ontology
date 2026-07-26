@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Alert,
   Box,
@@ -27,6 +27,8 @@ import ReviewFollowUpPanel from "@components/components/SomReview/ReviewFollowUp
 import ReviewQueueSelector from "@components/components/SomReview/ReviewQueueSelector";
 import ReviewTaskIntro from "@components/components/SomReview/ReviewTaskIntro";
 import ThemeModeToggle from "@components/components/SomReview/ThemeModeToggle";
+import OntologyComparisonPanel from "@components/components/SomReview/OntologyComparisonPanel";
+import ReviewWorkspaceSwitcher from "@components/components/SomReview/ReviewWorkspaceSwitcher";
 import { reviewInteractiveSurfaceSx } from "@components/components/SomReview/reviewStyles";
 import { clearReviewDraft } from "@components/lib/somReview/reviewDraft";
 import {
@@ -38,6 +40,7 @@ import {
   SomRespondResult,
   SomReviewCard,
   SomReviewHistoryItem,
+  SomReviewWorkspaceOption,
   SomReviseResult,
   SomSessionResponse,
 } from "@components/types/ISomReview";
@@ -72,7 +75,13 @@ export const ReviewPage = () => {
   const [{ user }] = useAuth();
   const router = useRouter();
   const [phase, setPhase] = useState<Phase>("loading");
+  const datasetIdRef = useRef("");
+  const [datasetId, setDatasetId] = useState("");
   const [datasetVersion, setDatasetVersion] = useState("");
+  const [workspaceId, setWorkspaceId] = useState("buy");
+  const [workspaces, setWorkspaces] = useState<SomReviewWorkspaceOption[]>([]);
+  const [roundLabel, setRoundLabel] = useState("");
+  const [currentRound, setCurrentRound] = useState(true);
   const [branch, setBranch] = useState("Sell");
   const [ontologyName, setOntologyName] = useState("Ontology");
   const [issueTypes, setIssueTypes] = useState<SomIssueTypeOption[]>([]);
@@ -97,13 +106,23 @@ export const ReviewPage = () => {
   const [completedSequence, setCompletedSequence] =
     useState<CompletedSequence | null>(null);
 
-  const loadOverview = useCallback(async () => {
+  const loadOverview = useCallback(async (requestedDatasetId?: string) => {
     setPhase("loading");
     setLoadError("");
     setRetryIssueType(null);
     try {
-      const overview = await Post<SomOverviewResponse>("/som-review/overview");
+      const targetDatasetId = requestedDatasetId || datasetIdRef.current;
+      const overview = await Post<SomOverviewResponse>(
+        "/som-review/overview",
+        targetDatasetId ? { datasetId: targetDatasetId } : {},
+      );
+      datasetIdRef.current = overview.datasetId;
+      setDatasetId(overview.datasetId);
       setDatasetVersion(overview.datasetVersion);
+      setWorkspaceId(overview.workspaceId);
+      setWorkspaces(overview.workspaces);
+      setRoundLabel(overview.roundLabel);
+      setCurrentRound(overview.currentRound);
       setBranch(overview.branch);
       setOntologyName(overview.ontologyName);
       setIssueTypes(overview.issueTypes);
@@ -117,8 +136,51 @@ export const ReviewPage = () => {
   }, []);
 
   useEffect(() => {
-    if (user) loadOverview();
-  }, [user, loadOverview]);
+    if (!user || !router.isReady) return;
+    const queryDatasetId =
+      typeof router.query.dataset === "string"
+        ? router.query.dataset
+        : undefined;
+    if (
+      datasetIdRef.current &&
+      (!queryDatasetId || queryDatasetId === datasetIdRef.current)
+    ) {
+      return;
+    }
+    loadOverview(queryDatasetId);
+  }, [loadOverview, router.isReady, router.query.dataset, user]);
+
+  const clearActiveReview = useCallback(() => {
+    setIssueType(null);
+    setSessionId("");
+    setCards([]);
+    setCursor(0);
+    setHistory([]);
+    setHistoryCards([]);
+    setRevisionProposalId("");
+    setRetryIssueType(null);
+    setFollowUpOffer(null);
+    setActiveSequence(null);
+    setCompletedSequence(null);
+  }, []);
+
+  const switchDataset = useCallback(
+    async (nextDatasetId: string) => {
+      if (!nextDatasetId || nextDatasetId === datasetIdRef.current) return;
+      clearActiveReview();
+      datasetIdRef.current = nextDatasetId;
+      await router.replace(
+        {
+          pathname: "/review",
+          query: { dataset: nextDatasetId },
+        },
+        undefined,
+        { shallow: true },
+      );
+      await loadOverview(nextDatasetId);
+    },
+    [clearActiveReview, loadOverview, router],
+  );
 
   const startSession = useCallback(
     async (
@@ -138,6 +200,7 @@ export const ReviewPage = () => {
       setActiveSequence(options.sequence || null);
       try {
         const result = await Post<SomSessionResponse>("/som-review/session", {
+          datasetId: datasetIdRef.current,
           issueType: issue,
           ...(options.preferredProposalId
             ? { preferredProposalId: options.preferredProposalId }
@@ -483,19 +546,9 @@ export const ReviewPage = () => {
   }, [cards.length, cursor, revisionCard, user?.userId]);
 
   const exitToSelector = useCallback(() => {
-    setIssueType(null);
-    setSessionId("");
-    setCards([]);
-    setCursor(0);
-    setHistory([]);
-    setHistoryCards([]);
-    setRevisionProposalId("");
-    setRetryIssueType(null);
-    setFollowUpOffer(null);
-    setActiveSequence(null);
-    setCompletedSequence(null);
+    clearActiveReview();
     loadOverview();
-  }, [loadOverview]);
+  }, [clearActiveReview, loadOverview]);
 
   const continueOriginalQueue = useCallback(() => {
     if (!followUpOffer) return;
@@ -544,7 +597,7 @@ export const ReviewPage = () => {
           },
         ]}
       >
-        <Container maxWidth="md">
+        <Container maxWidth="lg">
           {loadError && (
             <Alert
               severity="error"
@@ -585,8 +638,30 @@ export const ReviewPage = () => {
               readyFollowUps={readyFollowUps}
               onStartFollowUp={(followUp) => startLinkedFollowUp(followUp)}
               canDeliberate={canDeliberate}
-              onOpenDeliberation={() => router.push("/review/admin")}
+              onOpenDeliberation={() =>
+                router.push({
+                  pathname: "/review/admin",
+                  query: { dataset: datasetId },
+                })
+              }
               headerAction={<ThemeModeToggle />}
+              workspaceControls={
+                <>
+                  <ReviewWorkspaceSwitcher
+                    workspaces={workspaces}
+                    workspaceId={workspaceId}
+                    datasetId={datasetId}
+                    onChange={switchDataset}
+                  />
+                  {!currentRound && (
+                    <Alert severity="warning" sx={{ mb: 3 }}>
+                      You are reviewing a past round. Revisions are saved with
+                      that round, but they will not affect the current ontology
+                      until its decisions are propagated again.
+                    </Alert>
+                  )}
+                </>
+              }
             />
           )}
 
@@ -1091,6 +1166,16 @@ export const ReviewPage = () => {
                 </Button>
               </Stack>
             </Stack>
+          )}
+
+          {phase !== "loading" && datasetId && (
+            <OntologyComparisonPanel
+              key={datasetId}
+              datasetId={datasetId}
+              branch={branch}
+              roundLabel={roundLabel}
+              currentRound={currentRound}
+            />
           )}
         </Container>
       </Box>

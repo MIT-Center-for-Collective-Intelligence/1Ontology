@@ -15,6 +15,7 @@ import {
   SomDeliberationOverviewResponse,
   SomReviewerRole,
 } from "../../../../types/ISomReview";
+import { reviewRequestData } from "../../../../lib/somReview/request";
 
 const handler = async (request: NextApiRequest, res: NextApiResponse) => {
   const req = request as CustomNextApiRequest;
@@ -23,7 +24,10 @@ const handler = async (request: NextApiRequest, res: NextApiResponse) => {
   }
   try {
     const { response: access } = requireDeliberationAccess(req.user);
-    const dataset = getDataset();
+    const data = reviewRequestData(req.body);
+    const dataset = getDataset(
+      typeof data.datasetId === "string" ? data.datasetId : undefined,
+    );
     const weights = reviewerRoleWeights();
     const roles: SomReviewerRole[] = ["steward", "researcher", "contributor"];
     const deliberation = await loadDeliberationOverview(dataset, req.user.uid);

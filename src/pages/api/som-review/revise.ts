@@ -3,7 +3,7 @@ import { NextApiRequest, NextApiResponse } from "next";
 import fbAuth, { CustomNextApiRequest } from "../../../middlewares/fbAuth";
 import {
   compileResponseValidator,
-  getDataset,
+  getDatasetByVersion,
   isIssueTypeEnabled,
 } from "../../../lib/somReview/dataset";
 import {
@@ -15,20 +15,27 @@ import { reviewRequestData } from "../../../lib/somReview/request";
 import { SomReviseResult } from "../../../types/ISomReview";
 import { toLinkedFollowUps } from "../../../lib/somReview/followUps";
 
-let validateResponse: ReturnType<typeof compileResponseValidator> | null = null;
+const responseValidators = new Map<
+  string,
+  ReturnType<typeof compileResponseValidator>
+>();
 
 const handler = async (request: NextApiRequest, res: NextApiResponse) => {
   const req = request as CustomNextApiRequest;
   if (req.method !== "POST")
     return res.status(405).json({ error: "Method not allowed" });
   try {
-    const dataset = getDataset();
     const data = reviewRequestData(req.body);
     const payload = data.response as ResponsePayload;
     if (!payload)
       return res.status(400).json({ error: "Missing response payload" });
 
-    if (!validateResponse) validateResponse = compileResponseValidator();
+    const dataset = getDatasetByVersion(String(payload.datasetVersion || ""));
+    let validateResponse = responseValidators.get(dataset.datasetVersion);
+    if (!validateResponse) {
+      validateResponse = compileResponseValidator(dataset.rootDir);
+      responseValidators.set(dataset.datasetVersion, validateResponse);
+    }
     if (!validateResponse(payload)) {
       return res.status(400).json({
         error: "Response failed schema validation",
@@ -39,9 +46,6 @@ const handler = async (request: NextApiRequest, res: NextApiResponse) => {
       return res
         .status(403)
         .json({ error: "reviewerId does not match the signed-in user" });
-    }
-    if (payload.datasetVersion !== dataset.datasetVersion) {
-      return res.status(400).json({ error: "Unexpected datasetVersion" });
     }
     const record = dataset.recordsById.get(payload.proposalId);
     if (!record) return res.status(400).json({ error: "Unknown proposalId" });
