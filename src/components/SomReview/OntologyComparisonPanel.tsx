@@ -36,23 +36,38 @@ const normalizeCollection = (value: string): string => {
   return !normalized || normalized === "default" ? "main" : normalized;
 };
 
+const getCollectionKey = (
+  parentNodeId: string,
+  collectionName: string,
+): string =>
+  JSON.stringify([parentNodeId, normalizeCollection(collectionName)]);
+
+const getNodeIndentLevel = (depth: number): number => Math.min(depth * 2, 16);
+
+const getCollectionIndentLevel = (depth: number): number =>
+  Math.min(depth * 2 + 1, 17);
+
 const OutlineNode = ({
   nodeId,
   nodesById,
   childrenByParent,
   expanded,
+  expandedCollections,
   showEvidence,
   ancestors,
   onToggle,
+  onToggleCollection,
   depth,
 }: {
   nodeId: string;
   nodesById: Map<string, SomOntologyOutlineSnapshot["nodes"][number]>;
   childrenByParent: Map<string, OutlineChild[]>;
   expanded: Set<string>;
+  expandedCollections: Set<string>;
   showEvidence: boolean;
   ancestors: Set<string>;
   onToggle: (nodeId: string) => void;
+  onToggleCollection: (collectionKey: string) => void;
   depth: number;
 }) => {
   const node = nodesById.get(nodeId);
@@ -87,6 +102,8 @@ const OutlineNode = ({
   const isExpanded = expanded.has(nodeId);
   const nextAncestors = new Set(ancestors);
   nextAncestors.add(nodeId);
+  const nodeIndentLevel = getNodeIndentLevel(depth);
+  const collectionIndentLevel = getCollectionIndentLevel(depth);
 
   return (
     <Box role="treeitem" aria-expanded={hasChildren ? isExpanded : undefined}>
@@ -96,7 +113,7 @@ const OutlineNode = ({
         spacing={0.5}
         sx={{
           minHeight: 34,
-          pl: `${Math.min(depth, 8) * 14}px`,
+          pl: `${nodeIndentLevel * 14}px`,
           py: 0.25,
         }}
       >
@@ -131,61 +148,148 @@ const OutlineNode = ({
       </Stack>
 
       {hasChildren && isExpanded && (
-        <Box role="group">
-          {groups.map((group) => (
-            <Box key={`${nodeId}-${group.collectionName}`}>
-              <Typography
-                component="div"
+        <Box
+          role="group"
+          data-outline-guide="node"
+          sx={{
+            position: "relative",
+            "&::before": {
+              position: "absolute",
+              top: 0,
+              bottom: 4,
+              left: `${nodeIndentLevel * 14 + 15}px`,
+              width: 0,
+              borderLeft: "1px solid",
+              borderColor: (theme) =>
+                theme.palette.mode === "dark"
+                  ? "rgba(248, 248, 248, 0.24)"
+                  : "rgba(26, 26, 26, 0.2)",
+              content: '""',
+              pointerEvents: "none",
+            },
+          }}
+        >
+          {groups.map((group) => {
+            const collectionKey = getCollectionKey(
+              nodeId,
+              group.collectionName,
+            );
+            const isCollectionExpanded = expandedCollections.has(collectionKey);
+
+            return (
+              <Box
+                key={collectionKey}
+                role="treeitem"
                 aria-label={`Collection: ${group.collectionName}`}
+                aria-expanded={isCollectionExpanded}
                 data-outline-kind="collection"
-                sx={{
-                  ml: `${Math.min(depth + 1, 9) * 14 + 30}px`,
-                  mt: 0.4,
-                  mb: 0.15,
-                  pl: 0.75,
-                  borderLeft: "2px solid",
-                  borderColor: (theme) =>
-                    theme.palette.mode === "dark" ? "#80CBC4" : "#00695C",
-                  color: (theme) =>
-                    theme.palette.mode === "dark" ? "#80CBC4" : "#00695C",
-                  fontSize: "0.72rem",
-                  fontWeight: 800,
-                  lineHeight: 1.3,
-                  textTransform: "uppercase",
-                  letterSpacing: 0,
-                }}
               >
-                {group.collectionName}
-              </Typography>
-              {group.entries.map((child) =>
-                nextAncestors.has(child.childId) ? (
-                  <Typography
-                    key={`${nodeId}-${group.collectionName}-${child.childId}`}
+                <Stack
+                  direction="row"
+                  alignItems="flex-start"
+                  spacing={0.5}
+                  sx={{
+                    minHeight: 30,
+                    pl: `${collectionIndentLevel * 14}px`,
+                    py: 0.2,
+                  }}
+                >
+                  <IconButton
+                    size="small"
+                    aria-label={`${
+                      isCollectionExpanded ? "Collapse" : "Expand"
+                    } collection ${group.collectionName}`}
+                    onClick={() => onToggleCollection(collectionKey)}
                     sx={{
-                      ml: `${Math.min(depth + 2, 10) * 14 + 30}px`,
-                      py: 0.5,
-                      color: "warning.main",
-                      fontSize: "0.85rem",
+                      width: 24,
+                      height: 24,
+                      flex: "0 0 auto",
+                      color: (theme) =>
+                        theme.palette.mode === "dark" ? "#FFB15C" : "#9C3D00",
                     }}
                   >
-                    {nodesById.get(child.childId)?.title} (circular reference)
+                    {isCollectionExpanded ? (
+                      <ExpandMoreIcon sx={{ fontSize: 18 }} />
+                    ) : (
+                      <ChevronRightIcon sx={{ fontSize: 18 }} />
+                    )}
+                  </IconButton>
+                  <Typography
+                    component="div"
+                    data-outline-kind="collection-label"
+                    sx={{
+                      minWidth: 0,
+                      pt: 0.35,
+                      color: (theme) =>
+                        theme.palette.mode === "dark" ? "#FFB15C" : "#9C3D00",
+                      fontSize: "0.72rem",
+                      fontWeight: 800,
+                      lineHeight: 1.3,
+                      textTransform: "uppercase",
+                      letterSpacing: 0,
+                      overflowWrap: "anywhere",
+                    }}
+                  >
+                    {group.collectionName}
                   </Typography>
-                ) : (
-                  <OutlineNode
-                    key={`${nodeId}-${group.collectionName}-${child.childId}`}
-                    nodeId={child.childId}
-                    nodesById={nodesById}
-                    childrenByParent={childrenByParent}
-                    expanded={expanded}
-                    showEvidence={showEvidence}
-                    ancestors={nextAncestors}
-                    onToggle={onToggle}
-                    depth={depth + 1}
-                  />
-                ),
-              )}
-            </Box>
-          ))}
+                </Stack>
+                {isCollectionExpanded && (
+                  <Box
+                    role="group"
+                    data-outline-guide="collection"
+                    sx={{
+                      position: "relative",
+                      "&::before": {
+                        position: "absolute",
+                        top: 0,
+                        bottom: 4,
+                        left: `${collectionIndentLevel * 14 + 12}px`,
+                        width: 0,
+                        borderLeft: "1px solid",
+                        borderColor: (theme) =>
+                          theme.palette.mode === "dark"
+                            ? "rgba(255, 177, 92, 0.5)"
+                            : "rgba(156, 61, 0, 0.42)",
+                        content: '""',
+                        pointerEvents: "none",
+                      },
+                    }}
+                  >
+                    {group.entries.map((child) =>
+                      nextAncestors.has(child.childId) ? (
+                        <Typography
+                          key={`${collectionKey}-${child.childId}`}
+                          sx={{
+                            ml: `${getNodeIndentLevel(depth + 1) * 14 + 30}px`,
+                            py: 0.5,
+                            color: "warning.main",
+                            fontSize: "0.85rem",
+                          }}
+                        >
+                          {nodesById.get(child.childId)?.title} (circular
+                          reference)
+                        </Typography>
+                      ) : (
+                        <OutlineNode
+                          key={`${collectionKey}-${child.childId}`}
+                          nodeId={child.childId}
+                          nodesById={nodesById}
+                          childrenByParent={childrenByParent}
+                          expanded={expanded}
+                          expandedCollections={expandedCollections}
+                          showEvidence={showEvidence}
+                          ancestors={nextAncestors}
+                          onToggle={onToggle}
+                          onToggleCollection={onToggleCollection}
+                          depth={depth + 1}
+                        />
+                      ),
+                    )}
+                  </Box>
+                )}
+              </Box>
+            );
+          })}
         </Box>
       )}
     </Box>
@@ -231,13 +335,29 @@ const OutlineColumn = ({
         .map((node) => node.id),
     [childrenByParent, nodesById, showEvidence, snapshot.nodes],
   );
+  const expandableCollectionKeys = useMemo(() => {
+    const result = new Set<string>();
+    for (const [parentNodeId, children] of childrenByParent.entries()) {
+      for (const child of children) {
+        const childNode = nodesById.get(child.childId);
+        if (childNode && (showEvidence || !childNode.evidence)) {
+          result.add(getCollectionKey(parentNodeId, child.collectionName));
+        }
+      }
+    }
+    return [...result];
+  }, [childrenByParent, nodesById, showEvidence]);
   const [expanded, setExpanded] = useState<Set<string>>(
     () => new Set([snapshot.rootNodeId]),
+  );
+  const [expandedCollections, setExpandedCollections] = useState<Set<string>>(
+    () => new Set(expandableCollectionKeys),
   );
 
   useEffect(() => {
     setExpanded(new Set([snapshot.rootNodeId]));
-  }, [snapshot.rootNodeId, showEvidence]);
+    setExpandedCollections(new Set(expandableCollectionKeys));
+  }, [expandableCollectionKeys, snapshot.rootNodeId, showEvidence]);
 
   const visibleNodeCount = snapshot.nodes.filter(
     (node) => showEvidence || !node.evidence,
@@ -294,7 +414,10 @@ const OutlineColumn = ({
             <IconButton
               size="small"
               aria-label={`Expand all ${heading.toLowerCase()} nodes`}
-              onClick={() => setExpanded(new Set(expandableNodeIds))}
+              onClick={() => {
+                setExpanded(new Set(expandableNodeIds));
+                setExpandedCollections(new Set(expandableCollectionKeys));
+              }}
             >
               <UnfoldMoreIcon fontSize="small" />
             </IconButton>
@@ -303,7 +426,10 @@ const OutlineColumn = ({
             <IconButton
               size="small"
               aria-label={`Collapse all ${heading.toLowerCase()} nodes`}
-              onClick={() => setExpanded(new Set())}
+              onClick={() => {
+                setExpanded(new Set());
+                setExpandedCollections(new Set());
+              }}
             >
               <UnfoldLessIcon fontSize="small" />
             </IconButton>
@@ -325,6 +451,7 @@ const OutlineColumn = ({
           nodesById={nodesById}
           childrenByParent={childrenByParent}
           expanded={expanded}
+          expandedCollections={expandedCollections}
           showEvidence={showEvidence}
           ancestors={new Set()}
           onToggle={(nodeId) =>
@@ -332,6 +459,14 @@ const OutlineColumn = ({
               const next = new Set(current);
               if (next.has(nodeId)) next.delete(nodeId);
               else next.add(nodeId);
+              return next;
+            })
+          }
+          onToggleCollection={(collectionKey) =>
+            setExpandedCollections((current) => {
+              const next = new Set(current);
+              if (next.has(collectionKey)) next.delete(collectionKey);
+              else next.add(collectionKey);
               return next;
             })
           }
