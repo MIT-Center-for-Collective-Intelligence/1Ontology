@@ -1,0 +1,146 @@
+{
+  "schemaVersion": "som-reviewer-benchmark-v1",
+  "exportedAt": "2026-07-26T18:11:57.958Z",
+  "firestoreProjectId": "ontology-41607",
+  "datasetVersion": "buy-title-followup-after-initial-review-2026-07-25-v1",
+  "sourceOntology": "firestore://ontology-41607/final-hierarchy-with-o*net-rob-buy-titles-applied-2026-07-25",
+  "sourceOntologySha256": "16f06f140663d8b6329a464a34f9345abdf34bc5e090629df062d3d14dbdef0b",
+  "issueType": "title-clarity",
+  "reviewer": {
+    "label": "Rob-Laubacher"
+  },
+  "counts": {
+    "expected": 3,
+    "reviewed": 3,
+    "agreed": 3,
+    "disagreed": 0,
+    "missing": 0,
+    "orphanedHistoricalResponses": 0
+  },
+  "missingProposalIds": [],
+  "orphanedResponses": [],
+  "sourceNodeEvidence": [
+    {
+      "nodeId": "486b36c1fbc279a221308e88f260",
+      "title": "Subcontract Arrangement",
+      "appName": "final-hierarchy-with-o*net-rob-buy-titles-applied-2026-07-25",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "46af29adb4891714dd8582796003",
+              "linkTitle": "(O*Net) 1739 - Subcontract fabrication, installation, and arrangement of carpeting, fixtures, accessories, draperies, paint and wall coverings, art work, furniture, and related items.",
+              "title": "(O*Net) 1739 - Subcontract fabrication, installation, and arrangement of carpeting, fixtures, accessories, draperies, paint and wall coverings, art work, furniture, and related items.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Subcontract Arrangement",
+                "Subcontract Fabrication",
+                "Subcontract Installation"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "d0e7649ff1008ba26878c05709ba",
+      "title": "Subcontract Fabrication",
+      "appName": "final-hierarchy-with-o*net-rob-buy-titles-applied-2026-07-25",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "46af29adb4891714dd8582796003",
+              "linkTitle": "(O*Net) 1739 - Subcontract fabrication, installation, and arrangement of carpeting, fixtures, accessories, draperies, paint and wall coverings, art work, furniture, and related items.",
+              "title": "(O*Net) 1739 - Subcontract fabrication, installation, and arrangement of carpeting, fixtures, accessories, draperies, paint and wall coverings, art work, furniture, and related items.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Subcontract Arrangement",
+                "Subcontract Fabrication",
+                "Subcontract Installation"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "26257aedc7763ebd329be0903859",
+      "title": "Subcontract Installation",
+      "appName": "final-hierarchy-with-o*net-rob-buy-titles-applied-2026-07-25",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "46af29adb4891714dd8582796003",
+              "linkTitle": "(O*Net) 1739 - Subcontract fabrication, installation, and arrangement of carpeting, fixtures, accessories, draperies, paint and wall coverings, art work, furniture, and related items.",
+              "title": "(O*Net) 1739 - Subcontract fabrication, installation, and arrangement of carpeting, fixtures, accessories, draperies, paint and wall coverings, art work, furniture, and related items.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Subcontract Arrangement",
+                "Subcontract Fabrication",
+                "Subcontract Installation"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "judgments": [
+    {
+      "proposalId": "som-4376db2c113bf2e876c5",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "486b36c1fbc279a221308e88f260",
+      "parentNodeId": "7a319c3879ef984d91aa5fd81121",
+      "currentTitle": "Subcontract Arrangement",
+      "proposedTitle": "Subcontract Interior Arrangement",
+      "linkedTasks": [
+        "Subcontract fabrication, installation, and arrangement of carpeting, fixtures, accessories, draperies, paint and wall coverings, art work, furniture, and related items."
+      ],
+      "proposedNodes": [],
+      "agentReasoning": "The addition of interior accurately reflects the list of items in the evidence without narrowing the specific action of arrangement.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-f36f0ceb888e838017d0",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "d0e7649ff1008ba26878c05709ba",
+      "parentNodeId": "7a319c3879ef984d91aa5fd81121",
+      "currentTitle": "Subcontract Fabrication",
+      "proposedTitle": "Subcontract Interior Fabrication",
+      "linkedTasks": [
+        "Subcontract fabrication, installation, and arrangement of carpeting, fixtures, accessories, draperies, paint and wall coverings, art work, furniture, and related items."
+      ],
+      "proposedNodes": [],
+      "agentReasoning": "The addition of interior accurately reflects the list of items in the evidence without narrowing the specific action of fabrication.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-9fe541fdf526dc87258c",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "26257aedc7763ebd329be0903859",
+      "parentNodeId": "7a319c3879ef984d91aa5fd81121",
+      "currentTitle": "Subcontract Installation",
+      "proposedTitle": "Subcontract Interior Installation",
+      "linkedTasks": [
+        "Subcontract fabrication, installation, and arrangement of carpeting, fixtures, accessories, draperies, paint and wall coverings, art work, furniture, and related items."
+      ],
+      "proposedNodes": [],
+      "agentReasoning": "The addition of interior accurately reflects the list of items in the evidence without narrowing the specific action of installation.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    }
+  ]
+}

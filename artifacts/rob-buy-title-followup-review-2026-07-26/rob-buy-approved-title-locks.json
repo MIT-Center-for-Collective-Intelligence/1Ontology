@@ -1,0 +1,123 @@
+{
+  "schemaVersion": "som-approved-title-locks-v1",
+  "createdAt": "2026-07-26",
+  "sources": [
+    {
+      "file": "rob-buy-title-benchmark.json",
+      "sha256": "567c29e1aa3465d263030d9ff7d0e8b4aa2466b972b63010070aec36f7e6ad02",
+      "datasetVersion": "buy-exploratory-transfer-2026-07-25-v1"
+    },
+    {
+      "file": "rob-buy-title-followup-benchmark.json",
+      "sha256": "fb92c352a73441e942fe1e20667e3b8b598c5c2570b5bd1304696b648c9ac48b",
+      "datasetVersion": "buy-title-followup-after-initial-review-2026-07-25-v1"
+    }
+  ],
+  "judgments": [
+    {
+      "proposalId": "som-9c79b8cd3f2df078cfb4",
+      "decision": "agree",
+      "proposedTitle": "Cash Money Order",
+      "linkedTasks": [
+        "Issue and cash money orders.",
+        "Cash money orders."
+      ]
+    },
+    {
+      "proposalId": "som-bd65947da3c07699c392",
+      "decision": "agree",
+      "proposedTitle": "Purchase Advertising Space",
+      "linkedTasks": [
+        "Purchase advertising space or time as required to promote client's product or agenda."
+      ]
+    },
+    {
+      "proposalId": "som-90f88886a87c057b921f",
+      "decision": "agree",
+      "proposedTitle": "Purchase Advertising Time",
+      "linkedTasks": [
+        "Purchase advertising space or time as required to promote client's product or agenda."
+      ]
+    },
+    {
+      "proposalId": "som-e14831bf1afa58d1ac13",
+      "decision": "agree",
+      "proposedTitle": "Purchase Artwork",
+      "linkedTasks": [
+        "Select or design, and purchase furnishings, art work, and accessories."
+      ]
+    },
+    {
+      "proposalId": "som-c1859c2590d10f45d076",
+      "decision": "agree",
+      "proposedTitle": "Purchase Surface Finish",
+      "linkedTasks": [
+        "Select and purchase tools or finishes for surfaces to be covered, considering durability, ease of handling, methods of application, and customers' wishes."
+      ]
+    },
+    {
+      "proposalId": "som-10ce38f4036082ba8f05",
+      "decision": "agree",
+      "proposedTitle": "Purchase Wardrobe Necessity",
+      "linkedTasks": [
+        "Purchase, rent, or requisition costumes or other wardrobe necessities."
+      ]
+    },
+    {
+      "proposalId": "som-f8f26bcdf40ae4c21679",
+      "decision": "agree",
+      "proposedTitle": "Purchase Web Address",
+      "linkedTasks": [
+        "Devise, select, or purchase domain name and web address."
+      ]
+    },
+    {
+      "proposalId": "som-96f63c45224920cc5b3a",
+      "decision": "agree",
+      "proposedTitle": "Rent Wardrobe Necessity",
+      "linkedTasks": [
+        "Purchase, rent, or requisition costumes or other wardrobe necessities."
+      ]
+    },
+    {
+      "proposalId": "som-6b565b28d1ba39ec78d5",
+      "decision": "agree",
+      "proposedTitle": "Shop for Meals",
+      "linkedTasks": [
+        "Plan, shop for, or prepare nutritious meals or assist families in planning, shopping for, or preparing nutritious meals."
+      ]
+    },
+    {
+      "proposalId": "som-a61df941718a4c825525",
+      "decision": "agree",
+      "proposedTitle": "Staff Organizational Unit",
+      "linkedTasks": [
+        "Staffing Organizational Units"
+      ]
+    },
+    {
+      "proposalId": "som-4376db2c113bf2e876c5",
+      "decision": "agree",
+      "proposedTitle": "Subcontract Interior Arrangement",
+      "linkedTasks": [
+        "Subcontract fabrication, installation, and arrangement of carpeting, fixtures, accessories, draperies, paint and wall coverings, art work, furniture, and related items."
+      ]
+    },
+    {
+      "proposalId": "som-f36f0ceb888e838017d0",
+      "decision": "agree",
+      "proposedTitle": "Subcontract Interior Fabrication",
+      "linkedTasks": [
+        "Subcontract fabrication, installation, and arrangement of carpeting, fixtures, accessories, draperies, paint and wall coverings, art work, furniture, and related items."
+      ]
+    },
+    {
+      "proposalId": "som-9fe541fdf526dc87258c",
+      "decision": "agree",
+      "proposedTitle": "Subcontract Interior Installation",
+      "linkedTasks": [
+        "Subcontract fabrication, installation, and arrangement of carpeting, fixtures, accessories, draperies, paint and wall coverings, art work, furniture, and related items."
+      ]
+    }
+  ]
+}

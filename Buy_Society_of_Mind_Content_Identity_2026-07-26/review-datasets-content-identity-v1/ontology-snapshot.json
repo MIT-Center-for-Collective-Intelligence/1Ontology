@@ -1,0 +1,3378 @@
+{
+  "schemaVersion": "som-ontology-snapshot-v1",
+  "ontologyAppId": "final-hierarchy-with-o*net-rob-buy-title-followup-applied-2026-07-26",
+  "ontologyName": "Final Hierarchy with O*Net - Rob Buy Title Follow-up Applied 2026-07-26",
+  "firestoreProjectId": "ontology-41607",
+  "environment": "production",
+  "capturedAt": "2026-07-26T18:38:48.622Z",
+  "branchRootNodeId": "eb251f9a86936b841526689aaef9",
+  "branchRootTitle": "Buy",
+  "nodes": [
+    {
+      "id": "008bf18fb7dbacd8d84acf2037e3",
+      "title": "(O*Net) 23170 - Recruit and hire staff members.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "00acf4e94592fea367b80965dc63",
+      "title": "Purchase Surface Finish",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "017b9582a04c35f6ef652f58fd3d",
+      "title": "(O*Net) 15704 - Order or purchase merchandise to maintain optimal inventory levels.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "03676445401f1231f5f74b16e988",
+      "title": "Buy physical object",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "03bb4585c2c12f86e6d2fc28724f",
+      "title": "Recruit Base",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "054223d12852f155bdca94769efd",
+      "title": "Purchase Land",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "07c116af03d3230793b49b1899a9",
+      "title": "Purchase Furniture",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "07eee244cbb5da0a357edd953b5c",
+      "title": "Hire (Actor)",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "08b8cc0e443dbd54d21788cc29c8",
+      "title": "(O*Net) 20068 - Purchase and maintain equipment to support research projects.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "09d73d29a1dc735aa468fc4f9808",
+      "title": "(O*Net) 20710 - Buy merchandise or commodities for resale to wholesale or retail consumers.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "0a9d521a3540515776155b769612",
+      "title": "Recruit Personnel",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "0c7be75f62c4982fbe569468c3f8",
+      "title": "Cash Money Order",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "0c86b5906c24dea88cf5c02c6282",
+      "title": "(O*Net) 13240 - Order or purchase supplies.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "0cb154c0ab7877e54d5c7011ca2a",
+      "title": "(O*Net) 20331 - Purchase or negotiate placement of listings in local search engines, directories, or digital mapping technologies.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "0d07cb1e9059e754ad80b17ec335",
+      "title": "(O*Net) 1091 - Organize and direct worker training programs, resolve personnel problems, hire new staff, and evaluate employee performance in dining and lodging facilities.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "0e29fce75427db6f48347d2d61f1",
+      "title": "Buy Future",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "10cb92108a5e8d19d60657ae8aef",
+      "title": "Buy Merchandise",
+      "description": "Synonyms: Purchase Merchandise",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "1514c40813319742f5a3c6601e85",
+      "title": "(O*Net) 690 - Rent items, arrange for provision of services to customers, and accept returns.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "1586ad4b9ba332b8e2d084c73e8e",
+      "title": "Purchase Domain",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "165b88fa094f1ee2c759cfa4860f",
+      "title": "(O*Net) 324 - Purchase food in accordance with health and safety codes.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "16b534ac939f65bb51909975c492",
+      "title": "Subcontract (Activity)",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "16b7b159a69258e3f782d437f968",
+      "title": "Rent information",
+      "description": "Paying for time-limited access to or use of intangible information. This activity involves acquiring the right to consume, view, or otherwise use information for a specified period, after which the right expires. It is distinct from purchasing information, which typically grants perpetual access or ownership. Common examples include renting a movie for 48 hours on a streaming platform, paying for temporary access to a paywalled news article, or subscribing to a digital content service like a music or video streaming platform. This category is for intangible information only. Renting a physical object that contains information, such as a DVD or a physical book, should be classified as 'Rent physical object'.",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "17587808b041b6f5bbf1e7690b8e",
+      "title": "Subcontract Interior Installation",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "17f0d0826529bbff46fc7e19692d",
+      "title": "Rent Accommodation",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "19b2b931f8631f2ab594308ac42c",
+      "title": "(O*Net) 21119 - Recruit and hire new faculty.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "1a5b74abdf29233b30fafb85c4f4",
+      "title": "(O*Net) 5198 - Recruit, hire, train, and evaluate primary and supplemental staff and recommend personnel actions for programs and services.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "1ac81d6b58bc6ed2b2d7acba20de",
+      "title": "Reorder (Physical Object)",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "1cc6447a1b241f68a30a6fa260f2",
+      "title": "(O*Net) 4.A.4.c.3.I05.D06 - Purchase products or services.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "1e23c34a529acb87eef5fb82fd6c",
+      "title": "Order (buy)",
+      "description": "Synonyms: Order",
+      "synsets": "Order.v.02",
+      "actionAlternatives": []
+    },
+    {
+      "id": "1ec307da2b6c156f6aa269e7cf72",
+      "title": "Purchase Wardrobe Necessity",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "20be8db2d0c9c2ffe406eef6528d",
+      "title": "(O*Net) 20185 - Recruit and maintain client bases.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "20cb6434a653aa60fd335a20c212",
+      "title": "(O*Net) 7558 - Hire and train recruiters and data collectors.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "243521156b01a001a9761eb1436b",
+      "title": "Rent Merchandise",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "243a8a962abc3b556eb13e302649",
+      "title": "Hire Faculty",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "245b20f4bb21078870b19653e3f3",
+      "title": "(O*Net) 717 - Rent merchandise to customers.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "245b66522900fda90cccc72a79c2",
+      "title": "(O*Net) 11332 - Rent post office boxes to customers.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "24fba7ae9375b0034c8554d0504f",
+      "title": "Purchase Livestock",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "2561c423aae9c7d20d8862b5f1c5",
+      "title": "Buy (Information)",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "276936a3ce3a58a789c61c02b588",
+      "title": "Purchase Frame",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "286af6ca1b63008dbbb502b23044",
+      "title": "(O*Net) 21406 - Interview and hire associates to fill staff vacancies.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "2a2dd06c74d493a44cd366a07bb8",
+      "title": "(O*Net) 9622 - Purchase, rent, or requisition costumes or other wardrobe necessities.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "2c577cff5dc575776e468f993c50",
+      "title": "(O*Net) 22954 - Recruit, interview, and hire security personnel.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "2dbcbcd160070198b63eb3e81d72",
+      "title": "(O*Net) 5263 - Hire and train employees, and evaluate their performance.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "2ffd189631b291948ddad3022ea6",
+      "title": "(O*Net) 1792 - Interview and hire writers and reporters or negotiate contracts, royalties, and payments for authors or freelancers.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "302098de9759f7f7af7adae0015b",
+      "title": "(O*Net) 15662 - Hire or evaluate staff.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "307167d3e6d56c7224f558b7b857",
+      "title": "Recruit",
+      "description": "Actively seeking, identifying, and attracting potential candidates for a role or opportunity. As the initial 'sourcing' phase of the broader 'Hire' process, recruiting focuses on generating a pool of qualified and interested applicants. This includes activities like posting job advertisements, searching professional networks, attending career fairs, and conducting initial outreach. It is distinct from subsequent hiring stages such as interviewing, selecting, and onboarding. The primary way to specialize this activity is by the type of actor being recruited (e.g., employees, volunteers, sponsors). Synonyms: Synonyms: Recruit",
+      "synsets": "Recruit.v.02",
+      "actionAlternatives": []
+    },
+    {
+      "id": "318aedae6da85cb15f20677dec8a",
+      "title": "(O*Net) 9711 - Recruit, interview, and select employees.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "31ba534955ab0f9f0188e25104bb",
+      "title": "Subcontract Interior Fabrication",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "323b33cc3e168bca0e91f61710f4",
+      "title": "Hire Applicant",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "33320b65af7090b5b77cd9ae4b4b",
+      "title": "Recruit Applicant",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "3406446dfe2ab0cdaa7fa92389de",
+      "title": "Hire Collector",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "3514b4ca209098b5a8615134e908",
+      "title": "Recruit Employee",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "36ad3036e4b2c4389b329191c091",
+      "title": "(O*Net) 20389 - Purchase laboratory supplies, such as chemicals, when supplies are low or near their expiration date.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "3741e9abede3f77aaa116223a785",
+      "title": "(O*Net) 14840 - Recruit and hire agricultural workers.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "3785650001713333f1c8f2734fa3",
+      "title": "Purchase Flower",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "399b76d47f062e037940dc0d8e1e",
+      "title": "(O*Net) 7235 - Purchase building and maintenance supplies, equipment, or furniture.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "3a7fc88f7440b53bc89ba328cbfb",
+      "title": "(O*Net) 1024 - Interview and hire staff, and oversee staff training.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "3ca4eba06fea05e4247a55442686",
+      "title": "Purchase Part",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "3d0bb2095797c517b851392f45e8",
+      "title": "(O*Net) 15716 - Select and purchase technical web services, such as web hosting services, online merchant accounts, shopping cart software, payment gateway software, or spyware.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "3db6322d782ae49e60adc81a9711",
+      "title": "Recruit Faculty",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "40bd4f1f21203ad2cc0e9da1b595",
+      "title": "(O*Net) 21601 - Purchase investments for companies in accordance with company policy.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "415485540a7ecbfae43850ab1379",
+      "title": "(O*Net) 1119 - Purchase supplies, and arrange for outside services, such as deliveries, laundry, maintenance and repair, and trash collection.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "41ad8e6335694047538aebcc8dd9",
+      "title": "(O*Net) 15204 - Hire, supervise, and direct workers engaged in special project work, problem-solving, monitoring, and installation of data communication equipment and software.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "41e966ed35745de5a2e078f000ad",
+      "title": "(O*Net) 4.A.4.c.2.I01.D05 - Recruit personnel.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "420b5ed81aa0fd12a0adb384b273",
+      "title": "(O*Net) 2161 - Purchase or requisition supplies and equipment needed to ensure quality and timely delivery of services.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "433ce22f17f29326edfd5db4babc",
+      "title": "(O*Net) 1135 - Recruit, interview, and hire or sign up volunteers and staff.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "45408a651cfb5e820236aab325a3",
+      "title": "Purchase Machinery",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "45518eee627b6d1953265021b8f3",
+      "title": "(O*Net) 7209 - Hire, supervise, or evaluate engineers, technicians, researchers, or other staff.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "458d06e76c53eac74e6a2408f3c8",
+      "title": "(O*Net) 5224 - Recruit, hire, train, and evaluate primary and supplemental staff.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "460aecf3917b7dddae1b7749e43d",
+      "title": "(O*Net) 1118 - Interview and hire applicants.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "47251c07f1a5ffb408c38ba62bb7",
+      "title": "(O*Net) 4668 - Cash checks and process credit card advances for patrons.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "4789aef9351030076bffb91f3fe0",
+      "title": "(O*Net) 983 - Identify staff vacancies and recruit, interview, and select applicants.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "47a71cbd6883ac8f648928004dc8",
+      "title": "(O*Net) 21396 - Hire, supervise, and train support workers.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "495939fd048c5c06a56d27be01be",
+      "title": "(O*Net) 5268 - Issue and cash money orders.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "49dd3f743b87129c6155837a2fb6",
+      "title": "(O*Net) 2409 - Cash checks for customers.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "4a1ffdf2a4e7d6119120e069e923",
+      "title": "(O*Net) 5127 - Rent, sell, or issue sporting equipment and supplies, such as bowling shoes, golf balls, swimming suits, or beach chairs.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "4ad8e259d5246db1509eb390c567",
+      "title": "Recruit Sponsor",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "4b0673e09da14d0d5acade53c1ca",
+      "title": "Reorder",
+      "description": "Synonyms: Reorder",
+      "synsets": "Reorder.v.02",
+      "actionAlternatives": []
+    },
+    {
+      "id": "4ccb8f8afbcfb95460393db9686d",
+      "title": "(O*Net) 36 - Hire, train, evaluate, or discharge staff or resolve personnel grievances.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "4d3cecb59cff6631496c2f08c262",
+      "title": "Subcontract",
+      "description": "Synonyms: Subcontract",
+      "synsets": "Subcontract.v.01",
+      "actionAlternatives": []
+    },
+    {
+      "id": "4d70239cdd94e0dd6c1063549924",
+      "title": "Hire Personnel",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "4e179f83cb9a04e7ec9cf4832e5b",
+      "title": "(O*Net) 4.A.4.c.2.I01.D03 - Hire personnel.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "504d50c7e5ad2129aaeac491d156",
+      "title": "Staff Organizational Unit",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "508a11e554beb5dbbacd3276e784",
+      "title": "(O*Net) 22541 - Hire principal cast members and crew members, such as art directors, cinematographers, and costume designers.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "50c1f69db28becb74739e5f89362",
+      "title": "(O*Net) 23826 - Purchase supplies or equipment.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "513d3ece368ebc77bc4a6edad62a",
+      "title": "Hire Volunteer",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "513da1e100d3b9dc56ae7db40f2d",
+      "title": "Rent Equipment",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "52ee055db6eea6abceb3da91b706",
+      "title": "Recruit Volunteer",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "536731edfb17c35bcef72e366ffe",
+      "title": "(O*Net) 1095 - Assess staffing needs and recruit staff, using methods such as newspaper advertisements or attendance at job fairs.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "54a8531cba2c9e31999fa34863b3",
+      "title": "Staff",
+      "description": "Synonyms: Staff",
+      "synsets": "Staff.v.01",
+      "actionAlternatives": []
+    },
+    {
+      "id": "565afb519f8c99d75519dc48cf34",
+      "title": "(O*Net) 18850 - Interview and hire new employees.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "56d5d14545365b53a1af9eacfb62",
+      "title": "Purchase Lens",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "56e6de48a3da026f8b41c19fdde2",
+      "title": "(O*Net) 9676 - Inventory stock and reorder when inventories drop to specified levels.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "5705182901a1f4bfb01b4e21e92f",
+      "title": "(O*Net) 2310 - Hire, train, and supervise food and beverage service staff.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "5881c50abeda607c34e91dc14f4b",
+      "title": "(O*Net) 18179 - Purchase equipment, materials, or parts.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "5992608044a7d695d9a0a2a04bd6",
+      "title": "Hire Company",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "59b9324d652bb9be1b89a5ec617c",
+      "title": "Rent physical object",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "5a0c2c1b7f1e239f6673af479050",
+      "title": "(O*Net) 15724 - Devise, select, or purchase domain name and web address.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "5d90ea5460420a920e4ba3932934",
+      "title": "(O*Net) 11331 - Cash money orders.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "5e25546ecaecb5099442bb23d709",
+      "title": "Rent Clothing",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "5e42b741d4d673ee4977f92eb2e2",
+      "title": "(O*Net) 9502 - Shop for or order food and kitchen supplies and equipment.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "5f0e0dfd4d96dbf84fbc084c5937",
+      "title": "(O*Net) 1822 - Manage pharmacy operations, hiring or supervising staff, performing administrative duties, or buying or selling non-pharmaceutical merchandise.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "5f2d8e2d94b24982e29ead78a98e",
+      "title": "Purchase Derivative",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "600f7c44d4cb24aecc0a693913cf",
+      "title": "(O*Net) 15733 - Purchase new or used items from online or physical sources for resale via retail or auction Web site.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "60e339e9cfb6a6e83c51b441ace1",
+      "title": "Purchase Technology",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "6282e942978c2c476057a299899e",
+      "title": "(O*Net) 17739 - Purchase or rent equipment for solar energy system installation.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "63ac048dad2227ea487e9e44cf4b",
+      "title": "Hire Recruiter",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "6439b34f32bdaa4d6e73a1b92e0b",
+      "title": "(O*Net) 20113 - Hire, supervise, and work with extended coaching staff.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "644d41e9f0d410f269c8e6b6a7b5",
+      "title": "(O*Net) 23196 - Buy or sell stocks, bonds, commodity futures, foreign currencies, or other securities on behalf of investment dealers.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "645dbf59ecb8298911c86ea3bb4b",
+      "title": "Hire Member",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "6473988b6bba2177ccafe38ea1b5",
+      "title": "Purchase Resource",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "675c4a6f4211d111cc04e8b80d86",
+      "title": "(O*Net) 13022 - Purchase new or used clothing and accessory items as needed to complete designs.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "67832dc5f3f7725bc81ab91727d8",
+      "title": "Hire Coach",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "68571a65883c252ce25a3fe88c1d",
+      "title": "(O*Net) 18921 - Recruit sponsors, participants, or volunteers for fundraising events.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "696cae05730fdb542a47f93f6de6",
+      "title": "(O*Net) 15795 - Hire or supervise loss prevention staff.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "6a097938093316320354b09417c7",
+      "title": "(O*Net) 21304 - Purchase security-related supplies, equipment, or technology.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "6a61b6ade24e2b5b25ae93624f32",
+      "title": "Hire Expediter",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "6c453e8f0b7e3069d1cfcf0a21e3",
+      "title": "(O*Net) 12878 - Purchase, for further processing or for resale, farm products, such as milk, grains, or Christmas trees.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "6cf2684fa410fccd66343b339ca3",
+      "title": "(O*Net) 21477 - Recruit or hire project personnel.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "6eba02f43989d07ba21802bcf447",
+      "title": "(O*Net) 13170 - Sell or rent equipment, clothing, and supplies related to expeditions.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "6efac1af9a21d55b0e938b0b1448",
+      "title": "(O*Net) 1226 - Hire, train, and supervise volunteers and support staff required for events.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "6fbe61c47a16f0ced35a2df7d20e",
+      "title": "Cash Check",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "711b1983e82911a1e1316f5ed02c",
+      "title": "(O*Net) 4245 - Plan, purchase, prepare, or serve meals to patients or other family members, according to prescribed diets.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "7226cc524452b568d83ea6bfdf32",
+      "title": "(O*Net) 1737 - Select or design, and purchase furnishings, art work, and accessories.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "7545861406e304fae642aeb302ee",
+      "title": "Hire Writer",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "755a7561ff977f266b5d86cea3c9",
+      "title": "(O*Net) 18782 - Hire, train, or supervise new employees or apprentices.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "758c2b9364b06a7da39470de9eea",
+      "title": "(O*Net) 14841 - Employ foremen to deal directly with workers when recruiting, hiring, instructing, assigning tasks, and enforcing work rules.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "768341dc6866ee1ce9510ae26f11",
+      "title": "(O*Net) 22939 - Recruit or hire firefighting personnel.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "781a14bb97b82097d3f7b21db431",
+      "title": "(O*Net) 48 - Direct or conduct recruitment, hiring, and training of personnel.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "78ba73aba0f1894a2a0ccd0f1046",
+      "title": "(O*Net) 23830 - Interview and hire crew members.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "7cdd6d45d4d3c02c3f9f562f5e96",
+      "title": "Buy Stock",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "7d8308d6ca55398d1d23ffa74bb4",
+      "title": "(O*Net) 981 - Purchase necessary equipment.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "7e4be8b7d83e89b3cd17aa27a732",
+      "title": "Rent (pay for time-limited use)",
+      "description": "A type of 'Buy' activity where one pays for the temporary, time-limited use of a resource, rather than for its permanent ownership. This involves acquiring the right to use something for a specific period, after which the right expires. The resource being rented can be a physical object (e.g., a car or apartment), information (e.g., a streaming movie), or a service. The agreement itself can also vary, from a formal 'Lease' for property and equipment to 'Hire' for a person's labor or services. This category is for the act of *paying to use* a resource. It is the counterpart to activities like 'Lease out' or 'Rent out', where one receives payment for providing temporary use of a resource.",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "7e6674f9396539f6a844373e0178",
+      "title": "Rent Wardrobe Necessity",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "7f0c4a5568a935e852bde65b7e8a",
+      "title": "Recruit Contractor",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "80c57f429ef9e377ec0857837714",
+      "title": "Purchase Drug",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "81fc71ec0dfc68c5415811140681",
+      "title": "(O*Net) 23710 - Recruit and hire staff members.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "824408b42fbcd989fa7e36bcaa58",
+      "title": "Hire Trainer",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "827f0dc1e8d4ce18e961ab43484e",
+      "title": "(O*Net) 22571 - Coordinate and organize tours, or hire touring companies to arrange concert dates, venues, accommodations, and transportation for longer tours.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "87200808fd9335b004277c294af1",
+      "title": "(O*Net) 2470 - Rent or lease properties on behalf of clients.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "8825f6a9ffbf240f9e01dc13d926",
+      "title": "Buy Currency",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "8a18ee1fb4ad15bf1852b5a175e9",
+      "title": "(O*Net) 18859 - Hire employees and process hiring-related paperwork.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "8a8765977fb9f623a91003acd3bf",
+      "title": "Purchase Tool",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "8bfd349c4f9673fde00f7fba4279",
+      "title": "(O*Net) 9532 - Screen job applicants, and hire new employees.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "8c6f83884fac47e66472ae8c09b0",
+      "title": "Purchase Lumber",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "8e7cccc12f7546d618ccda3e9cb5",
+      "title": "(O*Net) 661 - Inventory stock and reorder when inventory drops to a specified level.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "8f08255678dc5178d97421a55a50",
+      "title": "(O*Net) 13151 - Recruit and hire staff members.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "8f2d0932df96e3104953022d802e",
+      "title": "(O*Net) 20712 - Examine, select, order, or purchase merchandise consistent with quality, quantity, specification requirements, or other factors, such as environmental soundness.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "8fb484a91815c634e41b07824ef6",
+      "title": "Purchase Furnishing",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "91f9a9ce381f06feed5ba591a628",
+      "title": "(O*Net) 8127 - Check stock levels and reorder merchandise as necessary.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "93751c2c2c4c66aeb3958a440711",
+      "title": "(O*Net) 1156 - Hire, train, or supervise purchasing clerks, buyers, and expediters.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "9396fcc05874a16d308f83bcbf97",
+      "title": "(O*Net) 1723 - Order and purchase flowers and supplies from wholesalers and growers.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "93a7c890a095bc36fe737ee58d8b",
+      "title": "(O*Net) 9725 - Monitor inventory levels and requisition or purchase supplies as needed.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "9406cf8e4cb3fc959a0b16453cf3",
+      "title": "Buy (Physical Object)",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "956cca5e09c233f9df14dbbe23ac",
+      "title": "(O*Net) 5235 - Recruit, hire, train, and terminate departmental personnel.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "961f246e72e9caee749b00c475bb",
+      "title": "Reorder Merchandise",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "9670d9458b0cfd028bf1c84f7eee",
+      "title": "Buy information",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "96ff83e11f02a1493d3a3d698885",
+      "title": "Purchase Advertising Space",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "97d58e66d5e52080a33063563165",
+      "title": "Hire",
+      "description": "The activity of establishing a formal agreement to engage a person, group, or organization for their work, skills, or services in exchange for payment. As a specialization of 'Rent (pay for time-limited use)', hiring is distinct from renting inanimate objects or property, as it specifically involves compensating an actor for their time and labor. This category represents the act of formally committing to an employment or service relationship, which is often the outcome of preceding activities like recruiting and interviewing. The primary ways to specialize this activity relate to the nature of the work agreement (e.g., hiring a 'Permanent worker', 'Part-time worker', or 'Temporary worker') or the type of actor being hired. Synonyms: engage, employ, Hire",
+      "synsets": "Engage.v.08, Hire.v.01",
+      "actionAlternatives": []
+    },
+    {
+      "id": "988041138c9c67b74616574f5794",
+      "title": "Recruit Subcontractor",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "98e6ff0c2d9c3e33bfbb87047ae8",
+      "title": "(O*Net) 15815 - Recruit or select wind operations employees, contractors, or subcontractors.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "99643c99314f53f0dac1c4dbc723",
+      "title": "(O*Net) 4.A.4.c.3.I05 - Purchase goods or services.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "9b59d535ad87054c7159740962cf",
+      "title": "Staff (Actor)",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "9bc25c26cf3ffbb65d9ac9fa59f7",
+      "title": "(O*Net) 1774 - Purchase advertising space or time as required to promote client's product or agenda.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "9c8220f8586a6c04963db908c0ad",
+      "title": "Purchase Material",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "9de8f7d4ae8e992b9c689d753a6a",
+      "title": "(O*Net) 9295 - Select and purchase lumber and hardware necessary for set construction.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "9ebc3a439df984bb521a9a5340e0",
+      "title": "Purchase Supply",
+      "description": "Synonyms: Shop Supply",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "9eec52d300ef6423c841f711c9a9",
+      "title": "Recruit Member",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "a18b44df05d9a3316433d9495c79",
+      "title": "(O*Net) 4612 - Rent properties or manage rental properties.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "a38198fc7f6a0e2ba8937a1c0e6c",
+      "title": "Purchase Good",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "a38ade257efd66964d169060a012",
+      "title": "Purchase Product",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "a3bfa07ee9366bd1e3885d872e60",
+      "title": "(O*Net) 23155 - Interview and hire workers.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "a46daa82a081eebc9317b6e0be0b",
+      "title": "Purchase Equipment",
+      "description": "Synonyms: Shop Equipment",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "a97f1c1d2552d97f062a0397e443",
+      "title": "(O*Net) 20096 - Recruit, train, and supervise department personnel, such as faculty and student writing instructors.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "a9ea0e76c05691b24b89bb74ca26",
+      "title": "Purchase Artwork",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "ad70eef84ecdedb20b8d100a8925",
+      "title": "(O*Net) 977 - Recruit, hire, train and supervise staff, or participate in staffing decisions.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "ad9f55173146eeb93769ac619d31",
+      "title": "(O*Net) 21080 - Purchase and stock supplies of feed and medicines.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "ae7a9d9252f58eb02a319bd50d35",
+      "title": "Purchase Accessory",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "aef0ee76ea085f6b871c42285fc9",
+      "title": "(O*Net) 1142 - Purchase the highest quality merchandise at the lowest possible price and in correct amounts.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "af7945192afcd63cd408a403f3e1",
+      "title": "(O*Net) 7192 - Interview and hire workers.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "b061451d892419986442fb893719",
+      "title": "Lease",
+      "description": "Paying for the time-limited use of an asset, where the terms are formalized in a legal contract (a 'lease'). A lease is a specific type of rental agreement, distinguished by its formal, contractual nature and typically longer duration. Unlike more casual or short-term renting, a lease establishes a legally binding agreement with specific terms and conditions. This category typically applies to significant assets like real estate, vehicles, or major equipment where such a formal agreement is standard. Synonyms: let, rent, Lease",
+      "synsets": "Lease.v.03",
+      "actionAlternatives": []
+    },
+    {
+      "id": "b3ae3916f419e55dd5211a46a599",
+      "title": "(O*Net) 4.A.4.c.2 - Staffing Organizational Units",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "b3bafec06ff16ee52b86e6823669",
+      "title": "Purchase Listing",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "b5547809b67159a14583a05b040e",
+      "title": "(O*Net) 21399 - Obtain financing for and purchase necessary machinery, land, supplies, or livestock.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "b591f1c2db001d2f64974959674a",
+      "title": "Rent service",
+      "description": "An activity of paying for temporary access to or use of a service, as opposed to a physical object or property. This category includes activities that involve ongoing or recurring payments for continuous access, such as a monthly subscription to a streaming platform or software-as-a-service (SaaS). It also covers hiring professional services for a specific duration, like retaining a consultant or a cleaning service. The key distinction from 'Buy service' is the time-limited or ongoing nature of the arrangement. For example, paying a monthly fee for a software license is 'Rent service', whereas paying a one-time fee for a single, discrete task like a car repair is 'Buy service'.",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "b65e00432ac20bc5580d84c15596",
+      "title": "Employ Foreman",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "b66a8cd66062345c997b58e73d65",
+      "title": "Hire Clerk",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "b8040b05f4369767901581cdaf3c",
+      "title": "Purchase Stock",
+      "description": "Synonyms: Reorder Stock",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "ba11edeee5f687a083385ec048fa",
+      "title": "Subcontract Interior Arrangement",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "bab0550c7539b5543e53a3c98d54",
+      "title": "Buy Jewelry",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "be14e7e39963941a11eef383e2c4",
+      "title": "(O*Net) 2178 - Estimate expected food consumption, requisition or purchase supplies, or procure food from storage.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "be631e200c6bd29797cea5467f65",
+      "title": "(O*Net) 17611 - Recruit, interview, or hire employees.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "bf20a6a4e3d6ec2f93a5cf17bba3",
+      "title": "Shop for Meals",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "bf6fa1a016470e8230997cc30729",
+      "title": "(O*Net) 9529 - Select and order or purchase new equipment, supplies, or furnishings.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "c02c13cf47e1c393b2a33a12a936",
+      "title": "(O*Net) 18551 - Order and purchase frames and lenses.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "c1221a64dbc14890bddf4fe42ebe",
+      "title": "(O*Net) 4.A.4.c.3.I05.D03 - Purchase materials, equipment, or other resources.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "c1c6294738278934af7da9dffcb6",
+      "title": "(O*Net) 8583 - Inventory supplies and requisition or purchase additional items, as necessary.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "c29d55f1cf8fcc3a41f36ced6a35",
+      "title": "Lease (Physical Object)",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "c334acaa099d21898aace57e7e7a",
+      "title": "(O*Net) 1811 - Order and purchase pharmaceutical supplies, medical supplies, or drugs, maintaining stock and storing and handling it properly.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "c35ba7d68b124c0fae6bc10bad66",
+      "title": "Purchase Investment",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "c69d8c5b4aeaed725f7a1d475494",
+      "title": "Hire Crew",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "c6c983eac48aaf07b35a391da871",
+      "title": "Recruit Staff",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "c736d64d3c712acb8e94371e6038",
+      "title": "(O*Net) 9662 - Hire, train, and evaluate personnel.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "c77237e8692b526d3315ea94f0ef",
+      "title": "(O*Net) 21313 - Recruit staff members.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "c93408990571bae22fc35d785a95",
+      "title": "Hire Reporter",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "ca11752c4d58e93fe9ec36217435",
+      "title": "(O*Net) 13190 - Demonstrate or explain products, methods, or services to persuade customers to purchase products or use services.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "caa5162f105bc4f7d41b91f5a1a3",
+      "title": "Purchase Service",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "ce8422bcbf8689af9e338dc25cd1",
+      "title": "Purchase Item",
+      "description": "Synonyms: Shop Item",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "cf3bb266acbc9624c9c90522bdb4",
+      "title": "Purchase Advertising Time",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "d01b6d6823ed4e8718c6d789310d",
+      "title": "Hire Buyer",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "d18f7d11815c042e6b52c1323db2",
+      "title": "(O*Net) 1092 - Order and purchase equipment and supplies.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "d19265cf65c0b35769cc5bffb356",
+      "title": "(O*Net) 665 - Hire, train, and evaluate personnel in sales or marketing establishments, promoting or firing workers when appropriate.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "d34b109f93567d8032b6c21b641e",
+      "title": "(O*Net) 12877 - Hire trainers or coaches to advise clients on performance matters, such as training techniques or performance presentations.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "d36380132bebfbe827c15d43dff6",
+      "title": "Buy service",
+      "description": "Acquiring a service—an intangible action, process, or grant of access performed by another entity—typically in exchange for money. This activity is distinguished from 'Buy product' by the nature of what is acquired. When buying a service, the primary value is work performed, expertise provided, or access to a resource, rather than ownership of a tangible or digital good. Examples include: - Hiring a consultant - Subscribing to a software-as-a-service (SaaS) platform - Purchasing a ticket for transportation - Paying for a repair",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "d3708b2066fb1b8c37161bc4d344",
+      "title": "(O*Net) 11025 - Hire and supervise workers who help locate people with specified attributes and talents.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "d3d0dcb16f2f8fc1cec34a513fcd",
+      "title": "(O*Net) 11141 - Recruit and hire staff, such as cooks and other kitchen workers.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "d5bf03ed5bf4f843378c9d601bba",
+      "title": "(O*Net) 21071 - Shop for groceries, clothing, and other items needed for children's care.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "d637e7684532ec7dc01a407bcab1",
+      "title": "Recruit Participant",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "d86f0f99799466835a50ab5d8efa",
+      "title": "Recruit (Actor)",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "d8d1b9efce0d6fc354442e32bf5e",
+      "title": "Hire Associate",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "d93ea13a85f1c84ceba29a2e5b29",
+      "title": "Purchase Meal",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "d984357c403e7538ee2cf9b6437c",
+      "title": "(O*Net) 11522 - Select and purchase tools or finishes for surfaces to be covered, considering durability, ease of handling, methods of application, and customers' wishes.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "d9f72a29571d26a60d377b4e729d",
+      "title": "Rent Box",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "db4951f819bb7a301665799471a9",
+      "title": "Hire Staff",
+      "description": "Synonyms: Employ Staff",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "db5f92a8f43f485d1c104e1693aa",
+      "title": "Buy Commodity",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "ddb596558254d3cddeaf4d23eca8",
+      "title": "(O*Net) 23363 - Requisition or purchase supplies, such as insecticides, machine parts or lubricants, or tools.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "de24facbc7a3353791a24b50b01b",
+      "title": "Purchase Web Address",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "df49106ee791f8ebb6ceb6d8d185",
+      "title": "Rent Item",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "e0aa93a9c5f60066d45add35c8a1",
+      "title": "Lease Property",
+      "description": "Synonyms: Rent Property",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "e0bed21c9bed7949d8df2b26835d",
+      "title": "(O*Net) 2375 - Plan, shop for, or prepare nutritious meals or assist families in planning, shopping for, or preparing nutritious meals.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "e1c087615be573103cfaf2fabcc1",
+      "title": "(O*Net) 23639 - Buy and sell jewelry, or serve as agents between buyers and sellers.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "e1f295e9ee85ee9c13f4e2080080",
+      "title": "Purchase Hardware",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "e309b637d5a0076a3fc8f794baf0",
+      "title": "Hire Employee",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "e45f45e18636396a5771c34e66f1",
+      "title": "(O*Net) 4.A.4.c.3.I05.D04 - Purchase stocks of merchandise or supplies.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "e4aa7715aee294bf1085af49278d",
+      "title": "(O*Net) 18187 - Select, purchase, set up, operate, or troubleshoot state-of-the-art laser cutting equipment.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "e4dc3c58da6c58e4473635457681",
+      "title": "(O*Net) 20564 - Manage business aspects such as employing or supervising staff or handling paperwork or insurance claims.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "e676dbdef5c267fab6d4886f8450",
+      "title": "Buy Bond",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "e6c95f7f4c9dc2dbe51c658ecf97",
+      "title": "Hire Worker",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "e9c946607ff952ccdbf6f373b99a",
+      "title": "(O*Net) 1739 - Subcontract fabrication, installation, and arrangement of carpeting, fixtures, accessories, draperies, paint and wall coverings, art work, furniture, and related items.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "eb251f9a86936b841526689aaef9",
+      "title": "Buy",
+      "description": "Acquiring an asset, good, or service from a seller in exchange for money or another form of payment. As a type of 'Get (Transfer in)', this activity is distinguished from other forms of acquisition (like 'Receive' or 'Find') by its reciprocal financial transaction. The scope of 'Buy' is broad, encompassing transactions for permanent ownership of physical objects, information, and services, as well as for their temporary, time-limited use (e.g., 'Rent'). Synonyms: purchase, Buy, Cash, Shop",
+      "synsets": "Buy.v.01, Cash.v.01, Shop.v.01, Shop.v.03",
+      "actionAlternatives": []
+    },
+    {
+      "id": "eba3edb7c61a089911da34a16276",
+      "title": "(O*Net) 2550 - Cash checks and pay out money after verifying that signatures are correct, that written and numerical amounts agree, and that accounts have sufficient funds.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "efdc53032262cdfaadab34943a3c",
+      "title": "Rent Supply",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "f1850869156a52b465e97e396a5e",
+      "title": "(O*Net) 19159 - Recommend or purchase needed art supplies or equipment.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "f5e96241d6f4d2de8e95aeaac5c6",
+      "title": "(O*Net) 23221 - Purchase or sell financial derivatives for customers.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "f5eab2822e6a8d00e2a360adb88b",
+      "title": "(O*Net) 7215 - Recruit personnel or oversee the development or maintenance of staff competence.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "f6a9f51e08211e3dd2fbf8ca8042",
+      "title": "(O*Net) 26 - Hire and terminate clerical and administrative personnel.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "f7e6560f8e3dfc79c9db9c988cd6",
+      "title": "Purchase Costume",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "f87c159b6fb09c4c41cbc9c9db67",
+      "title": "Recruit Worker",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "fa99027c9d4b383e3cc40a697194",
+      "title": "Purchase Food",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "fae16ccdd8ad8f83ec6b7bae0d3e",
+      "title": "(O*Net) 290 - Hire, train, and direct staff members who develop design concepts into art layouts or who prepare layouts for printing.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "fd48d5be5720fcaf2a4154d24a52",
+      "title": "(O*Net) 1114 - Show, rent, or assign accommodations.",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    },
+    {
+      "id": "fdf5cdcb7280a12d243698db9a4f",
+      "title": "Rent Costume",
+      "description": "",
+      "synsets": "",
+      "actionAlternatives": []
+    }
+  ],
+  "edges": [
+    {
+      "parentId": "00acf4e94592fea367b80965dc63",
+      "childId": "d984357c403e7538ee2cf9b6437c",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "03bb4585c2c12f86e6d2fc28724f",
+      "childId": "20be8db2d0c9c2ffe406eef6528d",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "054223d12852f155bdca94769efd",
+      "childId": "b5547809b67159a14583a05b040e",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "07c116af03d3230793b49b1899a9",
+      "childId": "399b76d47f062e037940dc0d8e1e",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "07eee244cbb5da0a357edd953b5c",
+      "childId": "243a8a962abc3b556eb13e302649",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "07eee244cbb5da0a357edd953b5c",
+      "childId": "323b33cc3e168bca0e91f61710f4",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "07eee244cbb5da0a357edd953b5c",
+      "childId": "3406446dfe2ab0cdaa7fa92389de",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "07eee244cbb5da0a357edd953b5c",
+      "childId": "4d70239cdd94e0dd6c1063549924",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "07eee244cbb5da0a357edd953b5c",
+      "childId": "513d3ece368ebc77bc4a6edad62a",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "07eee244cbb5da0a357edd953b5c",
+      "childId": "5992608044a7d695d9a0a2a04bd6",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "07eee244cbb5da0a357edd953b5c",
+      "childId": "63ac048dad2227ea487e9e44cf4b",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "07eee244cbb5da0a357edd953b5c",
+      "childId": "645dbf59ecb8298911c86ea3bb4b",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "07eee244cbb5da0a357edd953b5c",
+      "childId": "67832dc5f3f7725bc81ab91727d8",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "07eee244cbb5da0a357edd953b5c",
+      "childId": "6a61b6ade24e2b5b25ae93624f32",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "07eee244cbb5da0a357edd953b5c",
+      "childId": "7545861406e304fae642aeb302ee",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "07eee244cbb5da0a357edd953b5c",
+      "childId": "824408b42fbcd989fa7e36bcaa58",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "07eee244cbb5da0a357edd953b5c",
+      "childId": "b65e00432ac20bc5580d84c15596",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "07eee244cbb5da0a357edd953b5c",
+      "childId": "b66a8cd66062345c997b58e73d65",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "07eee244cbb5da0a357edd953b5c",
+      "childId": "c69d8c5b4aeaed725f7a1d475494",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "07eee244cbb5da0a357edd953b5c",
+      "childId": "c93408990571bae22fc35d785a95",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "07eee244cbb5da0a357edd953b5c",
+      "childId": "d01b6d6823ed4e8718c6d789310d",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "07eee244cbb5da0a357edd953b5c",
+      "childId": "d8d1b9efce0d6fc354442e32bf5e",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "07eee244cbb5da0a357edd953b5c",
+      "childId": "db4951f819bb7a301665799471a9",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "07eee244cbb5da0a357edd953b5c",
+      "childId": "e309b637d5a0076a3fc8f794baf0",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "07eee244cbb5da0a357edd953b5c",
+      "childId": "e6c95f7f4c9dc2dbe51c658ecf97",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "0a9d521a3540515776155b769612",
+      "childId": "2c577cff5dc575776e468f993c50",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "0a9d521a3540515776155b769612",
+      "childId": "41e966ed35745de5a2e078f000ad",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "0a9d521a3540515776155b769612",
+      "childId": "6cf2684fa410fccd66343b339ca3",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "0a9d521a3540515776155b769612",
+      "childId": "768341dc6866ee1ce9510ae26f11",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "0a9d521a3540515776155b769612",
+      "childId": "956cca5e09c233f9df14dbbe23ac",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "0a9d521a3540515776155b769612",
+      "childId": "a97f1c1d2552d97f062a0397e443",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "0a9d521a3540515776155b769612",
+      "childId": "f5eab2822e6a8d00e2a360adb88b",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "0c7be75f62c4982fbe569468c3f8",
+      "childId": "495939fd048c5c06a56d27be01be",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "0c7be75f62c4982fbe569468c3f8",
+      "childId": "5d90ea5460420a920e4ba3932934",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "0e29fce75427db6f48347d2d61f1",
+      "childId": "644d41e9f0d410f269c8e6b6a7b5",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "10cb92108a5e8d19d60657ae8aef",
+      "childId": "017b9582a04c35f6ef652f58fd3d",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "10cb92108a5e8d19d60657ae8aef",
+      "childId": "09d73d29a1dc735aa468fc4f9808",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "10cb92108a5e8d19d60657ae8aef",
+      "childId": "5f0e0dfd4d96dbf84fbc084c5937",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "10cb92108a5e8d19d60657ae8aef",
+      "childId": "8f2d0932df96e3104953022d802e",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "10cb92108a5e8d19d60657ae8aef",
+      "childId": "aef0ee76ea085f6b871c42285fc9",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "1586ad4b9ba332b8e2d084c73e8e",
+      "childId": "5a0c2c1b7f1e239f6673af479050",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "16b534ac939f65bb51909975c492",
+      "childId": "17587808b041b6f5bbf1e7690b8e",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "16b534ac939f65bb51909975c492",
+      "childId": "31ba534955ab0f9f0188e25104bb",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "16b534ac939f65bb51909975c492",
+      "childId": "ba11edeee5f687a083385ec048fa",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "17587808b041b6f5bbf1e7690b8e",
+      "childId": "e9c946607ff952ccdbf6f373b99a",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "17f0d0826529bbff46fc7e19692d",
+      "childId": "fd48d5be5720fcaf2a4154d24a52",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "1ac81d6b58bc6ed2b2d7acba20de",
+      "childId": "961f246e72e9caee749b00c475bb",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "1e23c34a529acb87eef5fb82fd6c",
+      "childId": "4b0673e09da14d0d5acade53c1ca",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "1ec307da2b6c156f6aa269e7cf72",
+      "childId": "2a2dd06c74d493a44cd366a07bb8",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "243521156b01a001a9761eb1436b",
+      "childId": "245b20f4bb21078870b19653e3f3",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "243a8a962abc3b556eb13e302649",
+      "childId": "19b2b931f8631f2ab594308ac42c",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "24fba7ae9375b0034c8554d0504f",
+      "childId": "b5547809b67159a14583a05b040e",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "2561c423aae9c7d20d8862b5f1c5",
+      "childId": "0e29fce75427db6f48347d2d61f1",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "2561c423aae9c7d20d8862b5f1c5",
+      "childId": "1586ad4b9ba332b8e2d084c73e8e",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "2561c423aae9c7d20d8862b5f1c5",
+      "childId": "5f2d8e2d94b24982e29ead78a98e",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "2561c423aae9c7d20d8862b5f1c5",
+      "childId": "6fbe61c47a16f0ced35a2df7d20e",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "2561c423aae9c7d20d8862b5f1c5",
+      "childId": "7cdd6d45d4d3c02c3f9f562f5e96",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "2561c423aae9c7d20d8862b5f1c5",
+      "childId": "8825f6a9ffbf240f9e01dc13d926",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "2561c423aae9c7d20d8862b5f1c5",
+      "childId": "96ff83e11f02a1493d3a3d698885",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "2561c423aae9c7d20d8862b5f1c5",
+      "childId": "a9ea0e76c05691b24b89bb74ca26",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "2561c423aae9c7d20d8862b5f1c5",
+      "childId": "b3bafec06ff16ee52b86e6823669",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "2561c423aae9c7d20d8862b5f1c5",
+      "childId": "bf20a6a4e3d6ec2f93a5cf17bba3",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "2561c423aae9c7d20d8862b5f1c5",
+      "childId": "c35ba7d68b124c0fae6bc10bad66",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "2561c423aae9c7d20d8862b5f1c5",
+      "childId": "caa5162f105bc4f7d41b91f5a1a3",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "2561c423aae9c7d20d8862b5f1c5",
+      "childId": "cf3bb266acbc9624c9c90522bdb4",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "2561c423aae9c7d20d8862b5f1c5",
+      "childId": "de24facbc7a3353791a24b50b01b",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "2561c423aae9c7d20d8862b5f1c5",
+      "childId": "e676dbdef5c267fab6d4886f8450",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "276936a3ce3a58a789c61c02b588",
+      "childId": "c02c13cf47e1c393b2a33a12a936",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "307167d3e6d56c7224f558b7b857",
+      "childId": "d86f0f99799466835a50ab5d8efa",
+      "collectionName": "Recruit -- miscellaneous"
+    },
+    {
+      "parentId": "31ba534955ab0f9f0188e25104bb",
+      "childId": "e9c946607ff952ccdbf6f373b99a",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "323b33cc3e168bca0e91f61710f4",
+      "childId": "460aecf3917b7dddae1b7749e43d",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "33320b65af7090b5b77cd9ae4b4b",
+      "childId": "4789aef9351030076bffb91f3fe0",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "3406446dfe2ab0cdaa7fa92389de",
+      "childId": "20cb6434a653aa60fd335a20c212",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "3514b4ca209098b5a8615134e908",
+      "childId": "318aedae6da85cb15f20677dec8a",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "3514b4ca209098b5a8615134e908",
+      "childId": "98e6ff0c2d9c3e33bfbb87047ae8",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "3514b4ca209098b5a8615134e908",
+      "childId": "be631e200c6bd29797cea5467f65",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "3785650001713333f1c8f2734fa3",
+      "childId": "9396fcc05874a16d308f83bcbf97",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "3ca4eba06fea05e4247a55442686",
+      "childId": "5881c50abeda607c34e91dc14f4b",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "3db6322d782ae49e60adc81a9711",
+      "childId": "19b2b931f8631f2ab594308ac42c",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "45408a651cfb5e820236aab325a3",
+      "childId": "b5547809b67159a14583a05b040e",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "4ad8e259d5246db1509eb390c567",
+      "childId": "68571a65883c252ce25a3fe88c1d",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "4b0673e09da14d0d5acade53c1ca",
+      "childId": "1ac81d6b58bc6ed2b2d7acba20de",
+      "collectionName": "Reorder -- miscellaneous"
+    },
+    {
+      "parentId": "4d3cecb59cff6631496c2f08c262",
+      "childId": "16b534ac939f65bb51909975c492",
+      "collectionName": "Subcontract -- miscellaneous"
+    },
+    {
+      "parentId": "4d70239cdd94e0dd6c1063549924",
+      "childId": "2c577cff5dc575776e468f993c50",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "4d70239cdd94e0dd6c1063549924",
+      "childId": "4e179f83cb9a04e7ec9cf4832e5b",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "4d70239cdd94e0dd6c1063549924",
+      "childId": "6cf2684fa410fccd66343b339ca3",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "4d70239cdd94e0dd6c1063549924",
+      "childId": "768341dc6866ee1ce9510ae26f11",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "4d70239cdd94e0dd6c1063549924",
+      "childId": "781a14bb97b82097d3f7b21db431",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "4d70239cdd94e0dd6c1063549924",
+      "childId": "956cca5e09c233f9df14dbbe23ac",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "4d70239cdd94e0dd6c1063549924",
+      "childId": "c736d64d3c712acb8e94371e6038",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "4d70239cdd94e0dd6c1063549924",
+      "childId": "d19265cf65c0b35769cc5bffb356",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "4d70239cdd94e0dd6c1063549924",
+      "childId": "f6a9f51e08211e3dd2fbf8ca8042",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "504d50c7e5ad2129aaeac491d156",
+      "childId": "b3ae3916f419e55dd5211a46a599",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "513d3ece368ebc77bc4a6edad62a",
+      "childId": "433ce22f17f29326edfd5db4babc",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "513d3ece368ebc77bc4a6edad62a",
+      "childId": "6efac1af9a21d55b0e938b0b1448",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "513da1e100d3b9dc56ae7db40f2d",
+      "childId": "4a1ffdf2a4e7d6119120e069e923",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "513da1e100d3b9dc56ae7db40f2d",
+      "childId": "6282e942978c2c476057a299899e",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "513da1e100d3b9dc56ae7db40f2d",
+      "childId": "6eba02f43989d07ba21802bcf447",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "52ee055db6eea6abceb3da91b706",
+      "childId": "433ce22f17f29326edfd5db4babc",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "52ee055db6eea6abceb3da91b706",
+      "childId": "68571a65883c252ce25a3fe88c1d",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "54a8531cba2c9e31999fa34863b3",
+      "childId": "9b59d535ad87054c7159740962cf",
+      "collectionName": "Staff -- miscellaneous"
+    },
+    {
+      "parentId": "56d5d14545365b53a1af9eacfb62",
+      "childId": "c02c13cf47e1c393b2a33a12a936",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "5992608044a7d695d9a0a2a04bd6",
+      "childId": "827f0dc1e8d4ce18e961ab43484e",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "5e25546ecaecb5099442bb23d709",
+      "childId": "6eba02f43989d07ba21802bcf447",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "5f2d8e2d94b24982e29ead78a98e",
+      "childId": "f5e96241d6f4d2de8e95aeaac5c6",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "60e339e9cfb6a6e83c51b441ace1",
+      "childId": "6a097938093316320354b09417c7",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "63ac048dad2227ea487e9e44cf4b",
+      "childId": "20cb6434a653aa60fd335a20c212",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "645dbf59ecb8298911c86ea3bb4b",
+      "childId": "508a11e554beb5dbbacd3276e784",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "6473988b6bba2177ccafe38ea1b5",
+      "childId": "c1221a64dbc14890bddf4fe42ebe",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "67832dc5f3f7725bc81ab91727d8",
+      "childId": "d34b109f93567d8032b6c21b641e",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "6a61b6ade24e2b5b25ae93624f32",
+      "childId": "93751c2c2c4c66aeb3958a440711",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "6fbe61c47a16f0ced35a2df7d20e",
+      "childId": "47251c07f1a5ffb408c38ba62bb7",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "6fbe61c47a16f0ced35a2df7d20e",
+      "childId": "49dd3f743b87129c6155837a2fb6",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "6fbe61c47a16f0ced35a2df7d20e",
+      "childId": "eba3edb7c61a089911da34a16276",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "7545861406e304fae642aeb302ee",
+      "childId": "2ffd189631b291948ddad3022ea6",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "7cdd6d45d4d3c02c3f9f562f5e96",
+      "childId": "644d41e9f0d410f269c8e6b6a7b5",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "7e4be8b7d83e89b3cd17aa27a732",
+      "childId": "97d58e66d5e52080a33063563165",
+      "collectionName": "Rent how?"
+    },
+    {
+      "parentId": "7e4be8b7d83e89b3cd17aa27a732",
+      "childId": "b061451d892419986442fb893719",
+      "collectionName": "Rent how?"
+    },
+    {
+      "parentId": "7e4be8b7d83e89b3cd17aa27a732",
+      "childId": "16b7b159a69258e3f782d437f968",
+      "collectionName": "Rent what kind of input?"
+    },
+    {
+      "parentId": "7e4be8b7d83e89b3cd17aa27a732",
+      "childId": "59b9324d652bb9be1b89a5ec617c",
+      "collectionName": "Rent what kind of input?"
+    },
+    {
+      "parentId": "7e4be8b7d83e89b3cd17aa27a732",
+      "childId": "b591f1c2db001d2f64974959674a",
+      "collectionName": "Rent what kind of input?"
+    },
+    {
+      "parentId": "7e6674f9396539f6a844373e0178",
+      "childId": "2a2dd06c74d493a44cd366a07bb8",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "7f0c4a5568a935e852bde65b7e8a",
+      "childId": "98e6ff0c2d9c3e33bfbb87047ae8",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "80c57f429ef9e377ec0857837714",
+      "childId": "c334acaa099d21898aace57e7e7a",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "824408b42fbcd989fa7e36bcaa58",
+      "childId": "d34b109f93567d8032b6c21b641e",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "8825f6a9ffbf240f9e01dc13d926",
+      "childId": "644d41e9f0d410f269c8e6b6a7b5",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "8a8765977fb9f623a91003acd3bf",
+      "childId": "d984357c403e7538ee2cf9b6437c",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "8c6f83884fac47e66472ae8c09b0",
+      "childId": "9de8f7d4ae8e992b9c689d753a6a",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "8fb484a91815c634e41b07824ef6",
+      "childId": "7226cc524452b568d83ea6bfdf32",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "8fb484a91815c634e41b07824ef6",
+      "childId": "bf6fa1a016470e8230997cc30729",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9406cf8e4cb3fc959a0b16453cf3",
+      "childId": "00acf4e94592fea367b80965dc63",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9406cf8e4cb3fc959a0b16453cf3",
+      "childId": "054223d12852f155bdca94769efd",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9406cf8e4cb3fc959a0b16453cf3",
+      "childId": "07c116af03d3230793b49b1899a9",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9406cf8e4cb3fc959a0b16453cf3",
+      "childId": "0c7be75f62c4982fbe569468c3f8",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9406cf8e4cb3fc959a0b16453cf3",
+      "childId": "10cb92108a5e8d19d60657ae8aef",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9406cf8e4cb3fc959a0b16453cf3",
+      "childId": "1ec307da2b6c156f6aa269e7cf72",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9406cf8e4cb3fc959a0b16453cf3",
+      "childId": "24fba7ae9375b0034c8554d0504f",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9406cf8e4cb3fc959a0b16453cf3",
+      "childId": "276936a3ce3a58a789c61c02b588",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9406cf8e4cb3fc959a0b16453cf3",
+      "childId": "3785650001713333f1c8f2734fa3",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9406cf8e4cb3fc959a0b16453cf3",
+      "childId": "3ca4eba06fea05e4247a55442686",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9406cf8e4cb3fc959a0b16453cf3",
+      "childId": "45408a651cfb5e820236aab325a3",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9406cf8e4cb3fc959a0b16453cf3",
+      "childId": "56d5d14545365b53a1af9eacfb62",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9406cf8e4cb3fc959a0b16453cf3",
+      "childId": "60e339e9cfb6a6e83c51b441ace1",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9406cf8e4cb3fc959a0b16453cf3",
+      "childId": "6473988b6bba2177ccafe38ea1b5",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9406cf8e4cb3fc959a0b16453cf3",
+      "childId": "80c57f429ef9e377ec0857837714",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9406cf8e4cb3fc959a0b16453cf3",
+      "childId": "8a8765977fb9f623a91003acd3bf",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9406cf8e4cb3fc959a0b16453cf3",
+      "childId": "8c6f83884fac47e66472ae8c09b0",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9406cf8e4cb3fc959a0b16453cf3",
+      "childId": "8fb484a91815c634e41b07824ef6",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9406cf8e4cb3fc959a0b16453cf3",
+      "childId": "9c8220f8586a6c04963db908c0ad",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9406cf8e4cb3fc959a0b16453cf3",
+      "childId": "9ebc3a439df984bb521a9a5340e0",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9406cf8e4cb3fc959a0b16453cf3",
+      "childId": "a38198fc7f6a0e2ba8937a1c0e6c",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9406cf8e4cb3fc959a0b16453cf3",
+      "childId": "a38ade257efd66964d169060a012",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9406cf8e4cb3fc959a0b16453cf3",
+      "childId": "a46daa82a081eebc9317b6e0be0b",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9406cf8e4cb3fc959a0b16453cf3",
+      "childId": "ae7a9d9252f58eb02a319bd50d35",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9406cf8e4cb3fc959a0b16453cf3",
+      "childId": "b8040b05f4369767901581cdaf3c",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9406cf8e4cb3fc959a0b16453cf3",
+      "childId": "bab0550c7539b5543e53a3c98d54",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9406cf8e4cb3fc959a0b16453cf3",
+      "childId": "ce8422bcbf8689af9e338dc25cd1",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9406cf8e4cb3fc959a0b16453cf3",
+      "childId": "d93ea13a85f1c84ceba29a2e5b29",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9406cf8e4cb3fc959a0b16453cf3",
+      "childId": "db5f92a8f43f485d1c104e1693aa",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9406cf8e4cb3fc959a0b16453cf3",
+      "childId": "e1f295e9ee85ee9c13f4e2080080",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9406cf8e4cb3fc959a0b16453cf3",
+      "childId": "f7e6560f8e3dfc79c9db9c988cd6",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9406cf8e4cb3fc959a0b16453cf3",
+      "childId": "fa99027c9d4b383e3cc40a697194",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "961f246e72e9caee749b00c475bb",
+      "childId": "91f9a9ce381f06feed5ba591a628",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "96ff83e11f02a1493d3a3d698885",
+      "childId": "9bc25c26cf3ffbb65d9ac9fa59f7",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "97d58e66d5e52080a33063563165",
+      "childId": "07eee244cbb5da0a357edd953b5c",
+      "collectionName": "Hire -- miscellaneous"
+    },
+    {
+      "parentId": "97d58e66d5e52080a33063563165",
+      "childId": "307167d3e6d56c7224f558b7b857",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "97d58e66d5e52080a33063563165",
+      "childId": "4d3cecb59cff6631496c2f08c262",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "97d58e66d5e52080a33063563165",
+      "childId": "54a8531cba2c9e31999fa34863b3",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "988041138c9c67b74616574f5794",
+      "childId": "98e6ff0c2d9c3e33bfbb87047ae8",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9b59d535ad87054c7159740962cf",
+      "childId": "504d50c7e5ad2129aaeac491d156",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9c8220f8586a6c04963db908c0ad",
+      "childId": "5881c50abeda607c34e91dc14f4b",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9c8220f8586a6c04963db908c0ad",
+      "childId": "c1221a64dbc14890bddf4fe42ebe",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9ebc3a439df984bb521a9a5340e0",
+      "childId": "0c86b5906c24dea88cf5c02c6282",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9ebc3a439df984bb521a9a5340e0",
+      "childId": "36ad3036e4b2c4389b329191c091",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9ebc3a439df984bb521a9a5340e0",
+      "childId": "399b76d47f062e037940dc0d8e1e",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9ebc3a439df984bb521a9a5340e0",
+      "childId": "415485540a7ecbfae43850ab1379",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9ebc3a439df984bb521a9a5340e0",
+      "childId": "420b5ed81aa0fd12a0adb384b273",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9ebc3a439df984bb521a9a5340e0",
+      "childId": "50c1f69db28becb74739e5f89362",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9ebc3a439df984bb521a9a5340e0",
+      "childId": "5e42b741d4d673ee4977f92eb2e2",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9ebc3a439df984bb521a9a5340e0",
+      "childId": "6a097938093316320354b09417c7",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9ebc3a439df984bb521a9a5340e0",
+      "childId": "9396fcc05874a16d308f83bcbf97",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9ebc3a439df984bb521a9a5340e0",
+      "childId": "93a7c890a095bc36fe737ee58d8b",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9ebc3a439df984bb521a9a5340e0",
+      "childId": "ad9f55173146eeb93769ac619d31",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9ebc3a439df984bb521a9a5340e0",
+      "childId": "b5547809b67159a14583a05b040e",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9ebc3a439df984bb521a9a5340e0",
+      "childId": "be14e7e39963941a11eef383e2c4",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9ebc3a439df984bb521a9a5340e0",
+      "childId": "bf6fa1a016470e8230997cc30729",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9ebc3a439df984bb521a9a5340e0",
+      "childId": "c334acaa099d21898aace57e7e7a",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9ebc3a439df984bb521a9a5340e0",
+      "childId": "d18f7d11815c042e6b52c1323db2",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9ebc3a439df984bb521a9a5340e0",
+      "childId": "ddb596558254d3cddeaf4d23eca8",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9ebc3a439df984bb521a9a5340e0",
+      "childId": "f1850869156a52b465e97e396a5e",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9eec52d300ef6423c841f711c9a9",
+      "childId": "c77237e8692b526d3315ea94f0ef",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "a38198fc7f6a0e2ba8937a1c0e6c",
+      "childId": "99643c99314f53f0dac1c4dbc723",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "a38ade257efd66964d169060a012",
+      "childId": "1cc6447a1b241f68a30a6fa260f2",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "a38ade257efd66964d169060a012",
+      "childId": "6c453e8f0b7e3069d1cfcf0a21e3",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "a38ade257efd66964d169060a012",
+      "childId": "ca11752c4d58e93fe9ec36217435",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "a46daa82a081eebc9317b6e0be0b",
+      "childId": "08b8cc0e443dbd54d21788cc29c8",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "a46daa82a081eebc9317b6e0be0b",
+      "childId": "399b76d47f062e037940dc0d8e1e",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "a46daa82a081eebc9317b6e0be0b",
+      "childId": "420b5ed81aa0fd12a0adb384b273",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "a46daa82a081eebc9317b6e0be0b",
+      "childId": "50c1f69db28becb74739e5f89362",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "a46daa82a081eebc9317b6e0be0b",
+      "childId": "5881c50abeda607c34e91dc14f4b",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "a46daa82a081eebc9317b6e0be0b",
+      "childId": "5e42b741d4d673ee4977f92eb2e2",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "a46daa82a081eebc9317b6e0be0b",
+      "childId": "6282e942978c2c476057a299899e",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "a46daa82a081eebc9317b6e0be0b",
+      "childId": "6a097938093316320354b09417c7",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "a46daa82a081eebc9317b6e0be0b",
+      "childId": "7d8308d6ca55398d1d23ffa74bb4",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "a46daa82a081eebc9317b6e0be0b",
+      "childId": "bf6fa1a016470e8230997cc30729",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "a46daa82a081eebc9317b6e0be0b",
+      "childId": "c1221a64dbc14890bddf4fe42ebe",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "a46daa82a081eebc9317b6e0be0b",
+      "childId": "d18f7d11815c042e6b52c1323db2",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "a46daa82a081eebc9317b6e0be0b",
+      "childId": "e4aa7715aee294bf1085af49278d",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "a46daa82a081eebc9317b6e0be0b",
+      "childId": "f1850869156a52b465e97e396a5e",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "a9ea0e76c05691b24b89bb74ca26",
+      "childId": "7226cc524452b568d83ea6bfdf32",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "ae7a9d9252f58eb02a319bd50d35",
+      "childId": "7226cc524452b568d83ea6bfdf32",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "b061451d892419986442fb893719",
+      "childId": "c29d55f1cf8fcc3a41f36ced6a35",
+      "collectionName": "Lease -- miscellaneous"
+    },
+    {
+      "parentId": "b3bafec06ff16ee52b86e6823669",
+      "childId": "0cb154c0ab7877e54d5c7011ca2a",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "b65e00432ac20bc5580d84c15596",
+      "childId": "758c2b9364b06a7da39470de9eea",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "b66a8cd66062345c997b58e73d65",
+      "childId": "93751c2c2c4c66aeb3958a440711",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "b8040b05f4369767901581cdaf3c",
+      "childId": "56e6de48a3da026f8b41c19fdde2",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "b8040b05f4369767901581cdaf3c",
+      "childId": "8e7cccc12f7546d618ccda3e9cb5",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "b8040b05f4369767901581cdaf3c",
+      "childId": "e45f45e18636396a5771c34e66f1",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "ba11edeee5f687a083385ec048fa",
+      "childId": "e9c946607ff952ccdbf6f373b99a",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "bab0550c7539b5543e53a3c98d54",
+      "childId": "e1c087615be573103cfaf2fabcc1",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "bf20a6a4e3d6ec2f93a5cf17bba3",
+      "childId": "e0bed21c9bed7949d8df2b26835d",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "c29d55f1cf8fcc3a41f36ced6a35",
+      "childId": "17f0d0826529bbff46fc7e19692d",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "c29d55f1cf8fcc3a41f36ced6a35",
+      "childId": "243521156b01a001a9761eb1436b",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "c29d55f1cf8fcc3a41f36ced6a35",
+      "childId": "513da1e100d3b9dc56ae7db40f2d",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "c29d55f1cf8fcc3a41f36ced6a35",
+      "childId": "5e25546ecaecb5099442bb23d709",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "c29d55f1cf8fcc3a41f36ced6a35",
+      "childId": "7e6674f9396539f6a844373e0178",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "c29d55f1cf8fcc3a41f36ced6a35",
+      "childId": "d9f72a29571d26a60d377b4e729d",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "c29d55f1cf8fcc3a41f36ced6a35",
+      "childId": "df49106ee791f8ebb6ceb6d8d185",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "c29d55f1cf8fcc3a41f36ced6a35",
+      "childId": "e0aa93a9c5f60066d45add35c8a1",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "c29d55f1cf8fcc3a41f36ced6a35",
+      "childId": "efdc53032262cdfaadab34943a3c",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "c29d55f1cf8fcc3a41f36ced6a35",
+      "childId": "fdf5cdcb7280a12d243698db9a4f",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "c35ba7d68b124c0fae6bc10bad66",
+      "childId": "40bd4f1f21203ad2cc0e9da1b595",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "c69d8c5b4aeaed725f7a1d475494",
+      "childId": "78ba73aba0f1894a2a0ccd0f1046",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "c6c983eac48aaf07b35a391da871",
+      "childId": "008bf18fb7dbacd8d84acf2037e3",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "c6c983eac48aaf07b35a391da871",
+      "childId": "1a5b74abdf29233b30fafb85c4f4",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "c6c983eac48aaf07b35a391da871",
+      "childId": "433ce22f17f29326edfd5db4babc",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "c6c983eac48aaf07b35a391da871",
+      "childId": "458d06e76c53eac74e6a2408f3c8",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "c6c983eac48aaf07b35a391da871",
+      "childId": "536731edfb17c35bcef72e366ffe",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "c6c983eac48aaf07b35a391da871",
+      "childId": "81fc71ec0dfc68c5415811140681",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "c6c983eac48aaf07b35a391da871",
+      "childId": "8f08255678dc5178d97421a55a50",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "c6c983eac48aaf07b35a391da871",
+      "childId": "ad70eef84ecdedb20b8d100a8925",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "c6c983eac48aaf07b35a391da871",
+      "childId": "d3d0dcb16f2f8fc1cec34a513fcd",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "c93408990571bae22fc35d785a95",
+      "childId": "2ffd189631b291948ddad3022ea6",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "caa5162f105bc4f7d41b91f5a1a3",
+      "childId": "1cc6447a1b241f68a30a6fa260f2",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "caa5162f105bc4f7d41b91f5a1a3",
+      "childId": "3d0bb2095797c517b851392f45e8",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "caa5162f105bc4f7d41b91f5a1a3",
+      "childId": "99643c99314f53f0dac1c4dbc723",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "ce8422bcbf8689af9e338dc25cd1",
+      "childId": "600f7c44d4cb24aecc0a693913cf",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "ce8422bcbf8689af9e338dc25cd1",
+      "childId": "675c4a6f4211d111cc04e8b80d86",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "ce8422bcbf8689af9e338dc25cd1",
+      "childId": "c1c6294738278934af7da9dffcb6",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "ce8422bcbf8689af9e338dc25cd1",
+      "childId": "d5bf03ed5bf4f843378c9d601bba",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "cf3bb266acbc9624c9c90522bdb4",
+      "childId": "9bc25c26cf3ffbb65d9ac9fa59f7",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "d01b6d6823ed4e8718c6d789310d",
+      "childId": "93751c2c2c4c66aeb3958a440711",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "d637e7684532ec7dc01a407bcab1",
+      "childId": "68571a65883c252ce25a3fe88c1d",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "d86f0f99799466835a50ab5d8efa",
+      "childId": "03bb4585c2c12f86e6d2fc28724f",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "d86f0f99799466835a50ab5d8efa",
+      "childId": "0a9d521a3540515776155b769612",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "d86f0f99799466835a50ab5d8efa",
+      "childId": "33320b65af7090b5b77cd9ae4b4b",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "d86f0f99799466835a50ab5d8efa",
+      "childId": "3514b4ca209098b5a8615134e908",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "d86f0f99799466835a50ab5d8efa",
+      "childId": "3db6322d782ae49e60adc81a9711",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "d86f0f99799466835a50ab5d8efa",
+      "childId": "4ad8e259d5246db1509eb390c567",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "d86f0f99799466835a50ab5d8efa",
+      "childId": "52ee055db6eea6abceb3da91b706",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "d86f0f99799466835a50ab5d8efa",
+      "childId": "7f0c4a5568a935e852bde65b7e8a",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "d86f0f99799466835a50ab5d8efa",
+      "childId": "988041138c9c67b74616574f5794",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "d86f0f99799466835a50ab5d8efa",
+      "childId": "9eec52d300ef6423c841f711c9a9",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "d86f0f99799466835a50ab5d8efa",
+      "childId": "c6c983eac48aaf07b35a391da871",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "d86f0f99799466835a50ab5d8efa",
+      "childId": "d637e7684532ec7dc01a407bcab1",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "d86f0f99799466835a50ab5d8efa",
+      "childId": "f87c159b6fb09c4c41cbc9c9db67",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "d8d1b9efce0d6fc354442e32bf5e",
+      "childId": "286af6ca1b63008dbbb502b23044",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "d93ea13a85f1c84ceba29a2e5b29",
+      "childId": "711b1983e82911a1e1316f5ed02c",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "d9f72a29571d26a60d377b4e729d",
+      "childId": "245b66522900fda90cccc72a79c2",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "db4951f819bb7a301665799471a9",
+      "childId": "008bf18fb7dbacd8d84acf2037e3",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "db4951f819bb7a301665799471a9",
+      "childId": "0d07cb1e9059e754ad80b17ec335",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "db4951f819bb7a301665799471a9",
+      "childId": "1a5b74abdf29233b30fafb85c4f4",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "db4951f819bb7a301665799471a9",
+      "childId": "302098de9759f7f7af7adae0015b",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "db4951f819bb7a301665799471a9",
+      "childId": "3a7fc88f7440b53bc89ba328cbfb",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "db4951f819bb7a301665799471a9",
+      "childId": "433ce22f17f29326edfd5db4babc",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "db4951f819bb7a301665799471a9",
+      "childId": "45518eee627b6d1953265021b8f3",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "db4951f819bb7a301665799471a9",
+      "childId": "458d06e76c53eac74e6a2408f3c8",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "db4951f819bb7a301665799471a9",
+      "childId": "4ccb8f8afbcfb95460393db9686d",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "db4951f819bb7a301665799471a9",
+      "childId": "5705182901a1f4bfb01b4e21e92f",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "db4951f819bb7a301665799471a9",
+      "childId": "5f0e0dfd4d96dbf84fbc084c5937",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "db4951f819bb7a301665799471a9",
+      "childId": "6439b34f32bdaa4d6e73a1b92e0b",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "db4951f819bb7a301665799471a9",
+      "childId": "696cae05730fdb542a47f93f6de6",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "db4951f819bb7a301665799471a9",
+      "childId": "6efac1af9a21d55b0e938b0b1448",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "db4951f819bb7a301665799471a9",
+      "childId": "81fc71ec0dfc68c5415811140681",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "db4951f819bb7a301665799471a9",
+      "childId": "8f08255678dc5178d97421a55a50",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "db4951f819bb7a301665799471a9",
+      "childId": "ad70eef84ecdedb20b8d100a8925",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "db4951f819bb7a301665799471a9",
+      "childId": "d3d0dcb16f2f8fc1cec34a513fcd",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "db4951f819bb7a301665799471a9",
+      "childId": "e4dc3c58da6c58e4473635457681",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "db4951f819bb7a301665799471a9",
+      "childId": "fae16ccdd8ad8f83ec6b7bae0d3e",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "db5f92a8f43f485d1c104e1693aa",
+      "childId": "09d73d29a1dc735aa468fc4f9808",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "de24facbc7a3353791a24b50b01b",
+      "childId": "5a0c2c1b7f1e239f6673af479050",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "df49106ee791f8ebb6ceb6d8d185",
+      "childId": "1514c40813319742f5a3c6601e85",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "e0aa93a9c5f60066d45add35c8a1",
+      "childId": "87200808fd9335b004277c294af1",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "e0aa93a9c5f60066d45add35c8a1",
+      "childId": "a18b44df05d9a3316433d9495c79",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "e1f295e9ee85ee9c13f4e2080080",
+      "childId": "9de8f7d4ae8e992b9c689d753a6a",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "e309b637d5a0076a3fc8f794baf0",
+      "childId": "2dbcbcd160070198b63eb3e81d72",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "e309b637d5a0076a3fc8f794baf0",
+      "childId": "565afb519f8c99d75519dc48cf34",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "e309b637d5a0076a3fc8f794baf0",
+      "childId": "755a7561ff977f266b5d86cea3c9",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "e309b637d5a0076a3fc8f794baf0",
+      "childId": "8a18ee1fb4ad15bf1852b5a175e9",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "e309b637d5a0076a3fc8f794baf0",
+      "childId": "8bfd349c4f9673fde00f7fba4279",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "e309b637d5a0076a3fc8f794baf0",
+      "childId": "be631e200c6bd29797cea5467f65",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "e676dbdef5c267fab6d4886f8450",
+      "childId": "644d41e9f0d410f269c8e6b6a7b5",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "e6c95f7f4c9dc2dbe51c658ecf97",
+      "childId": "3741e9abede3f77aaa116223a785",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "e6c95f7f4c9dc2dbe51c658ecf97",
+      "childId": "41ad8e6335694047538aebcc8dd9",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "e6c95f7f4c9dc2dbe51c658ecf97",
+      "childId": "47a71cbd6883ac8f648928004dc8",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "e6c95f7f4c9dc2dbe51c658ecf97",
+      "childId": "a3bfa07ee9366bd1e3885d872e60",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "e6c95f7f4c9dc2dbe51c658ecf97",
+      "childId": "af7945192afcd63cd408a403f3e1",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "e6c95f7f4c9dc2dbe51c658ecf97",
+      "childId": "d3708b2066fb1b8c37161bc4d344",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "eb251f9a86936b841526689aaef9",
+      "childId": "2561c423aae9c7d20d8862b5f1c5",
+      "collectionName": "Buy -- miscellaneous"
+    },
+    {
+      "parentId": "eb251f9a86936b841526689aaef9",
+      "childId": "9406cf8e4cb3fc959a0b16453cf3",
+      "collectionName": "Buy -- miscellaneous"
+    },
+    {
+      "parentId": "eb251f9a86936b841526689aaef9",
+      "childId": "1e23c34a529acb87eef5fb82fd6c",
+      "collectionName": "Buy how?"
+    },
+    {
+      "parentId": "eb251f9a86936b841526689aaef9",
+      "childId": "7e4be8b7d83e89b3cd17aa27a732",
+      "collectionName": "Buy how?"
+    },
+    {
+      "parentId": "eb251f9a86936b841526689aaef9",
+      "childId": "03676445401f1231f5f74b16e988",
+      "collectionName": "Buy what kind of input?"
+    },
+    {
+      "parentId": "eb251f9a86936b841526689aaef9",
+      "childId": "9670d9458b0cfd028bf1c84f7eee",
+      "collectionName": "Buy what kind of input?"
+    },
+    {
+      "parentId": "eb251f9a86936b841526689aaef9",
+      "childId": "d36380132bebfbe827c15d43dff6",
+      "collectionName": "Buy what kind of input?"
+    },
+    {
+      "parentId": "efdc53032262cdfaadab34943a3c",
+      "childId": "6eba02f43989d07ba21802bcf447",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "f7e6560f8e3dfc79c9db9c988cd6",
+      "childId": "2a2dd06c74d493a44cd366a07bb8",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "f87c159b6fb09c4c41cbc9c9db67",
+      "childId": "3741e9abede3f77aaa116223a785",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "fa99027c9d4b383e3cc40a697194",
+      "childId": "165b88fa094f1ee2c759cfa4860f",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "fdf5cdcb7280a12d243698db9a4f",
+      "childId": "2a2dd06c74d493a44cd366a07bb8",
+      "collectionName": "main"
+    }
+  ]
+}

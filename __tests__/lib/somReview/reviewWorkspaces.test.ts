@@ -14,7 +14,7 @@ describe("Society of Mind review workspaces", () => {
 
     expect(options.map((workspace) => workspace.id)).toEqual(["buy", "sell"]);
     expect(options.find((workspace) => workspace.id === "buy")).toMatchObject({
-      activeDatasetId: "buy-title-followup",
+      activeDatasetId: "buy-content-identity",
     });
     expect(options.find((workspace) => workspace.id === "sell")).toMatchObject({
       activeDatasetId: "sell-current",
