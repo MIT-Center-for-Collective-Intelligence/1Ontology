@@ -1,8 +1,8 @@
 # Ontology Oversight Formative Baseline
 
-Captured: 2026-07-27T23:21:35.000Z
+Captured: 2026-07-27T23:23:59.000Z
 
-Code revision: `6a0cc8cdbf46416c53faf253d8cd286c0c365663` on `codex/instrumented-ontology-pilot`
+Code revision: `28b0b12ab3f620f003e553e663970c4e3f9aea15` on `codex/instrumented-ontology-pilot`
 
 > This is a descriptive export of operational pilot data. It is not a
 > preregistered or confirmatory study result, and proposal acceptance is not

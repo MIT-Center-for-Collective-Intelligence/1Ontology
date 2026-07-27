@@ -13,7 +13,7 @@ review and erase the independent comparison the team wants.
 2. Expand the current hierarchy without opening the disagreement appendix.
 3. Record anything unclear, misplaced, duplicated, missing, or grouped at the wrong granularity.
 4. Compare the original and current outlines side by side.
-5. Only then open `expert-steward-disagreements.md` and compare the earlier expert's reasoning with your independent notes.
+5. Only then request the separately generated private expert-disagreement appendix and compare the earlier expert's reasoning with your independent notes.
 6. In the meeting, classify differences as agent error, reviewer error, missing evidence, policy ambiguity, or legitimate alternative organization.
 
 Production review surface: https://ontology.mit.edu/review?dataset=sell-current
@@ -22,8 +22,8 @@ Production review surface: https://ontology.mit.edu/review?dataset=sell-current
 
 - Current Sell dataset: `sell-rob-post-structure-2026-07-25-v1`
 - Baseline Sell dataset: `sell-final-hierarchy-onet-2026-07-15-v4`
-- Code revision: `6a0cc8cdbf46416c53faf253d8cd286c0c365663`
-- Capture time: 2026-07-27T23:21:35.000Z
+- Code revision: `28b0b12ab3f620f003e553e663970c4e3f9aea15`
+- Capture time: 2026-07-27T23:23:59.000Z
 
 ## Structural scan
 
@@ -94,9 +94,9 @@ review cycle created a new ontology copy.
 The table separates judgments that still match the frozen dataset from historical responses whose source record is no longer present.
 
 The complete aggregate metrics are in `study-baseline.md`; the machine-readable
-file is `study-baseline.json`. The disagreement appendix intentionally omits
-reviewer identity and should remain closed until the independent hierarchy scan
-is complete.
+file is `study-baseline.json`. Reviewer free text is intentionally excluded
+from this public artifact. A private appendix can be generated locally and
+should remain closed until the independent hierarchy scan is complete.
 
 ## Meeting decisions
 

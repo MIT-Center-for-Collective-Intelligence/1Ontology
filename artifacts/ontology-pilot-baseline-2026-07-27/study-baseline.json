@@ -1,6 +1,6 @@
 {
   "schemaVersion": "som-study-baseline-v1",
-  "capturedAt": "2026-07-27T23:21:35.000Z",
+  "capturedAt": "2026-07-27T23:23:59.000Z",
   "environment": "production",
   "firestoreProjectId": "ontology-41607",
   "status": "formative-operational-trace",
@@ -8,11 +8,12 @@
     "rawReviewerIdsIncluded": false,
     "reviewerEmailsIncluded": false,
     "freeTextIncludedInBaseline": false,
+    "privateFocusAppendixGenerated": false,
     "reviewerLabels": "one-way pseudonyms, plus an optional named role label"
   },
   "interpretation": "Descriptive operational pilot evidence; not a preregistered or confirmatory evaluation.",
   "codeState": {
-    "commit": "6a0cc8cdbf46416c53faf253d8cd286c0c365663",
+    "commit": "28b0b12ab3f620f003e553e663970c4e3f9aea15",
     "branch": "codex/instrumented-ontology-pilot",
     "dirty": false,
     "dirtyPaths": []
@@ -55,8 +56,8 @@
     },
     {
       "path": "scripts/som-review/export-study-baseline.mjs",
-      "bytes": 13476,
-      "sha256": "97174cde43f4497b62bdcba760a9554a17bb1e661f852935a40b148e8678dcf9"
+      "bytes": 13676,
+      "sha256": "d24f09582c4d612adabe1dc37bb121e8433466946f84b3ac9c03f4af7f538c12"
     },
     {
       "path": "scripts/som-review/generate-exploratory-subbranch-dataset.mjs",
@@ -65,8 +66,8 @@
     },
     {
       "path": "scripts/som-review/study-baseline-lib.mjs",
-      "bytes": 29414,
-      "sha256": "61cf6fb626dbf11d3950aedbf69e21bd1e4a3ecc065612b48e2003fd65fe6895"
+      "bytes": 29497,
+      "sha256": "9490919eb0f99d83a9182744d923bc993148b64c7957932f683fa7c67627f4a3"
     },
     {
       "path": "scripts/som-review/study-baseline-lib.test.mjs",
