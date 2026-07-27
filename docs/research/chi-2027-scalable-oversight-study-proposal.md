@@ -8,7 +8,7 @@ Full-paper deadline: September 10, 2026, Anywhere on Earth
 
 Protocol status: study proposal; not yet preregistered or ethics-approved
 
-Prepared: July 20, 2026
+Prepared: July 20, 2026; revised after the July 27 MIT CCI meeting
 
 ## Decision summary
 
@@ -31,6 +31,12 @@ immediate ethics review, bounded scope, rapid recruitment, and a firm August 3
 go/no-go decision. If those conditions are not met, the scientifically correct
 choice is to continue the study for CSCW or CHI 2028 rather than submit a rushed,
 underpowered paper.
+
+The July 27 group discussion clarified an important execution decision: continue
+the expert-LLM ontology work now, but do not equate operational progress with
+confirmatory evidence. Preserve the existing trace, obtain an independent
+blind-first review, and test the marginal value of nonexpert oversight in a small
+far-transfer pilot before funding or recruiting a large middle layer.
 
 ## 1. Working abstract
 
@@ -78,6 +84,26 @@ The paper should not claim that:
 - local proposal acceptance necessarily improves the complete ontology;
 - the agents are superhuman; or
 - high model confidence is enough to remove human review.
+
+### 2.1 July 27 contribution refinement
+
+The strongest paper is not "many people vote on LLM proposals." It is a
+cost-aware coordination system for oversight of a **dependent, mutable
+artifact**. A title decision can invalidate synonym, grouping, placement, and
+action proposals. Multiple reviewers can therefore make locally sensible
+judgments that conflict or become stale when applied concurrently.
+
+The primary contribution should be:
+
+> A dependency-aware method for allocating proposal generation, review,
+> escalation, and regeneration among LLMs, nonexperts, and experts while
+> preserving dissent and maintaining a coherent evolving artifact.
+
+The nonexpert layer is a secondary empirical question, not a design assumption.
+It is justified only if it reduces net expert effort or catches valuable errors
+after accounting for recruitment, training, aggregation, and audit. Direct
+expert-LLM collaboration remains a valid outcome if the middle layer adds little
+incremental value.
 
 ## 3. Research framing
 
@@ -128,15 +154,15 @@ The complete dependency rationale is documented in
 
 ### RQ1: Reviewability across expertise
 
-For which ontology proposal types can informed non-stewards and general reviewers
-make judgments comparable to an independent expert reference panel, and where do
-expertise gaps remain?
+For which ontology proposal types do informed non-stewards and general reviewers
+add enough error-detection or expert-time savings to justify their full
+coordination cost, and where is direct expert-LLM review preferable?
 
-### RQ2: Influence and deliberation
+### RQ2: Dependencies and coordinated review
 
-How do model-rationale exposure, structured rationale exchange, and AI-mediated
-synthesis change reviewers' decisions, confidence, disagreement reasons, effort,
-and retention of minority rationales?
+How should the system order, route, invalidate, and regenerate proposals when
+multiple judgments affect the same dependent, mutable ontology, and which
+conflicts require deliberation rather than automatic propagation?
 
 ### RQ3: Selective oversight
 
@@ -144,10 +170,11 @@ Can observable signals identify which proposals can receive lower-cost oversight
 and which require expert review or abstention, while meeting predeclared quality
 and dissent-preservation thresholds on held-out ontology branches?
 
-### RQ4: End-to-end compositionality
+### RQ4: Transfer and end-to-end compositionality
 
-Does applying decisions from the proposed oversight policy produce an ontology
-snapshot that is easier to understand and navigate without increasing formal or
+Do issue patterns learned on Sell transfer first to the near-mirror Buy branch and
+then to a semantically different held-out branch, and does applying the resulting
+policy improve the complete ontology without increasing formal or
 expert-identified structural defects?
 
 ## 5. Preregistered expectations
@@ -264,6 +291,18 @@ The operational app should be forked into a versioned study mode with:
 The UI and content questions must be separated. Otherwise, disagreement could be
 caused by a bad proposal, an unclear title, or an interaction failure.
 
+The operational and scientific tracks must also be separated:
+
+- **Track A, operational development:** continue expert-guided Sell repair and Buy
+  transfer now. Version every snapshot, prompt, response, propagation, and
+  regeneration cycle. These data are formative.
+- **Track B, research validation:** freeze a semantically different branch,
+  collect independent judgments under a fixed protocol, and evaluate routing,
+  coordination, and the marginal value of each expertise layer.
+
+Track B must not delay useful Track A work, but Track A observations cannot be
+reported as if they came from Track B.
+
 ## Study 0: Formative interface and dependency validation
 
 ### Purpose
@@ -310,6 +349,27 @@ The main study should not begin until:
 If these criteria fail, iterate the UI and repeat targeted sessions. Do not mix
 pre-freeze and post-freeze responses in the confirmatory dataset.
 
+## Study 0B: Cost-value feasibility pilot
+
+Before recruiting the full Study 1 sample, select approximately 24-36 balanced
+proposals from one frozen far-transfer branch. Have two independent stewards,
+four informed nonexperts, and four careful general reviewers assess the same
+proposal sample without seeing prior answers.
+
+Estimate:
+
+- reviewer time and full cost by stratum;
+- errors caught uniquely by each stratum;
+- expert minutes saved after training, aggregation, and audit;
+- unresolved-case and escalation behavior;
+- agreement by task family; and
+- learning across sequential feedback.
+
+Scale the nonexpert layer only if it reduces net expert effort or contributes
+distinct quality signal. Otherwise, simplify the architecture around direct
+expert-LLM interaction and retain nonexperts only for task families where the
+pilot supports them.
+
 ## Study 1: Confirmatory oversight and deliberation study
 
 ### 7.1 Stimulus development and held-out test
@@ -317,10 +377,11 @@ pre-freeze and post-freeze responses in the confirmatory dataset.
 Sell is the development branch. It must not be the sole confirmatory branch
 because prompts, proposal copy, and interface behavior were tuned against it.
 
-1. Use Sell and one additional branch for prompt development and variance
+1. Use Sell for development and Buy for near-transfer debugging and variance
    estimation.
 2. Freeze all prompts, model versions, ontology policies, and UI behavior.
-3. Select 3–5 held-out sub-branches varying in size and semantic character.
+3. Select at least one far-transfer branch before inspecting its proposals, then
+   expand to 3–5 held-out sub-branches if the feasibility pilot succeeds.
 4. Generate proposals by issue type from the frozen pipeline.
 5. Sample approximately 180 proposals with minimum representation from six
    families: labels/metadata, identity, grouping, placement, exact actions, and
@@ -355,6 +416,10 @@ relations that earlier approved changes would remove.
 ### 7.3 Participants
 
 Planning target: 72 independent reviewers.
+
+This is an upper planning scenario, not the immediate recruitment target. It is
+conditional on Study 0B showing that the nonexpert strata add measurable value
+and on simulation-based power analysis.
 
 | Stratum                    | Target | Eligibility                                                                                       |  Planned workload |
 | -------------------------- | -----: | ------------------------------------------------------------------------------------------------- | ----------------: |
@@ -680,6 +745,7 @@ disclosed and analyzed as a sensitivity check.
 Subject to ontology and participant-data permissions, release:
 
 - anonymized frozen app and study mode;
+- the read-only formative baseline exporter and aggregate pilot audit;
 - proposal schema and dependency graph;
 - prompt and model-version manifests;
 - ontology snapshots or structurally equivalent deidentified samples;
@@ -789,19 +855,24 @@ Target 7,000–8,000 words excluding references, consistent with the CHI call.
 
 ## 17. Immediate actions
 
-1. Ask Tom and Rob to approve the narrow framing: scalable oversight of
-   open-ended AI proposals, not a general proof of ontology correctness.
-2. Identify an MIT co-investigator responsible for human-subjects protocol and
-   submit the ethics determination immediately.
-3. Recruit at least two external ontology/knowledge-organization experts for the
-   reference panel.
-4. Freeze a written ontology policy covering titles, synonyms, polysemy,
-   grouping, placement, and acceptable unresolved cases.
-5. Implement study mode without changing the production review experience.
-6. Select development and held-out branches before inspecting their agent
-   proposals.
-7. Run the 12-person formative UI study and simulation-based power analysis.
-8. Make the August 3 go/no-go decision based on the criteria above.
+1. Export and freeze the current Sell/Buy formative trace, including code,
+   snapshot, prompt, agent, timing, and revision hashes.
+2. Give Tom the current Sell hierarchy for an independent pass before revealing
+   Rob's decisions, then compare their reasoning.
+3. Classify remaining Sell issues and change prompts only for recurring,
+   generalizable failures.
+4. Continue Buy as near transfer without claiming it is an unrelated held-out
+   domain.
+5. Compare the systems from Iman, Shuo, and Alice's UROPs using written design
+   decisions and constraints as well as demos.
+6. Select and freeze a semantically different far-transfer branch before
+   inspecting proposals.
+7. Run Study 0B to measure whether the nonexpert layer creates value net of its
+   transaction costs.
+8. Identify an MIT co-investigator for human-subjects review, recruit external
+   reference experts, and freeze the ontology policy and study mode.
+9. Make the August 3 go/no-go decision based on ethics, pilot signal, power,
+   recruitment, and the existing criteria.
 
 ## 18. Core literature
 
