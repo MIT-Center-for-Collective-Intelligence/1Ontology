@@ -705,7 +705,8 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                             height: "40px",
                             borderRadius: "18px",
                             color: "orange",
-                            fontWeight: "bold",
+                            fontWeight: 700,
+                            fontSize: "1.15rem",
                             backgroundColor: (theme) =>
                               theme.palette.background.paper,
                           },
@@ -758,7 +759,8 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                       <Typography
                         sx={{
                           color: "orange",
-                          fontWeight: "bold",
+                          fontWeight: 700,
+                          fontSize: "1.15rem",
                           overflow: "hidden",
                           textOverflow: "ellipsis",
                           whiteSpace: "nowrap",
@@ -820,8 +822,8 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                   <Tooltip title={currentVisibleNode.title}>
                     <Typography
                       sx={{
-                        fontWeight: 500,
-                        fontSize: "0.95rem",
+                        fontWeight: 700,
+                        fontSize: "1.15rem",
                         overflow: "hidden",
                         textOverflow: "ellipsis",
                         whiteSpace: "nowrap",

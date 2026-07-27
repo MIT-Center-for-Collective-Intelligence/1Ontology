@@ -855,6 +855,11 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
       (d: any) => d.symbol === "x" && !currentNodePartIdsSet.has(d.from),
     );
 
+    // "x" rows render in their own lists right below the draggable one; the
+    // draggable list drops its bottom padding then so they read as one list.
+    const hasTrailingXRows =
+      notInheritedItems.length > 0 || nonDraggableItems.length > 0;
+
     // Shared styling for both part dropdowns' menus.
     const menuPaperSx = {
       mt: 0.5,
@@ -937,6 +942,22 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
       fontSize: "0.95rem",
       color: "text.disabled",
     };
+    const rowHeightSpacer = (
+      <Select
+        value=""
+        displayEmpty
+        disabled
+        size="small"
+        aria-hidden
+        renderValue={() => <Box>{"\u00A0"}</Box>}
+        sx={{
+          visibility: "hidden",
+          fontSize: "0.9rem",
+          minWidth: 0,
+          borderRadius: "15px",
+        }}
+      />
+    );
 
     return (
       <Box
@@ -952,6 +973,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
               {...provided.droppableProps}
               sx={{
                 px: 1.8,
+                pb: hasTrailingXRows ? 0 : undefined,
               }}
             >
               {draggableItems.map((entry: any, index: number) => (
@@ -1590,9 +1612,12 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                   </Tooltip>
                 )}
 
-                {/* Not inherited: right column intentionally blank — no switch
-                    dropdown, since the part isn't on this node. */}
-                <ListItemText primary={null} sx={{ flex: 1, minWidth: 0.3 }} />
+                {/* Not inherited: no switch dropdown since the part isn't on
+                    this node — an invisible one keeps the row height equal. */}
+                <ListItemText
+                  primary={rowHeightSpacer}
+                  sx={{ flex: 1, minWidth: 0.3 }}
+                />
               </ListItem>
             ))}
           </List>
@@ -1654,6 +1679,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                 key={`non-draggable-${entryFrom || index}`}
                 sx={{
                   display: "flex",
+                  alignItems: "center",
                   backgroundImage:
                     "repeating-linear-gradient(to right, gray 0, gray 1px, transparent 1px, transparent 6px)",
                   backgroundPosition: "top",
@@ -1699,7 +1725,10 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                   </Tooltip>
                 )}
 
-                <ListItemText primary={null} sx={{ flex: 1, minWidth: 0.3 }} />
+                <ListItemText
+                  primary={rowHeightSpacer}
+                  sx={{ flex: 1, minWidth: 0.3 }}
+                />
               </ListItem>
             ))}
           </List>
@@ -1833,7 +1862,8 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                         height: "40px",
                         borderRadius: "18px",
                         color: "orange",
-                        fontWeight: "bold",
+                        fontWeight: 700,
+                        fontSize: "1.15rem",
                         backgroundColor: (theme) =>
                           theme.palette.background.paper,
                       },
@@ -1886,7 +1916,8 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                   <Typography
                     sx={{
                       color: "orange",
-                      fontWeight: "bold",
+                      fontWeight: 700,
+                      fontSize: "1.15rem",
                       overflow: "hidden",
                       textOverflow: "ellipsis",
                       whiteSpace: "nowrap",
@@ -1953,8 +1984,8 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
               <Tooltip title={currentVisibleNode.title}>
                 <Typography
                   sx={{
-                    fontWeight: 500,
-                    fontSize: "0.95rem",
+                    fontWeight: 700,
+                    fontSize: "1.15rem",
                     overflow: "hidden",
                     textOverflow: "ellipsis",
                     whiteSpace: "nowrap",
