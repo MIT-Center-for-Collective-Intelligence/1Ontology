@@ -261,6 +261,7 @@ const main = async () => {
   const outputDirectory = path.resolve(required(args["out-dir"], "--out-dir"));
   const focusReviewerEmail = args["focus-reviewer-email"] || "";
   const focusReviewerLabel = args["focus-reviewer-label"] || "expert-steward";
+  const includeFocusFreeText = args["include-focus-free-text"] === "true";
   const serviceAccount = credentials(environment);
   const app = initializeApp(
     { credential: cert(serviceAccount) },
@@ -377,6 +378,7 @@ const main = async () => {
       rawReviewerIdsIncluded: false,
       reviewerEmailsIncluded: false,
       freeTextIncludedInBaseline: false,
+      privateFocusAppendixGenerated: includeFocusFreeText,
       reviewerLabels: "one-way pseudonyms, plus an optional named role label",
     },
     interpretation:
@@ -399,21 +401,16 @@ const main = async () => {
     path.join(outputDirectory, "tom-review-brief.md"),
     renderTomBrief(baseline),
   );
-  write(
-    path.join(outputDirectory, "expert-steward-disagreements.md"),
-    focusReviewerId
-      ? renderFocusDisagreements({
-          datasets: rawDatasets,
-          focusReviewerId,
-          focusReviewerLabel,
-        })
-      : [
-          "# Expert Steward Disagreements",
-          "",
-          "No focus reviewer was configured for this export.",
-          "",
-        ].join("\n"),
-  );
+  if (includeFocusFreeText && focusReviewerId) {
+    write(
+      path.join(outputDirectory, "private-expert-steward-disagreements.md"),
+      renderFocusDisagreements({
+        datasets: rawDatasets,
+        focusReviewerId,
+        focusReviewerLabel,
+      }),
+    );
+  }
   write(
     path.join(outputDirectory, "README.md"),
     [
@@ -422,7 +419,7 @@ const main = async () => {
       "- `tom-review-brief.md`: blind-first instructions and compact Sell audit for Tom.",
       "- `study-baseline.md`: human-readable aggregate audit across all Sell and Buy rounds.",
       "- `study-baseline.json`: machine-readable metrics and SHA-256 inventories.",
-      "- `expert-steward-disagreements.md`: open only after an independent hierarchy review.",
+      "- Reviewer free text is excluded from this public package.",
       "",
       "Regenerate from the repository root:",
       "",
@@ -434,6 +431,8 @@ const main = async () => {
       "```",
       "",
       "The exporter reads review data and writes local artifacts. It does not mutate Firestore or an ontology.",
+      "",
+      "To create the private disagreement appendix, rerun into a non-repository directory with `--include-focus-free-text true`. Do not publish that file without a disclosure-risk review and reviewer approval.",
       "",
     ].join("\n"),
   );
