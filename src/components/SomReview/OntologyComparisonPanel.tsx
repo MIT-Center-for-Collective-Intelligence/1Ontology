@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Accordion,
   AccordionDetails,
@@ -7,6 +7,7 @@ import {
   Box,
   Button,
   Checkbox,
+  Chip,
   CircularProgress,
   FormControlLabel,
   IconButton,
@@ -14,6 +15,7 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import AccountTreeOutlinedIcon from "@mui/icons-material/AccountTreeOutlined";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -25,6 +27,7 @@ import {
   SomOntologyOutlineResponse,
   SomOntologyOutlineSnapshot,
 } from "../../types/ISomReview";
+import { reviewAccentColor } from "./reviewStyles";
 
 interface OutlineChild {
   childId: string;
@@ -48,6 +51,22 @@ const getCollectionKey = (
 
 const getOutlineIndentLevel = (indentLevel: number): number =>
   Math.min(indentLevel, 20);
+
+const treeScrollbarSx = {
+  maxHeight: { xs: 420, md: 560 },
+  overflow: "auto",
+  px: 1,
+  py: 1.25,
+  "&::-webkit-scrollbar": { width: 8 },
+  "&::-webkit-scrollbar-thumb": {
+    borderRadius: 8,
+    backgroundColor: (theme: { palette: { mode: string } }) =>
+      theme.palette.mode === "dark"
+        ? "rgba(255,255,255,0.18)"
+        : "rgba(0,0,0,0.18)",
+  },
+  "&::-webkit-scrollbar-track": { backgroundColor: "transparent" },
+} as const;
 
 const OutlineNode = ({
   nodeId,
@@ -111,6 +130,8 @@ const OutlineNode = ({
   nextAncestors.add(nodeId);
   const nodeIndentLevel = getOutlineIndentLevel(indentLevel);
   const collectionIndentLevel = getOutlineIndentLevel(indentLevel + 1);
+  const isEvidence = Boolean(node.evidence);
+  const isRoot = indentLevel === 0;
   const renderChild = (
     child: OutlineChild,
     childIndentLevel: number,
@@ -165,7 +186,17 @@ const OutlineNode = ({
         sx={{
           minHeight: 34,
           pl: `${nodeIndentLevel * 14}px`,
-          py: 0.25,
+          py: 0.2,
+          pr: 0.75,
+          borderRadius: 1,
+          transition: "background-color 0.15s ease",
+          "&:hover": {
+            backgroundColor: (theme) =>
+              alpha(
+                theme.palette.text.primary,
+                theme.palette.mode === "dark" ? 0.06 : 0.04,
+              ),
+          },
         }}
       >
         {hasChildren ? (
@@ -173,7 +204,16 @@ const OutlineNode = ({
             size="small"
             aria-label={`${isExpanded ? "Collapse" : "Expand"} ${node.title}`}
             onClick={() => onToggle(nodeId)}
-            sx={{ width: 30, height: 30, flex: "0 0 auto" }}
+            sx={{
+              width: 30,
+              height: 30,
+              flex: "0 0 auto",
+              color: "text.secondary",
+              "&:hover": {
+                color: reviewAccentColor,
+                backgroundColor: (theme) => alpha(reviewAccentColor(theme), 0.12),
+              },
+            }}
           >
             {isExpanded ? (
               <ExpandMoreIcon fontSize="small" />
@@ -188,10 +228,12 @@ const OutlineNode = ({
           sx={{
             minWidth: 0,
             pt: 0.45,
-            fontSize: "0.9rem",
-            fontWeight: indentLevel === 0 ? 800 : 600,
+            fontSize: isRoot ? "0.98rem" : isEvidence ? "0.84rem" : "0.9rem",
+            fontWeight: isRoot ? 800 : isEvidence ? 500 : 600,
+            fontStyle: isEvidence ? "italic" : "normal",
             lineHeight: 1.35,
             overflowWrap: "anywhere",
+            color: isEvidence ? "text.secondary" : "text.primary",
           }}
         >
           {node.title}
@@ -213,8 +255,8 @@ const OutlineNode = ({
               borderLeft: "1px solid",
               borderColor: (theme) =>
                 theme.palette.mode === "dark"
-                  ? "rgba(248, 248, 248, 0.24)"
-                  : "rgba(26, 26, 26, 0.2)",
+                  ? "rgba(248, 248, 248, 0.18)"
+                  : "rgba(26, 26, 26, 0.14)",
               content: '""',
               pointerEvents: "none",
             },
@@ -241,12 +283,32 @@ const OutlineNode = ({
               >
                 <Stack
                   direction="row"
-                  alignItems="flex-start"
+                  alignItems="center"
                   spacing={0.5}
                   sx={{
                     minHeight: 30,
-                    pl: `${collectionIndentLevel * 14}px`,
-                    py: 0.2,
+                    ml: `${collectionIndentLevel * 14}px`,
+                    mr: 0.5,
+                    my: 0.35,
+                    py: 0.25,
+                    pl: 0.25,
+                    pr: 1,
+                    width: "fit-content",
+                    maxWidth: "calc(100% - 8px)",
+                    borderRadius: 1.25,
+                    backgroundColor: (theme) =>
+                      alpha(
+                        reviewAccentColor(theme),
+                        theme.palette.mode === "dark" ? 0.14 : 0.09,
+                      ),
+                    transition: "background-color 0.15s ease",
+                    "&:hover": {
+                      backgroundColor: (theme) =>
+                        alpha(
+                          reviewAccentColor(theme),
+                          theme.palette.mode === "dark" ? 0.2 : 0.14,
+                        ),
+                    },
                   }}
                 >
                   <IconButton
@@ -259,8 +321,7 @@ const OutlineNode = ({
                       width: 24,
                       height: 24,
                       flex: "0 0 auto",
-                      color: (theme) =>
-                        theme.palette.mode === "dark" ? "#FFB15C" : "#9C3D00",
+                      color: reviewAccentColor,
                     }}
                   >
                     {isCollectionExpanded ? (
@@ -274,14 +335,12 @@ const OutlineNode = ({
                     data-outline-kind="collection-label"
                     sx={{
                       minWidth: 0,
-                      pt: 0.35,
-                      color: (theme) =>
-                        theme.palette.mode === "dark" ? "#FFB15C" : "#9C3D00",
-                      fontSize: "0.72rem",
+                      color: reviewAccentColor,
+                      fontSize: "0.7rem",
                       fontWeight: 800,
                       lineHeight: 1.3,
                       textTransform: "uppercase",
-                      letterSpacing: 0,
+                      letterSpacing: "0.04em",
                       overflowWrap: "anywhere",
                     }}
                   >
@@ -302,9 +361,10 @@ const OutlineNode = ({
                         width: 0,
                         borderLeft: "1px solid",
                         borderColor: (theme) =>
-                          theme.palette.mode === "dark"
-                            ? "rgba(255, 177, 92, 0.5)"
-                            : "rgba(156, 61, 0, 0.42)",
+                          alpha(
+                            reviewAccentColor(theme),
+                            theme.palette.mode === "dark" ? 0.45 : 0.35,
+                          ),
                         content: '""',
                         pointerEvents: "none",
                       },
@@ -328,10 +388,12 @@ const OutlineColumn = ({
   heading,
   snapshot,
   showEvidence,
+  tone,
 }: {
   heading: string;
   snapshot: SomOntologyOutlineSnapshot;
   showEvidence: boolean;
+  tone: "original" | "selected";
 }) => {
   const nodesById = useMemo(
     () => new Map(snapshot.nodes.map((node) => [node.id, node])),
@@ -385,15 +447,63 @@ const OutlineColumn = ({
   const [expandedCollections, setExpandedCollections] = useState<Set<string>>(
     () => new Set(expandableCollectionKeys),
   );
+  const previousRootNodeIdRef = useRef(snapshot.rootNodeId);
+  const previousCollectionKeysRef = useRef(expandableCollectionKeys);
 
+  // Full reset only when the outline snapshot itself changes — not when the
+  // reviewer toggles O*NET evidence (that would wipe their open nodes).
   useEffect(() => {
+    if (previousRootNodeIdRef.current === snapshot.rootNodeId) return;
+    previousRootNodeIdRef.current = snapshot.rootNodeId;
+    previousCollectionKeysRef.current = expandableCollectionKeys;
     setExpanded(new Set([snapshot.rootNodeId]));
     setExpandedCollections(new Set(expandableCollectionKeys));
-  }, [expandableCollectionKeys, snapshot.rootNodeId, showEvidence]);
+  }, [expandableCollectionKeys, snapshot.rootNodeId]);
+
+  // When evidence visibility changes, keep open nodes/collections; only prune
+  // hidden ones and auto-expand collections that just became available.
+  useEffect(() => {
+    const previousKeys = new Set(previousCollectionKeysRef.current);
+    previousCollectionKeysRef.current = expandableCollectionKeys;
+
+    setExpanded((current) => {
+      const next = new Set(
+        [...current].filter((id) => {
+          const node = nodesById.get(id);
+          return Boolean(node && (showEvidence || !node.evidence));
+        }),
+      );
+      if (
+        next.size === current.size &&
+        [...next].every((id) => current.has(id))
+      ) {
+        return current;
+      }
+      return next;
+    });
+    setExpandedCollections((current) => {
+      const valid = new Set(expandableCollectionKeys);
+      const next = new Set([...current].filter((key) => valid.has(key)));
+      for (const key of valid) {
+        if (!previousKeys.has(key)) next.add(key);
+      }
+      if (
+        next.size === current.size &&
+        [...next].every((key) => current.has(key))
+      ) {
+        return current;
+      }
+      return next;
+    });
+  }, [expandableCollectionKeys, nodesById, showEvidence]);
 
   const visibleNodeCount = snapshot.nodes.filter(
     (node) => showEvidence || !node.evidence,
   ).length;
+  const allExpanded =
+    expandableNodeIds.length > 0 &&
+    expandableNodeIds.every((id) => expanded.has(id)) &&
+    expandableCollectionKeys.every((key) => expandedCollections.has(key));
 
   return (
     <Box
@@ -403,9 +513,13 @@ const OutlineColumn = ({
         minWidth: 0,
         border: 1,
         borderColor: "divider",
-        borderRadius: 1,
+        borderRadius: 2,
         overflow: "hidden",
         backgroundColor: "background.paper",
+        boxShadow: (theme) =>
+          theme.palette.mode === "dark"
+            ? "0 8px 24px rgba(0,0,0,0.28)"
+            : "0 8px 24px rgba(15, 23, 42, 0.06)",
       }}
     >
       <Stack
@@ -416,67 +530,100 @@ const OutlineColumn = ({
         sx={{
           borderBottom: 1,
           borderColor: "divider",
+          borderLeft: 3,
+          borderLeftColor: (theme) =>
+            tone === "original"
+              ? theme.palette.mode === "dark"
+                ? "rgba(255,255,255,0.28)"
+                : "rgba(15, 23, 42, 0.28)"
+              : reviewAccentColor(theme),
           px: 1.5,
-          py: 1.25,
+          py: 1.35,
+          background: (theme) =>
+            theme.palette.mode === "dark"
+              ? `linear-gradient(180deg, ${alpha(theme.palette.common.white, 0.04)} 0%, transparent 100%)`
+              : `linear-gradient(180deg, ${alpha(theme.palette.common.black, 0.02)} 0%, transparent 100%)`,
         }}
       >
         <Box sx={{ minWidth: 0 }}>
-          <Typography
-            component="h3"
-            sx={{ fontSize: "0.95rem", fontWeight: 800 }}
-          >
-            {heading}
-          </Typography>
+          <Stack direction="row" alignItems="center" spacing={0.75} mb={0.35}>
+            <Typography
+              component="h3"
+              sx={{ fontSize: "0.95rem", fontWeight: 800, letterSpacing: 0.01 }}
+            >
+              {heading}
+            </Typography>
+            <Chip
+              size="small"
+              label={`${visibleNodeCount} nodes`}
+              sx={{
+                height: 22,
+                fontWeight: 700,
+                fontSize: "0.7rem",
+                color: "text.secondary",
+                backgroundColor: (theme) =>
+                  alpha(
+                    theme.palette.text.primary,
+                    theme.palette.mode === "dark" ? 0.1 : 0.06,
+                  ),
+              }}
+            />
+          </Stack>
           <Typography
             title={snapshot.ontologyName}
             sx={{
-              mt: 0.15,
               color: "text.secondary",
-              fontSize: "0.78rem",
+              fontSize: "0.76rem",
               overflow: "hidden",
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
             }}
           >
-            {visibleNodeCount} nodes · {snapshot.ontologyName}
+            {snapshot.ontologyName}
           </Typography>
         </Box>
-        <Stack direction="row" spacing={0.25}>
-          <Tooltip title="Expand all">
-            <IconButton
-              size="small"
-              aria-label={`Expand all ${heading.toLowerCase()} nodes`}
-              onClick={() => {
-                setExpanded(new Set(expandableNodeIds));
-                setExpandedCollections(new Set(expandableCollectionKeys));
-              }}
-            >
-              <UnfoldMoreIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Collapse all">
-            <IconButton
-              size="small"
-              aria-label={`Collapse all ${heading.toLowerCase()} nodes`}
-              onClick={() => {
+        <Tooltip title={allExpanded ? "Collapse all" : "Expand all"}>
+          <IconButton
+            size="small"
+            aria-label={`${allExpanded ? "Collapse" : "Expand"} all ${heading.toLowerCase()} nodes`}
+            onClick={() => {
+              if (allExpanded) {
                 setExpanded(new Set());
                 setExpandedCollections(new Set());
-              }}
-            >
+              } else {
+                setExpanded(new Set(expandableNodeIds));
+                setExpandedCollections(new Set(expandableCollectionKeys));
+              }
+            }}
+            sx={{
+              borderRadius: 1.25,
+              backgroundColor: (theme) =>
+                alpha(
+                  theme.palette.text.primary,
+                  theme.palette.mode === "dark" ? 0.06 : 0.04,
+                ),
+              "&:hover": {
+                color: reviewAccentColor,
+                backgroundColor: (theme) =>
+                  alpha(
+                    reviewAccentColor(theme),
+                    theme.palette.mode === "dark" ? 0.16 : 0.1,
+                  ),
+              },
+            }}
+          >
+            {allExpanded ? (
               <UnfoldLessIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        </Stack>
+            ) : (
+              <UnfoldMoreIcon fontSize="small" />
+            )}
+          </IconButton>
+        </Tooltip>
       </Stack>
       <Box
         role="tree"
         aria-label={`${heading} ${snapshot.rootTitle} hierarchy`}
-        sx={{
-          maxHeight: { xs: 420, md: 560 },
-          overflow: "auto",
-          px: 1,
-          py: 1,
-        }}
+        sx={treeScrollbarSx}
       >
         <OutlineNode
           nodeId={snapshot.rootNodeId}
@@ -556,11 +703,19 @@ const OntologyComparisonPanel = ({
       }}
       sx={{
         mt: 4,
-        borderTop: 1,
-        borderBottom: 1,
+        border: 1,
         borderColor: "divider",
+        borderRadius: 2,
+        overflow: "hidden",
         backgroundImage: "none",
+        backgroundColor: "background.paper",
         "&::before": { display: "none" },
+        "&.Mui-expanded": {
+          boxShadow: (theme) =>
+            theme.palette.mode === "dark"
+              ? `0 0 0 1px ${alpha(reviewAccentColor(theme), 0.28)}`
+              : `0 0 0 1px ${alpha(reviewAccentColor(theme), 0.2)}`,
+        },
       }}
     >
       <AccordionSummary
@@ -568,15 +723,40 @@ const OntologyComparisonPanel = ({
         aria-controls="ontology-comparison-content"
         id="ontology-comparison-header"
         sx={{
-          px: { xs: 1, sm: 1.5 },
-          minHeight: 64,
-          "& .MuiAccordionSummary-content": { minWidth: 0 },
+          px: { xs: 1.25, sm: 2 },
+          minHeight: 72,
+          "& .MuiAccordionSummary-content": { minWidth: 0, my: 1.25 },
+          "&:hover": {
+            backgroundColor: (theme) =>
+              alpha(
+                reviewAccentColor(theme),
+                theme.palette.mode === "dark" ? 0.06 : 0.04,
+              ),
+          },
         }}
       >
-        <Stack direction="row" alignItems="center" spacing={1.25} minWidth={0}>
-          <AccountTreeOutlinedIcon color="primary" />
+        <Stack direction="row" alignItems="center" spacing={1.5} minWidth={0}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: 40,
+              height: 40,
+              borderRadius: 1.5,
+              flex: "0 0 auto",
+              color: reviewAccentColor,
+              backgroundColor: (theme) =>
+                alpha(
+                  reviewAccentColor(theme),
+                  theme.palette.mode === "dark" ? 0.16 : 0.1,
+                ),
+            }}
+          >
+            <AccountTreeOutlinedIcon fontSize="small" />
+          </Box>
           <Box minWidth={0}>
-            <Typography sx={{ fontWeight: 800 }}>
+            <Typography sx={{ fontWeight: 800, fontSize: "1.02rem" }}>
               Compare {branch} hierarchy
             </Typography>
             <Typography
@@ -595,14 +775,17 @@ const OntologyComparisonPanel = ({
       </AccordionSummary>
       <AccordionDetails
         id="ontology-comparison-content"
-        sx={{ px: { xs: 1, sm: 1.5 }, pt: 0, pb: 2 }}
+        sx={{ px: { xs: 1.25, sm: 2 }, pt: 0, pb: 2.25 }}
       >
         {loading && (
-          <Stack alignItems="center" sx={{ py: 6 }}>
+          <Stack alignItems="center" spacing={1.25} sx={{ py: 6 }}>
             <CircularProgress
               size={32}
               aria-label="Loading ontology outlines"
             />
+            <Typography sx={{ color: "text.secondary", fontSize: "0.85rem" }}>
+              Loading outlines…
+            </Typography>
           </Stack>
         )}
         {!loading && loadError && (
@@ -618,14 +801,26 @@ const OntologyComparisonPanel = ({
           </Alert>
         )}
         {!loading && outline && (
-          <Stack spacing={1.5}>
+          <Stack spacing={1.75}>
             <Stack
               direction={{ xs: "column", sm: "row" }}
-              alignItems={{ xs: "flex-start", sm: "center" }}
+              alignItems={{ xs: "stretch", sm: "center" }}
               justifyContent="space-between"
-              spacing={0.75}
+              spacing={1}
+              sx={{
+                px: 1.25,
+                py: 1,
+                borderRadius: 1.5,
+                border: 1,
+                borderColor: "divider",
+                backgroundColor: (theme) =>
+                  alpha(
+                    theme.palette.text.primary,
+                    theme.palette.mode === "dark" ? 0.04 : 0.02,
+                  ),
+              }}
             >
-              <Typography sx={{ color: "text.secondary", fontSize: "0.9rem" }}>
+              <Typography sx={{ color: "text.secondary", fontSize: "0.88rem" }}>
                 Expand either outline independently. Collection labels are
                 preserved.
               </Typography>
@@ -635,17 +830,38 @@ const OntologyComparisonPanel = ({
                     size="small"
                     checked={showEvidence}
                     onChange={(event) => setShowEvidence(event.target.checked)}
+                    sx={{
+                      color: "text.secondary",
+                      "&.Mui-checked": { color: reviewAccentColor },
+                    }}
                   />
                 }
                 label="Include O*NET evidence"
-                sx={{ mr: 0 }}
+                sx={{
+                  mr: 0,
+                  ml: { xs: 0, sm: 1 },
+                  px: 0.75,
+                  py: 0.15,
+                  borderRadius: 1.25,
+                  backgroundColor: (theme) =>
+                    showEvidence
+                      ? alpha(
+                          reviewAccentColor(theme),
+                          theme.palette.mode === "dark" ? 0.14 : 0.08,
+                        )
+                      : "transparent",
+                  "& .MuiFormControlLabel-label": {
+                    fontSize: "0.86rem",
+                    fontWeight: showEvidence ? 700 : 500,
+                  },
+                }}
               />
             </Stack>
             <Box
               sx={{
                 display: "grid",
                 gridTemplateColumns: { xs: "minmax(0, 1fr)", md: "1fr 1fr" },
-                gap: 1.5,
+                gap: 1.75,
                 alignItems: "start",
               }}
             >
@@ -653,11 +869,13 @@ const OntologyComparisonPanel = ({
                 heading="Original"
                 snapshot={outline.original}
                 showEvidence={showEvidence}
+                tone="original"
               />
               <OutlineColumn
                 heading={currentRound ? "Current" : "Selected round"}
                 snapshot={outline.selected}
                 showEvidence={showEvidence}
+                tone="selected"
               />
             </Box>
           </Stack>
