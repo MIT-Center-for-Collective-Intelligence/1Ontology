@@ -1271,155 +1271,160 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                 placement="top"
                                 disableHoverListener={isSelectOpen}
                               >
-                                <Select
-                                  value={entry.to}
-                                  disabled={
-                                    savingPartIds.has(entry.to) ||
-                                    (partAlternativesLookup[entry.to]?.specs
-                                      .length ?? 0) +
-                                      (partAlternativesLookup[entry.to]?.gens
-                                        .length ?? 0) ===
-                                      0
-                                  }
-                                  onChange={(e) => {
-                                    const newPartId = e.target.value;
-                                    onReplacePart(entry.to, newPartId);
-                                  }}
-                                  onOpen={() => {
-                                    setIsSelectOpen(true);
-                                    handleDropdownOpen(entry.to);
-                                  }}
-                                  onClose={() => setIsSelectOpen(false)}
-                                  size="small"
-                                  renderValue={() => (
-                                    <Box
-                                      sx={{
-                                        overflow: "hidden",
-                                        textOverflow: "ellipsis",
-                                        whiteSpace: "nowrap",
-                                        display: "block",
-                                      }}
-                                    >
-                                      {allNodes[entry.to]?.title ||
-                                        entry.toTitle}
-                                    </Box>
-                                  )}
-                                  sx={{
-                                    color: (theme) =>
-                                      theme.palette.mode === "dark"
-                                        ? "white"
-                                        : "black",
-                                    fontSize: "0.9rem",
-                                    flex: 1,
-                                    minWidth: 0,
-                                    borderRadius: "15px",
-                                    backgroundColor: (theme) =>
-                                      theme.palette.background.paper,
-                                    overflow: "hidden",
-                                    textOverflow: "ellipsis",
-                                    whiteSpace: "nowrap",
-                                  }}
-                                  MenuProps={{
-                                    PaperProps: { sx: menuPaperSx },
-                                    MenuListProps: {
-                                      sx: {
-                                        paddingTop: 0.5,
-                                        paddingBottom: 0.5,
-                                      },
-                                    },
-                                  }}
+                                <Box
+                                  component="span"
+                                  sx={{ display: "flex", flex: 1, minWidth: 0 }}
                                 >
-                                  <ListSubheader sx={menuTitleSx}>
-                                    Switch to:
-                                  </ListSubheader>
-                                  <ListSubheader sx={sectionHeaderSx}>
-                                    Specializations
-                                  </ListSubheader>
-                                  {loadingSpecializations.has(entry.to) ? (
-                                    <MenuItem disabled sx={emptyStateSx}>
-                                      <SyncedSpinner size={16} />
-                                      <Typography
-                                        sx={{ ...emptyTextSx, ml: 1 }}
+                                  <Select
+                                    value={entry.to}
+                                    disabled={
+                                      savingPartIds.has(entry.to) ||
+                                      (partAlternativesLookup[entry.to]?.specs
+                                        .length ?? 0) +
+                                        (partAlternativesLookup[entry.to]?.gens
+                                          .length ?? 0) ===
+                                        0
+                                    }
+                                    onChange={(e) => {
+                                      const newPartId = e.target.value;
+                                      onReplacePart(entry.to, newPartId);
+                                    }}
+                                    onOpen={() => {
+                                      setIsSelectOpen(true);
+                                      handleDropdownOpen(entry.to);
+                                    }}
+                                    onClose={() => setIsSelectOpen(false)}
+                                    size="small"
+                                    renderValue={() => (
+                                      <Box
+                                        sx={{
+                                          overflow: "hidden",
+                                          textOverflow: "ellipsis",
+                                          whiteSpace: "nowrap",
+                                          display: "block",
+                                        }}
                                       >
-                                        Loading specializations...
-                                      </Typography>
-                                    </MenuItem>
-                                  ) : (partAlternativesLookup[entry.to]?.specs
-                                      .length ?? 0) > 0 ? (
-                                    (
-                                      partAlternativesLookup[entry.to]?.specs ??
-                                      []
-                                    ).map((spec: any) => (
-                                      <MenuItem
-                                        key={`spec-${spec.id}`}
-                                        value={spec.id}
-                                        sx={optionItemSx}
-                                      >
-                                        <SwapHorizIcon
-                                          sx={{
-                                            fontSize: 18,
-                                            color: "#f2a43a",
-                                          }}
-                                        />
-                                        <Typography sx={{ fontSize: "1rem" }}>
-                                          {spec.title}
-                                        </Typography>
-                                      </MenuItem>
-                                    ))
-                                  ) : (
-                                    <MenuItem disabled sx={emptyStateSx}>
-                                      <Typography sx={emptyTextSx}>
-                                        There is no Specializations to switch
-                                        to.
-                                      </Typography>
-                                    </MenuItem>
-                                  )}
-
-                                  <ListSubheader
-                                    sx={{ ...sectionHeaderSx, mt: 1 }}
+                                        {allNodes[entry.to]?.title ||
+                                          entry.toTitle}
+                                      </Box>
+                                    )}
+                                    sx={{
+                                      color: (theme) =>
+                                        theme.palette.mode === "dark"
+                                          ? "white"
+                                          : "black",
+                                      fontSize: "0.9rem",
+                                      flex: 1,
+                                      minWidth: 0,
+                                      borderRadius: "15px",
+                                      backgroundColor: (theme) =>
+                                        theme.palette.background.paper,
+                                      overflow: "hidden",
+                                      textOverflow: "ellipsis",
+                                      whiteSpace: "nowrap",
+                                    }}
+                                    MenuProps={{
+                                      PaperProps: { sx: menuPaperSx },
+                                      MenuListProps: {
+                                        sx: {
+                                          paddingTop: 0.5,
+                                          paddingBottom: 0.5,
+                                        },
+                                      },
+                                    }}
                                   >
-                                    Generalizations
-                                  </ListSubheader>
-                                  {loadingSpecializations.has(entry.to) ? (
-                                    <MenuItem disabled sx={emptyStateSx}>
-                                      <SyncedSpinner size={16} />
-                                      <Typography
-                                        sx={{ ...emptyTextSx, ml: 1 }}
-                                      >
-                                        Loading generalizations...
-                                      </Typography>
-                                    </MenuItem>
-                                  ) : (partAlternativesLookup[entry.to]?.gens
-                                      .length ?? 0) > 0 ? (
-                                    (
-                                      partAlternativesLookup[entry.to]?.gens ??
-                                      []
-                                    ).map((gen: any) => (
-                                      <MenuItem
-                                        key={`gen-${gen.id}`}
-                                        value={gen.id}
-                                        sx={optionItemSx}
-                                      >
-                                        <SwapHorizIcon
-                                          sx={{
-                                            fontSize: 18,
-                                            color: "#f2a43a",
-                                          }}
-                                        />
-                                        <Typography sx={{ fontSize: "1rem" }}>
-                                          {gen.title}
+                                    <ListSubheader sx={menuTitleSx}>
+                                      Switch to:
+                                    </ListSubheader>
+                                    <ListSubheader sx={sectionHeaderSx}>
+                                      Specializations
+                                    </ListSubheader>
+                                    {loadingSpecializations.has(entry.to) ? (
+                                      <MenuItem disabled sx={emptyStateSx}>
+                                        <SyncedSpinner size={16} />
+                                        <Typography
+                                          sx={{ ...emptyTextSx, ml: 1 }}
+                                        >
+                                          Loading specializations...
                                         </Typography>
                                       </MenuItem>
-                                    ))
-                                  ) : (
-                                    <MenuItem disabled sx={emptyStateSx}>
-                                      <Typography sx={emptyTextSx}>
-                                        There is no Generalizations to switch
-                                        to.
-                                      </Typography>
-                                    </MenuItem>
-                                  )}
-                                </Select>
+                                    ) : (partAlternativesLookup[entry.to]?.specs
+                                        .length ?? 0) > 0 ? (
+                                      (
+                                        partAlternativesLookup[entry.to]
+                                          ?.specs ?? []
+                                      ).map((spec: any) => (
+                                        <MenuItem
+                                          key={`spec-${spec.id}`}
+                                          value={spec.id}
+                                          sx={optionItemSx}
+                                        >
+                                          <SwapHorizIcon
+                                            sx={{
+                                              fontSize: 18,
+                                              color: "#f2a43a",
+                                            }}
+                                          />
+                                          <Typography sx={{ fontSize: "1rem" }}>
+                                            {spec.title}
+                                          </Typography>
+                                        </MenuItem>
+                                      ))
+                                    ) : (
+                                      <MenuItem disabled sx={emptyStateSx}>
+                                        <Typography sx={emptyTextSx}>
+                                          There is no Specializations to switch
+                                          to.
+                                        </Typography>
+                                      </MenuItem>
+                                    )}
+
+                                    <ListSubheader
+                                      sx={{ ...sectionHeaderSx, mt: 1 }}
+                                    >
+                                      Generalizations
+                                    </ListSubheader>
+                                    {loadingSpecializations.has(entry.to) ? (
+                                      <MenuItem disabled sx={emptyStateSx}>
+                                        <SyncedSpinner size={16} />
+                                        <Typography
+                                          sx={{ ...emptyTextSx, ml: 1 }}
+                                        >
+                                          Loading generalizations...
+                                        </Typography>
+                                      </MenuItem>
+                                    ) : (partAlternativesLookup[entry.to]?.gens
+                                        .length ?? 0) > 0 ? (
+                                      (
+                                        partAlternativesLookup[entry.to]
+                                          ?.gens ?? []
+                                      ).map((gen: any) => (
+                                        <MenuItem
+                                          key={`gen-${gen.id}`}
+                                          value={gen.id}
+                                          sx={optionItemSx}
+                                        >
+                                          <SwapHorizIcon
+                                            sx={{
+                                              fontSize: 18,
+                                              color: "#f2a43a",
+                                            }}
+                                          />
+                                          <Typography sx={{ fontSize: "1rem" }}>
+                                            {gen.title}
+                                          </Typography>
+                                        </MenuItem>
+                                      ))
+                                    ) : (
+                                      <MenuItem disabled sx={emptyStateSx}>
+                                        <Typography sx={emptyTextSx}>
+                                          There is no Generalizations to switch
+                                          to.
+                                        </Typography>
+                                      </MenuItem>
+                                    )}
+                                  </Select>
+                                </Box>
                               </Tooltip>
                               {!!entry.inheritedFrom &&
                                 (partSourcesLookup[entry.to] ?? []).length >=
@@ -1430,114 +1435,130 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                     } generalizations`}
                                     placement="top"
                                   >
-                                    <Select
-                                      value=""
-                                      displayEmpty
-                                      disabled={savingPartIds.has(entry.to)}
-                                      size="small"
-                                      renderValue={() => (
-                                        <Box
-                                          sx={{
-                                            overflow: "hidden",
-                                            textOverflow: "ellipsis",
-                                            whiteSpace: "nowrap",
-                                            fontSize: "0.72rem",
-                                            fontWeight: "bold",
-                                          }}
-                                        >
-                                          Inherited from
-                                        </Box>
-                                      )}
+                                    {/* Span, not the input: InputBase fires an
+                                        event-less onBlur when disabled
+                                        mid-focus. */}
+                                    <Box
+                                      component="span"
                                       sx={{
+                                        display: "flex",
                                         flex: "0 0 25%",
                                         minWidth: 0,
-                                        color: "#f2a43a",
-                                        fontWeight: "bold",
-                                        borderRadius: "15px",
-                                        backgroundColor: (theme) =>
-                                          theme.palette.background.paper,
-                                        "& .MuiOutlinedInput-notchedOutline": {
-                                          borderColor:
-                                            "rgba(242, 164, 58, 0.55)",
-                                        },
-                                        "&:hover .MuiOutlinedInput-notchedOutline":
-                                          {
-                                            borderColor: "#f2a43a",
-                                          },
-                                      }}
-                                      MenuProps={{
-                                        PaperProps: { sx: menuPaperSx },
-                                        MenuListProps: {
-                                          sx: {
-                                            paddingTop: 0.5,
-                                            paddingBottom: 0.5,
-                                          },
-                                        },
                                       }}
                                     >
-                                      <ListSubheader sx={menuTitleSx}>
-                                        This part is specifically inherited
-                                        from:
-                                      </ListSubheader>
-                                      {[...(partSourcesLookup[entry.to] ?? [])]
-                                        .sort(
-                                          (a, b) =>
-                                            (b.owner === entry.inheritedFrom
-                                              ? 1
-                                              : 0) -
-                                            (a.owner === entry.inheritedFrom
-                                              ? 1
-                                              : 0),
-                                        )
-                                        .map((source) => {
-                                          const isCurrent =
-                                            source.owner ===
-                                            entry.inheritedFrom;
-                                          return (
-                                            <MenuItem
-                                              key={`source-${source.genId}`}
-                                              disabled={isCurrent}
-                                              onClick={() => {
-                                                if (
-                                                  isCurrent ||
-                                                  savingPartIds.has(entry.to)
-                                                ) {
-                                                  return;
+                                      <Select
+                                        value=""
+                                        displayEmpty
+                                        disabled={savingPartIds.has(entry.to)}
+                                        size="small"
+                                        renderValue={() => (
+                                          <Box
+                                            sx={{
+                                              overflow: "hidden",
+                                              textOverflow: "ellipsis",
+                                              whiteSpace: "nowrap",
+                                              fontSize: "0.72rem",
+                                              fontWeight: "bold",
+                                            }}
+                                          >
+                                            Inherited from
+                                          </Box>
+                                        )}
+                                        sx={{
+                                          flex: 1,
+                                          minWidth: 0,
+                                          color: "#f2a43a",
+                                          fontWeight: "bold",
+                                          borderRadius: "15px",
+                                          backgroundColor: (theme) =>
+                                            theme.palette.background.paper,
+                                          "& .MuiOutlinedInput-notchedOutline":
+                                            {
+                                              borderColor:
+                                                "rgba(242, 164, 58, 0.55)",
+                                            },
+                                          "&:hover .MuiOutlinedInput-notchedOutline":
+                                            {
+                                              borderColor: "#f2a43a",
+                                            },
+                                        }}
+                                        MenuProps={{
+                                          PaperProps: { sx: menuPaperSx },
+                                          MenuListProps: {
+                                            sx: {
+                                              paddingTop: 0.5,
+                                              paddingBottom: 0.5,
+                                            },
+                                          },
+                                        }}
+                                      >
+                                        <ListSubheader sx={menuTitleSx}>
+                                          This part is specifically inherited
+                                          from:
+                                        </ListSubheader>
+                                        {[
+                                          ...(partSourcesLookup[entry.to] ??
+                                            []),
+                                        ]
+                                          .sort(
+                                            (a, b) =>
+                                              (b.owner === entry.inheritedFrom
+                                                ? 1
+                                                : 0) -
+                                              (a.owner === entry.inheritedFrom
+                                                ? 1
+                                                : 0),
+                                          )
+                                          .map((source) => {
+                                            const isCurrent =
+                                              source.owner ===
+                                              entry.inheritedFrom;
+                                            return (
+                                              <MenuItem
+                                                key={`source-${source.genId}`}
+                                                disabled={isCurrent}
+                                                onClick={() => {
+                                                  if (
+                                                    isCurrent ||
+                                                    savingPartIds.has(entry.to)
+                                                  ) {
+                                                    return;
+                                                  }
+                                                  switchPartSource(
+                                                    entry.to,
+                                                    source.genId,
+                                                  );
+                                                }}
+                                                sx={
+                                                  isCurrent
+                                                    ? currentSourceItemSx
+                                                    : optionItemSx
                                                 }
-                                                switchPartSource(
-                                                  entry.to,
-                                                  source.genId,
-                                                );
-                                              }}
-                                              sx={
-                                                isCurrent
-                                                  ? currentSourceItemSx
-                                                  : optionItemSx
-                                              }
-                                            >
-                                              <CheckIcon
-                                                sx={{
-                                                  fontSize: 18,
-                                                  color: "#f2a43a",
-                                                  visibility: isCurrent
-                                                    ? "visible"
-                                                    : "hidden",
-                                                }}
-                                              />
-                                              <Typography
-                                                sx={{
-                                                  fontSize: "1rem",
-                                                  fontWeight: isCurrent
-                                                    ? 700
-                                                    : 400,
-                                                }}
                                               >
-                                                {source.title}
-                                              </Typography>
-                                            </MenuItem>
-                                          );
-                                        })}
-                                    </Select>
+                                                <CheckIcon
+                                                  sx={{
+                                                    fontSize: 18,
+                                                    color: "#f2a43a",
+                                                    visibility: isCurrent
+                                                      ? "visible"
+                                                      : "hidden",
+                                                  }}
+                                                />
+                                                <Typography
+                                                  sx={{
+                                                    fontSize: "1rem",
+                                                    fontWeight: isCurrent
+                                                      ? 700
+                                                      : 400,
+                                                  }}
+                                                >
+                                                  {source.title}
+                                                </Typography>
+                                              </MenuItem>
+                                            );
+                                          })}
+                                      </Select>
+                                    </Box>
                                   </Tooltip>
                                 )}
                             </Box>
