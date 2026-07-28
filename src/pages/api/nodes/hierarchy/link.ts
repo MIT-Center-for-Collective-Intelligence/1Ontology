@@ -59,7 +59,10 @@ async function applyLink(ctx: ChangeCtx): Promise<{ ok: true }> {
     changeType: "modify elements" as const,
   };
 
-  await db.collection(NODES).doc(nodeId).update({ [side]: value });
+  await db
+    .collection(NODES)
+    .doc(nodeId)
+    .update({ [side]: value });
 
   const childLogs: NodeChange[] = [];
   await applyReciprocityRemove(
@@ -99,10 +102,13 @@ async function applyLink(ctx: ChangeCtx): Promise<{ ok: true }> {
   }
 
   // The inverse of reparenting: a node that just gained a real generalization
-  // leaves its root's unclassified collection.
+  // leaves its root's unclassified collection. The root it left counts as a
+  // REMOVED gen for the parts pass, so its parts switch to the new gen.
+  let leftRootId: string | null = null;
+  const leftRootByChild = new Map<string, string>();
   if (side === "generalizations") {
     if (added.length > 0) {
-      await removeFromUnclassified(
+      leftRootId = await removeFromUnclassified(
         nodeId,
         cache,
         parentLog,
@@ -113,7 +119,7 @@ async function applyLink(ctx: ChangeCtx): Promise<{ ok: true }> {
     }
   } else {
     for (const id of added) {
-      await removeFromUnclassified(
+      const parked = await removeFromUnclassified(
         id,
         cache,
         parentLog,
@@ -121,6 +127,7 @@ async function applyLink(ctx: ChangeCtx): Promise<{ ok: true }> {
         appName,
         childLogs,
       );
+      if (parked) leftRootByChild.set(id, parked);
     }
   }
 
@@ -131,7 +138,9 @@ async function applyLink(ctx: ChangeCtx): Promise<{ ok: true }> {
     await recomputeInheritance(nodeId, cache);
     await applyPartsForGenChange(
       nodeId,
-      removed,
+      leftRootId && !removed.includes(leftRootId)
+        ? [...removed, leftRootId]
+        : removed,
       cache,
       parentLog,
       uname,
@@ -142,9 +151,12 @@ async function applyLink(ctx: ChangeCtx): Promise<{ ok: true }> {
     for (const id of [...added, ...removed]) {
       cache.delete(id);
       await recomputeInheritance(id, cache);
+      const removedGens = removed.includes(id) ? [nodeId] : [];
+      const parked = leftRootByChild.get(id);
+      if (parked && !removedGens.includes(parked)) removedGens.push(parked);
       await applyPartsForGenChange(
         id,
-        removed.includes(id) ? [nodeId] : [],
+        removedGens,
         cache,
         parentLog,
         uname,
@@ -203,7 +215,11 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     return fail(res, 400, "nodeId is required");
   }
   if (side !== "specializations" && side !== "generalizations") {
-    return fail(res, 400, "side must be 'specializations' or 'generalizations'");
+    return fail(
+      res,
+      400,
+      "side must be 'specializations' or 'generalizations'",
+    );
   }
   const value = sanitizeCollections(data.value, nodeId);
   if (!value) return fail(res, 400, "value must be an array of collections");
@@ -227,7 +243,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     });
     return res.status(200).json(result);
   } catch (error: any) {
-    if (error instanceof HttpError) return fail(res, error.status, error.message);
+    if (error instanceof HttpError)
+      return fail(res, error.status, error.message);
     console.error("nodes/hierarchy/link error", error);
     recordLogs(
       {

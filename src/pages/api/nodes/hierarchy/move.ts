@@ -49,10 +49,16 @@ async function applyMove(ctx: {
   const previousValue = asCollections(nodeData.generalizations);
   const currentGens = generalizationIds(nodeData);
   if (!currentGens.includes(fromParentId)) {
-    throw new HttpError(400, "Node is not a specialization of the source parent");
+    throw new HttpError(
+      400,
+      "Node is not a specialization of the source parent",
+    );
   }
   if (currentGens.includes(toParentId)) {
-    throw new HttpError(409, "Node is already a specialization of the target parent");
+    throw new HttpError(
+      409,
+      "Node is already a specialization of the target parent",
+    );
   }
 
   await assertNoCycle("generalizations", nodeId, [toParentId]);
@@ -105,13 +111,23 @@ async function applyMove(ctx: {
     toCollectionName,
   );
 
-  await removeFromUnclassified(nodeId, cache, parentLog, uname, appName, childLogs);
+  // A root the node left also counts as a removed gen for the parts pass.
+  const leftRootId = await removeFromUnclassified(
+    nodeId,
+    cache,
+    parentLog,
+    uname,
+    appName,
+    childLogs,
+  );
 
   cache.delete(nodeId); // re-read so recompute sees the new generalizations
   await recomputeInheritance(nodeId, cache);
   await applyPartsForGenChange(
     nodeId,
-    [fromParentId],
+    leftRootId && leftRootId !== fromParentId
+      ? [fromParentId, leftRootId]
+      : [fromParentId],
     cache,
     parentLog,
     uname,
@@ -192,7 +208,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     });
     return res.status(200).json(result);
   } catch (error: any) {
-    if (error instanceof HttpError) return fail(res, error.status, error.message);
+    if (error instanceof HttpError)
+      return fail(res, error.status, error.message);
     console.error("nodes/hierarchy/move error", error);
     recordLogs(
       {

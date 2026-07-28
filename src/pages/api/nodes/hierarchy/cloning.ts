@@ -18,7 +18,11 @@ import {
   writeChangeLog,
   recordLogs,
 } from "@components/lib/server/hierarchy";
-import { partsNodes, toParts } from "@components/lib/server/parts";
+import {
+  applyPartsForGenChange,
+  partsNodes,
+  toParts,
+} from "@components/lib/server/parts";
 import {
   computeInheritedPartsDetails,
   fetchPartsContext,
@@ -291,7 +295,9 @@ async function applyClone(ctx: {
   // current node out of unclassified; a specializations add gives the new node
   // a second generalization.
   if (targetProperty === "generalizations") {
-    await removeFromUnclassified(
+    // Leaving unclassified counts as a removed gen for the parts pass, so the
+    // node's parts switch from the root onto its new generalization.
+    const leftRootId = await removeFromUnclassified(
       currentNodeId,
       cache,
       parentLog,
@@ -301,6 +307,15 @@ async function applyClone(ctx: {
     );
     cache.delete(currentNodeId);
     await recomputeInheritance(currentNodeId, cache);
+    await applyPartsForGenChange(
+      currentNodeId,
+      leftRootId ? [leftRootId] : [],
+      cache,
+      parentLog,
+      uname,
+      appName,
+      childLogs,
+    );
   } else if (targetProperty === "specializations") {
     cache.delete(newNodeId);
     await recomputeInheritance(newNodeId, cache);
