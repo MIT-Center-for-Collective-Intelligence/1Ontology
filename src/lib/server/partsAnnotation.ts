@@ -63,7 +63,8 @@ const fetchNodes = async (
 /**
  * Fetches the neighborhood computeInheritedPartsDetails needs around
  * `currentNode` (which may be an in-memory post-edit copy — it wins over the
- * stored doc) and returns it with a resolver. `extraIds` ride the part wave.
+ * stored doc) and returns it with a resolver. `extraIds` join the first wave,
+ * so their source chains close too.
  */
 export async function fetchPartsContext(
   currentNode: INode,
@@ -83,6 +84,7 @@ export async function fetchPartsContext(
   const relatedNodes = await fetchNodes([
     ...generalizations.map((g) => g.id),
     ...pathHint,
+    ...extraIds,
   ]);
   relatedNodes[currentNode.id] = currentNode;
 
@@ -111,7 +113,7 @@ export async function fetchPartsContext(
   }
 
   const partNodes = await fetchNodes([
-    ...new Set([...partIds, ...generalizationPartIds, ...extraIds]),
+    ...new Set([...partIds, ...generalizationPartIds]),
   ]);
   Object.assign(relatedNodes, partNodes);
 

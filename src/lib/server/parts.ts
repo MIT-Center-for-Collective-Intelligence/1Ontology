@@ -2,24 +2,22 @@ import { db } from "@components/lib/firestoreServer/admin";
 import { NODES } from "@components/lib/firestoreClient/collections";
 import {
   ICollection,
-  IInheritance,
   ILinkNode,
   INode,
   NodeChange,
 } from "@components/types/INode";
 import { NodeCache, getNode, walkSpecializations } from "./hierarchy";
+import { applyGenChange, toPartsNode, PartsGraph } from "./partsModel";
 import {
-  derivePartsAndRef,
-  matchesSource,
-  overallRefThroughGen,
-  partsAfterGenChange,
-} from "./partsModel";
+  computeInheritedPartsDetails,
+  fetchPartsContext,
+  makeResolvedOf,
+} from "./partsAnnotation";
 
 /**
- * Server-side helpers for parts inheritance.
- * "inheritedFrom": the node that owns it. (specific inheritance)
- * "partsOverallSource": the generalization a node draws its arrangement from. (direct generalization)
- * "inheritance.parts.ref": the owner that source derives to.
+ * Server-side helpers for parts inheritance (ref model).
+ * "inheritedFrom" on a stored entry: the node that OWNS the part.
+ * "partsInheritance.source": the direct generalization the node follows.
  */
 
 /** Parts live in a single "main" collection; read its node list. */
@@ -42,54 +40,11 @@ export function asPartsCollections(value: any): ICollection[] {
 }
 
 /**
- * Builds a complete `inheritance.parts` entry so a
- * legacy node with no entry still gets a valid one.
- */
-export function partsInheritanceEntry(
-  ref: string | null,
-  title: string,
-  existingType?: string,
-): IInheritance[string] {
-  return {
-    ref,
-    title,
-    inheritanceType:
-      (existingType as IInheritance[string]["inheritanceType"]) ??
-      "inheritUnlessAlreadyOverRidden",
-  };
-}
-
-/**
- * A node's tagged parts + its stored overall source. For an old node it
- * fills the gaps once: tags come from the generalizations, the source from
- * the old `inheritance.parts.ref` (a null ref stays null).
- */
-export function taggedPartsAndSource(
-  node: INode,
-  gens: GenForAttach[],
-): { tagged: ILinkNode[]; stored: string | null } {
-  const parts = partsNodes(node.properties?.parts);
-  if (node.partsOverallSource !== undefined) {
-    return { tagged: parts, stored: node.partsOverallSource };
-  }
-  const legacyRef = node.inheritance?.parts?.ref ?? null;
-  const stored =
-    legacyRef === null
-      ? null
-      : (gens.find(
-          (g) =>
-            overallRefThroughGen(g) === legacyRef && matchesSource(parts, g),
-        )?.id ?? null);
-  const tagged = parts.some((p) => !!p.inheritedFrom)
-    ? parts
-    : derivePartsAndRef(parts, gens, { oldParts: [], sourceId: stored }).parts;
-  return { tagged, stored };
-}
-
-/**
- * Applies a generalization change to `nodeId`'s parts: parts tracked through a
- * removed gen are dropped (kept when a remaining gen still provides them), and
- * losing the attached source re-attaches to the first remaining gen by merge.
+ * Applies a generalization change to `nodeId`'s parts: stored entries tracked
+ * through a removed gen drop unless a remaining gen still provides them, and
+ * losing the attached source re-attaches to the first remaining gen by MERGE.
+ * The gen list changed, so the annotation pair is refreshed even when the
+ * stored parts came out identical.
  */
 export async function applyPartsForGenChange(
   nodeId: string,
@@ -103,84 +58,86 @@ export async function applyPartsForGenChange(
   cache.delete(nodeId);
   const node = await getNode(nodeId, cache);
   if (!node || node.deleted) return;
+  const current = { ...node, id: nodeId } as INode;
 
-  const remainingGens = await buildGensForAttach(node, cache);
-  const removedGens: GenForAttach[] = [];
-  for (const id of removedGenIds) {
-    const g = await getNode(id, cache);
-    if (!g) continue;
-    removedGens.push({
-      id,
-      parts: partsNodes(g.properties?.parts),
-      ref: g.inheritance?.parts?.ref ?? null,
-    });
-  }
-
-  const { tagged, stored } = taggedPartsAndSource(node, remainingGens);
-  const {
-    parts: newParts,
-    sourceId: newSource,
-    ref,
-  } = partsAfterGenChange({ tagged, stored, removedGens, remainingGens });
-
-  const before = partsNodes(node.properties?.parts);
-  const unchanged =
-    node.partsOverallSource !== undefined &&
-    newSource === node.partsOverallSource &&
-    newParts.length === before.length &&
-    newParts.every(
-      (p, i) =>
-        before[i]?.id === p.id &&
-        (before[i]?.inheritedFrom ?? null) === (p.inheritedFrom ?? null),
-    );
-  if (unchanged) return;
-
-  const beforeCol = asPartsCollections(node.properties?.parts);
-  const ownerTitle = ref ? ((await getNode(ref, cache))?.title ?? "") : "";
-  const partsEntry = partsInheritanceEntry(
-    ref,
-    ownerTitle,
-    node.inheritance?.parts?.inheritanceType,
+  // Context around the PRE-change state; the removed gens are no longer among
+  // the node's generalizations, so they ride the first wave explicitly.
+  const { relatedNodes } = await fetchPartsContext(current, removedGenIds);
+  const graph: PartsGraph = new Map(
+    Object.values(relatedNodes).map((n) => [n.id, toPartsNode(n)]),
   );
+  const remainingGenIds = (current.generalizations ?? []).flatMap((c) =>
+    (c.nodes ?? []).map((n) => n.id),
+  );
+  const { parts, partsInheritance } = applyGenChange(
+    nodeId,
+    graph,
+    removedGenIds,
+    remainingGenIds,
+  );
+
+  const beforeEntries = partsNodes(current.properties?.parts);
+  const beforeCol = asPartsCollections(current.properties?.parts);
+  const side = toParts(parts);
+  const updatedNode = {
+    ...current,
+    properties: { ...current.properties, parts: side },
+    partsInheritance,
+  } as INode;
+  const updatedRelated = { ...relatedNodes, [nodeId]: updatedNode };
+  const resolvedOfUpdated = makeResolvedOf(updatedRelated);
+
   await db
     .collection(NODES)
     .doc(nodeId)
     .update({
-      "properties.parts": toParts(newParts),
-      "inheritance.parts": partsEntry,
-      partsOverallSource: newSource,
+      "properties.parts": side,
+      partsInheritance,
+      inheritedPartsDetails: computeInheritedPartsDetails({
+        currentNode: updatedNode,
+        relatedNodes: updatedRelated,
+        resolvedOf: resolvedOfUpdated,
+      }),
+      resolvedParts: resolvedOfUpdated(nodeId),
     });
-  cache.set(nodeId, {
-    ...node,
-    properties: { ...node.properties, parts: toParts(newParts) },
-    inheritance: { ...node.inheritance, parts: partsEntry },
-    partsOverallSource: newSource,
-  } as INode);
+  cache.set(nodeId, updatedNode);
 
-  const keptIds = new Set(newParts.map((p) => p.id));
-  const dropped = before.map((p) => p.id).filter((id) => !keptIds.has(id));
-  await applyIsPartOfOwnerOnly(
-    nodeId,
-    node.title ?? "",
-    [],
-    dropped,
-    cache,
-    parentLog,
-    uname,
-    appName,
-    childLogs,
-  );
+  const keptIds = new Set(parts.map((p) => p.id));
+  const dropped = beforeEntries
+    .map((e) => e.id)
+    .filter((id) => !keptIds.has(id));
+  if (dropped.length > 0) {
+    await applyIsPartOfOwnerOnly(
+      nodeId,
+      current.title ?? "",
+      [],
+      dropped,
+      cache,
+      parentLog,
+      uname,
+      appName,
+      childLogs,
+    );
+  }
 
-  if (uname) {
+  const changed =
+    (current.partsInheritance?.source ?? null) !== partsInheritance.source ||
+    parts.length !== beforeEntries.length ||
+    parts.some(
+      (p, i) =>
+        beforeEntries[i]?.id !== p.id ||
+        (beforeEntries[i]?.inheritedFrom ?? null) !== (p.inheritedFrom ?? null),
+    );
+  if (uname && changed) {
     childLogs.push({
       nodeId,
       modifiedBy: uname,
       modifiedProperty: "parts",
       previousValue: beforeCol,
-      newValue: toParts(newParts),
+      newValue: side,
       modifiedAt: new Date(),
       changeType: "modify elements",
-      fullNode: node,
+      fullNode: current,
       triggeredBy: parentLog,
       ...(appName ? { appName } : {}),
     } as NodeChange);
@@ -267,34 +224,6 @@ export async function applyIsPartOfOwnerOnly(
       } as NodeChange);
     }
   }
-}
-
-export type GenForAttach = {
-  id: string;
-  parts: ILinkNode[];
-  /** The generalization's own parts.ref (used to resolve part owners). */
-  ref: string | null;
-};
-
-/** Builds the attachment candidates from a node's generalizations, in order. */
-export async function buildGensForAttach(
-  nodeData: INode,
-  cache: NodeCache,
-): Promise<GenForAttach[]> {
-  const genIds = (nodeData.generalizations || []).flatMap((c) =>
-    (c.nodes || []).map((n) => n.id),
-  );
-  const gens: GenForAttach[] = [];
-  for (const id of genIds) {
-    const g = await getNode(id, cache);
-    if (!g || g.deleted) continue;
-    gens.push({
-      id,
-      parts: partsNodes(g.properties?.parts),
-      ref: g.inheritance?.parts?.ref ?? null,
-    });
-  }
-  return gens;
 }
 
 /**
