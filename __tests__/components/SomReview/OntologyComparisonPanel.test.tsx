@@ -154,6 +154,69 @@ describe("ontology comparison panel", () => {
     ).toBeInTheDocument();
   });
 
+  it("keeps manually expanded nodes open when toggling O*NET evidence", async () => {
+    const nestedOutline: SomOntologyOutlineResponse = {
+      ...outlineResponse,
+      original: {
+        ...outlineResponse.original,
+        nodes: [
+          ...outlineResponse.original.nodes,
+          {
+            id: "original-grandchild",
+            title: "Purchase online",
+            evidence: false,
+          },
+        ],
+        edges: [
+          ...outlineResponse.original.edges,
+          {
+            parentId: "original-main-child",
+            childId: "original-grandchild",
+            collectionName: "main",
+          },
+        ],
+      },
+    };
+    (Post as jest.Mock).mockResolvedValue(nestedOutline);
+
+    render(
+      <OntologyComparisonPanel
+        datasetId="buy-current"
+        branch="Buy"
+        roundLabel="Current Buy round"
+        currentRound
+      />,
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: /Compare Buy hierarchy/i }),
+    );
+
+    const expandChild = await screen.findByRole("button", {
+      name: "Expand Purchase directly",
+    });
+    fireEvent.click(expandChild);
+    expect(screen.getByText("Purchase online")).toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole("checkbox", { name: "Include O*NET evidence" }),
+    );
+
+    expect(screen.getByText("Purchase online")).toBeInTheDocument();
+    expect(screen.getByText("(O*Net) Purchase task")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Collapse Purchase directly" }),
+    ).toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole("checkbox", { name: "Include O*NET evidence" }),
+    );
+
+    expect(screen.getByText("Purchase online")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Collapse Purchase directly" }),
+    ).toBeInTheDocument();
+  });
+
   it("renders Main collection children directly beneath their parent", async () => {
     render(
       <OntologyComparisonPanel
