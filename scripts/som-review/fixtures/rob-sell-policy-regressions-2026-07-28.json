@@ -1,0 +1,109 @@
+{
+  "schemaVersion": "som-audit-policy-regressions-v1",
+  "source": "Rob review meeting and Sell outline, 2026-07-28",
+  "cases": [
+    {
+      "id": "insurance-entitlement-not-document",
+      "input": "Sell insurance policies and investment instruments",
+      "expectedIssue": "placement",
+      "expectedOutcome": "Evaluate as a service or entitlement rather than defaulting to information.",
+      "requiredRuleIds": ["semantic-value-over-carrier", "contextual-placement"]
+    },
+    {
+      "id": "bicycle-and-accessory-existing-domain-parent",
+      "input": "Bicycles and bicycle accessories are flat siblings while a sporting-equipment category is available.",
+      "expectedIssue": "placement-or-grouping",
+      "expectedOutcome": "Test the existing sporting-equipment parent before creating a new category.",
+      "requiredRuleIds": [
+        "existing-parent-before-new-group",
+        "contextual-placement"
+      ]
+    },
+    {
+      "id": "flower-under-agriculture",
+      "input": "A flower-selling activity is separate from an existing agricultural-products category.",
+      "expectedIssue": "placement",
+      "expectedOutcome": "Test placement under the existing agricultural-products parent.",
+      "requiredRuleIds": [
+        "existing-parent-before-new-group",
+        "contextual-placement"
+      ]
+    },
+    {
+      "id": "food-specialty-under-food",
+      "input": "A food-specialty activity is separate from an existing food-and-beverage category.",
+      "expectedIssue": "placement",
+      "expectedOutcome": "Test placement under the existing food-and-beverage parent.",
+      "requiredRuleIds": [
+        "existing-parent-before-new-group",
+        "contextual-placement"
+      ]
+    },
+    {
+      "id": "gambling-chip-token-identity",
+      "input": "Two activities differ only by chip versus token and their evidence is substitutable.",
+      "expectedIssue": "duplicate-synonym",
+      "expectedOutcome": "Propose identity only after checking all source-task meanings.",
+      "requiredRuleIds": ["exact-activity-identity"]
+    },
+    {
+      "id": "service-number-variant",
+      "input": "Two activities differ only by a singular or plural service label.",
+      "expectedIssue": "duplicate-synonym",
+      "expectedOutcome": "Treat number variation as a candidate, not sufficient proof of identity.",
+      "requiredRuleIds": ["exact-activity-identity"]
+    },
+    {
+      "id": "admission-pass-ticket-identity",
+      "input": "Admission pass and admission ticket have substitutable evidence.",
+      "expectedIssue": "duplicate-synonym",
+      "expectedOutcome": "Propose identity when the evidence confirms the same activity.",
+      "requiredRuleIds": ["exact-activity-identity"]
+    },
+    {
+      "id": "postal-product-supply-identity",
+      "input": "Postal products and postal supplies may overlap but their source tasks must be inspected.",
+      "expectedIssue": "duplicate-synonym-or-grouping",
+      "expectedOutcome": "Require evidence before merging related object categories.",
+      "requiredRuleIds": ["exact-activity-identity"]
+    },
+    {
+      "id": "equipment-items-boundary",
+      "input": "Equipment and items may overlap but have no supplied identity evidence.",
+      "expectedIssue": "manual-evidence-review",
+      "expectedOutcome": "Do not merge broad related categories from wording alone.",
+      "requiredRuleIds": ["exact-activity-identity", "no-aesthetic-grouping"]
+    },
+    {
+      "id": "long-physical-object-list",
+      "input": "A long flat list contains stable domain clusters, including some two-member clusters.",
+      "expectedIssue": "flat-list-grouping",
+      "expectedOutcome": "Allow evidence-supported groups with two or more members.",
+      "requiredRuleIds": [
+        "evidence-supported-small-group",
+        "no-aesthetic-grouping"
+      ]
+    },
+    {
+      "id": "miscellaneous-versus-what",
+      "input": "A miscellaneous or other collection duplicates an explicit what dimension.",
+      "expectedIssue": "collection-design",
+      "expectedOutcome": "Raise a policy proposal that accounts for every child; do not silently remove anything.",
+      "requiredRuleIds": ["collection-policy-is-reviewable"]
+    },
+    {
+      "id": "funeral-task-multiple-parent-lineage",
+      "input": "One task names products and services, a specific product node is created, and broad product and service parents already exist.",
+      "expectedIssue": "evidence-parent-allocation",
+      "expectedOutcome": "Keep the specific product output and justified service parent; remove a superseded broad product edge.",
+      "requiredRuleIds": ["explicit-evidence-parent-allocation"]
+    },
+    {
+      "id": "temporary-usage-wrapper",
+      "input": "A temporary-usage wrapper has one rent-out child and lease-out is recorded as a synonym.",
+      "expectedIssue": "redundant-node-or-identity",
+      "expectedOutcome": "Test coextensiveness and preserve the lexical synonym; do not collapse without checking for other meanings.",
+      "requiredRuleIds": ["exact-activity-identity", "contextual-placement"]
+    }
+  ]
+}

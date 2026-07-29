@@ -1,0 +1,344 @@
+{
+  "schemaVersion": "som-review-v1",
+  "datasetVersion": "sell-rob-outline-followup-2026-07-28-v1",
+  "branch": "Sell",
+  "generatedAt": "2026-07-29T01:05:17.000Z",
+  "sourceOntology": "firestore://ontology-41607/final-hierarchy-with-o*net-rob-structure-applied-2026-07-25",
+  "sourceOntologySha256": "ec34b54cd9a8a3230f31af8f5efc95997eb5f70e5ff15fc7986a8cf67aa55809",
+  "safety": {
+    "reviewOnly": true,
+    "mutatesOntology": false,
+    "approvalAuthorizesAutomaticWrite": false,
+    "modelConfidenceVisibleToReviewer": false
+  },
+  "uiContract": {
+    "issueHomogeneousSessions": true,
+    "defaultSessionSize": 10,
+    "maximumSessionSize": 15,
+    "oneAtomicItemAtATime": true,
+    "agreeAutoAdvancesWithoutPageReload": true,
+    "disagreeRequiresReason": true,
+    "optionalContextCollapsedByDefault": true,
+    "allowSaveAndExit": true
+  },
+  "issueTypes": [
+    {
+      "id": "title-clarity",
+      "label": "Clarify unclear titles",
+      "stage": "content",
+      "robTaskIds": [
+        1
+      ],
+      "rolloutStatus": "prototype",
+      "view": "title-comparison",
+      "proposals": 0,
+      "controls": 0,
+      "manualChecks": 0
+    },
+    {
+      "id": "synonym-enrichment",
+      "label": "Add missing synonyms",
+      "stage": "content",
+      "robTaskIds": [
+        2
+      ],
+      "rolloutStatus": "experimental",
+      "view": "metadata-edit",
+      "proposals": 0,
+      "controls": 0,
+      "manualChecks": 0
+    },
+    {
+      "id": "description-enrichment",
+      "label": "Add missing descriptions",
+      "stage": "additional-quality",
+      "robTaskIds": [
+        3
+      ],
+      "optional": true,
+      "rolloutStatus": "experimental",
+      "view": "metadata-edit",
+      "proposals": 0,
+      "controls": 0,
+      "manualChecks": 0
+    },
+    {
+      "id": "misc-facet-duplicate",
+      "label": "Repeated miscellaneous/facet nodes",
+      "stage": "within-branch",
+      "robTaskIds": [
+        4
+      ],
+      "rolloutStatus": "experimental",
+      "view": "overlap-comparison",
+      "proposals": 0,
+      "controls": 0,
+      "manualChecks": 0
+    },
+    {
+      "id": "mistaken-synonym",
+      "label": "Mistaken synonyms",
+      "stage": "content",
+      "robTaskIds": [
+        5
+      ],
+      "rolloutStatus": "experimental",
+      "view": "metadata-edit",
+      "proposals": 0,
+      "controls": 0,
+      "manualChecks": 0
+    },
+    {
+      "id": "duplicate-synonym",
+      "label": "Undetected synonyms",
+      "stage": "content",
+      "robTaskIds": [
+        6
+      ],
+      "rolloutStatus": "experimental",
+      "view": "duplicate-comparison",
+      "proposals": 2,
+      "controls": 0,
+      "manualChecks": 3
+    },
+    {
+      "id": "polysemy",
+      "label": "Undetected double meanings",
+      "stage": "content",
+      "robTaskIds": [
+        7
+      ],
+      "rolloutStatus": "experimental",
+      "view": "polysemy-review",
+      "proposals": 0,
+      "controls": 0,
+      "manualChecks": 0
+    },
+    {
+      "id": "flat-list-grouping",
+      "label": "Group long flat lists",
+      "stage": "within-branch",
+      "robTaskIds": [
+        8
+      ],
+      "rolloutStatus": "prototype",
+      "view": "grouping-outline",
+      "proposals": 0,
+      "controls": 0,
+      "manualChecks": 1
+    },
+    {
+      "id": "compound-object-grouping",
+      "label": "Group compound objects",
+      "stage": "within-branch",
+      "robTaskIds": [
+        9
+      ],
+      "rolloutStatus": "prototype",
+      "view": "grouping-outline",
+      "proposals": 0,
+      "controls": 0,
+      "manualChecks": 0
+    },
+    {
+      "id": "collection-design",
+      "label": "Create warranted collections",
+      "stage": "within-branch",
+      "robTaskIds": [
+        10
+      ],
+      "rolloutStatus": "experimental",
+      "view": "collection-design",
+      "proposals": 1,
+      "controls": 0,
+      "manualChecks": 0
+    },
+    {
+      "id": "placement",
+      "label": "Wrong place within Sub-branch",
+      "stage": "within-branch",
+      "robTaskIds": [
+        11
+      ],
+      "rolloutStatus": "experimental",
+      "view": "placement-comparison",
+      "proposals": 7,
+      "controls": 0,
+      "manualChecks": 0
+    },
+    {
+      "id": "wrong-verb",
+      "label": "Misjudged synonyms within Sub-branch",
+      "stage": "outside-branch",
+      "robTaskIds": [
+        12
+      ],
+      "rolloutStatus": "experimental",
+      "view": "placement-comparison",
+      "proposals": 0,
+      "controls": 0,
+      "manualChecks": 0
+    },
+    {
+      "id": "sense-relocation",
+      "label": "Move a separated non-selling sense",
+      "stage": "outside-branch",
+      "robTaskIds": [
+        13
+      ],
+      "rolloutStatus": "experimental",
+      "view": "sense-relocation-action",
+      "proposals": 0,
+      "controls": 0,
+      "manualChecks": 0
+    },
+    {
+      "id": "node-merge",
+      "label": "Review approved node merges",
+      "stage": "final-action",
+      "robTaskIds": [
+        4,
+        6
+      ],
+      "rolloutStatus": "experimental",
+      "view": "merge-action",
+      "proposals": 5,
+      "controls": 0,
+      "manualChecks": 0
+    },
+    {
+      "id": "relocation",
+      "label": "Review approved relocations",
+      "stage": "final-action",
+      "robTaskIds": [
+        11,
+        12
+      ],
+      "rolloutStatus": "experimental",
+      "view": "relocation-action",
+      "proposals": 6,
+      "controls": 0,
+      "manualChecks": 0
+    },
+    {
+      "id": "missing-activity",
+      "label": "Missing activity",
+      "stage": "additional-quality",
+      "robTaskIds": [],
+      "optional": true,
+      "rolloutStatus": "experimental",
+      "view": "addition-action",
+      "proposals": 0,
+      "controls": 0,
+      "manualChecks": 0
+    },
+    {
+      "id": "redundant-node",
+      "label": "Redundant node",
+      "stage": "additional-quality",
+      "robTaskIds": [],
+      "rolloutStatus": "experimental",
+      "view": "merge-up-action",
+      "proposals": 0,
+      "controls": 0,
+      "manualChecks": 1
+    }
+  ],
+  "files": {
+    "allProposals": "all_proposals.jsonl",
+    "allControls": "all_controls.jsonl",
+    "manualChecks": "manual_checks.jsonl",
+    "proposalsByIssue": "proposals/<issue-type>.jsonl",
+    "controlsByIssue": "controls/<issue-type>.jsonl",
+    "rejectedAgentCandidates": "diagnostics/rejected_agent_candidates.jsonl",
+    "proposalSchema": "schema/review-proposal.schema.json",
+    "responseSchema": "schema/review-response.schema.json",
+    "schemaSource": "src/agents/review-proposal-contract.ts",
+    "ontologySnapshot": "ontology-snapshot.json"
+  },
+  "counts": {
+    "proposals": 21,
+    "controls": 0,
+    "manualChecks": 5,
+    "rejectedAgentCandidates": 0
+  },
+  "limitations": [
+    "The records encode Rob's July 28 outline observations as atomic review questions; they are not pre-approved ontology changes.",
+    "Admission-pass, postal, equipment/items, and temporary-use cases remain explicit boundary checks.",
+    "The collection-policy item cannot delete or reorganize the ontology.",
+    "Every application requires a separate snapshot-bound plan tied to reviewed proposal IDs."
+  ],
+  "sourceSnapshot": {
+    "file": "ontology-snapshot.json",
+    "sha256": "ec34b54cd9a8a3230f31af8f5efc95997eb5f70e5ff15fc7986a8cf67aa55809",
+    "ontologyAppId": "final-hierarchy-with-o*net-rob-structure-applied-2026-07-25",
+    "ontologyName": "Final Hierarchy with O*Net - Rob Structure Applied 2026-07-25",
+    "environment": "production",
+    "capturedAt": "2026-07-25T15:32:47.656Z",
+    "sellRootNodeId": "9c347b3345120c1df2554b834c13",
+    "nodeCount": 127,
+    "sellNodeCount": 123,
+    "referenceNodeCount": 4,
+    "edgeCount": 156,
+    "branchRootTitle": "Sell"
+  },
+  "coverage": {
+    "snapshotBound": true,
+    "exhaustiveWithinPackagedDetectorOutputs": true,
+    "semanticCompletenessGuaranteed": false,
+    "robTaskFamiliesRepresented": 1,
+    "robTaskFamiliesTotal": 13,
+    "exactRelocationsWithVerifiedCurrentTargets": 0,
+    "note": "Every issue family in Rob's July 9 document retains an atomic review contract. This cycle contains only snapshot-bound candidates after applying completed expert decisions; resolved or currently inapplicable queues may contain zero items. Candidate generation is exhaustive only for the packaged scans and deterministic metadata checks."
+  },
+  "regeneration": {
+    "mode": "drop-stale-and-rebind",
+    "excludedIssueTypes": [],
+    "excludedRecordCount": 0,
+    "staleRecordCount": 58,
+    "staleRecordAuditFile": "diagnostics/stale_records.jsonl",
+    "expansion": {
+      "generator": "scripts/som-review/expand-comprehensive-sell-dataset.mjs",
+      "replacedIssueTypes": [
+        "collection-design",
+        "compound-object-grouping",
+        "description-enrichment",
+        "duplicate-synonym",
+        "flat-list-grouping",
+        "missing-activity",
+        "mistaken-synonym",
+        "node-merge",
+        "placement",
+        "polysemy",
+        "redundant-node",
+        "relocation",
+        "sense-relocation",
+        "synonym-enrichment",
+        "wrong-verb"
+      ],
+      "inputProposalCount": 65,
+      "retainedProposalCount": 0,
+      "generatedProposalCount": 65,
+      "historicalPreSplitRejectedCandidates": 3
+    }
+  },
+  "reviewRelease": {
+    "strategy": "snapshot-bound-expert-followup",
+    "currentWave": "rob-outline-followup",
+    "releasedIssueTypes": [
+      "placement",
+      "relocation",
+      "duplicate-synonym",
+      "node-merge",
+      "collection-design",
+      "redundant-node",
+      "flat-list-grouping"
+    ],
+    "awaitingRegenerationIssueTypes": [],
+    "message": "Review the snapshot-bound issues identified in the July 28 Sell outline inspection. Exact merges and moves remain dependency-gated, and no response writes to the ontology."
+  },
+  "appliedReviewCycle": {
+    "auditFile": "diagnostics/structure_application_audit.json",
+    "auditSha256": "4e58676bb87a99ff9aeeb05d65761052946c6f6cf3ba6b4ddb31da2c3d7725bf"
+  }
+}

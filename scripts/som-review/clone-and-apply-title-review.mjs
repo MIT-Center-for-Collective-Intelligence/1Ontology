@@ -233,6 +233,21 @@ function addDirectSpecialization(node, entry) {
   }
 }
 
+function removeDirectSpecialization(node, childId) {
+  let removed = 0;
+  node.specializations = (node.specializations || [])
+    .map((collection) => {
+      const before = (collection.nodes || []).length;
+      const links = (collection.nodes || []).filter(
+        (link) => linkId(link) !== childId,
+      );
+      removed += before - links.length;
+      return { ...collection, nodes: links };
+    })
+    .filter((collection) => collection.nodes.length > 0);
+  return removed;
+}
+
 function taskAssignments(split) {
   return [
     { ...split.retainSourceAs, outputMode: "retained" },
@@ -248,6 +263,126 @@ function taskAssignments(split) {
     ...output,
     sourceTaskTitles: new Set(output.sourceTaskTitles),
   }));
+}
+
+function evidenceParentContractForTask(split, taskTitle) {
+  const contract = split.evidenceParentContract;
+  if (!contract) return null;
+  if (contract.policy !== "explicit") {
+    throw new Error(
+      `Split ${split.from} has unsupported evidence-parent policy "${contract.policy}"`,
+    );
+  }
+  const retainedByTask = contract.retainedExistingParentTitlesByTask;
+  if (
+    !retainedByTask ||
+    typeof retainedByTask !== "object" ||
+    !Object.hasOwn(retainedByTask, taskTitle)
+  ) {
+    throw new Error(
+      `Split ${split.from} lacks an explicit evidence-parent decision for task: ${taskTitle}`,
+    );
+  }
+  const retainedTitles = retainedByTask[taskTitle];
+  if (
+    !Array.isArray(retainedTitles) ||
+    retainedTitles.some((title) => typeof title !== "string" || !title.trim())
+  ) {
+    throw new Error(
+      `Split ${split.from} has an invalid retained-parent list for task: ${taskTitle}`,
+    );
+  }
+  if (new Set(retainedTitles).size !== retainedTitles.length) {
+    throw new Error(
+      `Split ${split.from} repeats a retained parent for task: ${taskTitle}`,
+    );
+  }
+  return new Set(retainedTitles);
+}
+
+function applyEvidenceParentContract({
+  nodes,
+  split,
+  sourceNode,
+  taskEntry,
+  assignedNodes,
+  targetAppId,
+}) {
+  const taskTitle = canonicalTaskTitle(taskEntry.node);
+  const retainedTitles = evidenceParentContractForTask(split, taskTitle);
+  if (!retainedTitles) {
+    return {
+      taskTitle,
+      policy: "legacy-source-only",
+      assignedOutputTitles: assignedNodes.map((node) => node.title).sort(),
+      retainedExistingParentTitles: [],
+      removedExistingParentTitles: [],
+    };
+  }
+
+  const assignedNodeIds = new Set(assignedNodes.map((node) => node.id));
+  const liveRetainableTitles = new Set();
+  const removedExistingParentTitles = [];
+  const retainedExistingParentTitles = [];
+
+  taskEntry.node.generalizations = (taskEntry.node.generalizations || [])
+    .map((collection) => {
+      const links = [];
+      for (const link of collection.nodes || []) {
+        const parentId = linkId(link);
+        const parent = nodes.get(parentId);
+        if (
+          parentId === sourceNode.id ||
+          assignedNodeIds.has(parentId) ||
+          !parent ||
+          parent.appName !== targetAppId ||
+          isOnetEvidence(parent)
+        ) {
+          links.push(link);
+          continue;
+        }
+
+        liveRetainableTitles.add(parent.title);
+        if (retainedTitles.has(parent.title)) {
+          retainedExistingParentTitles.push(parent.title);
+          links.push(link);
+          continue;
+        }
+
+        const removedReciprocal = removeDirectSpecialization(
+          parent,
+          taskEntry.node.id,
+        );
+        if (!removedReciprocal) {
+          throw new Error(
+            `Evidence parent ${parent.title} does not reciprocally specialize task ${taskTitle}`,
+          );
+        }
+        removedExistingParentTitles.push(parent.title);
+      }
+      return { ...collection, nodes: links };
+    })
+    .filter((collection) => collection.nodes.length > 0);
+
+  for (const retainedTitle of retainedTitles) {
+    if (!liveRetainableTitles.has(retainedTitle)) {
+      throw new Error(
+        `Split ${split.from} cannot retain unlinked evidence parent "${retainedTitle}" for task: ${taskTitle}`,
+      );
+    }
+  }
+
+  return {
+    taskTitle,
+    policy: "explicit",
+    assignedOutputTitles: assignedNodes.map((node) => node.title).sort(),
+    retainedExistingParentTitles: [
+      ...new Set(retainedExistingParentTitles),
+    ].sort(),
+    removedExistingParentTitles: [
+      ...new Set(removedExistingParentTitles),
+    ].sort(),
+  };
 }
 
 function applySplit(nodes, split, targetAppId) {
@@ -283,6 +418,27 @@ function applySplit(nodes, split, targetAppId) {
       throw new Error(
         `Split ${split.from} leaves an O*NET source task unassigned: ${title}`,
       );
+    }
+  }
+  if (split.evidenceParentContract?.policy === "explicit") {
+    const contractTaskTitles = new Set(
+      Object.keys(
+        split.evidenceParentContract.retainedExistingParentTitlesByTask || {},
+      ),
+    );
+    for (const title of liveTaskTitles) {
+      if (!contractTaskTitles.has(title)) {
+        throw new Error(
+          `Split ${split.from} lacks an explicit evidence-parent decision for task: ${title}`,
+        );
+      }
+    }
+    for (const title of contractTaskTitles) {
+      if (!liveTaskTitles.has(title)) {
+        throw new Error(
+          `Split ${split.from} declares evidence parents for an unlinked task: ${title}`,
+        );
+      }
     }
   }
 
@@ -359,6 +515,7 @@ function applySplit(nodes, split, targetAppId) {
     assignedExisting.push(existing);
   }
 
+  const evidenceParentChanges = [];
   for (const taskEntry of onetEntries) {
     const assignedOutputs = outputs.filter((output) =>
       output.sourceTaskTitles.has(canonicalTaskTitle(taskEntry.node)),
@@ -399,6 +556,16 @@ function applySplit(nodes, split, targetAppId) {
         `O*NET task ${taskEntry.node.id} does not reciprocally generalize to ${sourceNode.id}`,
       );
     }
+    evidenceParentChanges.push(
+      applyEvidenceParentContract({
+        nodes,
+        split,
+        sourceNode,
+        taskEntry,
+        assignedNodes,
+        targetAppId,
+      }),
+    );
   }
 
   return {
@@ -410,6 +577,7 @@ function applySplit(nodes, split, targetAppId) {
       id: node.id,
       title: node.title,
     })),
+    evidenceParentChanges,
   };
 }
 
@@ -825,6 +993,8 @@ function runSelfTest() {
   const taskId = "task";
   const existingId = "existing";
   const existingTaskId = "existing-task";
+  const retainedEvidenceParentId = "services";
+  const staleEvidenceParentId = "merchandise";
   const sourceDocuments = new Map([
     [
       parentId,
@@ -880,6 +1050,38 @@ function runSelfTest() {
       },
     ],
     [
+      retainedEvidenceParentId,
+      {
+        id: retainedEvidenceParentId,
+        appName: sourceAppId,
+        title: "Sell Services",
+        deleted: false,
+        specializations: [
+          {
+            collectionName: "O*NET",
+            nodes: [{ id: taskId, title: "Sell bicycles and accessories." }],
+          },
+        ],
+        generalizations: [],
+      },
+    ],
+    [
+      staleEvidenceParentId,
+      {
+        id: staleEvidenceParentId,
+        appName: sourceAppId,
+        title: "Sell Merchandise",
+        deleted: false,
+        specializations: [
+          {
+            collectionName: "O*NET",
+            nodes: [{ id: taskId, title: "Sell bicycles and accessories." }],
+          },
+        ],
+        generalizations: [],
+      },
+    ],
+    [
       taskId,
       {
         id: taskId,
@@ -891,7 +1093,17 @@ function runSelfTest() {
         generalizations: [
           {
             collectionName: "O*NET",
-            nodes: [{ id: sourceId, title: "Sell Bicycle" }],
+            nodes: [
+              { id: sourceId, title: "Sell Bicycle" },
+              {
+                id: retainedEvidenceParentId,
+                title: "Sell Services",
+              },
+              {
+                id: staleEvidenceParentId,
+                title: "Sell Merchandise",
+              },
+            ],
           },
         ],
       },
@@ -939,12 +1151,19 @@ function runSelfTest() {
             sourceTaskTitles: ["Sell products."],
           },
         ],
+        evidenceParentContract: {
+          policy: "explicit",
+          retainedExistingParentTitlesByTask: {
+            "Sell bicycles and accessories.": ["Sell Services"],
+            "Sell products.": [],
+          },
+        },
       },
     ],
     regenerateWithoutApplying: [],
   };
   const result = cloneAndTransform(sourceDocuments, plan);
-  if (result.targetDocuments.size !== 6 || result.report.newNodeCount !== 1) {
+  if (result.targetDocuments.size !== 8 || result.report.newNodeCount !== 1) {
     throw new Error("Self-test did not create exactly one split node");
   }
   const targetSourceId = result.idMap.get(sourceId);
@@ -952,12 +1171,25 @@ function runSelfTest() {
   const targetExistingId = result.idMap.get(existingId);
   const targetExistingTaskId = result.idMap.get(existingTaskId);
   const targetParentId = result.idMap.get(parentId);
+  const targetRetainedEvidenceParentId = result.idMap.get(
+    retainedEvidenceParentId,
+  );
+  const targetStaleEvidenceParentId = result.idMap.get(staleEvidenceParentId);
   const targetSource = result.targetDocuments.get(targetSourceId);
   const targetTask = result.targetDocuments.get(targetTaskId);
   const targetExisting = result.targetDocuments.get(targetExistingId);
   const targetExistingTask = result.targetDocuments.get(targetExistingTaskId);
   const targetParent = result.targetDocuments.get(targetParentId);
+  const targetRetainedEvidenceParent = result.targetDocuments.get(
+    targetRetainedEvidenceParentId,
+  );
+  const targetStaleEvidenceParent = result.targetDocuments.get(
+    targetStaleEvidenceParentId,
+  );
   const created = result.report.splits[0].created[0];
+  const evidenceChange = result.report.splits[0].evidenceParentChanges.find(
+    (change) => change.taskTitle === "Sell bicycles and accessories.",
+  );
   if (
     targetSource.title !== "Sell Bicycles" ||
     !targetSource.specializations[0].nodes.some(
@@ -978,6 +1210,21 @@ function runSelfTest() {
     targetExistingTask.generalizations[0].nodes.some(
       (link) => linkId(link) === targetSourceId,
     ) ||
+    !targetTask.generalizations[0].nodes.some(
+      (link) => linkId(link) === targetRetainedEvidenceParentId,
+    ) ||
+    targetTask.generalizations[0].nodes.some(
+      (link) => linkId(link) === targetStaleEvidenceParentId,
+    ) ||
+    !targetRetainedEvidenceParent.specializations[0].nodes.some(
+      (link) => linkId(link) === targetTaskId,
+    ) ||
+    (targetStaleEvidenceParent.specializations || []).some((collection) =>
+      (collection.nodes || []).some((link) => linkId(link) === targetTaskId),
+    ) ||
+    evidenceChange?.policy !== "explicit" ||
+    !evidenceChange.retainedExistingParentTitles.includes("Sell Services") ||
+    !evidenceChange.removedExistingParentTitles.includes("Sell Merchandise") ||
     sourceDocuments.get(sourceId).title !== "Sell Bicycle"
   ) {
     throw new Error(

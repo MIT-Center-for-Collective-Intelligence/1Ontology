@@ -644,6 +644,12 @@ export const ReviewPage = () => {
                   query: { dataset: datasetId },
                 })
               }
+              onOpenInspection={() =>
+                router.push({
+                  pathname: "/review/inspection",
+                  query: { workspace: workspaceId },
+                })
+              }
               headerAction={<ThemeModeToggle />}
               workspaceControls={
                 <>

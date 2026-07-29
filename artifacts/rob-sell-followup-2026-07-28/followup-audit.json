@@ -1,0 +1,441 @@
+{
+  "schemaVersion": "som-sell-followup-audit-v1",
+  "generatedAt": "2026-07-29T01:05:17.000Z",
+  "auditPolicyVersion": "ontology-audit-policy-v3",
+  "sourceSnapshot": {
+    "path": "Sell_Society_of_Mind_Review_UI_Handoff_2026-07-15/review-datasets-rob-post-structure-2026-07-25/ontology-snapshot.json",
+    "sha256": "ec34b54cd9a8a3230f31af8f5efc95997eb5f70e5ff15fc7986a8cf67aa55809",
+    "ontologyAppId": "final-hierarchy-with-o*net-rob-structure-applied-2026-07-25",
+    "ontologyName": "Final Hierarchy with O*Net - Rob Structure Applied 2026-07-25",
+    "capturedAt": "2026-07-25T15:32:47.656Z",
+    "rootNodeId": "9c347b3345120c1df2554b834c13",
+    "nodeCount": 127,
+    "edgeCount": 156
+  },
+  "safety": {
+    "dryRunOnly": true,
+    "ontologyMutated": false,
+    "confidenceAuthorizesMutation": false,
+    "everyOperationRequiresReviewedProposalId": true
+  },
+  "summary": {
+    "cases": 13,
+    "readyForExpertConfirmation": 7,
+    "needsBoundaryOrEvidenceReview": 4,
+    "regenerationCases": 1
+  },
+  "cases": [
+    {
+      "id": "miscellaneous-versus-what",
+      "failureClass": "prompt-policy-gap",
+      "disposition": "explicit-policy-review",
+      "current": {
+        "proposedCollectionName": "Sell what kind of usage?",
+        "proposedBranchTitles": [
+          "Sell information",
+          "Sell ownership",
+          "Sell physical objects",
+          "Sell service",
+          "Sell temporary use"
+        ],
+        "retiredCollectionNames": [
+          "Sell -- miscellaneous"
+        ],
+        "retiredPlaceholderTitles": [
+          "Sell (Other)"
+        ]
+      },
+      "proposed": "Account for every root child under the explicit What? dimension before retiring the redundant miscellaneous collection and Other placeholder.",
+      "automaticApplicationAllowed": false
+    },
+    {
+      "id": "funeral-evidence-lineage",
+      "failureClass": "dependency-failure",
+      "disposition": "ready-for-expert-confirmation",
+      "current": {
+        "taskNodeId": "6284bf15ece4581e8d4f0b41ca68",
+        "taskTitle": "(O*Net) 18843 - Sell funeral services, products, or merchandise to clients.",
+        "parentTitles": [
+          "Sell Funeral Products",
+          "Sell Products",
+          "Sell Services"
+        ]
+      },
+      "proposed": {
+        "assignedOutputTitles": [
+          "Sell Funeral Products"
+        ],
+        "retainedExistingParentTitles": [
+          "Sell Services"
+        ],
+        "removedExistingParentTitles": [
+          "Sell Products"
+        ]
+      },
+      "automaticApplicationAllowed": false
+    },
+    {
+      "id": "insurance-and-investment-semantic-type",
+      "failureClass": "detector-prompt-policy-gap",
+      "disposition": "ready-for-expert-confirmation",
+      "current": [
+        {
+          "parentNodeId": "64a0dfd908529ee455e1c0aed2e7",
+          "parentTitle": "Sell information",
+          "childNodeId": "d8d879750a910e578970e369b6b0",
+          "childTitle": "Sell Insurance Policies",
+          "collectionName": "main"
+        },
+        {
+          "parentNodeId": "64a0dfd908529ee455e1c0aed2e7",
+          "parentTitle": "Sell information",
+          "childNodeId": "6222f2046dcc8c83a7616cb3ab20",
+          "childTitle": "Sell Investment Instruments",
+          "collectionName": "main"
+        }
+      ],
+      "proposedParent": {
+        "id": "c578ae350a21084904b779a83dca",
+        "title": "Sell service"
+      },
+      "rationale": "The sold value is an entitlement and continuing service obligation, not merely the document or data that records it.",
+      "automaticApplicationAllowed": false
+    },
+    {
+      "id": "bicycle-domain-grouping",
+      "failureClass": "placement-or-grouping",
+      "disposition": "ready-for-expert-confirmation",
+      "current": [
+        {
+          "parentNodeId": "da8b4b175d8e1475f595d880d34b",
+          "parentTitle": "Sell physical objects",
+          "childNodeId": "18a4b18a07e6b17aa7e603ae06df",
+          "childTitle": "Sell Bicycles",
+          "collectionName": "main"
+        },
+        {
+          "parentNodeId": "da8b4b175d8e1475f595d880d34b",
+          "parentTitle": "Sell physical objects",
+          "childNodeId": "d1ebd3e26c6018436d99747310ef",
+          "childTitle": "Sell Bicycle Accessories",
+          "collectionName": "main"
+        }
+      ],
+      "proposedParent": {
+        "id": "ea49da030ace4af96991ae9ce273",
+        "title": "Sell Sporting Equipment"
+      },
+      "evidence": [
+        {
+          "id": "2b092f5472d58d603010a3941ade",
+          "title": "(O*Net) 20917 - Sell bicycles and accessories."
+        },
+        {
+          "id": "2b092f5472d58d603010a3941ade",
+          "title": "(O*Net) 20917 - Sell bicycles and accessories."
+        }
+      ],
+      "automaticApplicationAllowed": false
+    },
+    {
+      "id": "flower-placement",
+      "failureClass": "placement",
+      "disposition": "ready-for-expert-confirmation",
+      "current": {
+        "parentNodeId": "da8b4b175d8e1475f595d880d34b",
+        "parentTitle": "Sell physical objects",
+        "childNodeId": "577ed5177444c054e19b8defff0a",
+        "childTitle": "Sell Flower",
+        "collectionName": "main"
+      },
+      "proposedParent": {
+        "id": "fcb1760c855a5dc045461f600fe2",
+        "title": "Sell Agricultural Products"
+      },
+      "evidence": [
+        {
+          "id": "09fc37239a466897f02f63c8dd33",
+          "title": "(O*Net) 23376 - Sell and deliver plants and flowers to customers."
+        }
+      ],
+      "automaticApplicationAllowed": false
+    },
+    {
+      "id": "food-specialty-placement",
+      "failureClass": "placement",
+      "disposition": "ready-for-expert-confirmation",
+      "current": {
+        "parentNodeId": "da8b4b175d8e1475f595d880d34b",
+        "parentTitle": "Sell physical objects",
+        "childNodeId": "a2e10f817dec67b21f8147d28bb3",
+        "childTitle": "Sell Food Specialties",
+        "collectionName": "main"
+      },
+      "proposedParent": {
+        "id": "485fe8b113203bfe54cb37413cb0",
+        "title": "Sell Food and Beverages"
+      },
+      "evidence": [
+        {
+          "id": "79d26455cdfb1117449ad83bdefc",
+          "title": "(O*Net) 3165 - Sell food specialties, such as sandwiches and beverages, to office workers and patrons of sports events."
+        }
+      ],
+      "automaticApplicationAllowed": false
+    },
+    {
+      "id": "gambling-chip-token-identity",
+      "failureClass": "missed-identity",
+      "disposition": "ready-for-expert-confirmation",
+      "current": {
+        "canonical": {
+          "id": "c96c5de89bac9aeb7ba5db22bac3",
+          "title": "Sell Gambling Chips",
+          "description": "",
+          "synsets": "",
+          "actionAlternatives": []
+        },
+        "candidateSynonym": {
+          "id": "769c984afedf61408cfb65f97a7c",
+          "title": "Sell Gambling Tokens",
+          "description": "",
+          "synsets": "",
+          "actionAlternatives": []
+        },
+        "evidenceIsIdentical": true,
+        "evidence": [
+          {
+            "id": "a4f99ce10bdee2ae9bd11695ace7",
+            "title": "(O*Net) 4669 - Sell gambling chips, tokens, or tickets to patrons or to other workers for resale to patrons."
+          },
+          {
+            "id": "ff979f2674c1cd800f6d42893a89",
+            "title": "(O*Net) 7006 - Sell gambling chips, tokens, or tickets to patrons, or to other workers for resale to patrons."
+          }
+        ]
+      },
+      "proposed": "Keep one activity and preserve the absorbed title as a synonym; move all reciprocal evidence links.",
+      "automaticApplicationAllowed": false
+    },
+    {
+      "id": "service-number-identity",
+      "failureClass": "missed-identity",
+      "disposition": "ready-for-expert-confirmation",
+      "current": {
+        "parentNodeId": "c578ae350a21084904b779a83dca",
+        "parentTitle": "Sell service",
+        "childNodeId": "2bdf7edf2a4a6cb8ab52781f59f8",
+        "childTitle": "Sell Services",
+        "collectionName": "main"
+      },
+      "proposed": "Merge the generic plural node into the high-level singular activity while preserving its O*NET evidence and the plural form as a synonym.",
+      "evidence": [
+        {
+          "id": "23490bab0761189fd8f56d5aaa23",
+          "title": "(O*Net) 13237 - Circulate among potential customers or travel by foot, truck, automobile, or bicycle to deliver or sell merchandise or services."
+        },
+        {
+          "id": "8bb9048973c5259bc2599150326d",
+          "title": "(O*Net) 17620 - Sell products, services, or memberships."
+        },
+        {
+          "id": "6284bf15ece4581e8d4f0b41ca68",
+          "title": "(O*Net) 18843 - Sell funeral services, products, or merchandise to clients."
+        },
+        {
+          "id": "46e590fb51e0bc14526fe8cf3a47",
+          "title": "(O*Net) 23202 - Sell services or equipment, such as trusts, investments, or check processing services."
+        },
+        {
+          "id": "8a12494d36cbd530e1740a69fd76",
+          "title": "(O*Net) 2561 - Explain, promote, or sell products or services, such as travelers' checks, savings bonds, money orders, and cashier's checks, using computerized information about customers to tailor recommendations."
+        },
+        {
+          "id": "dc5a75aaeaaf7c397a15ec6a7ed6",
+          "title": "(O*Net) 4.A.4.a.6.I02 - Sell products or services."
+        },
+        {
+          "id": "a780858b436c91726207c5422e14",
+          "title": "(O*Net) 4.A.4.a.6.I02.D05 - Sell products or services."
+        },
+        {
+          "id": "3f05135b5a3f810ebcd3c3cf9edf",
+          "title": "(O*Net) 4.A.4.a.6.I03.D04 - Market products, services, or events."
+        }
+      ],
+      "automaticApplicationAllowed": false
+    },
+    {
+      "id": "admission-pass-ticket-boundary",
+      "failureClass": "identity-boundary",
+      "disposition": "needs-explicit-boundary-review",
+      "current": {
+        "ticket": {
+          "id": "54ddf7f8e5f93a08b04a69ce36ec",
+          "title": "Sell Ticket",
+          "description": "",
+          "synsets": "",
+          "actionAlternatives": []
+        },
+        "admissionPasses": {
+          "id": "6690211e26818c323dd1cae8ff37",
+          "title": "Sell Admission Passes",
+          "description": "",
+          "synsets": "",
+          "actionAlternatives": []
+        },
+        "ticketEvidence": [
+          {
+            "id": "bd649dd6a883c250ccb40aaa1cc0",
+            "title": "(O*Net) 20764 - Sell or collect admission tickets, passes, or facility memberships from patrons at entertainment events."
+          },
+          {
+            "id": "2049c973ae55f92306538a5be282",
+            "title": "(O*Net) 2413 - Sell tickets and other items to customers."
+          },
+          {
+            "id": "a4f99ce10bdee2ae9bd11695ace7",
+            "title": "(O*Net) 4669 - Sell gambling chips, tokens, or tickets to patrons or to other workers for resale to patrons."
+          },
+          {
+            "id": "497c611cf5e72c9550479e8089b0",
+            "title": "(O*Net) 5119 - Sell tickets and collect fees from customers."
+          },
+          {
+            "id": "ff979f2674c1cd800f6d42893a89",
+            "title": "(O*Net) 7006 - Sell gambling chips, tokens, or tickets to patrons, or to other workers for resale to patrons."
+          }
+        ],
+        "admissionPassEvidence": [
+          {
+            "id": "bd649dd6a883c250ccb40aaa1cc0",
+            "title": "(O*Net) 20764 - Sell or collect admission tickets, passes, or facility memberships from patrons at entertainment events."
+          }
+        ]
+      },
+      "proposed": "Review whether Admission Passes is a synonym or a narrower subtype of Ticket; the evidence is a subset rather than identical, so do not merge automatically.",
+      "automaticApplicationAllowed": false
+    },
+    {
+      "id": "postal-product-supply-boundary",
+      "failureClass": "identity-or-grouping-boundary",
+      "disposition": "needs-source-evidence-review",
+      "current": {
+        "products": {
+          "id": "d09637403b4ab145f22827af2929",
+          "title": "Sell Postal Products",
+          "description": "",
+          "synsets": "",
+          "actionAlternatives": []
+        },
+        "supplies": {
+          "id": "067424357e90bdcd0ad60c81f1c6",
+          "title": "Sell Postal Supplies",
+          "description": "Sell postal supplies such as stamps or money orders.",
+          "synsets": "",
+          "actionAlternatives": []
+        },
+        "productEvidence": [
+          {
+            "id": "434e08f634b0a2b425be05ec85c6",
+            "title": "(O*Net) 11325 - Sell and collect payment for products such as stamps, prepaid mail envelopes, and money orders."
+          },
+          {
+            "id": "922180eeb498370ccdc5780a0989",
+            "title": "(O*Net) 13286 - Sell mail products, and accept payment for products and mailing charges."
+          }
+        ],
+        "supplyChildren": [
+          {
+            "id": "ce269cdbada8adce60e9ee90cb0b",
+            "title": "Sell Money Orders",
+            "collectionName": "main"
+          },
+          {
+            "id": "4252b306936f8e0d895b3b56d7ba",
+            "title": "Sell Stamp",
+            "collectionName": "main"
+          }
+        ]
+      },
+      "proposed": "Compare the O*NET tasks with the Stamp and Money Orders descendants before deciding between merge, parent-child grouping, or separate nodes.",
+      "automaticApplicationAllowed": false
+    },
+    {
+      "id": "equipment-items-boundary",
+      "failureClass": "identity-or-grouping-boundary",
+      "disposition": "needs-source-evidence-review",
+      "current": {
+        "equipment": {
+          "id": "7984bf641c2e2988ac1ea33d42df",
+          "title": "Sell Equipment",
+          "description": "",
+          "synsets": "",
+          "actionAlternatives": []
+        },
+        "items": {
+          "id": "73ac376055ecceea969ef55aaa24",
+          "title": "Sell Items",
+          "description": "",
+          "synsets": "",
+          "actionAlternatives": []
+        },
+        "equipmentEvidence": [
+          {
+            "id": "6b9c6fcbc7ca2af5479ef1896fd2",
+            "title": "(O*Net) 13782 - Sell parts and equipment."
+          },
+          {
+            "id": "46e590fb51e0bc14526fe8cf3a47",
+            "title": "(O*Net) 23202 - Sell services or equipment, such as trusts, investments, or check processing services."
+          }
+        ],
+        "itemsEvidence": [
+          {
+            "id": "2049c973ae55f92306538a5be282",
+            "title": "(O*Net) 2413 - Sell tickets and other items to customers."
+          }
+        ]
+      },
+      "proposed": "Do not merge broad related object categories from labels alone; inspect source-task scope first.",
+      "automaticApplicationAllowed": false
+    },
+    {
+      "id": "temporary-use-wrapper",
+      "failureClass": "identity-policy-question",
+      "disposition": "needs-policy-decision",
+      "current": {
+        "wrapper": {
+          "id": "bc3a0d85a3dcd1e3ea729857acc3",
+          "title": "Sell temporary use",
+          "description": "Transfer temporary use of something in exchange for payment.",
+          "synsets": "",
+          "actionAlternatives": []
+        },
+        "onlySemanticChild": [
+          {
+            "id": "df319ef0372ddc12e45ccbd4b4b0",
+            "title": "Rent out",
+            "collectionName": "main"
+          }
+        ],
+        "childSynonyms": [
+          "Lease out"
+        ]
+      },
+      "proposed": "Review whether the wrapper is coextensive with Rent out. Preserve Lease out as a synonym and retain the wrapper only if another temporary-use specialization is identified.",
+      "automaticApplicationAllowed": false
+    },
+    {
+      "id": "long-physical-object-list",
+      "failureClass": "detector-miss-or-judge-threshold",
+      "disposition": "regenerate-with-policy-v3",
+      "current": {
+        "parentNodeId": "da8b4b175d8e1475f595d880d34b",
+        "semanticChildCount": 28
+      },
+      "proposed": "Rerun the structure detector with existing-parent-first placement and evidence-supported groups of two or more; continue rejecting aesthetic grouping.",
+      "automaticApplicationAllowed": false
+    }
+  ]
+}

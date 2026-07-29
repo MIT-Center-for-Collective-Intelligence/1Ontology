@@ -1,0 +1,553 @@
+import crypto from "crypto";
+import { Timestamp } from "firebase-admin/firestore";
+
+import { db } from "../firestoreServer/admin";
+import {
+  SOM_REVIEW_INSPECTION_EXCEPTIONS,
+  SOM_REVIEW_INSPECTION_EXCEPTION_REVISIONS,
+  SOM_REVIEW_INSPECTION_SCANS,
+  SOM_REVIEW_RESPONSES,
+} from "../firestoreClient/collections";
+import {
+  SomInspectionException,
+  SomInspectionItem,
+  SomInspectionOverviewResponse,
+  SomInspectionReviewer,
+  SomInspectionScan,
+  SomReviewDecision,
+} from "../../types/ISomReview";
+import { getDataset, getDatasetByVersion, SomDataset } from "./dataset";
+import { loadUserProfiles } from "./deliberationStore";
+import { applicableReviewResponses } from "./reviewWorkflow";
+import { reviewDatasetConfig, reviewWorkspaceConfig } from "./reviewWorkspaces";
+import { toReviewerCard } from "./sanitize";
+import { inspectionRecordSource } from "./inspectionPolicy";
+
+interface StoredResponseRecord {
+  datasetVersion: string;
+  issueType: string;
+  proposalId: string;
+  reviewerId: string;
+  status: "current" | "retracted";
+  response: {
+    decision: SomReviewDecision;
+    disagreementReason?: string;
+    suggestedCorrection?: string;
+    reviewedAt?: string;
+  };
+  updatedAt?: unknown;
+}
+
+interface StoredExceptionRecord {
+  workspaceId: string;
+  datasetVersion: string;
+  proposalId: string;
+  subjectReviewerId: string;
+  inspectorId: string;
+  status: "active" | "cleared";
+  rationale: string;
+  suggestedAlternative: string;
+  revisionCount: number;
+  updatedAt?: unknown;
+}
+
+export class InspectionStoreError extends Error {
+  status: number;
+
+  constructor(status: number, message: string) {
+    super(message);
+    this.status = status;
+  }
+}
+
+const stableDocId = (...parts: string[]): string =>
+  crypto.createHash("sha256").update(parts.join("|")).digest("hex");
+
+const toIso = (value: any, fallback = ""): string => {
+  if (value?.toDate) return value.toDate().toISOString();
+  if (value instanceof Date) return value.toISOString();
+  if (typeof value === "string") return value;
+  return fallback;
+};
+
+const scanRef = (
+  workspaceId: string,
+  datasetVersion: string,
+  sourceSnapshotSha256: string,
+  inspectorId: string,
+) =>
+  db
+    .collection(SOM_REVIEW_INSPECTION_SCANS)
+    .doc(
+      stableDocId(
+        workspaceId,
+        datasetVersion,
+        sourceSnapshotSha256,
+        inspectorId,
+      ),
+    );
+
+export const inspectionTargetForWorkspace = (workspaceId: string) => {
+  const workspace = reviewWorkspaceConfig(workspaceId);
+  const dataset = getDataset(workspace.activeDatasetId);
+  return {
+    workspace,
+    dataset,
+    datasetVersion: dataset.datasetVersion,
+    sourceSnapshotSha256: dataset.manifest.sourceSnapshot.sha256,
+  };
+};
+
+const exceptionRef = (
+  workspaceId: string,
+  datasetVersion: string,
+  proposalId: string,
+  subjectReviewerId: string,
+  inspectorId: string,
+) =>
+  db
+    .collection(SOM_REVIEW_INSPECTION_EXCEPTIONS)
+    .doc(
+      stableDocId(
+        workspaceId,
+        datasetVersion,
+        proposalId,
+        subjectReviewerId,
+        inspectorId,
+      ),
+    );
+
+const loadScan = async (
+  workspaceId: string,
+  datasetVersion: string,
+  sourceSnapshotSha256: string,
+  inspectorId: string,
+): Promise<SomInspectionScan | undefined> => {
+  const snapshot = await scanRef(
+    workspaceId,
+    datasetVersion,
+    sourceSnapshotSha256,
+    inspectorId,
+  ).get();
+  if (!snapshot.exists) return undefined;
+  const record = snapshot.data() || {};
+  if (
+    !record.lockedAt ||
+    record.datasetVersion !== datasetVersion ||
+    record.sourceSnapshotSha256 !== sourceSnapshotSha256
+  ) {
+    return undefined;
+  }
+  return {
+    workspaceId,
+    inspectorId,
+    datasetVersion,
+    sourceSnapshotSha256: String(record.sourceSnapshotSha256),
+    observations: String(record.observations || ""),
+    noIssuesFound: record.noIssuesFound === true,
+    lockedAt: toIso(record.lockedAt),
+  };
+};
+
+const currentResponsesForDataset = async (
+  datasetVersion: string,
+  reviewerId?: string,
+): Promise<StoredResponseRecord[]> => {
+  let query: any = db
+    .collection(SOM_REVIEW_RESPONSES)
+    .where("datasetVersion", "==", datasetVersion)
+    .where("status", "==", "current");
+  if (reviewerId) {
+    query = query.where("reviewerId", "==", reviewerId);
+  }
+  const snapshot = await query.get();
+  return snapshot.docs
+    .map((doc: any) => doc.data() as StoredResponseRecord)
+    .filter((record: StoredResponseRecord) => Boolean(record.response));
+};
+
+const availableReviewers = async (
+  workspaceId: string,
+): Promise<SomInspectionReviewer[]> => {
+  const workspace = reviewWorkspaceConfig(workspaceId);
+  const responses = (
+    await Promise.all(
+      workspace.datasets.map((config) =>
+        currentResponsesForDataset(config.datasetVersion),
+      ),
+    )
+  ).flat();
+  const counts = new Map<string, number>();
+  for (const response of responses) {
+    counts.set(response.reviewerId, (counts.get(response.reviewerId) || 0) + 1);
+  }
+  const profiles = await loadUserProfiles([...counts.keys()]);
+  return [...counts.entries()]
+    .map(([reviewerId, responseCount]) => ({
+      reviewerId,
+      displayName: profiles.get(reviewerId)?.displayName || "Ontology reviewer",
+      responseCount,
+    }))
+    .sort(
+      (left, right) =>
+        right.responseCount - left.responseCount ||
+        left.displayName.localeCompare(right.displayName, "en"),
+    );
+};
+
+const loadExceptionDocuments = async (
+  refs: FirebaseFirestore.DocumentReference[],
+): Promise<Map<string, StoredExceptionRecord>> => {
+  const result = new Map<string, StoredExceptionRecord>();
+  for (let index = 0; index < refs.length; index += 100) {
+    const snapshots = await db.getAll(...refs.slice(index, index + 100));
+    for (const snapshot of snapshots) {
+      if (snapshot.exists) {
+        result.set(snapshot.id, snapshot.data() as StoredExceptionRecord);
+      }
+    }
+  }
+  return result;
+};
+
+const orderedItemsForDataset = (
+  dataset: SomDataset,
+  datasetLabel: string,
+  currentRound: boolean,
+  responses: StoredResponseRecord[],
+): Omit<SomInspectionItem, "exception">[] => {
+  const responseByProposalId = new Map(
+    responses.map((response) => [response.proposalId, response]),
+  );
+  const applicable = new Set(
+    applicableReviewResponses(dataset, responses).map(
+      (response) => response.proposalId,
+    ),
+  );
+  const items: Omit<SomInspectionItem, "exception">[] = [];
+  for (const [issueType, proposalIds] of dataset.orderedIdsByIssue.entries()) {
+    for (
+      let proposalIndex = 0;
+      proposalIndex < proposalIds.length;
+      proposalIndex += 1
+    ) {
+      const proposalId = proposalIds[proposalIndex];
+      const response = responseByProposalId.get(proposalId);
+      const record = dataset.recordsById.get(proposalId);
+      if (!response || !record) continue;
+      items.push({
+        datasetId: dataset.datasetId,
+        datasetLabel,
+        currentRound,
+        issueLabel: dataset.issueLabels.get(issueType) || issueType,
+        proposalIndex,
+        recordSource: inspectionRecordSource(record),
+        currentlyApplicable: applicable.has(proposalId),
+        card: { ...toReviewerCard(record), proposalIndex },
+        subjectResponse: {
+          decision: response.response.decision,
+          disagreementReason: response.response.disagreementReason || "",
+          suggestedCorrection: response.response.suggestedCorrection || "",
+          reviewedAt: response.response.reviewedAt || toIso(response.updatedAt),
+        },
+      });
+    }
+  }
+  return items;
+};
+
+const reviewItems = async ({
+  workspaceId,
+  subjectReviewerId,
+  inspectorId,
+}: {
+  workspaceId: string;
+  subjectReviewerId: string;
+  inspectorId: string;
+}): Promise<SomInspectionItem[]> => {
+  const workspace = reviewWorkspaceConfig(workspaceId);
+  const rounds = [...workspace.datasets].reverse();
+  const roundItems = await Promise.all(
+    rounds.map(async (config) => {
+      const dataset = getDataset(config.id);
+      const responses = await currentResponsesForDataset(
+        config.datasetVersion,
+        subjectReviewerId,
+      );
+      return orderedItemsForDataset(
+        dataset,
+        config.label,
+        config.current,
+        responses,
+      );
+    }),
+  );
+  const items = roundItems.flat();
+  const refs = items.map((item) =>
+    exceptionRef(
+      workspaceId,
+      item.card.datasetVersion,
+      item.card.proposalId,
+      subjectReviewerId,
+      inspectorId,
+    ),
+  );
+  const exceptionDocuments = await loadExceptionDocuments(refs);
+  return items.map((item, index) => {
+    const exception = exceptionDocuments.get(refs[index].id);
+    if (!exception || exception.status !== "active") return item;
+    return {
+      ...item,
+      exception: {
+        datasetVersion: exception.datasetVersion,
+        proposalId: exception.proposalId,
+        subjectReviewerId: exception.subjectReviewerId,
+        inspectorId: exception.inspectorId,
+        rationale: exception.rationale,
+        suggestedAlternative: exception.suggestedAlternative || "",
+        updatedAt: toIso(exception.updatedAt),
+      },
+    };
+  });
+};
+
+export const loadInspectionOverview = async ({
+  workspaceId,
+  inspectorId,
+  requestedReviewerId,
+}: {
+  workspaceId: string;
+  inspectorId: string;
+  requestedReviewerId?: string;
+}): Promise<SomInspectionOverviewResponse> => {
+  const { workspace, datasetVersion, sourceSnapshotSha256 } =
+    inspectionTargetForWorkspace(workspaceId);
+  const scan = await loadScan(
+    workspaceId,
+    datasetVersion,
+    sourceSnapshotSha256,
+    inspectorId,
+  );
+  if (!scan) {
+    return {
+      workspaceId,
+      workspaceLabel: workspace.label,
+      activeDatasetId: workspace.activeDatasetId,
+      stage: "independent-scan",
+      reviewers: [],
+      items: [],
+    };
+  }
+
+  const reviewers = (await availableReviewers(workspaceId)).filter(
+    (reviewer) => reviewer.reviewerId !== inspectorId,
+  );
+  const selectedReviewerId = reviewers.some(
+    (reviewer) => reviewer.reviewerId === requestedReviewerId,
+  )
+    ? requestedReviewerId
+    : reviewers[0]?.reviewerId;
+  const items = selectedReviewerId
+    ? await reviewItems({
+        workspaceId,
+        subjectReviewerId: selectedReviewerId,
+        inspectorId,
+      })
+    : [];
+
+  return {
+    workspaceId,
+    workspaceLabel: workspace.label,
+    activeDatasetId: workspace.activeDatasetId,
+    stage: "prior-review",
+    scan,
+    reviewers,
+    selectedReviewerId,
+    items,
+  };
+};
+
+export const lockInspectionScan = async ({
+  workspaceId,
+  inspectorId,
+  observations,
+  noIssuesFound,
+}: {
+  workspaceId: string;
+  inspectorId: string;
+  observations: string;
+  noIssuesFound: boolean;
+}): Promise<{ changed: boolean }> => {
+  const { datasetVersion, sourceSnapshotSha256 } =
+    inspectionTargetForWorkspace(workspaceId);
+  const ref = scanRef(
+    workspaceId,
+    datasetVersion,
+    sourceSnapshotSha256,
+    inspectorId,
+  );
+  return db.runTransaction(async (transaction) => {
+    const snapshot = await transaction.get(ref);
+    if (snapshot.exists && snapshot.data()?.lockedAt) {
+      const existing = snapshot.data() || {};
+      const identical =
+        String(existing.observations || "") === observations &&
+        (existing.noIssuesFound === true) === noIssuesFound;
+      if (!identical) {
+        throw new InspectionStoreError(
+          409,
+          "The independent hierarchy scan is already locked",
+        );
+      }
+      return { changed: false };
+    }
+    const now = Timestamp.now();
+    transaction.set(ref, {
+      workspaceId,
+      inspectorId,
+      datasetVersion,
+      sourceSnapshotSha256,
+      observations,
+      noIssuesFound,
+      lockedAt: now,
+      createdAt: now,
+    });
+    return { changed: true };
+  });
+};
+
+const assertInspectableResponse = async ({
+  workspaceId,
+  datasetVersion,
+  proposalId,
+  subjectReviewerId,
+  inspectorId,
+}: {
+  workspaceId: string;
+  datasetVersion: string;
+  proposalId: string;
+  subjectReviewerId: string;
+  inspectorId: string;
+}) => {
+  if (subjectReviewerId === inspectorId) {
+    throw new InspectionStoreError(
+      400,
+      "A reviewer cannot annotate their own prior response",
+    );
+  }
+  const {
+    datasetVersion: activeDatasetVersion,
+    sourceSnapshotSha256: activeSourceSnapshotSha256,
+  } = inspectionTargetForWorkspace(workspaceId);
+  const scan = await loadScan(
+    workspaceId,
+    activeDatasetVersion,
+    activeSourceSnapshotSha256,
+    inspectorId,
+  );
+  if (!scan) {
+    throw new InspectionStoreError(
+      409,
+      "Lock the independent hierarchy scan before inspecting prior responses",
+    );
+  }
+  const dataset = getDatasetByVersion(datasetVersion);
+  if (reviewDatasetConfig(dataset.datasetId).workspaceId !== workspaceId) {
+    throw new InspectionStoreError(
+      400,
+      "The proposal does not belong to this workspace",
+    );
+  }
+  if (!dataset.recordsById.has(proposalId)) {
+    throw new InspectionStoreError(400, "Unknown proposal");
+  }
+  const responseSnapshot = await db
+    .collection(SOM_REVIEW_RESPONSES)
+    .where("datasetVersion", "==", datasetVersion)
+    .where("proposalId", "==", proposalId)
+    .where("reviewerId", "==", subjectReviewerId)
+    .where("status", "==", "current")
+    .limit(1)
+    .get();
+  if (responseSnapshot.empty) {
+    throw new InspectionStoreError(
+      409,
+      "The prior reviewer response is no longer available",
+    );
+  }
+};
+
+export const saveInspectionException = async ({
+  workspaceId,
+  datasetVersion,
+  proposalId,
+  subjectReviewerId,
+  inspectorId,
+  rationale,
+  suggestedAlternative,
+  clear = false,
+}: {
+  workspaceId: string;
+  datasetVersion: string;
+  proposalId: string;
+  subjectReviewerId: string;
+  inspectorId: string;
+  rationale: string;
+  suggestedAlternative: string;
+  clear?: boolean;
+}): Promise<{ changed: boolean }> => {
+  await assertInspectableResponse({
+    workspaceId,
+    datasetVersion,
+    proposalId,
+    subjectReviewerId,
+    inspectorId,
+  });
+  const ref = exceptionRef(
+    workspaceId,
+    datasetVersion,
+    proposalId,
+    subjectReviewerId,
+    inspectorId,
+  );
+  return db.runTransaction(async (transaction) => {
+    const snapshot = await transaction.get(ref);
+    const previous = snapshot.exists
+      ? (snapshot.data() as StoredExceptionRecord)
+      : null;
+    const status = clear ? "cleared" : "active";
+    const nextRationale = clear ? "" : rationale;
+    const nextAlternative = clear ? "" : suggestedAlternative;
+    const identical =
+      previous?.status === status &&
+      previous.rationale === nextRationale &&
+      previous.suggestedAlternative === nextAlternative;
+    if (identical) return { changed: false };
+
+    const now = Timestamp.now();
+    const revisionCount = (previous?.revisionCount || 0) + 1;
+    const record = {
+      workspaceId,
+      datasetVersion,
+      proposalId,
+      subjectReviewerId,
+      inspectorId,
+      status,
+      rationale: nextRationale,
+      suggestedAlternative: nextAlternative,
+      revisionCount,
+      createdAt: previous ? (previous as any).createdAt || now : now,
+      updatedAt: now,
+    };
+    transaction.set(ref, record);
+    transaction.set(
+      db.collection(SOM_REVIEW_INSPECTION_EXCEPTION_REVISIONS).doc(),
+      {
+        ...record,
+        action: clear ? "clear" : previous ? "edit" : "save",
+        createdAt: now,
+      },
+    );
+    return { changed: true };
+  });
+};

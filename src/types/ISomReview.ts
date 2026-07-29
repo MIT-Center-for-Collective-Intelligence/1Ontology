@@ -113,6 +113,14 @@ export type SomReviewContext =
       sourceTasks?: string[];
     }
   | {
+      type: "evidence-parent-allocation";
+      taskTitle: string;
+      currentParentTitles: string[];
+      assignedOutputTitles: string[];
+      retainedParentTitles: string[];
+      removedParentTitles: string[];
+    }
+  | {
       type: "overlap-comparison";
       parentTitle: string;
       firstCollection: string;
@@ -327,6 +335,7 @@ export interface SomOntologyOutlineNode {
   id: string;
   title: string;
   evidence: boolean;
+  synonyms: string[];
 }
 
 export interface SomOntologyOutlineEdge {
@@ -467,4 +476,107 @@ export interface SomDeliberationProposalResponse {
 
 export interface SomDeliberationMutationResult {
   ok: boolean;
+}
+
+export type SomInspectionRecordSource =
+  | "proposed-change"
+  | "status-quo-audit"
+  | "manual-check";
+
+export interface SomInspectionReviewer {
+  reviewerId: string;
+  displayName: string;
+  responseCount: number;
+}
+
+export interface SomInspectionScan {
+  workspaceId: string;
+  inspectorId: string;
+  datasetVersion: string;
+  sourceSnapshotSha256: string;
+  observations: string;
+  noIssuesFound: boolean;
+  lockedAt: string;
+}
+
+export interface SomInspectionException {
+  datasetVersion: string;
+  proposalId: string;
+  subjectReviewerId: string;
+  inspectorId: string;
+  rationale: string;
+  suggestedAlternative: string;
+  updatedAt: string;
+}
+
+export interface SomInspectionSubjectResponse {
+  decision: SomReviewDecision;
+  disagreementReason: string;
+  suggestedCorrection: string;
+  reviewedAt: string;
+}
+
+export interface SomInspectionItem {
+  datasetId: string;
+  datasetLabel: string;
+  currentRound: boolean;
+  issueLabel: string;
+  proposalIndex: number;
+  recordSource: SomInspectionRecordSource;
+  currentlyApplicable: boolean;
+  card: SomReviewCard;
+  subjectResponse: SomInspectionSubjectResponse;
+  exception?: SomInspectionException;
+}
+
+export interface SomInspectionOverviewResponse {
+  workspaceId: string;
+  workspaceLabel: string;
+  activeDatasetId: string;
+  stage: "independent-scan" | "prior-review";
+  scan?: SomInspectionScan;
+  reviewers: SomInspectionReviewer[];
+  selectedReviewerId?: string;
+  items: SomInspectionItem[];
+}
+
+export interface SomInspectionMutationResult {
+  ok: boolean;
+  changed: boolean;
+}
+
+export interface SomCalibrationAssignmentOption {
+  id: string;
+  title: string;
+  branch: string;
+  taskLabel: string;
+  status: "available" | "completed";
+}
+
+export interface SomCalibrationAssignment {
+  id: string;
+  title: string;
+  branch: string;
+  taskLabel: string;
+  introduction: string;
+  datasetId: string;
+  datasetVersion: string;
+  issueType: SomIssueType;
+  consensusSnapshotId: string;
+  releasedAt: string;
+  cards: SomReviewCard[];
+  cursor: number;
+  total: number;
+  responses: SomReviewHistoryItem[];
+}
+
+export interface SomCalibrationOverviewResponse {
+  assignments: SomCalibrationAssignmentOption[];
+  active?: SomCalibrationAssignment;
+}
+
+export interface SomCalibrationRespondResult {
+  ok: boolean;
+  cursor: number;
+  completed: boolean;
 }

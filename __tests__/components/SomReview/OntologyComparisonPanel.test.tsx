@@ -5,7 +5,9 @@ import React from "react";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 
-import OntologyComparisonPanel from "../../../src/components/SomReview/OntologyComparisonPanel";
+import OntologyComparisonPanel, {
+  OUTLINE_COLLECTION_COLORS,
+} from "../../../src/components/SomReview/OntologyComparisonPanel";
 import { Post } from "../../../src/lib/utils/Post";
 import { SomOntologyOutlineResponse } from "../../../src/types/ISomReview";
 
@@ -24,17 +26,24 @@ const outlineResponse: SomOntologyOutlineResponse = {
     rootNodeId: "original-root",
     rootTitle: "Buy",
     nodes: [
-      { id: "original-root", title: "Buy", evidence: false },
-      { id: "original-child", title: "Purchase product", evidence: false },
+      { id: "original-root", title: "Buy", evidence: false, synonyms: [] },
+      {
+        id: "original-child",
+        title: "Purchase product",
+        evidence: false,
+        synonyms: ["Acquire product"],
+      },
       {
         id: "original-main-child",
         title: "Purchase directly",
         evidence: false,
+        synonyms: [],
       },
       {
         id: "original-evidence",
         title: "(O*Net) Purchase task",
         evidence: true,
+        synonyms: [],
       },
     ],
     edges: [
@@ -61,12 +70,18 @@ const outlineResponse: SomOntologyOutlineResponse = {
     rootNodeId: "current-root",
     rootTitle: "Buy",
     nodes: [
-      { id: "current-root", title: "Buy", evidence: false },
-      { id: "current-child", title: "Purchase goods", evidence: false },
+      { id: "current-root", title: "Buy", evidence: false, synonyms: [] },
+      {
+        id: "current-child",
+        title: "Purchase goods",
+        evidence: false,
+        synonyms: [],
+      },
       {
         id: "current-main-child",
         title: "Acquire directly",
         evidence: false,
+        synonyms: [],
       },
     ],
     edges: [
@@ -84,10 +99,36 @@ const outlineResponse: SomOntologyOutlineResponse = {
   },
 };
 
+const luminance = (hex: string): number => {
+  const channels = hex
+    .slice(1)
+    .match(/.{2}/g)!
+    .map((value) => parseInt(value, 16) / 255)
+    .map((value) =>
+      value <= 0.03928 ? value / 12.92 : Math.pow((value + 0.055) / 1.055, 2.4),
+    );
+  return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
+};
+
+const contrast = (foreground: string, background: string): number => {
+  const first = luminance(foreground);
+  const second = luminance(background);
+  return (Math.max(first, second) + 0.05) / (Math.min(first, second) + 0.05);
+};
+
 describe("ontology comparison panel", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (Post as jest.Mock).mockResolvedValue(outlineResponse);
+  });
+
+  it("uses collection colors with readable contrast in light and dark modes", () => {
+    expect(
+      contrast(OUTLINE_COLLECTION_COLORS.light, "#FFFFFF"),
+    ).toBeGreaterThan(4.5);
+    expect(contrast(OUTLINE_COLLECTION_COLORS.dark, "#28282A")).toBeGreaterThan(
+      4.5,
+    );
   });
 
   it("loads lazily and presents the original and current outlines side by side", async () => {
@@ -131,6 +172,29 @@ describe("ontology comparison panel", () => {
     expect(screen.queryByText("(O*Net) Purchase task")).not.toBeInTheDocument();
   });
 
+  it("waits for an explicit retry after a load failure", async () => {
+    (Post as jest.Mock).mockRejectedValueOnce(new Error("offline"));
+    render(
+      <OntologyComparisonPanel
+        datasetId="buy-current"
+        branch="Buy"
+        roundLabel="Current Buy round"
+        currentRound
+        initiallyExpanded
+      />,
+    );
+
+    expect(
+      await screen.findByText("The ontology outlines could not be loaded."),
+    ).toBeInTheDocument();
+    expect(Post).toHaveBeenCalledTimes(1);
+
+    (Post as jest.Mock).mockResolvedValueOnce(outlineResponse);
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    await screen.findByRole("region", { name: "Original ontology outline" });
+    expect(Post).toHaveBeenCalledTimes(2);
+  });
+
   it("reveals O*NET evidence only when the reviewer requests it", async () => {
     render(
       <OntologyComparisonPanel
@@ -165,6 +229,7 @@ describe("ontology comparison panel", () => {
             id: "original-grandchild",
             title: "Purchase online",
             evidence: false,
+            synonyms: [],
           },
         ],
         edges: [

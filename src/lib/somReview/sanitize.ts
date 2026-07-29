@@ -63,6 +63,10 @@ export const reviewerQuestion = (
         : context.candidateHome
           ? `Is "${context.nodeTitle}" better placed under the more specific category "${context.candidateHome}" than under "${context.currentParentTitle}"?`
           : `Is "${context.nodeTitle}" misplaced under "${context.currentParentTitle}"?`;
+    case "evidence-parent-allocation":
+      return `Should this source task keep the specific parents shown and drop only ${context.removedParentTitles
+        .map((title) => `"${title}"`)
+        .join(" and ")}?`;
     case "overlap-comparison":
       return `Could "${context.firstTitle}" and "${context.secondTitle}" represent the same concept?`;
     case "merge-action":
@@ -283,6 +287,23 @@ const sanitizeContext = (context: any): SomReviewContext => {
         })),
         placementIssue: context.placementIssue,
         sourceTasks: context.sourceTasks || [],
+      };
+    case "evidence-parent-allocation":
+      return {
+        type: "evidence-parent-allocation",
+        taskTitle: cleanText(context.taskTitle),
+        currentParentTitles: (context.currentParentTitles || [])
+          .map(cleanText)
+          .filter(Boolean),
+        assignedOutputTitles: (context.assignedOutputTitles || [])
+          .map(cleanText)
+          .filter(Boolean),
+        retainedParentTitles: (context.retainedParentTitles || [])
+          .map(cleanText)
+          .filter(Boolean),
+        removedParentTitles: (context.removedParentTitles || [])
+          .map(cleanText)
+          .filter(Boolean),
       };
     case "overlap-comparison":
       return {

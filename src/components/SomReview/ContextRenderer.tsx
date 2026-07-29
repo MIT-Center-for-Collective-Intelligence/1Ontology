@@ -32,6 +32,7 @@ const CONTEXTS_WITH_STATE_COMPARISONS = new Set<SomReviewContext["type"]>([
   "polysemy-review",
   "collection-design",
   "sense-relocation-action",
+  "evidence-parent-allocation",
 ]);
 
 export const contextShowsStateComparison = (
@@ -77,6 +78,8 @@ const ContextRenderer = ({
       return <DuplicateComparison context={context} />;
     case "placement-comparison":
       return <PlacementNote context={context} branch={branch} />;
+    case "evidence-parent-allocation":
+      return <EvidenceParentAllocation context={context} />;
     case "overlap-comparison":
       return <OverlapComparison context={context} />;
     case "merge-action":
@@ -1033,6 +1036,45 @@ const OverlapComparison = ({
     <BoundaryNote>
       Agreeing only marks a possible overlap for follow-up. It does not merge
       either activity.
+    </BoundaryNote>
+  </Box>
+);
+
+const EvidenceParentAllocation = ({
+  context,
+}: {
+  context: Extract<SomReviewContext, { type: "evidence-parent-allocation" }>;
+}) => (
+  <Box>
+    <Typography sx={{ mb: 1.5, fontWeight: 750 }}>
+      {context.taskTitle}
+    </Typography>
+    <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
+      <Box sx={comparisonPanelSx} aria-label="Evidence parents before">
+        <Typography sx={sectionLabelSx}>Before</Typography>
+        {context.currentParentTitles.map((title) => (
+          <OutlineItem key={title} title={title} highlighted indent={0} />
+        ))}
+      </Box>
+      <Box sx={comparisonPanelSx} aria-label="Evidence parents after">
+        <Typography sx={sectionLabelSx}>After</Typography>
+        {[...context.assignedOutputTitles, ...context.retainedParentTitles].map(
+          (title) => (
+            <OutlineItem key={title} title={title} highlighted indent={0} />
+          ),
+        )}
+        {context.removedParentTitles.length > 0 && (
+          <Typography
+            sx={{ mt: 1.25, color: "text.secondary", fontSize: "0.85rem" }}
+          >
+            Remove stale parent: {context.removedParentTitles.join(", ")}
+          </Typography>
+        )}
+      </Box>
+    </Stack>
+    <BoundaryNote>
+      The task may retain multiple parents when each parent captures a distinct
+      meaning. Agreeing removes only the named stale parent.
     </BoundaryNote>
   </Box>
 );

@@ -18,6 +18,7 @@ import DriveFileRenameOutlineIcon from "@mui/icons-material/DriveFileRenameOutli
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import HubOutlinedIcon from "@mui/icons-material/HubOutlined";
 import GroupsOutlinedIcon from "@mui/icons-material/GroupsOutlined";
+import FactCheckOutlinedIcon from "@mui/icons-material/FactCheckOutlined";
 import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import AltRouteOutlinedIcon from "@mui/icons-material/AltRouteOutlined";
 import CallMergeOutlinedIcon from "@mui/icons-material/CallMergeOutlined";
@@ -203,6 +204,7 @@ const ReviewQueueSelector = ({
   onStart,
   canDeliberate = false,
   onOpenDeliberation,
+  onOpenInspection,
   headerAction,
   workspaceControls,
   readyFollowUps = [],
@@ -214,6 +216,7 @@ const ReviewQueueSelector = ({
   onStart: (issueType: SomIssueType) => void;
   canDeliberate?: boolean;
   onOpenDeliberation?: () => void;
+  onOpenInspection?: () => void;
   headerAction?: React.ReactNode;
   workspaceControls?: React.ReactNode;
   readyFollowUps?: SomLinkedFollowUp[];
@@ -274,6 +277,17 @@ const ReviewQueueSelector = ({
               sx={{ minHeight: 46, fontWeight: 750 }}
             >
               Group deliberation
+            </Button>
+          )}
+          {canDeliberate && onOpenInspection && (
+            <Button
+              disableElevation
+              variant="outlined"
+              startIcon={<FactCheckOutlinedIcon />}
+              onClick={onOpenInspection}
+              sx={{ minHeight: 46, fontWeight: 750 }}
+            >
+              Inspect prior review
             </Button>
           )}
           {headerAction}

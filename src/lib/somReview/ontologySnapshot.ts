@@ -2,7 +2,10 @@ import crypto from "crypto";
 import fs from "fs";
 import path from "path";
 
+import { nodeSynonyms } from "./ontologyNodeMetadata";
+
 export { SELL_ONTOLOGY_APP_ID, SELL_ONTOLOGY_NAME } from "./ontologyConfig";
+export { nodeSynonyms } from "./ontologyNodeMetadata";
 
 export interface SomOntologySnapshot {
   schemaVersion: "som-ontology-snapshot-v1";
@@ -253,20 +256,6 @@ const sameStringArray = (left: unknown, right: string[]): boolean =>
   left.length === right.length &&
   left.every((value, index) => value === right[index]);
 
-const nodeSynonyms = (
-  node?: SomOntologySnapshot["nodes"][number],
-): string[] => {
-  const values = new Set<string>();
-  for (const value of node?.actionAlternatives || []) {
-    if (String(value).trim()) values.add(String(value).trim());
-  }
-  for (const value of String(node?.synsets || "").split(",")) {
-    const lemma = value.trim().replace(/\.[a-z]+\.\d+$/i, "");
-    if (lemma) values.add(lemma.replace(/_/g, " "));
-  }
-  return [...values].sort((left, right) => left.localeCompare(right, "en"));
-};
-
 const allRecordedSynonyms = (
   node?: SomOntologySnapshot["nodes"][number],
 ): string[] => {
@@ -406,6 +395,30 @@ export const validateProposalAgainstSnapshot = (
       ) {
         addTitle(context.candidateHome);
       }
+      break;
+    }
+    case "evidence-parent-allocation": {
+      subjectNodeId = addTitle(context.taskTitle);
+      const currentParentTitles: string[] = context.currentParentTitles || [];
+      const currentParentIds = currentParentTitles.map((title) =>
+        addTitle(title),
+      );
+      for (const currentParentId of currentParentIds) {
+        requireAnyEdge(index, currentParentId, subjectNodeId);
+      }
+      for (const title of [
+        ...(context.assignedOutputTitles || []),
+        ...(context.retainedParentTitles || []),
+      ]) {
+        const parentId = addTitle(title);
+        requireAnyEdge(index, parentId, subjectNodeId);
+      }
+      for (const title of context.removedParentTitles || []) {
+        const parentId = addTitle(title);
+        requireAnyEdge(index, parentId, subjectNodeId);
+        if (!parentNodeId) parentNodeId = parentId;
+      }
+      if (!parentNodeId) parentNodeId = currentParentIds[0] || "";
       break;
     }
     case "overlap-comparison": {

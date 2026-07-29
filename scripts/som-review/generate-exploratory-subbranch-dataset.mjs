@@ -7,6 +7,16 @@ import process from "node:process";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 
+import {
+  AUDIT_POLICY_VERSION,
+  CRITIC_GROUPING_GUIDANCE,
+  IDENTITY_AGENT_GUIDANCE,
+  PLACEMENT_AGENT_GUIDANCE,
+  STRUCTURE_AGENT_GUIDANCE,
+  detectRedundantCollectionPolicy,
+  renderAuditPolicy,
+} from "./audit-policy.mjs";
+
 const require = createRequire(import.meta.url);
 const { loadEnvConfig } = require("@next/env");
 const { GoogleGenAI } = require("@google/genai");
@@ -23,7 +33,7 @@ const BASE_DATASET_DIR = path.join(
 const SNAPSHOT_SCHEMA_VERSION = "som-ontology-snapshot-v1";
 const REVIEW_SCHEMA_VERSION = "som-review-v1";
 const MODEL = "gemini-3.1-pro-preview";
-const PIPELINE_PROMPT_VERSION = "buy-transfer-v2";
+const PIPELINE_PROMPT_VERSION = "buy-transfer-v3";
 const CONTENT_VERIFIER_PROMPT_VERSION = "buy-content-verifier-v3";
 const DETECTOR_PASSES = 2;
 const CONTENT_VERIFICATION_ISSUE_TYPES = new Set([
@@ -221,6 +231,10 @@ const ASSESSMENT_RESPONSE_SCHEMA = {
             enum: ["accept", "reject", "revise"],
           },
           rationale: { type: "string" },
+          confidence: {
+            type: "string",
+            enum: ["high", "medium", "low"],
+          },
           revisedFields: {
             type: "object",
             additionalProperties: true,
@@ -234,13 +248,21 @@ const ASSESSMENT_RESPONSE_SCHEMA = {
 const DETECTORS = [
   {
     id: "title-evidence-agent",
-    role: "Systematically inspect every non-evidence title against its description and source tasks. Return every high-confidence title-clarity candidate, while preserving every meaning expressed by the evidence.",
+    role: "Systematically inspect every non-evidence title against its description and source tasks. Return every plausible title-clarity candidate across high, medium, and low confidence while preserving every meaning expressed by the evidence.",
     schema: `
 title-clarity: {nodeTitle,currentParentTitle,proposedTitle,rationale}`,
   },
   {
     id: "identity-agent",
-    role: "Inspect structured synonyms, identity, and polysemy. A synonym is useful when it provides an alternative lexicalization of the same activity, so never remove one merely because it is a close or trivial wording variation. Propose mistaken-synonym only when the term changes the activity's meaning and is not substitutable in the evidence context. Pay special attention to whether a root synonym has introduced descendants that perform a related but different action. Return only synonym-enrichment, mistaken-synonym, duplicate-synonym, or polysemy candidates.",
+    role: `${IDENTITY_AGENT_GUIDANCE}
+Inspect structured synonyms, identity, and polysemy. A synonym is useful when it
+provides an alternative lexicalization of the same activity, so never remove
+one merely because it is a close or trivial wording variation. Propose
+mistaken-synonym only when the term changes the activity's meaning and is not
+substitutable in the evidence context. Pay special attention to whether a root
+synonym has introduced descendants that perform a related but different
+action. Return only synonym-enrichment, mistaken-synonym, duplicate-synonym, or
+polysemy candidates.`,
     schema: `
 synonym-enrichment: {nodeTitle,proposedSynonyms:[...],rationale}
 mistaken-synonym: {nodeTitle,removeSynonyms:[...],rationale}
@@ -249,7 +271,10 @@ polysemy: {nodeTitle,currentParentTitle,proposedSenses:[{title,meaning}],rationa
   },
   {
     id: "structure-agent",
-    role: "Inspect sibling structure, long flat lists, compound objects, and genuinely distinct specialization dimensions. Return only flat-list-grouping, compound-object-grouping, or collection-design candidates.",
+    role: `${STRUCTURE_AGENT_GUIDANCE}
+Inspect sibling structure, compound objects, and genuinely distinct
+specialization dimensions. Return only flat-list-grouping,
+compound-object-grouping, or collection-design candidates.`,
     schema: `
 flat-list-grouping or compound-object-grouping:
   {parentTitle,proposedGroupTitle,proposedChildren:[at least 2 exact direct child titles],rationale}
@@ -258,7 +283,10 @@ collection-design:
   },
   {
     id: "placement-boundary-agent",
-    role: "Inspect whether nodes sit under an overly broad or semantically wrong current parent, and whether a node actually expresses a different main action. Return only placement or wrong-verb candidates.",
+    role: `${PLACEMENT_AGENT_GUIDANCE}
+Inspect whether nodes sit under an overly broad or semantically wrong current
+parent, and whether a node actually expresses a different main action. Return
+only placement or wrong-verb candidates.`,
     schema: `
 placement or wrong-verb:
   {nodeTitle,currentParentTitle,candidateHome,rationale}`,
@@ -717,6 +745,8 @@ Learned process constraints:
     for keeping a synonym, not removing it. Remove a synonym only when it names
     a meaningfully different activity.
 
+${renderAuditPolicy(branch)}
+
 Existing external destination categories that may be used only when a node
 truly expresses a different main action:
 ${JSON.stringify(externalDestinations)}
@@ -852,11 +882,14 @@ Your role:
 ${detector.role}
 
 Return one JSON object with a "candidates" array. Each candidate must include
-"issueType" and exactly the fields specified below:
+"issueType", "detectorConfidence" ("high", "medium", or "low"), and the fields
+specified below:
 ${detector.schema}
 
-Return at most 30 high-confidence candidates. Do not include commentary outside
-the JSON object.`;
+Return at most 40 plausible candidates across confidence levels. Confidence is
+descriptive metadata only: do not suppress a plausible issue because confidence
+is low, and do not assume a high-confidence candidate will be applied. Do not
+include commentary outside the JSON object.`;
       try {
         const output = await runCachedStage({
           cacheFile: path.join(cacheDir, `${detector.id}-pass-${pass}.json`),
@@ -945,6 +978,55 @@ function deterministicOverlapCandidates(index, branch) {
     });
   }
   return candidates;
+}
+
+function deterministicCollectionPolicyCandidates(index, branch) {
+  const directEdges = directChildEdges(index, branch, {
+    semanticOnly: true,
+  });
+  const policy = detectRedundantCollectionPolicy({
+    branch,
+    children: directEdges.map((edge) => ({
+      collectionName: edge.collectionName,
+      title: titleFor(index, edge.childId),
+    })),
+  });
+  if (!policy) return [];
+  const {
+    proposedCollectionName,
+    proposedBranchTitles,
+    retiredCollectionNames,
+    retiredPlaceholderTitles,
+  } = policy;
+  const candidate = {
+    issueType: "collection-design",
+    parentTitle: branch,
+    proposedCollectionName,
+    proposedBranches: proposedBranchTitles
+      .map((title) => ({
+        title,
+        status: "existing",
+        children: [],
+      }))
+      .sort((left, right) => left.title.localeCompare(right.title, "en")),
+    collectionPolicy: {
+      retiredCollectionNames,
+      retiredPlaceholderTitles,
+    },
+    rationale: `The generic ${retiredCollectionNames
+      .map((name) => `"${name}"`)
+      .join(
+        " and ",
+      )} structure duplicates the explicit "${proposedCollectionName}" specialization dimension. Review whether every current child can be accounted for under the explicit dimension before retiring the generic collection or placeholder; this proposal does not delete anything automatically.`,
+    detectorId: "deterministic-collection-policy-scan",
+    requiresPolicyReview: true,
+  };
+  return [
+    {
+      ...candidate,
+      candidateId: stableCandidateId(candidate.detectorId, candidate),
+    },
+  ];
 }
 
 function hasOnlyNumberChange(currentTitle, proposedTitle) {
@@ -1129,13 +1211,12 @@ whose only rationale is that the synonym is a trivial, close, or morphological
 variation of the title. Accept removal only when the candidate term denotes a
 different action or meaning in the supplied context.
 
-For grouping proposals, reducing a long flat sibling list is itself an
-operational benefit when the proposed group is semantically coherent, uses a
-stable category, has at least three members, and does not overlap another
-proposed group. Do not reject such a grouping merely because the current nodes
-are technically usable without it. Reject a grouping when its proposed members
-are near-synonyms that should instead receive an identity judgment, when one
-member already subsumes the others, or when the group mixes distinct objects.
+For grouping proposals:
+${CRITIC_GROUPING_GUIDANCE}
+Do not reject a coherent grouping merely because the current nodes are
+technically usable without it. Reject a grouping when its proposed members are
+near-synonyms that should instead receive an identity judgment, when one member
+already subsumes the others, or when the group mixes distinct objects.
 
 If a candidate identifies a real issue but contains a fixable wording or field
 error, use "revise" and return only the corrected fields in "revisedFields".
@@ -1147,7 +1228,7 @@ Candidates:
 ${JSON.stringify(candidates)}
 
 Return JSON:
-{"assessments":[{"candidateId":"exact id","decision":"accept"|"reject"|"revise","rationale":"brief evidence-based reason","revisedFields":{}}]}
+{"assessments":[{"candidateId":"exact id","decision":"accept"|"reject"|"revise","confidence":"high"|"medium"|"low","rationale":"brief evidence-based reason","revisedFields":{}}]}
 Include exactly one assessment for every candidateId and no other text.`;
   const response = await callAgent(
     ai,
@@ -1624,7 +1705,7 @@ function makeRecord({
     proposalId: proposalId(datasetVersion, candidate.issueType, key),
     branch,
     issueType: candidate.issueType,
-    reviewMode: "proposed-change",
+    reviewMode: candidate.reviewMode || "proposed-change",
     rolloutStatus: "experimental",
     workflow: {
       robTaskIds: issue.robTaskIds,
@@ -1659,8 +1740,8 @@ function makeRecord({
       judgeId: "independent-critic",
       judgeName: "IndependentConservativeCritic",
       judgePromptVersion: PIPELINE_PROMPT_VERSION,
-      detectorConfidence: "high",
-      judgeConfidence: "high",
+      detectorConfidence: clean(candidate.detectorConfidence) || "unknown",
+      judgeConfidence: clean(candidate.judgeConfidence) || "unknown",
       reviewerVisible: false,
     },
     provenance: {
@@ -1893,10 +1974,23 @@ function recordForCandidate(candidate, config) {
       relatedTitles: context.proposedBranches.flatMap((item) => item.children),
     };
     reviewerView = {
-      question: `Should "${candidate.parentTitle}" use the proposed "${candidate.proposedCollectionName}" collection?`,
-      currentState:
-        "The current direct children are not organized along this dimension.",
-      proposedState: "Create the proposed collection and branches.",
+      question: candidate.collectionPolicy
+        ? `Should "${candidate.proposedCollectionName}" replace the redundant generic collection structure under "${candidate.parentTitle}"?`
+        : `Should "${candidate.parentTitle}" use the proposed "${candidate.proposedCollectionName}" collection?`,
+      currentState: candidate.collectionPolicy
+        ? `The explicit "${candidate.proposedCollectionName}" dimension coexists with ${candidate.collectionPolicy.retiredCollectionNames
+            .map((name) => `"${name}"`)
+            .join(" and ")}${
+            candidate.collectionPolicy.retiredPlaceholderTitles.length
+              ? ` and ${candidate.collectionPolicy.retiredPlaceholderTitles
+                  .map((title) => `"${title}"`)
+                  .join(" and ")}`
+              : ""
+          }.`
+        : "The current direct children are not organized along this dimension.",
+      proposedState: candidate.collectionPolicy
+        ? `Account for every current child under "${candidate.proposedCollectionName}", then retire the redundant generic collection or placeholder in a separately reviewed application plan.`
+        : "Create the proposed collection and branches.",
       reasoning: rationale,
     };
   } else if (issueType === "placement" || issueType === "wrong-verb") {
@@ -1936,8 +2030,38 @@ function recordForCandidate(candidate, config) {
     subject,
     reviewerView,
     ...config,
-    key: candidate.candidateId,
+    key: candidate.recordKey || candidate.candidateId,
   });
+}
+
+function manualCheckRecordsForRejected(rejections, config) {
+  const records = [];
+  const seen = new Set();
+  for (const rejection of rejections) {
+    const candidate = rejection.candidate;
+    if (
+      !candidate ||
+      seen.has(candidate.candidateId) ||
+      preflightCandidate(candidate, config.index)
+    ) {
+      continue;
+    }
+    seen.add(candidate.candidateId);
+    records.push(
+      recordForCandidate(
+        {
+          ...candidate,
+          reviewMode: "manual-check",
+          recordKey: `manual-check:${candidate.candidateId}`,
+          criticRationale: `The detector raised this possible issue, but an independent verification step did not confirm it: ${clean(
+            rejection.reason,
+          )} Review the supplied evidence directly. This question cannot authorize an ontology change without a separate accepted application plan.`,
+        },
+        config,
+      ),
+    );
+  }
+  return records;
 }
 
 function ancestorOf(index, ancestorTitle, descendantTitle) {
@@ -2162,6 +2286,7 @@ function snapshotFromIndex({
 function writeDataset({
   outputDir,
   records,
+  manualChecks,
   snapshot,
   snapshotHash,
   generatedAt,
@@ -2185,7 +2310,7 @@ function writeDataset({
   writeJson(path.join(outputDir, "ontology-snapshot.json"), snapshot);
   writeJsonl(path.join(outputDir, "all_proposals.jsonl"), records);
   writeJsonl(path.join(outputDir, "all_controls.jsonl"), []);
-  writeJsonl(path.join(outputDir, "manual_checks.jsonl"), []);
+  writeJsonl(path.join(outputDir, "manual_checks.jsonl"), manualChecks);
   writeJsonl(
     path.join(outputDir, "diagnostics", "rejected_agent_candidates.jsonl"),
     rejected,
@@ -2206,6 +2331,8 @@ function writeDataset({
     ...issue,
     proposals: records.filter((record) => record.issueType === issue.id).length,
     controls: 0,
+    manualChecks: manualChecks.filter((record) => record.issueType === issue.id)
+      .length,
   }));
   const manifest = {
     schemaVersion: REVIEW_SCHEMA_VERSION,
@@ -2246,12 +2373,13 @@ function writeDataset({
     counts: {
       proposals: records.length,
       controls: 0,
-      manualChecks: 0,
+      manualChecks: manualChecks.length,
       rejectedAgentCandidates: rejected.length,
     },
     limitations: [
       `This is a provisional transfer run on ${branch}; it must be regenerated if the source ontology or learned process constraints change.`,
       "The independent critic is conservative, but accepted candidates remain hypotheses for expert review rather than validated ontology changes.",
+      "Valid detector candidates rejected by a verification stage remain available as blinded manual checks; confidence never removes or applies an item.",
       "No Sell-specific examples or expert answers were supplied to the detector agents.",
       ...(audit.priorExpertTitleLocks?.count
         ? [
@@ -2378,7 +2506,10 @@ async function main() {
     }
   }
   const detected = [...detectedByKey.values()];
-  const deterministic = deterministicOverlapCandidates(index, branch);
+  const deterministic = [
+    ...deterministicOverlapCandidates(index, branch),
+    ...deterministicCollectionPolicyCandidates(index, branch),
+  ];
   const allCandidates = [...deterministic, ...detected];
 
   addReferenceTargets({
@@ -2436,6 +2567,16 @@ async function main() {
   const criticRejected = [];
   const criticAccepted = preflightReady.flatMap((candidate) => {
     const assessment = assessmentById.get(candidate.candidateId);
+    if (candidate.requiresPolicyReview) {
+      return [
+        {
+          ...candidate,
+          judgeConfidence: clean(assessment?.confidence) || "unknown",
+          criticRationale:
+            clean(assessment?.rationale) || clean(candidate.rationale),
+        },
+      ];
+    }
     if (
       assessment?.decision !== "accept" &&
       assessment?.decision !== "revise"
@@ -2448,7 +2589,10 @@ async function main() {
         reason: clean(
           assessment?.rationale || "The critic did not return an acceptance.",
         ),
-        candidate,
+        candidate: {
+          ...candidate,
+          judgeConfidence: clean(assessment?.confidence) || "unknown",
+        },
       });
       return [];
     }
@@ -2478,6 +2622,7 @@ async function main() {
     return [
       {
         ...revisedCandidate,
+        judgeConfidence: clean(assessment?.confidence) || "unknown",
         criticRationale: clean(assessment.rationale),
       },
     ];
@@ -2538,7 +2683,13 @@ async function main() {
           assessment?.rationale ||
             "The content verifier did not return an acceptance.",
         ),
-        candidate,
+        candidate: {
+          ...candidate,
+          judgeConfidence:
+            clean(assessment?.confidence) ||
+            clean(candidate.judgeConfidence) ||
+            "unknown",
+        },
       });
       return [];
     }
@@ -2561,13 +2712,23 @@ async function main() {
         decision: "reject",
         stage: "post-content-verifier-preflight",
         reason,
-        candidate: verifiedCandidate,
+        candidate: {
+          ...verifiedCandidate,
+          judgeConfidence:
+            clean(assessment?.confidence) ||
+            clean(candidate.judgeConfidence) ||
+            "unknown",
+        },
       });
       return [];
     }
     return [
       {
         ...verifiedCandidate,
+        judgeConfidence:
+          clean(assessment?.confidence) ||
+          clean(candidate.judgeConfidence) ||
+          "unknown",
         criticRationale: clean(assessment.rationale),
       },
     ];
@@ -2611,12 +2772,21 @@ async function main() {
     ...placementNormalization.rejected,
     ...contentRejected,
   ];
+  const manualChecks = manualCheckRecordsForRejected(
+    [...criticRejected, ...contentRejected],
+    config,
+  ).sort((left, right) =>
+    `${left.issueType}|${left.proposalId}`.localeCompare(
+      `${right.issueType}|${right.proposalId}`,
+    ),
+  );
   const audit = {
     datasetVersion,
     branch,
     generatedAt,
     ontologyAppId,
     model: MODEL,
+    auditPolicyVersion: AUDIT_POLICY_VERSION,
     learnedConstraints:
       "Content and identity precede structure; exact actions are separately gated; no Sell examples were supplied.",
     priorExpertTitleLocks: {
@@ -2632,10 +2802,12 @@ async function main() {
     acceptedCandidates: accepted,
     rejectedCandidateCount: rejected.length,
     generatedProposalIds: records.map((record) => record.proposalId),
+    generatedManualCheckIds: manualChecks.map((record) => record.proposalId),
   };
   writeDataset({
     outputDir,
     records,
+    manualChecks,
     snapshot,
     snapshotHash,
     generatedAt,
@@ -2658,6 +2830,7 @@ async function main() {
         acceptedCandidates: accepted.length,
         rejectedCandidates: rejected.length,
         proposals: records.length,
+        manualChecks: manualChecks.length,
         byIssue: Object.fromEntries(
           ISSUE_DEFINITIONS.map((issue) => [
             issue.id,
