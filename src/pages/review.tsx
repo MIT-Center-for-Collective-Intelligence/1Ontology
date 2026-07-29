@@ -95,6 +95,7 @@ export const ReviewPage = () => {
   const [revisionProposalId, setRevisionProposalId] = useState("");
   const [loadError, setLoadError] = useState("");
   const [canDeliberate, setCanDeliberate] = useState(false);
+  const [canInspectPriorReview, setCanInspectPriorReview] = useState(false);
   const [retryIssueType, setRetryIssueType] = useState<SomIssueType | null>(
     null,
   );
@@ -128,6 +129,7 @@ export const ReviewPage = () => {
       setIssueTypes(overview.issueTypes);
       setReadyFollowUps(overview.readyFollowUps || []);
       setCanDeliberate(overview.canDeliberate);
+      setCanInspectPriorReview(overview.canInspectPriorReview);
       setPhase("select");
     } catch {
       setLoadError("The review queues could not be loaded. Please try again.");
@@ -644,6 +646,7 @@ export const ReviewPage = () => {
                   query: { dataset: datasetId },
                 })
               }
+              canInspectPriorReview={canInspectPriorReview}
               onOpenInspection={() =>
                 router.push({
                   pathname: "/review/inspection",

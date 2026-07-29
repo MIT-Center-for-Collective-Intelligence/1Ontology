@@ -203,6 +203,7 @@ const ReviewQueueSelector = ({
   ontologyName = "Ontology",
   onStart,
   canDeliberate = false,
+  canInspectPriorReview = false,
   onOpenDeliberation,
   onOpenInspection,
   headerAction,
@@ -215,6 +216,7 @@ const ReviewQueueSelector = ({
   ontologyName?: string;
   onStart: (issueType: SomIssueType) => void;
   canDeliberate?: boolean;
+  canInspectPriorReview?: boolean;
   onOpenDeliberation?: () => void;
   onOpenInspection?: () => void;
   headerAction?: React.ReactNode;
@@ -279,7 +281,7 @@ const ReviewQueueSelector = ({
               Group deliberation
             </Button>
           )}
-          {canDeliberate && onOpenInspection && (
+          {canInspectPriorReview && onOpenInspection && (
             <Button
               disableElevation
               variant="outlined"
