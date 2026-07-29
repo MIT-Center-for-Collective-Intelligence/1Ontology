@@ -19,7 +19,10 @@ import { loadUserProfiles } from "./deliberationStore";
 import { applicableReviewResponses } from "./reviewWorkflow";
 import { reviewDatasetConfig, reviewWorkspaceConfig } from "./reviewWorkspaces";
 import { toReviewerCard } from "./sanitize";
-import { inspectionRecordSource } from "./inspectionPolicy";
+import {
+  inspectableReviewerCounts,
+  inspectionRecordSource,
+} from "./inspectionPolicy";
 
 interface StoredResponseRecord {
   datasetVersion: string;
@@ -119,17 +122,13 @@ const availableReviewers = async (
   workspaceId: string,
 ): Promise<SomInspectionReviewer[]> => {
   const workspace = reviewWorkspaceConfig(workspaceId);
-  const responses = (
-    await Promise.all(
-      workspace.datasets.map((config) =>
-        currentResponsesForDataset(config.datasetVersion),
-      ),
-    )
-  ).flat();
-  const counts = new Map<string, number>();
-  for (const response of responses) {
-    counts.set(response.reviewerId, (counts.get(response.reviewerId) || 0) + 1);
-  }
+  const rounds = await Promise.all(
+    workspace.datasets.map(async (config) => ({
+      proposalIds: new Set(getDataset(config.id).recordsById.keys()),
+      responses: await currentResponsesForDataset(config.datasetVersion),
+    })),
+  );
+  const counts = inspectableReviewerCounts(rounds);
   const profiles = await loadUserProfiles([...counts.keys()]);
   return [...counts.entries()]
     .map(([reviewerId, responseCount]) => ({
