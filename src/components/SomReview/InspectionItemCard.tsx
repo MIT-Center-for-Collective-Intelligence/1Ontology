@@ -129,10 +129,12 @@ const SelectedDecision = ({
 const InspectionItemCard = ({
   item,
   reviewerName,
+  canAnnotate = true,
   onSaveException,
 }: {
   item: SomInspectionItem;
   reviewerName: string;
+  canAnnotate?: boolean;
   onSaveException: (
     item: SomInspectionItem,
     rationale: string,
@@ -266,7 +268,13 @@ const InspectionItemCard = ({
       <SelectedDecision item={item} reviewerName={reviewerName} />
 
       <Divider sx={{ my: 2 }} />
-      {!editing && (
+      {!canAnnotate && (
+        <Typography sx={{ color: "text.secondary", fontSize: "0.88rem" }}>
+          This is your own response. Inspection notes are available only to
+          another reviewer.
+        </Typography>
+      )}
+      {canAnnotate && !editing && (
         <Button
           disableElevation
           color="inherit"
@@ -277,7 +285,7 @@ const InspectionItemCard = ({
           Mark not aligned
         </Button>
       )}
-      {editing && (
+      {canAnnotate && editing && (
         <Stack spacing={1.25}>
           <Typography sx={{ fontWeight: 800 }}>
             Your separate inspection note

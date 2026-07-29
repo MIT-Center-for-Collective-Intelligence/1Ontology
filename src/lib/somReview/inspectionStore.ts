@@ -5,7 +5,6 @@ import { db } from "../firestoreServer/admin";
 import {
   SOM_REVIEW_INSPECTION_EXCEPTIONS,
   SOM_REVIEW_INSPECTION_EXCEPTION_REVISIONS,
-  SOM_REVIEW_INSPECTION_SCANS,
   SOM_REVIEW_RESPONSES,
 } from "../firestoreClient/collections";
 import {
@@ -13,7 +12,6 @@ import {
   SomInspectionItem,
   SomInspectionOverviewResponse,
   SomInspectionReviewer,
-  SomInspectionScan,
   SomReviewDecision,
 } from "../../types/ISomReview";
 import { getDataset, getDatasetByVersion, SomDataset } from "./dataset";
@@ -70,23 +68,6 @@ const toIso = (value: any, fallback = ""): string => {
   return fallback;
 };
 
-const scanRef = (
-  workspaceId: string,
-  datasetVersion: string,
-  sourceSnapshotSha256: string,
-  inspectorId: string,
-) =>
-  db
-    .collection(SOM_REVIEW_INSPECTION_SCANS)
-    .doc(
-      stableDocId(
-        workspaceId,
-        datasetVersion,
-        sourceSnapshotSha256,
-        inspectorId,
-      ),
-    );
-
 export const inspectionTargetForWorkspace = (workspaceId: string) => {
   const workspace = reviewWorkspaceConfig(workspaceId);
   const dataset = getDataset(workspace.activeDatasetId);
@@ -116,38 +97,6 @@ const exceptionRef = (
         inspectorId,
       ),
     );
-
-const loadScan = async (
-  workspaceId: string,
-  datasetVersion: string,
-  sourceSnapshotSha256: string,
-  inspectorId: string,
-): Promise<SomInspectionScan | undefined> => {
-  const snapshot = await scanRef(
-    workspaceId,
-    datasetVersion,
-    sourceSnapshotSha256,
-    inspectorId,
-  ).get();
-  if (!snapshot.exists) return undefined;
-  const record = snapshot.data() || {};
-  if (
-    !record.lockedAt ||
-    record.datasetVersion !== datasetVersion ||
-    record.sourceSnapshotSha256 !== sourceSnapshotSha256
-  ) {
-    return undefined;
-  }
-  return {
-    workspaceId,
-    inspectorId,
-    datasetVersion,
-    sourceSnapshotSha256: String(record.sourceSnapshotSha256),
-    observations: String(record.observations || ""),
-    noIssuesFound: record.noIssuesFound === true,
-    lockedAt: toIso(record.lockedAt),
-  };
-};
 
 const currentResponsesForDataset = async (
   datasetVersion: string,
@@ -320,28 +269,8 @@ export const loadInspectionOverview = async ({
   inspectorId: string;
   requestedReviewerId?: string;
 }): Promise<SomInspectionOverviewResponse> => {
-  const { workspace, datasetVersion, sourceSnapshotSha256 } =
-    inspectionTargetForWorkspace(workspaceId);
-  const scan = await loadScan(
-    workspaceId,
-    datasetVersion,
-    sourceSnapshotSha256,
-    inspectorId,
-  );
-  if (!scan) {
-    return {
-      workspaceId,
-      workspaceLabel: workspace.label,
-      activeDatasetId: workspace.activeDatasetId,
-      stage: "independent-scan",
-      reviewers: [],
-      items: [],
-    };
-  }
-
-  const reviewers = (await availableReviewers(workspaceId)).filter(
-    (reviewer) => reviewer.reviewerId !== inspectorId,
-  );
+  const { workspace } = inspectionTargetForWorkspace(workspaceId);
+  const reviewers = await availableReviewers(workspaceId);
   const selectedReviewerId = reviewers.some(
     (reviewer) => reviewer.reviewerId === requestedReviewerId,
   )
@@ -359,61 +288,10 @@ export const loadInspectionOverview = async ({
     workspaceId,
     workspaceLabel: workspace.label,
     activeDatasetId: workspace.activeDatasetId,
-    stage: "prior-review",
-    scan,
     reviewers,
     selectedReviewerId,
     items,
   };
-};
-
-export const lockInspectionScan = async ({
-  workspaceId,
-  inspectorId,
-  observations,
-  noIssuesFound,
-}: {
-  workspaceId: string;
-  inspectorId: string;
-  observations: string;
-  noIssuesFound: boolean;
-}): Promise<{ changed: boolean }> => {
-  const { datasetVersion, sourceSnapshotSha256 } =
-    inspectionTargetForWorkspace(workspaceId);
-  const ref = scanRef(
-    workspaceId,
-    datasetVersion,
-    sourceSnapshotSha256,
-    inspectorId,
-  );
-  return db.runTransaction(async (transaction) => {
-    const snapshot = await transaction.get(ref);
-    if (snapshot.exists && snapshot.data()?.lockedAt) {
-      const existing = snapshot.data() || {};
-      const identical =
-        String(existing.observations || "") === observations &&
-        (existing.noIssuesFound === true) === noIssuesFound;
-      if (!identical) {
-        throw new InspectionStoreError(
-          409,
-          "The independent hierarchy scan is already locked",
-        );
-      }
-      return { changed: false };
-    }
-    const now = Timestamp.now();
-    transaction.set(ref, {
-      workspaceId,
-      inspectorId,
-      datasetVersion,
-      sourceSnapshotSha256,
-      observations,
-      noIssuesFound,
-      lockedAt: now,
-      createdAt: now,
-    });
-    return { changed: true };
-  });
 };
 
 const assertInspectableResponse = async ({
@@ -435,22 +313,7 @@ const assertInspectableResponse = async ({
       "A reviewer cannot annotate their own prior response",
     );
   }
-  const {
-    datasetVersion: activeDatasetVersion,
-    sourceSnapshotSha256: activeSourceSnapshotSha256,
-  } = inspectionTargetForWorkspace(workspaceId);
-  const scan = await loadScan(
-    workspaceId,
-    activeDatasetVersion,
-    activeSourceSnapshotSha256,
-    inspectorId,
-  );
-  if (!scan) {
-    throw new InspectionStoreError(
-      409,
-      "Lock the independent hierarchy scan before inspecting prior responses",
-    );
-  }
+  inspectionTargetForWorkspace(workspaceId);
   const dataset = getDatasetByVersion(datasetVersion);
   if (reviewDatasetConfig(dataset.datasetId).workspaceId !== workspaceId) {
     throw new InspectionStoreError(

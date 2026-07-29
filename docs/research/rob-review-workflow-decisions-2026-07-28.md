@@ -11,21 +11,19 @@ Sources:
 
 ## Product decisions
 
-### 1. Tom's review has two stages
+### 1. Tom inspects Rob's completed review in one scrollable pass
 
 Tom should not repeat Rob's entire atomic review.
 
-1. **Independent hierarchy scan.** Tom compares the original and current Sell
-   outlines and records any unclear, misplaced, duplicated, missing, or poorly
-   grouped activities. The notes are locked before prior-review evidence is
-   revealed.
-2. **Prior-review inspection.** Tom sees every item Rob reviewed in stable queue
-   order on one scrollable page. Each item includes:
-   - the before state;
-   - the LLM-proposed after state, including no-change controls;
-   - Rob's visibly selected response;
-   - Rob's disagreement rationale, when present; and
-   - Rob's proposed alternative, when present.
+Tom sees every item Rob reviewed in stable queue order on one scrollable page.
+There is no preliminary blind scan, staged reveal, or proposal-by-proposal
+navigation. Each item includes:
+
+- the before state;
+- the LLM-proposed after state, including no-change controls;
+- Rob's visibly selected response;
+- Rob's disagreement rationale, when present; and
+- Rob's proposed alternative, when present.
 
 Tom does not overwrite or replicate Rob's response. He leaves an exception only
 when he is not aligned with it. The exception stores Tom's rationale and optional
@@ -94,9 +92,10 @@ task before changing propagation logic.
 
 ## Acceptance criteria
 
-- Tom can lock a hierarchy scan before seeing Rob's answers.
-- A research-team member can select Rob and inspect all of his applicable
-  responses without clicking proposal by proposal.
+- A research-team member can select Rob and immediately inspect all of his saved
+  responses without a preliminary scan or clicking proposal by proposal.
+- Rob can preview the same page using his own account, but cannot add an
+  inspection exception to his own response.
 - Rob's decision, rationale, and alternative remain visible after an inspection
   exception is saved.
 - An inspector can add, edit, or clear a separate not-aligned exception.

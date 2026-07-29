@@ -14,7 +14,8 @@ apply any ontology change.
 3. Open `/review?dataset=sell-outline-followup` and verify that diagnostics
    precede their dependency-gated merge or move actions.
 4. Open `/review/inspection?workspace=sell` with a research-team account and
-   verify that prior responses are hidden until an independent scan is locked.
+   verify that all saved prior-review responses appear immediately on one
+   scrollable page.
 5. Open `/review/calibration` with a test participant account and verify that
    only the released task set is visible.
 
@@ -26,15 +27,14 @@ indexes; no new ordered or range query is introduced.
 
 Send Tom `/review/inspection?workspace=sell`.
 
-1. Compare the original and current Sell hierarchies.
-2. Record observations or explicitly record that no issues were found.
-3. Lock the scan. It is bound to the active dataset version and ontology
-   snapshot, so a later hierarchy requires a new blind scan.
-4. Select Rob as the prior reviewer.
-5. Read the scrollable before, proposed after, selected response, rationale, and
+1. Select Rob as the prior reviewer.
+2. Read the scrollable before, proposed after, selected response, rationale, and
    alternative record.
-6. Add a `Not aligned` exception only where Tom differs. His note is stored
+3. Add a `Not aligned` exception only where Tom differs. His note is stored
    separately and never overwrites Rob's response.
+
+Rob can open the same link to preview the interface. His own responses remain
+read-only because a reviewer cannot add an inspection exception to themselves.
 
 ## Non-expert calibration
 
@@ -53,6 +53,8 @@ Send Rob `/review?dataset=sell-outline-followup`.
 - The 26 items encode the July 28 outline observations as atomic questions.
 - Identity and placement diagnoses appear before exact merge and move actions.
 - Exact actions unlock only when their diagnosis is accepted.
+- Queue 4 contains the undetected-synonym diagnoses; exact merge actions are
+  separate dependency-gated items in queue 13.
 - Boundary cases remain manual checks.
 - Model confidence is hidden and cannot authorize an ontology write.
 
