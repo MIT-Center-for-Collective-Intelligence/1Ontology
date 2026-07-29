@@ -96,6 +96,9 @@ task before changing propagation logic.
   responses without a preliminary scan or clicking proposal by proposal.
 - Rob can preview the same page using his own account, but cannot add an
   inspection exception to his own response.
+- Reviewer response counts include only records that still resolve to a frozen
+  proposal card. Orphaned historical responses remain in the audit artifacts
+  but are not presented as inspectable before/after proposals.
 - Rob's decision, rationale, and alternative remain visible after an inspection
   exception is saved.
 - An inspector can add, edit, or clear a separate not-aligned exception.

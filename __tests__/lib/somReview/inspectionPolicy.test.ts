@@ -1,5 +1,6 @@
 import {
   confidenceAuthorizesOntologyMutation,
+  inspectableReviewerCounts,
   inspectionRecordSource,
 } from "../../../src/lib/somReview/inspectionPolicy";
 
@@ -36,4 +37,23 @@ describe("inspection policy", () => {
       ).toBe(false);
     },
   );
+
+  it("counts only responses that still resolve to a proposal card", () => {
+    const counts = inspectableReviewerCounts([
+      {
+        proposalIds: new Set(["proposal-1", "proposal-2"]),
+        responses: [
+          { proposalId: "proposal-1", reviewerId: "rob" },
+          { proposalId: "proposal-2", reviewerId: "rob" },
+          { proposalId: "orphaned", reviewerId: "rob" },
+          { proposalId: "proposal-1", reviewerId: "tom" },
+        ],
+      },
+    ]);
+
+    expect([...counts.entries()]).toEqual([
+      ["rob", 2],
+      ["tom", 1],
+    ]);
+  });
 });
