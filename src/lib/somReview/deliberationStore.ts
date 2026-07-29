@@ -33,7 +33,7 @@ import {
   remainingIndependentReviewCount,
 } from "./reviewWorkflow";
 
-interface UserProfile {
+export interface UserProfile {
   userId: string;
   displayName: string;
   email: string;
@@ -134,7 +134,7 @@ const chunks = <T>(values: T[], size: number): T[][] => {
   return result;
 };
 
-const loadUserProfiles = async (
+export const loadUserProfiles = async (
   userIds: string[],
 ): Promise<Map<string, UserProfile>> => {
   const unique = [...new Set(userIds.filter(Boolean))];

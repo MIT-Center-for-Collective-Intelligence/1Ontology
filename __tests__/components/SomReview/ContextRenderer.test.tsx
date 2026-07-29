@@ -239,6 +239,38 @@ describe("Society of Mind context renderers", () => {
     ).toBeInTheDocument();
   });
 
+  it("shows an evidence task retaining justified parents while removing only the stale parent", () => {
+    render(
+      <ContextRenderer
+        context={{
+          type: "evidence-parent-allocation",
+          taskTitle:
+            "(O*Net) 18843 - Sell funeral services, products, or merchandise to clients.",
+          currentParentTitles: [
+            "Sell Funeral Products",
+            "Sell Products",
+            "Sell Services",
+          ],
+          assignedOutputTitles: ["Sell Funeral Products"],
+          retainedParentTitles: ["Sell Services"],
+          removedParentTitles: ["Sell Products"],
+        }}
+      />,
+    );
+
+    expect(screen.getByLabelText("Evidence parents before")).toHaveTextContent(
+      "Sell Funeral ProductsSell ProductsSell Services",
+    );
+    expect(screen.getByLabelText("Evidence parents after")).toHaveTextContent(
+      "Sell Funeral ProductsSell ServicesRemove stale parent: Sell Products",
+    );
+    expect(
+      screen.getByText(
+        /may retain multiple parents.*removes only the named stale parent/i,
+      ),
+    ).toBeInTheDocument();
+  });
+
   it("renders structural overlap details without authorizing a merge", () => {
     render(
       <ContextRenderer

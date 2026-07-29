@@ -1,4 +1,10 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   Accordion,
   AccordionDetails,
@@ -21,8 +27,11 @@ import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import UnfoldLessIcon from "@mui/icons-material/UnfoldLess";
 import UnfoldMoreIcon from "@mui/icons-material/UnfoldMore";
+import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 
 import { Post } from "../../lib/utils/Post";
+import { formatOutlineText } from "../../lib/somReview/outline";
 import {
   SomOntologyOutlineResponse,
   SomOntologyOutlineSnapshot,
@@ -33,6 +42,11 @@ interface OutlineChild {
   childId: string;
   collectionName: string;
 }
+
+export const OUTLINE_COLLECTION_COLORS = {
+  light: "#9C3D00",
+  dark: "#FFB15C",
+} as const;
 
 const normalizeCollection = (value: string): string => {
   const normalized = value.trim().replace(/^\[/, "").replace(/\]$/, "");
@@ -211,7 +225,8 @@ const OutlineNode = ({
               color: "text.secondary",
               "&:hover": {
                 color: reviewAccentColor,
-                backgroundColor: (theme) => alpha(reviewAccentColor(theme), 0.12),
+                backgroundColor: (theme) =>
+                  alpha(reviewAccentColor(theme), 0.12),
               },
             }}
           >
@@ -224,20 +239,34 @@ const OutlineNode = ({
         ) : (
           <Box aria-hidden="true" sx={{ width: 30, flex: "0 0 auto" }} />
         )}
-        <Typography
-          sx={{
-            minWidth: 0,
-            pt: 0.45,
-            fontSize: isRoot ? "0.98rem" : isEvidence ? "0.84rem" : "0.9rem",
-            fontWeight: isRoot ? 800 : isEvidence ? 500 : 600,
-            fontStyle: isEvidence ? "italic" : "normal",
-            lineHeight: 1.35,
-            overflowWrap: "anywhere",
-            color: isEvidence ? "text.secondary" : "text.primary",
-          }}
-        >
-          {node.title}
-        </Typography>
+        <Box sx={{ minWidth: 0, pt: 0.45 }}>
+          <Typography
+            sx={{
+              fontSize: isRoot ? "0.98rem" : isEvidence ? "0.84rem" : "0.9rem",
+              fontWeight: isRoot ? 800 : isEvidence ? 500 : 600,
+              fontStyle: isEvidence ? "italic" : "normal",
+              lineHeight: 1.35,
+              overflowWrap: "anywhere",
+              color: isEvidence ? "text.secondary" : "text.primary",
+            }}
+          >
+            {node.title}
+          </Typography>
+          {node.synonyms.length > 0 && (
+            <Typography
+              data-outline-kind="synonyms"
+              sx={{
+                mt: 0.2,
+                color: "text.secondary",
+                fontSize: "0.72rem",
+                lineHeight: 1.35,
+                overflowWrap: "anywhere",
+              }}
+            >
+              Synonyms: {node.synonyms.join("; ")}
+            </Typography>
+          )}
+        </Box>
       </Stack>
 
       {hasChildren && isExpanded && (
@@ -321,7 +350,8 @@ const OutlineNode = ({
                       width: 24,
                       height: 24,
                       flex: "0 0 auto",
-                      color: reviewAccentColor,
+                      color: (theme) =>
+                        OUTLINE_COLLECTION_COLORS[theme.palette.mode],
                     }}
                   >
                     {isCollectionExpanded ? (
@@ -335,8 +365,10 @@ const OutlineNode = ({
                     data-outline-kind="collection-label"
                     sx={{
                       minWidth: 0,
-                      color: reviewAccentColor,
-                      fontSize: "0.7rem",
+                      pt: 0.35,
+                      color: (theme) =>
+                        OUTLINE_COLLECTION_COLORS[theme.palette.mode],
+                      fontSize: "0.72rem",
                       fontWeight: 800,
                       lineHeight: 1.3,
                       textTransform: "uppercase",
@@ -389,11 +421,13 @@ const OutlineColumn = ({
   snapshot,
   showEvidence,
   tone,
+  downloadName,
 }: {
   heading: string;
   snapshot: SomOntologyOutlineSnapshot;
   showEvidence: boolean;
   tone: "original" | "selected";
+  downloadName: string;
 }) => {
   const nodesById = useMemo(
     () => new Map(snapshot.nodes.map((node) => [node.id, node])),
@@ -582,43 +616,65 @@ const OutlineColumn = ({
             {snapshot.ontologyName}
           </Typography>
         </Box>
-        <Tooltip title={allExpanded ? "Collapse all" : "Expand all"}>
-          <IconButton
-            size="small"
-            aria-label={`${allExpanded ? "Collapse" : "Expand"} all ${heading.toLowerCase()} nodes`}
-            onClick={() => {
-              if (allExpanded) {
-                setExpanded(new Set());
-                setExpandedCollections(new Set());
-              } else {
-                setExpanded(new Set(expandableNodeIds));
-                setExpandedCollections(new Set(expandableCollectionKeys));
-              }
-            }}
-            sx={{
-              borderRadius: 1.25,
-              backgroundColor: (theme) =>
-                alpha(
-                  theme.palette.text.primary,
-                  theme.palette.mode === "dark" ? 0.06 : 0.04,
-                ),
-              "&:hover": {
-                color: reviewAccentColor,
+        <Stack direction="row" spacing={0.25}>
+          <Tooltip title={`Download ${heading.toLowerCase()} outline`}>
+            <IconButton
+              size="small"
+              aria-label={`Download ${heading.toLowerCase()} outline`}
+              onClick={() => {
+                const blob = new Blob(
+                  [formatOutlineText(snapshot, showEvidence)],
+                  { type: "text/plain;charset=utf-8" },
+                );
+                const url = URL.createObjectURL(blob);
+                const anchor = document.createElement("a");
+                anchor.href = url;
+                anchor.download = downloadName;
+                anchor.click();
+                URL.revokeObjectURL(url);
+              }}
+            >
+              <DownloadOutlinedIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title={allExpanded ? "Collapse all" : "Expand all"}>
+            <IconButton
+              size="small"
+              aria-label={`${allExpanded ? "Collapse" : "Expand"} all ${heading.toLowerCase()} nodes`}
+              onClick={() => {
+                if (allExpanded) {
+                  setExpanded(new Set());
+                  setExpandedCollections(new Set());
+                } else {
+                  setExpanded(new Set(expandableNodeIds));
+                  setExpandedCollections(new Set(expandableCollectionKeys));
+                }
+              }}
+              sx={{
+                borderRadius: 1.25,
                 backgroundColor: (theme) =>
                   alpha(
-                    reviewAccentColor(theme),
-                    theme.palette.mode === "dark" ? 0.16 : 0.1,
+                    theme.palette.text.primary,
+                    theme.palette.mode === "dark" ? 0.06 : 0.04,
                   ),
-              },
-            }}
-          >
-            {allExpanded ? (
-              <UnfoldLessIcon fontSize="small" />
-            ) : (
-              <UnfoldMoreIcon fontSize="small" />
-            )}
-          </IconButton>
-        </Tooltip>
+                "&:hover": {
+                  color: reviewAccentColor,
+                  backgroundColor: (theme) =>
+                    alpha(
+                      reviewAccentColor(theme),
+                      theme.palette.mode === "dark" ? 0.16 : 0.1,
+                    ),
+                },
+              }}
+            >
+              {allExpanded ? (
+                <UnfoldLessIcon fontSize="small" />
+              ) : (
+                <UnfoldMoreIcon fontSize="small" />
+              )}
+            </IconButton>
+          </Tooltip>
+        </Stack>
       </Stack>
       <Box
         role="tree"
@@ -661,13 +717,15 @@ const OntologyComparisonPanel = ({
   branch,
   roundLabel,
   currentRound,
+  initiallyExpanded = false,
 }: {
   datasetId: string;
   branch: string;
   roundLabel: string;
   currentRound: boolean;
+  initiallyExpanded?: boolean;
 }) => {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(initiallyExpanded);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState("");
   const [outline, setOutline] = useState<SomOntologyOutlineResponse | null>(
@@ -675,7 +733,7 @@ const OntologyComparisonPanel = ({
   );
   const [showEvidence, setShowEvidence] = useState(false);
 
-  const loadOutline = async () => {
+  const loadOutline = useCallback(async () => {
     setLoading(true);
     setLoadError("");
     try {
@@ -690,7 +748,11 @@ const OntologyComparisonPanel = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [datasetId]);
+
+  useEffect(() => {
+    if (expanded && !outline && !loading && !loadError) loadOutline();
+  }, [expanded, loadError, loadOutline, loading, outline]);
 
   return (
     <Accordion
@@ -699,7 +761,6 @@ const OntologyComparisonPanel = ({
       elevation={0}
       onChange={(_, nextExpanded) => {
         setExpanded(nextExpanded);
-        if (nextExpanded && !outline && !loading) loadOutline();
       }}
       sx={{
         mt: 4,
@@ -820,42 +881,53 @@ const OntologyComparisonPanel = ({
                   ),
               }}
             >
-              <Typography sx={{ color: "text.secondary", fontSize: "0.88rem" }}>
-                Expand either outline independently. Collection labels are
-                preserved.
+              <Typography sx={{ color: "text.secondary", fontSize: "0.9rem" }}>
+                Collection labels and recorded synonyms are preserved.
               </Typography>
-              <FormControlLabel
-                control={
-                  <Checkbox
+              <Stack direction="row" alignItems="center" spacing={0.5}>
+                <Tooltip title="Chevrons expand descendants. A vertical guide line connects each expanded node or collection to its children. Main-collection children appear directly under their parent.">
+                  <IconButton
                     size="small"
-                    checked={showEvidence}
-                    onChange={(event) => setShowEvidence(event.target.checked)}
-                    sx={{
-                      color: "text.secondary",
-                      "&.Mui-checked": { color: reviewAccentColor },
-                    }}
-                  />
-                }
-                label="Include O*NET evidence"
-                sx={{
-                  mr: 0,
-                  ml: { xs: 0, sm: 1 },
-                  px: 0.75,
-                  py: 0.15,
-                  borderRadius: 1.25,
-                  backgroundColor: (theme) =>
-                    showEvidence
-                      ? alpha(
-                          reviewAccentColor(theme),
-                          theme.palette.mode === "dark" ? 0.14 : 0.08,
-                        )
-                      : "transparent",
-                  "& .MuiFormControlLabel-label": {
-                    fontSize: "0.86rem",
-                    fontWeight: showEvidence ? 700 : 500,
-                  },
-                }}
-              />
+                    aria-label="Explain hierarchy controls"
+                  >
+                    <InfoOutlinedIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      size="small"
+                      checked={showEvidence}
+                      onChange={(event) =>
+                        setShowEvidence(event.target.checked)
+                      }
+                      sx={{
+                        color: "text.secondary",
+                        "&.Mui-checked": { color: reviewAccentColor },
+                      }}
+                    />
+                  }
+                  label="Include O*NET evidence"
+                  sx={{
+                    mr: 0,
+                    ml: { xs: 0, sm: 1 },
+                    px: 0.75,
+                    py: 0.15,
+                    borderRadius: 1.25,
+                    backgroundColor: (theme) =>
+                      showEvidence
+                        ? alpha(
+                            reviewAccentColor(theme),
+                            theme.palette.mode === "dark" ? 0.14 : 0.08,
+                          )
+                        : "transparent",
+                    "& .MuiFormControlLabel-label": {
+                      fontSize: "0.86rem",
+                      fontWeight: showEvidence ? 700 : 500,
+                    },
+                  }}
+                />
+              </Stack>
             </Stack>
             <Box
               sx={{
@@ -870,12 +942,14 @@ const OntologyComparisonPanel = ({
                 snapshot={outline.original}
                 showEvidence={showEvidence}
                 tone="original"
+                downloadName={`${branch.toLowerCase()}-original-outline.txt`}
               />
               <OutlineColumn
                 heading={currentRound ? "Current" : "Selected round"}
                 snapshot={outline.selected}
                 showEvidence={showEvidence}
                 tone="selected"
+                downloadName={`${branch.toLowerCase()}-${datasetId}-outline.txt`}
               />
             </Box>
           </Stack>

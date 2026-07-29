@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "som-outline-followup-generation-audit-v1",
+  "generatedAt": "2026-07-29T01:05:17.000Z",
+  "datasetVersion": "sell-rob-outline-followup-2026-07-28-v1",
+  "auditPolicyVersion": "ontology-audit-policy-v3",
+  "sourceSnapshotSha256": "ec34b54cd9a8a3230f31af8f5efc95997eb5f70e5ff15fc7986a8cf67aa55809",
+  "proposalIds": [
+    "som-e157a522b6e760b960b4",
+    "som-88fcd08567be01ea56d0",
+    "som-f90d90805bf349643a74",
+    "som-1db41c0a5dbd5f569250",
+    "som-3ae3f4192dabde927a5b",
+    "som-9aa447c01265d5116c76",
+    "som-b628054f5a2cf414446d",
+    "som-d5cc57eb83441ece5263",
+    "som-25b8ae57ca6e5f358354",
+    "som-3e14fab351e473b88048",
+    "som-4ef70b34c91a28290786",
+    "som-588c3588114f2675763b",
+    "som-604b0a750cdecca904d3",
+    "som-bc7ac372a2ad4dd41b61",
+    "som-cf065d915dec4ab33ca8",
+    "som-13a0b9597058f5cc1ee4",
+    "som-58d54a9ade1cd25c92fb",
+    "som-9d6b457c5b200e5a360a",
+    "som-b39b4ac147b470941496",
+    "som-c3e10c58f040be8320ae",
+    "som-c79381791a64407e02f2"
+  ],
+  "manualCheckIds": [
+    "som-1e01dce0b17914e36efd",
+    "som-28538bf9eaed596f6bde",
+    "som-8a82c42fe8c545cdc4c7",
+    "som-df5d16b46d08dc483050",
+    "som-a6d6defc795862260c35"
+  ],
+  "ontologyMutated": false
+}

@@ -24,6 +24,15 @@ export const SOM_REVIEW_DELIBERATION_POSITION_REVISIONS =
   "somReviewDeliberationPositionRevisions";
 export const SOM_REVIEW_RESOLUTIONS = "somReviewResolutions";
 export const SOM_REVIEW_RESOLUTION_REVISIONS = "somReviewResolutionRevisions";
+export const SOM_REVIEW_INSPECTION_SCANS = "somReviewInspectionScans";
+export const SOM_REVIEW_INSPECTION_EXCEPTIONS = "somReviewInspectionExceptions";
+export const SOM_REVIEW_INSPECTION_EXCEPTION_REVISIONS =
+  "somReviewInspectionExceptionRevisions";
+export const SOM_REVIEW_CALIBRATION_ASSIGNMENTS =
+  "somReviewCalibrationAssignments";
+export const SOM_REVIEW_CALIBRATION_RESPONSES = "somReviewCalibrationResponses";
+export const SOM_REVIEW_CALIBRATION_RESPONSE_REVISIONS =
+  "somReviewCalibrationResponseRevisions";
 
 /* realtime database */
 export const UNREAD_COMMENTS = "unreadComments";

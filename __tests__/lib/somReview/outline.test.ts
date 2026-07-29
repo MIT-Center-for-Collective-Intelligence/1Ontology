@@ -1,5 +1,8 @@
 import { getDataset } from "../../../src/lib/somReview/dataset";
-import { toOutlineSnapshot } from "../../../src/lib/somReview/outline";
+import {
+  formatOutlineText,
+  toOutlineSnapshot,
+} from "../../../src/lib/somReview/outline";
 
 describe("Society of Mind ontology outlines", () => {
   it.each([
@@ -33,5 +36,33 @@ describe("Society of Mind ontology outlines", () => {
     expect(
       evidenceNodes.every((node) => node.title.startsWith("(O*Net)")),
     ).toBe(true);
+  });
+
+  it("includes normalized synonyms without representing them as child nodes", () => {
+    const outline = toOutlineSnapshot(getDataset("sell-current"));
+    const nodesWithSynonyms = outline.nodes.filter(
+      (node) => node.synonyms.length > 0,
+    );
+
+    expect(nodesWithSynonyms.length).toBeGreaterThan(0);
+    expect(
+      nodesWithSynonyms.every(
+        (node) =>
+          new Set(node.synonyms.map((synonym) => synonym.toLowerCase()))
+            .size === node.synonyms.length,
+      ),
+    ).toBe(true);
+  });
+
+  it("formats a deterministic, collection-aware downloadable outline", () => {
+    const outline = toOutlineSnapshot(getDataset("sell-current"));
+    const first = formatOutlineText(outline);
+    const second = formatOutlineText(outline);
+
+    expect(first).toBe(second);
+    expect(first).toContain(`- ${outline.rootTitle}`);
+    expect(first).toMatch(/\[[^\]]+\]/);
+    expect(first).not.toContain("(O*Net)");
+    expect(formatOutlineText(outline, true)).toContain("(O*Net)");
   });
 });

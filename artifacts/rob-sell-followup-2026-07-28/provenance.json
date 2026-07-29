@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "som-research-provenance-v1",
+  "generatedAt": "2026-07-29T01:05:17.000Z",
+  "artifactBuilder": "scripts/som-review/build-rob-sell-followup-artifacts.mjs",
+  "command": "node scripts/som-review/build-rob-sell-followup-artifacts.mjs --generated-at 2026-07-29T01:05:17.000Z",
+  "sourceFiles": [
+    {
+      "path": "scripts/som-review/build-rob-sell-followup-artifacts.mjs",
+      "sha256": "d7f0580e13925917c39b8f69fc7cd3e003b7636aed17dbe8c79664f108b32bf4"
+    },
+    {
+      "path": "docs/research/rob-review-workflow-decisions-2026-07-28.md",
+      "sha256": "ea4dba9f6f30bf982b811d5aa89f1267b63f563b36ed2e32fca0e241d9c107f5"
+    },
+    {
+      "path": "scripts/som-review/audit-policy.mjs",
+      "sha256": "9cfec04732f22d8a5b44923e7242d5966575299f0f3d7b11ebb6d8f837d7e10c"
+    },
+    {
+      "path": "scripts/som-review/fixtures/rob-sell-policy-regressions-2026-07-28.json",
+      "sha256": "27cb0a78554c22332ed6f627cba824e6e9da5da947671cf520b4b9ccd844329d"
+    },
+    {
+      "path": "scripts/som-review/clone-and-apply-title-review.mjs",
+      "sha256": "80f2413421829f5f7247100b1132785218216f4a859ee32ac8f561e7a9107af3"
+    }
+  ],
+  "outputs": [
+    "artifacts/rob-sell-followup-2026-07-28/followup-audit.json",
+    "artifacts/rob-sell-followup-2026-07-28/dry-run-application-plan.json",
+    "artifacts/rob-sell-followup-2026-07-28/provenance.json"
+  ]
+}

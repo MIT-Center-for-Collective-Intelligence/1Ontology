@@ -55,6 +55,17 @@ const buyDatasets: SomReviewDatasetConfig[] = [
 
 const sellDatasets: SomReviewDatasetConfig[] = [
   {
+    id: "sell-outline-followup",
+    datasetVersion: "sell-rob-outline-followup-2026-07-28-v1",
+    workspaceId: "sell",
+    label: "Rob outline follow-up",
+    relativeDir: [
+      "Sell_Society_of_Mind_Review_UI_Handoff_2026-07-15",
+      "review-datasets-rob-outline-followup-2026-07-28",
+    ],
+    current: true,
+  },
+  {
     id: "sell-current",
     datasetVersion: "sell-rob-post-structure-2026-07-25-v1",
     workspaceId: "sell",
@@ -63,7 +74,7 @@ const sellDatasets: SomReviewDatasetConfig[] = [
       "Sell_Society_of_Mind_Review_UI_Handoff_2026-07-15",
       "review-datasets-rob-post-structure-2026-07-25",
     ],
-    current: true,
+    current: false,
   },
   {
     id: "sell-structure-review",
@@ -133,7 +144,7 @@ export const SOM_REVIEW_WORKSPACES: SomReviewWorkspaceConfig[] = [
   {
     id: "sell",
     label: "Sell",
-    activeDatasetId: "sell-current",
+    activeDatasetId: "sell-outline-followup",
     originalDatasetId: "sell-initial-review",
     datasets: sellDatasets,
   },
