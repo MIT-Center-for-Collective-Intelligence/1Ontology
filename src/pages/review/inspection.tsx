@@ -3,12 +3,10 @@ import {
   Alert,
   Box,
   Button,
-  Checkbox,
   Chip,
   CircularProgress,
   Container,
   FormControl,
-  FormControlLabel,
   InputLabel,
   MenuItem,
   Select,
@@ -19,13 +17,10 @@ import {
   Typography,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
-import FactCheckOutlinedIcon from "@mui/icons-material/FactCheckOutlined";
 import Head from "next/head";
 import { useRouter } from "next/router";
 
 import InspectionItemCard from "@components/components/SomReview/InspectionItemCard";
-import OntologyComparisonPanel from "@components/components/SomReview/OntologyComparisonPanel";
 import ThemeModeToggle from "@components/components/SomReview/ThemeModeToggle";
 import { reviewInteractiveSurfaceSx } from "@components/components/SomReview/reviewStyles";
 import { useAuth } from "@components/components/context/AuthContext";
@@ -49,10 +44,6 @@ export const ReviewInspectionPage = () => {
     useState<SomInspectionOverviewResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
-  const [observations, setObservations] = useState("");
-  const [noIssuesFound, setNoIssuesFound] = useState(false);
-  const [confirmedLock, setConfirmedLock] = useState(false);
-  const [savingScan, setSavingScan] = useState(false);
   const [search, setSearch] = useState("");
   const [itemFilter, setItemFilter] = useState<ItemFilter>("all");
 
@@ -71,7 +62,6 @@ export const ReviewInspectionPage = () => {
         );
         setOverview(result);
         if (
-          result.stage === "prior-review" &&
           result.selectedReviewerId &&
           result.selectedReviewerId !== requestedReviewerId
         ) {
@@ -103,37 +93,6 @@ export const ReviewInspectionPage = () => {
   useEffect(() => {
     if (user && router.isReady) loadOverview();
   }, [loadOverview, router.isReady, user]);
-
-  const lockScan = async () => {
-    if (
-      savingScan ||
-      !confirmedLock ||
-      (!noIssuesFound && observations.trim().length < 3)
-    ) {
-      return;
-    }
-    setSavingScan(true);
-    setLoadError("");
-    try {
-      await Post<SomInspectionMutationResult>(
-        "/som-review/inspection/lock-scan",
-        {
-          workspaceId,
-          observations,
-          noIssuesFound,
-        },
-        false,
-      );
-      await loadOverview();
-    } catch (error: any) {
-      setLoadError(
-        error?.response?.data?.error ||
-          "The independent scan could not be locked.",
-      );
-    } finally {
-      setSavingScan(false);
-    }
-  };
 
   const selectReviewer = async (reviewerId: string) => {
     await router.replace(
@@ -270,8 +229,9 @@ export const ReviewInspectionPage = () => {
                 Prior-review inspection
               </Typography>
               <Typography sx={{ mt: 0.5, color: "text.secondary" }}>
-                Record an independent hierarchy scan before seeing another
-                reviewer&apos;s item-level judgments.
+                Inspect another reviewer&apos;s completed judgments in one
+                scrollable page. Add a separate note only where you are not
+                aligned.
               </Typography>
             </Box>
             <ToggleButtonGroup
@@ -311,98 +271,13 @@ export const ReviewInspectionPage = () => {
             </Alert>
           )}
 
-          {!loading && overview?.stage === "independent-scan" && !loadError && (
-            <Stack spacing={3} sx={{ mt: 3 }}>
-              <Alert severity="info" icon={<FactCheckOutlinedIcon />}>
-                Prior responses are hidden. Inspect the original and current{" "}
-                {overview.workspaceLabel} outlines first. These notes become
-                read-only when you continue.
-              </Alert>
-              <OntologyComparisonPanel
-                datasetId={overview.activeDatasetId}
-                branch={overview.workspaceLabel}
-                roundLabel="Current hierarchy"
-                currentRound
-                initiallyExpanded
-              />
-              <Box component="section" sx={{ maxWidth: 820 }}>
-                <Typography
-                  component="h2"
-                  sx={{ fontSize: "1.1rem", fontWeight: 800 }}
-                >
-                  Independent observations
-                </Typography>
-                <Typography sx={{ mt: 0.5, color: "text.secondary" }}>
-                  Note anything unclear, misplaced, duplicated, missing, or
-                  poorly grouped without trying to reconstruct prior choices.
-                </Typography>
-                <TextField
-                  fullWidth
-                  multiline
-                  minRows={5}
-                  label="Hierarchy observations"
-                  value={observations}
-                  onChange={(event) => setObservations(event.target.value)}
-                  inputProps={{ maxLength: 5000 }}
-                  sx={{ mt: 2 }}
-                />
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={noIssuesFound}
-                      onChange={(event) =>
-                        setNoIssuesFound(event.target.checked)
-                      }
-                    />
-                  }
-                  label="I did not identify any issues in this scan"
-                  sx={{ mt: 1 }}
-                />
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={confirmedLock}
-                      onChange={(event) =>
-                        setConfirmedLock(event.target.checked)
-                      }
-                    />
-                  }
-                  label="I understand this scan will be locked before prior responses are revealed"
-                  sx={{ display: "flex", mt: 0.5 }}
-                />
-                <Button
-                  disableElevation
-                  variant="contained"
-                  startIcon={
-                    savingScan ? (
-                      <CircularProgress size={18} color="inherit" />
-                    ) : (
-                      <LockOutlinedIcon />
-                    )
-                  }
-                  disabled={
-                    savingScan ||
-                    !confirmedLock ||
-                    (!noIssuesFound && observations.trim().length < 3)
-                  }
-                  onClick={lockScan}
-                  sx={{ mt: 1.5, minHeight: 48, fontWeight: 800 }}
-                >
-                  Lock scan and inspect prior review
-                </Button>
-              </Box>
-            </Stack>
-          )}
-
-          {!loading && overview?.stage === "prior-review" && !loadError && (
+          {!loading && overview && !loadError && (
             <Stack spacing={2.5} sx={{ mt: 3 }}>
-              <Alert severity="success" icon={<LockOutlinedIcon />}>
-                Independent scan locked{" "}
-                {overview.scan?.lockedAt
-                  ? new Date(overview.scan.lockedAt).toLocaleString()
-                  : ""}
-                . It is bound to this hierarchy snapshot. Prior-review evidence
-                is now available.
+              <Alert severity="info">
+                Every saved proposal response is listed below. If you are
+                aligned, continue scrolling without taking action. Mark an item
+                as not aligned only when you want to record an issue for
+                discussion; the prior response remains unchanged.
               </Alert>
 
               {overview.reviewers.length === 0 ? (
@@ -520,6 +395,9 @@ export const ReviewInspectionPage = () => {
                               reviewerName={
                                 selectedReviewer?.displayName ||
                                 "Prior reviewer"
+                              }
+                              canAnnotate={
+                                overview.selectedReviewerId !== user?.userId
                               }
                               onSaveException={saveException}
                             />

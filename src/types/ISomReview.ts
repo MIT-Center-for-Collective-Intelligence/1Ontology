@@ -489,16 +489,6 @@ export interface SomInspectionReviewer {
   responseCount: number;
 }
 
-export interface SomInspectionScan {
-  workspaceId: string;
-  inspectorId: string;
-  datasetVersion: string;
-  sourceSnapshotSha256: string;
-  observations: string;
-  noIssuesFound: boolean;
-  lockedAt: string;
-}
-
 export interface SomInspectionException {
   datasetVersion: string;
   proposalId: string;
@@ -533,8 +523,6 @@ export interface SomInspectionOverviewResponse {
   workspaceId: string;
   workspaceLabel: string;
   activeDatasetId: string;
-  stage: "independent-scan" | "prior-review";
-  scan?: SomInspectionScan;
   reviewers: SomInspectionReviewer[];
   selectedReviewerId?: string;
   items: SomInspectionItem[];
