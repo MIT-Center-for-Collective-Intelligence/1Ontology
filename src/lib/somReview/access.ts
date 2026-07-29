@@ -14,6 +14,11 @@ export interface ReviewAccess {
   canFinalize: boolean;
 }
 
+export interface ReviewSurfaceCapabilities {
+  canDeliberate: boolean;
+  canInspectPriorReview: boolean;
+}
+
 const DEFAULT_STEWARD_EMAILS = ["malone@mit.edu", "rjl@mit.edu"];
 
 const DEFAULT_STEWARD_UIDS = [
@@ -151,3 +156,11 @@ export const reviewAccessForToken = (
     emailVerified: token.email_verified === true,
     claims: token,
   });
+
+export const reviewSurfaceCapabilities = (
+  access: ReviewAccess,
+  deliberationEnabled: boolean,
+): ReviewSurfaceCapabilities => ({
+  canDeliberate: deliberationEnabled && access.canDeliberate,
+  canInspectPriorReview: access.canDeliberate,
+});

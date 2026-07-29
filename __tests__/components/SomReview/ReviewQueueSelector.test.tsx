@@ -389,4 +389,24 @@ describe("Society of Mind review queue selector", () => {
     fireEvent.click(screen.getByRole("button", { name: "Group deliberation" }));
     expect(onOpenDeliberation).toHaveBeenCalledTimes(1);
   });
+
+  it("shows prior-review inspection without enabling group deliberation", () => {
+    const onOpenInspection = jest.fn();
+    render(
+      <ReviewQueueSelector
+        issueTypes={issues}
+        onStart={jest.fn()}
+        canInspectPriorReview
+        onOpenInspection={onOpenInspection}
+      />,
+    );
+
+    expect(
+      screen.queryByRole("button", { name: "Group deliberation" }),
+    ).not.toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Inspect prior review" }),
+    );
+    expect(onOpenInspection).toHaveBeenCalledTimes(1);
+  });
 });

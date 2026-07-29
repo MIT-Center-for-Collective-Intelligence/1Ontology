@@ -13,7 +13,10 @@ import {
   reviewerReadyDependentRecords,
 } from "../../../lib/somReview/store";
 import { SomIssueType, SomOverviewResponse } from "../../../types/ISomReview";
-import { reviewAccessForToken } from "../../../lib/somReview/access";
+import {
+  reviewAccessForToken,
+  reviewSurfaceCapabilities,
+} from "../../../lib/somReview/access";
 import { toLinkedFollowUps } from "../../../lib/somReview/followUps";
 import { numberReviewIssues } from "../../../lib/somReview/reviewTaxonomy";
 import {
@@ -86,6 +89,11 @@ const handler = async (request: NextApiRequest, res: NextApiResponse) => {
       blockedBy: blockingIssuePrerequisites(issue.id, issuesByType),
     }));
 
+    const reviewAccess = reviewAccessForToken(req.user);
+    const capabilities = reviewSurfaceCapabilities(
+      reviewAccess,
+      process.env.SOM_REVIEW_DELIBERATION_ENABLED === "true",
+    );
     const body: SomOverviewResponse = {
       datasetId: dataset.datasetId,
       datasetVersion: dataset.datasetVersion,
@@ -101,9 +109,7 @@ const handler = async (request: NextApiRequest, res: NextApiResponse) => {
       ),
       issueTypes,
       readyFollowUps: toLinkedFollowUps(dataset, readyFollowUpRecords),
-      canDeliberate:
-        process.env.SOM_REVIEW_DELIBERATION_ENABLED === "true" &&
-        reviewAccessForToken(req.user).canDeliberate,
+      ...capabilities,
     };
     return res.status(200).json(body);
   } catch (error: any) {

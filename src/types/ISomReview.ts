@@ -315,6 +315,7 @@ export interface SomOverviewResponse {
   issueTypes: SomIssueTypeOption[];
   readyFollowUps: SomLinkedFollowUp[];
   canDeliberate: boolean;
+  canInspectPriorReview: boolean;
 }
 
 export interface SomReviewRoundOption {

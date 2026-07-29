@@ -35,6 +35,9 @@ Send Tom `/review/inspection?workspace=sell`.
 
 Rob can open the same link to preview the interface. His own responses remain
 read-only because a reviewer cannot add an inspection exception to themselves.
+Research-team users can also open this page from **Inspect prior review** on the
+expert review screen even when the separate group-deliberation feature is
+disabled.
 
 ## Non-expert calibration
 

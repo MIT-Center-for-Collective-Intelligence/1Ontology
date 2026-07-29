@@ -2,6 +2,7 @@ import {
   resolveReviewerRole,
   reviewAccessForIdentity,
   reviewerRoleWeights,
+  reviewSurfaceCapabilities,
 } from "../../../src/lib/somReview/access";
 
 describe("Society of Mind reviewer access", () => {
@@ -51,6 +52,30 @@ describe("Society of Mind reviewer access", () => {
       role: "contributor",
       canDeliberate: false,
       canFinalize: false,
+    });
+  });
+
+  it("keeps prior-review inspection available when group deliberation is disabled", () => {
+    const access = reviewAccessForIdentity({
+      uid: "researcher",
+      roleClaim: "researcher",
+    });
+
+    expect(reviewSurfaceCapabilities(access, false)).toEqual({
+      canDeliberate: false,
+      canInspectPriorReview: true,
+    });
+  });
+
+  it("does not expose either review surface to contributors", () => {
+    const access = reviewAccessForIdentity({
+      uid: "outside",
+      email: "reviewer@example.org",
+    });
+
+    expect(reviewSurfaceCapabilities(access, true)).toEqual({
+      canDeliberate: false,
+      canInspectPriorReview: false,
     });
   });
 
