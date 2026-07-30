@@ -32,6 +32,11 @@ export interface SomOntologySnapshot {
     childId: string;
     collectionName: string;
   }>;
+  /** Named collection declarations, including collections with no edges. */
+  collections?: Array<{
+    parentId: string;
+    collectionName: string;
+  }>;
 }
 
 export interface SomProposalSourceRefs {
@@ -49,6 +54,7 @@ type SnapshotIndex = {
   idsByTitle: Map<string, string[]>;
   edgeKeys: Set<string>;
   edgePairs: Set<string>;
+  collectionKeys: Set<string>;
   childrenByParent: Map<string, Set<string>>;
 };
 
@@ -72,6 +78,9 @@ const edgeKey = (
 
 const edgePair = (parentId: string, childId: string): string =>
   `${parentId}\u001f${childId}`;
+
+const collectionKey = (parentId: string, collectionName?: string): string =>
+  `${parentId}\u001f${normalizeCollection(collectionName)}`;
 
 export const sha256File = (filePath: string): string =>
   crypto.createHash("sha256").update(fs.readFileSync(filePath)).digest("hex");
@@ -104,6 +113,7 @@ export const buildSnapshotIndex = (
 
   const edgeKeys = new Set<string>();
   const edgePairs = new Set<string>();
+  const collectionKeys = new Set<string>();
   const childrenByParent = new Map<string, Set<string>>();
   for (const edge of snapshot.edges) {
     if (!nodesById.has(edge.parentId) || !nodesById.has(edge.childId)) {
@@ -113,9 +123,20 @@ export const buildSnapshotIndex = (
     }
     edgeKeys.add(edgeKey(edge.parentId, edge.childId, edge.collectionName));
     edgePairs.add(edgePair(edge.parentId, edge.childId));
+    collectionKeys.add(collectionKey(edge.parentId, edge.collectionName));
     const children = childrenByParent.get(edge.parentId) || new Set<string>();
     children.add(edge.childId);
     childrenByParent.set(edge.parentId, children);
+  }
+  for (const collection of snapshot.collections || []) {
+    if (!nodesById.has(collection.parentId)) {
+      throw new Error(
+        `Ontology snapshot collection references a missing parent: ${collection.parentId}`,
+      );
+    }
+    collectionKeys.add(
+      collectionKey(collection.parentId, collection.collectionName),
+    );
   }
 
   const rootNodeId = snapshot.branchRootNodeId || snapshot.sellRootNodeId || "";
@@ -139,6 +160,7 @@ export const buildSnapshotIndex = (
     idsByTitle,
     edgeKeys,
     edgePairs,
+    collectionKeys,
     childrenByParent,
   };
 };
@@ -421,6 +443,45 @@ export const validateProposalAgainstSnapshot = (
       if (!parentNodeId) parentNodeId = currentParentIds[0] || "";
       break;
     }
+    case "evidence-specialization": {
+      subjectNodeId = addTitle(context.sourceTask);
+      const currentParentTitles: string[] = context.currentParentTitles || [];
+      const currentParentIds = currentParentTitles.map((title) =>
+        addTitle(title),
+      );
+      for (const currentParentId of currentParentIds) {
+        requireAnyEdge(index, currentParentId, subjectNodeId);
+      }
+      if (!currentParentTitles.includes(context.genericNodeTitle)) {
+        throw new Error(
+          `Generic evidence parent is not a current parent: ${context.genericNodeTitle}`,
+        );
+      }
+      parentNodeId = addTitle(context.genericNodeTitle);
+      for (const title of [
+        ...(context.removedParentTitles || []),
+        ...(context.retainedParentTitles || []),
+      ]) {
+        if (!currentParentTitles.includes(title)) {
+          throw new Error(
+            `Evidence specialization references a non-current parent: ${title}`,
+          );
+        }
+        const parentId = addTitle(title);
+        requireAnyEdge(index, parentId, subjectNodeId);
+      }
+      addTitle(context.targetParentTitle);
+      const proposedIds = index.idsByTitle.get(context.proposedTitle) || [];
+      if (context.proposedTitleStatus === "new" && proposedIds.length > 0) {
+        throw new Error(
+          `Proposed evidence specialization already exists: ${context.proposedTitle}`,
+        );
+      }
+      if (context.proposedTitleStatus === "existing") {
+        addTitle(context.proposedTitle);
+      }
+      break;
+    }
     case "overlap-comparison": {
       const first = addDirectChild(
         context.parentTitle,
@@ -547,6 +608,39 @@ export const validateProposalAgainstSnapshot = (
       for (const title of context.childTitles || []) {
         const childId = addTitle(title);
         requireAnyEdge(index, subjectNodeId, childId);
+      }
+      break;
+    }
+    case "empty-node-action": {
+      parentNodeId = addTitle(context.parentTitle);
+      subjectNodeId = addTitle(context.nodeTitle);
+      requireEdge(index, parentNodeId, subjectNodeId, context.parentCollection);
+      if ((index.childrenByParent.get(subjectNodeId)?.size || 0) > 0) {
+        throw new Error(
+          `Empty-node proposal has children: ${context.nodeTitle}`,
+        );
+      }
+      break;
+    }
+    case "empty-collection-action": {
+      parentNodeId = addTitle(context.parentTitle);
+      subjectNodeId = parentNodeId;
+      const key = collectionKey(parentNodeId, context.collectionName);
+      if (!index.collectionKeys.has(key)) {
+        throw new Error(
+          `Empty-collection proposal references a missing collection: ${context.collectionName}`,
+        );
+      }
+      const hasMembers = index.snapshot.edges.some(
+        (edge) =>
+          edge.parentId === parentNodeId &&
+          normalizeCollection(edge.collectionName) ===
+            normalizeCollection(context.collectionName),
+      );
+      if (hasMembers) {
+        throw new Error(
+          `Empty-collection proposal has members: ${context.collectionName}`,
+        );
       }
       break;
     }

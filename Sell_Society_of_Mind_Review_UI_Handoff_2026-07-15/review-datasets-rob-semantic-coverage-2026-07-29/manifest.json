@@ -1,0 +1,163 @@
+{
+  "schemaVersion": "som-review-v1",
+  "datasetVersion": "sell-rob-semantic-coverage-2026-07-29-v1",
+  "branch": "Sell",
+  "generatedAt": "2026-07-30T01:01:43.000Z",
+  "sourceOntology": "firestore://ontology-41607/final-hierarchy-with-o*net-rob-structure-applied-2026-07-25",
+  "sourceOntologySha256": "c362f9d3587dbed1303a7355b7d5feef8057684544857139f0178a1038b687b2",
+  "counts": {
+    "proposals": 19,
+    "controls": 0,
+    "manualChecks": 3,
+    "rejectedAgentCandidates": 49
+  },
+  "files": {
+    "allProposals": "all_proposals.jsonl",
+    "allControls": "all_controls.jsonl",
+    "manualChecks": "manual_checks.jsonl",
+    "proposalsByIssue": "proposals/<issue-type>.jsonl",
+    "controlsByIssue": "controls/<issue-type>.jsonl",
+    "rejectedAgentCandidates": "diagnostics/rejected_agent_candidates.jsonl",
+    "acceptedStructureProvenance": "diagnostics/accepted_structure_provenance.json",
+    "proposalSchema": "schema/review-proposal.schema.json",
+    "responseSchema": "schema/review-response.schema.json",
+    "ontologySnapshot": "ontology-snapshot.json"
+  },
+  "uiContract": {
+    "issueHomogeneousSessions": true,
+    "defaultSessionSize": 10,
+    "maximumSessionSize": 15,
+    "oneAtomicItemAtATime": true,
+    "agreeAutoAdvancesWithoutPageReload": true,
+    "disagreeRequiresReason": true,
+    "optionalContextCollapsedByDefault": true,
+    "allowSaveAndExit": true
+  },
+  "issueTypes": [
+    {
+      "id": "cross-branch-recall",
+      "label": "1. Related activities outside Sell",
+      "taskIds": [],
+      "stage": "content",
+      "contextType": "placement-comparison",
+      "proposals": 8,
+      "controls": 0,
+      "manualChecks": 0
+    },
+    {
+      "id": "evidence-specialization",
+      "label": "2. Specific activities from O*NET evidence",
+      "taskIds": [],
+      "stage": "content",
+      "contextType": "evidence-specialization",
+      "proposals": 3,
+      "controls": 0,
+      "manualChecks": 0
+    },
+    {
+      "id": "relocation",
+      "label": "Exact moves into Sell",
+      "taskIds": [],
+      "stage": "final-action",
+      "contextType": "relocation-action",
+      "proposals": 8,
+      "controls": 0,
+      "manualChecks": 0
+    },
+    {
+      "id": "empty-node",
+      "label": "Empty-node cleanup after propagation",
+      "taskIds": [],
+      "stage": "final-action",
+      "contextType": "empty-node-action",
+      "proposals": 0,
+      "controls": 0,
+      "manualChecks": 3
+    },
+    {
+      "id": "empty-collection",
+      "label": "Empty-collection cleanup after propagation",
+      "taskIds": [],
+      "stage": "final-action",
+      "contextType": "empty-collection-action",
+      "proposals": 0,
+      "controls": 0,
+      "manualChecks": 0
+    }
+  ],
+  "reviewRelease": {
+    "strategy": "semantic-coverage-first",
+    "currentWave": "semantic-recall-and-evidence-specialization",
+    "releasedIssueTypes": [
+      "cross-branch-recall",
+      "evidence-specialization",
+      "relocation"
+    ],
+    "awaitingRegenerationIssueTypes": [
+      "empty-node",
+      "empty-collection"
+    ],
+    "message": "Review semantic branch-recall and O*NET specialization first. Downstream structure and empty-node/collection cleanup will be regenerated after these decisions are propagated."
+  },
+  "safety": {
+    "reviewOnly": true,
+    "mutatesOntology": false,
+    "approvalAuthorizesAutomaticWrite": false,
+    "modelConfidenceVisibleToReviewer": false
+  },
+  "acceptedStructureProvenance": {
+    "proposalId": "som-f0464db076534dd0bde0",
+    "origin": "explicit-human-reviewed-collection-design-proposal",
+    "file": "diagnostics/accepted_structure_provenance.json"
+  },
+  "limitations": [
+    "Embedding similarity retrieves candidates but never authorizes an ontology change.",
+    "A semantic-direction judge filters embedding candidates; direct provider-side O*NET evidence is scanned across the full ontology candidate set so the embedding cutoff cannot hide it.",
+    "Every whole-node move has a separate exact action tied to an approved diagnosis.",
+    "O*NET specializations are released only when a deterministic text rule verifies an explicit modifier; broader model suggestions remain diagnostic.",
+    "Empty-node and empty-collection findings are deterministic and intentionally unreleased until upstream changes propagate.",
+    "Descriptions and broad missing-activity generation remain deferred."
+  ],
+  "sourceSnapshot": {
+    "file": "ontology-snapshot.json",
+    "sha256": "c362f9d3587dbed1303a7355b7d5feef8057684544857139f0178a1038b687b2",
+    "capturedAt": "2026-07-30T01:01:43.000Z",
+    "ontologyAppId": "final-hierarchy-with-o*net-rob-structure-applied-2026-07-25",
+    "ontologyName": "Final Hierarchy with O*Net - Rob Structure Applied 2026-07-25",
+    "environment": "production",
+    "branchRootTitle": "Sell",
+    "branchRootNodeId": "9c347b3345120c1df2554b834c13",
+    "sellRootNodeId": "9c347b3345120c1df2554b834c13",
+    "nodeCount": 144,
+    "edgeCount": 180,
+    "collectionCount": 146
+  },
+  "detector": {
+    "version": "sell-semantic-coverage-v1",
+    "embeddingModel": "text-embedding-3-large",
+    "embeddingDimensions": 1024,
+    "judgeModel": "gemini-3.1-pro-preview",
+    "semanticQueries": [
+      {
+        "label": "sale",
+        "text": "Sell goods, services, rights, access, or ideas to a buyer in exchange for payment."
+      },
+      {
+        "label": "seller-side temporary use",
+        "text": "Rent out or lease out property, equipment, goods, or services to another party for payment."
+      },
+      {
+        "label": "commercial transfer",
+        "text": "Vend, retail, auction, broker, or otherwise transfer something to a customer for payment."
+      },
+      {
+        "label": "paid temporary access",
+        "text": "Provide temporary use of an asset to another person in exchange for payment while retaining ownership."
+      }
+    ],
+    "wholeOntologySemanticCandidateCount": 18616,
+    "rankedCandidateCount": 57,
+    "reviewedCandidateCount": 57,
+    "directEvidenceCandidateCount": 8
+  }
+}

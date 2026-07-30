@@ -21,6 +21,8 @@ import {
 const EXPECTED_SCHEMA_VERSION = "som-review-v1";
 
 export const SUPPORTED_ISSUE_TYPES: SomIssueType[] = [
+  "cross-branch-recall",
+  "evidence-specialization",
   "title-clarity",
   "synonym-enrichment",
   "description-enrichment",
@@ -38,6 +40,8 @@ export const SUPPORTED_ISSUE_TYPES: SomIssueType[] = [
   "relocation",
   "missing-activity",
   "redundant-node",
+  "empty-node",
+  "empty-collection",
 ];
 
 export type SomProposalAvailability = "ready" | "waiting" | "not-applicable";

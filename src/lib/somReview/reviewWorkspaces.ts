@@ -55,6 +55,17 @@ const buyDatasets: SomReviewDatasetConfig[] = [
 
 const sellDatasets: SomReviewDatasetConfig[] = [
   {
+    id: "sell-semantic-coverage",
+    datasetVersion: "sell-rob-semantic-coverage-2026-07-29-v1",
+    workspaceId: "sell",
+    label: "Whole-ontology coverage and evidence specialization",
+    relativeDir: [
+      "Sell_Society_of_Mind_Review_UI_Handoff_2026-07-15",
+      "review-datasets-rob-semantic-coverage-2026-07-29",
+    ],
+    current: true,
+  },
+  {
     id: "sell-outline-followup",
     datasetVersion: "sell-rob-outline-followup-2026-07-28-v1",
     workspaceId: "sell",
@@ -63,7 +74,7 @@ const sellDatasets: SomReviewDatasetConfig[] = [
       "Sell_Society_of_Mind_Review_UI_Handoff_2026-07-15",
       "review-datasets-rob-outline-followup-2026-07-28",
     ],
-    current: true,
+    current: false,
   },
   {
     id: "sell-current",
@@ -144,7 +155,7 @@ export const SOM_REVIEW_WORKSPACES: SomReviewWorkspaceConfig[] = [
   {
     id: "sell",
     label: "Sell",
-    activeDatasetId: "sell-outline-followup",
+    activeDatasetId: "sell-semantic-coverage",
     originalDatasetId: "sell-initial-review",
     datasets: sellDatasets,
   },

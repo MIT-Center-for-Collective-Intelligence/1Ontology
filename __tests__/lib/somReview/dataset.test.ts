@@ -9,6 +9,7 @@ import {
   proposalAvailability,
 } from "../../../src/lib/somReview/dataset";
 import {
+  buildSnapshotIndex,
   loadOntologySnapshot,
   validateProposalAgainstSnapshot,
 } from "../../../src/lib/somReview/ontologySnapshot";
@@ -35,6 +36,8 @@ describe("Society of Mind review dataset", () => {
 
   it("keeps all 13 Rob tasks distinct and exposes action queues separately", () => {
     expect(SUPPORTED_ISSUE_TYPES).toEqual([
+      "cross-branch-recall",
+      "evidence-specialization",
       "title-clarity",
       "synonym-enrichment",
       "description-enrichment",
@@ -52,6 +55,8 @@ describe("Society of Mind review dataset", () => {
       "relocation",
       "missing-activity",
       "redundant-node",
+      "empty-node",
+      "empty-collection",
     ]);
 
     const representedTasks = [
@@ -334,6 +339,49 @@ describe("Society of Mind review dataset", () => {
     expect(() =>
       validateProposalAgainstSnapshot(record, source.index, source.sha256),
     ).toThrow("Proposed relocation already exists");
+  });
+
+  it("validates an empty collection only when the snapshot declares it without members", () => {
+    const snapshot = {
+      schemaVersion: "som-ontology-snapshot-v1" as const,
+      ontologyAppId: "ontology",
+      ontologyName: "Ontology",
+      firestoreProjectId: "project",
+      environment: "production" as const,
+      capturedAt: "2026-07-29T00:00:00.000Z",
+      branchRootNodeId: "sell",
+      branchRootTitle: "Sell",
+      nodes: [{ id: "sell", title: "Sell" }],
+      edges: [],
+      collections: [{ parentId: "sell", collectionName: "Sell by channel" }],
+    };
+    const record = {
+      proposalId: "empty-collection",
+      subject: { path: [] },
+      reviewerView: {
+        context: {
+          type: "empty-collection-action",
+          parentTitle: "Sell",
+          collectionName: "Sell by channel",
+        },
+      },
+      provenance: {
+        sourceOntologyAppId: "ontology",
+        sourceOntologyName: "Ontology",
+        sourceSnapshotSha256: "snapshot",
+        subjectNodeId: "sell",
+        parentNodeId: "sell",
+        referencedNodeIds: ["sell"],
+      },
+    };
+
+    expect(
+      validateProposalAgainstSnapshot(
+        record,
+        buildSnapshotIndex(snapshot),
+        "snapshot",
+      ),
+    ).toMatchObject({ subjectNodeId: "sell", parentNodeId: "sell" });
   });
 
   it("enables supported types by default and honors the disable list", () => {

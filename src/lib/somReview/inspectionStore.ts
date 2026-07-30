@@ -22,6 +22,9 @@ import { toReviewerCard } from "./sanitize";
 import {
   inspectableReviewerCounts,
   inspectionRecordSource,
+  selectInspectionReviewer,
+  inspectionTaskKey,
+  inspectionTasks,
 } from "./inspectionPolicy";
 
 interface StoredResponseRecord {
@@ -263,24 +266,37 @@ export const loadInspectionOverview = async ({
   workspaceId,
   inspectorId,
   requestedReviewerId,
+  requestedTaskKey,
 }: {
   workspaceId: string;
   inspectorId: string;
   requestedReviewerId?: string;
+  requestedTaskKey?: string;
 }): Promise<SomInspectionOverviewResponse> => {
   const { workspace } = inspectionTargetForWorkspace(workspaceId);
   const reviewers = await availableReviewers(workspaceId);
-  const selectedReviewerId = reviewers.some(
-    (reviewer) => reviewer.reviewerId === requestedReviewerId,
-  )
-    ? requestedReviewerId
-    : reviewers[0]?.reviewerId;
-  const items = selectedReviewerId
+  const selectedReviewerId = selectInspectionReviewer(
+    reviewers,
+    requestedReviewerId,
+    inspectorId,
+  );
+  const allItems = selectedReviewerId
     ? await reviewItems({
         workspaceId,
         subjectReviewerId: selectedReviewerId,
         inspectorId,
       })
+    : [];
+  const tasks = inspectionTasks(allItems);
+  const selectedTaskKey = tasks.some((task) => task.key === requestedTaskKey)
+    ? requestedTaskKey
+    : undefined;
+  const items = selectedTaskKey
+    ? allItems.filter(
+        (item) =>
+          inspectionTaskKey(item.datasetId, item.card.issueType) ===
+          selectedTaskKey,
+      )
     : [];
 
   return {
@@ -289,6 +305,8 @@ export const loadInspectionOverview = async ({
     activeDatasetId: workspace.activeDatasetId,
     reviewers,
     selectedReviewerId,
+    tasks,
+    selectedTaskKey,
     items,
   };
 };

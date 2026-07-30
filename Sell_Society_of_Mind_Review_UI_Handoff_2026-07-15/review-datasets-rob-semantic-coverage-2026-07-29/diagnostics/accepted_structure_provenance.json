@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "som-accepted-structure-provenance-v1",
+  "proposalId": "som-f0464db076534dd0bde0",
+  "origin": "explicit-human-reviewed-collection-design-proposal",
+  "review": {
+    "datasetVersion": "sell-rob-structure-wave-2026-07-24-v1",
+    "issueType": "collection-design",
+    "reviewerLabel": "Rob Laubacher",
+    "decision": "agree",
+    "revisionCount": 1,
+    "sourceFile": "artifacts/rob-structure-review-2026-07-25/rob-collection-design-2026-07-25.json",
+    "sourceSha256": "e5ffce866906ae7a3d5c78baf2420146cdaafbb9a0a292ec21e29efb9a684b43"
+  },
+  "application": {
+    "sourceOntology": {
+      "appId": "final-hierarchy-with-o*net-rob-structure-review-2026-07-24",
+      "name": "Final Hierarchy with O*Net - Rob Structure Review 2026-07-24"
+    },
+    "targetOntology": {
+      "appId": "final-hierarchy-with-o*net-rob-structure-applied-2026-07-25",
+      "name": "Final Hierarchy with O*Net - Rob Structure Applied 2026-07-25"
+    },
+    "collectionName": "Sell what kind of usage?",
+    "branches": [
+      {
+        "title": "Sell ownership",
+        "nodeId": "2dfe6a4a3194a23d73d3681eb844",
+        "movedChildren": []
+      },
+      {
+        "title": "Sell temporary use",
+        "nodeId": "bc3a0d85a3dcd1e3ea729857acc3",
+        "movedChildren": [
+          {
+            "nodeId": "df319ef0372ddc12e45ccbd4b4b0",
+            "nodeTitle": "Rent out",
+            "fromParentId": "9c347b3345120c1df2554b834c13",
+            "fromParentTitle": "Sell",
+            "toParentId": "bc3a0d85a3dcd1e3ea729857acc3",
+            "toParentTitle": "Sell temporary use",
+            "proposedCollection": "main"
+          }
+        ]
+      }
+    ],
+    "sourceFile": "Sell_Society_of_Mind_Review_UI_Handoff_2026-07-15/review-datasets-rob-post-structure-2026-07-25/diagnostics/structure_application_audit.json",
+    "sourceSha256": "4e58676bb87a99ff9aeeb05d65761052946c6f6cf3ba6b4ddb31da2c3d7725bf",
+    "targetDigestVerified": true,
+    "sourceUnchanged": true
+  },
+  "conclusion": "\"Sell ownership\" and \"Sell temporary use\" were surfaced for review, explicitly accepted, and then applied to a new ontology copy; they were not hidden or automatic model mutations."
+}

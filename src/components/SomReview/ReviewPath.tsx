@@ -5,7 +5,7 @@ import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import CheckIcon from "@mui/icons-material/Check";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 
-import { SOM_REVIEW_PATH } from "../../lib/somReview/reviewDependencies";
+import { reviewPathForIssueTypes } from "../../lib/somReview/reviewDependencies";
 import { SomIssueType, SomIssueTypeOption } from "../../types/ISomReview";
 
 type StepStatus =
@@ -113,7 +113,8 @@ const ReviewPath = ({
   onStart: (issueType: SomIssueType) => void;
 }) => {
   const issuesById = new Map(issueTypes.map((issue) => [issue.id, issue]));
-  const steps = SOM_REVIEW_PATH.map((step) => {
+  const path = reviewPathForIssueTypes(issueTypes.map((issue) => issue.id));
+  const steps = path.map((step) => {
     const issues = step.issueTypes.flatMap((id) => {
       const issue = issuesById.get(id);
       return issue ? [issue] : [];
@@ -172,7 +173,7 @@ const ReviewPath = ({
           gridTemplateColumns: {
             xs: "1fr",
             sm: "repeat(2, minmax(0, 1fr))",
-            md: "repeat(5, minmax(0, 1fr))",
+            md: `repeat(${Math.min(steps.length, 5)}, minmax(0, 1fr))`,
           },
           gap: { xs: 1, md: 1.5 },
         }}

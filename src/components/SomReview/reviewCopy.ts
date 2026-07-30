@@ -1,6 +1,10 @@
 import { SomIssueType } from "../../types/ISomReview";
 
 export const ISSUE_DESCRIPTIONS: Record<SomIssueType, string> = {
+  "cross-branch-recall":
+    "Review semantically related activities found outside the current sub-branch.",
+  "evidence-specialization":
+    "Create specific activity nodes when O*NET evidence modifies a generic object.",
   "title-clarity": "Judge whether an activity title is clear and precise.",
   "synonym-enrichment": "Review synonyms missing from structured metadata.",
   "description-enrichment":
@@ -29,9 +33,17 @@ export const ISSUE_DESCRIPTIONS: Record<SomIssueType, string> = {
     "Optionally judge whether a well-known activity is missing from the sub-branch.",
   "redundant-node":
     "Review removal of a wrapper whose children can move to its parent.",
+  "empty-node":
+    "Review an empty semantic node before removing it from the sub-branch.",
+  "empty-collection":
+    "Review a named collection with no member nodes before removing it.",
 };
 
 export const ISSUE_INTRODUCTIONS: Record<SomIssueType, string> = {
+  "cross-branch-recall":
+    "Semantic retrieval searched the complete ontology for activities related to this sub-branch but currently located elsewhere. Agree only when the candidate expresses this branch's main action in the stated sense. This review changes no ontology node by itself.",
+  "evidence-specialization":
+    "Review a specific activity node derived from modifiers in linked O*NET evidence. Agree only when the specific title preserves the task meaning and the listed evidence should move from its generic parent to that node.",
   "title-clarity":
     "Compare the current activity title with a proposed title using its source O*NET tasks. Agree only if the proposed title is clearer and still names the same activity.",
   "synonym-enrichment":
@@ -66,4 +78,8 @@ export const ISSUE_INTRODUCTIONS: Record<SomIssueType, string> = {
     "Optionally review a proposed activity that is not currently represented in the sub-branch. Agree only if it is distinct, commonly needed, and placed under an appropriate parent.",
   "redundant-node":
     "Review a wrapper node that may add no useful distinction. The before-and-after view shows which children would move directly to its parent if the wrapper were removed.",
+  "empty-node":
+    "Review a semantic node with no direct children or source evidence. Agree only when it is genuinely empty and adds no needed conceptual distinction; an expert can retain intentional organizing concepts.",
+  "empty-collection":
+    "Review a named collection with no member nodes. Agree only when the empty grouping is obsolete; an expert can retain a deliberately reserved collection.",
 };

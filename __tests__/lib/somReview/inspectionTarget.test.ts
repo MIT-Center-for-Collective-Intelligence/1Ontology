@@ -8,9 +8,9 @@ describe("prior-review inspection target", () => {
   it("binds a Sell scan to the active round and exact ontology snapshot", () => {
     const target = inspectionTargetForWorkspace("sell");
 
-    expect(target.workspace.activeDatasetId).toBe("sell-outline-followup");
+    expect(target.workspace.activeDatasetId).toBe("sell-semantic-coverage");
     expect(target.datasetVersion).toBe(
-      "sell-rob-outline-followup-2026-07-28-v1",
+      "sell-rob-semantic-coverage-2026-07-29-v1",
     );
     expect(target.sourceSnapshotSha256).toMatch(/^[a-f0-9]{64}$/);
     expect(target.sourceSnapshotSha256).toBe(

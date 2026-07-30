@@ -33,20 +33,18 @@ import {
   SomLinkedFollowUp,
 } from "../../types/ISomReview";
 import { SOM_REVIEW_STAGES } from "../../lib/somReview/reviewTaxonomy";
-import { SOM_REVIEW_PATH } from "../../lib/somReview/reviewDependencies";
+import { reviewPathForIssueTypes } from "../../lib/somReview/reviewDependencies";
 import { ISSUE_DESCRIPTIONS } from "./reviewCopy";
 import { reviewAccentColor, reviewIconColor } from "./reviewStyles";
 import ReviewFollowUpPanel from "./ReviewFollowUpPanel";
 import ReviewPath from "./ReviewPath";
 
-const reviewPathStepByIssue = new Map(
-  SOM_REVIEW_PATH.flatMap((step) =>
-    step.issueTypes.map((issueType) => [issueType, step] as const),
-  ),
-);
-
 const blockingPhaseSummary = (
   blockers: SomIssueTypeOption["blockedBy"],
+  reviewPathStepByIssue: Map<
+    SomIssueType,
+    ReturnType<typeof reviewPathForIssueTypes>[number]
+  >,
 ): string => {
   const labels = Array.from(
     new Set(
@@ -77,6 +75,10 @@ const activeQueueStatusSx: SxProps<Theme> = {
 const IssueIcon = ({ issueType }: { issueType: SomIssueType }) => {
   const sx = { fontSize: 28 };
   switch (issueType) {
+    case "cross-branch-recall":
+      return <HubOutlinedIcon sx={sx} />;
+    case "evidence-specialization":
+      return <PlaylistAddOutlinedIcon sx={sx} />;
     case "title-clarity":
       return <DriveFileRenameOutlineIcon sx={sx} />;
     case "flat-list-grouping":
@@ -106,6 +108,8 @@ const IssueIcon = ({ issueType }: { issueType: SomIssueType }) => {
     case "missing-activity":
       return <PlaylistAddOutlinedIcon sx={sx} />;
     case "redundant-node":
+    case "empty-node":
+    case "empty-collection":
       return <RemoveCircleOutlineIcon sx={sx} />;
   }
 };
@@ -224,6 +228,11 @@ const ReviewQueueSelector = ({
   readyFollowUps?: SomLinkedFollowUp[];
   onStartFollowUp?: (followUp: SomLinkedFollowUp) => void;
 }) => {
+  const reviewPathStepByIssue = new Map(
+    reviewPathForIssueTypes(issueTypes.map((issue) => issue.id)).flatMap(
+      (step) => step.issueTypes.map((issueType) => [issueType, step] as const),
+    ),
+  );
   const releaseMessage = issueTypes.find(
     (issue) => !issue.released && issue.releaseMessage,
   )?.releaseMessage;
@@ -350,7 +359,10 @@ const ReviewQueueSelector = ({
                     issue.enabled &&
                     issue.released &&
                     (hasSavedItems || (hasNewItems && !blocked));
-                  const blockerPhases = blockingPhaseSummary(blockers);
+                  const blockerPhases = blockingPhaseSummary(
+                    blockers,
+                    reviewPathStepByIssue,
+                  );
                   const unavailableLabel =
                     issue.total === 0
                       ? `${issue.label}; no review items found`

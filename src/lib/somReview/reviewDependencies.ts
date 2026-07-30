@@ -10,6 +10,8 @@ import {
  * dependencies remain attached to individual proposals in the dataset.
  */
 const ISSUE_PREREQUISITES: Partial<Record<SomIssueType, SomIssueType[]>> = {
+  "evidence-specialization": ["cross-branch-recall"],
+  "title-clarity": ["cross-branch-recall", "evidence-specialization"],
   "synonym-enrichment": ["title-clarity"],
   "mistaken-synonym": ["title-clarity"],
   "duplicate-synonym": ["title-clarity"],
@@ -83,6 +85,42 @@ const ISSUE_PREREQUISITES: Partial<Record<SomIssueType, SomIssueType[]>> = {
     "polysemy",
     "misc-facet-duplicate",
   ],
+  "empty-node": [
+    "cross-branch-recall",
+    "evidence-specialization",
+    "title-clarity",
+    "synonym-enrichment",
+    "mistaken-synonym",
+    "duplicate-synonym",
+    "polysemy",
+    "misc-facet-duplicate",
+    "node-merge",
+    "flat-list-grouping",
+    "compound-object-grouping",
+    "collection-design",
+    "placement",
+    "wrong-verb",
+    "relocation",
+    "sense-relocation",
+  ],
+  "empty-collection": [
+    "cross-branch-recall",
+    "evidence-specialization",
+    "title-clarity",
+    "synonym-enrichment",
+    "mistaken-synonym",
+    "duplicate-synonym",
+    "polysemy",
+    "misc-facet-duplicate",
+    "node-merge",
+    "flat-list-grouping",
+    "compound-object-grouping",
+    "collection-design",
+    "placement",
+    "wrong-verb",
+    "relocation",
+    "sense-relocation",
+  ],
 };
 
 export const issuePrerequisiteTypes = (
@@ -124,15 +162,23 @@ export interface SomReviewPathStep {
 
 export const SOM_REVIEW_PATH: SomReviewPathStep[] = [
   {
-    id: "labels",
+    id: "coverage",
     number: 1,
+    title: "Complete branch coverage",
+    description:
+      "Find related activities elsewhere, then derive specific nodes from source evidence.",
+    issueTypes: ["cross-branch-recall", "evidence-specialization"],
+  },
+  {
+    id: "labels",
+    number: 2,
     title: "Clarify labels",
     description: "Resolve unclear titles before judging meaning or structure.",
     issueTypes: ["title-clarity"],
   },
   {
     id: "meaning",
-    number: 2,
+    number: 3,
     title: "Resolve meaning and identity",
     description:
       "Review meaning diagnoses and confirm their exact node merges before structure.",
@@ -147,7 +193,7 @@ export const SOM_REVIEW_PATH: SomReviewPathStep[] = [
   },
   {
     id: "structure",
-    number: 3,
+    number: 4,
     title: "Review structure and placement",
     description:
       "Judge proposed groups, collections, and movements after meanings are clear.",
@@ -161,7 +207,7 @@ export const SOM_REVIEW_PATH: SomReviewPathStep[] = [
   },
   {
     id: "actions",
-    number: 4,
+    number: 5,
     title: "Confirm exact changes",
     description:
       "Exact move decisions appear as soon as their structural diagnoses are approved.",
@@ -169,8 +215,16 @@ export const SOM_REVIEW_PATH: SomReviewPathStep[] = [
     contextual: true,
   },
   {
+    id: "cleanup",
+    number: 6,
+    title: "Review empty-structure cleanup",
+    description:
+      "After upstream changes settle, decide whether each remaining empty node or named collection should be retained.",
+    issueTypes: ["empty-node", "empty-collection"],
+  },
+  {
     id: "optional",
-    number: 5,
+    number: 7,
     title: "Optional quality checks",
     description:
       "Descriptions, missing activities, and redundant nodes do not block restructuring.",
@@ -182,3 +236,12 @@ export const SOM_REVIEW_PATH: SomReviewPathStep[] = [
     optional: true,
   },
 ];
+
+export const reviewPathForIssueTypes = (
+  issueTypes: SomIssueType[],
+): SomReviewPathStep[] => {
+  const present = new Set(issueTypes);
+  return SOM_REVIEW_PATH.filter((step) =>
+    step.issueTypes.some((issueType) => present.has(issueType)),
+  ).map((step, index) => ({ ...step, number: index + 1 }));
+};
