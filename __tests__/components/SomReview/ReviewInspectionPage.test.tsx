@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import React from "react";
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 
 import { Post } from "../../../src/lib/utils/Post";
@@ -17,10 +17,11 @@ jest.mock("../../../src/components/context/AuthContext", () => ({
 }));
 
 const replace = jest.fn().mockResolvedValue(true);
+let routerQuery: Record<string, string> = { workspace: "sell" };
 jest.mock("next/router", () => ({
   useRouter: () => ({
     isReady: true,
-    query: { workspace: "sell" },
+    query: routerQuery,
     push: jest.fn(),
     replace,
   }),
@@ -86,6 +87,7 @@ const item = (proposalId: string, question: string, proposalIndex: number) => ({
 describe("Tom's prior-review inspection page", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    routerQuery = { workspace: "sell" };
     (Post as jest.Mock).mockResolvedValue({
       workspaceId: "sell",
       workspaceLabel: "Sell",
@@ -98,23 +100,48 @@ describe("Tom's prior-review inspection page", () => {
         },
       ],
       selectedReviewerId: "rob",
-      items: [
-        item("proposal-1", "First reviewed proposal", 0),
-        item("proposal-2", "Second reviewed proposal", 1),
+      tasks: [
+        {
+          key: "sell-initial-review::duplicate-synonym",
+          datasetId: "sell-initial-review",
+          datasetLabel: "Initial review",
+          currentRound: false,
+          issueType: "duplicate-synonym",
+          issueLabel: "4. Undetected synonyms",
+          responseCount: 2,
+          agreeCount: 2,
+          disagreeCount: 0,
+          exceptionCount: 0,
+          currentlyApplicableCount: 2,
+        },
       ],
+      items: [],
     });
   });
 
-  it("shows every prior response immediately on one page without a scan gate", async () => {
+  it("shows a task dashboard instead of mixing every prior response", async () => {
     render(<ReviewInspectionPage />);
 
-    expect(await screen.findByText("First reviewed proposal")).toBeVisible();
-    expect(screen.getByText("Second reviewed proposal")).toBeVisible();
-    expect(screen.getByText("2 shown")).toBeVisible();
+    expect(await screen.findByText("4. Undetected synonyms")).toBeVisible();
+    expect(screen.getByText("2 responses")).toBeVisible();
+    expect(screen.queryByText("First reviewed proposal")).toBeNull();
     expect(
       screen.queryByText(/independent hierarchy scan/i),
     ).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /lock scan/i })).toBeNull();
+
+    fireEvent.click(screen.getByText("4. Undetected synonyms"));
+    expect(replace).toHaveBeenCalledWith(
+      {
+        pathname: "/review/inspection",
+        query: {
+          workspace: "sell",
+          reviewer: "rob",
+          task: "sell-initial-review::duplicate-synonym",
+        },
+      },
+      undefined,
+      { shallow: true },
+    );
 
     await waitFor(() =>
       expect(Post).toHaveBeenCalledWith(
@@ -128,5 +155,63 @@ describe("Tom's prior-review inspection page", () => {
         String(url).includes("lock-scan"),
       ),
     ).toBe(false);
+  });
+
+  it("shows all responses for one selected task on a scrollable page", async () => {
+    routerQuery = {
+      workspace: "sell",
+      reviewer: "rob",
+      task: "sell-initial-review::duplicate-synonym",
+    };
+    (Post as jest.Mock).mockResolvedValue({
+      workspaceId: "sell",
+      workspaceLabel: "Sell",
+      activeDatasetId: "sell-outline-followup",
+      reviewers: [
+        {
+          reviewerId: "rob",
+          displayName: "Rob Laubacher",
+          responseCount: 2,
+        },
+      ],
+      selectedReviewerId: "rob",
+      selectedTaskKey: "sell-initial-review::duplicate-synonym",
+      tasks: [
+        {
+          key: "sell-initial-review::duplicate-synonym",
+          datasetId: "sell-initial-review",
+          datasetLabel: "Initial review",
+          currentRound: false,
+          issueType: "duplicate-synonym",
+          issueLabel: "4. Undetected synonyms",
+          responseCount: 2,
+          agreeCount: 2,
+          disagreeCount: 0,
+          exceptionCount: 0,
+          currentlyApplicableCount: 2,
+        },
+      ],
+      items: [
+        item("proposal-1", "First reviewed proposal", 0),
+        item("proposal-2", "Second reviewed proposal", 1),
+      ],
+    });
+
+    render(<ReviewInspectionPage />);
+
+    expect(await screen.findByText("First reviewed proposal")).toBeVisible();
+    expect(screen.getByText("Second reviewed proposal")).toBeVisible();
+    expect(screen.getByText("2 shown")).toBeVisible();
+    await waitFor(() =>
+      expect(Post).toHaveBeenCalledWith(
+        "/som-review/inspection/overview",
+        {
+          workspaceId: "sell",
+          reviewerId: "rob",
+          taskKey: "sell-initial-review::duplicate-synonym",
+        },
+        false,
+      ),
+    );
   });
 });

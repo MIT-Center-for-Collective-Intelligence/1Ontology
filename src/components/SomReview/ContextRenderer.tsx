@@ -33,6 +33,9 @@ const CONTEXTS_WITH_STATE_COMPARISONS = new Set<SomReviewContext["type"]>([
   "collection-design",
   "sense-relocation-action",
   "evidence-parent-allocation",
+  "evidence-specialization",
+  "empty-node-action",
+  "empty-collection-action",
 ]);
 
 export const contextShowsStateComparison = (
@@ -80,6 +83,12 @@ const ContextRenderer = ({
       return <PlacementNote context={context} branch={branch} />;
     case "evidence-parent-allocation":
       return <EvidenceParentAllocation context={context} />;
+    case "evidence-specialization":
+      return <EvidenceSpecialization context={context} />;
+    case "empty-node-action":
+      return <EmptyNodeAction context={context} />;
+    case "empty-collection-action":
+      return <EmptyCollectionAction context={context} />;
     case "overlap-comparison":
       return <OverlapComparison context={context} />;
     case "merge-action":
@@ -545,9 +554,11 @@ const PlacementNote = ({
           : ""}
         {affectedNodes.length > 1
           ? "Agreeing confirms the shared diagnosis for these activities. Each exact move remains a separate review step."
-          : context.placementIssue === "wrong-verb"
-            ? `Agreeing confirms that this activity does not belong in the ${branch} sub-branch. The exact move remains a separate review step.`
-            : "Agreeing confirms that the current parent is too broad. The exact move remains a separate review step."}
+          : context.placementIssue === "missing-from-branch"
+            ? `Agreeing confirms that this activity belongs in the ${branch} sub-branch even though it was found elsewhere. The exact move remains a separate review step.`
+            : context.placementIssue === "wrong-verb"
+              ? `Agreeing confirms that this activity does not belong in the ${branch} sub-branch. The exact move remains a separate review step.`
+              : "Agreeing confirms that the current parent is too broad. The exact move remains a separate review step."}
       </BoundaryNote>
     </Stack>
   );
@@ -1077,6 +1088,148 @@ const EvidenceParentAllocation = ({
       meaning. Agreeing removes only the named stale parent.
     </BoundaryNote>
   </Box>
+);
+
+const EvidenceSpecialization = ({
+  context,
+}: {
+  context: Extract<SomReviewContext, { type: "evidence-specialization" }>;
+}) => (
+  <Box>
+    <SourceTasks tasks={[context.sourceTask]} />
+    <Stack direction={{ xs: "column", md: "row" }} spacing={2} sx={{ mt: 1.5 }}>
+      <Box
+        sx={comparisonPanelSx}
+        aria-label="Generic evidence assignment before"
+      >
+        <Typography sx={sectionLabelSx}>Before</Typography>
+        {context.currentParentTitles.map((title) => (
+          <OutlineItem
+            key={title}
+            title={title}
+            highlighted={title === context.genericNodeTitle}
+            indent={0}
+          />
+        ))}
+      </Box>
+      <Box
+        sx={comparisonPanelSx}
+        aria-label="Specific evidence assignment after"
+      >
+        <Typography sx={sectionLabelSx}>After</Typography>
+        {context.proposedTitleStatus === "new" && (
+          <Typography sx={{ mt: 1, fontWeight: 750 }}>
+            {context.targetParentTitle}
+          </Typography>
+        )}
+        <Stack
+          direction="row"
+          alignItems="center"
+          flexWrap="wrap"
+          gap={0.75}
+          sx={{ mt: context.proposedTitleStatus === "new" ? 0.5 : 1 }}
+        >
+          <OutlineItem
+            title={context.proposedTitle}
+            highlighted
+            indent={context.proposedTitleStatus === "new" ? 1 : 0}
+          />
+          <Chip
+            size="small"
+            color={
+              context.proposedTitleStatus === "new" ? "primary" : "success"
+            }
+            label={
+              context.proposedTitleStatus === "new"
+                ? "New activity"
+                : "Existing activity"
+            }
+            variant="outlined"
+          />
+        </Stack>
+        {context.retainedParentTitles.map((title) => (
+          <OutlineItem key={title} title={title} indent={0} />
+        ))}
+        <Typography
+          sx={{ mt: 1.25, color: "text.secondary", fontSize: "0.85rem" }}
+        >
+          Remove generic parent: {context.removedParentTitles.join(", ")}
+        </Typography>
+      </Box>
+    </Stack>
+    <BoundaryNote>
+      The specific title must be supported by the O*NET wording itself. Agreeing
+      changes only the named evidence assignment; independently justified
+      parents remain.
+    </BoundaryNote>
+  </Box>
+);
+
+const EmptyNodeAction = ({
+  context,
+}: {
+  context: Extract<SomReviewContext, { type: "empty-node-action" }>;
+}) => (
+  <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
+    <Box
+      sx={comparisonPanelSx}
+      aria-label="Hierarchy before empty-node removal"
+    >
+      <Typography sx={sectionLabelSx}>Before</Typography>
+      <Typography sx={{ mt: 1, fontWeight: 750 }}>
+        {context.parentTitle}
+      </Typography>
+      <CollectionNote value={context.parentCollection} />
+      <OutlineItem title={context.nodeTitle} highlighted indent={1} />
+      <Typography sx={{ mt: 1, color: "text.secondary" }}>
+        No direct children or source evidence
+      </Typography>
+    </Box>
+    <Box sx={comparisonPanelSx} aria-label="Hierarchy after empty-node removal">
+      <Typography sx={sectionLabelSx}>After</Typography>
+      <Typography sx={{ mt: 1, fontWeight: 750 }}>
+        {context.parentTitle}
+      </Typography>
+      <CollectionNote value={context.parentCollection} />
+      <Typography sx={{ mt: 1, color: "text.secondary" }}>
+        {context.nodeTitle} removed
+      </Typography>
+    </Box>
+  </Stack>
+);
+
+const EmptyCollectionAction = ({
+  context,
+}: {
+  context: Extract<SomReviewContext, { type: "empty-collection-action" }>;
+}) => (
+  <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
+    <Box
+      sx={comparisonPanelSx}
+      aria-label="Hierarchy before empty-collection removal"
+    >
+      <Typography sx={sectionLabelSx}>Before</Typography>
+      <Typography sx={{ mt: 1, fontWeight: 750 }}>
+        {context.parentTitle}
+      </Typography>
+      <CollectionNote value={context.collectionName} />
+      <Typography sx={{ mt: 1, color: "text.secondary" }}>
+        Named collection with no member nodes
+      </Typography>
+    </Box>
+    <Box
+      sx={comparisonPanelSx}
+      aria-label="Hierarchy after empty-collection removal"
+    >
+      <Typography sx={sectionLabelSx}>After</Typography>
+      <Typography sx={{ mt: 1, fontWeight: 750 }}>
+        {context.parentTitle}
+      </Typography>
+      <Typography sx={{ mt: 1, color: "text.secondary" }}>
+        Collection &quot;{context.collectionName}&quot; removed
+      </Typography>
+    </Box>
+  </Stack>
 );
 
 export default ContextRenderer;

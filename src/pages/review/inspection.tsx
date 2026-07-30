@@ -3,6 +3,8 @@ import {
   Alert,
   Box,
   Button,
+  Card,
+  CardActionArea,
   Chip,
   CircularProgress,
   Container,
@@ -17,6 +19,8 @@ import {
   Typography,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import EditNoteOutlinedIcon from "@mui/icons-material/EditNoteOutlined";
 import Head from "next/head";
 import { useRouter } from "next/router";
 
@@ -40,6 +44,8 @@ export const ReviewInspectionPage = () => {
   const workspaceId = router.query.workspace === "buy" ? "buy" : "sell";
   const requestedReviewerId =
     typeof router.query.reviewer === "string" ? router.query.reviewer : "";
+  const requestedTaskKey =
+    typeof router.query.task === "string" ? router.query.task : "";
   const [overview, setOverview] =
     useState<SomInspectionOverviewResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -57,6 +63,7 @@ export const ReviewInspectionPage = () => {
           {
             workspaceId,
             ...(requestedReviewerId ? { reviewerId: requestedReviewerId } : {}),
+            ...(requestedTaskKey ? { taskKey: requestedTaskKey } : {}),
           },
           false,
         );
@@ -71,6 +78,9 @@ export const ReviewInspectionPage = () => {
               query: {
                 workspace: workspaceId,
                 reviewer: result.selectedReviewerId,
+                ...(result.selectedTaskKey
+                  ? { task: result.selectedTaskKey }
+                  : {}),
               },
             },
             undefined,
@@ -87,7 +97,7 @@ export const ReviewInspectionPage = () => {
         if (!quiet) setLoading(false);
       }
     },
-    [requestedReviewerId, router, workspaceId],
+    [requestedReviewerId, requestedTaskKey, router, workspaceId],
   );
 
   useEffect(() => {
@@ -99,6 +109,35 @@ export const ReviewInspectionPage = () => {
       {
         pathname: "/review/inspection",
         query: { workspace: workspaceId, reviewer: reviewerId },
+      },
+      undefined,
+      { shallow: true },
+    );
+  };
+
+  const selectTask = async (taskKey: string) => {
+    await router.replace(
+      {
+        pathname: "/review/inspection",
+        query: {
+          workspace: workspaceId,
+          reviewer: overview?.selectedReviewerId || requestedReviewerId,
+          task: taskKey,
+        },
+      },
+      undefined,
+      { shallow: true },
+    );
+  };
+
+  const returnToTasks = async () => {
+    await router.replace(
+      {
+        pathname: "/review/inspection",
+        query: {
+          workspace: workspaceId,
+          reviewer: overview?.selectedReviewerId || requestedReviewerId,
+        },
       },
       undefined,
       { shallow: true },
@@ -133,6 +172,12 @@ export const ReviewInspectionPage = () => {
   const selectedReviewer = overview?.reviewers.find(
     (reviewer) => reviewer.reviewerId === overview.selectedReviewerId,
   );
+  const selectedTask = overview?.tasks.find(
+    (task) => task.key === overview.selectedTaskKey,
+  );
+  const inspectingOwnReview =
+    Boolean(overview?.selectedReviewerId) &&
+    overview?.selectedReviewerId === user?.userId;
   const visibleItems = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
     return (overview?.items || []).filter((item) => {
@@ -200,7 +245,7 @@ export const ReviewInspectionPage = () => {
                     dataset:
                       overview?.activeDatasetId ||
                       (workspaceId === "sell"
-                        ? "sell-outline-followup"
+                        ? "sell-semantic-coverage"
                         : "buy-content-identity"),
                   },
                 })
@@ -229,9 +274,9 @@ export const ReviewInspectionPage = () => {
                 Prior-review inspection
               </Typography>
               <Typography sx={{ mt: 0.5, color: "text.secondary" }}>
-                Inspect another reviewer&apos;s completed judgments in one
-                scrollable page. Add a separate note only where you are not
-                aligned.
+                {selectedTask
+                  ? `Review every saved judgment for ${selectedTask.issueLabel} on one page.`
+                  : "Choose one completed review task, then inspect all of its saved judgments together."}
               </Typography>
             </Box>
             <ToggleButtonGroup
@@ -273,16 +318,10 @@ export const ReviewInspectionPage = () => {
 
           {!loading && overview && !loadError && (
             <Stack spacing={2.5} sx={{ mt: 3 }}>
-              <Alert severity="info">
-                Every saved proposal response is listed below. If you are
-                aligned, continue scrolling without taking action. Mark an item
-                as not aligned only when you want to record an issue for
-                discussion; the prior response remains unchanged.
-              </Alert>
-
               {overview.reviewers.length === 0 ? (
                 <Alert severity="info">
-                  No other reviewer has saved responses in this workspace yet.
+                  No reviewer has saved inspectable responses in this workspace
+                  yet.
                 </Alert>
               ) : (
                 <>
@@ -291,6 +330,18 @@ export const ReviewInspectionPage = () => {
                     alignItems={{ xs: "stretch", md: "center" }}
                     spacing={1.5}
                   >
+                    {selectedTask && (
+                      <Button
+                        disableElevation
+                        color="inherit"
+                        variant="outlined"
+                        startIcon={<ArrowBackIcon />}
+                        onClick={returnToTasks}
+                        sx={{ minHeight: 56, fontWeight: 750 }}
+                      >
+                        All review tasks
+                      </Button>
+                    )}
                     <FormControl sx={{ minWidth: 260 }}>
                       <InputLabel id="prior-reviewer-label">
                         Prior reviewer
@@ -313,98 +364,218 @@ export const ReviewInspectionPage = () => {
                         ))}
                       </Select>
                     </FormControl>
-                    <TextField
-                      fullWidth
-                      label="Search reviewed items"
-                      value={search}
-                      onChange={(event) => setSearch(event.target.value)}
-                    />
+                    {selectedTask && (
+                      <TextField
+                        fullWidth
+                        label="Search this review task"
+                        value={search}
+                        onChange={(event) => setSearch(event.target.value)}
+                      />
+                    )}
                   </Stack>
 
-                  <Stack
-                    direction={{ xs: "column", md: "row" }}
-                    alignItems={{ xs: "flex-start", md: "center" }}
-                    justifyContent="space-between"
-                    spacing={1.5}
-                  >
-                    <ToggleButtonGroup
-                      exclusive
-                      size="small"
-                      value={itemFilter}
-                      onChange={(_, value) => value && setItemFilter(value)}
-                      aria-label="Reviewed item filter"
-                    >
-                      <ToggleButton value="all">All</ToggleButton>
-                      <ToggleButton value="not-aligned">
-                        Not aligned
-                      </ToggleButton>
-                      <ToggleButton value="disagreements">
-                        Disagreements
-                      </ToggleButton>
-                      <ToggleButton value="controls">Controls</ToggleButton>
-                    </ToggleButtonGroup>
-                    <Stack direction="row" spacing={0.75}>
-                      <Chip
-                        label={`${visibleItems.length} shown`}
-                        variant="outlined"
-                      />
-                      <Chip
-                        label={`${
-                          overview.items.filter((item) => item.exception).length
-                        } not aligned`}
-                        color="warning"
-                        variant="outlined"
-                      />
-                    </Stack>
-                  </Stack>
-
-                  {visibleItems.length === 0 ? (
-                    <Alert severity="info">
-                      No reviewed items match the current filters.
-                    </Alert>
-                  ) : (
-                    <Stack spacing={1.5}>
-                      {visibleItems.map((item, index) => {
-                        const previous = visibleItems[index - 1];
-                        const newRound =
-                          !previous || previous.datasetId !== item.datasetId;
-                        return (
-                          <React.Fragment
-                            key={`${item.card.datasetVersion}-${item.card.proposalId}`}
+                  {!selectedTask && (
+                    <>
+                      <Alert
+                        severity={inspectingOwnReview ? "success" : "info"}
+                      >
+                        {inspectingOwnReview
+                          ? "These are your saved review tasks. Open a task to check every answer, rationale, and proposed alternative before another reviewer inspects them."
+                          : "The tasks below preserve the original review order. Open one task to inspect all of its responses without mixing different kinds of ontology decisions."}
+                      </Alert>
+                      <Stack spacing={1.25}>
+                        {overview.tasks.map((task) => (
+                          <Card
+                            key={task.key}
+                            variant="outlined"
+                            sx={{ borderRadius: 2 }}
                           >
-                            {newRound && (
-                              <Box sx={{ pt: index === 0 ? 0 : 2 }}>
-                                <Typography
-                                  component="h2"
-                                  sx={{ fontSize: "1.15rem", fontWeight: 850 }}
-                                >
-                                  {item.datasetLabel}
-                                </Typography>
-                                {item.currentRound && (
-                                  <Chip
-                                    size="small"
-                                    color="primary"
-                                    label="Current round"
-                                    sx={{ mt: 0.75 }}
-                                  />
-                                )}
-                              </Box>
-                            )}
+                            <CardActionArea
+                              onClick={() => selectTask(task.key)}
+                              sx={{ p: { xs: 1.75, sm: 2.25 } }}
+                            >
+                              <Stack
+                                direction={{ xs: "column", sm: "row" }}
+                                alignItems={{ xs: "stretch", sm: "center" }}
+                                justifyContent="space-between"
+                                spacing={1.5}
+                              >
+                                <Box sx={{ minWidth: 0 }}>
+                                  <Stack
+                                    direction="row"
+                                    alignItems="center"
+                                    flexWrap="wrap"
+                                    gap={0.75}
+                                  >
+                                    <Typography
+                                      component="h2"
+                                      sx={{
+                                        fontSize: "1.05rem",
+                                        fontWeight: 850,
+                                      }}
+                                    >
+                                      {task.issueLabel}
+                                    </Typography>
+                                    {task.currentRound && (
+                                      <Chip
+                                        size="small"
+                                        color="primary"
+                                        label="Current round"
+                                      />
+                                    )}
+                                  </Stack>
+                                  <Typography
+                                    sx={{
+                                      mt: 0.45,
+                                      color: "text.secondary",
+                                      lineHeight: 1.45,
+                                    }}
+                                  >
+                                    {task.datasetLabel}
+                                  </Typography>
+                                  <Stack
+                                    direction="row"
+                                    flexWrap="wrap"
+                                    gap={0.75}
+                                    sx={{ mt: 1 }}
+                                  >
+                                    <Chip
+                                      size="small"
+                                      label={`${task.responseCount} responses`}
+                                      variant="outlined"
+                                    />
+                                    <Chip
+                                      size="small"
+                                      label={`${task.agreeCount} agreed`}
+                                      color="success"
+                                      variant="outlined"
+                                    />
+                                    <Chip
+                                      size="small"
+                                      label={`${task.disagreeCount} disagreed`}
+                                      color="error"
+                                      variant="outlined"
+                                    />
+                                    {task.exceptionCount > 0 && (
+                                      <Chip
+                                        size="small"
+                                        label={`${task.exceptionCount} not aligned`}
+                                        color="warning"
+                                        variant="outlined"
+                                      />
+                                    )}
+                                  </Stack>
+                                </Box>
+                                <ArrowForwardIcon
+                                  aria-hidden="true"
+                                  color="action"
+                                />
+                              </Stack>
+                            </CardActionArea>
+                          </Card>
+                        ))}
+                      </Stack>
+                    </>
+                  )}
+
+                  {selectedTask && (
+                    <>
+                      <Alert
+                        severity={inspectingOwnReview ? "success" : "info"}
+                        action={
+                          inspectingOwnReview ? (
+                            <Button
+                              color="inherit"
+                              startIcon={<EditNoteOutlinedIcon />}
+                              onClick={() =>
+                                router.push({
+                                  pathname: "/review",
+                                  query: {
+                                    dataset: selectedTask.datasetId,
+                                    issue: selectedTask.issueType,
+                                  },
+                                })
+                              }
+                            >
+                              Edit my answers
+                            </Button>
+                          ) : undefined
+                        }
+                      >
+                        {inspectingOwnReview
+                          ? "This is your own review. Use Edit my answers to revise this task; inspection notes are intentionally disabled for self-review."
+                          : "If you are aligned, continue scrolling without taking action. Mark an item as not aligned only when you want to preserve a separate issue for discussion; the prior response remains unchanged."}
+                      </Alert>
+
+                      <Stack
+                        direction={{ xs: "column", md: "row" }}
+                        alignItems={{ xs: "flex-start", md: "center" }}
+                        justifyContent="space-between"
+                        spacing={1.5}
+                      >
+                        <ToggleButtonGroup
+                          exclusive
+                          size="small"
+                          value={itemFilter}
+                          onChange={(_, value) => value && setItemFilter(value)}
+                          aria-label="Reviewed item filter"
+                        >
+                          <ToggleButton value="all">All</ToggleButton>
+                          <ToggleButton value="not-aligned">
+                            Not aligned
+                          </ToggleButton>
+                          <ToggleButton value="disagreements">
+                            Disagreements
+                          </ToggleButton>
+                          <ToggleButton value="controls">Controls</ToggleButton>
+                        </ToggleButtonGroup>
+                        <Stack direction="row" spacing={0.75}>
+                          <Chip
+                            label={`${visibleItems.length} shown`}
+                            variant="outlined"
+                          />
+                          <Chip
+                            label={`${selectedTask.exceptionCount} not aligned`}
+                            color="warning"
+                            variant="outlined"
+                          />
+                        </Stack>
+                      </Stack>
+
+                      {visibleItems.length === 0 ? (
+                        <Alert severity="info">
+                          No reviewed items match the current filters.
+                        </Alert>
+                      ) : (
+                        <Stack spacing={1.5}>
+                          <Box>
+                            <Typography
+                              component="h2"
+                              sx={{ fontSize: "1.15rem", fontWeight: 850 }}
+                            >
+                              {selectedTask.issueLabel}
+                            </Typography>
+                            <Typography
+                              sx={{ mt: 0.35, color: "text.secondary" }}
+                            >
+                              {selectedTask.datasetLabel}
+                            </Typography>
+                          </Box>
+                          {visibleItems.map((item) => (
                             <InspectionItemCard
+                              key={`${item.card.datasetVersion}-${item.card.proposalId}`}
                               item={item}
                               reviewerName={
                                 selectedReviewer?.displayName ||
                                 "Prior reviewer"
                               }
-                              canAnnotate={
-                                overview.selectedReviewerId !== user?.userId
-                              }
+                              canAnnotate={!inspectingOwnReview}
                               onSaveException={saveException}
                             />
-                          </React.Fragment>
-                        );
-                      })}
-                    </Stack>
+                          ))}
+                        </Stack>
+                      )}
+                    </>
                   )}
                 </>
               )}

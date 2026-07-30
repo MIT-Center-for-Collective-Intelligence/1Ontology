@@ -76,6 +76,7 @@ export const ReviewPage = () => {
   const router = useRouter();
   const [phase, setPhase] = useState<Phase>("loading");
   const datasetIdRef = useRef("");
+  const autoOpenedTaskRef = useRef("");
   const [datasetId, setDatasetId] = useState("");
   const [datasetVersion, setDatasetVersion] = useState("");
   const [workspaceId, setWorkspaceId] = useState("buy");
@@ -304,6 +305,34 @@ export const ReviewPage = () => {
     },
     [introStorageKey, issueTypes, startSession],
   );
+
+  useEffect(() => {
+    if (!router.isReady || phase !== "select" || !datasetId) return;
+    const requestedIssue =
+      typeof router.query.issue === "string" ? router.query.issue : "";
+    const issue = issueTypes.find(
+      (candidate) => candidate.id === requestedIssue,
+    );
+    if (!issue) return;
+    const requestKey = `${datasetId}:${issue.id}`;
+    if (autoOpenedTaskRef.current === requestKey) return;
+    autoOpenedTaskRef.current = requestKey;
+    void router
+      .replace(
+        { pathname: "/review", query: { dataset: datasetId } },
+        undefined,
+        { shallow: true },
+      )
+      .then(() => chooseIssueType(issue.id));
+  }, [
+    chooseIssueType,
+    datasetId,
+    issueTypes,
+    phase,
+    router,
+    router.isReady,
+    router.query.issue,
+  ]);
 
   const continueFromIntro = useCallback(() => {
     if (!issueType) return;

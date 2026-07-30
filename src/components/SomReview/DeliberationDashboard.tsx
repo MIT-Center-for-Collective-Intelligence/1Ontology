@@ -33,6 +33,8 @@ import type { ReviewTone } from "./reviewStyles";
 type QueueFilter = "attention" | "ready" | "resolved" | "all";
 
 const ISSUE_LABELS: Record<SomIssueType, string> = {
+  "cross-branch-recall": "Recall related activities",
+  "evidence-specialization": "O*NET-derived specific activities",
   "title-clarity": "1. Title clarity",
   "synonym-enrichment": "2. Missing synonyms",
   "description-enrichment": "3. Missing descriptions",
@@ -50,6 +52,8 @@ const ISSUE_LABELS: Record<SomIssueType, string> = {
   relocation: "Approved relocations",
   "missing-activity": "Missing activity",
   "redundant-node": "Redundant node",
+  "empty-node": "Empty-node cleanup",
+  "empty-collection": "Empty-collection cleanup",
 };
 
 const RECOMMENDATION_LABELS: Record<SomDeliberationRecommendation, string> = {

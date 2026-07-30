@@ -205,6 +205,101 @@ describe("Society of Mind context renderers", () => {
     ).toBeInTheDocument();
   });
 
+  it("explains a whole-ontology recall candidate without reversing its direction", () => {
+    render(
+      <ContextRenderer
+        context={{
+          type: "placement-comparison",
+          nodeTitle: "Rent Equipment",
+          currentParentTitle: "Lease (Physical Object)",
+          candidateHome: "Rent out",
+          placementIssue: "missing-from-branch",
+          sourceTasks: ["Sell or rent equipment to customers."],
+        }}
+        branch="Sell"
+      />,
+    );
+
+    expect(
+      screen.getByText(
+        /belongs in the Sell sub-branch even though it was found elsewhere/i,
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/does not belong in the Sell sub-branch/i),
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows the exact evidence reassignment for a specific Sell activity", () => {
+    render(
+      <ContextRenderer
+        context={{
+          type: "evidence-specialization",
+          genericNodeTitle: "Sell Products",
+          sourceTask: "(O*Net) 1 - Buy or sell non-pharmaceutical merchandise.",
+          currentParentTitles: ["Buy Merchandise", "Sell Products"],
+          proposedTitle: "Sell Non-Pharmaceutical Merchandise",
+          proposedTitleStatus: "new",
+          targetParentTitle: "Sell Products",
+          removedParentTitles: ["Sell Products"],
+          retainedParentTitles: ["Buy Merchandise"],
+        }}
+      />,
+    );
+
+    expect(
+      screen.getByText(
+        "(O*Net) 1 - Buy or sell non-pharmaceutical merchandise.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Sell Non-Pharmaceutical Merchandise"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("New activity")).toBeInTheDocument();
+    expect(
+      screen.getByText("Remove generic parent: Sell Products"),
+    ).toBeVisible();
+  });
+
+  it("renders empty-node removal without pretending children move upward", () => {
+    render(
+      <ContextRenderer
+        context={{
+          type: "empty-node-action",
+          parentTitle: "Sell",
+          parentCollection: "Sell -- miscellaneous",
+          nodeTitle: "Sell (Other)",
+        }}
+      />,
+    );
+
+    expect(
+      screen.getByLabelText("Hierarchy before empty-node removal"),
+    ).toHaveTextContent("No direct children or source evidence");
+    expect(
+      screen.getByLabelText("Hierarchy after empty-node removal"),
+    ).toHaveTextContent("Sell (Other) removed");
+  });
+
+  it("renders empty-collection removal as a collection-only change", () => {
+    render(
+      <ContextRenderer
+        context={{
+          type: "empty-collection-action",
+          parentTitle: "Sell",
+          collectionName: "Sell how?",
+        }}
+      />,
+    );
+
+    expect(
+      screen.getByLabelText("Hierarchy before empty-collection removal"),
+    ).toHaveTextContent("Named collection with no member nodes");
+    expect(
+      screen.getByLabelText("Hierarchy after empty-collection removal"),
+    ).toHaveTextContent('Collection "Sell how?" removed');
+  });
+
   it("lists every activity covered by a grouped wrong-verb diagnosis", () => {
     render(
       <ContextRenderer

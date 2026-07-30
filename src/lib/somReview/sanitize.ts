@@ -58,6 +58,9 @@ export const reviewerQuestion = (
                 : "a more specific category"
             }?`;
       }
+      if (context.placementIssue === "missing-from-branch") {
+        return `Does "${context.nodeTitle}" express the "${branch}" action and belong in this sub-branch?`;
+      }
       return context.placementIssue === "wrong-verb"
         ? `Does "${context.nodeTitle}" use a different main action than the "${branch}" action?`
         : context.candidateHome
@@ -67,6 +70,14 @@ export const reviewerQuestion = (
       return `Should this source task keep the specific parents shown and drop only ${context.removedParentTitles
         .map((title) => `"${title}"`)
         .join(" and ")}?`;
+    case "evidence-specialization":
+      return context.proposedTitleStatus === "new"
+        ? `Should this source task create the more specific activity "${context.proposedTitle}"?`
+        : `Should this source task be assigned to the more specific activity "${context.proposedTitle}"?`;
+    case "empty-node-action":
+      return `Should the empty node "${context.nodeTitle}" be removed from "${context.parentTitle}"?`;
+    case "empty-collection-action":
+      return `Should the empty collection "${context.collectionName}" be removed from "${context.parentTitle}"?`;
     case "overlap-comparison":
       return `Could "${context.firstTitle}" and "${context.secondTitle}" represent the same concept?`;
     case "merge-action":
@@ -143,23 +154,29 @@ const placementReviewerText = (
       context.currentParentTitle
     }"${category ? ` in the "${category}" category` : ""}.`,
     proposedState:
-      context.placementIssue === "wrong-verb"
-        ? `"${context.nodeTitle}" does not express the "${branch}" action${
-            context.candidateHome
-              ? `; "${context.candidateHome}" is the suggested category`
-              : ` and does not belong under "${context.currentParentTitle}"`
-          }.`
-        : context.candidateHome
-          ? `"${context.nodeTitle}" appears to belong under the more specific category "${context.candidateHome}".`
-          : `"${context.nodeTitle}" does not belong under "${context.currentParentTitle}".`,
+      context.placementIssue === "missing-from-branch"
+        ? `"${context.nodeTitle}" expresses a provider-side "${branch}" action and should be considered under "${context.candidateHome || branch}".`
+        : context.placementIssue === "wrong-verb"
+          ? `"${context.nodeTitle}" does not express the "${branch}" action${
+              context.candidateHome
+                ? `; "${context.candidateHome}" is the suggested category`
+                : ` and does not belong under "${context.currentParentTitle}"`
+            }.`
+          : context.candidateHome
+            ? `"${context.nodeTitle}" appears to belong under the more specific category "${context.candidateHome}".`
+            : `"${context.nodeTitle}" does not belong under "${context.currentParentTitle}".`,
     agreeLabel:
-      context.placementIssue === "wrong-verb"
-        ? "Yes, different action"
-        : "Yes, misplaced",
+      context.placementIssue === "missing-from-branch"
+        ? `Yes, include in ${branch}`
+        : context.placementIssue === "wrong-verb"
+          ? "Yes, different action"
+          : "Yes, misplaced",
     disagreeLabel:
-      context.placementIssue === "wrong-verb"
-        ? "No, it belongs here"
-        : "No, keep here",
+      context.placementIssue === "missing-from-branch"
+        ? "No, keep outside"
+        : context.placementIssue === "wrong-verb"
+          ? "No, it belongs here"
+          : "No, keep here",
   };
 };
 
@@ -304,6 +321,37 @@ const sanitizeContext = (context: any): SomReviewContext => {
         removedParentTitles: (context.removedParentTitles || [])
           .map(cleanText)
           .filter(Boolean),
+      };
+    case "evidence-specialization":
+      return {
+        type: "evidence-specialization",
+        genericNodeTitle: cleanText(context.genericNodeTitle),
+        sourceTask: cleanText(context.sourceTask),
+        currentParentTitles: (context.currentParentTitles || [])
+          .map(cleanText)
+          .filter(Boolean),
+        proposedTitle: cleanText(context.proposedTitle),
+        proposedTitleStatus: context.proposedTitleStatus,
+        targetParentTitle: cleanText(context.targetParentTitle),
+        removedParentTitles: (context.removedParentTitles || [])
+          .map(cleanText)
+          .filter(Boolean),
+        retainedParentTitles: (context.retainedParentTitles || [])
+          .map(cleanText)
+          .filter(Boolean),
+      };
+    case "empty-node-action":
+      return {
+        type: "empty-node-action",
+        parentTitle: cleanText(context.parentTitle),
+        parentCollection: cleanText(context.parentCollection) || "main",
+        nodeTitle: cleanText(context.nodeTitle),
+      };
+    case "empty-collection-action":
+      return {
+        type: "empty-collection-action",
+        parentTitle: cleanText(context.parentTitle),
+        collectionName: cleanText(context.collectionName),
       };
     case "overlap-comparison":
       return {

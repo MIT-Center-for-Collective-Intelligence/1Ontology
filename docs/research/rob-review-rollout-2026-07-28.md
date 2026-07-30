@@ -8,14 +8,14 @@ apply any ontology change.
 ## Deployment checks
 
 1. Deploy the merged application revision.
-2. Confirm the active Sell dataset is `sell-outline-followup` and that its
+2. Confirm the active Sell dataset is `sell-semantic-coverage` and that its
    source SHA-256 is
-   `ec34b54cd9a8a3230f31af8f5efc95997eb5f70e5ff15fc7986a8cf67aa55809`.
-3. Open `/review?dataset=sell-outline-followup` and verify that diagnostics
-   precede their dependency-gated merge or move actions.
+   `c362f9d3587dbed1303a7355b7d5feef8057684544857139f0178a1038b687b2`.
+3. Open `/review?dataset=sell-semantic-coverage` and verify that semantic
+   diagnoses precede their dependency-gated exact moves.
 4. Open `/review/inspection?workspace=sell` with a research-team account and
-   verify that all saved prior-review responses appear immediately on one
-   scrollable page.
+   verify the completed-task dashboard, then open one task and inspect every
+   saved response on one scrollable page.
 5. Open `/review/calibration` with a test participant account and verify that
    only the released task set is visible.
 
@@ -25,12 +25,16 @@ indexes; no new ordered or range query is introduced.
 
 ## Tom's inspection
 
-Send Tom `/review/inspection?workspace=sell`.
+First send Rob `/review/inspection?workspace=sell`. His own responses should be
+selected by default. He can open each completed task and use **Edit my answers**
+when needed. After Rob confirms that his record is ready, send the same link to
+Tom.
 
 1. Select Rob as the prior reviewer.
-2. Read the scrollable before, proposed after, selected response, rationale, and
-   alternative record.
-3. Add a `Not aligned` exception only where Tom differs. His note is stored
+2. Select a completed review task.
+3. Read every before state, proposed after state, selected response, rationale,
+   and alternative for that task on one page.
+4. Add a `Not aligned` exception only where Tom differs. His note is stored
    separately and never overwrites Rob's response.
 
 Rob can open the same link to preview the interface. His own responses remain
@@ -49,16 +53,19 @@ Send a participant `/review/calibration`.
 - Completion does not release another task or propagate any participant answer.
 - The research team must explicitly release the next frozen assignment.
 
-## Rob's next review
+## Rob's semantic-coverage review
 
-Send Rob `/review?dataset=sell-outline-followup`.
+Send Rob `/review?dataset=sell-semantic-coverage`.
 
-- The 26 items encode the July 28 outline observations as atomic questions.
-- Identity and placement diagnoses appear before exact merge and move actions.
+- Eight diagnoses ask whether provider-side Rent/Lease activities found outside
+  Sell belong in the branch.
+- Each accepted diagnosis unlocks its own exact move to `Rent out`.
+- Three O\*NET proposals specialize explicit task wording currently attached to
+  generic Sell nodes.
+- No O\*NET specialization is released solely from model inference.
+- Empty-node and empty-collection cleanup remain unreleased until upstream
+  decisions are propagated and the branch is regenerated.
 - Exact actions unlock only when their diagnosis is accepted.
-- Queue 4 contains the undetected-synonym diagnoses; exact merge actions are
-  separate dependency-gated items in queue 13.
-- Boundary cases remain manual checks.
 - Model confidence is hidden and cannot authorize an ontology write.
 
 ## Applying reviewed decisions

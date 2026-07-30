@@ -36,6 +36,16 @@ describe("review queue dependencies", () => {
     ]);
   });
 
+  it("orders semantic recall and evidence-derived nodes before title review", () => {
+    expect(issuePrerequisiteTypes("evidence-specialization")).toEqual([
+      "cross-branch-recall",
+    ]);
+    expect(issuePrerequisiteTypes("title-clarity")).toEqual([
+      "cross-branch-recall",
+      "evidence-specialization",
+    ]);
+  });
+
   it("requires meaning and identity review before structural review", () => {
     expect(issuePrerequisiteTypes("flat-list-grouping")).toEqual([
       "title-clarity",

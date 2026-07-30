@@ -1,4 +1,6 @@
 export type SomIssueType =
+  | "cross-branch-recall"
+  | "evidence-specialization"
   | "title-clarity"
   | "synonym-enrichment"
   | "description-enrichment"
@@ -15,7 +17,9 @@ export type SomIssueType =
   | "relocation"
   | "sense-relocation"
   | "missing-activity"
-  | "redundant-node";
+  | "redundant-node"
+  | "empty-node"
+  | "empty-collection";
 
 export type SomReviewStage =
   | "content"
@@ -109,7 +113,11 @@ export type SomReviewContext =
         currentBucket?: string;
         sourceTasks?: string[];
       }>;
-      placementIssue: "wrong-bucket" | "wrong-parent" | "wrong-verb";
+      placementIssue:
+        | "wrong-bucket"
+        | "wrong-parent"
+        | "wrong-verb"
+        | "missing-from-branch";
       sourceTasks?: string[];
     }
   | {
@@ -119,6 +127,28 @@ export type SomReviewContext =
       assignedOutputTitles: string[];
       retainedParentTitles: string[];
       removedParentTitles: string[];
+    }
+  | {
+      type: "evidence-specialization";
+      genericNodeTitle: string;
+      sourceTask: string;
+      currentParentTitles: string[];
+      proposedTitle: string;
+      proposedTitleStatus: "existing" | "new";
+      targetParentTitle: string;
+      removedParentTitles: string[];
+      retainedParentTitles: string[];
+    }
+  | {
+      type: "empty-node-action";
+      parentTitle: string;
+      parentCollection: string;
+      nodeTitle: string;
+    }
+  | {
+      type: "empty-collection-action";
+      parentTitle: string;
+      collectionName: string;
     }
   | {
       type: "overlap-comparison";
@@ -520,12 +550,28 @@ export interface SomInspectionItem {
   exception?: SomInspectionException;
 }
 
+export interface SomInspectionTask {
+  key: string;
+  datasetId: string;
+  datasetLabel: string;
+  currentRound: boolean;
+  issueType: SomIssueType;
+  issueLabel: string;
+  responseCount: number;
+  agreeCount: number;
+  disagreeCount: number;
+  exceptionCount: number;
+  currentlyApplicableCount: number;
+}
+
 export interface SomInspectionOverviewResponse {
   workspaceId: string;
   workspaceLabel: string;
   activeDatasetId: string;
   reviewers: SomInspectionReviewer[];
   selectedReviewerId?: string;
+  tasks: SomInspectionTask[];
+  selectedTaskKey?: string;
   items: SomInspectionItem[];
 }
 

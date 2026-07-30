@@ -17,7 +17,7 @@ describe("Society of Mind review workspaces", () => {
       activeDatasetId: "buy-content-identity",
     });
     expect(options.find((workspace) => workspace.id === "sell")).toMatchObject({
-      activeDatasetId: "sell-outline-followup",
+      activeDatasetId: "sell-semantic-coverage",
     });
     for (const workspace of options) {
       expect(workspace.rounds.filter((round) => round.current)).toHaveLength(1);
@@ -34,6 +34,7 @@ describe("Society of Mind review workspaces", () => {
 
     for (const configuration of configurations) {
       const dataset = getDataset(configuration.id);
+      expect(dataset.manifest.schemaVersion).toBe("som-review-v1");
       expect(dataset.datasetId).toBe(configuration.id);
       expect(dataset.datasetVersion).toBe(configuration.datasetVersion);
       expect(getDatasetByVersion(configuration.datasetVersion)).toBe(dataset);

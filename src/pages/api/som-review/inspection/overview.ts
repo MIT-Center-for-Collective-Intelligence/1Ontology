@@ -23,6 +23,8 @@ const handler = async (request: NextApiRequest, res: NextApiResponse) => {
       inspectorId: req.user.uid,
       requestedReviewerId:
         typeof data.reviewerId === "string" ? data.reviewerId : undefined,
+      requestedTaskKey:
+        typeof data.taskKey === "string" ? data.taskKey : undefined,
     });
     return res.status(200).json(body);
   } catch (error) {

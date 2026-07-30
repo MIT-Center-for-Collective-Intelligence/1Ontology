@@ -10,7 +10,8 @@ export const SOM_REVIEW_STAGES: SomReviewStageDefinition[] = [
   {
     id: "content",
     title: "Content of nodes",
-    description: "Review titles, synonyms, descriptions, and meanings first.",
+    description:
+      "Review branch recall, evidence-derived nodes, titles, synonyms, descriptions, and meanings first.",
   },
   {
     id: "within-branch",
