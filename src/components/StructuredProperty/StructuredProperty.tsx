@@ -147,9 +147,6 @@ type IStructuredPropertyProps = {
   setGlowIds: any;
   selectedCollection: any;
   appName?: string;
-  partsInheritance?: {
-    [nodeId: string]: { inheritedFrom: string; partInheritance: string };
-  };
   enableEdit: boolean;
   inheritanceDetails?: any;
   inheritedPartsDetails?: InheritedPartsDetail[] | null;
@@ -762,27 +759,6 @@ const StructuredProperty = ({
     }, 2000);
   };
 
-  const getInheritedPartsSet = (): Set<string> => {
-    const inheritedParts = new Set<string>();
-
-    if (currentVisibleNode.inheritanceParts) {
-      Object.keys(currentVisibleNode.inheritanceParts).forEach(
-        (partId: string) => {
-          inheritedParts.add(partId);
-        },
-      );
-    }
-
-    if (currentVisibleNode.properties?.parts) {
-      currentVisibleNode.properties.parts.forEach((collection: any) => {
-        collection.nodes.forEach((part: any) => {
-          inheritedParts.add(part.id);
-        });
-      });
-    }
-
-    return inheritedParts;
-  };
   const [savingPartIds, setSavingPartIds] = useState<Set<string>>(new Set());
   // Count of parts writes in flight — the viewers show the annotation spinner
   // while the endpoint recomputes the pair server-side.
