@@ -23,7 +23,6 @@ import {
 import {
   getGeneralizationParts,
   getAllGeneralizations,
-  getEffectiveGeneralizations,
 } from "@components/lib/utils/partsHelper";
 import {
   ICollection,

@@ -78,7 +78,6 @@ import {
   updatePropertyOf,
   updateInheritanceWhenUnlinkAGeneralization,
 } from "@components/lib/utils/helpers";
-import { breakInheritanceAndCopyParts } from "@components/lib/utils/partsHelper";
 import {
   INode,
   INodePath,

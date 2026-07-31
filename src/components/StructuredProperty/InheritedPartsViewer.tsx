@@ -1,17 +1,15 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo } from "react";
 import {
   Box,
   Typography,
   IconButton,
   Tooltip,
   MenuItem,
-  Select,
   ListItemText,
   ListItemIcon,
   ListItem,
   List,
   Link,
-  Popover,
   Button,
   TextField,
 } from "@mui/material";
@@ -19,30 +17,16 @@ import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import ArrowRightAltIcon from "@mui/icons-material/ArrowRightAlt";
 import RemoveIcon from "@mui/icons-material/Remove";
 import SearchIcon from "@mui/icons-material/Search";
-import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import AddIcon from "@mui/icons-material/Add";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import DragHandleIcon from "@mui/icons-material/DragHandle";
 import CloseIcon from "@mui/icons-material/Close";
 import InheritedPartsLegend from "../Common/InheritedPartsLegend";
 import {
-  ICollection,
   ILinkNode,
   INode,
-  TransferInheritance,
   InheritedPartsDetail,
 } from "@components/types/INode";
-import {
-  query,
-  collection,
-  where,
-  getFirestore,
-  onSnapshot,
-  doc,
-  setDoc,
-} from "firebase/firestore";
-
-import { INHERITANCE_FOR_PARTS_COLLECTION_NAME } from "@components/lib/firestoreClient/collections";
 import SyncedSpinner from "@components/components/SyncedSpinner";
 import { getPartGeneralizationSources } from "@components/lib/utils/partsHelper";
 import { makeResolvedOf } from "@components/lib/hooks/useResolvedParts";
@@ -93,53 +77,12 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
   removePart,
   navigateToNode,
 }) => {
-  const db = getFirestore();
   const [activeTab, setActiveTab] = React.useState<string | null>(null);
   const generalizations: GeneralizationNode[] = getAllGeneralizations();
-  const [selectedGeneralizationIndex, setSelectedGeneralizationIndex] =
-    useState<number>(0);
-  const [inheritanceForParts, setInheritanceForParts] = useState<{
-    [pickingFor: string]: string;
-  }>({});
-  const [pickingFor, setPickingFor] = useState<string>("");
-  const [anchorEl, setAnchorEl] = useState(null);
 
   // All lists come from the RESOLVED view (ref chain), never raw storage.
   const resolvedOf = useMemo(() => makeResolvedOf(nodes), [nodes]);
 
-  const handleClick = (event: any, from: string) => {
-    setAnchorEl(event.currentTarget);
-    setPickingFor(from);
-  };
-
-  const handleClose = () => {
-    setAnchorEl(null);
-    setPickingFor("");
-  };
-
-  const open = Boolean(anchorEl);
-  const id = open ? "switch-popover" : undefined;
-
-  useEffect(() => {
-    if (!currentVisibleNode?.id) return;
-    const nodesQuery = query(
-      collection(db, INHERITANCE_FOR_PARTS_COLLECTION_NAME),
-      where("nodeId", "==", currentVisibleNode.id),
-    );
-    const unsubscribeNodes = onSnapshot(nodesQuery, (snapshot) => {
-      const docChanges = snapshot.docChanges();
-      if (docChanges.length > 0) {
-        if (docChanges[0].type === "removed") {
-          setInheritanceForParts({});
-          return;
-        }
-        const docChange = docChanges[0].doc;
-        const dataChange = docChange.data().inheritedFrom || {};
-        setInheritanceForParts(dataChange);
-      }
-    });
-    return () => unsubscribeNodes();
-  }, [currentVisibleNode.id]);
   useEffect(() => {
     // Set the first generalization as the active tab initially
     if (generalizations.length > 0 && !activeTab) {
@@ -157,13 +100,6 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
   }, [currentVisibleNode.id]); // Use node ID to avoid infinite loop
 
   if (selectedProperty !== "parts") return null;
-
-  const handleSelectedGenChange = (
-    event: React.SyntheticEvent,
-    newValue: number,
-  ): void => {
-    setSelectedGeneralizationIndex(newValue);
-  };
 
   const getPartOptionalStatus = (partId: string, nodeId: string): boolean => {
     return !!resolvedOf(nodeId).find((n) => n.id === partId)?.optional;
@@ -303,32 +239,6 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
     }
 
     const details = cachedGeneralizationData.details || [];
-
-    // Convert nonPickedOnes from {[key]: [{id, title}]} to {[key]: [id]}
-    const nonPickedOnes = Object.entries(
-      cachedGeneralizationData.nonPickedOnes || {},
-    ).reduce(
-      (acc, [key, value]) => {
-        acc[key] = (value as { id: any }[]).map((item) => item.id);
-        return acc;
-      },
-      {} as { [key: string]: string[] },
-    );
-
-    const handleSelect = (option: string) => {
-      const _previous = { ...inheritanceForParts };
-      _previous[pickingFor] = option;
-      setInheritanceForParts(_previous);
-      const inheritanceRef = doc(
-        collection(db, INHERITANCE_FOR_PARTS_COLLECTION_NAME),
-        currentVisibleNode.id,
-      );
-      setDoc(inheritanceRef, {
-        inheritedFrom: _previous,
-        nodeId: currentVisibleNode.id,
-      });
-      handleClose();
-    };
 
     return (
       <>
@@ -472,7 +382,7 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                     <ArrowForwardIosIcon
                       sx={{
                         fontSize: 20,
-                        color: pickingFor === entry.from ? "white" : "orange",
+                        color: "orange",
                         p: 0.2,
                         borderRadius: "50%",
                       }}
@@ -543,54 +453,6 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
             );
           })}
         </List>
-        <Popover
-          id={id}
-          open={open}
-          anchorEl={anchorEl}
-          onClose={handleClose}
-          anchorOrigin={{
-            vertical: "center",
-            horizontal: "right",
-          }}
-          transformOrigin={{
-            vertical: "center",
-            horizontal: "left",
-          }}
-          PaperProps={{
-            sx: {
-              border: "1.5px solid orange",
-              borderRadius: "10px",
-              backgroundColor: (theme) =>
-                theme.palette.mode === "light" ? "#cccccc" : "#524e4e",
-            },
-          }}
-        >
-          <List sx={{ p: 0, mx: "4px" }}>
-            {(nonPickedOnes[pickingFor] || []).map((option: string) => (
-              <ListItem
-                disablePadding
-                key={option}
-                sx={{
-                  px: 2,
-                  cursor: "pointer",
-                  ":hover": {
-                    backgroundColor: "gray",
-                  },
-                  gap: "5px",
-                  border: "1px solid gray",
-                  borderRadius: "25px",
-                  my: "4px",
-                }}
-              >
-                <SwapHorizIcon />
-                <ListItemText
-                  primary={nodes[option]?.title || "Unknown"}
-                  onClick={() => handleSelect(option)}
-                />
-              </ListItem>
-            ))}
-          </List>
-        </Popover>
       </>
     );
   };

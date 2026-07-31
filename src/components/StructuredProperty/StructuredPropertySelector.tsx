@@ -37,10 +37,6 @@ import {
   getFirestore,
   doc,
 } from "firebase/firestore";
-import {
-  saveAsInheritancePart,
-  getGeneralizationParts,
-} from "@components/lib/utils/partsHelper";
 import { SearchBox } from "../SearchBox/SearchBox";
 
 const StructuredPropertySelector = ({
@@ -151,7 +147,6 @@ const StructuredPropertySelector = ({
   fetchNode: (nodeId: string) => Promise<any | null>;
 }) => {
   const [disabledButton, setDisabledButton] = useState(false);
-  const [isUpdatingInheritance, setIsUpdatingInheritance] = useState(false);
   const [glowSearchBox, setGlowSearchBox] = useState(false);
   const [chromaSearchResults, setChromaSearchResults] = useState<any[]>([]);
   const [loadingChromaSearch, setLoadingChromaSearch] = useState(false);
@@ -332,18 +327,8 @@ const StructuredPropertySelector = ({
 
   // Initialize checkedItems with parts that are already inherited
   useEffect(() => {
-    if (
-      selectedProperty === "parts" &&
-      currentVisibleNode &&
-      !isUpdatingInheritance
-    ) {
+    if (selectedProperty === "parts" && currentVisibleNode) {
       const partsToCheck = new Set<string>();
-
-      if (currentVisibleNode.inheritanceParts) {
-        Object.keys(currentVisibleNode.inheritanceParts).forEach((partId) => {
-          partsToCheck.add(partId);
-        });
-      }
 
       if (currentVisibleNode.properties?.parts) {
         currentVisibleNode.properties.parts.forEach((collection: any) => {
@@ -375,11 +360,9 @@ const StructuredPropertySelector = ({
   }, [
     selectedProperty,
     currentVisibleNode?.id,
-    currentVisibleNode?.inheritanceParts,
     currentVisibleNode?.properties?.parts,
     setCheckedItems,
     relatedNodes,
-    isUpdatingInheritance,
   ]);
 
   useEffect(() => {
@@ -508,10 +491,6 @@ const StructuredPropertySelector = ({
   const markItemAsChecked = async (
     checkedId: string,
     radioSelection = false,
-    fromGeneralizationDropdown?: {
-      generalizationId: string;
-      generalizationTitle: string;
-    },
   ) => {
     const removedElements: string[] = [];
     const addedElements: string[] = [];
@@ -525,163 +504,91 @@ const StructuredPropertySelector = ({
 
     setLoadingIds((prev: Set<string>) => new Set(prev).add(checkedId));
 
-    // Handle parts property with new inheritance logic
-    if (selectedProperty === "parts" && fromGeneralizationDropdown) {
-      // This is a part selected from generalization dropdown - save to inheritanceParts
-      setIsUpdatingInheritance(true);
-      try {
-        const action = isRemoving ? "remove" : "add";
-
-        const generalizationNode =
-          relatedNodes[fromGeneralizationDropdown.generalizationId];
-        const partInGeneralization = getGeneralizationParts(
-          fromGeneralizationDropdown.generalizationId,
-          relatedNodes,
-        ).find((p) => p.id === checkedId);
-
-        let inheritedFromId = fromGeneralizationDropdown.generalizationId;
-        let inheritedFromTitle = fromGeneralizationDropdown.generalizationTitle;
-
-        if (
-          partInGeneralization?.isInherited &&
-          generalizationNode?.inheritanceParts?.[checkedId]
-        ) {
-          const originalInheritance =
-            generalizationNode.inheritanceParts[checkedId];
-          inheritedFromId = originalInheritance.inheritedFromId;
-          inheritedFromTitle = originalInheritance.inheritedFromTitle;
-        }
-
-        await saveAsInheritancePart(
-          currentVisibleNode?.id,
-          checkedId,
-          inheritedFromId,
-          inheritedFromTitle,
-          user,
-          action,
-          appName ?? "",
+    setEditableProperty((prev: ICollection[]) => {
+      const updated = [...prev];
+      if (checkedItems.has(checkedId)) {
+        updated.forEach((collection) => {
+          collection.nodes = collection.nodes.filter((n) => n.id !== checkedId);
+        });
+      } else {
+        const targetCollectionName = selectedCollection || "main";
+        let targetCollection = updated.find(
+          (c) => c.collectionName === targetCollectionName,
         );
 
-        // Refresh state after inheritance operations
-        refreshEditableProperty();
+        if (!targetCollection) {
+          targetCollection = { collectionName: "main", nodes: [] };
+          updated.push(targetCollection);
+        }
 
-        setCheckedItems((prev: Set<string>) => {
-          const updated = new Set(prev);
-          if (updated.has(checkedId)) {
-            updated.delete(checkedId);
-          } else {
-            if (radioSelection) updated.clear();
-            updated.add(checkedId);
-          }
-          if (selectedProperty === "generalizations" && updated.size === 0) {
-            return prev;
-          }
-          return updated;
+        targetCollection.nodes.push({
+          id: checkedId,
+          title: relatedNodes[checkedId]?.title ?? "",
         });
-
-        // Update newOnes state for inheritance parts
-        setNewOnes((prev: Set<string>) => {
-          const updated = new Set(prev);
-          updated.has(checkedId)
-            ? updated.delete(checkedId)
-            : updated.add(checkedId);
-          return updated;
-        });
-      } catch (error) {
-        console.error("Error saving inheritance part:", error);
-      } finally {
-        setIsUpdatingInheritance(false);
       }
-    } else {
-      // Existing logic for non-parts properties or direct parts
-      setEditableProperty((prev: ICollection[]) => {
-        const updated = [...prev];
-        if (checkedItems.has(checkedId)) {
-          updated.forEach((collection) => {
-            collection.nodes = collection.nodes.filter(
-              (n) => n.id !== checkedId,
-            );
-          });
-        } else {
-          const targetCollectionName = selectedCollection || "main";
-          let targetCollection = updated.find(
-            (c) => c.collectionName === targetCollectionName,
-          );
+      return updated;
+    });
 
-          if (!targetCollection) {
-            targetCollection = { collectionName: "main", nodes: [] };
-            updated.push(targetCollection);
-          }
+    setAddedElements((prev: Set<string>) => {
+      const updated = new Set(prev);
+      updated.has(checkedId)
+        ? updated.delete(checkedId)
+        : updated.add(checkedId);
+      return updated;
+    });
 
-          targetCollection.nodes.push({
-            id: checkedId,
-            title: relatedNodes[checkedId]?.title ?? "",
-          });
-        }
-        return updated;
-      });
+    setCheckedItems((prev: Set<string>) => {
+      const updated = new Set(prev);
+      if (updated.has(checkedId)) {
+        updated.delete(checkedId);
+      } else {
+        if (radioSelection) updated.clear();
+        updated.add(checkedId);
+      }
+      if (selectedProperty === "generalizations" && updated.size === 0) {
+        return prev;
+      }
+      return updated;
+    });
 
-      setAddedElements((prev: Set<string>) => {
-        const updated = new Set(prev);
-        updated.has(checkedId)
-          ? updated.delete(checkedId)
-          : updated.add(checkedId);
-        return updated;
-      });
+    setNewOnes((prev: Set<string>) => {
+      const updated = new Set(prev);
+      updated.has(checkedId)
+        ? updated.delete(checkedId)
+        : updated.add(checkedId);
+      return updated;
+    });
 
-      setCheckedItems((prev: Set<string>) => {
-        const updated = new Set(prev);
-        if (updated.has(checkedId)) {
-          updated.delete(checkedId);
-        } else {
-          if (radioSelection) updated.clear();
-          updated.add(checkedId);
-        }
-        if (selectedProperty === "generalizations" && updated.size === 0) {
-          return prev;
-        }
-        return updated;
-      });
-
-      setNewOnes((prev: Set<string>) => {
-        const updated = new Set(prev);
-        updated.has(checkedId)
-          ? updated.delete(checkedId)
-          : updated.add(checkedId);
-        return updated;
-      });
-
-      // Persist changes and refresh state
-      try {
-        if (selectedProperty === "parts") {
-          if (isRemoving) {
-            await unlinkNodeRelation(
-              currentVisibleNode?.id,
-              checkedId,
-              -1,
-              0,
-              true,
-            );
-          } else {
-            await linkNodeRelation({
-              currentNodeId: currentVisibleNode?.id,
-              partId: checkedId,
-            });
-          }
-        } else {
-          await handleSaveLinkChanges(
-            removedElements,
-            addedElements,
-            selectedProperty,
+    // Persist changes and refresh state
+    try {
+      if (selectedProperty === "parts") {
+        if (isRemoving) {
+          await unlinkNodeRelation(
             currentVisibleNode?.id,
-            selectedCollection,
+            checkedId,
+            -1,
+            0,
+            true,
           );
+        } else {
+          await linkNodeRelation({
+            currentNodeId: currentVisibleNode?.id,
+            partId: checkedId,
+          });
         }
-        // editableProperty re-syncs from currentVisibleNode in the refresh
-        // effect once the instant update or snapshot lands.
-      } catch (error) {
-        console.error("Error saving link changes:", error);
+      } else {
+        await handleSaveLinkChanges(
+          removedElements,
+          addedElements,
+          selectedProperty,
+          currentVisibleNode?.id,
+          selectedCollection,
+        );
       }
+      // editableProperty re-syncs from currentVisibleNode in the refresh
+      // effect once the instant update or snapshot lands.
+    } catch (error) {
+      console.error("Error saving link changes:", error);
     }
 
     scrollToElement(checkedId);
