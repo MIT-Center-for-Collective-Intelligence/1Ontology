@@ -481,7 +481,7 @@ export async function applyReciprocityAdd(
  * each inherited property: keep it if a generalization still provides it, move
  * it to one that owns it, or drop it if none do. Properties the generalizations
  * have but the node lacks get added.
- * `parts`/`isPartOf` are skipped — they inherit separately via `inheritanceParts`.
+ * `parts`/`isPartOf` are skipped — parts inherit via `partsInheritance` (ref model).
  */
 export async function recomputeInheritance(
   nodeId: string,

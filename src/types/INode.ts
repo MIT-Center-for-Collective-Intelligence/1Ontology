@@ -90,29 +90,13 @@ export type INode = {
     isPartOf: ICollection[];
   };
   inheritance: IInheritance;
-  inheritanceParts: {
-    [nodeId: string]: {
-      inheritedFromTitle: string;
-      inheritedFromId: string;
-    } | null;
-  };
   inheritedPartsDetails: InheritedPartsDetail[];
-  /**
-   * The generalization this node draws its parts ARRANGEMENT from, or null when
-   * it owns it. A stored CHOICE: it is set at creation and by an explicit user
-   * reattach, cleared when the node breaks, and never re-derived.
-   * `inheritance.parts.ref` (the owner) is derived from it.
-   * ⚠️ LEGACY (materialize model) — replaced by `partsInheritance`; retired by
-   * the one-time conversion script.
-   */
-  partsOverallSource?: string | null;
   /** Ref-based parts inheritance state — see {@link IPartsInheritance}. */
   partsInheritance?: IPartsInheritance;
   /**
-   * DERIVED materialized copy of the resolved parts view (read-repair cache).
-   * Written by write endpoints for their own node, by the annotation endpoint
-   * on repair, and by the backfill sweep — never rendered from directly and
-   * never cascaded; freshness is "as of last write/view/sweep".
+   * A stored snapshot of this node's resolved parts. It can go stale but that's
+   * fine: reads compare it against a fresh resolution and silently repair it.
+   * Never shown in the UI directly and never copied to other nodes.
    */
   resolvedParts?: ILinkNode[];
   specializations: ICollection[];
