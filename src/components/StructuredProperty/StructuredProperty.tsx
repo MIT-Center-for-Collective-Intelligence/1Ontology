@@ -1563,7 +1563,7 @@ const StructuredProperty = ({
             )}
           {(!currentVisibleNode.unclassified ||
             property === "specializations") &&
-            selectedProperty !== property &&
+            (selectedProperty !== property || property === "parts") &&
             !selectedDiffNode &&
             !currentImprovement &&
             property !== "isPartOf" && (
