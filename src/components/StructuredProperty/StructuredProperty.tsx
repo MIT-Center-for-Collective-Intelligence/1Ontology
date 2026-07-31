@@ -221,9 +221,7 @@ const StructuredProperty = ({
   const theme = useTheme();
   const isMobile = useMediaQuery("(max-width:599px)");
   const [openAddCollection, setOpenAddCollection] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
   const BUTTON_COLOR = theme.palette.mode === "dark" ? "#373739" : "#dde2ea";
-  const [modifiedOrder, setModifiedOrder] = useState(false);
   const [displayOptional, setDisplayOptional] = useState(false);
   const [showTopOptionalLegend, setShowTopOptionalLegend] = useState(true);
   const [editProperty, setEditProperty] = useState("");
@@ -744,49 +742,6 @@ const StructuredProperty = ({
       property: property,
     });
   };
-  const onSave = useCallback(async () => {
-    try {
-      setIsSaving(true);
-      const _removedElements = new Set(removedElements);
-      const _addedElements = new Set(addedElements);
-      const _selectedProperty = selectedProperty;
-      handleCloseAddLinksModel();
-      for (let nId in clonedNodesQueue) {
-        await handleCloning(
-          { id: clonedNodesQueue[nId].id },
-          clonedNodesQueue[nId].title,
-          nId,
-        );
-      }
-      await handleSaveLinkChanges(
-        _removedElements,
-        _addedElements,
-        _selectedProperty,
-        currentVisibleNode?.id,
-      );
-    } catch (error: any) {
-      console.error(error);
-      recordLogs({
-        type: "error",
-        error: JSON.stringify({
-          name: error.name,
-          message: error.message,
-          stack: error.stack,
-        }),
-        at: "recordLogs",
-      });
-    } finally {
-      setIsSaving(false);
-    }
-  }, [
-    clonedNodesQueue,
-    addedElements,
-    removedElements,
-    selectedProperty,
-    modifiedOrder,
-    currentVisibleNode?.id,
-  ]);
-
   const scrollToElement = (elementId: string) => {
     setTimeout(() => {
       const element = document.getElementById(`${elementId}-${property}`);
@@ -1546,19 +1501,6 @@ const StructuredProperty = ({
                     <CloseIcon sx={{ color: "white" }} />
                   </IconButton>
                 </Tooltip>
-                {/*  <LoadingButton
-                size="small"
-                onClick={onSave}
-                loading={isSaving}
-                color="success"
-                variant="contained"
-                sx={{ borderRadius: "25px", color: "white" }}
-                disabled={
-                  addedElements.size === 0 && removedElements.size === 0
-                }
-              >
-                Save
-              </LoadingButton> */}
               </Box>
             )}
           {(!currentVisibleNode.unclassified ||
@@ -1723,13 +1665,10 @@ const StructuredProperty = ({
               selectedProperty={selectedProperty}
               clonedNodesQueue={clonedNodesQueue}
               model={!!selectedProperty}
-              setModifiedOrder={setModifiedOrder}
               glowIds={glowIds}
               scrollToElement={scrollToElement}
               selectedCollection={selectedCollection}
               handleCloseAddLinksModel={handleCloseAddLinksModel}
-              onSave={onSave}
-              isSaving={isSaving}
               addedElements={addedElements}
               removedElements={removedElements}
               setSearchValue={setSearchValue}
@@ -1840,7 +1779,6 @@ const StructuredProperty = ({
         selectedProperty === property &&
         !selectedCollection && (
           <StructuredPropertySelector
-            onSave={onSave}
             currentVisibleNode={currentVisibleNode}
             relatedNodes={relatedNodes}
             fetchNode={fetchNode}
@@ -1885,7 +1823,6 @@ const StructuredProperty = ({
             addedElements={addedElements}
             setRemovedElements={setRemovedElements}
             setAddedElements={setAddedElements}
-            isSaving={isSaving}
             scrollToElement={scrollToElement}
             selectedCollection={selectedCollection}
             appName={appName}

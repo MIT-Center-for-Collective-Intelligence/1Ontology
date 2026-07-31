@@ -172,13 +172,10 @@ const CollectionStructure = ({
   unlinkElement,
   addACloneNodeQueue,
   selectedProperty,
-  setModifiedOrder,
   glowIds,
   scrollToElement,
   selectedCollection,
   handleCloseAddLinksModel,
-  onSave,
-  isSaving,
   addedElements,
   removedElements,
   setSearchValue,
@@ -241,13 +238,10 @@ const CollectionStructure = ({
   unlinkElement: any;
   addACloneNodeQueue: any;
   selectedProperty: string;
-  setModifiedOrder: any;
   glowIds: Set<string>;
   scrollToElement: (elementId: string) => void;
   selectedCollection: string;
   handleCloseAddLinksModel: any;
-  onSave: any;
-  isSaving: any;
   addedElements: any;
   removedElements: any;
   setSearchValue: any;
@@ -408,7 +402,6 @@ const CollectionStructure = ({
             newArray.splice(destinationIndex, 0, movedElement);
             return newArray;
           });
-          setModifiedOrder(true);
           return;
         }
         const nodeData = { ...currentVisibleNode } as INode;
@@ -561,7 +554,6 @@ const CollectionStructure = ({
           }
           return prev;
         });
-        setModifiedOrder(true);
 
         if (propertyValue) {
           const previousValue = JSON.parse(JSON.stringify(propertyValue));
@@ -1645,23 +1637,6 @@ const CollectionStructure = ({
                                             />
                                           </IconButton>
                                         </Tooltip>
-                                        {/*<LoadingButton
-                                          size="small"
-                                          onClick={onSave}
-                                          loading={isSaving}
-                                          color="success"
-                                          variant="contained"
-                                          sx={{
-                                            borderRadius: "25px",
-                                            color: "white",
-                                          }}
-                                          disabled={
-                                            addedElements.size === 0 &&
-                                            removedElements.size === 0
-                                          }
-                                        >
-                                          Save
-                                        </LoadingButton> */}
                                       </Box>
                                     )}
                                 </Box>
@@ -2220,7 +2195,6 @@ const CollectionStructure = ({
                             selectedCollection ===
                               collection.collectionName && (
                               <StructuredPropertySelector
-                                onSave={onSave}
                                 currentVisibleNode={currentVisibleNode}
                                 relatedNodes={nodes}
                                 fetchNode={fetchNode}
@@ -2257,7 +2231,6 @@ const CollectionStructure = ({
                                 setRemovedElements={setRemovedElements}
                                 setAddedElements={setAddedElements}
                                 clonedNodesQueue={clonedNodesQueue}
-                                isSaving={isSaving}
                                 scrollToElement={scrollToElement}
                                 addACloneNodeQueue={addACloneNodeQueue}
                                 removedElements={removedElements}

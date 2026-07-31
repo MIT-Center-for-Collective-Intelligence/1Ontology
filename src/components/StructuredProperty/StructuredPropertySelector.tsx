@@ -45,7 +45,6 @@ import { SearchBox } from "../SearchBox/SearchBox";
 
 const StructuredPropertySelector = ({
   handleCloseAddLinksModel,
-  onSave,
   selectedProperty,
   currentVisibleNode,
   setSearchValue,
@@ -81,7 +80,6 @@ const StructuredPropertySelector = ({
   addedElements,
   setRemovedElements,
   setAddedElements,
-  isSaving,
   scrollToElement,
   selectedCollection,
   appName,
@@ -92,7 +90,6 @@ const StructuredPropertySelector = ({
   relatedNodes,
   fetchNode,
 }: {
-  onSave: any;
   handleCloseAddLinksModel: any;
   selectedProperty: any;
   currentVisibleNode: any;
@@ -143,7 +140,6 @@ const StructuredPropertySelector = ({
   setRemovedElements: any;
   addedElements: Set<string>;
   setAddedElements: any;
-  isSaving: boolean;
   scrollToElement: (nodeId: string) => void;
   selectedCollection: string;
   appName?: string;
@@ -822,7 +818,9 @@ const StructuredPropertySelector = ({
       where("deleted", "==", false),
     ];
     if (appName) constraints.push(where("appName", "==", appName));
-    const rootDocs = await getDocs(query(collection(db, NODES), ...constraints));
+    const rootDocs = await getDocs(
+      query(collection(db, NODES), ...constraints),
+    );
     const rootId = rootDocs.docs[0]?.id;
     if (!rootId) {
       confirmIt(
@@ -911,7 +909,6 @@ const StructuredPropertySelector = ({
           nodes={relatedNodes}
           cloning={cloning}
           addACloneNodeQueue={_add}
-          isSaving={isSaving}
           disabledAddButton={
             selectedProperty === "generalizations" && checkedItems.size === 1
           }
@@ -1050,7 +1047,6 @@ const StructuredPropertySelector = ({
                   }}
                   variant="contained"
                   disabled={
-                    isSaving ||
                     searchValue.length < 3 ||
                     searchResultsForSelection[0]?.title.trim() ===
                       searchValue.trim() ||

@@ -39,7 +39,6 @@ type ITreeViewSimplifiedProps = {
   categoriesOrder?: string[];
   cloning?: string | null;
   addACloneNodeQueue?: any;
-  isSaving?: any;
   disabledAddButton?: boolean;
   selectedProperty?: string;
   getNumOfGeneralizations?: any;
@@ -65,7 +64,6 @@ const TreeViewSimplified = ({
   categoriesOrder,
   cloning,
   addACloneNodeQueue,
-  isSaving,
   disabledAddButton,
   selectedProperty,
   getNumOfGeneralizations,
@@ -115,7 +113,6 @@ const TreeViewSimplified = ({
               selectedProperty={selectedProperty}
               clone={clone}
               disabledAddButton={disabledAddButton}
-              isSaving={isSaving}
               preventLoops={preventLoops}
               sendNode={sendNode}
               manageLock={manageLock}
@@ -176,7 +173,6 @@ const TreeViewSimplified = ({
                 preventLoops={preventLoops}
                 cloning={cloning}
                 addACloneNodeQueue={addACloneNodeQueue}
-                isSaving={isSaving}
                 disabledAddButton={disabledAddButton}
                 selectedProperty={selectedProperty}
                 getNumOfGeneralizations={getNumOfGeneralizations}
@@ -199,7 +195,6 @@ const NodeLabel = ({
   selectedProperty,
   clone,
   disabledAddButton,
-  isSaving,
   preventLoops,
   sendNode,
   manageLock,
@@ -219,7 +214,6 @@ const NodeLabel = ({
   selectedProperty: any;
   clone: any;
   disabledAddButton: any;
-  isSaving: any;
   preventLoops: any;
   sendNode: any;
   manageLock: any;
@@ -295,8 +289,7 @@ const NodeLabel = ({
       </Typography>
 
       {/* Action Buttons */}
-      {!isSaving &&
-        !treeVisualization[nodeId].isCategory &&
+      {!treeVisualization[nodeId].isCategory &&
         clone &&
         !treeVisualization[nodeId].unclassified &&
         !preventLoops?.has(treeVisualization[nodeId]?.id) && (
@@ -382,8 +375,7 @@ const NodeLabel = ({
           </>
         )}
 
-      {!isSaving &&
-        clone &&
+      {clone &&
         !treeVisualization[nodeId].isCategory &&
         !treeVisualization[nodeId].locked &&
         !preventLoops?.has(treeVisualization[nodeId]?.id) && (
