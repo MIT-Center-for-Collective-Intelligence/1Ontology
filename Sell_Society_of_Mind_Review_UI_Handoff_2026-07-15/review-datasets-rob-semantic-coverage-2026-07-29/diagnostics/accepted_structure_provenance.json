@@ -1,7 +1,39 @@
 {
-  "schemaVersion": "som-accepted-structure-provenance-v1",
+  "schemaVersion": "som-accepted-structure-provenance-v3",
   "proposalId": "som-f0464db076534dd0bde0",
-  "origin": "explicit-human-reviewed-collection-design-proposal",
+  "origin": "human-accepted-wrapper-over-machine-derived-baseline-nodes",
+  "contentPrerequisite": {
+    "occurredBeforeCollectionDesign": true,
+    "finding": "Rob accepted the synonym diagnosis and exact merge that absorbed \"Lease out\" into \"Rent out\". The subsequent collection-design proposal therefore operated on the surviving \"Rent out\" node.",
+    "review": {
+      "reviewerLabel": "rob-laubacher",
+      "diagnosisProposalId": "som-af5752d64f929944a380",
+      "diagnosisDecision": "agree",
+      "actionProposalId": "som-9551307c7a40c479a755",
+      "actionDecision": "agree",
+      "diagnosisSourceFile": "artifacts/rob-content-review-wave2-2026-07-24/rob-duplicate-synonym-2026-07-24.json",
+      "diagnosisSourceSha256": "fe5d641bf0837c6d736ce0682982ef064b86df1567f15c6e68bef81aa1278382",
+      "actionSourceFile": "artifacts/rob-content-review-wave2-2026-07-24/rob-node-merge-2026-07-24.json",
+      "actionSourceSha256": "d62402416e53d75755a1af8ab592c4d54ef2f988449fcbe3eb361bfe7134ac10"
+    },
+    "application": {
+      "sourceOntology": {
+        "appId": "final-hierarchy-with-o*net-rob-content-review-2026-07-24",
+        "name": "Final Hierarchy with O*Net - Rob Content Review 2026-07-24"
+      },
+      "targetOntology": {
+        "appId": "final-hierarchy-with-o*net-rob-structure-review-2026-07-24",
+        "name": "Final Hierarchy with O*Net - Rob Structure Review 2026-07-24"
+      },
+      "canonicalTitle": "Rent out",
+      "absorbedTitle": "Lease out",
+      "movedDirectChildCount": 0,
+      "sourceFile": "Sell_Society_of_Mind_Review_UI_Handoff_2026-07-15/review-datasets-rob-post-structure-2026-07-25/diagnostics/content_application_audit.json",
+      "sourceSha256": "19104f04726e8b290c48072fc9a1e470035d6109fdd26a66960213f3268e9118",
+      "targetDigestVerified": true,
+      "sourceUnchanged": true
+    }
+  },
   "review": {
     "datasetVersion": "sell-rob-structure-wave-2026-07-24-v1",
     "issueType": "collection-design",
@@ -48,5 +80,35 @@
     "targetDigestVerified": true,
     "sourceUnchanged": true
   },
-  "conclusion": "\"Sell ownership\" and \"Sell temporary use\" were surfaced for review, explicitly accepted, and then applied to a new ontology copy; they were not hidden or automatic model mutations."
+  "conclusion": "The collection-design proposal did not invent \"Rent out\", \"Lease out\", or temporary-use selling. Both activity nodes were already direct children of \"Sell\" in the machine-derived July 15 baseline. Rob then accepted a synonym decision and exact merge that absorbed \"Lease out\" into \"Rent out\". The later collection-design proposal created the \"Sell temporary use\" wrapper and moved the surviving \"Rent out\" node beneath it. The wrapper and move were human-reviewed, while the underlying activity nodes came from the earlier machine-derived ontology.",
+  "baseline": {
+    "capturedAt": "2026-07-15T18:00:00.000Z",
+    "ontologyAppId": "final-hierarchy-with-o*net",
+    "sourceFile": "Sell_Society_of_Mind_Review_UI_Handoff_2026-07-15/review-datasets/ontology-snapshot.json",
+    "sourceSha256": "c86217e0f2dbefe5b716bd5881b46d50cec9f76264676ab23f63bfe060266837",
+    "nodes": [
+      {
+        "title": "Lease out",
+        "activeNodeId": "C1jYc2PTyZIjQd2Iyt7V",
+        "activeDocumentCreatedAt": "2026-04-01T15:36:26.513Z",
+        "predecessorNodeId": "Mhu9BmPinYS1QzWJUe4e",
+        "predecessorDocumentCreatedAt": "2026-02-10T10:29:45.175Z",
+        "predecessorContributors": ["gemini"],
+        "predecessorFoundInPreviousId": "4lyDxFffGRPCb6QWHwie",
+        "parentTitleAtCapture": "Sell"
+      },
+      {
+        "title": "Rent out",
+        "activeNodeId": "jsXlKplPQ3BxIrHzSwLL",
+        "activeDocumentCreatedAt": "2026-04-01T15:36:26.513Z",
+        "predecessorNodeId": "UteAyqKbbaIS2rdJxVmc",
+        "predecessorDocumentCreatedAt": "2026-02-10T10:27:41.180Z",
+        "predecessorContributors": ["gemini"],
+        "predecessorFoundInPreviousId": "WCDKQUPUBl5QgjZMY1B5",
+        "parentTitleAtCapture": "Sell"
+      }
+    ],
+    "finding": "Lease out and Rent out were already direct children of Sell before the collection-design proposal was generated.",
+    "firestoreMetadataObservedAt": "2026-08-02T22:25:00.000Z"
+  }
 }

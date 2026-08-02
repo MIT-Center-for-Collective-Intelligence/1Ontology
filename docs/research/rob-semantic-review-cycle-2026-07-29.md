@@ -17,7 +17,7 @@ Sources:
 | Do not miss direct seller-side evidence below the embedding cutoff | Deterministic provider-side Rent/Lease patterns scan all 18,616 candidates before union with ranked candidates | Unit test proves direct-evidence candidates are added after ranking                                         |
 | Keep buyer-side renting out of Sell                                | Only direct provider-side evidence or an allowlisted model classification/destination can enter expert review  | `Rent Necessity` remains excluded; 8 provider-side candidates are released                                  |
 | Let the expert decide                                              | All detections create review-only records; confidence never authorizes mutation                                | Manifest sets `mutatesOntology: false`; exact changes require reviewed IDs and a later application plan     |
-| Make each exact move a separate decision                           | Each semantic diagnosis has one dependency-gated relocation to `Rent out`                                      | Dataset test checks all 8 diagnosis/action links                                                            |
+| Avoid a diagnosis/move click sequence                              | Each candidate is one move decision with source evidence and both exact hierarchy paths visible                | Dataset test checks all 8 one-step items and confirms there are no duplicate relocation cards               |
 | Create specific nodes from explicit O\*NET wording early           | Deterministic text rules release 3 explicit-modifier specializations                                           | Broader model-only proposals remain in diagnostics                                                          |
 | Check empty nodes and collections last                             | Separate snapshot-bound empty-node and empty-collection issue types are generated as deferred manual checks    | Current snapshot has 3 empty nodes and 0 empty named collections                                            |
 | Let Rob inspect his own prior work by task                         | Inspection opens a completed-task dashboard; each task opens all responses on one scrollable page              | Self-review defaults to Rob when available; annotations are disabled; source-task editing remains available |
@@ -31,20 +31,26 @@ Sources:
   `final-hierarchy-with-o*net-rob-structure-applied-2026-07-25`
 - Snapshot SHA-256:
   `c362f9d3587dbed1303a7355b7d5feef8057684544857139f0178a1038b687b2`
-- Released diagnoses: 8
-- Released exact relocations: 8
+- Released one-step missing-node moves: 8
 - Released O\*NET specializations: 3
 - Deferred empty-node checks: 3
 - Deferred empty-collection checks: 0
 
 ## Provenance resolution
 
-`Sell ownership` and `Sell temporary use` were not hidden model mutations.
-Collection-design proposal `som-f0464db076534dd0bde0` was presented to Rob in
-the July 24 structure wave. Rob agreed, and the separately audited application
-created those nodes in a new ontology copy and moved `Rent out` under
-`Sell temporary use`. The released dataset includes the source hashes and
-verified target digest in
+The earlier provenance statement was incomplete. Collection-design proposal
+`som-f0464db076534dd0bde0` was presented to Rob in the July 24 structure wave;
+Rob agreed, and the audited application created the `Sell ownership` and
+`Sell temporary use` wrappers in a new ontology copy. But the July 15 baseline
+already contained `Rent out` and `Lease out` as direct children of `Sell`.
+Firestore lineage traces predecessor records for those nodes to February 10,
+with Gemini listed as a contributor. Before the structure wave, Rob accepted
+both the synonym diagnosis and the exact merge that absorbed `Lease out` into
+`Rent out`. The later collection proposal then created `Sell temporary use`
+and moved the surviving `Rent out` node beneath it. The proposal therefore
+organized a machine-derived baseline node; it did not originate the underlying
+activity. The released dataset records this full sequence, source hashes, and
+the verified target digests in
 `diagnostics/accepted_structure_provenance.json`.
 
 ## Deferred until current review propagates

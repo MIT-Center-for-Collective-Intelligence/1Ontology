@@ -29,7 +29,7 @@ export const SOM_REVIEW_STAGES: SomReviewStageDefinition[] = [
     id: "final-action",
     title: "Follow-up change proposals",
     description:
-      "After you agree with a diagnosis, review the specific merge or move as a separate decision here.",
+      "Review any exact merges, moves, and cleanup actions released for this dataset.",
   },
   {
     id: "additional-quality",

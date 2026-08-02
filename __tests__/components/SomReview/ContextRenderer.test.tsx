@@ -213,6 +213,19 @@ describe("Society of Mind context renderers", () => {
           nodeTitle: "Rent Equipment",
           currentParentTitle: "Lease (Physical Object)",
           candidateHome: "Rent out",
+          currentPathTitles: [
+            "Buy",
+            "Rent (pay for time-limited use)",
+            "Lease",
+            "Lease (Physical Object)",
+            "Rent Equipment",
+          ],
+          proposedPathTitles: [
+            "Sell",
+            "Sell temporary use",
+            "Rent out",
+            "Rent Equipment",
+          ],
           placementIssue: "missing-from-branch",
           sourceTasks: ["Sell or rent equipment to customers."],
         }}
@@ -222,11 +235,19 @@ describe("Society of Mind context renderers", () => {
 
     expect(
       screen.getByText(
-        /belongs in the Sell sub-branch even though it was found elsewhere/i,
+        /compare the source evidence with both hierarchy locations/i,
       ),
     ).toBeInTheDocument();
     expect(
-      screen.queryByText(/does not belong in the Sell sub-branch/i),
+      screen.getByLabelText("Current hierarchy location"),
+    ).toHaveTextContent(
+      "BuyRent (pay for time-limited use)LeaseLease (Physical Object)Rent Equipment",
+    );
+    expect(
+      screen.getByLabelText("Proposed hierarchy location"),
+    ).toHaveTextContent("SellSell temporary useRent outRent Equipment");
+    expect(
+      screen.queryByText(/exact move remains a separate review step/i),
     ).not.toBeInTheDocument();
   });
 

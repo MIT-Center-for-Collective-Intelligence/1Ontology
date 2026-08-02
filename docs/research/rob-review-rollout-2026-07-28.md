@@ -11,8 +11,9 @@ apply any ontology change.
 2. Confirm the active Sell dataset is `sell-semantic-coverage` and that its
    source SHA-256 is
    `c362f9d3587dbed1303a7355b7d5feef8057684544857139f0178a1038b687b2`.
-3. Open `/review?dataset=sell-semantic-coverage` and verify that semantic
-   diagnoses precede their dependency-gated exact moves.
+3. Open `/review?dataset=sell-semantic-coverage` and verify that each
+   potentially missing node shows its current and proposed hierarchy paths in
+   one review item.
 4. Open `/review/inspection?workspace=sell` with a research-team account and
    verify the completed-task dashboard, then open one task and inspect every
    saved response on one scrollable page.
@@ -57,15 +58,16 @@ Send a participant `/review/calibration`.
 
 Send Rob `/review?dataset=sell-semantic-coverage`.
 
-- Eight diagnoses ask whether provider-side Rent/Lease activities found outside
-  Sell belong in the branch.
-- Each accepted diagnosis unlocks its own exact move to `Rent out`.
+- Eight one-step items ask whether provider-side Rent/Lease activities should
+  move from their current Buy-side hierarchy path to the displayed location
+  under `Rent out` in Sell.
+- Each item shows the relevant ancestors, source evidence, and proposed
+  alternative before the reviewer answers.
 - Three O\*NET proposals specialize explicit task wording currently attached to
   generic Sell nodes.
 - No O\*NET specialization is released solely from model inference.
 - Empty-node and empty-collection cleanup remain unreleased until upstream
   decisions are propagated and the branch is regenerated.
-- Exact actions unlock only when their diagnosis is accepted.
 - Model confidence is hidden and cannot authorize an ontology write.
 
 ## Applying reviewed decisions

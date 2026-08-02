@@ -6,7 +6,7 @@
   "sourceOntology": "firestore://ontology-41607/final-hierarchy-with-o*net-rob-structure-applied-2026-07-25",
   "sourceOntologySha256": "c362f9d3587dbed1303a7355b7d5feef8057684544857139f0178a1038b687b2",
   "counts": {
-    "proposals": 19,
+    "proposals": 11,
     "controls": 0,
     "manualChecks": 3,
     "rejectedAgentCandidates": 49
@@ -36,7 +36,7 @@
   "issueTypes": [
     {
       "id": "cross-branch-recall",
-      "label": "1. Related activities outside Sell",
+      "label": "1. Potentially missing nodes for this sub-branch",
       "taskIds": [],
       "stage": "content",
       "contextType": "placement-comparison",
@@ -51,16 +51,6 @@
       "stage": "content",
       "contextType": "evidence-specialization",
       "proposals": 3,
-      "controls": 0,
-      "manualChecks": 0
-    },
-    {
-      "id": "relocation",
-      "label": "Exact moves into Sell",
-      "taskIds": [],
-      "stage": "final-action",
-      "contextType": "relocation-action",
-      "proposals": 8,
       "controls": 0,
       "manualChecks": 0
     },
@@ -90,14 +80,13 @@
     "currentWave": "semantic-recall-and-evidence-specialization",
     "releasedIssueTypes": [
       "cross-branch-recall",
-      "evidence-specialization",
-      "relocation"
+      "evidence-specialization"
     ],
     "awaitingRegenerationIssueTypes": [
       "empty-node",
       "empty-collection"
     ],
-    "message": "Review semantic branch-recall and O*NET specialization first. Downstream structure and empty-node/collection cleanup will be regenerated after these decisions are propagated."
+    "message": "Review each potentially missing node once, with its source evidence and both hierarchy locations visible, then review O*NET specializations. Downstream cleanup will be regenerated after these decisions are propagated."
   },
   "safety": {
     "reviewOnly": true,
@@ -107,13 +96,13 @@
   },
   "acceptedStructureProvenance": {
     "proposalId": "som-f0464db076534dd0bde0",
-    "origin": "explicit-human-reviewed-collection-design-proposal",
+    "origin": "human-accepted-wrapper-over-machine-derived-baseline-nodes",
     "file": "diagnostics/accepted_structure_provenance.json"
   },
   "limitations": [
     "Embedding similarity retrieves candidates but never authorizes an ontology change.",
     "A semantic-direction judge filters embedding candidates; direct provider-side O*NET evidence is scanned across the full ontology candidate set so the embedding cutoff cannot hide it.",
-    "Every whole-node move has a separate exact action tied to an approved diagnosis.",
+    "Each whole-node move is reviewed once, with the source evidence and both complete hierarchy locations visible together.",
     "O*NET specializations are released only when a deterministic text rule verifies an explicit modifier; broader model suggestions remain diagnostic.",
     "Empty-node and empty-collection findings are deterministic and intentionally unreleased until upstream changes propagate.",
     "Descriptions and broad missing-activity generation remain deferred."
@@ -159,5 +148,6 @@
     "rankedCandidateCount": 57,
     "reviewedCandidateCount": 57,
     "directEvidenceCandidateCount": 8
-  }
+  },
+  "contentRevision": 2
 }

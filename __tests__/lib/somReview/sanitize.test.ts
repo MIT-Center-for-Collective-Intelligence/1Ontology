@@ -142,6 +142,62 @@ describe("Society of Mind reviewer card blinding", () => {
     });
   });
 
+  it("preserves exact paths and action wording for a missing-node move", () => {
+    const card = toReviewerCard({
+      proposalId: "missing-node-example",
+      datasetVersion: dataset.datasetVersion,
+      branch: "Sell",
+      issueType: "cross-branch-recall",
+      reviewerView: {
+        currentState: "Legacy current state.",
+        proposedState: "Legacy proposed state.",
+        reasoning: "The source task rents equipment to customers.",
+        context: {
+          type: "placement-comparison",
+          nodeTitle: "Rent Equipment",
+          currentParentTitle: "Lease (Physical Object)",
+          candidateHome: "Rent out",
+          currentPathTitles: [
+            "Buy",
+            "Rent (pay for time-limited use)",
+            "Lease (Physical Object)",
+            "Rent Equipment",
+          ],
+          proposedPathTitles: [
+            "Sell",
+            "Sell temporary use",
+            "Rent out",
+            "Rent Equipment",
+          ],
+          placementIssue: "missing-from-branch",
+        },
+      },
+    });
+
+    expect(card.reviewerView).toMatchObject({
+      question:
+        'Should "Rent Equipment" move from "Lease (Physical Object)" to "Rent out" in the Sell sub-branch?',
+      proposedState:
+        'Move "Rent Equipment" to "Rent out" because its evidence expresses a provider-side "Sell" action.',
+      agreeLabel: "Approve move",
+      disagreeLabel: "Keep current location",
+      context: {
+        currentPathTitles: [
+          "Buy",
+          "Rent (pay for time-limited use)",
+          "Lease (Physical Object)",
+          "Rent Equipment",
+        ],
+        proposedPathTitles: [
+          "Sell",
+          "Sell temporary use",
+          "Rent out",
+          "Rent Equipment",
+        ],
+      },
+    });
+  });
+
   it("consolidates a shared wrong-verb diagnosis without losing node detail", () => {
     const card = toReviewerCard({
       proposalId: "market-family",

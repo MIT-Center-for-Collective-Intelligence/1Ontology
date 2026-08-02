@@ -59,7 +59,9 @@ export const reviewerQuestion = (
             }?`;
       }
       if (context.placementIssue === "missing-from-branch") {
-        return `Does "${context.nodeTitle}" express the "${branch}" action and belong in this sub-branch?`;
+        return context.candidateHome
+          ? `Should "${context.nodeTitle}" move from "${context.currentParentTitle}" to "${context.candidateHome}" in the ${branch} sub-branch?`
+          : `Does "${context.nodeTitle}" express the "${branch}" action and belong in this sub-branch?`;
       }
       return context.placementIssue === "wrong-verb"
         ? `Does "${context.nodeTitle}" use a different main action than the "${branch}" action?`
@@ -155,7 +157,7 @@ const placementReviewerText = (
     }"${category ? ` in the "${category}" category` : ""}.`,
     proposedState:
       context.placementIssue === "missing-from-branch"
-        ? `"${context.nodeTitle}" expresses a provider-side "${branch}" action and should be considered under "${context.candidateHome || branch}".`
+        ? `Move "${context.nodeTitle}" to "${context.candidateHome || branch}" because its evidence expresses a provider-side "${branch}" action.`
         : context.placementIssue === "wrong-verb"
           ? `"${context.nodeTitle}" does not express the "${branch}" action${
               context.candidateHome
@@ -167,13 +169,13 @@ const placementReviewerText = (
             : `"${context.nodeTitle}" does not belong under "${context.currentParentTitle}".`,
     agreeLabel:
       context.placementIssue === "missing-from-branch"
-        ? `Yes, include in ${branch}`
+        ? "Approve move"
         : context.placementIssue === "wrong-verb"
           ? "Yes, different action"
           : "Yes, misplaced",
     disagreeLabel:
       context.placementIssue === "missing-from-branch"
-        ? "No, keep outside"
+        ? "Keep current location"
         : context.placementIssue === "wrong-verb"
           ? "No, it belongs here"
           : "No, keep here",
@@ -292,6 +294,12 @@ const sanitizeContext = (context: any): SomReviewContext => {
             ? context.currentBucket
             : "",
         candidateHome: cleanText(context.candidateHome),
+        currentPathTitles: (context.currentPathTitles || [])
+          .map(cleanText)
+          .filter(Boolean),
+        proposedPathTitles: (context.proposedPathTitles || [])
+          .map(cleanText)
+          .filter(Boolean),
         sharedAction: cleanText(context.sharedAction),
         affectedNodes: (context.affectedNodes || []).map((node: any) => ({
           nodeTitle: cleanText(node.nodeTitle),

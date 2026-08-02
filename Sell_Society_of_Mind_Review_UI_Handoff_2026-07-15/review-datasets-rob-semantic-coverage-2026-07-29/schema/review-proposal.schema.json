@@ -314,6 +314,22 @@
                       "items": {
                         "$ref": "#/definitions/SocietyOfMindReviewProposal/properties/datasetVersion"
                       }
+                    },
+                    "currentPathTitles": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "minItems": 2
+                    },
+                    "proposedPathTitles": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "minItems": 2
                     }
                   },
                   "required": [

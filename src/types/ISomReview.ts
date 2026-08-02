@@ -106,6 +106,8 @@ export type SomReviewContext =
       currentParentTitle: string;
       currentBucket?: string;
       candidateHome?: string;
+      currentPathTitles?: string[];
+      proposedPathTitles?: string[];
       sharedAction?: string;
       affectedNodes?: Array<{
         nodeTitle: string;

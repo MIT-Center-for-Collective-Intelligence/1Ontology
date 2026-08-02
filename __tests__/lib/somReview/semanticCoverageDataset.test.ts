@@ -51,7 +51,11 @@ describe("Sell semantic coverage review wave", () => {
           record.reviewerView.context.type === "placement-comparison" &&
           record.reviewerView.context.placementIssue ===
             "missing-from-branch" &&
-          record.reviewerView.context.candidateHome === "Rent out",
+          record.reviewerView.context.candidateHome === "Rent out" &&
+          record.reviewerView.context.currentPathTitles?.[0] === "Buy" &&
+          record.reviewerView.context.proposedPathTitles?.[0] === "Sell" &&
+          record.reviewerView.context.proposedPathTitles?.at(-1) ===
+            record.subject.title,
       ),
     ).toBe(true);
     expect(
@@ -59,20 +63,23 @@ describe("Sell semantic coverage review wave", () => {
     ).toBe(false);
   });
 
-  it("keeps every exact move behind its own semantic diagnosis", () => {
-    const diagnosisIds = new Set(
-      records
-        .filter((record) => record.issueType === "cross-branch-recall")
-        .map((record) => record.proposalId),
+  it("uses one exact move decision per potentially missing node", () => {
+    const moves = records.filter(
+      (record) => record.issueType === "cross-branch-recall",
     );
-    const moves = records.filter((record) => record.issueType === "relocation");
     expect(moves).toHaveLength(8);
+    expect(
+      records.filter((record) => record.issueType === "relocation"),
+    ).toHaveLength(0);
     for (const move of moves) {
-      expect(move.workflow.dependsOnProposalIds).toHaveLength(1);
-      expect(diagnosisIds.has(move.workflow.dependsOnProposalIds[0])).toBe(
-        true,
+      expect(move.workflow).toMatchObject({
+        proposalKind: "action",
+        dependsOnProposalIds: [],
+      });
+      expect(move.reviewerView.question).toContain('to "Rent out"');
+      expect(move.reviewerView.reasoning).not.toMatch(
+        /available only after|diagnosis is approved/i,
       );
-      expect(move.reviewerView.context.proposedParentTitle).toBe("Rent out");
     }
   });
 
@@ -133,7 +140,7 @@ describe("Sell semantic coverage review wave", () => {
   it("records that the usage branches came from Rob's accepted proposal", () => {
     expect(dataset.manifest.acceptedStructureProvenance).toEqual({
       proposalId: "som-f0464db076534dd0bde0",
-      origin: "explicit-human-reviewed-collection-design-proposal",
+      origin: "human-accepted-wrapper-over-machine-derived-baseline-nodes",
       file: "diagnostics/accepted_structure_provenance.json",
     });
     const provenance = JSON.parse(
@@ -154,5 +161,42 @@ describe("Sell semantic coverage review wave", () => {
       targetDigestVerified: true,
       sourceUnchanged: true,
     });
+    expect(provenance.baseline).toMatchObject({
+      ontologyAppId: "final-hierarchy-with-o*net",
+      finding:
+        "Lease out and Rent out were already direct children of Sell before the collection-design proposal was generated.",
+    });
+    expect(provenance.baseline.nodes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          title: "Lease out",
+          parentTitleAtCapture: "Sell",
+          predecessorContributors: ["gemini"],
+        }),
+        expect.objectContaining({
+          title: "Rent out",
+          parentTitleAtCapture: "Sell",
+          predecessorContributors: ["gemini"],
+        }),
+      ]),
+    );
+    expect(provenance.contentPrerequisite).toMatchObject({
+      occurredBeforeCollectionDesign: true,
+      review: {
+        diagnosisProposalId: "som-af5752d64f929944a380",
+        diagnosisDecision: "agree",
+        actionProposalId: "som-9551307c7a40c479a755",
+        actionDecision: "agree",
+      },
+      application: {
+        canonicalTitle: "Rent out",
+        absorbedTitle: "Lease out",
+        targetDigestVerified: true,
+        sourceUnchanged: true,
+      },
+    });
+    expect(provenance.conclusion).toContain(
+      'absorbed "Lease out" into "Rent out"',
+    );
   });
 });
