@@ -164,9 +164,9 @@ export const SOM_REVIEW_PATH: SomReviewPathStep[] = [
   {
     id: "coverage",
     number: 1,
-    title: "Complete branch coverage",
+    title: "Potentially missing nodes for this sub-branch",
     description:
-      "Find related activities elsewhere, then derive specific nodes from source evidence.",
+      "Review activities found elsewhere and specific nodes supported by source evidence.",
     issueTypes: ["cross-branch-recall", "evidence-specialization"],
   },
   {

@@ -2,7 +2,7 @@ import { SomIssueType } from "../../types/ISomReview";
 
 export const ISSUE_DESCRIPTIONS: Record<SomIssueType, string> = {
   "cross-branch-recall":
-    "Review semantically related activities found outside the current sub-branch.",
+    "Review potentially missing nodes found elsewhere in the ontology and their proposed locations.",
   "evidence-specialization":
     "Create specific activity nodes when O*NET evidence modifies a generic object.",
   "title-clarity": "Judge whether an activity title is clear and precise.",
@@ -41,7 +41,7 @@ export const ISSUE_DESCRIPTIONS: Record<SomIssueType, string> = {
 
 export const ISSUE_INTRODUCTIONS: Record<SomIssueType, string> = {
   "cross-branch-recall":
-    "Semantic retrieval searched the complete ontology for activities related to this sub-branch but currently located elsewhere. Agree only when the candidate expresses this branch's main action in the stated sense. This review changes no ontology node by itself.",
+    "Semantic retrieval searched the complete ontology for activities that may be missing from this sub-branch. Compare the source evidence and both hierarchy paths, then approve the displayed move only when the candidate expresses this branch's main action in the stated sense and the proposed parent is appropriate.",
   "evidence-specialization":
     "Review a specific activity node derived from modifiers in linked O*NET evidence. Agree only when the specific title preserves the task meaning and the listed evidence should move from its generic parent to that node.",
   "title-clarity":

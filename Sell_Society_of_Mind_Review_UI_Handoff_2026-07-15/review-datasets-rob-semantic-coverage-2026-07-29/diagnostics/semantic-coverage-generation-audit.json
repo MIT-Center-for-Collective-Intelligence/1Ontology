@@ -5786,34 +5786,60 @@
   "emptyCollectionCandidates": [],
   "releasedIssueTypes": [
     "cross-branch-recall",
-    "evidence-specialization",
-    "relocation"
+    "evidence-specialization"
   ],
   "proposalIds": [
-    "som-03c75772f02aef876ae1",
-    "som-152c3617d61c68732b2b",
-    "som-2b26108a6a522921055e",
-    "som-530b4d746f060412f399",
-    "som-5d15d4f7220de932be23",
-    "som-5fbed1619f03f4a1bc30",
-    "som-cd8212e05c8a5640b40d",
-    "som-e028ab9536c3a5dcf0d5",
+    "som-756a156508bbc6756859",
+    "som-465816b46486fcf5d2bf",
+    "som-0b734eb0be482c04eef1",
+    "som-2712192fe57dd0dbf045",
+    "som-ed212c77f550f328ce1d",
+    "som-b8c5ba1c90158e6784c7",
+    "som-f7564256227086773936",
+    "som-b876e1950ee85f53d266",
     "som-1e8507f5e5299d55a476",
     "som-c3c0349e84b76c8ea6e1",
-    "som-c7d33b475e51802c7ba0",
-    "som-15fba4ccfad0dd29cbc5",
-    "som-2349d16033acaead6103",
-    "som-27afd77fd2d9b2564529",
-    "som-3ce0cf5a80839238edf9",
-    "som-3f7e33c2a810735c6d56",
-    "som-a129fc5e2012529a5814",
-    "som-b0618ed6153588a186ba",
-    "som-fecda86541f0949e2d50"
+    "som-c7d33b475e51802c7ba0"
   ],
   "manualCheckIds": [
     "som-ab3d78b6bef69cc7afe9",
     "som-c936209753da4ab48410",
     "som-fbcb665a0931bc89fb65"
   ],
-  "ontologyMutated": false
+  "ontologyMutated": false,
+  "contentRevision": 2,
+  "postGenerationRevision": {
+    "script": "scripts/som-review/migrate-semantic-coverage-to-one-step.mjs",
+    "reason": "Replace diagnosis-plus-relocation pairs with one review item showing evidence and both exact hierarchy locations.",
+    "priorDiagnosisProposalIds": [
+      "som-03c75772f02aef876ae1",
+      "som-152c3617d61c68732b2b",
+      "som-2b26108a6a522921055e",
+      "som-530b4d746f060412f399",
+      "som-5d15d4f7220de932be23",
+      "som-5fbed1619f03f4a1bc30",
+      "som-cd8212e05c8a5640b40d",
+      "som-e028ab9536c3a5dcf0d5"
+    ],
+    "priorRelocationProposalIds": [
+      "som-15fba4ccfad0dd29cbc5",
+      "som-2349d16033acaead6103",
+      "som-27afd77fd2d9b2564529",
+      "som-3ce0cf5a80839238edf9",
+      "som-3f7e33c2a810735c6d56",
+      "som-a129fc5e2012529a5814",
+      "som-b0618ed6153588a186ba",
+      "som-fecda86541f0949e2d50"
+    ],
+    "replacementProposalIds": [
+      "som-756a156508bbc6756859",
+      "som-465816b46486fcf5d2bf",
+      "som-0b734eb0be482c04eef1",
+      "som-2712192fe57dd0dbf045",
+      "som-ed212c77f550f328ce1d",
+      "som-b8c5ba1c90158e6784c7",
+      "som-f7564256227086773936",
+      "som-b876e1950ee85f53d266"
+    ]
+  }
 }

@@ -417,6 +417,31 @@ export const validateProposalAgainstSnapshot = (
       ) {
         addTitle(context.candidateHome);
       }
+      if (context.currentPathTitles?.length) {
+        validatePath(index, context.currentPathTitles);
+        if (context.currentPathTitles.at(-1) !== context.nodeTitle) {
+          throw new Error(
+            `Current hierarchy path does not end at ${context.nodeTitle}`,
+          );
+        }
+      }
+      if (context.proposedPathTitles?.length) {
+        const proposedParentPath = context.proposedPathTitles.slice(0, -1);
+        validatePath(index, proposedParentPath);
+        if (context.proposedPathTitles.at(-1) !== context.nodeTitle) {
+          throw new Error(
+            `Proposed hierarchy path does not end at ${context.nodeTitle}`,
+          );
+        }
+        if (
+          context.candidateHome &&
+          proposedParentPath.at(-1) !== context.candidateHome
+        ) {
+          throw new Error(
+            `Proposed hierarchy path does not use ${context.candidateHome} as the parent`,
+          );
+        }
+      }
       break;
     }
     case "evidence-parent-allocation": {

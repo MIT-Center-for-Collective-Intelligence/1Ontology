@@ -48,7 +48,32 @@ const acceptedStructureApplicationAuditFile = path.join(
   "diagnostics",
   "structure_application_audit.json",
 );
+const acceptedUsageSynonymBenchmarkFile = path.join(
+  repoRoot,
+  "artifacts",
+  "rob-content-review-wave2-2026-07-24",
+  "rob-duplicate-synonym-2026-07-24.json",
+);
+const acceptedUsageMergeBenchmarkFile = path.join(
+  repoRoot,
+  "artifacts",
+  "rob-content-review-wave2-2026-07-24",
+  "rob-node-merge-2026-07-24.json",
+);
+const acceptedUsageMergeApplicationAuditFile = path.join(
+  sourceDatasetDir,
+  "diagnostics",
+  "content_application_audit.json",
+);
+const initialReviewSnapshotFile = path.join(
+  repoRoot,
+  "Sell_Society_of_Mind_Review_UI_Handoff_2026-07-15",
+  "review-datasets",
+  "ontology-snapshot.json",
+);
 const usageCollectionProposalId = "som-f0464db076534dd0bde0";
+const usageSynonymProposalId = "som-af5752d64f929944a380";
+const usageMergeProposalId = "som-9551307c7a40c479a755";
 const defaultOutputDir = path.join(
   repoRoot,
   "Sell_Society_of_Mind_Review_UI_Handoff_2026-07-15",
@@ -64,6 +89,26 @@ const embeddingModel = "text-embedding-3-large";
 const embeddingDimensions = 1024;
 const judgeModel = "gemini-3.1-pro-preview";
 const detectorVersion = "sell-semantic-coverage-v1";
+const usageNodeFirestoreHistory = [
+  {
+    title: "Lease out",
+    activeNodeId: "C1jYc2PTyZIjQd2Iyt7V",
+    activeDocumentCreatedAt: "2026-04-01T15:36:26.513Z",
+    predecessorNodeId: "Mhu9BmPinYS1QzWJUe4e",
+    predecessorDocumentCreatedAt: "2026-02-10T10:29:45.175Z",
+    predecessorContributors: ["gemini"],
+    predecessorFoundInPreviousId: "4lyDxFffGRPCb6QWHwie",
+  },
+  {
+    title: "Rent out",
+    activeNodeId: "jsXlKplPQ3BxIrHzSwLL",
+    activeDocumentCreatedAt: "2026-04-01T15:36:26.513Z",
+    predecessorNodeId: "UteAyqKbbaIS2rdJxVmc",
+    predecessorDocumentCreatedAt: "2026-02-10T10:27:41.180Z",
+    predecessorContributors: ["gemini"],
+    predecessorFoundInPreviousId: "WCDKQUPUBl5QgjZMY1B5",
+  },
+];
 const semanticQueries = [
   {
     label: "sale",
@@ -135,8 +180,28 @@ const loadAcceptedStructureProvenance = () => {
     acceptedStructureApplicationAuditFile,
     "utf8",
   );
+  const synonymBenchmarkText = fs.readFileSync(
+    acceptedUsageSynonymBenchmarkFile,
+    "utf8",
+  );
+  const mergeBenchmarkText = fs.readFileSync(
+    acceptedUsageMergeBenchmarkFile,
+    "utf8",
+  );
+  const mergeApplicationText = fs.readFileSync(
+    acceptedUsageMergeApplicationAuditFile,
+    "utf8",
+  );
+  const initialSnapshotText = fs.readFileSync(
+    initialReviewSnapshotFile,
+    "utf8",
+  );
   const benchmark = JSON.parse(benchmarkText);
   const applicationAudit = JSON.parse(applicationText);
+  const synonymBenchmark = JSON.parse(synonymBenchmarkText);
+  const mergeBenchmark = JSON.parse(mergeBenchmarkText);
+  const mergeApplicationAudit = JSON.parse(mergeApplicationText);
+  const initialSnapshot = JSON.parse(initialSnapshotText);
   const judgment = (benchmark.judgments || []).find(
     (item) => item.proposalId === usageCollectionProposalId,
   );
@@ -148,10 +213,97 @@ const loadAcceptedStructureProvenance = () => {
       `Cannot verify accepted structure provenance for ${usageCollectionProposalId}`,
     );
   }
+  const synonymJudgment = (synonymBenchmark.judgments || []).find(
+    (item) => item.proposalId === usageSynonymProposalId,
+  );
+  const mergeJudgment = (mergeBenchmark.judgments || []).find(
+    (item) => item.proposalId === usageMergeProposalId,
+  );
+  const appliedMerge = (mergeApplicationAudit.merges || []).find(
+    (item) => item.actionProposalId === usageMergeProposalId,
+  );
+  if (
+    synonymJudgment?.decision !== "agree" ||
+    mergeJudgment?.decision !== "agree" ||
+    appliedMerge?.canonicalTitle !== "Rent out" ||
+    appliedMerge?.absorbedTitle !== "Lease out"
+  ) {
+    throw new Error("Cannot verify the Rent out / Lease out merge sequence");
+  }
+  const initialNodesById = new Map(
+    (initialSnapshot.nodes || []).map((node) => [node.id, node]),
+  );
+  const initialParentByChild = new Map(
+    (initialSnapshot.edges || []).map((edge) => [edge.childId, edge.parentId]),
+  );
+  const baselineNodes = usageNodeFirestoreHistory.map((history) => {
+    const node = initialNodesById.get(history.activeNodeId);
+    const parent = initialNodesById.get(
+      initialParentByChild.get(history.activeNodeId),
+    );
+    if (!node || node.title !== history.title || parent?.title !== "Sell") {
+      throw new Error(`Cannot verify baseline origin for ${history.title}`);
+    }
+    return {
+      ...history,
+      parentTitleAtCapture: parent.title,
+    };
+  });
   return {
-    schemaVersion: "som-accepted-structure-provenance-v1",
+    schemaVersion: "som-accepted-structure-provenance-v3",
     proposalId: usageCollectionProposalId,
-    origin: "explicit-human-reviewed-collection-design-proposal",
+    origin: "human-accepted-wrapper-over-machine-derived-baseline-nodes",
+    baseline: {
+      capturedAt: initialSnapshot.capturedAt,
+      ontologyAppId: initialSnapshot.ontologyAppId,
+      sourceFile: path.relative(repoRoot, initialReviewSnapshotFile),
+      sourceSha256: sha256(initialSnapshotText),
+      nodes: baselineNodes,
+      finding:
+        "Lease out and Rent out were already direct children of Sell before the collection-design proposal was generated.",
+      firestoreMetadataObservedAt: "2026-08-02T22:25:00.000Z",
+    },
+    contentPrerequisite: {
+      occurredBeforeCollectionDesign: true,
+      finding:
+        'Rob accepted the synonym diagnosis and exact merge that absorbed "Lease out" into "Rent out". The subsequent collection-design proposal therefore operated on the surviving "Rent out" node.',
+      review: {
+        reviewerLabel:
+          mergeBenchmark.reviewer?.label ||
+          synonymBenchmark.reviewer?.label ||
+          "",
+        diagnosisProposalId: usageSynonymProposalId,
+        diagnosisDecision: synonymJudgment.decision,
+        actionProposalId: usageMergeProposalId,
+        actionDecision: mergeJudgment.decision,
+        diagnosisSourceFile: path.relative(
+          repoRoot,
+          acceptedUsageSynonymBenchmarkFile,
+        ),
+        diagnosisSourceSha256: sha256(synonymBenchmarkText),
+        actionSourceFile: path.relative(
+          repoRoot,
+          acceptedUsageMergeBenchmarkFile,
+        ),
+        actionSourceSha256: sha256(mergeBenchmarkText),
+      },
+      application: {
+        sourceOntology: mergeApplicationAudit.sourceOntology,
+        targetOntology: mergeApplicationAudit.targetOntology,
+        canonicalTitle: appliedMerge.canonicalTitle,
+        absorbedTitle: appliedMerge.absorbedTitle,
+        movedDirectChildCount: appliedMerge.movedDirectChildCount,
+        sourceFile: path.relative(
+          repoRoot,
+          acceptedUsageMergeApplicationAuditFile,
+        ),
+        sourceSha256: sha256(mergeApplicationText),
+        targetDigestVerified:
+          mergeApplicationAudit.verification?.targetDigestMatches === true,
+        sourceUnchanged:
+          mergeApplicationAudit.verification?.sourceUnchanged === true,
+      },
+    },
     review: {
       datasetVersion: benchmark.datasetVersion,
       issueType: benchmark.issueType,
@@ -176,7 +328,7 @@ const loadAcceptedStructureProvenance = () => {
       sourceUnchanged: applicationAudit.verification?.sourceUnchanged === true,
     },
     conclusion:
-      '"Sell ownership" and "Sell temporary use" were surfaced for review, explicitly accepted, and then applied to a new ontology copy; they were not hidden or automatic model mutations.',
+      'The collection-design proposal did not invent "Rent out", "Lease out", or temporary-use selling. Both activity nodes were already direct children of "Sell" in the machine-derived July 15 baseline. Rob then accepted a synonym decision and exact merge that absorbed "Lease out" into "Rent out". The later collection-design proposal created the "Sell temporary use" wrapper and moved the surviving "Rent out" node beneath it. The wrapper and move were human-reviewed, while the underlying activity nodes came from the earlier machine-derived ontology.',
   };
 };
 
@@ -269,6 +421,11 @@ const ancestorPath = (node, nodesById, parentEdgesByChild) => {
     current = parent.id ? nodesById.get(parent.id) : undefined;
   }
   return values.filter(Boolean);
+};
+
+const pathFromNamedBranch = (titles, branchTitles) => {
+  const index = titles.findIndex((title) => branchTitles.includes(title));
+  return index >= 0 ? titles.slice(index) : titles;
 };
 
 const directContext = (node, nodesById) => {
@@ -424,7 +581,7 @@ const workflowFor = (issueType, dependsOnProposalIds = []) => {
     "cross-branch-recall": {
       robTaskIds: [],
       stage: "content",
-      proposalKind: "diagnosis",
+      proposalKind: "action",
     },
     relocation: {
       robTaskIds: [],
@@ -536,6 +693,16 @@ const extendSchema = (schema) => {
       ...placementContext.properties.placementIssue.enum,
       "missing-from-branch",
     ]);
+    placementContext.properties.currentPathTitles = {
+      type: "array",
+      items: { type: "string", minLength: 1 },
+      minItems: 2,
+    };
+    placementContext.properties.proposedPathTitles = {
+      type: "array",
+      items: { type: "string", minLength: 1 },
+      minItems: 2,
+    };
   }
   contexts.push({
     type: "object",
@@ -987,30 +1154,43 @@ ${JSON.stringify(genericEvidenceFacts)}
     if (!candidate || !target || !candidate.currentParentId) continue;
     referencedIds.add(candidate.id);
     referencedIds.add(candidate.currentParentId);
-    const diagnosis = makeRecord({
-      key: `semantic:${candidate.id}`,
+    const currentPathTitles = pathFromNamedBranch(candidate.currentPathTitles, [
+      "Buy",
+      "Sell",
+    ]);
+    const proposedPathTitles = [
+      ...pathFromNamedBranch(
+        ancestorPath(target, nodesById, parentEdgesByChild),
+        ["Sell"],
+      ),
+      candidate.title,
+    ];
+    const moveProposal = makeRecord({
+      key: `semantic:${candidate.id}:one-step-move`,
       issueType: "cross-branch-recall",
       subject: {
         title: candidate.title,
         parentTitle: candidate.currentParentTitle,
-        path: candidate.currentPathTitles,
+        path: currentPathTitles,
         relatedTitles: [assessment.proposedParentTitle],
       },
       reviewerView: {
-        question: `Does "${candidate.title}" express a Sell activity that is currently outside the Sell branch?`,
-        currentState: `"${candidate.title}" is currently under "${candidate.currentParentTitle}".`,
-        proposedState: `Treat it as a Sell activity and consider "${assessment.proposedParentTitle}" as its exact destination.`,
+        question: `Should "${candidate.title}" move from "${candidate.currentParentTitle}" to "${assessment.proposedParentTitle}" in the Sell sub-branch?`,
+        currentState: `"${candidate.title}" is currently under "${candidate.currentParentTitle}" in the Buy sub-branch.`,
+        proposedState: `Move the existing node to "${assessment.proposedParentTitle}" in the Sell sub-branch without changing its title or descendants.`,
         reasoning: clean(assessment.reason),
         context: {
           type: "placement-comparison",
           nodeTitle: candidate.title,
           currentParentTitle: candidate.currentParentTitle,
           candidateHome: assessment.proposedParentTitle,
+          currentPathTitles,
+          proposedPathTitles,
           placementIssue: "missing-from-branch",
           sourceTasks: candidate.sourceTasks,
         },
-        agreeLabel: "This belongs in Sell",
-        disagreeLabel: "Keep it outside Sell",
+        agreeLabel: "Approve move",
+        disagreeLabel: "Keep current location",
       },
       refs: {
         subjectNodeId: candidate.id,
@@ -1022,66 +1202,12 @@ ${JSON.stringify(genericEvidenceFacts)}
       sourceOntologyAppId: ontologyAppId,
       sourceOntologyName: ontologyName,
       generatedAt,
-      detectorId: "whole-ontology-semantic-retrieval",
+      detectorId: "whole-ontology-semantic-one-step-move",
       detectorConfidence: Number.isFinite(candidate.similarity)
         ? candidate.similarity.toFixed(6)
         : "direct-source-evidence",
     });
-    const relocation = makeRecord({
-      key: `semantic:${candidate.id}:exact`,
-      issueType: "relocation",
-      subject: {
-        title: candidate.title,
-        parentTitle: candidate.currentParentTitle,
-        path: candidate.currentPathTitles,
-        relatedTitles: [assessment.proposedParentTitle],
-      },
-      reviewerView: {
-        question: `Should "${candidate.title}" move from "${candidate.currentParentTitle}" to "${assessment.proposedParentTitle}"?`,
-        currentState: `"${candidate.title}" and its direct descendants remain outside Sell under "${candidate.currentParentTitle}".`,
-        proposedState: `Move the existing node to "${assessment.proposedParentTitle}" without changing its title, synonyms, or direct descendants.`,
-        reasoning:
-          "This exact move is available only after the semantic branch-recall diagnosis is approved.",
-        context: {
-          type: "relocation-action",
-          nodeTitle: candidate.title,
-          currentParentTitle: candidate.currentParentTitle,
-          currentCollection: normalizeCollection(
-            parentEdgesByChild
-              .get(candidate.id)
-              ?.find((edge) => edge.parentId === candidate.currentParentId)
-              ?.collectionName,
-          ),
-          proposedParentTitle: assessment.proposedParentTitle,
-          proposedCollection: "main",
-          childTitles: [
-            ...candidate.childTitles,
-            ...candidate.sourceTasks,
-          ].sort((left, right) => left.localeCompare(right, "en")),
-        },
-      },
-      refs: {
-        subjectNodeId: candidate.id,
-        parentNodeId: candidate.currentParentId,
-        referencedNodeIds: [
-          candidate.id,
-          candidate.currentParentId,
-          target.id,
-          ...allChildren(nodesById.get(candidate.id)).map((child) => child.id),
-        ],
-      },
-      snapshotHash: "",
-      sourceOntology: `firestore://ontology-41607/${ontologyAppId}`,
-      sourceOntologyAppId: ontologyAppId,
-      sourceOntologyName: ontologyName,
-      generatedAt,
-      dependsOnProposalIds: [diagnosis.proposalId],
-      detectorId: "whole-ontology-semantic-exact-move",
-      detectorConfidence: Number.isFinite(candidate.similarity)
-        ? candidate.similarity.toFixed(6)
-        : "direct-source-evidence",
-    });
-    records.push(diagnosis, relocation);
+    records.push(moveProposal);
   }
 
   for (const proposal of specializationProposals) {
@@ -1350,13 +1476,6 @@ ${JSON.stringify(genericEvidenceFacts)}
       contextType: "evidence-specialization",
     },
     {
-      id: "relocation",
-      label: "Exact moves into Sell",
-      taskIds: [],
-      stage: "final-action",
-      contextType: "relocation-action",
-    },
-    {
       id: "empty-node",
       label: "Empty-node cleanup after propagation",
       taskIds: [],
@@ -1450,11 +1569,7 @@ ${JSON.stringify(genericEvidenceFacts)}
     reviewRelease: {
       strategy: "semantic-coverage-first",
       currentWave: "semantic-recall-and-evidence-specialization",
-      releasedIssueTypes: [
-        "cross-branch-recall",
-        "evidence-specialization",
-        "relocation",
-      ],
+      releasedIssueTypes: ["cross-branch-recall", "evidence-specialization"],
       awaitingRegenerationIssueTypes: ["empty-node", "empty-collection"],
       message:
         "Review semantic branch-recall and O*NET specialization first. Downstream structure and empty-node/collection cleanup will be regenerated after these decisions are propagated.",
@@ -1473,7 +1588,7 @@ ${JSON.stringify(genericEvidenceFacts)}
     limitations: [
       "Embedding similarity retrieves candidates but never authorizes an ontology change.",
       "A semantic-direction judge filters embedding candidates; direct provider-side O*NET evidence is scanned across the full ontology candidate set so the embedding cutoff cannot hide it.",
-      "Every whole-node move has a separate exact action tied to an approved diagnosis.",
+      "Each whole-node move is reviewed once, with the source evidence and both complete hierarchy locations visible together.",
       "O*NET specializations are released only when a deterministic text rule verifies an explicit modifier; broader model suggestions remain diagnostic.",
       "Empty-node and empty-collection findings are deterministic and intentionally unreleased until upstream changes propagate.",
       "Descriptions and broad missing-activity generation remain deferred.",
@@ -1573,9 +1688,10 @@ O*NET-derived Sell specializations before downstream regeneration.
 - Review: https://ontology.mit.edu/review?dataset=sell-semantic-coverage
 - Safety: responses are review records only. A separately reviewed application
   plan is required before any ontology mutation.
-- Provenance: \`Sell ownership\` and \`Sell temporary use\` came from proposal
-  \`${usageCollectionProposalId}\`, which Rob explicitly accepted before it was
-  applied to a new ontology copy. See
+- Provenance: \`Rent out\` and \`Lease out\` already existed in the July 15
+  baseline. Rob accepted merging \`Lease out\` into \`Rent out\`; afterward he
+  accepted proposal \`${usageCollectionProposalId}\`, which created the
+  \`Sell temporary use\` wrapper and moved \`Rent out\` beneath it. See
   \`diagnostics/accepted_structure_provenance.json\`.
 - Cleanup: empty nodes and named empty collections are detected now but remain
   unreleased until upstream decisions are propagated and the branch is

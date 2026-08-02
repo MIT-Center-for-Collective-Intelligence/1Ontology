@@ -2,6 +2,7 @@ import {
   blockingIssuePrerequisites,
   issuePrerequisiteTypes,
   issueReviewIsComplete,
+  SOM_REVIEW_PATH,
 } from "../../../src/lib/somReview/reviewDependencies";
 import {
   SomIssueType,
@@ -30,6 +31,12 @@ const option = (
 });
 
 describe("review queue dependencies", () => {
+  it("names the first phase around potentially missing nodes", () => {
+    expect(SOM_REVIEW_PATH[0].title).toBe(
+      "Potentially missing nodes for this sub-branch",
+    );
+  });
+
   it("requires title review before meaning review", () => {
     expect(issuePrerequisiteTypes("duplicate-synonym")).toEqual([
       "title-clarity",

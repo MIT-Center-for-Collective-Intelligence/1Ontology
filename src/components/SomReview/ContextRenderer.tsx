@@ -520,6 +520,10 @@ const PlacementNote = ({
   branch: string;
 }) => {
   const affectedNodes = context.affectedNodes || [];
+  const hasPathComparison =
+    context.placementIssue === "missing-from-branch" &&
+    Boolean(context.currentPathTitles?.length) &&
+    Boolean(context.proposedPathTitles?.length);
   return (
     <Stack spacing={2}>
       {affectedNodes.length > 1 && (
@@ -547,15 +551,28 @@ const PlacementNote = ({
           </List>
         </Box>
       )}
+      {hasPathComparison && (
+        <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
+          <HierarchyPath
+            label="Current hierarchy location"
+            titles={context.currentPathTitles || []}
+          />
+          <HierarchyPath
+            label="Proposed hierarchy location"
+            titles={context.proposedPathTitles || []}
+            proposed
+          />
+        </Stack>
+      )}
       <SourceTasks tasks={context.sourceTasks || []} />
       <BoundaryNote>
-        {context.candidateHome
+        {context.candidateHome && !hasPathComparison
           ? `The suggested category is "${context.candidateHome}". `
           : ""}
         {affectedNodes.length > 1
           ? "Agreeing confirms the shared diagnosis for these activities. Each exact move remains a separate review step."
           : context.placementIssue === "missing-from-branch"
-            ? `Agreeing confirms that this activity belongs in the ${branch} sub-branch even though it was found elsewhere. The exact move remains a separate review step.`
+            ? `Compare the source evidence with both hierarchy locations. Approve only if the activity uses the provider-side meaning and the proposed ${branch} location is more accurate.`
             : context.placementIssue === "wrong-verb"
               ? `Agreeing confirms that this activity does not belong in the ${branch} sub-branch. The exact move remains a separate review step.`
               : "Agreeing confirms that the current parent is too broad. The exact move remains a separate review step."}
@@ -563,6 +580,62 @@ const PlacementNote = ({
     </Stack>
   );
 };
+
+const HierarchyPath = ({
+  label,
+  titles,
+  proposed = false,
+}: {
+  label: string;
+  titles: string[];
+  proposed?: boolean;
+}) => (
+  <Box sx={comparisonPanelSx} aria-label={label}>
+    <Typography sx={sectionLabelSx}>{label}</Typography>
+    <Box component="ol" sx={{ listStyle: "none", p: 0, mt: 1, mb: 0 }}>
+      {titles.map((title, index) => (
+        <Box
+          component="li"
+          key={`${title}-${index}`}
+          sx={{
+            display: "flex",
+            alignItems: "flex-start",
+            minWidth: 0,
+            mt: index === 0 ? 0 : 0.4,
+            pl: Math.min(index, 4) * 1.5,
+          }}
+        >
+          {index > 0 && (
+            <SubdirectoryArrowRightIcon
+              aria-hidden="true"
+              sx={{
+                flex: "0 0 auto",
+                mt: 0.2,
+                mr: 0.75,
+                color: proposed ? "primary.main" : "text.secondary",
+                fontSize: 18,
+              }}
+            />
+          )}
+          <Typography
+            sx={{
+              minWidth: 0,
+              overflowWrap: "anywhere",
+              fontWeight: index === titles.length - 1 ? 800 : 600,
+              color:
+                proposed && index === titles.length - 1
+                  ? "primary.main"
+                  : "text.primary",
+              lineHeight: 1.4,
+            }}
+          >
+            {title}
+          </Typography>
+        </Box>
+      ))}
+    </Box>
+  </Box>
+);
 
 const MergeAction = ({
   context,

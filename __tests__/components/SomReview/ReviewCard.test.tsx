@@ -271,6 +271,69 @@ describe("Society of Mind review card", () => {
     ).toBeInTheDocument();
   });
 
+  it("shows a missing-node proposal as one exact move, not a broad-parent diagnosis", () => {
+    const missingNodeCard: SomReviewCard = {
+      proposalId: "missing-node-1",
+      datasetVersion: "dataset-1",
+      branch: "Sell",
+      issueType: "cross-branch-recall",
+      reviewerView: {
+        question:
+          'Should "Rent Equipment" move from "Lease (Physical Object)" to "Rent out" in the Sell sub-branch?',
+        currentState:
+          '"Rent Equipment" is currently under "Lease (Physical Object)" in the Buy sub-branch.',
+        proposedState:
+          'Move "Rent Equipment" to "Rent out" in the Sell sub-branch.',
+        reasoning:
+          "The source task uses rent equipment in the provider-side sense.",
+        context: {
+          type: "placement-comparison",
+          nodeTitle: "Rent Equipment",
+          currentParentTitle: "Lease (Physical Object)",
+          candidateHome: "Rent out",
+          currentPathTitles: [
+            "Buy",
+            "Rent (pay for time-limited use)",
+            "Lease",
+            "Lease (Physical Object)",
+            "Rent Equipment",
+          ],
+          proposedPathTitles: [
+            "Sell",
+            "Sell temporary use",
+            "Rent out",
+            "Rent Equipment",
+          ],
+          placementIssue: "missing-from-branch",
+          sourceTasks: ["Rent equipment to customers."],
+        },
+        agreeLabel: "Approve move",
+        disagreeLabel: "Keep current location",
+      },
+    };
+
+    render(
+      <ReviewCard
+        card={missingNodeCard}
+        reviewerId="reviewer-1"
+        onSubmit={jest.fn()}
+      />,
+    );
+
+    expect(
+      screen.getByText(/incorrect parent for its provider-side meaning/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/parent that is too broad/i),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Approve move" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Keep current location" }),
+    ).toBeInTheDocument();
+  });
+
   it("does not repeat generic state panels when the context has before and after panels", () => {
     const metadataCard: SomReviewCard = {
       proposalId: "metadata-1",

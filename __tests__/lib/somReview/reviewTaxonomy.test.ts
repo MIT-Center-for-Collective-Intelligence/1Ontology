@@ -38,5 +38,11 @@ describe("Society of Mind review taxonomy", () => {
       "Follow-up change proposals",
       "Additional optional quality checks",
     ]);
+    expect(
+      SOM_REVIEW_STAGES.find((stage) => stage.id === "final-action")
+        ?.description,
+    ).toBe(
+      "Review any exact merges, moves, and cleanup actions released for this dataset.",
+    );
   });
 });

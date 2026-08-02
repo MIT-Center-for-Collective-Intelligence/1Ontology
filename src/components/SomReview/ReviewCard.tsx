@@ -252,22 +252,28 @@ const ReviewCard = ({
   const placementContext =
     view.context.type === "placement-comparison" ? view.context : null;
   const wrongVerb = placementContext?.placementIssue === "wrong-verb";
+  const missingFromBranch =
+    placementContext?.placementIssue === "missing-from-branch";
   const affectedPlacementNodes = placementContext?.affectedNodes || [];
   const groupedPlacement = affectedPlacementNodes.length > 1;
   const agreeLabel = groupedPlacement
     ? view.agreeLabel
-    : wrongVerb
-      ? "Yes, different action"
-      : placementContext
-        ? "Yes, misplaced"
-        : view.agreeLabel;
+    : missingFromBranch
+      ? "Approve move"
+      : wrongVerb
+        ? "Yes, different action"
+        : placementContext
+          ? "Yes, misplaced"
+          : view.agreeLabel;
   const disagreeLabel = groupedPlacement
     ? view.disagreeLabel
-    : wrongVerb
-      ? "No, it belongs here"
-      : placementContext
-        ? "No, keep here"
-        : view.disagreeLabel;
+    : missingFromBranch
+      ? "Keep current location"
+      : wrongVerb
+        ? "No, it belongs here"
+        : placementContext
+          ? "No, keep here"
+          : view.disagreeLabel;
 
   return (
     <Box
@@ -347,7 +353,7 @@ const ReviewCard = ({
                     <>
                       These activities{" "}
                       {wrongVerb
-                          ? `appear to use "${
+                        ? `appear to use "${
                             placementContext.sharedAction ||
                             "their leading verb"
                           }" as a different action from "${branch}".`
@@ -358,13 +364,19 @@ const ReviewCard = ({
                       &quot;{placementContext.nodeTitle}&quot;{" "}
                       {wrongVerb
                         ? `does not express the "${branch}" action.`
-                        : "is under a parent that is too broad."}
+                        : missingFromBranch
+                          ? "is under an incorrect parent for its provider-side meaning."
+                          : "is under a parent that is too broad."}
                     </>
                   )}
                 </Typography>
                 {placementContext.candidateHome && (
                   <PanelField
-                    label="Suggested category"
+                    label={
+                      missingFromBranch
+                        ? "Proposed parent"
+                        : "Suggested category"
+                    }
                     value={placementContext.candidateHome}
                   />
                 )}
