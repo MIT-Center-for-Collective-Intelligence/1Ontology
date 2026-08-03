@@ -39,6 +39,16 @@ describe("Society of Mind reviewer access", () => {
       }),
     ).toBe("researcher");
     expect(
+      resolveReviewerRole({
+        uid: "sam",
+        email: "ouhrac@gmail.com",
+        emailVerified: true,
+      }),
+    ).toBe("researcher");
+    expect(resolveReviewerRole({ uid: "d255rP2ZAnZtsRdN7iZWg3AyxMn2" })).toBe(
+      "researcher",
+    );
+    expect(
       resolveReviewerRole({ uid: "outside", email: "reviewer@example.org" }),
     ).toBe("contributor");
   });

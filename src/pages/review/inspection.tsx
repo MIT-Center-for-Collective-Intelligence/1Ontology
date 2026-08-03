@@ -39,6 +39,17 @@ import {
 
 type ItemFilter = "all" | "not-aligned" | "disagreements" | "controls";
 
+export const inspectionLoadErrorMessage = (error: any): string => {
+  const status = error?.response?.status ?? error?.status;
+  const message =
+    typeof error === "string"
+      ? error
+      : error?.response?.data?.error || error?.message || "";
+  return status === 403 || message === "Deliberation access is restricted"
+    ? "This page is restricted to the Society of Mind research team."
+    : "The prior-review inspection could not be loaded.";
+};
+
 export const ReviewInspectionPage = () => {
   const [{ user }] = useAuth();
   const router = useRouter();
@@ -93,11 +104,7 @@ export const ReviewInspectionPage = () => {
           );
         }
       } catch (error: any) {
-        setLoadError(
-          error?.response?.status === 403
-            ? "This page is restricted to the Society of Mind research team."
-            : "The prior-review inspection could not be loaded.",
-        );
+        setLoadError(inspectionLoadErrorMessage(error));
       } finally {
         if (!quiet) setLoading(false);
       }

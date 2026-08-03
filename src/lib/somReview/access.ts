@@ -39,6 +39,7 @@ const DEFAULT_RESEARCHER_EMAILS = [
   "oneweb@umich.edu",
   "oneman@mit.edu",
   "iman@honor.education",
+  "ouhrac@gmail.com",
   "caia@mit.edu",
   "acai@college.harvard.edu",
   "xinru.wang@smart.mit.edu",
@@ -51,6 +52,8 @@ const DEFAULT_RESEARCHER_EMAILS = [
   "aimanim@mit.edu",
   "ethanasi@mit.edu",
 ];
+
+const DEFAULT_RESEARCHER_UIDS = ["d255rP2ZAnZtsRdN7iZWg3AyxMn2"];
 
 const normalizedSet = (defaults: string[], configured?: string): Set<string> =>
   new Set(
@@ -135,7 +138,10 @@ export const resolveReviewerRole = (
     DEFAULT_RESEARCHER_EMAILS,
     process.env.SOM_REVIEW_RESEARCHER_EMAILS,
   );
-  const researcherUids = uidSet([], process.env.SOM_REVIEW_RESEARCHER_UIDS);
+  const researcherUids = uidSet(
+    DEFAULT_RESEARCHER_UIDS,
+    process.env.SOM_REVIEW_RESEARCHER_UIDS,
+  );
   if (
     (emailCanAssignRole && researcherEmails.has(email)) ||
     researcherUids.has(identity.uid)
