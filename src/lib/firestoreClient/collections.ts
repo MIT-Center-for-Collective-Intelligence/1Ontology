@@ -17,6 +17,9 @@ export const TREE_QUEUES = "treeUpdateQueue";
 export const SOM_REVIEW_RESPONSES = "somReviewResponses";
 export const SOM_REVIEW_RESPONSE_REVISIONS = "somReviewResponseRevisions";
 export const SOM_REVIEW_SESSIONS = "somReviewSessions";
+export const SOM_REVIEW_TRUSTED_PROPAGATIONS = "somReviewTrustedPropagations";
+export const SOM_REVIEW_TRUSTED_PROPAGATION_REVISIONS =
+  "somReviewTrustedPropagationRevisions";
 export const SOM_REVIEW_DELIBERATION_COMMENTS = "somReviewDeliberationComments";
 export const SOM_REVIEW_DELIBERATION_POSITIONS =
   "somReviewDeliberationPositions";

@@ -27,6 +27,7 @@ import ReviewFollowUpPanel from "@components/components/SomReview/ReviewFollowUp
 import ReviewQueueSelector from "@components/components/SomReview/ReviewQueueSelector";
 import ReviewTaskIntro from "@components/components/SomReview/ReviewTaskIntro";
 import ThemeModeToggle from "@components/components/SomReview/ThemeModeToggle";
+import TrustedPropagationControl from "@components/components/SomReview/TrustedPropagationControl";
 import OntologyComparisonPanel from "@components/components/SomReview/OntologyComparisonPanel";
 import ReviewWorkspaceSwitcher from "@components/components/SomReview/ReviewWorkspaceSwitcher";
 import { reviewInteractiveSurfaceSx } from "@components/components/SomReview/reviewStyles";
@@ -97,6 +98,10 @@ export const ReviewPage = () => {
   const [loadError, setLoadError] = useState("");
   const [canDeliberate, setCanDeliberate] = useState(false);
   const [canInspectPriorReview, setCanInspectPriorReview] = useState(false);
+  const [trustedPropagationAllowed, setTrustedPropagationAllowed] =
+    useState(false);
+  const [trustedPropagationEnabled, setTrustedPropagationEnabled] =
+    useState(false);
   const [retryIssueType, setRetryIssueType] = useState<SomIssueType | null>(
     null,
   );
@@ -131,12 +136,47 @@ export const ReviewPage = () => {
       setReadyFollowUps(overview.readyFollowUps || []);
       setCanDeliberate(overview.canDeliberate);
       setCanInspectPriorReview(overview.canInspectPriorReview);
+      setTrustedPropagationAllowed(
+        Boolean(overview.trustedPropagation?.allowed),
+      );
       setPhase("select");
     } catch {
       setLoadError("The review queues could not be loaded. Please try again.");
       setPhase("select");
     }
   }, []);
+
+  useEffect(() => {
+    if (!user?.userId || !trustedPropagationAllowed) {
+      setTrustedPropagationEnabled(false);
+      return;
+    }
+    try {
+      setTrustedPropagationEnabled(
+        window.localStorage.getItem(
+          `som-review-trusted-propagation-${user.userId}`,
+        ) === "true",
+      );
+    } catch {
+      setTrustedPropagationEnabled(false);
+    }
+  }, [trustedPropagationAllowed, user?.userId]);
+
+  const updateTrustedPropagation = useCallback(
+    (enabled: boolean) => {
+      setTrustedPropagationEnabled(enabled);
+      if (!user?.userId) return;
+      try {
+        window.localStorage.setItem(
+          `som-review-trusted-propagation-${user.userId}`,
+          String(enabled),
+        );
+      } catch {
+        // The current page can retain the setting when storage is unavailable.
+      }
+    },
+    [user?.userId],
+  );
 
   useEffect(() => {
     if (!user || !router.isReady) return;
@@ -373,6 +413,9 @@ export const ReviewPage = () => {
             reviewedAt,
             elapsedMs: Math.max(0, Math.round(submission.elapsedMs)),
           },
+          ...(trustedPropagationAllowed && currentRound
+            ? { trustedPropagation: trustedPropagationEnabled }
+            : {}),
         },
         false,
       );
@@ -393,6 +436,7 @@ export const ReviewPage = () => {
             disagreementReason: submission.disagreementReason,
             suggestedCorrection: submission.suggestedCorrection,
             reviewedAt,
+            fastTracked: result.propagation?.status === "ready",
           },
         ].sort((left, right) => left.proposalIndex - right.proposalIndex),
       );
@@ -435,7 +479,17 @@ export const ReviewPage = () => {
       }
       if (result.completed) setPhase("complete");
     },
-    [activeSequence, cards, cursor, issueTypes, sessionId, user?.userId],
+    [
+      activeSequence,
+      cards,
+      currentRound,
+      cursor,
+      issueTypes,
+      sessionId,
+      trustedPropagationAllowed,
+      trustedPropagationEnabled,
+      user?.userId,
+    ],
   );
 
   const revisionItem = history.find(
@@ -474,11 +528,17 @@ export const ReviewPage = () => {
             reviewedAt,
             elapsedMs: Math.max(0, Math.round(submission.elapsedMs)),
           },
+          ...(trustedPropagationAllowed && currentRound
+            ? {
+                trustedPropagation:
+                  Boolean(item.fastTracked) || trustedPropagationEnabled,
+              }
+            : {}),
         },
         false,
       );
 
-      if (result.changed) {
+      if (result.changed || result.propagation) {
         setHistory((currentHistory) =>
           currentHistory.map((historyItem) =>
             historyItem.proposalId === item.proposalId
@@ -488,6 +548,10 @@ export const ReviewPage = () => {
                   disagreementReason: submission.disagreementReason,
                   suggestedCorrection: submission.suggestedCorrection,
                   reviewedAt,
+                  fastTracked:
+                    result.propagation?.status === "ready" ||
+                    (result.propagation === undefined &&
+                      historyItem.fastTracked),
                 }
               : historyItem,
           ),
@@ -536,6 +600,7 @@ export const ReviewPage = () => {
     },
     [
       cards.length,
+      currentRound,
       cursor,
       history,
       historyCards,
@@ -543,6 +608,8 @@ export const ReviewPage = () => {
       issueType,
       revisionProposalId,
       startSession,
+      trustedPropagationAllowed,
+      trustedPropagationEnabled,
       user?.userId,
     ],
   );
@@ -652,6 +719,13 @@ export const ReviewPage = () => {
             >
               {loadError}
             </Alert>
+          )}
+
+          {phase !== "loading" && trustedPropagationAllowed && currentRound && (
+            <TrustedPropagationControl
+              enabled={trustedPropagationEnabled}
+              onChange={updateTrustedPropagation}
+            />
           )}
 
           {phase === "loading" && (

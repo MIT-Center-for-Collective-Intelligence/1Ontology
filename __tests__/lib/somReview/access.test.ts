@@ -3,6 +3,7 @@ import {
   reviewAccessForIdentity,
   reviewerRoleWeights,
   reviewSurfaceCapabilities,
+  trustedPropagationAccessForIdentity,
 } from "../../../src/lib/somReview/access";
 
 describe("Society of Mind reviewer access", () => {
@@ -133,5 +134,46 @@ describe("Society of Mind reviewer access", () => {
     const weights = reviewerRoleWeights();
     expect(weights.researcher).toBeGreaterThan(weights.contributor);
     expect(weights.steward).toBeGreaterThan(weights.researcher);
+  });
+
+  it("keeps trusted propagation narrower than the steward role", () => {
+    expect(
+      trustedPropagationAccessForIdentity({
+        uid: "rob",
+        email: "rjl@mit.edu",
+        emailVerified: true,
+      }).allowed,
+    ).toBe(true);
+    expect(
+      trustedPropagationAccessForIdentity({
+        uid: "tom",
+        email: "malone@mit.edu",
+        emailVerified: true,
+      }).allowed,
+    ).toBe(false);
+    expect(
+      trustedPropagationAccessForIdentity({
+        uid: "unverified-rob",
+        email: "rjl@mit.edu",
+        emailVerified: false,
+      }).allowed,
+    ).toBe(false);
+  });
+
+  it("supports an explicit trusted-propagator claim with a deny override", () => {
+    expect(
+      trustedPropagationAccessForIdentity({
+        uid: "trusted",
+        claims: { somReviewTrustedPropagator: true },
+      }).allowed,
+    ).toBe(true);
+    expect(
+      trustedPropagationAccessForIdentity({
+        uid: "rob",
+        email: "rjl@mit.edu",
+        emailVerified: true,
+        claims: { somReviewTrustedPropagator: false },
+      }).allowed,
+    ).toBe(false);
   });
 });

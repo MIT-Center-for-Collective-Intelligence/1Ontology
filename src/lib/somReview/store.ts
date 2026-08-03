@@ -1,10 +1,13 @@
-import { Query, Timestamp } from "firebase-admin/firestore";
+import crypto from "crypto";
+import { Query, Timestamp, Transaction } from "firebase-admin/firestore";
 
 import { db } from "../firestoreServer/admin";
 import {
   SOM_REVIEW_RESPONSES,
   SOM_REVIEW_RESPONSE_REVISIONS,
   SOM_REVIEW_SESSIONS,
+  SOM_REVIEW_TRUSTED_PROPAGATIONS,
+  SOM_REVIEW_TRUSTED_PROPAGATION_REVISIONS,
 } from "../firestoreClient/collections";
 import { SomIssuePrerequisite, SomIssueType } from "../../types/ISomReview";
 import {
@@ -22,6 +25,11 @@ import {
   planUndoTransition,
 } from "./sessionState";
 import { readyDependentRecords } from "./followUps";
+import {
+  TrustedPropagationDirective,
+  TrustedPropagationPlanState,
+  trustedPropagationPlanTransition,
+} from "./trustedPropagation";
 
 export interface SessionDoc {
   datasetVersion: string;
@@ -354,6 +362,143 @@ interface StoredResponseDoc {
   updatedAt: Timestamp;
 }
 
+interface TrustedPropagationDoc extends TrustedPropagationPlanState {
+  schemaVersion: "som-trusted-propagation-v1";
+  datasetVersion: string;
+  proposalId: string;
+  issueType: SomIssueType;
+  reviewerId: string;
+  responseDocId: string;
+  responseRevisionIndex: number;
+  disagreementReason: string;
+  suggestedCorrection: string;
+  applicationMode: "separate-snapshot-bound-batch";
+  ontologyMutated: false;
+  revisionCount: number;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+export interface StoredReviewerResponse extends ResponsePayload {
+  fastTracked: boolean;
+}
+
+export interface ResponseWriteResult {
+  fastTracked: boolean;
+  propagationStatus: TrustedPropagationDirective["status"];
+}
+
+const trustedPropagationDocId = (
+  datasetVersion: string,
+  proposalId: string,
+  reviewerId: string,
+): string =>
+  crypto
+    .createHash("sha256")
+    .update(`${datasetVersion}|${proposalId}|${reviewerId}`)
+    .digest("hex");
+
+const trustedPropagationRef = (
+  datasetVersion: string,
+  proposalId: string,
+  reviewerId: string,
+) =>
+  db
+    .collection(SOM_REVIEW_TRUSTED_PROPAGATIONS)
+    .doc(trustedPropagationDocId(datasetVersion, proposalId, reviewerId));
+
+const syncTrustedPropagation = ({
+  transaction,
+  existing,
+  propagationRef,
+  responseRefId,
+  responseRevisionIndex,
+  issueType,
+  payload,
+  directive,
+  now,
+}: {
+  transaction: Transaction;
+  existing: TrustedPropagationDoc | null;
+  propagationRef: ReturnType<typeof trustedPropagationRef>;
+  responseRefId: string;
+  responseRevisionIndex: number;
+  issueType: SomIssueType;
+  payload: ResponsePayload;
+  directive: TrustedPropagationDirective;
+  now: Timestamp;
+}): boolean => {
+  let transition = trustedPropagationPlanTransition({
+    existing,
+    directive,
+    decision: payload.decision,
+  });
+  if (
+    !transition &&
+    directive.status === "ready" &&
+    existing?.status === "ready" &&
+    (existing.responseDocId !== responseRefId ||
+      existing.responseRevisionIndex !== responseRevisionIndex ||
+      existing.disagreementReason !== (payload.disagreementReason || "") ||
+      existing.suggestedCorrection !== (payload.suggestedCorrection || ""))
+  ) {
+    transition = { action: "update", status: "ready" };
+  }
+  if (!transition) return existing?.status === "ready";
+
+  const revisionCount = (existing?.revisionCount || 0) + 1;
+  if (transition.status === "retracted") {
+    if (!existing) return false;
+    const retracted: TrustedPropagationDoc = {
+      ...existing,
+      status: "retracted",
+      revisionCount,
+      updatedAt: now,
+    };
+    transaction.set(propagationRef, retracted);
+    transaction.set(
+      db.collection(SOM_REVIEW_TRUSTED_PROPAGATION_REVISIONS).doc(),
+      {
+        ...retracted,
+        action: transition.action,
+        recordedAt: now,
+      },
+    );
+    return false;
+  }
+
+  const authorized: TrustedPropagationDoc = {
+    schemaVersion: "som-trusted-propagation-v1",
+    datasetVersion: payload.datasetVersion,
+    proposalId: payload.proposalId,
+    issueType,
+    reviewerId: payload.reviewerId,
+    responseDocId: responseRefId,
+    responseRevisionIndex,
+    decision: payload.decision,
+    disagreementReason: payload.disagreementReason || "",
+    suggestedCorrection: payload.suggestedCorrection || "",
+    policyVersion: directive.policyVersion,
+    sourceSnapshotSha256: directive.sourceSnapshotSha256,
+    status: "ready",
+    applicationMode: "separate-snapshot-bound-batch",
+    ontologyMutated: false,
+    revisionCount,
+    createdAt: existing?.createdAt || now,
+    updatedAt: now,
+  };
+  transaction.set(propagationRef, authorized);
+  transaction.set(
+    db.collection(SOM_REVIEW_TRUSTED_PROPAGATION_REVISIONS).doc(),
+    {
+      ...authorized,
+      action: transition.action,
+      recordedAt: now,
+    },
+  );
+  return true;
+};
+
 /** Common fields identifying a response revision's logical subject. */
 const revisionIdentity = (payload: {
   datasetVersion: string;
@@ -374,10 +519,16 @@ export const saveResponse = async (
   sessionId: string,
   issueType: SomIssueType,
   payload: ResponsePayload,
-): Promise<{ cursor: number; completed: boolean }> => {
+  propagation: TrustedPropagationDirective,
+): Promise<{ cursor: number; completed: boolean } & ResponseWriteResult> => {
   return db.runTransaction(async (transaction) => {
     const sessionRef = db.collection(SOM_REVIEW_SESSIONS).doc(sessionId);
-    const [responseSnap, sessionSnap] = await Promise.all([
+    const propagationRef = trustedPropagationRef(
+      payload.datasetVersion,
+      payload.proposalId,
+      payload.reviewerId,
+    );
+    const [responseSnap, sessionSnap, propagationSnap] = await Promise.all([
       transaction.get(
         currentResponseQuery(
           payload.datasetVersion,
@@ -386,6 +537,7 @@ export const saveResponse = async (
         ),
       ),
       transaction.get(sessionRef),
+      transaction.get(propagationRef),
     ]);
     if (!sessionSnap.exists) throw new Error("Review session was not found");
     const session = sessionSnap.data() as SessionDoc;
@@ -412,11 +564,11 @@ export const saveResponse = async (
       payload.proposalId,
       Boolean(identicalRetry),
     );
+    const responseRef = existingDoc
+      ? existingDoc.ref
+      : db.collection(SOM_REVIEW_RESPONSES).doc();
 
     if (transition.shouldPersist) {
-      const responseRef = existingDoc
-        ? existingDoc.ref
-        : db.collection(SOM_REVIEW_RESPONSES).doc();
       const revisionIndex = (existing?.revisionCount || 0) + 1;
       transaction.set(responseRef, {
         ...revisionIdentity(payload),
@@ -437,6 +589,23 @@ export const saveResponse = async (
       });
     }
 
+    const responseRevisionIndex = transition.shouldPersist
+      ? (existing?.revisionCount || 0) + 1
+      : existing?.revisionCount || 1;
+    const fastTracked = syncTrustedPropagation({
+      transaction,
+      existing: propagationSnap.exists
+        ? (propagationSnap.data() as TrustedPropagationDoc)
+        : null,
+      propagationRef,
+      responseRefId: responseRef.id,
+      responseRevisionIndex,
+      issueType,
+      payload,
+      directive: propagation,
+      now,
+    });
+
     transaction.update(sessionRef, {
       cursor: transition.cursor,
       status: transition.completed ? "completed" : "active",
@@ -445,6 +614,8 @@ export const saveResponse = async (
     return {
       cursor: transition.cursor,
       completed: transition.completed,
+      fastTracked,
+      propagationStatus: propagation.status,
     };
   });
 };
@@ -454,7 +625,7 @@ export const issueResponses = async (
   datasetVersion: string,
   issueType: SomIssueType,
   reviewerId: string,
-): Promise<Map<string, ResponsePayload>> => {
+): Promise<Map<string, StoredReviewerResponse>> => {
   const snapshot = await db
     .collection(SOM_REVIEW_RESPONSES)
     .where("datasetVersion", "==", datasetVersion)
@@ -462,11 +633,30 @@ export const issueResponses = async (
     .where("reviewerId", "==", reviewerId)
     .where("status", "==", "current")
     .get();
+  const records = snapshot.docs
+    .map((doc) => doc.data() as StoredResponseDoc)
+    .filter((record) => Boolean(record.response));
+  const propagationSnapshots = records.length
+    ? await db.getAll(
+        ...records.map((record) =>
+          trustedPropagationRef(
+            record.datasetVersion,
+            record.proposalId,
+            record.reviewerId,
+          ),
+        ),
+      )
+    : [];
   return new Map(
-    snapshot.docs
-      .map((doc) => doc.data() as StoredResponseDoc)
-      .filter((record) => Boolean(record.response))
-      .map((record) => [record.proposalId, record.response]),
+    records.map((record, index) => [
+      record.proposalId,
+      {
+        ...record.response,
+        fastTracked:
+          propagationSnapshots[index]?.exists &&
+          propagationSnapshots[index]?.data()?.status === "ready",
+      },
+    ]),
   );
 };
 
@@ -478,15 +668,24 @@ export const issueResponses = async (
 export const reviseResponse = async (
   issueType: SomIssueType,
   payload: ResponsePayload,
-): Promise<{ changed: boolean }> => {
+  propagation: TrustedPropagationDirective,
+): Promise<{ changed: boolean } & ResponseWriteResult> => {
   return db.runTransaction(async (transaction) => {
-    const responseSnap = await transaction.get(
-      currentResponseQuery(
-        payload.datasetVersion,
-        payload.proposalId,
-        payload.reviewerId,
-      ),
+    const propagationRef = trustedPropagationRef(
+      payload.datasetVersion,
+      payload.proposalId,
+      payload.reviewerId,
     );
+    const [responseSnap, propagationSnap] = await Promise.all([
+      transaction.get(
+        currentResponseQuery(
+          payload.datasetVersion,
+          payload.proposalId,
+          payload.reviewerId,
+        ),
+      ),
+      transaction.get(propagationRef),
+    ]);
     if (responseSnap.empty) {
       throw new Error("The prior response could not be found");
     }
@@ -502,25 +701,44 @@ export const reviseResponse = async (
         (payload.disagreementReason || "") &&
       (existing.response.suggestedCorrection || "") ===
         (payload.suggestedCorrection || "");
-    if (identical) return { changed: false };
-
     const now = Timestamp.now();
-    const revisionIndex = (existing.revisionCount || 0) + 1;
-    transaction.update(responseDoc.ref, {
-      response: payload,
-      revisionCount: revisionIndex,
-      updatedAt: now,
-    });
-    transaction.set(db.collection(SOM_REVIEW_RESPONSE_REVISIONS).doc(), {
-      ...revisionIdentity(payload),
+    const revisionIndex = identical
+      ? existing.revisionCount || 1
+      : (existing.revisionCount || 0) + 1;
+    if (!identical) {
+      transaction.update(responseDoc.ref, {
+        response: payload,
+        revisionCount: revisionIndex,
+        updatedAt: now,
+      });
+      transaction.set(db.collection(SOM_REVIEW_RESPONSE_REVISIONS).doc(), {
+        ...revisionIdentity(payload),
+        issueType,
+        responseDocId: responseDoc.id,
+        revisionIndex,
+        action: "edit",
+        response: payload,
+        createdAt: now,
+      });
+    }
+    const fastTracked = syncTrustedPropagation({
+      transaction,
+      existing: propagationSnap.exists
+        ? (propagationSnap.data() as TrustedPropagationDoc)
+        : null,
+      propagationRef,
+      responseRefId: responseDoc.id,
+      responseRevisionIndex: revisionIndex,
       issueType,
-      responseDocId: responseDoc.id,
-      revisionIndex,
-      action: "edit",
-      response: payload,
-      createdAt: now,
+      payload,
+      directive: propagation,
+      now,
     });
-    return { changed: true };
+    return {
+      changed: !identical,
+      fastTracked,
+      propagationStatus: propagation.status,
+    };
   });
 };
 
@@ -549,9 +767,17 @@ export const undoPrevious = async (
     const transition = planUndoTransition(session);
 
     const previousId = session.proposalIds[transition.cursor];
-    const responseSnap = await transaction.get(
-      currentResponseQuery(datasetVersion, previousId, reviewerId),
+    const propagationRef = trustedPropagationRef(
+      datasetVersion,
+      previousId,
+      reviewerId,
     );
+    const [responseSnap, propagationSnap] = await Promise.all([
+      transaction.get(
+        currentResponseQuery(datasetVersion, previousId, reviewerId),
+      ),
+      transaction.get(propagationRef),
+    ]);
     if (responseSnap.empty) throw new Error("Previous response not found");
     const responseDoc = responseSnap.docs[0];
 
@@ -573,6 +799,28 @@ export const undoPrevious = async (
       response: null,
       createdAt: now,
     });
+    const existingPropagation = propagationSnap.exists
+      ? (propagationSnap.data() as TrustedPropagationDoc)
+      : null;
+    if (existingPropagation?.status === "ready") {
+      const propagationRevisionCount =
+        (existingPropagation.revisionCount || 0) + 1;
+      const retracted: TrustedPropagationDoc = {
+        ...existingPropagation,
+        status: "retracted",
+        revisionCount: propagationRevisionCount,
+        updatedAt: now,
+      };
+      transaction.set(propagationRef, retracted);
+      transaction.set(
+        db.collection(SOM_REVIEW_TRUSTED_PROPAGATION_REVISIONS).doc(),
+        {
+          ...retracted,
+          action: "retract",
+          recordedAt: now,
+        },
+      );
+    }
     transaction.update(sessionRef, {
       cursor: transition.cursor,
       status: transition.status,

@@ -114,6 +114,7 @@ const handler = async (request: NextApiRequest, res: NextApiResponse) => {
             disagreementReason: response.disagreementReason || "",
             suggestedCorrection: response.suggestedCorrection || "",
             reviewedAt: response.reviewedAt,
+            fastTracked: response.fastTracked,
           },
         ];
       },
