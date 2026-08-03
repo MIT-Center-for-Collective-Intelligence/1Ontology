@@ -1,12 +1,13 @@
 {
   "schemaVersion": "som-review-revision-v1",
-  "contentRevision": 3,
+  "contentRevision": 4,
   "sourceDatasetVersion": "sell-rob-semantic-coverage-2026-07-29-v1",
   "reason": "Rob requested one review decision with the proposed alternative visible immediately and enough ancestor context to interpret the current placement.",
   "changes": [
     "Replaced 8 diagnosis-plus-relocation pairs with 8 one-step move proposals.",
     "Added current and proposed hierarchy paths to every move proposal.",
-    "Preserved prior responses under their original proposal IDs rather than reinterpret them as approvals of a newly expanded question.",
+    "Carried the 8 prior exact relocation responses forward to their equivalent one-step cards without changing the stored source records.",
+    "Kept the broader prior diagnosis responses under their original proposal IDs rather than reinterpret them as exact move approvals.",
     "Corrected the provenance distinction between the accepted wrapper proposal and its machine-derived baseline nodes.",
     "Removed the invalid collection-generated activity wrappers from the current snapshot and restored Rent out directly under Sell."
   ],
@@ -37,6 +38,48 @@
     "som-b8c5ba1c90158e6784c7",
     "som-f7564256227086773936",
     "som-b876e1950ee85f53d266"
+  ],
+  "responseCarryForwardMappings": [
+    {
+      "sourceProposalId": "som-a129fc5e2012529a5814",
+      "targetProposalId": "som-756a156508bbc6756859",
+      "subjectTitle": "Lease Property"
+    },
+    {
+      "sourceProposalId": "som-b0618ed6153588a186ba",
+      "targetProposalId": "som-465816b46486fcf5d2bf",
+      "subjectTitle": "Rent Clothing"
+    },
+    {
+      "sourceProposalId": "som-27afd77fd2d9b2564529",
+      "targetProposalId": "som-0b734eb0be482c04eef1",
+      "subjectTitle": "Rent Box"
+    },
+    {
+      "sourceProposalId": "som-3ce0cf5a80839238edf9",
+      "targetProposalId": "som-2712192fe57dd0dbf045",
+      "subjectTitle": "Rent Merchandise"
+    },
+    {
+      "sourceProposalId": "som-3f7e33c2a810735c6d56",
+      "targetProposalId": "som-ed212c77f550f328ce1d",
+      "subjectTitle": "Rent Accommodation"
+    },
+    {
+      "sourceProposalId": "som-fecda86541f0949e2d50",
+      "targetProposalId": "som-b8c5ba1c90158e6784c7",
+      "subjectTitle": "Rent Supply"
+    },
+    {
+      "sourceProposalId": "som-15fba4ccfad0dd29cbc5",
+      "targetProposalId": "som-f7564256227086773936",
+      "subjectTitle": "Rent Equipment"
+    },
+    {
+      "sourceProposalId": "som-2349d16033acaead6103",
+      "targetProposalId": "som-b876e1950ee85f53d266",
+      "subjectTitle": "Rent Item"
+    }
   ],
   "collectionNodeRepair": {
     "auditFile": "Sell_Society_of_Mind_Review_UI_Handoff_2026-07-15/review-datasets-rob-semantic-coverage-2026-07-29/diagnostics/collection_design_node_repair.json",

@@ -87,6 +87,30 @@ describe("Sell semantic coverage review wave", () => {
     }
   });
 
+  it("carries only the equivalent prior relocation decisions forward", () => {
+    expect(dataset.manifest.responseCarryForward).toMatchObject({
+      schemaVersion: "som-response-carry-forward-v1",
+    });
+    const mappings = dataset.manifest.responseCarryForward.mappings;
+    expect(mappings).toHaveLength(8);
+    expect(
+      new Set(mappings.map((mapping: any) => mapping.sourceProposalId)),
+    ).toHaveProperty("size", 8);
+    expect(
+      new Set(mappings.map((mapping: any) => mapping.targetProposalId)),
+    ).toHaveProperty("size", 8);
+    for (const mapping of mappings) {
+      expect(mapping).toMatchObject({
+        sourceIssueType: "relocation",
+        targetIssueType: "cross-branch-recall",
+      });
+      expect(
+        dataset.recordsById.get(mapping.targetProposalId)?.subject.title,
+      ).toBe(mapping.subjectTitle);
+      expect(dataset.recordsById.has(mapping.sourceProposalId)).toBe(false);
+    }
+  });
+
   it("limits evidence specialization to explicit modifiers", () => {
     const proposals = records.filter(
       (record) => record.issueType === "evidence-specialization",

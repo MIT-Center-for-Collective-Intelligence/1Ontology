@@ -11,6 +11,7 @@ import {
 } from "../firestoreClient/collections";
 import { SomIssuePrerequisite, SomIssueType } from "../../types/ISomReview";
 import {
+  getDatasetByVersion,
   isIssueTypeEnabled,
   SomDataset,
   proposalAvailability,
@@ -30,6 +31,10 @@ import {
   TrustedPropagationPlanState,
   trustedPropagationPlanTransition,
 } from "./trustedPropagation";
+import {
+  carryForwardResponseRecords,
+  responseCarryForwardSources,
+} from "./responseCarryForward";
 
 export interface SessionDoc {
   datasetVersion: string;
@@ -81,11 +86,18 @@ const answeredProposalIds = async (
   const snapshot = await db
     .collection(SOM_REVIEW_RESPONSES)
     .where("datasetVersion", "==", datasetVersion)
-    .where("issueType", "==", issueType)
     .where("reviewerId", "==", reviewerId)
     .where("status", "==", "current")
     .get();
-  return new Set(snapshot.docs.map((doc) => doc.data().proposalId));
+  const records = carryForwardResponseRecords(
+    getDatasetByVersion(datasetVersion),
+    snapshot.docs.map((doc) => doc.data() as StoredResponseDoc),
+  );
+  return new Set(
+    records
+      .filter((record) => record.issueType === issueType)
+      .map((record) => record.proposalId),
+  );
 };
 
 const reviewerDecisions = async (
@@ -98,11 +110,12 @@ const reviewerDecisions = async (
     .where("reviewerId", "==", reviewerId)
     .where("status", "==", "current")
     .get();
+  const records = carryForwardResponseRecords(
+    getDatasetByVersion(datasetVersion),
+    snapshot.docs.map((doc) => doc.data() as StoredResponseDoc),
+  );
   return new Map(
-    snapshot.docs.map((doc) => {
-      const data = doc.data() as StoredResponseDoc;
-      return [data.proposalId, data.response.decision];
-    }),
+    records.map((record) => [record.proposalId, record.response.decision]),
   );
 };
 
@@ -629,12 +642,14 @@ export const issueResponses = async (
   const snapshot = await db
     .collection(SOM_REVIEW_RESPONSES)
     .where("datasetVersion", "==", datasetVersion)
-    .where("issueType", "==", issueType)
     .where("reviewerId", "==", reviewerId)
     .where("status", "==", "current")
     .get();
-  const records = snapshot.docs
-    .map((doc) => doc.data() as StoredResponseDoc)
+  const records = carryForwardResponseRecords(
+    getDatasetByVersion(datasetVersion),
+    snapshot.docs.map((doc) => doc.data() as StoredResponseDoc),
+  )
+    .filter((record) => record.issueType === issueType)
     .filter((record) => Boolean(record.response));
   const propagationSnapshots = records.length
     ? await db.getAll(
@@ -671,28 +686,48 @@ export const reviseResponse = async (
   propagation: TrustedPropagationDirective,
 ): Promise<{ changed: boolean } & ResponseWriteResult> => {
   return db.runTransaction(async (transaction) => {
+    const dataset = getDatasetByVersion(payload.datasetVersion);
+    const inheritedProposalIds = responseCarryForwardSources(
+      dataset,
+      payload.proposalId,
+    );
     const propagationRef = trustedPropagationRef(
       payload.datasetVersion,
       payload.proposalId,
       payload.reviewerId,
     );
-    const [responseSnap, propagationSnap] = await Promise.all([
-      transaction.get(
-        currentResponseQuery(
-          payload.datasetVersion,
-          payload.proposalId,
-          payload.reviewerId,
-        ),
+    const responseQueries = [
+      currentResponseQuery(
+        payload.datasetVersion,
+        payload.proposalId,
+        payload.reviewerId,
       ),
+      ...(inheritedProposalIds.length
+        ? [
+            db
+              .collection(SOM_REVIEW_RESPONSES)
+              .where("datasetVersion", "==", payload.datasetVersion)
+              .where("proposalId", "in", inheritedProposalIds)
+              .where("reviewerId", "==", payload.reviewerId)
+              .where("status", "==", "current")
+              .limit(inheritedProposalIds.length),
+          ]
+        : []),
+    ];
+    const [responseSnapshots, propagationSnap] = await Promise.all([
+      Promise.all(responseQueries.map((query) => transaction.get(query))),
       transaction.get(propagationRef),
     ]);
-    if (responseSnap.empty) {
+    const directResponseDoc = responseSnapshots[0].docs[0];
+    const inheritedResponseDoc = responseSnapshots[1]?.docs[0];
+    const responseDoc = directResponseDoc || inheritedResponseDoc;
+    const inherited = !directResponseDoc && Boolean(inheritedResponseDoc);
+    if (!responseDoc) {
       throw new Error("The prior response could not be found");
     }
 
-    const responseDoc = responseSnap.docs[0];
     const existing = responseDoc.data() as StoredResponseDoc;
-    if (existing.issueType !== issueType) {
+    if (!inherited && existing.issueType !== issueType) {
       throw new Error("The prior response belongs to another issue type");
     }
     const identical =
@@ -704,20 +739,41 @@ export const reviseResponse = async (
     const now = Timestamp.now();
     const revisionIndex = identical
       ? existing.revisionCount || 1
-      : (existing.revisionCount || 0) + 1;
+      : inherited
+        ? 1
+        : (existing.revisionCount || 0) + 1;
+    const persistedResponseRef =
+      inherited && !identical
+        ? db.collection(SOM_REVIEW_RESPONSES).doc()
+        : responseDoc.ref;
     if (!identical) {
-      transaction.update(responseDoc.ref, {
-        response: payload,
-        revisionCount: revisionIndex,
-        updatedAt: now,
-      });
+      if (inherited) {
+        transaction.set(persistedResponseRef, {
+          ...revisionIdentity(payload),
+          issueType,
+          status: "current",
+          response: payload,
+          revisionCount: revisionIndex,
+          carriedForwardFromProposalId: existing.proposalId,
+          updatedAt: now,
+        });
+      } else {
+        transaction.update(persistedResponseRef, {
+          response: payload,
+          revisionCount: revisionIndex,
+          updatedAt: now,
+        });
+      }
       transaction.set(db.collection(SOM_REVIEW_RESPONSE_REVISIONS).doc(), {
         ...revisionIdentity(payload),
         issueType,
-        responseDocId: responseDoc.id,
+        responseDocId: persistedResponseRef.id,
         revisionIndex,
         action: "edit",
         response: payload,
+        ...(inherited
+          ? { carriedForwardFromProposalId: existing.proposalId }
+          : {}),
         createdAt: now,
       });
     }
@@ -727,7 +783,7 @@ export const reviseResponse = async (
         ? (propagationSnap.data() as TrustedPropagationDoc)
         : null,
       propagationRef,
-      responseRefId: responseDoc.id,
+      responseRefId: persistedResponseRef.id,
       responseRevisionIndex: revisionIndex,
       issueType,
       payload,

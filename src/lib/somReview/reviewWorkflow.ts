@@ -1,5 +1,6 @@
 import { SomReviewDecision } from "../../types/ISomReview";
 import { proposalAvailability, SomDataset } from "./dataset";
+import { carryForwardResponseRecords } from "./responseCarryForward";
 
 export interface WorkflowResponseRecord {
   proposalId: string;
@@ -29,8 +30,9 @@ export const applicableReviewResponses = <T extends WorkflowResponseRecord>(
   dataset: SomDataset,
   responses: T[],
 ): T[] => {
-  const reviewerDecisions = decisionsByReviewer(responses);
-  return responses.filter((response) => {
+  const currentResponses = carryForwardResponseRecords(dataset, responses);
+  const reviewerDecisions = decisionsByReviewer(currentResponses);
+  return currentResponses.filter((response) => {
     const record = dataset.recordsById.get(response.proposalId);
     if (!record) return false;
     return (
@@ -49,7 +51,8 @@ export const remainingIndependentReviewCount = <
   reviewerId: string,
   responses: T[],
 ): number => {
-  const reviewerResponses = responses.filter(
+  const currentResponses = carryForwardResponseRecords(dataset, responses);
+  const reviewerResponses = currentResponses.filter(
     (response) => response.reviewerId === reviewerId,
   );
   const decisions = new Map(
