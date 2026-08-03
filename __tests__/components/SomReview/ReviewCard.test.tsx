@@ -216,7 +216,7 @@ describe("Society of Mind review card", () => {
     );
   });
 
-  it("shows a finer-grained destination without authorizing the move", () => {
+  it("shows the placement diagnosis and destination as one move decision", () => {
     const placementCard: SomReviewCard = {
       proposalId: "placement-1",
       datasetVersion: "dataset-1",
@@ -250,25 +250,68 @@ describe("Society of Mind review card", () => {
     );
 
     expect(screen.getByText("Current location")).toBeInTheDocument();
-    expect(screen.getByText("Recommended finding")).toBeInTheDocument();
+    expect(screen.getByText("Proposed location")).toBeInTheDocument();
     expect(
       screen.getByText(
-        'The suggested category is "Actors and Activities". Agreeing confirms that the current parent is too broad. The exact move remains a separate review step.',
+        'This is one complete move decision. Approve only if the current parent is incorrect and "Actors and Activities" is the better parent.',
       ),
     ).toBeInTheDocument();
     expect(screen.getAllByText("Actors and Activities")).not.toHaveLength(0);
     expect(
-      screen.getByRole("button", { name: "Yes, misplaced" }),
+      screen.getByRole("button", { name: "Approve move" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "No, keep here" }),
+      screen.getByRole("button", { name: "Reject proposed move" }),
     ).toBeInTheDocument();
     expect(
       screen.queryByText(/advisory candidate home/i),
     ).not.toBeInTheDocument();
     expect(
-      screen.getByText(/exact move remains a separate review step/i),
-    ).toBeInTheDocument();
+      screen.queryByText(/exact move remains a separate review step/i),
+    ).not.toBeInTheDocument();
+  });
+
+  it("uses explicit same-activity choices for possible synonyms", () => {
+    const synonymCard: SomReviewCard = {
+      proposalId: "synonym-1",
+      datasetVersion: "dataset-1",
+      branch: "Sell",
+      issueType: "duplicate-synonym",
+      reviewerView: {
+        question:
+          'Do "Sell products" and "Sell merchandise" name the same activity?',
+        currentState: "They are separate activity nodes.",
+        proposedState: "Keep one title and record the other as a synonym.",
+        reasoning: "Their meanings may be interchangeable.",
+        context: {
+          type: "duplicate-comparison",
+          parentTitle: "Sell",
+          canonicalTitle: "Sell products",
+          candidateSynonymTitle: "Sell merchandise",
+        },
+        agreeLabel: "Agree",
+        disagreeLabel: "Disagree",
+      },
+    };
+
+    render(
+      <ReviewCard
+        card={synonymCard}
+        reviewerId="reviewer-1"
+        onSubmit={jest.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "Same activity" })).toBeVisible();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Different activities" }),
+    );
+    expect(
+      screen.getByLabelText(/What meaningfully distinguishes/i),
+    ).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: "Save as different activities" }),
+    ).toBeDisabled();
   });
 
   it("shows a missing-node proposal as one exact move, not a broad-parent diagnosis", () => {
@@ -330,7 +373,7 @@ describe("Society of Mind review card", () => {
       screen.getByRole("button", { name: "Approve move" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Keep current location" }),
+      screen.getByRole("button", { name: "Reject proposed move" }),
     ).toBeInTheDocument();
   });
 

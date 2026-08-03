@@ -13,7 +13,8 @@ export const ISSUE_DESCRIPTIONS: Record<SomIssueType, string> = {
     "Find concepts repeated in miscellaneous and explicit facets.",
   "mistaken-synonym":
     "Remove terms that name a meaningfully different activity.",
-  "duplicate-synonym": "Judge one possible synonym pair at a time.",
+  "duplicate-synonym":
+    "Decide whether two titles name exactly the same activity.",
   polysemy: "Separate one title that combines distinct activity meanings.",
   "flat-list-grouping":
     "Organize a long sibling list into coherent intermediate groups.",
@@ -21,8 +22,10 @@ export const ISSUE_DESCRIPTIONS: Record<SomIssueType, string> = {
     "Group activities joined in the same O*NET object phrase.",
   "collection-design":
     "Review a distinct specialization dimension and its branches.",
-  placement: "Judge whether an activity is under the wrong parent.",
-  "wrong-verb": "Assess whether misjudged synonyms should be moved.",
+  placement:
+    "Review an activity's current parent and proposed destination together.",
+  "wrong-verb":
+    "Review whether an activity uses another main action and should move.",
   "sense-relocation":
     "Move only the separated sense that belongs outside this sub-branch.",
   "node-merge":
@@ -55,7 +58,7 @@ export const ISSUE_INTRODUCTIONS: Record<SomIssueType, string> = {
   "mistaken-synonym":
     "Review terms currently recorded as synonyms. Agree only if the proposed removal separates a term that names a meaningfully different activity.",
   "duplicate-synonym":
-    "Compare two existing activity titles. Decide only whether they name the same activity.",
+    "Compare two existing activity titles. Choose Same activity only when the titles are interchangeable names for the same action in this ontology. If one activity is broader, narrower, a subtype, or merely related to the other, choose Different activities.",
   polysemy:
     "Review whether one title combines distinct activity meanings. Decide only whether the meanings should be represented separately; their locations will be reviewed later.",
   "flat-list-grouping":
@@ -65,9 +68,9 @@ export const ISSUE_INTRODUCTIONS: Record<SomIssueType, string> = {
   "collection-design":
     "Review a collection that captures a distinct specialization dimension. Agree only if the dimension and proposed branches organize the activities coherently without treating related activities as synonyms.",
   placement:
-    "Review whether an activity is currently under the wrong parent within the current sub-branch. Decide only whether its present placement is wrong; a specific new parent will be reviewed separately.",
+    "Review the current parent and proposed destination together. When a destination is shown, approve the move only if both the current placement is incorrect and the displayed destination is better. A historical item without a destination records a diagnosis only and cannot authorize a move.",
   "wrong-verb":
-    "Assess whether a synonym was misjudged because the activity uses a different main action. Decide whether it belongs in the current sub-branch; a specific destination will be reviewed separately.",
+    "Review whether the activity uses a different main action and compare its current location with the proposed destination. When a destination is shown, one answer approves or rejects the complete move.",
   "sense-relocation":
     "Review the exact separation and relocation proposed after a polysemy diagnosis. The before-and-after view shows which sense remains in the current sub-branch and which sense moves elsewhere.",
   "node-merge":

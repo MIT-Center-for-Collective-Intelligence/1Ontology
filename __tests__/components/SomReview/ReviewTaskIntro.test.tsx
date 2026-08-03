@@ -30,7 +30,14 @@ describe("ReviewTaskIntro", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("Buy sub-branch")).toBeInTheDocument();
     expect(
-      screen.getByText(/decide only whether its present placement is wrong/i),
+      screen.getByText(
+        /review the current parent and proposed destination together/i,
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /a historical item without a destination.*cannot authorize a move/i,
+      ),
     ).toBeInTheDocument();
     expect(
       screen.getByText(

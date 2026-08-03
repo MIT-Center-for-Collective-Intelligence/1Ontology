@@ -21,9 +21,10 @@ import { reviewDatasetConfig, reviewWorkspaceConfig } from "./reviewWorkspaces";
 import { toReviewerCard } from "./sanitize";
 import {
   inspectableReviewerCounts,
+  inspectionIssueLabel,
   inspectionRecordSource,
   selectInspectionReviewer,
-  inspectionTaskKey,
+  inspectionIssueTypeFromTaskKey,
   inspectionTasks,
 } from "./inspectionPolicy";
 
@@ -190,7 +191,7 @@ const orderedItemsForDataset = (
         datasetId: dataset.datasetId,
         datasetLabel,
         currentRound,
-        issueLabel: dataset.issueLabels.get(issueType) || issueType,
+        issueLabel: inspectionIssueLabel(issueType),
         proposalIndex,
         recordSource: inspectionRecordSource(record),
         currentlyApplicable: applicable.has(proposalId),
@@ -288,15 +289,13 @@ export const loadInspectionOverview = async ({
       })
     : [];
   const tasks = inspectionTasks(allItems);
-  const selectedTaskKey = tasks.some((task) => task.key === requestedTaskKey)
-    ? requestedTaskKey
-    : undefined;
-  const items = selectedTaskKey
-    ? allItems.filter(
-        (item) =>
-          inspectionTaskKey(item.datasetId, item.card.issueType) ===
-          selectedTaskKey,
-      )
+  const requestedIssueType = inspectionIssueTypeFromTaskKey(requestedTaskKey);
+  const selectedTask = tasks.find(
+    (task) => task.issueType === requestedIssueType,
+  );
+  const selectedTaskKey = selectedTask?.key;
+  const items = selectedTask
+    ? allItems.filter((item) => item.card.issueType === selectedTask.issueType)
     : [];
 
   return {

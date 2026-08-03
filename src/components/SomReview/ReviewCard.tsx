@@ -251,29 +251,40 @@ const ReviewCard = ({
   const showStatePanels = !contextShowsStateComparison(view.context);
   const placementContext =
     view.context.type === "placement-comparison" ? view.context : null;
+  const duplicateContext =
+    view.context.type === "duplicate-comparison" ? view.context : null;
   const wrongVerb = placementContext?.placementIssue === "wrong-verb";
   const missingFromBranch =
     placementContext?.placementIssue === "missing-from-branch";
   const affectedPlacementNodes = placementContext?.affectedNodes || [];
   const groupedPlacement = affectedPlacementNodes.length > 1;
-  const agreeLabel = groupedPlacement
-    ? view.agreeLabel
-    : missingFromBranch
-      ? "Approve move"
-      : wrongVerb
-        ? "Yes, different action"
-        : placementContext
-          ? "Yes, misplaced"
-          : view.agreeLabel;
-  const disagreeLabel = groupedPlacement
-    ? view.disagreeLabel
-    : missingFromBranch
-      ? "Keep current location"
-      : wrongVerb
-        ? "No, it belongs here"
-        : placementContext
-          ? "No, keep here"
-          : view.disagreeLabel;
+  const exactPlacement = Boolean(placementContext?.candidateHome);
+  const agreeLabel = duplicateContext
+    ? "Same activity"
+    : groupedPlacement
+      ? view.agreeLabel
+      : missingFromBranch
+        ? "Approve move"
+        : exactPlacement
+          ? "Approve move"
+          : wrongVerb
+            ? "Yes, different action"
+            : placementContext
+              ? "Yes, misplaced"
+              : view.agreeLabel;
+  const disagreeLabel = duplicateContext
+    ? "Different activities"
+    : groupedPlacement
+      ? view.disagreeLabel
+      : exactPlacement
+        ? "Reject proposed move"
+        : missingFromBranch
+          ? "Keep current location"
+          : wrongVerb
+            ? "No, it belongs here"
+            : placementContext
+              ? "No, keep here"
+              : view.disagreeLabel;
 
   return (
     <Box
@@ -341,7 +352,13 @@ const ReviewCard = ({
             )}
           </StatePanel>
           <StatePanel
-            label={placementContext ? "Recommended finding" : "Proposed"}
+            label={
+              placementContext
+                ? exactPlacement
+                  ? "Proposed location"
+                  : "Recommended finding"
+                : "Proposed"
+            }
             accent="primary"
           >
             {placementContext ? (
@@ -366,7 +383,7 @@ const ReviewCard = ({
                         ? `does not express the "${branch}" action.`
                         : missingFromBranch
                           ? "is under an incorrect parent for its provider-side meaning."
-                          : "is under a parent that is too broad."}
+                          : "is under an incorrect parent."}
                     </>
                   )}
                 </Typography>
@@ -502,15 +519,21 @@ const ReviewCard = ({
           <Stack spacing={1.5}>
             <TextField
               label={
-                placementContext
-                  ? wrongVerb
-                    ? groupedPlacement
-                      ? "Which activities should be handled differently, and why?"
-                      : `Why does "${placementContext.nodeTitle}" belong in the ${branch} sub-branch?`
-                    : groupedPlacement
-                      ? "Which activities should be handled differently, and why?"
-                      : `Why should "${placementContext.nodeTitle}" stay under "${placementContext.currentParentTitle}"?`
-                  : "Why do you disagree?"
+                duplicateContext
+                  ? `What meaningfully distinguishes "${duplicateContext.canonicalTitle}" from "${duplicateContext.candidateSynonymTitle}"?`
+                  : placementContext
+                    ? wrongVerb
+                      ? groupedPlacement
+                        ? "Which activities should be handled differently, and why?"
+                        : exactPlacement
+                          ? "Why is the proposed move incorrect?"
+                          : `Why does "${placementContext.nodeTitle}" belong in the ${branch} sub-branch?`
+                      : groupedPlacement
+                        ? "Which activities should be handled differently, and why?"
+                        : exactPlacement
+                          ? "Why is the proposed move incorrect?"
+                          : `Why should "${placementContext.nodeTitle}" stay under "${placementContext.currentParentTitle}"?`
+                    : "Why do you disagree?"
               }
               required
               multiline
@@ -532,9 +555,13 @@ const ReviewCard = ({
             />
             <TextField
               label={
-                placementContext
-                  ? "Other placement suggestion (optional)"
-                  : "Suggested correction (optional)"
+                duplicateContext
+                  ? "Preferred relationship or title (optional)"
+                  : placementContext
+                    ? exactPlacement
+                      ? "Better parent (optional)"
+                      : "Other placement suggestion (optional)"
+                    : "Suggested correction (optional)"
               }
               multiline
               maxRows={3}
@@ -590,9 +617,13 @@ const ReviewCard = ({
               >
                 {mode === "revise"
                   ? "Save revised answer"
-                  : placementContext
-                    ? "Keep current placement"
-                    : "Save disagreement"}
+                  : duplicateContext
+                    ? "Save as different activities"
+                    : placementContext
+                      ? exactPlacement
+                        ? "Reject proposed move"
+                        : "Keep current placement"
+                      : "Save disagreement"}
               </Button>
             </Stack>
           </Stack>

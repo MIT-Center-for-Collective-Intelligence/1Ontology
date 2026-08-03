@@ -1,4 +1,5 @@
 import {
+  inspectionIssueTypeFromTaskKey,
   inspectionTaskKey,
   inspectionTasks,
   selectInspectionReviewer,
@@ -9,10 +10,15 @@ const inspectionItem = (
   proposalId: string,
   decision: "agree" | "disagree",
   exception = false,
+  round: {
+    datasetId?: string;
+    datasetLabel?: string;
+    currentRound?: boolean;
+  } = {},
 ): SomInspectionItem => ({
-  datasetId: "sell-round",
-  datasetLabel: "Sell round",
-  currentRound: true,
+  datasetId: round.datasetId || "sell-round",
+  datasetLabel: round.datasetLabel || "Sell round",
+  currentRound: round.currentRound ?? true,
   issueLabel: "1. Recall related activities",
   proposalIndex: 0,
   recordSource: "proposed-change",
@@ -71,15 +77,31 @@ describe("inspection task dashboard", () => {
     expect(selectInspectionReviewer(reviewers, "missing", "iman")).toBe("rob");
   });
 
-  it("groups completed responses by dataset and issue type", () => {
+  it("keeps old round-specific inspection links usable", () => {
+    expect(
+      inspectionIssueTypeFromTaskKey("sell-initial-review::duplicate-synonym"),
+    ).toBe("duplicate-synonym");
+    expect(inspectionIssueTypeFromTaskKey("issue::placement")).toBe(
+      "placement",
+    );
+  });
+
+  it("combines the same decision type across review rounds", () => {
     const tasks = inspectionTasks([
       inspectionItem("one", "agree"),
-      inspectionItem("two", "disagree", true),
+      inspectionItem("two", "disagree", true, {
+        datasetId: "sell-round-older",
+        datasetLabel: "Older Sell round",
+        currentRound: false,
+      }),
     ]);
 
     expect(tasks).toEqual([
       expect.objectContaining({
-        key: inspectionTaskKey("sell-round", "placement"),
+        key: inspectionTaskKey("placement"),
+        issueLabel: "Activities under an incorrect parent",
+        roundCount: 2,
+        datasetIds: ["sell-round", "sell-round-older"],
         responseCount: 2,
         agreeCount: 1,
         disagreeCount: 1,

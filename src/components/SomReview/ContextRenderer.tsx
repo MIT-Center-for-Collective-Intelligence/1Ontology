@@ -566,16 +566,13 @@ const PlacementNote = ({
       )}
       <SourceTasks tasks={context.sourceTasks || []} />
       <BoundaryNote>
-        {context.candidateHome && !hasPathComparison
-          ? `The suggested category is "${context.candidateHome}". `
-          : ""}
-        {affectedNodes.length > 1
-          ? "Agreeing confirms the shared diagnosis for these activities. Each exact move remains a separate review step."
-          : context.placementIssue === "missing-from-branch"
-            ? `Compare the source evidence with both hierarchy locations. Approve only if the activity uses the provider-side meaning and the proposed ${branch} location is more accurate.`
-            : context.placementIssue === "wrong-verb"
-              ? `Agreeing confirms that this activity does not belong in the ${branch} sub-branch. The exact move remains a separate review step.`
-              : "Agreeing confirms that the current parent is too broad. The exact move remains a separate review step."}
+        {context.candidateHome
+          ? affectedNodes.length > 1
+            ? `One answer applies the displayed destination, "${context.candidateHome}", to every listed activity. Approve all moves only if every item has the same placement issue; otherwise review them individually.`
+            : context.placementIssue === "missing-from-branch"
+              ? `This is one complete move decision. Compare the evidence with both hierarchy locations and approve only if the activity uses the provider-side meaning and the proposed ${branch} location is more accurate.`
+              : `This is one complete move decision. Approve only if the current parent is incorrect and "${context.candidateHome}" is the better parent.`
+          : "This historical item identifies a possible placement problem but does not specify a destination. It cannot authorize a move."}
       </BoundaryNote>
     </Stack>
   );
@@ -1102,6 +1099,11 @@ const DuplicateComparison = ({
     <Box sx={{ mt: 1 }}>
       <SourceTasks tasks={context.sourceTasks || []} />
     </Box>
+    <BoundaryNote>
+      Choose <strong>Same activity</strong> only when the two titles are
+      interchangeable names for the same action. A broader activity, narrower
+      activity, subtype, or merely related activity should remain separate.
+    </BoundaryNote>
   </Box>
 );
 

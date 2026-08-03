@@ -76,7 +76,7 @@ const ISSUE_DEFINITIONS = [
   ["mistaken-synonym", "Mistaken synonyms", "content", [5], "metadata-edit"],
   [
     "duplicate-synonym",
-    "Undetected synonyms",
+    "Possible duplicate activities",
     "content",
     [6],
     "duplicate-comparison",
@@ -105,14 +105,14 @@ const ISSUE_DEFINITIONS = [
   ],
   [
     "placement",
-    "Wrong place within Sub-branch",
+    "Activities under an incorrect parent",
     "within-branch",
     [11],
     "placement-comparison",
   ],
   [
     "wrong-verb",
-    "Misjudged synonyms within Sub-branch",
+    "Activities using a different main action",
     "outside-branch",
     [12],
     "placement-comparison",
@@ -1722,6 +1722,10 @@ function makeRecord({
 }) {
   const issue = issueDefinition(candidate.issueType);
   const actionTypes = new Set(["node-merge", "relocation", "sense-relocation"]);
+  const oneStepMove =
+    ["placement", "wrong-verb"].includes(candidate.issueType) &&
+    context.type === "placement-comparison" &&
+    Boolean(context.candidateHome);
   const refs = deriveRefs(context, index, subject);
   return {
     schemaVersion: REVIEW_SCHEMA_VERSION,
@@ -1734,11 +1738,12 @@ function makeRecord({
     workflow: {
       robTaskIds: issue.robTaskIds,
       stage: issue.stage,
-      proposalKind: actionTypes.has(candidate.issueType)
-        ? "action"
-        : candidate.issueType === "collection-design"
-          ? "design"
-          : "diagnosis",
+      proposalKind:
+        actionTypes.has(candidate.issueType) || oneStepMove
+          ? "action"
+          : candidate.issueType === "collection-design"
+            ? "design"
+            : "diagnosis",
       dependsOnProposalIds: [],
       ...workflow,
     },
@@ -2039,10 +2044,12 @@ function recordForCandidate(candidate, config) {
     );
     subject.relatedTitles = [candidate.candidateHome];
     reviewerView = {
-      question: `Is "${candidate.nodeTitle}" better placed under "${candidate.candidateHome}"?`,
+      question: `Should "${candidate.nodeTitle}" move from "${candidate.currentParentTitle}" to "${candidate.candidateHome}"?`,
       currentState: `"${candidate.nodeTitle}" is currently under "${candidate.currentParentTitle}".`,
-      proposedState: `Review "${candidate.candidateHome}" as the more specific destination.`,
+      proposedState: `Move the existing activity and its descendants to "${candidate.candidateHome}".`,
       reasoning: rationale,
+      agreeLabel: "Approve move",
+      disagreeLabel: "Reject proposed move",
     };
   } else {
     throw new Error(`Cannot build record for ${issueType}`);
@@ -2208,61 +2215,6 @@ function exactActionRecords(diagnosisRecords, candidates, config) {
         }),
       );
     }
-    if (
-      (candidate.issueType === "placement" ||
-        candidate.issueType === "wrong-verb") &&
-      (config.index.idsByTitle.get(candidate.candidateHome) || []).length === 1
-    ) {
-      const source = sourceEdge(
-        config.index,
-        candidate.currentParentTitle,
-        candidate.nodeTitle,
-      );
-      const targetId = uniqueIdForTitle(config.index, candidate.candidateHome);
-      const nodeId = uniqueIdForTitle(config.index, candidate.nodeTitle);
-      if (config.index.edgePairs.has(edgePair(targetId, nodeId))) continue;
-      const context = {
-        type: "relocation-action",
-        nodeTitle: candidate.nodeTitle,
-        currentParentTitle: candidate.currentParentTitle,
-        currentCollection: source.collectionName,
-        proposedParentTitle: candidate.candidateHome,
-        proposedCollection: "main",
-        childTitles: allCurrentChildren(config.index, candidate.nodeTitle),
-      };
-      records.push(
-        makeRecord({
-          ...config,
-          candidate: {
-            ...candidate,
-            issueType: "relocation",
-            detectorId: `${candidate.detectorId}-exact-action`,
-          },
-          context,
-          subject: {
-            title: candidate.nodeTitle,
-            parentTitle: candidate.currentParentTitle,
-            path:
-              config.index.pathsById.get(
-                uniqueIdForTitle(config.index, candidate.nodeTitle),
-              ) || [],
-            relatedTitles: [candidate.candidateHome],
-          },
-          reviewerView: {
-            question: `Should "${candidate.nodeTitle}" move from "${candidate.currentParentTitle}" to "${candidate.candidateHome}"?`,
-            currentState: `"${candidate.nodeTitle}" remains under "${candidate.currentParentTitle}".`,
-            proposedState: `Move it to "${candidate.candidateHome}" with all current direct children.`,
-            reasoning:
-              "This exact move is available only after the reviewer agrees that the current placement is wrong.",
-          },
-          workflow: {
-            dependsOnProposalIds: [diagnosis.proposalId],
-            conflictGroupId: `move-${sha256(candidate.nodeTitle).slice(0, 12)}`,
-          },
-          key: `relocation:${candidate.candidateId}`,
-        }),
-      );
-    }
   }
   return records;
 }
@@ -2411,7 +2363,7 @@ function writeDataset({
           ]
         : []),
       "Deterministic facet-overlap checks identify structural equivalence candidates, not automatic merges.",
-      "Every exact merge or relocation is separately gated by the corresponding diagnosis.",
+      "A target-known placement move is reviewed as one complete decision. Exact node consolidations and separated-sense relocations remain gated by their corresponding meaning diagnosis.",
       "This dataset is review-only and neither generation nor review acceptance writes to Firestore.",
     ],
     sourceSnapshot: {
@@ -2812,7 +2764,7 @@ async function main() {
     model: MODEL,
     auditPolicyVersion: AUDIT_POLICY_VERSION,
     learnedConstraints:
-      "Content and identity precede structure; exact actions are separately gated; no Sell examples were supplied.",
+      "Content and identity precede structure; target-known placement moves are reviewed in one step; exact identity and sense actions remain diagnosis-gated; no Sell examples were supplied.",
     priorExpertTitleLocks: {
       benchmarkFile: approvedTitleLocks.benchmarkFile,
       benchmarkSha256: approvedTitleLocks.benchmarkSha256,

@@ -575,8 +575,12 @@ export interface SomInspectionItem {
 
 export interface SomInspectionTask {
   key: string;
+  /** Preferred round for editing: current when present, otherwise the newest. */
   datasetId: string;
   datasetLabel: string;
+  datasetIds: string[];
+  datasetLabels: string[];
+  roundCount: number;
   currentRound: boolean;
   issueType: SomIssueType;
   issueLabel: string;
