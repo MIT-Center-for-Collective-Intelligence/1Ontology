@@ -6,7 +6,10 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 
 import { Post } from "../../../src/lib/utils/Post";
-import { ReviewInspectionPage } from "../../../src/pages/review/inspection";
+import {
+  inspectionLoadErrorMessage,
+  ReviewInspectionPage,
+} from "../../../src/pages/review/inspection";
 
 jest.mock("../../../src/lib/utils/Post", () => ({
   Post: jest.fn(),
@@ -224,6 +227,15 @@ describe("Tom's prior-review inspection page", () => {
         },
         false,
       ),
+    );
+  });
+
+  it("classifies both supported forms of a research-team access error", () => {
+    expect(
+      inspectionLoadErrorMessage("Deliberation access is restricted"),
+    ).toBe("This page is restricted to the Society of Mind research team.");
+    expect(inspectionLoadErrorMessage({ response: { status: 403 } })).toBe(
+      "This page is restricted to the Society of Mind research team.",
     );
   });
 });

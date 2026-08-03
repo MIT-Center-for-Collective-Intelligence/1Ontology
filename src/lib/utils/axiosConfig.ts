@@ -1,19 +1,18 @@
 import axios from "axios";
 
-function getErrorMessage(error: any) {
+export function getErrorMessage(error: any) {
   const response = error.response;
   if (!response) return error;
   if (response.status === 418) return error;
-  let errorMessage = "";
   const { data } = response;
-  if (data) {
-    errorMessage += data.message ? data.message : "";
-    errorMessage += data.errorMessage ? data.errorMessage : "";
-    if (data.error) {
-      console.error(data.error);
-    }
+  if (!data) return error;
+  if (data.error) {
+    console.error(data.error);
   }
-  return errorMessage;
+  const errorMessage = [data.message, data.errorMessage, data.error]
+    .filter((message) => typeof message === "string" && message.trim())
+    .join(" ");
+  return errorMessage || error;
 }
 const adapter = axios.create({
   headers: {
@@ -32,7 +31,7 @@ adapter.interceptors.response.use(
   (error) => {
     const errorMessage = getErrorMessage(error);
     return Promise.reject(errorMessage);
-  }
+  },
 );
 
 export default adapter;
