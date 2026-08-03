@@ -2,7 +2,11 @@ import { Box, Typography } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import InheritedPartsViewerEdit from "./InheritedPartsViewerEdit";
 import InheritedPartsViewer from "./InheritedPartsViewer";
-import { INode, InheritedPartsDetail } from "@components/types/INode";
+import {
+  ILinkNode,
+  INode,
+  InheritedPartsDetail,
+} from "@components/types/INode";
 import { useInheritedPartsDetails } from "@components/lib/hooks/useInheritedPartsDetails";
 
 interface PartViewerProps {
@@ -10,6 +14,9 @@ interface PartViewerProps {
   property: string;
   getAllGeneralizations: any;
   currentVisibleNode: any;
+  resolvedParts: ILinkNode[];
+  resolvedPartsLoading: boolean;
+  partsWriting?: boolean;
   relatedNodes: { [id: string]: any };
   fetchNode: (nodeId: string) => Promise<INode | null>;
   addNodesToCache?: (
@@ -18,10 +25,14 @@ interface PartViewerProps {
   ) => void;
   linkNodeRelation: any;
   unlinkNodeRelation: any;
-  saveParts: (
-    newParts: any[],
+  sortParts: (
+    orderedIds: string[],
     inheritedPartsDetails?: InheritedPartsDetail[] | null,
   ) => Promise<void>;
+  switchPartSource: (partId: string, genId: string) => Promise<void>;
+  addPartFromGen: (partId: string, genId?: string) => Promise<void>;
+  togglePartOptional: (partId: string, optional: boolean) => Promise<void>;
+  savingPartIds: Set<string>;
   user: any;
   navigateToNode: any;
   replaceWith: any;
@@ -41,12 +52,19 @@ const PartViewer: React.FC<PartViewerProps> = ({
   property,
   getAllGeneralizations,
   currentVisibleNode,
+  resolvedParts,
+  resolvedPartsLoading,
+  partsWriting,
   relatedNodes,
   fetchNode,
   addNodesToCache,
   linkNodeRelation,
   unlinkNodeRelation,
-  saveParts,
+  sortParts,
+  switchPartSource,
+  addPartFromGen,
+  togglePartOptional,
+  savingPartIds,
   user,
   navigateToNode,
   replaceWith,
@@ -62,10 +80,13 @@ const PartViewer: React.FC<PartViewerProps> = ({
 
   const {
     data: inheritedPartsDetails,
-    loading: inheritedPartsLoading,
+    repairing: inheritedPartsRepairing,
     mutateData: mutateInheritedPartsDetails,
-    refetchNow,
-  } = useInheritedPartsDetails(currentVisibleNode);
+  } = useInheritedPartsDetails(
+    currentVisibleNode,
+    resolvedParts,
+    resolvedPartsLoading,
+  );
 
   useEffect(() => {
     onDisplayDetailsChange?.(displayDetails);
@@ -85,6 +106,7 @@ const PartViewer: React.FC<PartViewerProps> = ({
           addNodesToCache={addNodesToCache}
           readOnly={true}
           currentVisibleNode={currentVisibleNode}
+          resolvedParts={resolvedParts}
           setDisplayDetails={setDisplayDetails}
           enableEdit={enableEdit}
           addPart={
@@ -113,12 +135,15 @@ const PartViewer: React.FC<PartViewerProps> = ({
           user={user}
           navigateToNode={navigateToNode}
           replaceWith={replaceWith}
-          saveParts={saveParts}
+          sortParts={sortParts}
+          switchPartSource={switchPartSource}
+          addPartFromGen={addPartFromGen}
+          togglePartOptional={togglePartOptional}
+          savingPartIds={savingPartIds}
           appName={appName}
           inheritedPartsDetails={inheritedPartsDetails}
-          inheritedPartsLoading={inheritedPartsLoading}
+          inheritedPartsRepairing={inheritedPartsRepairing || !!partsWriting}
           mutateInheritedPartsDetails={mutateInheritedPartsDetails}
-          refetchNow={refetchNow}
           clonedNodesQueue={clonedNodesQueue}
           approvePendingPart={(queuedId: string) =>
             saveNewSpecialization?.(queuedId, "main")
@@ -136,6 +161,7 @@ const PartViewer: React.FC<PartViewerProps> = ({
           fetchNode={fetchNode}
           readOnly={true}
           currentVisibleNode={currentVisibleNode}
+          resolvedParts={resolvedParts}
           setDisplayDetails={setDisplayDetails}
           addPart={
             enableEdit
@@ -163,6 +189,7 @@ const PartViewer: React.FC<PartViewerProps> = ({
           navigateToNode={navigateToNode}
           displayDetails={displayDetails}
           inheritedPartsDetails={inheritedPartsDetails}
+          inheritedPartsRepairing={inheritedPartsRepairing || !!partsWriting}
         />
       )}
     </Box>

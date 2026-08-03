@@ -18,6 +18,15 @@ import {
   writeChangeLog,
   recordLogs,
 } from "@components/lib/server/hierarchy";
+import {
+  applyPartsForGenChange,
+  partsNodes,
+  toParts,
+} from "@components/lib/server/parts";
+import {
+  computeInheritedPartsDetails,
+  fetchPartsContext,
+} from "@components/lib/server/partsAnnotation";
 
 const SCALAR_TYPES = new Set([
   "string",
@@ -166,7 +175,7 @@ async function applyClone(ctx: {
     JSON.stringify(sourceSpecsBefore),
   );
   // When the node has no parent when created from properties other than "specializations",
-  // adds it to "unclassified" collection of the root 
+  // adds it to "unclassified" collection of the root
   addToSide(sourceSpecs, sourceCollectionName, { id: newNodeId, title });
   await db
     .collection(NODES)
@@ -204,19 +213,29 @@ async function applyClone(ctx: {
       [targetProperty]: side,
     } as INode);
   } else if (isParts) {
-    // Parts are a plain own value; inheritance is recomputed by a separate
-    // endpoint, so this just stores the value and the reciprocal isPartOf.
+    // The new clone is an owned part (its isPartOf backlink was seeded above):
+    // append it to the stored entries; appending never breaks attachment.
     sideBefore = asCollections(currentNode.properties?.parts);
-    side = JSON.parse(JSON.stringify(sideBefore));
-    addToSide(side, collectionName, { id: newNodeId, title });
+    side = toParts([...partsNodes(sideBefore), { id: newNodeId, title }]);
+    const updatedCurrent = {
+      ...currentNode,
+      properties: { ...currentNode.properties, parts: side },
+    } as INode;
+    const { relatedNodes, resolvedOf } =
+      await fetchPartsContext(updatedCurrent);
     await db
       .collection(NODES)
       .doc(currentNodeId)
-      .update({ [`properties.parts`]: side });
-    cache.set(currentNodeId, {
-      ...currentNode,
-      properties: { ...currentNode.properties, parts: side },
-    });
+      .update({
+        "properties.parts": side,
+        inheritedPartsDetails: computeInheritedPartsDetails({
+          currentNode: updatedCurrent,
+          relatedNodes,
+          resolvedOf,
+        }),
+        resolvedParts: resolvedOf(currentNodeId),
+      });
+    cache.set(currentNodeId, updatedCurrent);
   } else {
     // Generic link property: resolve the value the user saw (through the
     // inheritance ref while inheriting), add the new node, and override if it was
@@ -224,9 +243,9 @@ async function applyClone(ctx: {
     const inheritedRef = currentNode.inheritance?.[targetProperty]?.ref;
     let refData: INode | undefined;
     if (inheritedRef) {
-      refData = (
-        await db.collection(NODES).doc(inheritedRef).get()
-      ).data() as INode | undefined;
+      refData = (await db.collection(NODES).doc(inheritedRef).get()).data() as
+        | INode
+        | undefined;
     }
     const base =
       refData && hasOwn(refData.properties, targetProperty)
@@ -242,7 +261,8 @@ async function applyClone(ctx: {
       updates[`inheritance.${targetProperty}.ref`] = null;
       updates[`inheritance.${targetProperty}.title`] = "";
       if (refData?.textValue && hasOwn(refData.textValue, targetProperty)) {
-        updates[`textValue.${targetProperty}`] = refData.textValue[targetProperty];
+        updates[`textValue.${targetProperty}`] =
+          refData.textValue[targetProperty];
       }
     }
     await db.collection(NODES).doc(currentNodeId).update(updates);
@@ -275,7 +295,9 @@ async function applyClone(ctx: {
   // current node out of unclassified; a specializations add gives the new node
   // a second generalization.
   if (targetProperty === "generalizations") {
-    await removeFromUnclassified(
+    // Leaving unclassified counts as a removed gen for the parts pass, so the
+    // node's parts switch from the root onto its new generalization.
+    const leftRootId = await removeFromUnclassified(
       currentNodeId,
       cache,
       parentLog,
@@ -285,6 +307,15 @@ async function applyClone(ctx: {
     );
     cache.delete(currentNodeId);
     await recomputeInheritance(currentNodeId, cache);
+    await applyPartsForGenChange(
+      currentNodeId,
+      leftRootId ? [leftRootId] : [],
+      cache,
+      parentLog,
+      uname,
+      appName,
+      childLogs,
+    );
   } else if (targetProperty === "specializations") {
     cache.delete(newNodeId);
     await recomputeInheritance(newNodeId, cache);
@@ -377,7 +408,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     if (newSnap.exists) return fail(res, 409, "newNodeId already exists");
     const source = sourceSnap.data() as INode | undefined;
     const currentNode = currentSnap.data() as INode | undefined;
-    if (!source || source.deleted) return fail(res, 404, "Source node not found");
+    if (!source || source.deleted)
+      return fail(res, 404, "Source node not found");
     if (!currentNode || currentNode.deleted) {
       return fail(res, 404, "Target node not found");
     }
@@ -412,7 +444,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     });
     return res.status(200).json(result);
   } catch (error: any) {
-    if (error instanceof HttpError) return fail(res, error.status, error.message);
+    if (error instanceof HttpError)
+      return fail(res, error.status, error.message);
     console.error("nodes/hierarchy/cloning error", error);
     recordLogs(
       {

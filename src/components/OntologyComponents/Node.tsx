@@ -91,13 +91,7 @@ import {
   setDoc,
   updateDoc,
 } from "firebase/firestore";
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Text from "./Text";
 import useConfirmDialog from "@components/lib/hooks/useConfirmDialog";
 import {
@@ -1058,21 +1052,6 @@ const Node = ({
     }
   };
 
-  // Latest parts value are used as the write base so the writes build on each other
-  // and not on the snapshot. This prevents viewer edits to undo each other.
-  const latestPartsRef = useRef<{ id: string; parts: ICollection[] } | null>(
-    null,
-  );
-  useEffect(() => {
-    if (!currentVisibleNode?.id) return;
-    latestPartsRef.current = {
-      id: currentVisibleNode.id,
-      parts: JSON.parse(
-        JSON.stringify(currentVisibleNode.properties?.parts ?? []),
-      ),
-    };
-  }, [currentVisibleNode?.id, currentVisibleNode?.properties?.parts]);
-
   const handleSaveLinkChanges = useCallback(
     async (
       removedElements: string[],
@@ -1105,50 +1084,6 @@ const Node = ({
         const removedLinks = new Array(...removedElements).map((l) => ({
           id: l,
         }));
-
-        // Save parts through the parts endpoint.
-        if (selectedProperty === "parts") {
-          const source =
-            latestPartsRef.current?.id === nodeId
-              ? latestPartsRef.current.parts
-              : relatedNodes[nodeId]?.properties?.parts;
-          const next: ICollection[] =
-            Array.isArray(source) && source.length
-              ? JSON.parse(JSON.stringify(source))
-              : [{ collectionName: "main", nodes: [] }];
-          for (const c of next) {
-            c.nodes = (c.nodes || []).filter(
-              (n: { id: string }) => !removedElements.includes(n.id),
-            );
-          }
-          let i = next.findIndex((c) => c.collectionName === selectedCollection);
-          if (i === -1) i = 0;
-          const existing = new Set(
-            next.flatMap((c) => c.nodes.map((n: { id: string }) => n.id)),
-          );
-          next[i].nodes.push(...addedLinks.filter((l) => !existing.has(l.id)));
-
-          // Advance the ref now so adds in the same tick build on this result.
-          latestPartsRef.current = { id: nodeId, parts: next };
-
-          setCurrentVisibleNode((prev: any) =>
-            prev && prev.id === nodeId
-              ? { ...prev, properties: { ...prev.properties, parts: next } }
-              : prev,
-          );
-
-          pendingWrites.start(nodeId, "properties.parts");
-          try {
-            await Post("/nodes/parts/update", {
-              nodeId,
-              parts: next,
-              ...(appName ? { appName } : {}),
-            });
-          } finally {
-            pendingWrites.end(nodeId, "properties.parts");
-          }
-          return;
-        }
 
         // Generic link-typed properties (actor, …) are saved through the API.
         // The structural edges below keep their existing flow.
@@ -1297,7 +1232,9 @@ const Node = ({
               (n: { id: string }) => !removedElements.includes(n.id),
             );
           }
-          let i = next.findIndex((c) => c.collectionName === selectedCollection);
+          let i = next.findIndex(
+            (c) => c.collectionName === selectedCollection,
+          );
           if (i === -1) i = 0;
           const existing = new Set(
             next.flatMap((c) => c.nodes.map((n: { id: string }) => n.id)),
@@ -1568,43 +1505,6 @@ const Node = ({
         ) {
           if (nodeData.inheritance[selectedProperty]) {
             const reference = nodeData.inheritance[selectedProperty].ref;
-
-            // Handling for parts property - move inherited parts to inheritanceParts
-            if (
-              selectedProperty === "parts" &&
-              reference &&
-              relatedNodes[reference]
-            ) {
-              const referencedNode = relatedNodes[reference];
-
-              if (!nodeData.inheritanceParts) {
-                nodeData.inheritanceParts = {};
-              }
-
-              // Get inherited parts from the referenced generalization
-              const inheritedParts = referencedNode.properties.parts || [];
-              const inheritedPartsFromInheritance =
-                referencedNode.inheritanceParts || {};
-
-              // Add direct parts from generalization to inheritanceParts
-              inheritedParts.forEach((collection: any) => {
-                collection.nodes.forEach((partNode: any) => {
-                  nodeData.inheritanceParts[partNode.id] = {
-                    inheritedFromTitle: referencedNode.title,
-                    inheritedFromId: reference,
-                  };
-                });
-              });
-
-              // Add inherited parts from generalization's inheritanceParts
-              Object.entries(inheritedPartsFromInheritance).forEach(
-                ([partId, partInfo]) => {
-                  if (partInfo) {
-                    nodeData.inheritanceParts[partId] = partInfo;
-                  }
-                },
-              );
-            }
 
             if (
               reference &&

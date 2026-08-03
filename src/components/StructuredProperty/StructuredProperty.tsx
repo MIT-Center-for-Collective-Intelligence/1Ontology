@@ -23,14 +23,25 @@ import {
 import {
   getGeneralizationParts,
   getAllGeneralizations,
-  getEffectiveGeneralizations,
 } from "@components/lib/utils/partsHelper";
 import {
   ICollection,
   ILinkNode,
   InheritedPartsDetail,
   INode,
+  IPartsInheritance,
 } from "@components/types/INode";
+import {
+  applyRemove,
+  applyReplace,
+  applySwitchSource,
+  applyToggleOptional,
+  classifySort,
+  convertToOverlay,
+  resolveParts,
+  toPartsNode,
+  PartsGraph,
+} from "@components/lib/server/partsModel";
 import { DISPLAY, UNCLASSIFIED } from "@components/lib/CONSTANTS";
 import {
   collection,
@@ -55,6 +66,10 @@ import PropertyContributors from "./PropertyContributors";
 import { NODES } from "@components/lib/firestoreClient/collections";
 import { Post } from "@components/lib/utils/Post";
 import { pendingWrites } from "@components/lib/utils/pendingWrites";
+import {
+  makeResolvedOf,
+  useResolvedParts,
+} from "@components/lib/hooks/useResolvedParts";
 import InheritedPartsLegend from "../Common/InheritedPartsLegend";
 import EditProperty from "../AddPropertyForm/EditProperty";
 import StructuredPropertySelector from "./StructuredPropertySelector";
@@ -132,9 +147,6 @@ type IStructuredPropertyProps = {
   setGlowIds: any;
   selectedCollection: any;
   appName?: string;
-  partsInheritance?: {
-    [nodeId: string]: { inheritedFrom: string; partInheritance: string };
-  };
   enableEdit: boolean;
   inheritanceDetails?: any;
   inheritedPartsDetails?: InheritedPartsDetail[] | null;
@@ -205,9 +217,7 @@ const StructuredProperty = ({
   const theme = useTheme();
   const isMobile = useMediaQuery("(max-width:599px)");
   const [openAddCollection, setOpenAddCollection] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
   const BUTTON_COLOR = theme.palette.mode === "dark" ? "#373739" : "#dde2ea";
-  const [modifiedOrder, setModifiedOrder] = useState(false);
   const [displayOptional, setDisplayOptional] = useState(false);
   const [showTopOptionalLegend, setShowTopOptionalLegend] = useState(true);
   const [editProperty, setEditProperty] = useState("");
@@ -289,6 +299,12 @@ const StructuredProperty = ({
     [paginationState],
   );
 
+  const { resolvedParts, loading: resolvedPartsLoading } = useResolvedParts(
+    property === "parts" ? currentVisibleNode : null,
+    relatedNodes,
+    fetchNode,
+  );
+
   const propertyValue: PaginatedCollection[] = useMemo(() => {
     try {
       let result = null;
@@ -296,11 +312,10 @@ const StructuredProperty = ({
         result =
           currentVisibleNode[property as "specializations" | "generalizations"];
       } else {
-        // Parts always reflect this node's `properties.parts` only; do not
-        // substitute the collection from `inheritance.parts.ref` (the UI
-        // still explains inheritance via InheritedPartsViewer / details).
+        // Parts render the RESOLVED view: the ref chain resolved through
+        // `partsInheritance.source` with this node's stored entries spliced in.
         if (property === "parts") {
-          result = currentVisibleNode?.properties?.parts;
+          result = [{ collectionName: "main", nodes: resolvedParts }];
         } else {
           result =
             getPropertyValue(
@@ -424,6 +439,7 @@ const StructuredProperty = ({
     currentVisibleNode,
     relatedNodes,
     property,
+    resolvedParts,
     selectedDiffNode,
     processCollectionData,
     db,
@@ -431,7 +447,9 @@ const StructuredProperty = ({
 
   const isReparenting =
     property === "generalizations" &&
-    !(typeof currentVisibleNode?.root === "boolean" && currentVisibleNode.root) &&
+    !(
+      typeof currentVisibleNode?.root === "boolean" && currentVisibleNode.root
+    ) &&
     (currentVisibleNode?.generalizations || []).flatMap(
       (c: ICollection) => c.nodes,
     ).length === 0;
@@ -720,49 +738,6 @@ const StructuredProperty = ({
       property: property,
     });
   };
-  const onSave = useCallback(async () => {
-    try {
-      setIsSaving(true);
-      const _removedElements = new Set(removedElements);
-      const _addedElements = new Set(addedElements);
-      const _selectedProperty = selectedProperty;
-      handleCloseAddLinksModel();
-      for (let nId in clonedNodesQueue) {
-        await handleCloning(
-          { id: clonedNodesQueue[nId].id },
-          clonedNodesQueue[nId].title,
-          nId,
-        );
-      }
-      await handleSaveLinkChanges(
-        _removedElements,
-        _addedElements,
-        _selectedProperty,
-        currentVisibleNode?.id,
-      );
-    } catch (error: any) {
-      console.error(error);
-      recordLogs({
-        type: "error",
-        error: JSON.stringify({
-          name: error.name,
-          message: error.message,
-          stack: error.stack,
-        }),
-        at: "recordLogs",
-      });
-    } finally {
-      setIsSaving(false);
-    }
-  }, [
-    clonedNodesQueue,
-    addedElements,
-    removedElements,
-    selectedProperty,
-    modifiedOrder,
-    currentVisibleNode?.id,
-  ]);
-
   const scrollToElement = (elementId: string) => {
     setTimeout(() => {
       const element = document.getElementById(`${elementId}-${property}`);
@@ -784,51 +759,75 @@ const StructuredProperty = ({
     }, 2000);
   };
 
-  const getInheritedPartsSet = (): Set<string> => {
-    const inheritedParts = new Set<string>();
+  const [savingPartIds, setSavingPartIds] = useState<Set<string>>(new Set());
+  // Count of parts writes in flight — the viewers show the annotation spinner
+  // while the endpoint recomputes the pair server-side.
+  const [partsWriteCount, setPartsWriteCount] = useState(0);
 
-    if (currentVisibleNode.inheritanceParts) {
-      Object.keys(currentVisibleNode.inheritanceParts).forEach(
-        (partId: string) => {
-          inheritedParts.add(partId);
-        },
-      );
-    }
+  // Chain-only graph over the caches, for running the pure model ops
+  // client-side (instant patches mirror what the endpoint will store).
+  // `extraRoots` pulls in another node's chain too (a gen being referenced).
+  const clientPartsGraph = useCallback(
+    (extraRoots: string[] = []): PartsGraph => {
+      const graph: PartsGraph = new Map();
+      const walk = (start: string | null | undefined) => {
+        let cursor = start;
+        while (cursor && !graph.has(cursor)) {
+          const doc =
+            cursor === currentVisibleNode?.id
+              ? currentVisibleNode
+              : relatedNodes[cursor];
+          if (!doc) break;
+          const partsNode = toPartsNode(doc);
+          graph.set(cursor, partsNode);
+          cursor = partsNode.partsInheritance.source;
+        }
+      };
+      walk(currentVisibleNode?.id);
+      for (const root of extraRoots) walk(root);
+      return graph;
+    },
+    [currentVisibleNode, relatedNodes],
+  );
 
-    if (currentVisibleNode.properties?.parts) {
-      currentVisibleNode.properties.parts.forEach((collection: any) => {
-        collection.nodes.forEach((part: any) => {
-          inheritedParts.add(part.id);
-        });
-      });
-    }
-
-    return inheritedParts;
-  };
-  // Single write point for the focused node's parts. 
-  // On failure it re-fetches so the UI never keeps an unsaved change.
-  const saveParts = useCallback(
+  // Delta edits on parts (remove/replace/sort): instant local state + the
+  // matching endpoint. On failure it re-fetches so the UI never keeps an
+  // unsaved change.
+  const savePartsDelta = useCallback(
     async (
-      newParts: ICollection[],
-      inheritedPartsDetails?: InheritedPartsDetail[] | null,
+      endpoint: string,
+      payload: Record<string, any>,
+      instantParts: ICollection[],
+      affectedIds: string[] = [],
+      instantInheritance?: IPartsInheritance,
     ) => {
       const nodeId = currentVisibleNode?.id;
       if (!nodeId) return;
+      setPartsWriteCount((c) => c + 1);
+      if (affectedIds.length) {
+        setSavingPartIds((prev) => new Set([...prev, ...affectedIds]));
+      }
       setCurrentVisibleNode((prev: any) =>
         prev && prev.id === nodeId
-          ? { ...prev, properties: { ...prev.properties, parts: newParts } }
+          ? {
+              ...prev,
+              properties: { ...prev.properties, parts: instantParts },
+              ...(instantInheritance
+                ? { partsInheritance: instantInheritance }
+                : {}),
+            }
           : prev,
       );
       pendingWrites.start(nodeId, "properties.parts");
+      pendingWrites.start(nodeId, "partsInheritance");
       try {
-        await Post("/nodes/parts/update", {
+        await Post(endpoint, {
           nodeId,
-          parts: newParts,
-          ...(inheritedPartsDetails ? { inheritedPartsDetails } : {}),
+          ...payload,
           ...(appName ? { appName } : {}),
         });
       } catch (error: any) {
-        const fresh = await fetchNode(nodeId);
+        const fresh = await fetchNode(nodeId, true);
         setCurrentVisibleNode((prev: any) =>
           prev?.id === nodeId && fresh ? fresh : prev,
         );
@@ -838,6 +837,20 @@ const StructuredProperty = ({
         setSnackbarMessage(`Failed to update parts: ${reason}`);
       } finally {
         pendingWrites.end(nodeId, "properties.parts");
+        pendingWrites.end(nodeId, "partsInheritance");
+        setPartsWriteCount((c) => c - 1);
+        if (affectedIds.length) {
+          setSavingPartIds((prev) => {
+            const next = new Set(prev);
+            affectedIds.forEach((id) => next.delete(id));
+            return next;
+          });
+        }
+        // The freshness comparison skipped its runs while the write was
+        // pending; a new identity makes it run once more now the gate is open.
+        setCurrentVisibleNode((prev: any) =>
+          prev && prev.id === nodeId ? { ...prev } : prev,
+        );
       }
     },
     [
@@ -849,6 +862,155 @@ const StructuredProperty = ({
     ],
   );
 
+  // Reorder of the RESOLVED view; the instant state runs the same classify
+  // the endpoint does (local-entry moves re-anchor, source-order moves break).
+  const sortParts = useCallback(
+    async (
+      orderedIds: string[],
+      inheritedPartsDetails?: InheritedPartsDetail[] | null,
+    ) => {
+      if (!currentVisibleNode?.id) return;
+      const result = classifySort(
+        currentVisibleNode.id,
+        clientPartsGraph(),
+        orderedIds,
+      );
+      await savePartsDelta(
+        "/nodes/parts/sort",
+        {
+          orderedIds,
+          ...(inheritedPartsDetails ? { inheritedPartsDetails } : {}),
+        },
+        [{ collectionName: "main", nodes: result.parts }],
+        [],
+        result.breaks ? result.partsInheritance : undefined,
+      );
+    },
+    [savePartsDelta, currentVisibleNode?.id, clientPartsGraph],
+  );
+
+  // Instant state via the pure model: a stored entry flips its flag, a
+  // virtual part records an override in partsInheritance.
+  const togglePartOptional = useCallback(
+    async (partId: string, optional: boolean) => {
+      if (!currentVisibleNode?.id) return;
+      const result = applyToggleOptional(
+        currentVisibleNode.id,
+        clientPartsGraph(),
+        partId,
+        optional,
+      );
+      if (!result.changed) return;
+      await savePartsDelta(
+        "/nodes/parts/toggle-optional",
+        { partId, optional },
+        [{ collectionName: "main", nodes: result.parts }],
+        [partId],
+        result.partsInheritance,
+      );
+    },
+    [currentVisibleNode?.id, clientPartsGraph, savePartsDelta],
+  );
+
+  // Switch which generalization a part is specifically inherited from. The
+  // instant tag mirrors the server: the owner resolved through the picked gen.
+  const switchPartSource = useCallback(
+    async (partId: string, genId: string) => {
+      if (!currentVisibleNode?.id) return;
+      const result = applySwitchSource(
+        currentVisibleNode.id,
+        clientPartsGraph([genId]),
+        partId,
+        genId,
+      );
+      if (!result.changed) return;
+      await savePartsDelta(
+        "/nodes/parts/switch-source",
+        { partId, genId },
+        [{ collectionName: "main", nodes: result.parts }],
+        [partId],
+        result.partsInheritance,
+      );
+    },
+    [currentVisibleNode?.id, clientPartsGraph, savePartsDelta],
+  );
+
+  /**
+   * Attaches this node's overall parts inheritance to `sourceId` — repairing a
+   * break, or moving to another generalization. The server hard-resets the list
+   * (only owned parts survive) and refetch on success.
+   */
+  const reattachOverall = useCallback(
+    async (sourceId: string) => {
+      const nodeId = currentVisibleNode?.id;
+      if (!nodeId || !sourceId) return;
+      if (sourceId === (currentVisibleNode.partsInheritance?.source ?? "")) {
+        return;
+      }
+
+      // The same pure reset the endpoint runs names exactly what disappears.
+      const graph = clientPartsGraph([sourceId]);
+      const before = resolveParts(nodeId, graph);
+      const { parts, partsInheritance } = convertToOverlay(
+        nodeId,
+        graph,
+        sourceId,
+      );
+      const afterGraph: PartsGraph = new Map(graph);
+      afterGraph.set(nodeId, { id: nodeId, parts, partsInheritance });
+      const afterIds = new Set(
+        resolveParts(nodeId, afterGraph).map((p) => p.id),
+      );
+      const discarded = before
+        .filter((p) => !afterIds.has(p.id))
+        .map((p) => p.title || relatedNodes[p.id]?.title || p.id);
+
+      const sourceTitle =
+        relatedNodes[sourceId]?.title || "this generalization";
+      const ok = await confirmIt(
+        <Box>
+          <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+            {`Inherit parts from "${sourceTitle}"?`}
+          </Typography>
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ fontWeight: 400, lineHeight: 1.5 }}
+          >
+            {`This node's parts will be replaced by that generalization's, in the same order. Only parts owned by this node will be kept.`}
+          </Typography>
+          {discarded.length > 0 && (
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ fontWeight: 400, mt: 1.5, lineHeight: 1.5 }}
+            >
+              {`These parts will be removed: ${discarded.join(", ")}.`}
+            </Typography>
+          )}
+        </Box>,
+        "Inherit",
+        "Cancel",
+      );
+      if (!ok) return;
+
+      await savePartsDelta(
+        "/nodes/parts/reattach",
+        { sourceId },
+        [{ collectionName: "main", nodes: parts }],
+        [],
+        partsInheritance,
+      );
+    },
+    [
+      currentVisibleNode,
+      relatedNodes,
+      clientPartsGraph,
+      confirmIt,
+      savePartsDelta,
+    ],
+  );
+
   const unlinkNodeRelation = async (
     currentNodeId: string,
     linkId: string,
@@ -857,16 +1019,22 @@ const StructuredProperty = ({
     fromModel: boolean = false,
   ) => {
     try {
-      // Parts: drop the id from the node's own parts and persist via endpoint.
+      // Parts: instant state via the same pure model the endpoint runs — a
+      // removal the source provides breaks and materializes the view.
       if (property === "parts") {
-        const source = currentVisibleNode?.properties?.parts;
-        const newParts: ICollection[] = Array.isArray(source)
-          ? JSON.parse(JSON.stringify(source))
-          : [{ collectionName: "main", nodes: [] }];
-        for (const c of newParts) {
-          c.nodes = (c.nodes || []).filter((n: ILinkNode) => n.id !== linkId);
-        }
-        await saveParts(newParts);
+        if (!currentVisibleNode) return;
+        const { parts, partsInheritance } = applyRemove(
+          currentVisibleNode.id,
+          clientPartsGraph(),
+          [linkId],
+        );
+        await savePartsDelta(
+          "/nodes/parts/remove",
+          { removeIds: [linkId] },
+          [{ collectionName: "main", nodes: parts }],
+          [linkId],
+          partsInheritance,
+        );
         return;
       }
       if (
@@ -1029,6 +1197,41 @@ const StructuredProperty = ({
     }
   };
 
+  // Appends a part. With `genId` it is inherited specifically through that
+  // generalization otherwise the server decides inherited or owned.
+  const addParts = async (partId: string, genId?: string) => {
+    try {
+      const source = currentVisibleNode?.properties?.parts;
+      const newParts: ICollection[] =
+        Array.isArray(source) && source.length
+          ? JSON.parse(JSON.stringify(source))
+          : [{ collectionName: "main", nodes: [] }];
+      // Present = in the RESOLVED view (virtual parts have no stored entry).
+      if (resolvedParts.some((n: ILinkNode) => n.id === partId)) return;
+      const node: ILinkNode = {
+        id: partId,
+        title: relatedNodes[partId]?.title ?? "",
+      };
+      if (genId) {
+        // The gen's own view is resolved too — the part may be virtual on it.
+        const genPart = makeResolvedOf(relatedNodes)(genId).find(
+          (n: ILinkNode) => n.id === partId,
+        );
+        node.inheritedFrom = genPart?.inheritedFrom || genId;
+        if (!node.title) node.title = genPart?.title ?? "";
+      }
+      newParts[0].nodes.push(node);
+      await savePartsDelta(
+        "/nodes/parts/add",
+        { partIds: [partId], ...(genId ? { genId } : {}) },
+        newParts,
+        [partId],
+      );
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   const linkNodeRelation = async ({
     currentNodeId,
     partId,
@@ -1036,58 +1239,32 @@ const StructuredProperty = ({
     currentNodeId: string;
     partId: string;
   }) => {
-    try {
-      const source = currentVisibleNode?.properties?.parts;
-      const newParts: ICollection[] =
-        Array.isArray(source) && source.length
-          ? JSON.parse(JSON.stringify(source))
-          : [{ collectionName: "main", nodes: [] }];
-      if (newParts[0].nodes.some((n: ILinkNode) => n.id === partId)) return;
-      newParts[0].nodes.push({
-        id: partId,
-        title: relatedNodes[partId]?.title ?? "",
-      });
-      await saveParts(newParts);
-    } catch (error) {
-      console.error(error);
-    }
+    await addParts(partId);
   };
   const replaceWith = useCallback(
-    async (
-      oldPartId: string,
-      newPartId: string,
-      updatedInheritedPartsDetails?: InheritedPartsDetail[] | null,
-    ) => {
+    async (oldPartId: string, newPartId: string) => {
       try {
         if (property !== "parts") return;
         if (!currentVisibleNode?.id || !user?.uname) return;
         if (!oldPartId || !newPartId || oldPartId === newPartId) return;
 
-        // scrollToElement(oldPartId);
-
-        // Following linkNodeRelation and unlinkNodeRelation but updated as a single Function for clarity
-
-        const sourceParts: ICollection[] | undefined =
-          currentVisibleNode.properties?.parts;
-        if (!Array.isArray(sourceParts) || !sourceParts[0]?.nodes) return;
-
-        const updatedParts: ICollection[] = JSON.parse(
-          JSON.stringify(sourceParts),
+        // Instant state via the same pure model the endpoint runs: replacing a
+        // source-provided part breaks; a floating entry swaps in place.
+        const { parts, partsInheritance, replaced } = applyReplace(
+          currentVisibleNode.id,
+          clientPartsGraph(),
+          oldPartId,
+          { id: newPartId, title: relatedNodes[newPartId]?.title || "" },
         );
-        const elementIdx = updatedParts[0].nodes.findIndex(
-          (n: ILinkNode) => n.id === oldPartId,
+        if (!replaced) return;
+
+        await savePartsDelta(
+          "/nodes/parts/replace",
+          { fromId: oldPartId, toId: newPartId },
+          [{ collectionName: "main", nodes: parts }],
+          [oldPartId, newPartId],
+          partsInheritance,
         );
-        if (elementIdx === -1) return;
-        if (updatedParts[0].nodes.some((n: ILinkNode) => n.id === newPartId)) {
-          return; // newPartId already in parts
-        }
-
-        // Replace id + title at the same slot (keeps position and optional flag).
-        updatedParts[0].nodes[elementIdx].id = newPartId;
-        updatedParts[0].nodes[elementIdx].title =
-          relatedNodes[newPartId]?.title || "";
-
-        await saveParts(updatedParts, updatedInheritedPartsDetails);
 
         recordLogs({
           action: "replace part",
@@ -1108,7 +1285,14 @@ const StructuredProperty = ({
         });
       }
     },
-    [currentVisibleNode, relatedNodes, property, user, saveParts],
+    [
+      currentVisibleNode,
+      relatedNodes,
+      property,
+      user,
+      savePartsDelta,
+      clientPartsGraph,
+    ],
   );
 
   if (
@@ -1309,24 +1493,11 @@ const StructuredProperty = ({
                     <CloseIcon sx={{ color: "white" }} />
                   </IconButton>
                 </Tooltip>
-                {/*  <LoadingButton
-                size="small"
-                onClick={onSave}
-                loading={isSaving}
-                color="success"
-                variant="contained"
-                sx={{ borderRadius: "25px", color: "white" }}
-                disabled={
-                  addedElements.size === 0 && removedElements.size === 0
-                }
-              >
-                Save
-              </LoadingButton> */}
               </Box>
             )}
           {(!currentVisibleNode.unclassified ||
             property === "specializations") &&
-            selectedProperty !== property &&
+            (selectedProperty !== property || property === "parts") &&
             !selectedDiffNode &&
             !currentImprovement &&
             property !== "isPartOf" && (
@@ -1395,25 +1566,38 @@ const StructuredProperty = ({
                 {property !== "generalizations" &&
                   property !== "specializations" &&
                   property !== "isPartOf" &&
-                  property !== "parts" &&
                   !currentVisibleNode.unclassified && (
                     <SelectInheritance
                       currentVisibleNode={currentVisibleNode}
                       property={property}
                       nodes={relatedNodes}
                       enableEdit={enableEdit}
+                      {...(property === "parts"
+                        ? {
+                            value:
+                              currentVisibleNode.partsInheritance?.source ?? "",
+                            onChange: reattachOverall,
+                          }
+                        : {})}
                     />
                   )}
-                {property !== "parts" &&
-                  currentVisibleNode.inheritance[property]?.ref &&
+                {(property === "parts"
+                  ? !!currentVisibleNode.partsInheritance?.source
+                  : !!currentVisibleNode.inheritance[property]?.ref) &&
                   !enableEdit && (
                     <Typography
                       sx={{ fontSize: "14px", ml: "9px", color: "gray" }}
                     >
                       {'(Inherited from "'}
-                      {relatedNodes[
-                        currentVisibleNode.inheritance[property].ref
-                      ]?.title || ""}
+                      {property === "parts"
+                        ? relatedNodes[
+                            currentVisibleNode.partsInheritance!.source!
+                          ]?.title || ""
+                        : relatedNodes[
+                            currentVisibleNode.inheritance[property].ref!
+                          ]?.title ||
+                          currentVisibleNode.inheritance[property].title ||
+                          ""}
                       {'")'}
                     </Typography>
                   )}
@@ -1451,8 +1635,8 @@ const StructuredProperty = ({
               property={property}
               propertyValue={
                 selectedProperty === property
-                  ? editableProperty ?? []
-                  : propertyValue ?? []
+                  ? (editableProperty ?? [])
+                  : (propertyValue ?? [])
               }
               setEditableProperty={setEditableProperty}
               getCategoryStyle={getCategoryStyle}
@@ -1473,13 +1657,10 @@ const StructuredProperty = ({
               selectedProperty={selectedProperty}
               clonedNodesQueue={clonedNodesQueue}
               model={!!selectedProperty}
-              setModifiedOrder={setModifiedOrder}
               glowIds={glowIds}
               scrollToElement={scrollToElement}
               selectedCollection={selectedCollection}
               handleCloseAddLinksModel={handleCloseAddLinksModel}
-              onSave={onSave}
-              isSaving={isSaving}
               addedElements={addedElements}
               removedElements={removedElements}
               setSearchValue={setSearchValue}
@@ -1537,12 +1718,19 @@ const StructuredProperty = ({
             property={property}
             getAllGeneralizations={getAllGeneralizations}
             currentVisibleNode={currentVisibleNode}
+            resolvedParts={resolvedParts}
+            resolvedPartsLoading={resolvedPartsLoading}
+            partsWriting={partsWriteCount > 0}
             relatedNodes={relatedNodes}
             fetchNode={fetchNode}
             addNodesToCache={addNodesToCache}
             linkNodeRelation={linkNodeRelation}
             unlinkNodeRelation={unlinkNodeRelation}
-            saveParts={saveParts}
+            sortParts={sortParts}
+            switchPartSource={switchPartSource}
+            addPartFromGen={addParts}
+            togglePartOptional={togglePartOptional}
+            savingPartIds={savingPartIds}
             user={user}
             navigateToNode={navigateToNode}
             replaceWith={replaceWith}
@@ -1583,7 +1771,6 @@ const StructuredProperty = ({
         selectedProperty === property &&
         !selectedCollection && (
           <StructuredPropertySelector
-            onSave={onSave}
             currentVisibleNode={currentVisibleNode}
             relatedNodes={relatedNodes}
             fetchNode={fetchNode}
@@ -1628,7 +1815,6 @@ const StructuredProperty = ({
             addedElements={addedElements}
             setRemovedElements={setRemovedElements}
             setAddedElements={setAddedElements}
-            isSaving={isSaving}
             scrollToElement={scrollToElement}
             selectedCollection={selectedCollection}
             appName={appName}

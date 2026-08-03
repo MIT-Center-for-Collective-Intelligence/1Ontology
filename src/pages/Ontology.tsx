@@ -133,7 +133,6 @@ import { getDatabase, onValue, ref } from "firebase/database";
 import { recordLogs } from "@components/lib/utils/helpers";
 import { pendingWrites } from "@components/lib/utils/pendingWrites";
 import { useHover } from "@components/lib/hooks/useHover";
-import { useInheritedPartsDetails } from "@components/lib/hooks/useInheritedPartsDetails";
 import { MemoizedToolbarSidebar } from "@components/components/Sidebar/ToolbarSidebar";
 import { NodeChange } from "@components/types/INode";
 import GuidLines from "@components/components/Guidelines/GuideLines";
@@ -263,7 +262,6 @@ const Ontology = ({
   const [addedElements, setAddedElements] = useState<Set<string>>(new Set());
   const [loadingNodes, setLoadingNodes] = useState(false);
   const [isPageReady, setIsPageReady] = useState(false);
-  const [partsInheritance, setPartsInheritance] = useState<any>({});
   const [currentNodeTreeData, setCurrentNodeTreeData] = useState<TreeData[]>(
     [],
   );
@@ -1029,9 +1027,6 @@ const Ontology = ({
       }
       visited.add(node.id);
       const nodeTitle = node.title;
-      const parts = Array.isArray(node.properties.parts)
-        ? node.properties.parts.flatMap((c) => c.nodes)
-        : [];
       // Create an entry for the current node in the main specializations tree
       newSpecializationsTree[node.id] = {
         id: node.category ? `${node.id}-${nodeTitle.trim()}` : node.id,
@@ -1040,7 +1035,6 @@ const Ontology = ({
         locked: !!node.locked,
         title: nodeTitle,
         unclassified: !!node.unclassified,
-        parts,
         specializations: {},
         generalizations: {},
       };
@@ -1215,7 +1209,8 @@ const Ontology = ({
         for (const field of pending) {
           if (field.startsWith("properties.")) {
             const p = field.slice("properties.".length);
-            merged.properties[p] = prevAny.properties?.[p] ?? snapAny.properties?.[p];
+            merged.properties[p] =
+              prevAny.properties?.[p] ?? snapAny.properties?.[p];
           } else {
             merged[field] = prevAny[field] ?? snapAny[field];
           }
@@ -1603,7 +1598,12 @@ const Ontology = ({
 
       if (!node) {
         // Create minimal node with just id and title for instant highlighting
-        node = { id: nodeId, title: nodeTitle || "", appName, _isMinimal: true } as any;
+        node = {
+          id: nodeId,
+          title: nodeTitle || "",
+          appName,
+          _isMinimal: true,
+        } as any;
         setIsLoadingNodeDetails(true);
       } else {
         setIsLoadingNodeDetails(false);
@@ -1655,7 +1655,12 @@ const Ontology = ({
 
       if (!node) {
         // Create minimal node with just id and title for instant highlighting
-        node = { id: nodeId, title: nodeTitle || "", appName, _isMinimal: true } as any;
+        node = {
+          id: nodeId,
+          title: nodeTitle || "",
+          appName,
+          _isMinimal: true,
+        } as any;
         setIsLoadingNodeDetails(true);
       } else {
         setIsLoadingNodeDetails(false);
@@ -2005,93 +2010,6 @@ const Ontology = ({
     });
   }, []);
 
-  useEffect(() => {
-    if (!currentVisibleNode) return;
-
-    const _inheritanceDetails: any = {};
-
-    const _currentVisibleNode = { ...currentVisibleNode };
-
-    let parts = _currentVisibleNode?.properties?.parts || [];
-
-    const generalizations = (
-      _currentVisibleNode?.generalizations || []
-    ).flatMap((c) => c.nodes);
-    const checkGeneralizations = (
-      partId: string,
-    ): { genId: string; partOf: string | null }[] | null => {
-      let inheritanceDetails: { genId: string; partOf: string | null }[] = [];
-
-      for (let generalization of generalizations) {
-        if (!relatedNodes[generalization.id]) {
-          continue;
-        }
-        let generalizationParts =
-          relatedNodes[generalization.id]?.properties?.parts;
-
-        if (!generalizationParts || !generalizationParts[0]) {
-          continue;
-        }
-
-        const partIdex = generalizationParts[0].nodes.findIndex(
-          (c) => c.id === partId,
-        );
-
-        let partOfIdx: any = -1;
-
-        if (partIdex === -1) {
-          for (let { id } of generalizationParts[0].nodes) {
-            const specializationPart = (
-              relatedNodes[id]?.specializations || []
-            ).flatMap((c) => c.nodes);
-            partOfIdx = specializationPart.findIndex((c) => c.id === partId);
-            if (partOfIdx !== -1) {
-              inheritanceDetails.push({
-                genId: generalization.id,
-                partOf: id,
-              });
-            }
-          }
-        }
-        if (partIdex === -1) {
-          const ontologyPathForPart = eachNodePath[partId] ?? [];
-
-          const exacts = generalizationParts[0].nodes.filter((n) => {
-            const findIndex = ontologyPathForPart.findIndex(
-              (d) => d.id === n.id,
-            );
-            return findIndex !== -1;
-          });
-          if (exacts.length > 0) {
-            inheritanceDetails.push({
-              genId: generalization.id,
-              partOf: exacts[0].id,
-            });
-          }
-        }
-
-        if (partIdex !== -1) {
-          inheritanceDetails.push({
-            genId: generalization.id,
-            partOf: generalizationParts[0].nodes[partIdex].id,
-          });
-        }
-      }
-      if (inheritanceDetails.length > 0) {
-        return inheritanceDetails;
-      }
-      return null;
-    };
-
-    if (parts && parts[0]) {
-      for (let node of parts[0].nodes) {
-        if (relatedNodes[node.id]) {
-          _inheritanceDetails[node.id] = checkGeneralizations(node.id);
-        }
-      }
-    }
-    setPartsInheritance(_inheritanceDetails);
-  }, [currentVisibleNode, relatedNodes, eachNodePath]);
   if (!isPageReady) {
     return <FullPageLogoLoading />;
   }

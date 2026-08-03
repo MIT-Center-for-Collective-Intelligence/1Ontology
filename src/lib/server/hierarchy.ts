@@ -167,7 +167,10 @@ export async function writeSideOrder(
   side: Side,
   value: ICollection[],
 ): Promise<void> {
-  await db.collection(NODES).doc(nodeId).update({ [side]: value });
+  await db
+    .collection(NODES)
+    .doc(nodeId)
+    .update({ [side]: value });
 }
 
 // ──────── Subtree traversal ────────
@@ -442,7 +445,10 @@ export async function applyReciprocityAdd(
     const after: ICollection[] = JSON.parse(JSON.stringify(before));
     const added =
       collectionName && collectionName !== "main"
-        ? addToCollection(after, collectionName, { id: nodeId, title: nodeTitle })
+        ? addToCollection(after, collectionName, {
+            id: nodeId,
+            title: nodeTitle,
+          })
         : addToMain(after, { id: nodeId, title: nodeTitle });
     if (!added) continue;
     await db
@@ -475,7 +481,7 @@ export async function applyReciprocityAdd(
  * each inherited property: keep it if a generalization still provides it, move
  * it to one that owns it, or drop it if none do. Properties the generalizations
  * have but the node lacks get added.
- * `parts`/`isPartOf` are skipped — they inherit separately via `inheritanceParts`.
+ * `parts`/`isPartOf` are skipped — parts inherit via `partsInheritance` (ref model).
  */
 export async function recomputeInheritance(
   nodeId: string,
@@ -796,7 +802,8 @@ export function buildSpecializationNode(
 ): INode {
   const inheritance: any = JSON.parse(JSON.stringify(source.inheritance || {}));
   for (const property in inheritance) {
-    if (inheritance[property].title === undefined) inheritance[property].title = "";
+    if (inheritance[property].title === undefined)
+      inheritance[property].title = "";
     if (!inheritance[property].ref && property !== "isPartOf") {
       inheritance[property].ref = source.id;
       inheritance[property].title = source.title ?? "";
@@ -818,10 +825,23 @@ export function buildSpecializationNode(
     }
   }
 
+  // Parts resolve through the ref chain: the child stores no entries and
+  // follows `source` until it breaks. Its inheritance entry stays null.
+  properties.parts = [{ collectionName: "main", nodes: [] }];
+  inheritance.parts = {
+    ref: null,
+    title: "",
+    inheritanceType:
+      source.inheritance?.parts?.inheritanceType ??
+      "inheritUnlessAlreadyOverRidden",
+  };
+
   const newNode: any = {
     ...source,
     id: newNodeId,
     title,
+    partsInheritance: { source: source.id, overrides: {} },
+    inheritedPartsDetails: [],
     createdBy: uname,
     contributors: [],
     contributorsByProperty: {},
@@ -839,7 +859,10 @@ export function buildSpecializationNode(
     ],
     propertyOf: {},
     numberOfGeneralizations: (source.numberOfGeneralizations || 0) + 1,
-    properties: { ...properties, isPartOf: [{ collectionName: "main", nodes: [] }] },
+    properties: {
+      ...properties,
+      isPartOf: [{ collectionName: "main", nodes: [] }],
+    },
     propertyType: { ...(source.propertyType || {}) },
     nodeType: source.nodeType,
     ...(appName ? { appName } : {}),
@@ -847,8 +870,13 @@ export function buildSpecializationNode(
   };
   delete newNode.root;
   delete newNode.oNetTask;
-  if (newNode?.textValue?.specializations) delete newNode.textValue.specializations;
-  if (newNode?.textValue?.generalizations) delete newNode.textValue.generalizations;
+  delete newNode.resolvedParts;
+  delete newNode.partsOverallSource;
+  delete newNode.inheritanceParts;
+  if (newNode?.textValue?.specializations)
+    delete newNode.textValue.specializations;
+  if (newNode?.textValue?.generalizations)
+    delete newNode.textValue.generalizations;
   if (newNode.properties?.["ONetID"]) {
     delete newNode.properties["ONetID"];
     delete newNode.propertyType?.["ONetID"];

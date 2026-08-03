@@ -71,44 +71,6 @@ const LinkNodeTitle = ({
       title={
         <Box sx={{ p: "5px" }}>
           <Typography>{title}</Typography>
-          {/* {partsInheritance[link.id] ? (
-            <>
-              <span
-                style={{
-                  display: "flex",
-                  gap: "4px",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {partsInheritance[link.id][0].genId &&
-                  relatedNodes[partsInheritance[link.id][0].genId] && (
-                    <>
-                      Inherited from{" "}
-                      <strong style={{ fontSize: "12px" }}>
-                        {'"'}
-                        {relatedNodes[partsInheritance[link.id][0].genId].title}
-                        {'"'},
-                      </strong>
-                    </>
-                  )}
-                {partsInheritance[link.id][0]?.partOf && (
-                  <>
-                    Part{" "}
-                    <strong style={{ fontSize: "12px", color: "orange" }}>
-                      {relatedNodes[partsInheritance[link.id][0].partOf]?.title}
-                    </strong>
-                  </>
-                )}
-              </span>
-              {link.optional && (
-                <span style={{ marginLeft: "2px" }}>{"(Optional)"}</span>
-              )}
-            </>
-          ) : link.optional ? (
-            <span style={{ marginLeft: "2px" }}>{"(Optional)"}</span>
-          ) : (
-            ""
-          )} */}
         </Box>
       }
       slotProps={{

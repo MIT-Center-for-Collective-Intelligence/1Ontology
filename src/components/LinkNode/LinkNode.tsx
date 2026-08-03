@@ -67,18 +67,14 @@ In this example, `ChildNode` is used to display a child node with the given prop
  */
 import { NODES, NODES_LOGS } from "@components/lib/firestoreClient/collections";
 import useConfirmDialog from "@components/lib/hooks/useConfirmDialog";
-import SwapVertIcon from "@mui/icons-material/SwapVert";
-import AddIcon from "@mui/icons-material/Add";
 import {
   recordLogs,
   saveNewChangeLog,
   unlinkPropertyOf,
   updateInheritance,
-  updatePartsAndPartsOf,
   updatePropertyOf,
   updateInheritanceWhenUnlinkAGeneralization,
 } from "@components/lib/utils/helpers";
-import { breakInheritanceAndCopyParts } from "@components/lib/utils/partsHelper";
 import {
   INode,
   INodePath,
@@ -129,6 +125,11 @@ import {
   removeLinkFromNode,
 } from "@components/lib/utils/instantTreeUpdate";
 import { pendingWrites } from "@components/lib/utils/pendingWrites";
+import {
+  applyToggleOptional,
+  toPartsNode,
+  PartsGraph,
+} from "@components/lib/server/partsModel";
 import SyncedSpinner from "@components/components/SyncedSpinner";
 
 const isInUnclassified = (rootNode: INode | undefined, childId: string) =>
@@ -167,8 +168,6 @@ type ILinkNodeProps = {
   collectionIndex: number;
   collectionName: string;
   selectedDiffNode: any;
-  replaceWith: any;
-  saveNewAndSwapIt: any;
   setClonedNodesQueue: any;
   clonedNodesQueue?: any;
   unlinkElement?: any;
@@ -203,8 +202,6 @@ const LinkNode = ({
   collectionIndex,
   collectionName,
   selectedDiffNode,
-  replaceWith,
-  saveNewAndSwapIt,
   setClonedNodesQueue,
   clonedNodesQueue = {},
   unlinkElement,
@@ -222,9 +219,6 @@ const LinkNode = ({
 }: ILinkNodeProps) => {
   const db = getFirestore();
   const theme = useTheme();
-  const [swapIt, setSwapIt] = useState(false);
-  const [addNew, setAddNew] = useState(false);
-  const [newPart, setNewPart] = useState("");
 
   const BUTTON_COLOR = theme.palette.mode === "dark" ? "#373739" : "#dde2ea";
 
@@ -305,39 +299,54 @@ const LinkNode = ({
     }
   };
 
+  // Instant state via the pure model, persisted through the toggle-optional
+  // endpoint: a stored entry flips its flag, a virtual part records an
+  // override in partsInheritance.
   const makeLinkOptional = useCallback(async () => {
-    const nodeCopy = { ...currentVisibleNode };
-
-    const partsNodes = nodeCopy.properties["parts"]?.[0]?.nodes;
-    if (!partsNodes) return;
-    const currentPartIndx = partsNodes.findIndex((c) => c.id === link.id);
-
-    if (currentPartIndx !== -1) {
-      partsNodes[currentPartIndx].optional =
-        !partsNodes[currentPartIndx].optional;
-
-      const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
-      setCurrentVisibleNode((prev: any) => {
-        const _prev = { ...prev };
-        _prev.properties["parts"].nodes = partsNodes;
-        return _prev;
-      });
-      setEditableProperty([
-        {
-          collectionName: "main",
-          nodes: partsNodes,
-        },
-      ]);
-      updateDoc(nodeRef, {
-        "properties.parts": [
-          {
-            collectionName: "main",
-            nodes: partsNodes,
-          },
-        ],
-      });
+    const nodeId = currentVisibleNode?.id;
+    if (!nodeId) return;
+    const graph: PartsGraph = new Map();
+    let cursor: string | null | undefined = nodeId;
+    while (cursor && !graph.has(cursor)) {
+      const docData =
+        cursor === nodeId ? currentVisibleNode : relatedNodes[cursor];
+      if (!docData) break;
+      const partsNode = toPartsNode(docData);
+      graph.set(cursor, partsNode);
+      cursor = partsNode.partsInheritance.source;
     }
-  }, [currentVisibleNode, relatedNodes, fetchNode]);
+    const optional = !link.optional;
+    const result = applyToggleOptional(nodeId, graph, link.id, optional);
+    if (!result.changed) return;
+    const side = [{ collectionName: "main", nodes: result.parts }];
+    setCurrentVisibleNode((prev: any) =>
+      prev?.id === nodeId
+        ? {
+            ...prev,
+            properties: { ...prev.properties, parts: side },
+            partsInheritance: result.partsInheritance,
+          }
+        : prev,
+    );
+    setEditableProperty(side);
+    pendingWrites.start(nodeId, "properties.parts");
+    pendingWrites.start(nodeId, "partsInheritance");
+    try {
+      await Post("/nodes/parts/toggle-optional", {
+        nodeId,
+        partId: link.id,
+        optional,
+        ...(appName ? { appName } : {}),
+      });
+    } finally {
+      pendingWrites.end(nodeId, "properties.parts");
+      pendingWrites.end(nodeId, "partsInheritance");
+      // Re-run the freshness comparison now the write gate is open.
+      setCurrentVisibleNode((prev: any) =>
+        prev && prev.id === nodeId ? { ...prev } : prev,
+      );
+    }
+  }, [currentVisibleNode, relatedNodes, link.id, link.optional, appName]);
 
   const unlinkSpecializationOrGeneralization = async (
     currentNodeId: string,
@@ -447,7 +456,7 @@ const LinkNode = ({
             c.nodes = c.nodes.filter((n: { id: string }) => n.id !== linkId);
           }
         }
-        
+
         onInstantTreeUpdate?.((tree) => tree);
 
         setCurrentVisibleNode((prev: any) =>
@@ -599,15 +608,6 @@ const LinkNode = ({
           : theme.palette.common.notebookMainBlack;
   };
 
-  const getSpecializations = (nodeId: string) => {
-    if (!relatedNodes[nodeId]) {
-      return [];
-    }
-    return relatedNodes[nodeId].specializations
-      .flatMap((s) => s.nodes)
-      .filter((n) => !!relatedNodes[n.id]?.title);
-  };
-
   const queueEntry = clonedNodesQueue[link.id];
   const isQueuedClone = queueEntry?.property === property;
   const queuedTitle = queueEntry?.title;
@@ -629,12 +629,7 @@ const LinkNode = ({
     <Box
       id={`${link.id}-${property}`}
       sx={{
-        backgroundColor: !!swapIt
-          ? (theme) => (theme.palette.mode === "dark" ? "#5f5e5d" : "#d9dfe6")
-          : "",
         borderRadius: "25px",
-        p: !!swapIt ? 1 : "",
-        my: swapIt ? "5px" : "",
         animation: glowIds.has(`${link.id}-${property}`)
           ? `${glowGreen} 1.5s ease-in-out infinite`
           : "",
@@ -806,155 +801,10 @@ const LinkNode = ({
                 )}
               </>
             )}
-          {property === "parts" &&
-            !currentImprovement &&
-            !selectedDiffNode &&
-            !isQueuedClone &&
-            !loadingIds.has(link.id) &&
-            enableEdit && (
-              <Tooltip title={swapIt ? "Close" : "Specialize"}>
-                <IconButton
-                  sx={{
-                    p: 0.2,
-                    ml: 2,
-                    backgroundColor: swapIt ? "orange" : "",
-                  }}
-                  onClick={() => {
-                    setSwapIt((prev) => !prev);
-                  }}
-                >
-                  {swapIt ? <CloseIcon /> : <SwapHorizIcon />}
-                </IconButton>
-              </Tooltip>
-            )}
         </Box>
 
         {ConfirmDialog}
       </ListItem>
-      {swapIt && property === "parts" && !selectedDiffNode && (
-        <Box>
-          {getSpecializations(link.id).map((n) => (
-            <Tooltip key={n.id} title="Replace with" placement="left">
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  px: 1,
-                  pl: 0,
-                  borderRadius: "25px",
-                  cursor: "pointer",
-                  ":hover": {
-                    backgroundColor: (theme) =>
-                      theme.palette.mode === "dark" ? "#858381" : "#bec4cc",
-                  },
-                }}
-                onClick={() => {
-                  replaceWith(n.id, link.id);
-                }}
-              >
-                <IconButton sx={{ p: 0.2, m: "6px" }}>
-                  <SwapHorizIcon />
-                </IconButton>
-
-                <Typography>{relatedNodes[n.id]?.title}</Typography>
-              </Box>
-            </Tooltip>
-          ))}{" "}
-          {addNew && (
-            <Tooltip
-              title="Save and replace with"
-              placement="top"
-              sx={{ alignItems: "center" }}
-            >
-              <IconButton
-                onClick={() => {
-                  setAddNew(false);
-                  saveNewAndSwapIt(newPart, link.id);
-                }}
-                sx={{
-                  p: 0.3,
-                  m: "6px",
-                  mt: "15px",
-                  bgcolor: "green",
-                  border: "1px solid",
-                }}
-                disabled={!newPart.trim()}
-              >
-                <SwapHorizIcon
-                  sx={{ color: !!newPart.trim() ? "white" : "" }}
-                />
-              </IconButton>
-            </Tooltip>
-          )}
-          {addNew && (
-            <Tooltip title="Cancel" placement="bottom">
-              <IconButton
-                onClick={() => {
-                  setAddNew(false);
-                  setNewPart("");
-                }}
-                sx={{ p: 0.3, m: "6px", bgcolor: "red", mt: "15px" }}
-              >
-                <CloseIcon sx={{ color: "white" }} />
-              </IconButton>
-            </Tooltip>
-          )}
-          {addNew && (
-            <TextField
-              value={newPart}
-              onChange={(e: any) => {
-                setNewPart(e.target.value);
-              }}
-              sx={{
-                width: "80%",
-                m: "6px",
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: "25px",
-                },
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  // saveNodeTitle();
-                }
-              }}
-              placeholder="Node title..."
-              fullWidth
-              slotProps={{
-                input: {
-                  sx: {
-                    p: 10,
-                    borderRadius: "25px",
-                  },
-                },
-              }}
-            />
-          )}
-          {!addNew && (
-            <Button
-              sx={{
-                display: "flex",
-                // backgroundColor: "orange",
-                borderRadius: "25px",
-                p: 0.3,
-                mt: 2,
-                cursor: "pointer",
-                width: "100%",
-                ":hover": {
-                  backgroundColor: "orange",
-                },
-                alignItems: "center",
-              }}
-              onClick={() => {
-                setAddNew(true);
-              }}
-              variant="outlined"
-            >
-              <AddIcon />
-              <Typography>New Specialization</Typography>
-            </Button>
-          )}
-        </Box>
-      )}
     </Box>
   );
 };

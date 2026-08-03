@@ -628,7 +628,6 @@ const ChatSideBar = ({
               user={user}
               nodes={nodes}
               cloning={false}
-              isSaving={false}
               disabledAddButton={false}
               getNumOfGeneralizations={() => false}
               selectedProperty=""

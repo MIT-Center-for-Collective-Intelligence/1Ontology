@@ -36,7 +36,6 @@ import {
   randomProminentColor,
   saveNewChangeLog,
   updateInheritance,
-  updatePartsAndPartsOf,
   updatePropertyOf,
 } from "@components/lib/utils/helpers";
 import { diffWords, diffLines } from "diff"; // Using diffLines for line-by-line diff

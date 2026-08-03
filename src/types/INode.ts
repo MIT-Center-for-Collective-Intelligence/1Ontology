@@ -40,8 +40,26 @@ export type ILinkNode = {
   change?: any;
   changeType?: string;
   randomId?: string;
+  /** For a part: the node that OWNS it (empty ⇒ owned here). Drives parts inheritance. */
   inheritedFrom?: string;
   optional?: boolean;
+  /**
+   * For a stored parts entry on an ATTACHED node: the resolved part id this
+   * entry sits behind (null = front; absent = end). Broken nodes store none —
+   * their array order is authoritative.
+   */
+  after?: string | null;
+};
+
+/**
+ * Parts inheritance state. `source` = the direct generalization the node's
+ * parts view resolves through (null = broken/root). `overrides` = optional
+ * toggles on VIRTUAL (non-stored) parts only. Replaces both the old
+ * `partsOverallSource` and the `inheritance.parts` entry (permanently nulled).
+ */
+export type IPartsInheritance = {
+  source: string | null;
+  overrides: { [partId: string]: { optional: boolean } };
 };
 
 export type ICollection = {
@@ -72,13 +90,15 @@ export type INode = {
     isPartOf: ICollection[];
   };
   inheritance: IInheritance;
-  inheritanceParts: {
-    [nodeId: string]: {
-      inheritedFromTitle: string;
-      inheritedFromId: string;
-    } | null;
-  };
   inheritedPartsDetails: InheritedPartsDetail[];
+  /** Ref-based parts inheritance state — see {@link IPartsInheritance}. */
+  partsInheritance?: IPartsInheritance;
+  /**
+   * A stored snapshot of this node's resolved parts. It can go stale but that's
+   * fine: reads compare it against a fresh resolution and silently repair it.
+   * Never shown in the UI directly and never copied to other nodes.
+   */
+  resolvedParts?: ILinkNode[];
   specializations: ICollection[];
   generalizations: ICollection[];
   root: string;

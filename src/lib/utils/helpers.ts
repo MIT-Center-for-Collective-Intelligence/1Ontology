@@ -1,9 +1,4 @@
-import {
-  ICollection,
-  IInheritance,
-  ILinkNode,
-  INode,
-} from "@components/types/INode";
+import { ICollection, IInheritance, INode } from "@components/types/INode";
 import {
   getDoc,
   doc,
@@ -876,8 +871,21 @@ export const createNewNode = (
     }
   }
 
+  // Parts resolve through the ref chain: the child stores no entries and
+  // follows the parent until it breaks. Its inheritance entry stays null.
+  updatedProperties.parts = [{ collectionName: "main", nodes: [] }];
+  updatedInheritance.parts = {
+    ref: null,
+    title: "",
+    inheritanceType:
+      parentNodeData.inheritance?.parts?.inheritanceType ??
+      "inheritUnlessAlreadyOverRidden",
+  };
+
   const newNode: any = {
     ...parentNodeData,
+    partsInheritance: { source: parentNodeData.id, overrides: {} },
+    inheritedPartsDetails: [],
     contributors: [],
     contributorsByProperty: [],
     textValue: {},
@@ -900,7 +908,7 @@ export const createNewNode = (
             id: generalizationId,
             title:
               generalizationId === parentNodeData.id
-                ? parentNodeData.title ?? ""
+                ? (parentNodeData.title ?? "")
                 : "",
           },
         ],
@@ -921,6 +929,9 @@ export const createNewNode = (
   };
   delete newNode.root;
   delete newNode.oNetTask;
+  delete newNode.resolvedParts;
+  delete newNode.partsOverallSource;
+  delete newNode.inheritanceParts;
   if (newNode?.textValue?.specializations) {
     delete newNode.textValue.specializations;
   }

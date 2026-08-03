@@ -37,15 +37,10 @@ import {
   getFirestore,
   doc,
 } from "firebase/firestore";
-import {
-  saveAsInheritancePart,
-  getGeneralizationParts,
-} from "@components/lib/utils/partsHelper";
 import { SearchBox } from "../SearchBox/SearchBox";
 
 const StructuredPropertySelector = ({
   handleCloseAddLinksModel,
-  onSave,
   selectedProperty,
   currentVisibleNode,
   setSearchValue,
@@ -81,7 +76,6 @@ const StructuredPropertySelector = ({
   addedElements,
   setRemovedElements,
   setAddedElements,
-  isSaving,
   scrollToElement,
   selectedCollection,
   appName,
@@ -92,7 +86,6 @@ const StructuredPropertySelector = ({
   relatedNodes,
   fetchNode,
 }: {
-  onSave: any;
   handleCloseAddLinksModel: any;
   selectedProperty: any;
   currentVisibleNode: any;
@@ -143,7 +136,6 @@ const StructuredPropertySelector = ({
   setRemovedElements: any;
   addedElements: Set<string>;
   setAddedElements: any;
-  isSaving: boolean;
   scrollToElement: (nodeId: string) => void;
   selectedCollection: string;
   appName?: string;
@@ -155,7 +147,6 @@ const StructuredPropertySelector = ({
   fetchNode: (nodeId: string) => Promise<any | null>;
 }) => {
   const [disabledButton, setDisabledButton] = useState(false);
-  const [isUpdatingInheritance, setIsUpdatingInheritance] = useState(false);
   const [glowSearchBox, setGlowSearchBox] = useState(false);
   const [chromaSearchResults, setChromaSearchResults] = useState<any[]>([]);
   const [loadingChromaSearch, setLoadingChromaSearch] = useState(false);
@@ -336,18 +327,8 @@ const StructuredPropertySelector = ({
 
   // Initialize checkedItems with parts that are already inherited
   useEffect(() => {
-    if (
-      selectedProperty === "parts" &&
-      currentVisibleNode &&
-      !isUpdatingInheritance
-    ) {
+    if (selectedProperty === "parts" && currentVisibleNode) {
       const partsToCheck = new Set<string>();
-
-      if (currentVisibleNode.inheritanceParts) {
-        Object.keys(currentVisibleNode.inheritanceParts).forEach((partId) => {
-          partsToCheck.add(partId);
-        });
-      }
 
       if (currentVisibleNode.properties?.parts) {
         currentVisibleNode.properties.parts.forEach((collection: any) => {
@@ -379,11 +360,9 @@ const StructuredPropertySelector = ({
   }, [
     selectedProperty,
     currentVisibleNode?.id,
-    currentVisibleNode?.inheritanceParts,
     currentVisibleNode?.properties?.parts,
     setCheckedItems,
     relatedNodes,
-    isUpdatingInheritance,
   ]);
 
   useEffect(() => {
@@ -512,10 +491,6 @@ const StructuredPropertySelector = ({
   const markItemAsChecked = async (
     checkedId: string,
     radioSelection = false,
-    fromGeneralizationDropdown?: {
-      generalizationId: string;
-      generalizationTitle: string;
-    },
   ) => {
     const removedElements: string[] = [];
     const addedElements: string[] = [];
@@ -529,134 +504,79 @@ const StructuredPropertySelector = ({
 
     setLoadingIds((prev: Set<string>) => new Set(prev).add(checkedId));
 
-    // Handle parts property with new inheritance logic
-    if (selectedProperty === "parts" && fromGeneralizationDropdown) {
-      // This is a part selected from generalization dropdown - save to inheritanceParts
-      setIsUpdatingInheritance(true);
-      try {
-        const action = isRemoving ? "remove" : "add";
-
-        const generalizationNode =
-          relatedNodes[fromGeneralizationDropdown.generalizationId];
-        const partInGeneralization = getGeneralizationParts(
-          fromGeneralizationDropdown.generalizationId,
-          relatedNodes,
-        ).find((p) => p.id === checkedId);
-
-        let inheritedFromId = fromGeneralizationDropdown.generalizationId;
-        let inheritedFromTitle = fromGeneralizationDropdown.generalizationTitle;
-
-        if (
-          partInGeneralization?.isInherited &&
-          generalizationNode?.inheritanceParts?.[checkedId]
-        ) {
-          const originalInheritance =
-            generalizationNode.inheritanceParts[checkedId];
-          inheritedFromId = originalInheritance.inheritedFromId;
-          inheritedFromTitle = originalInheritance.inheritedFromTitle;
-        }
-
-        await saveAsInheritancePart(
-          currentVisibleNode?.id,
-          checkedId,
-          inheritedFromId,
-          inheritedFromTitle,
-          user,
-          action,
-          appName ?? "",
+    setEditableProperty((prev: ICollection[]) => {
+      const updated = [...prev];
+      if (checkedItems.has(checkedId)) {
+        updated.forEach((collection) => {
+          collection.nodes = collection.nodes.filter((n) => n.id !== checkedId);
+        });
+      } else {
+        const targetCollectionName = selectedCollection || "main";
+        let targetCollection = updated.find(
+          (c) => c.collectionName === targetCollectionName,
         );
 
-        // Refresh state after inheritance operations
-        refreshEditableProperty();
+        if (!targetCollection) {
+          targetCollection = { collectionName: "main", nodes: [] };
+          updated.push(targetCollection);
+        }
 
-        setCheckedItems((prev: Set<string>) => {
-          const updated = new Set(prev);
-          if (updated.has(checkedId)) {
-            updated.delete(checkedId);
-          } else {
-            if (radioSelection) updated.clear();
-            updated.add(checkedId);
-          }
-          if (selectedProperty === "generalizations" && updated.size === 0) {
-            return prev;
-          }
-          return updated;
+        targetCollection.nodes.push({
+          id: checkedId,
+          title: relatedNodes[checkedId]?.title ?? "",
         });
-
-        // Update newOnes state for inheritance parts
-        setNewOnes((prev: Set<string>) => {
-          const updated = new Set(prev);
-          updated.has(checkedId)
-            ? updated.delete(checkedId)
-            : updated.add(checkedId);
-          return updated;
-        });
-      } catch (error) {
-        console.error("Error saving inheritance part:", error);
-      } finally {
-        setIsUpdatingInheritance(false);
       }
-    } else {
-      // Existing logic for non-parts properties or direct parts
-      setEditableProperty((prev: ICollection[]) => {
-        const updated = [...prev];
-        if (checkedItems.has(checkedId)) {
-          updated.forEach((collection) => {
-            collection.nodes = collection.nodes.filter(
-              (n) => n.id !== checkedId,
-            );
-          });
-        } else {
-          const targetCollectionName = selectedCollection || "main";
-          let targetCollection = updated.find(
-            (c) => c.collectionName === targetCollectionName,
+      return updated;
+    });
+
+    setAddedElements((prev: Set<string>) => {
+      const updated = new Set(prev);
+      updated.has(checkedId)
+        ? updated.delete(checkedId)
+        : updated.add(checkedId);
+      return updated;
+    });
+
+    setCheckedItems((prev: Set<string>) => {
+      const updated = new Set(prev);
+      if (updated.has(checkedId)) {
+        updated.delete(checkedId);
+      } else {
+        if (radioSelection) updated.clear();
+        updated.add(checkedId);
+      }
+      if (selectedProperty === "generalizations" && updated.size === 0) {
+        return prev;
+      }
+      return updated;
+    });
+
+    setNewOnes((prev: Set<string>) => {
+      const updated = new Set(prev);
+      updated.has(checkedId)
+        ? updated.delete(checkedId)
+        : updated.add(checkedId);
+      return updated;
+    });
+
+    // Persist changes and refresh state
+    try {
+      if (selectedProperty === "parts") {
+        if (isRemoving) {
+          await unlinkNodeRelation(
+            currentVisibleNode?.id,
+            checkedId,
+            -1,
+            0,
+            true,
           );
-
-          if (!targetCollection) {
-            targetCollection = { collectionName: "main", nodes: [] };
-            updated.push(targetCollection);
-          }
-
-          targetCollection.nodes.push({
-            id: checkedId,
-            title: relatedNodes[checkedId]?.title ?? "",
+        } else {
+          await linkNodeRelation({
+            currentNodeId: currentVisibleNode?.id,
+            partId: checkedId,
           });
         }
-        return updated;
-      });
-
-      setAddedElements((prev: Set<string>) => {
-        const updated = new Set(prev);
-        updated.has(checkedId)
-          ? updated.delete(checkedId)
-          : updated.add(checkedId);
-        return updated;
-      });
-
-      setCheckedItems((prev: Set<string>) => {
-        const updated = new Set(prev);
-        if (updated.has(checkedId)) {
-          updated.delete(checkedId);
-        } else {
-          if (radioSelection) updated.clear();
-          updated.add(checkedId);
-        }
-        if (selectedProperty === "generalizations" && updated.size === 0) {
-          return prev;
-        }
-        return updated;
-      });
-
-      setNewOnes((prev: Set<string>) => {
-        const updated = new Set(prev);
-        updated.has(checkedId)
-          ? updated.delete(checkedId)
-          : updated.add(checkedId);
-        return updated;
-      });
-
-      // Persist changes and refresh state
-      try {
+      } else {
         await handleSaveLinkChanges(
           removedElements,
           addedElements,
@@ -664,11 +584,11 @@ const StructuredPropertySelector = ({
           currentVisibleNode?.id,
           selectedCollection,
         );
-        // editableProperty re-syncs from currentVisibleNode in the refresh
-        // effect once the instant update or snapshot lands.
-      } catch (error) {
-        console.error("Error saving link changes:", error);
       }
+      // editableProperty re-syncs from currentVisibleNode in the refresh
+      // effect once the instant update or snapshot lands.
+    } catch (error) {
+      console.error("Error saving link changes:", error);
     }
 
     scrollToElement(checkedId);
@@ -805,7 +725,9 @@ const StructuredPropertySelector = ({
       where("deleted", "==", false),
     ];
     if (appName) constraints.push(where("appName", "==", appName));
-    const rootDocs = await getDocs(query(collection(db, NODES), ...constraints));
+    const rootDocs = await getDocs(
+      query(collection(db, NODES), ...constraints),
+    );
     const rootId = rootDocs.docs[0]?.id;
     if (!rootId) {
       confirmIt(
@@ -894,7 +816,6 @@ const StructuredPropertySelector = ({
           nodes={relatedNodes}
           cloning={cloning}
           addACloneNodeQueue={_add}
-          isSaving={isSaving}
           disabledAddButton={
             selectedProperty === "generalizations" && checkedItems.size === 1
           }
@@ -1033,7 +954,6 @@ const StructuredPropertySelector = ({
                   }}
                   variant="contained"
                   disabled={
-                    isSaving ||
                     searchValue.length < 3 ||
                     searchResultsForSelection[0]?.title.trim() ===
                       searchValue.trim() ||

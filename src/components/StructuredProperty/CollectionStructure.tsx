@@ -172,13 +172,10 @@ const CollectionStructure = ({
   unlinkElement,
   addACloneNodeQueue,
   selectedProperty,
-  setModifiedOrder,
   glowIds,
   scrollToElement,
   selectedCollection,
   handleCloseAddLinksModel,
-  onSave,
-  isSaving,
   addedElements,
   removedElements,
   setSearchValue,
@@ -241,13 +238,10 @@ const CollectionStructure = ({
   unlinkElement: any;
   addACloneNodeQueue: any;
   selectedProperty: string;
-  setModifiedOrder: any;
   glowIds: Set<string>;
   scrollToElement: (elementId: string) => void;
   selectedCollection: string;
   handleCloseAddLinksModel: any;
-  onSave: any;
-  isSaving: any;
   addedElements: any;
   removedElements: any;
   setSearchValue: any;
@@ -408,7 +402,6 @@ const CollectionStructure = ({
             newArray.splice(destinationIndex, 0, movedElement);
             return newArray;
           });
-          setModifiedOrder(true);
           return;
         }
         const nodeData = { ...currentVisibleNode } as INode;
@@ -561,7 +554,6 @@ const CollectionStructure = ({
           }
           return prev;
         });
-        setModifiedOrder(true);
 
         if (propertyValue) {
           const previousValue = JSON.parse(JSON.stringify(propertyValue));
@@ -976,63 +968,6 @@ const CollectionStructure = ({
       onInstantTreeUpdate,
       confirmIt,
     ],
-  );
-  const saveNewAndSwapIt = (newPartTitle: string, partId: string) => {
-    try {
-      if (model && addACloneNodeQueue) {
-        const newId = addACloneNodeQueue(partId, newPartTitle);
-        replaceWith(newId, partId);
-        return;
-      }
-      if (property === "parts" && cloneNode) {
-        const nodeId = partId;
-        const newId = doc(collection(db, NODES)).id;
-        const clonedNode = cloneNode(nodeId, newPartTitle, newId, property);
-
-        replaceWith(newId, partId);
-      }
-    } catch (error) {
-      console.error(error);
-    }
-  };
-  const replaceWith = useCallback(
-    async (partId: string, id: string) => {
-      try {
-        // scrollToElement(partId);
-        if (model) {
-          setEditableProperty((prev: ICollection[]) => {
-            const _prev = [...prev];
-            const elementIdx = _prev[0].nodes.findIndex((n) => n.id === id);
-            const existIdx = _prev[0].nodes.findIndex((n) => n.id === partId);
-            if (existIdx === -1) {
-              _prev[0].nodes[elementIdx].id = partId;
-            }
-            return _prev;
-          });
-          return;
-        }
-
-        if (property === "parts" && currentVisibleNode?.id) {
-          const elementIdx = propertyValue[0].nodes.findIndex(
-            (n: { id: string }) => n.id === id,
-          );
-          const existIdx = propertyValue[0].nodes.findIndex(
-            (n: { id: string }) => n.id === partId,
-          );
-          if (existIdx === -1) {
-            propertyValue[0].nodes[elementIdx].id = partId;
-            const nodeRef = doc(collection(db, NODES), currentVisibleNode?.id);
-
-            updateDoc(nodeRef, {
-              "properties.parts": propertyValue,
-            });
-          }
-        }
-      } catch (error) {
-        console.error(error);
-      }
-    },
-    [currentVisibleNode?.id, db, property, propertyValue, model],
   );
   const saveEditCollection = useCallback(
     async (newCollection: string) => {
@@ -1645,23 +1580,6 @@ const CollectionStructure = ({
                                             />
                                           </IconButton>
                                         </Tooltip>
-                                        {/*<LoadingButton
-                                          size="small"
-                                          onClick={onSave}
-                                          loading={isSaving}
-                                          color="success"
-                                          variant="contained"
-                                          sx={{
-                                            borderRadius: "25px",
-                                            color: "white",
-                                          }}
-                                          disabled={
-                                            addedElements.size === 0 &&
-                                            removedElements.size === 0
-                                          }
-                                        >
-                                          Save
-                                        </LoadingButton> */}
                                       </Box>
                                     )}
                                 </Box>
@@ -1911,10 +1829,6 @@ const CollectionStructure = ({
                                                   selectedDiffNode={
                                                     selectedDiffNode
                                                   }
-                                                  replaceWith={replaceWith}
-                                                  saveNewAndSwapIt={
-                                                    saveNewAndSwapIt
-                                                  }
                                                   clonedNodesQueue={
                                                     clonedNodesQueue
                                                   }
@@ -2037,180 +1951,6 @@ const CollectionStructure = ({
                                     </Typography>
                                   )}
 
-                                  {/* Display inheritanceParts from the referenced generalization when inheritance.parts.ref exists */}
-                                  {/* {property === "parts" &&
-                                    currentVisibleNode.inheritance?.parts
-                                      ?.ref &&
-                                    nodes[
-                                      currentVisibleNode.inheritance.parts.ref
-                                    ]?.inheritanceParts &&
-                                    Object.entries(
-                                      nodes[
-                                        currentVisibleNode.inheritance.parts.ref
-                                      ].inheritanceParts,
-                                    ).map(
-                                      ([nodeId, inheritanceInfo], index) => {
-                                        if (!inheritanceInfo) return null;
-
-                                        const info = inheritanceInfo as {
-                                          inheritedFromTitle: string;
-                                          inheritedFromId: string;
-                                        };
-
-                                        return (
-                                          <LinkNode
-                                            key={`inherited-from-ref-${nodeId}-${index}`}
-                                            provided={{}}
-                                            navigateToNode={navigateToNode}
-                                            setSnackbarMessage={
-                                              setSnackbarMessage
-                                            }
-                                            currentVisibleNode={
-                                              currentVisibleNode
-                                            }
-                                            setCurrentVisibleNode={
-                                              setCurrentVisibleNode
-                                            }
-                                            sx={{ pl: 1 }}
-                                            link={{
-                                              id: nodeId,
-                                              inheritedFrom:
-                                                info.inheritedFromTitle,
-                                            }}
-                                            property={property}
-                                            title={getTitle(nodes, nodeId)}
-                                            nodes={nodes}
-                                            linkIndex={-1} // -1 indicates inherited part
-                                            linkLocked={false}
-                                            locked={
-                                              locked || !!currentImprovement
-                                            }
-                                            user={user}
-                                            collectionIndex={collectionIndex}
-                                            collectionName={
-                                              propertyValue[collectionIndex]
-                                                .collectionName
-                                            }
-                                            selectedDiffNode={selectedDiffNode}
-                                            replaceWith={replaceWith}
-                                            saveNewAndSwapIt={saveNewAndSwapIt}
-                                            clonedNodesQueue={clonedNodesQueue}
-                                            unlinkElement={unlinkElement}
-                                            selectedProperty={selectedProperty}
-                                            glowIds={glowIds}
-                                            appName={appName}
-                                            currentImprovement={
-                                              currentImprovement
-                                            }
-                                            loadingIds={loadingIds}
-                                            saveNewSpecialization={
-                                              saveNewSpecialization
-                                            }
-                                            enableEdit={enableEdit}
-                                            setClonedNodesQueue={
-                                              setClonedNodesQueue
-                                            }
-                                            partsInheritance={partsInheritance}
-                                            setEditableProperty={
-                                              setEditableProperty
-                                            }
-                                            unlinkNodeRelation={
-                                              unlinkNodeRelation
-                                            }
-                                            onInstantTreeUpdate={
-                                              onInstantTreeUpdate
-                                            }
-                                          />
-                                        );
-                                      },
-                                    )} */}
-
-                                  {/* Display inherited parts from inheritanceParts only if inheritance.parts.ref is null */}
-                                  {/*   {property === "parts" &&
-                                    !currentVisibleNode.inheritance?.parts
-                                      ?.ref &&
-                                    nodes[currentVisibleNode.id]
-                                      ?.inheritanceParts &&
-                                    Object.entries(
-                                      nodes[currentVisibleNode.id]
-                                        .inheritanceParts,
-                                    ).map(
-                                      ([nodeId, inheritanceInfo], index) => {
-                                        if (!inheritanceInfo) return null;
-
-                                        const info = inheritanceInfo as {
-                                          inheritedFromTitle: string;
-                                          inheritedFromId: string;
-                                        };
-
-                                        return (
-                                          <LinkNode
-                                            key={`inherited-${nodeId}-${index}`}
-                                            provided={{}}
-                                            navigateToNode={navigateToNode}
-                                            setSnackbarMessage={
-                                              setSnackbarMessage
-                                            }
-                                            currentVisibleNode={
-                                              currentVisibleNode
-                                            }
-                                            setCurrentVisibleNode={
-                                              setCurrentVisibleNode
-                                            }
-                                            sx={{ pl: 1 }}
-                                            link={{
-                                              id: nodeId,
-                                              inheritedFrom:
-                                                info.inheritedFromTitle,
-                                            }}
-                                            property={property}
-                                            title={getTitle(nodes, nodeId)}
-                                            nodes={nodes}
-                                            linkIndex={-1} // -1 indicates inherited part
-                                            linkLocked={false}
-                                            locked={
-                                              locked || !!currentImprovement
-                                            }
-                                            user={user}
-                                            collectionIndex={collectionIndex}
-                                            collectionName={
-                                              propertyValue[collectionIndex]
-                                                .collectionName
-                                            }
-                                            selectedDiffNode={selectedDiffNode}
-                                            replaceWith={replaceWith}
-                                            saveNewAndSwapIt={saveNewAndSwapIt}
-                                            clonedNodesQueue={clonedNodesQueue}
-                                            unlinkElement={unlinkElement}
-                                            selectedProperty={selectedProperty}
-                                            glowIds={glowIds}
-                                            appName={appName}
-                                            currentImprovement={
-                                              currentImprovement
-                                            }
-                                            loadingIds={loadingIds}
-                                            saveNewSpecialization={
-                                              saveNewSpecialization
-                                            }
-                                            enableEdit={enableEdit}
-                                            setClonedNodesQueue={
-                                              setClonedNodesQueue
-                                            }
-                                            partsInheritance={partsInheritance}
-                                            setEditableProperty={
-                                              setEditableProperty
-                                            }
-                                            unlinkNodeRelation={
-                                              unlinkNodeRelation
-                                            }
-                                            onInstantTreeUpdate={
-                                              onInstantTreeUpdate
-                                            }
-                                          />
-                                        );
-                                      },
-                                    )} */}
-
                                 </Box>
                           </List>
 
@@ -2220,7 +1960,6 @@ const CollectionStructure = ({
                             selectedCollection ===
                               collection.collectionName && (
                               <StructuredPropertySelector
-                                onSave={onSave}
                                 currentVisibleNode={currentVisibleNode}
                                 relatedNodes={nodes}
                                 fetchNode={fetchNode}
@@ -2257,7 +1996,6 @@ const CollectionStructure = ({
                                 setRemovedElements={setRemovedElements}
                                 setAddedElements={setAddedElements}
                                 clonedNodesQueue={clonedNodesQueue}
-                                isSaving={isSaving}
                                 scrollToElement={scrollToElement}
                                 addACloneNodeQueue={addACloneNodeQueue}
                                 removedElements={removedElements}

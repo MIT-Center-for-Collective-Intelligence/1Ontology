@@ -24,7 +24,6 @@ const ExpandSearchResult = ({
   user,
   nodes,
   cloning,
-  isSaving,
   disabledAddButton,
   getNumOfGeneralizations,
   selectedProperty,
@@ -39,7 +38,6 @@ const ExpandSearchResult = ({
   user: any;
   nodes: any;
   cloning: any;
-  isSaving: any;
   disabledAddButton: any;
   getNumOfGeneralizations: any;
   selectedProperty: any;
@@ -85,7 +83,6 @@ const ExpandSearchResult = ({
           user={user}
           handleCloning={handleCloning}
           cloning={cloning}
-          isSaving={isSaving}
           disabledAddButton={disabledAddButton}
           getNumOfGeneralizations={getNumOfGeneralizations}
           selectedProperty={selectedProperty}
@@ -126,7 +123,6 @@ const ExpandSearchResult = ({
               user={user}
               handleCloning={handleCloning}
               cloning={cloning}
-              isSaving={isSaving}
               disabledAddButton={disabledAddButton}
               getNumOfGeneralizations={getNumOfGeneralizations}
               selectedProperty={selectedProperty}
@@ -186,7 +182,6 @@ const NodeLabel = ({
   user,
   handleCloning,
   cloning,
-  isSaving,
   disabledAddButton,
   getNumOfGeneralizations,
   selectedProperty,
@@ -202,7 +197,6 @@ const NodeLabel = ({
   user: any;
   handleCloning: any;
   cloning: any;
-  isSaving: any;
   disabledAddButton: any;
   getNumOfGeneralizations: any;
   selectedProperty: any;
@@ -288,7 +282,7 @@ const NodeLabel = ({
         <LockIcon sx={{ color: "orange", mx: "15px" }} />
       )}
 
-      {handleCloning && !isSaving && (
+      {handleCloning && (
         <Tooltip title={"Add Specialization"}>
           <IconButton
             sx={{

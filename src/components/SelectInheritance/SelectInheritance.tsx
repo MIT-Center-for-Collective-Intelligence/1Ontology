@@ -20,20 +20,27 @@ const SelectInheritance = ({
   nodes,
   enableEdit,
   onInheritanceChange, // Callback to communicate with Text component
+  value,
+  onChange,
 }: {
   currentVisibleNode: INode;
   property: string;
   nodes: { [nodeId: string]: INode };
   enableEdit: boolean;
   onInheritanceChange?: (property: string, newInheritanceRef: string) => any;
+  value?: string;
+  onChange?: (generalizationId: string) => void;
 }) => {
   const db = getFirestore();
   const [generalizations, setGeneralizations] = useState<
     { id: string; title: string }[]
   >([]);
 
-  const inheritanceRef =
-    currentVisibleNode.inheritance?.[property]?.ref || "inheritance-overridden";
+  const controlled = typeof onChange === "function";
+  const inheritanceRef = controlled
+    ? value || "inheritance-overridden"
+    : currentVisibleNode.inheritance?.[property]?.ref ||
+      "inheritance-overridden";
 
   useEffect(() => {
     let _generalizations: any = [
@@ -45,28 +52,27 @@ const SelectInheritance = ({
       title: getTitle(nodes, node.id),
     }));
 
-    _generalizations = _generalizations.filter((g: any) => {
-      return (
-        !nodes[g.id]?.inheritance?.[property]?.ref ||
-        nodes[g.id]?.inheritance?.[property]?.ref !== inheritanceRef
+    if (!controlled) {
+      _generalizations = _generalizations.filter((g: any) => {
+        return (
+          !nodes[g.id]?.inheritance?.[property]?.ref ||
+          nodes[g.id]?.inheritance?.[property]?.ref !== inheritanceRef
+        );
+      });
+      const index = _generalizations.findIndex(
+        (g: any) => g.id === inheritanceRef,
       );
-    });
-    const index = _generalizations.findIndex(
-      (g: any) => g.id === inheritanceRef,
-    );
-    if (index === -1) {
-      const title =
-        inheritanceRef === "inheritance-overridden"
-          ? "Inheritance Overridden"
-          : getTitle(nodes, inheritanceRef);
-      _generalizations.push({
-        id: inheritanceRef,
-        title:
+      if (index === -1) {
+        const title =
           inheritanceRef === "inheritance-overridden"
             ? "Inheritance Overridden"
-            : getTitle(nodes, inheritanceRef),
-        fullTitle: title,
-      });
+            : getTitle(nodes, inheritanceRef);
+        _generalizations.push({
+          id: inheritanceRef,
+          title,
+          fullTitle: title,
+        });
+      }
     }
 
     _generalizations.forEach((c: any) => {
@@ -76,7 +82,13 @@ const SelectInheritance = ({
       c.title = truncatedTitle;
     });
     setGeneralizations(_generalizations);
-  }, [currentVisibleNode.generalizations, inheritanceRef, nodes]);
+  }, [
+    currentVisibleNode.generalizations,
+    inheritanceRef,
+    nodes,
+    controlled,
+    property,
+  ]);
 
   // Map the generalizations to get the title and id
 
@@ -191,6 +203,7 @@ const SelectInheritance = ({
   };
   // Don't render if inheritanceType is neverInherit
   if (
+    !controlled &&
     currentVisibleNode.inheritance[property]?.inheritanceType === "neverInherit"
   ) {
     return null;
@@ -200,7 +213,11 @@ const SelectInheritance = ({
     <Box sx={{ ml: "auto" }}>
       <TextField
         value={inheritanceRef}
-        onChange={(e: any) => changeInheritance(e, property)}
+        onChange={(e: any) =>
+          controlled
+            ? onChange?.(e.target.value)
+            : changeInheritance(e, property)
+        }
         select
         label="Change Inheritance"
         sx={{

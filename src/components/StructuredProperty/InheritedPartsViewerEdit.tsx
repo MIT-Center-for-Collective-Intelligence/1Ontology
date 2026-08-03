@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Box,
   Typography,
@@ -32,10 +32,11 @@ import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import DragHandleIcon from "@mui/icons-material/DragHandle";
 import CloseIcon from "@mui/icons-material/Close";
 import InheritedPartsLegend from "../Common/InheritedPartsLegend";
-import GeneralizationTabs from "./GeneralizationTabs";
 
 import { Timestamp } from "firebase/firestore";
 import { recordLogs } from "@components/lib/utils/helpers";
+import { getPartGeneralizationSources } from "@components/lib/utils/partsHelper";
+import { makeResolvedOf } from "@components/lib/hooks/useResolvedParts";
 import SyncedSpinner from "@components/components/SyncedSpinner";
 
 interface GeneralizationNode {
@@ -64,13 +65,18 @@ interface InheritedPartsViewerProps {
   ) => void;
   readOnly?: boolean;
   currentVisibleNode: any;
+  resolvedParts: ILinkNode[];
   setDisplayDetails: any;
   enableEdit: boolean;
   replaceWith: any;
-  saveParts: (
-    newParts: ICollection[],
+  sortParts: (
+    orderedIds: string[],
     inheritedPartsDetails?: InheritedPartsDetail[] | null,
   ) => Promise<void>;
+  switchPartSource: (partId: string, genId: string) => Promise<void>;
+  addPartFromGen: (partId: string, genId?: string) => Promise<void>;
+  togglePartOptional: (partId: string, optional: boolean) => Promise<void>;
+  savingPartIds: Set<string>;
   user: any;
   appName?: string;
   navigateToNode?: any;
@@ -78,11 +84,10 @@ interface InheritedPartsViewerProps {
   addPart?: any;
   removePart?: any;
   inheritedPartsDetails?: InheritedPartsDetail[] | null;
-  inheritedPartsLoading?: boolean;
+  inheritedPartsRepairing?: boolean;
   mutateInheritedPartsDetails?: (
     newData: InheritedPartsDetail[] | null,
   ) => void;
-  refetchNow?: () => void;
   clonedNodesQueue?: {
     [nodeId: string]: { title: string; id: string; property: string };
   };
@@ -101,8 +106,13 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
   readOnly = false,
   enableEdit,
   replaceWith,
-  saveParts,
+  sortParts,
+  switchPartSource,
+  addPartFromGen,
+  togglePartOptional,
+  savingPartIds,
   currentVisibleNode,
+  resolvedParts,
   triggerSearch,
   addPart,
   removePart,
@@ -111,9 +121,8 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
   setDisplayDetails,
   appName,
   inheritedPartsDetails,
-  inheritedPartsLoading,
+  inheritedPartsRepairing,
   mutateInheritedPartsDetails,
-  refetchNow,
   clonedNodesQueue,
   approvePendingPart,
   cancelPendingPart,
@@ -125,8 +134,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
 
   // Root node: no generalizations, but may have own parts. Treat current node as its own
   // "generalization" so parts can be displayed for comparison.
-  const partsSource = currentVisibleNode.properties?.parts;
-  const hasOwnParts = (partsSource?.[0]?.nodes?.length ?? 0) > 0;
+  const hasOwnParts = resolvedParts.length > 0;
   const generalizations: GeneralizationNode[] =
     generalizationsFromParent.length > 0
       ? generalizationsFromParent
@@ -150,37 +158,42 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
   );
   // Titles of just-approved parts, used as a fallback while the cloned node
   // hasn't loaded into relatedNodes yet (otherwise the new row shows blank).
-  const [approvedTitles, setApprovedTitles] = useState<{ [id: string]: string }>(
-    {},
-  );
+  const [approvedTitles, setApprovedTitles] = useState<{
+    [id: string]: string;
+  }>({});
   const [loadingSpecializations, setLoadingSpecializations] = useState<
     Set<string>
   >(new Set());
   const [fetchedNodes, setFetchedNodes] = useState<{ [id: string]: INode }>({});
   const seenQueuedPendingIdsRef = useRef<Set<string>>(new Set());
-  const [highlightedPendingIds, setHighlightedPendingIds] = useState<Set<string>>(
-    new Set(),
-  );
+  const [highlightedPendingIds, setHighlightedPendingIds] = useState<
+    Set<string>
+  >(new Set());
 
   // Merge nodes from props with locally fetched nodes
   const allNodes = { ...nodes, ...fetchedNodes };
+  // Gen part lists resolve through the ref chain, like the rows themselves.
+  const resolvedOf = useMemo(
+    () => makeResolvedOf({ ...nodes, ...fetchedNodes }),
+    [nodes, fetchedNodes],
+  );
   // Ids of parts already on this node — used to filter them out of the
   // dropdown options so the user can't pick a duplicate.
-  const currentNodePartIdsSet = new Set<string>(
-    currentVisibleNode.properties?.parts?.[0]?.nodes?.map(
-      (n: { id: string }) => n.id,
-    ) ?? [],
-  );
+  const currentNodePartIdsSet = new Set<string>(resolvedParts.map((n) => n.id));
 
   useEffect(() => {
     const currentQueuedIds = Object.keys(clonedNodesQueue || {});
     const previouslySeenIds = seenQueuedPendingIdsRef.current;
-    const newlyQueuedIds = currentQueuedIds.filter((id) => !previouslySeenIds.has(id));
+    const newlyQueuedIds = currentQueuedIds.filter(
+      (id) => !previouslySeenIds.has(id),
+    );
 
     seenQueuedPendingIdsRef.current = new Set(currentQueuedIds);
 
     setHighlightedPendingIds((prev) => {
-      const next = new Set([...prev].filter((id) => currentQueuedIds.includes(id)));
+      const next = new Set(
+        [...prev].filter((id) => currentQueuedIds.includes(id)),
+      );
       newlyQueuedIds.forEach((id) => next.add(id));
       return next;
     });
@@ -223,11 +236,6 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
       setActiveTab(null);
     }
   }, [currentVisibleNode.id]);
-
-
-  const handleTabChange = (event: React.SyntheticEvent, newValue: string) => {
-    setActiveTab(newValue);
-  };
 
   if (selectedProperty !== "parts" || generalizations.length <= 0) {
     return null;
@@ -381,25 +389,18 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
       const newToTitle = allNodes[newTo]?.title || xRow.toTitle || "";
       const oldToTitle = xRow.toTitle || allNodes[oldTo]?.title || "";
 
-      const sourceParts: ICollection[] | undefined =
-        currentVisibleNode.properties?.["parts"];
-      if (!sourceParts?.[0]) return;
-
-      // Swap the parts' positions so the picked part takes the old one's slot:
-      // the generalization row stays put and only its right column flips.
-      const updatedParts: ICollection[] = JSON.parse(
-        JSON.stringify(sourceParts),
-      );
-      const partsNodes = updatedParts[0].nodes;
-      const oldIdx = partsNodes.findIndex((n: any) => n.id === oldTo);
-      const newIdx = partsNodes.findIndex((n: any) => n.id === newTo);
+      // Swap the parts' positions in the RESOLVED view so the picked part
+      // takes the old one's slot: the generalization row stays put and only
+      // its right column flips.
+      const newOrder: string[] = resolvedParts.map((p: ILinkNode) => p.id);
+      const oldIdx = newOrder.indexOf(oldTo);
+      const newIdx = newOrder.indexOf(newTo);
       if (oldIdx === -1 || newIdx === -1) return;
-      const tmp = partsNodes[oldIdx];
-      partsNodes[oldIdx] = partsNodes[newIdx];
-      partsNodes[newIdx] = tmp;
-      const newOrder: string[] = partsNodes.map((n: any) => n.id);
+      newOrder[oldIdx] = newTo;
+      newOrder[newIdx] = oldTo;
 
-      // Update details locally for an instant switch; refetchNow reconciles.
+      // Update details locally for an instant switch; the endpoint's fresh
+      // annotation write reconciles.
       const updatedDetails: InheritedPartsDetail[] | null =
         inheritedPartsDetails
           ? JSON.parse(JSON.stringify(inheritedPartsDetails))
@@ -412,8 +413,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
             gen.createdAt = original;
           } else {
             const seconds = original?._seconds ?? original?.seconds;
-            const nanos =
-              original?._nanoseconds ?? original?.nanoseconds ?? 0;
+            const nanos = original?._nanoseconds ?? original?.nanoseconds ?? 0;
             gen.createdAt =
               typeof seconds === "number"
                 ? new Timestamp(seconds, nanos)
@@ -466,10 +466,12 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
         });
       }
 
-      // Show it now, then persist and let the server decide.
+      // The swap changes positions only, membership and sources stay.
+      // So it persists through the SORT endpoint, which
+      // applies the usual reorder rules. The patched details ride along so
+      // the user's pick survives a recompute.
       mutateInheritedPartsDetails?.(updatedDetails);
-      await saveParts(updatedParts, updatedDetails);
-      refetchNow?.();
+      await sortParts(newOrder, updatedDetails);
 
       recordLogs({
         action: "switch to",
@@ -492,9 +494,8 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
     }
   };
 
-  // onAddPart/onRemovePart/onReplacePart route through saveParts. Rows derive
-  // from properties.parts, so they update at once; a new part shows a pending
-  // spinner until the recompute fills its annotation.
+  // Rows derive from the resolved view, so they update at once; a new part
+  // shows no symbol until the endpoint's annotation write lands.
   const onAddPart = (partId: string) => {
     addPart(partId);
   };
@@ -505,10 +506,21 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
 
   const onReplacePart = async (oldPartId: string, newPartId: string) => {
     if (!oldPartId || !newPartId || oldPartId === newPartId) return;
-    // The new id shows a pending row until the recompute fills its symbol;
-    // refetch so it resolves promptly.
+    if (inheritedPartsDetails) {
+      const updated: InheritedPartsDetail[] = JSON.parse(
+        JSON.stringify(inheritedPartsDetails),
+      );
+      for (const gen of updated) {
+        const row = gen.details.find((d) => d.to === oldPartId);
+        if (row) {
+          row.to = newPartId;
+          row.toTitle = allNodes[newPartId]?.title || row.toTitle || "";
+          row.symbol = row.from === newPartId ? "=" : ">";
+        }
+      }
+      mutateInheritedPartsDetails?.(updated);
+    }
     await replaceWith(oldPartId, newPartId);
-    refetchNow?.();
   };
 
   const onApprovePendingPart = async (queuedId: string, title: string) => {
@@ -532,31 +544,13 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
   const toggleOptional = async (partId: string) => {
     try {
       if (!user?.uname || !partId) return;
-      const sourceParts: ICollection[] | undefined =
-        currentVisibleNode.properties?.["parts"];
-      if (!sourceParts) return;
+      // Rows read optional live from the resolved view, so the (o) badge
+      // updates as soon as the instant patch lands.
+      const current = resolvedParts.find((n) => n.id === partId);
+      if (!current) return;
+      const newOptional = !current.optional;
 
-      // Flip optional on the part. Rows read optional live from properties.parts,
-      // so the (o) badge updates as soon as saveParts runs.
-      const updatedParts: ICollection[] = JSON.parse(
-        JSON.stringify(sourceParts),
-      );
-
-      let newOptional = false;
-      let found = false;
-      for (const col of updatedParts) {
-        const part = col.nodes.find((n: any) => n.id === partId);
-        if (part) {
-          part.optional = !part.optional;
-          newOptional = !!part.optional;
-          found = true;
-          break;
-        }
-      }
-      if (!found) return;
-
-      // Save through saveParts (maintains isPartOf, logs, handles failure).
-      saveParts(updatedParts);
+      togglePartOptional(partId, newOptional);
 
       recordLogs({
         action: "toggle optional",
@@ -580,8 +574,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
 
   const getTabContent = (generalizationId: string): JSX.Element => {
     // Check if node has any parts at all
-    const hasParts =
-      currentVisibleNode.properties?.parts?.[0]?.nodes?.length > 0;
+    const hasParts = resolvedParts.length > 0;
 
     // Computed first so the nodes with no parts can render pending rows too
     const pendingQueuedParts = Object.entries(clonedNodesQueue || {})
@@ -638,9 +631,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                 </ListItemIcon>
                 <ListItemText
                   primary={
-                    <Box
-                      sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                    >
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       <TextField
                         size="small"
                         value={pendingPart.title}
@@ -741,43 +732,15 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
       );
     }
 
+    // No annotation for this gen yet: rows still render from the resolved
+    // view, just without symbols, until the silent repair fills them in.
     const cachedGeneralizationData = inheritedPartsDetails?.find(
       (calc) => calc.generalizationId === generalizationId,
     );
 
-    if (!inheritedPartsDetails || !cachedGeneralizationData) {
-      return (
-        <Box>
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 1,
-              py: 2,
-            }}
-          >
-            <SyncedSpinner size={16} />
-            <Typography
-              variant="body2"
-              sx={{
-                color: (theme) =>
-                  theme.palette.mode === "light" ? "#95a5a6" : "#7f8c8d",
-                fontStyle: "italic",
-                fontSize: "0.75rem",
-              }}
-            >
-              Loading...
-            </Typography>
-          </Box>
-          {pendingRowsList}
-        </Box>
-      );
-    }
-
-    const details = cachedGeneralizationData.details || [];
+    const details = cachedGeneralizationData?.details || [];
     const nonPickedOnes = Object.entries(
-      cachedGeneralizationData.nonPickedOnes || {},
+      cachedGeneralizationData?.nonPickedOnes || {},
     ).reduce(
       (acc, [key, value]) => {
         acc[key] = value.map((item) => item.id);
@@ -785,16 +748,15 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
       },
       {} as { [key: string]: string[] },
     );
-    // Rows come from the node's own parts, so edits show at once. details is
-    // just an annotation lookup (from/symbol/switch options); a part with no
-    // entry yet renders `pending`. optional/optionalChange are read live.
+    // Rows come from the RESOLVED parts view, so edits show at once. details
+    // is just an annotation lookup (from/symbol/switch options); a part with
+    // no entry yet spins until the annotation covers it. optional/
+    // optionalChange are read live.
     const detailByTo = new Map<string, any>();
     for (const d of details) {
       if (d.to) detailByTo.set(d.to, d);
     }
-    const draggableItems = (
-      currentVisibleNode.properties?.parts?.[0]?.nodes ?? []
-    ).map((partNode: any) => {
+    const draggableItems = resolvedParts.map((partNode: any) => {
       const liveOptional = !!partNode.optional;
       const entry = detailByTo.get(partNode.id);
       if (entry) {
@@ -805,7 +767,12 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
               ? "added"
               : "removed"
           : "none";
-        return { ...entry, toOptional: liveOptional, optionalChange, pending: false };
+        return {
+          ...entry,
+          toOptional: liveOptional,
+          optionalChange,
+          inheritedFrom: partNode.inheritedFrom,
+        };
       }
       return {
         from: "",
@@ -822,6 +789,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
         optionalChange: "none",
         hops: 0,
         pending: true,
+        inheritedFrom: partNode.inheritedFrom,
       };
     });
 
@@ -853,10 +821,143 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
       partAlternativesLookup[entry.to] = { specs, gens };
     }
 
+    // Per part: the generalizations it can be specifically inherited from,
+    // each resolved to the owner it would record (skips a pass-through gen).
+    const partSourcesLookup: {
+      [partId: string]: { genId: string; title: string; owner: string }[];
+    } = {};
+    for (const entry of draggableItems) {
+      if (partSourcesLookup[entry.to]) continue;
+      partSourcesLookup[entry.to] = getPartGeneralizationSources(
+        entry.to,
+        generalizations,
+        allNodes,
+      ).map((s) => {
+        const genPart = resolvedOf(s.generalizationId).find(
+          (n) => n.id === entry.to,
+        );
+        return {
+          genId: s.generalizationId,
+          title: s.generalizationTitle,
+          owner: genPart?.inheritedFrom || s.generalizationId,
+        };
+      });
+    }
+
     const nonDraggableItems = Object.keys(nonPickedOnes).filter((id) => {
       const index = details.findIndex((d) => d.from === id);
       return index === -1;
     });
+
+    // Parts the generalization has but this node did not inherit.
+    // They have no own-part row, so the draggable list above skips them
+    const notInheritedItems = details.filter(
+      (d: any) => d.symbol === "x" && !currentNodePartIdsSet.has(d.from),
+    );
+
+    // "x" rows render in their own lists right below the draggable one; the
+    // draggable list drops its bottom padding then so they read as one list.
+    const hasTrailingXRows =
+      notInheritedItems.length > 0 || nonDraggableItems.length > 0;
+
+    // Shared styling for both part dropdowns' menus.
+    const menuPaperSx = {
+      mt: 0.5,
+      borderRadius: "14px",
+      boxShadow: (theme: any) =>
+        theme.palette.mode === "dark"
+          ? "0 14px 34px rgba(0, 0, 0, 0.6)"
+          : "0 14px 34px rgba(15, 23, 42, 0.16)",
+      overflow: "hidden",
+      "&::-webkit-scrollbar": { display: "none" },
+    };
+    const menuTitleSx = {
+      color: "text.primary",
+      fontSize: "1.1rem",
+      fontWeight: 700,
+      lineHeight: 1.5,
+      px: 1.75,
+      pt: 2,
+      pb: 1.75,
+      backgroundColor: (theme: any) =>
+        theme.palette.mode === "dark"
+          ? "rgba(0, 0, 0, 0.45)"
+          : "rgba(15, 23, 42, 0.14)",
+    };
+
+    const sectionHeaderSx = {
+      color: "text.secondary",
+      fontSize: "0.78rem",
+      fontWeight: 700,
+      letterSpacing: "0.09em",
+      textTransform: "uppercase",
+      lineHeight: 2.2,
+      px: 1.75,
+      backgroundColor: (theme: any) => theme.palette.background.paper,
+    };
+    const optionItemSx = {
+      display: "flex",
+      gap: 1,
+      mx: "10px",
+      my: "6px",
+      px: 1.5,
+      py: 0.9,
+      borderRadius: "10px",
+      border: "1px solid rgba(242, 164, 58, 0.4)",
+      transition: "background-color 0.15s ease, border-color 0.15s ease",
+      "&:hover": {
+        backgroundColor: (theme: any) =>
+          theme.palette.mode === "dark"
+            ? "rgba(242, 164, 58, 0.1)"
+            : "rgba(242, 164, 58, 0.08)",
+        borderColor: "#f2a43a",
+      },
+      "&.Mui-selected, &.Mui-selected:hover": {
+        backgroundColor: (theme: any) =>
+          theme.palette.mode === "dark"
+            ? "rgba(242, 164, 58, 0.14)"
+            : "rgba(242, 164, 58, 0.12)",
+        borderColor: "#f2a43a",
+      },
+    };
+    // The already-inherited source: disabled (can't re-pick it) but emphasized
+    // with a filled accent and a solid orange outline, floated to the top.
+    const currentSourceItemSx = {
+      ...optionItemSx,
+      cursor: "default",
+      fontWeight: 700,
+      backgroundColor: (theme: any) =>
+        theme.palette.mode === "dark"
+          ? "rgba(242, 164, 58, 0.16)"
+          : "rgba(242, 164, 58, 0.14)",
+      borderColor: "#f2a43a",
+      "&.Mui-disabled": { opacity: 1 },
+    };
+    const emptyStateSx = {
+      justifyContent: "center",
+      "&.Mui-disabled": { opacity: 1 },
+    };
+    const emptyTextSx = {
+      fontStyle: "italic",
+      fontSize: "0.95rem",
+      color: "text.disabled",
+    };
+    const rowHeightSpacer = (
+      <Select
+        value=""
+        displayEmpty
+        disabled
+        size="small"
+        aria-hidden
+        renderValue={() => <Box>{"\u00A0"}</Box>}
+        sx={{
+          visibility: "hidden",
+          fontSize: "0.9rem",
+          minWidth: 0,
+          borderRadius: "15px",
+        }}
+      />
+    );
 
     return (
       <Box
@@ -872,14 +973,11 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
               {...provided.droppableProps}
               sx={{
                 px: 1.8,
+                pb: hasTrailingXRows ? 0 : undefined,
               }}
             >
               {draggableItems.map((entry: any, index: number) => (
-                <Draggable
-                  key={entry.to}
-                  draggableId={entry.to}
-                  index={index}
-                >
+                <Draggable key={entry.to} draggableId={entry.to} index={index}>
                   {(providedDraggable) => (
                     <ListItem
                       ref={providedDraggable.innerRef}
@@ -940,12 +1038,30 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                       />
 
                       <ListItemIcon sx={{ minWidth: "auto" }}>
-                        {entry.pending ? (
+                        {savingPartIds.has(entry.to) ? (
+                          <Tooltip title="Linking this part…" placement="top">
+                            <span
+                              style={{
+                                display: "inline-flex",
+                                cursor: "default",
+                              }}
+                            >
+                              <SyncedSpinner size={18} />
+                            </span>
+                          </Tooltip>
+                        ) : entry.pending ? (
                           <Tooltip
-                            title="Calculating inheritance for this part"
+                            title="Calculating inheritance…"
                             placement="top"
                           >
-                            <SyncedSpinner size={18} />
+                            <span
+                              style={{
+                                display: "inline-flex",
+                                cursor: "default",
+                              }}
+                            >
+                              <SyncedSpinner size={18} />
+                            </span>
                           </Tooltip>
                         ) : entry.symbol === "x" ? (
                           <CloseIcon sx={{ fontSize: 20, color: "orange" }} />
@@ -1009,7 +1125,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                         <Tooltip title={"Remove part"} placement="top">
                           <span
                             style={{
-                              cursor: entry.pending
+                              cursor: savingPartIds.has(entry.to)
                                 ? "not-allowed"
                                 : undefined,
                               display: "inline-flex",
@@ -1017,7 +1133,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                           >
                             <IconButton
                               sx={{ p: 0.5 }}
-                              disabled={entry.pending}
+                              disabled={savingPartIds.has(entry.to)}
                               onClick={() => {
                                 onRemovePart(entry.to);
                               }}
@@ -1025,14 +1141,14 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                               <RemoveIcon
                                 sx={{
                                   fontSize: 20,
-                                  color: entry.pending
+                                  color: savingPartIds.has(entry.to)
                                     ? "gray"
                                     : "red",
-                                  border: entry.pending
+                                  border: savingPartIds.has(entry.to)
                                     ? "1px solid gray"
                                     : "1px solid red",
                                   borderRadius: "50%",
-                                  opacity: entry.pending
+                                  opacity: savingPartIds.has(entry.to)
                                     ? 0.5
                                     : 1,
                                 }}
@@ -1083,7 +1199,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                 <Box
                                   component="button"
                                   type="button"
-                                  disabled={entry.pending}
+                                  disabled={savingPartIds.has(entry.to)}
                                   onMouseDown={(e: React.MouseEvent) => {
                                     e.stopPropagation();
                                   }}
@@ -1093,7 +1209,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                     toggleOptional(entry.to);
                                   }}
                                   sx={{
-                                    cursor: entry.pending
+                                    cursor: savingPartIds.has(entry.to)
                                       ? "not-allowed"
                                       : "pointer",
                                     "&:disabled": { opacity: 0.5 },
@@ -1155,195 +1271,296 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                 placement="top"
                                 disableHoverListener={isSelectOpen}
                               >
-                                <Select
-                                  value={entry.to}
-                                  disabled={entry.pending}
-                                  onChange={(e) => {
-                                    const newPartId = e.target.value;
-                                    onReplacePart(entry.to, newPartId);
-                                  }}
-                                  onOpen={() => {
-                                    setIsSelectOpen(true);
-                                    handleDropdownOpen(entry.to);
-                                  }}
-                                  onClose={() => setIsSelectOpen(false)}
-                                  size="small"
-                                  renderValue={() => (
-                                    <Box
-                                      sx={{
-                                        overflow: "hidden",
-                                        textOverflow: "ellipsis",
-                                        whiteSpace: "nowrap",
-                                        display: "block",
-                                      }}
-                                    >
-                                      {allNodes[entry.to]?.title ||
-                                        entry.toTitle}
-                                    </Box>
-                                  )}
-                                  sx={{
-                                    color: (theme) =>
-                                      theme.palette.mode === "dark"
-                                        ? "white"
-                                        : "black",
-                                    fontSize: "0.9rem",
-                                    flex: 1,
-                                    minWidth: 0,
-                                    borderRadius: "15px",
-                                    backgroundColor: (theme) =>
-                                      theme.palette.background.paper,
-                                    overflow: "hidden",
-                                    textOverflow: "ellipsis",
-                                    whiteSpace: "nowrap",
-                                  }}
-                                  MenuProps={{
-                                    PaperProps: {
-                                      sx: {
-                                        border: "2px solid orange",
-                                        borderRadius: "12px",
-                                        "&::-webkit-scrollbar": {
-                                          display: "none",
-                                        },
-                                      },
-                                    },
-                                    MenuListProps: {
-                                      sx: {
-                                        paddingTop: 0,
-                                        paddingBottom: 0,
-                                      },
-                                    },
-                                  }}
+                                <Box
+                                  component="span"
+                                  sx={{ display: "flex", flex: 1, minWidth: 0 }}
                                 >
-                                  {loadingSpecializations.has(entry.to) && (
-                                    <MenuItem disabled>
+                                  <Select
+                                    value={entry.to}
+                                    disabled={
+                                      savingPartIds.has(entry.to) ||
+                                      (partAlternativesLookup[entry.to]?.specs
+                                        .length ?? 0) +
+                                        (partAlternativesLookup[entry.to]?.gens
+                                          .length ?? 0) ===
+                                        0
+                                    }
+                                    onChange={(e) => {
+                                      const newPartId = e.target.value;
+                                      onReplacePart(entry.to, newPartId);
+                                    }}
+                                    onOpen={() => {
+                                      setIsSelectOpen(true);
+                                      handleDropdownOpen(entry.to);
+                                    }}
+                                    onClose={() => setIsSelectOpen(false)}
+                                    size="small"
+                                    renderValue={() => (
                                       <Box
                                         sx={{
-                                          display: "flex",
-                                          alignItems: "center",
-                                          gap: 1,
+                                          overflow: "hidden",
+                                          textOverflow: "ellipsis",
+                                          whiteSpace: "nowrap",
+                                          display: "block",
                                         }}
                                       >
+                                        {allNodes[entry.to]?.title ||
+                                          entry.toTitle}
+                                      </Box>
+                                    )}
+                                    sx={{
+                                      color: (theme) =>
+                                        theme.palette.mode === "dark"
+                                          ? "white"
+                                          : "black",
+                                      fontSize: "0.9rem",
+                                      flex: 1,
+                                      minWidth: 0,
+                                      borderRadius: "15px",
+                                      backgroundColor: (theme) =>
+                                        theme.palette.background.paper,
+                                      overflow: "hidden",
+                                      textOverflow: "ellipsis",
+                                      whiteSpace: "nowrap",
+                                    }}
+                                    MenuProps={{
+                                      PaperProps: { sx: menuPaperSx },
+                                      MenuListProps: {
+                                        sx: {
+                                          paddingTop: 0.5,
+                                          paddingBottom: 0.5,
+                                        },
+                                      },
+                                    }}
+                                  >
+                                    <ListSubheader sx={menuTitleSx}>
+                                      Switch to:
+                                    </ListSubheader>
+                                    <ListSubheader sx={sectionHeaderSx}>
+                                      Specializations
+                                    </ListSubheader>
+                                    {loadingSpecializations.has(entry.to) ? (
+                                      <MenuItem disabled sx={emptyStateSx}>
                                         <SyncedSpinner size={16} />
                                         <Typography
-                                          sx={{
-                                            fontStyle: "italic",
-                                            color: "gray",
-                                            fontSize: "0.9rem",
-                                          }}
+                                          sx={{ ...emptyTextSx, ml: 1 }}
                                         >
                                           Loading specializations...
                                         </Typography>
-                                      </Box>
-                                    </MenuItem>
-                                  )}
-                                  {(partAlternativesLookup[entry.to]?.specs
-                                    .length ?? 0) > 0 && (
-                                    <ListSubheader
-                                      sx={{
-                                        color: (theme) =>
-                                          theme.palette.mode === "dark"
-                                            ? "white"
-                                            : "black",
-                                        fontSize: "16px",
-                                        backgroundColor: (theme) =>
-                                          theme.palette.mode === "dark"
-                                            ? "#000000"
-                                            : "#d0d5dd",
-                                        borderBottomLeftRadius: "15px",
-                                        borderBottomRightRadius: "15px",
-                                      }}
-                                    >
-                                      Specializations{" "}
-                                    </ListSubheader>
-                                  )}
-                                  {(partAlternativesLookup[entry.to]?.specs ?? []).map(
-                                    (spec: any) => (
-                                      <MenuItem
-                                        key={`spec-${spec.id}`}
-                                        value={spec.id}
-                                        sx={{
-                                          display: "flex",
-                                          gap: "10px",
-                                          border: "1px solid gray",
-                                          borderRadius: "25px",
-                                          my: "4px",
-                                          mx: "8px",
-                                        }}
-                                      >
-                                        <SwapHorizIcon />
-                                        <Typography>{spec.title}</Typography>
                                       </MenuItem>
-                                    ),
-                                  )}
-
-                                  {(partAlternativesLookup[entry.to]?.gens
-                                    .length ?? 0) > 0 && (
-                                    <ListSubheader
-                                      sx={{
-                                        color: (theme) =>
-                                          theme.palette.mode === "dark"
-                                            ? "white"
-                                            : "black",
-                                        fontSize: "16px",
-                                        backgroundColor: (theme) =>
-                                          theme.palette.mode === "dark"
-                                            ? "#000000"
-                                            : "#d0d5dd",
-                                        borderBottomLeftRadius: "15px",
-                                        borderBottomRightRadius: "15px",
-                                      }}
-                                    >
-                                      Generalizations
-                                    </ListSubheader>
-                                  )}
-                                  {(partAlternativesLookup[entry.to]?.gens ?? []).map(
-                                    (gen: any) => (
-                                      <MenuItem
-                                        key={`gen-${gen.id}`}
-                                        value={gen.id}
-                                        sx={{
-                                          display: "flex",
-                                          gap: "10px",
-                                          border: "1px solid gray",
-                                          borderRadius: "25px",
-                                          my: "4px",
-                                          mx: "8px",
-                                        }}
-                                      >
-                                        <SwapHorizIcon />{" "}
-                                        <Typography>{gen.title}</Typography>
-                                      </MenuItem>
-                                    ),
-                                  )}
-                                  {/* Fallback when filtering has emptied both
-                                      sections, so the menu isn't blank. */}
-                                  {!loadingSpecializations.has(entry.to) &&
-                                    (partAlternativesLookup[entry.to]?.specs
-                                      .length ?? 0) === 0 &&
-                                    (partAlternativesLookup[entry.to]?.gens
-                                      .length ?? 0) === 0 && (
-                                      <MenuItem
-                                        disabled
-                                        sx={{
-                                          "&.Mui-disabled": { opacity: 1 },
-                                        }}
-                                      >
-                                        <Typography
-                                          sx={{
-                                            fontStyle: "italic",
-                                            fontSize: "0.9rem",
-                                            color: (theme) =>
-                                              theme.palette.mode === "light"
-                                                ? "#555"
-                                                : "#cfcfcf",
-                                          }}
+                                    ) : (partAlternativesLookup[entry.to]?.specs
+                                        .length ?? 0) > 0 ? (
+                                      (
+                                        partAlternativesLookup[entry.to]
+                                          ?.specs ?? []
+                                      ).map((spec: any) => (
+                                        <MenuItem
+                                          key={`spec-${spec.id}`}
+                                          value={spec.id}
+                                          sx={optionItemSx}
                                         >
-                                          No alternatives available
+                                          <SwapHorizIcon
+                                            sx={{
+                                              fontSize: 18,
+                                              color: "#f2a43a",
+                                            }}
+                                          />
+                                          <Typography sx={{ fontSize: "1rem" }}>
+                                            {spec.title}
+                                          </Typography>
+                                        </MenuItem>
+                                      ))
+                                    ) : (
+                                      <MenuItem disabled sx={emptyStateSx}>
+                                        <Typography sx={emptyTextSx}>
+                                          There is no Specializations to switch
+                                          to.
                                         </Typography>
                                       </MenuItem>
                                     )}
-                                </Select>
+
+                                    <ListSubheader
+                                      sx={{ ...sectionHeaderSx, mt: 1 }}
+                                    >
+                                      Generalizations
+                                    </ListSubheader>
+                                    {loadingSpecializations.has(entry.to) ? (
+                                      <MenuItem disabled sx={emptyStateSx}>
+                                        <SyncedSpinner size={16} />
+                                        <Typography
+                                          sx={{ ...emptyTextSx, ml: 1 }}
+                                        >
+                                          Loading generalizations...
+                                        </Typography>
+                                      </MenuItem>
+                                    ) : (partAlternativesLookup[entry.to]?.gens
+                                        .length ?? 0) > 0 ? (
+                                      (
+                                        partAlternativesLookup[entry.to]
+                                          ?.gens ?? []
+                                      ).map((gen: any) => (
+                                        <MenuItem
+                                          key={`gen-${gen.id}`}
+                                          value={gen.id}
+                                          sx={optionItemSx}
+                                        >
+                                          <SwapHorizIcon
+                                            sx={{
+                                              fontSize: 18,
+                                              color: "#f2a43a",
+                                            }}
+                                          />
+                                          <Typography sx={{ fontSize: "1rem" }}>
+                                            {gen.title}
+                                          </Typography>
+                                        </MenuItem>
+                                      ))
+                                    ) : (
+                                      <MenuItem disabled sx={emptyStateSx}>
+                                        <Typography sx={emptyTextSx}>
+                                          There is no Generalizations to switch
+                                          to.
+                                        </Typography>
+                                      </MenuItem>
+                                    )}
+                                  </Select>
+                                </Box>
                               </Tooltip>
+                              {!!entry.inheritedFrom &&
+                                (partSourcesLookup[entry.to] ?? []).length >=
+                                  2 && (
+                                  <Tooltip
+                                    title={`Exists in ${
+                                      (partSourcesLookup[entry.to] ?? []).length
+                                    } generalizations`}
+                                    placement="top"
+                                  >
+                                    {/* Span, not the input: InputBase fires an
+                                        event-less onBlur when disabled
+                                        mid-focus. */}
+                                    <Box
+                                      component="span"
+                                      sx={{
+                                        display: "flex",
+                                        flex: "0 0 25%",
+                                        minWidth: 0,
+                                      }}
+                                    >
+                                      <Select
+                                        value=""
+                                        displayEmpty
+                                        disabled={savingPartIds.has(entry.to)}
+                                        size="small"
+                                        renderValue={() => (
+                                          <Box
+                                            sx={{
+                                              overflow: "hidden",
+                                              textOverflow: "ellipsis",
+                                              whiteSpace: "nowrap",
+                                              fontSize: "0.72rem",
+                                              fontWeight: "bold",
+                                            }}
+                                          >
+                                            Inherited from
+                                          </Box>
+                                        )}
+                                        sx={{
+                                          flex: 1,
+                                          minWidth: 0,
+                                          color: "#f2a43a",
+                                          fontWeight: "bold",
+                                          borderRadius: "15px",
+                                          backgroundColor: (theme) =>
+                                            theme.palette.background.paper,
+                                          "& .MuiOutlinedInput-notchedOutline":
+                                            {
+                                              borderColor:
+                                                "rgba(242, 164, 58, 0.55)",
+                                            },
+                                          "&:hover .MuiOutlinedInput-notchedOutline":
+                                            {
+                                              borderColor: "#f2a43a",
+                                            },
+                                        }}
+                                        MenuProps={{
+                                          PaperProps: { sx: menuPaperSx },
+                                          MenuListProps: {
+                                            sx: {
+                                              paddingTop: 0.5,
+                                              paddingBottom: 0.5,
+                                            },
+                                          },
+                                        }}
+                                      >
+                                        <ListSubheader sx={menuTitleSx}>
+                                          This part is specifically inherited
+                                          from:
+                                        </ListSubheader>
+                                        {[
+                                          ...(partSourcesLookup[entry.to] ??
+                                            []),
+                                        ]
+                                          .sort(
+                                            (a, b) =>
+                                              (b.owner === entry.inheritedFrom
+                                                ? 1
+                                                : 0) -
+                                              (a.owner === entry.inheritedFrom
+                                                ? 1
+                                                : 0),
+                                          )
+                                          .map((source) => {
+                                            const isCurrent =
+                                              source.owner ===
+                                              entry.inheritedFrom;
+                                            return (
+                                              <MenuItem
+                                                key={`source-${source.genId}`}
+                                                disabled={isCurrent}
+                                                onClick={() => {
+                                                  if (
+                                                    isCurrent ||
+                                                    savingPartIds.has(entry.to)
+                                                  ) {
+                                                    return;
+                                                  }
+                                                  switchPartSource(
+                                                    entry.to,
+                                                    source.genId,
+                                                  );
+                                                }}
+                                                sx={
+                                                  isCurrent
+                                                    ? currentSourceItemSx
+                                                    : optionItemSx
+                                                }
+                                              >
+                                                <CheckIcon
+                                                  sx={{
+                                                    fontSize: 18,
+                                                    color: "#f2a43a",
+                                                    visibility: isCurrent
+                                                      ? "visible"
+                                                      : "hidden",
+                                                  }}
+                                                />
+                                                <Typography
+                                                  sx={{
+                                                    fontSize: "1rem",
+                                                    fontWeight: isCurrent
+                                                      ? 700
+                                                      : 400,
+                                                  }}
+                                                >
+                                                  {source.title}
+                                                </Typography>
+                                              </MenuItem>
+                                            );
+                                          })}
+                                      </Select>
+                                    </Box>
+                                  </Tooltip>
+                                )}
                             </Box>
                           ) : null
                         }
@@ -1357,6 +1574,75 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
             </List>
           )}
         </Droppable>
+        {notInheritedItems.length > 0 && (
+          <List sx={{ px: 1.8, py: 0 }}>
+            {notInheritedItems.map((entry: any, index: number) => (
+              <ListItem
+                key={`not-inherited-${entry.from || index}`}
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1,
+                  px: 1,
+                  py: 0,
+                  backgroundImage:
+                    "repeating-linear-gradient(to right, gray 0, gray 1px, transparent 1px, transparent 6px)",
+                  backgroundPosition: "top",
+                  backgroundRepeat: "repeat-x",
+                  backgroundSize: "100% 1px",
+                }}
+              >
+                <ListItemText
+                  primary={
+                    <Typography>
+                      {formatPartTitle(
+                        entry.from,
+                        entry.fromOptional || false,
+                        "none",
+                        entry.fromTitle,
+                      )}
+                    </Typography>
+                  }
+                  sx={{ flex: 1, minWidth: 0.3 }}
+                />
+
+                <ListItemIcon sx={{ minWidth: "auto" }}>
+                  <CloseIcon sx={{ fontSize: 20, color: "orange" }} />
+                </ListItemIcon>
+
+                {/* Inherits the part specifically through this tab's
+                    generalization. Unlike a plain add, it never becomes
+                    owned and overall inheritance is untouched. */}
+                {!!addPartFromGen && (
+                  <Tooltip title={"Inherit this part"} placement="top">
+                    <IconButton
+                      sx={{ p: 0.5 }}
+                      onClick={async () => {
+                        await addPartFromGen(entry.from, generalizationId);
+                      }}
+                    >
+                      <AddIcon
+                        sx={{
+                          fontSize: 20,
+                          color: "green",
+                          border: "1px solid green",
+                          borderRadius: "50%",
+                        }}
+                      />
+                    </IconButton>
+                  </Tooltip>
+                )}
+
+                {/* Not inherited: no switch dropdown since the part isn't on
+                    this node — an invisible one keeps the row height equal. */}
+                <ListItemText
+                  primary={rowHeightSpacer}
+                  sx={{ flex: 1, minWidth: 0.3 }}
+                />
+              </ListItem>
+            ))}
+          </List>
+        )}
         <Popover
           id={id}
           open={open}
@@ -1414,6 +1700,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                 key={`non-draggable-${entryFrom || index}`}
                 sx={{
                   display: "flex",
+                  alignItems: "center",
                   backgroundImage:
                     "repeating-linear-gradient(to right, gray 0, gray 1px, transparent 1px, transparent 6px)",
                   backgroundPosition: "top",
@@ -1459,7 +1746,10 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                   </Tooltip>
                 )}
 
-                <ListItemText primary={null} sx={{ flex: 1, minWidth: 0.3 }} />
+                <ListItemText
+                  primary={rowHeightSpacer}
+                  sx={{ flex: 1, minWidth: 0.3 }}
+                />
               </ListItem>
             ))}
           </List>
@@ -1472,51 +1762,24 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
   const activeGeneralization = generalizations.find((g) => g.id === activeTab);
   const activeGenId = activeGeneralization?.id;
   const activeGenTitle = activeGeneralization?.title;
-  // Only turn the arrow into a spinner when rows are actually showing. If the
-  // active gen has no details yet, the tab body shows its own "Loading…", so a
-  // second spinner here would be redundant.
-  const showRecomputeSpinner =
-    !!inheritedPartsLoading &&
-    !!inheritedPartsDetails?.some((c) => c.generalizationId === activeGenId);
   const handleSorting = (e: any) => {
     try {
       // draggableId === the part id (see the Draggable above).
       const { source, destination, draggableId } = e;
       // No destination, or dropped back in the same spot: nothing to persist.
-      if (
-        !destination ||
-        !user?.uname ||
-        destination.index === source?.index
-      ) {
+      if (!destination || !user?.uname || destination.index === source?.index) {
         return;
       }
 
-      /* these have index 0 by default since parts don't have collections but that may change in the future */
-      const sourceCollectionIndex = 0;
-      const destinationCollectionIndex = 0;
+      // The rows render the RESOLVED view, so the new order is a move within
+      // its ids. The sort endpoint classifies whether it breaks.
+      const orderedIds = resolvedParts.map((p: ILinkNode) => p.id);
+      const fromIdx = orderedIds.indexOf(draggableId);
+      if (fromIdx === -1) return;
+      orderedIds.splice(fromIdx, 1);
+      orderedIds.splice(destination.index, 0, draggableId);
 
-      const source_ = currentVisibleNode.properties?.["parts"];
-      if (!source_) return;
-
-      // Work on a clone so we never mutate the live node state in place.
-      const newParts: ICollection[] = JSON.parse(JSON.stringify(source_));
-
-      const nodeIdx = newParts[sourceCollectionIndex].nodes.findIndex(
-        (link: ILinkNode) => link.id === draggableId,
-      );
-
-      if (nodeIdx !== -1) {
-        const moveValue = newParts[sourceCollectionIndex].nodes[nodeIdx];
-        newParts[sourceCollectionIndex].nodes.splice(nodeIdx, 1);
-        newParts[destinationCollectionIndex].nodes.splice(
-          destination.index,
-          0,
-          moveValue,
-        );
-      }
-
-      // Persist the reordered parts through the shared saveParts.
-      saveParts(newParts);
+      sortParts(orderedIds);
 
       recordLogs({
         action: "sort elements",
@@ -1583,12 +1846,6 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
         </Box>
       </Box>
 
-      <GeneralizationTabs
-        generalizations={generalizations}
-        activeTab={activeTab}
-        onChange={handleTabChange}
-      />
-
       {activeGeneralization && activeGenId && activeGenTitle && (
         <Box key={activeGenId}>
           <Box
@@ -1598,6 +1855,8 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
               height: 40,
               position: "relative",
               mx: 2,
+              mt: 2,
+              mb: 2.5,
             }}
           >
             {/* Left Text */}
@@ -1605,22 +1864,90 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
               sx={{
                 flex: 1,
                 minWidth: 0,
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
                 pr: "30px", // space to avoid overlap with center icon
               }}
             >
-              <Tooltip title={activeGenTitle}>
-                <Typography
-                  sx={{
-                    color: "orange",
-                    fontWeight: "bold",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
+              {generalizations.length > 1 ? (
+                <TextField
+                  value={activeGenId}
+                  onChange={(e) => setActiveTab(e.target.value)}
+                  select
+                  label="Generalizations"
+                  sx={{ flex: 1, minWidth: 0 }}
+                  slotProps={{
+                    input: {
+                      sx: {
+                        height: "40px",
+                        borderRadius: "18px",
+                        color: "orange",
+                        fontWeight: 700,
+                        fontSize: "1.15rem",
+                        backgroundColor: (theme) =>
+                          theme.palette.background.paper,
+                      },
+                    },
+                    inputLabel: { style: { color: "grey" } },
+                    select: {
+                      MenuProps: {
+                        PaperProps: {
+                          sx: {
+                            border: "2px solid orange",
+                            borderRadius: "12px",
+                            "&::-webkit-scrollbar": { display: "none" },
+                          },
+                        },
+                        MenuListProps: {
+                          sx: { paddingTop: 0, paddingBottom: 0 },
+                        },
+                      },
+                      renderValue: () => (
+                        <Box
+                          sx={{
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {activeGenTitle}
+                        </Box>
+                      ),
+                    },
                   }}
                 >
-                  {activeGenTitle}
-                </Typography>
-              </Tooltip>
+                  {generalizations.map((gen) => (
+                    <MenuItem
+                      key={gen.id}
+                      value={gen.id}
+                      sx={{
+                        border: "1px solid gray",
+                        borderRadius: "25px",
+                        my: "4px",
+                        mx: "8px",
+                      }}
+                    >
+                      <Typography>{gen.title}</Typography>
+                    </MenuItem>
+                  ))}
+                </TextField>
+              ) : (
+                <Tooltip title={activeGenTitle}>
+                  <Typography
+                    sx={{
+                      color: "orange",
+                      fontWeight: 700,
+                      fontSize: "1.15rem",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {activeGenTitle}
+                  </Typography>
+                </Tooltip>
+              )}
             </Box>
 
             <Box
@@ -1633,29 +1960,38 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                 justifyContent: "center",
                 gap: 1,
                 height: "50px",
-                width: showRecomputeSpinner ? "auto" : "50px",
+                width: "50px",
                 whiteSpace: "nowrap",
               }}
             >
-              {/* Spinner + label while the gen→node mapping recomputes. */}
-              {showRecomputeSpinner ? (
-                <>
-                  <SyncedSpinner size={20} />
-                  <Typography
-                    sx={{
-                      fontSize: "0.8rem",
-                      fontWeight: "bold",
-                      fontStyle: "italic",
-                      color: "orange",
-                    }}
-                  >
-                    Generating inheritance…
-                  </Typography>
-                </>
+              {/* Rows keep rendering from the resolved view; only the arrow
+                  hints that the annotation is recomputing. */}
+              {inheritedPartsRepairing ? (
+                <SyncedSpinner size={20} />
               ) : (
                 <ArrowRightAltIcon sx={{ color: "orange", fontSize: "50px" }} />
               )}
             </Box>
+
+            {inheritedPartsRepairing && (
+              <Typography
+                sx={{
+                  position: "absolute",
+                  top: "100%",
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  mt: "1px",
+                  fontSize: "0.75rem",
+                  fontWeight: "bold",
+                  fontStyle: "italic",
+                  color: "orange",
+                  whiteSpace: "nowrap",
+                  pointerEvents: "none",
+                }}
+              >
+                Calculating inheritance…
+              </Typography>
+            )}
 
             <Box
               sx={{
@@ -1669,8 +2005,8 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
               <Tooltip title={currentVisibleNode.title}>
                 <Typography
                   sx={{
-                    fontWeight: 500,
-                    fontSize: "0.95rem",
+                    fontWeight: 700,
+                    fontSize: "1.15rem",
                     overflow: "hidden",
                     textOverflow: "ellipsis",
                     whiteSpace: "nowrap",

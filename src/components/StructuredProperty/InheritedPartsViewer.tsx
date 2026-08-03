@@ -1,48 +1,35 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo } from "react";
 import {
   Box,
   Typography,
   IconButton,
   Tooltip,
   MenuItem,
-  Select,
   ListItemText,
   ListItemIcon,
   ListItem,
   List,
   Link,
-  Popover,
   Button,
+  TextField,
 } from "@mui/material";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import ArrowRightAltIcon from "@mui/icons-material/ArrowRightAlt";
 import RemoveIcon from "@mui/icons-material/Remove";
 import SearchIcon from "@mui/icons-material/Search";
-import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import AddIcon from "@mui/icons-material/Add";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import DragHandleIcon from "@mui/icons-material/DragHandle";
 import CloseIcon from "@mui/icons-material/Close";
 import InheritedPartsLegend from "../Common/InheritedPartsLegend";
-import GeneralizationTabs from "./GeneralizationTabs";
 import {
-  ICollection,
+  ILinkNode,
   INode,
-  TransferInheritance,
   InheritedPartsDetail,
 } from "@components/types/INode";
-import {
-  query,
-  collection,
-  where,
-  getFirestore,
-  onSnapshot,
-  doc,
-  setDoc,
-} from "firebase/firestore";
-
-import { INHERITANCE_FOR_PARTS_COLLECTION_NAME } from "@components/lib/firestoreClient/collections";
 import SyncedSpinner from "@components/components/SyncedSpinner";
+import { getPartGeneralizationSources } from "@components/lib/utils/partsHelper";
+import { makeResolvedOf } from "@components/lib/hooks/useResolvedParts";
 
 interface GeneralizationNode {
   id: string;
@@ -64,7 +51,9 @@ interface InheritedPartsViewerProps {
   setDisplayDetails: any;
   displayDetails: boolean;
   inheritedPartsDetails?: InheritedPartsDetail[] | null;
+  inheritedPartsRepairing?: boolean;
   currentVisibleNode: any;
+  resolvedParts: ILinkNode[];
   navigateToNode?: any;
   triggerSearch?: any;
   addPart?: any;
@@ -80,56 +69,20 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
   setDisplayDetails,
   displayDetails,
   inheritedPartsDetails,
+  inheritedPartsRepairing,
   currentVisibleNode,
+  resolvedParts,
   triggerSearch,
   addPart,
   removePart,
   navigateToNode,
 }) => {
-  const db = getFirestore();
   const [activeTab, setActiveTab] = React.useState<string | null>(null);
   const generalizations: GeneralizationNode[] = getAllGeneralizations();
-  const [selectedGeneralizationIndex, setSelectedGeneralizationIndex] =
-    useState<number>(0);
-  const [inheritanceForParts, setInheritanceForParts] = useState<{
-    [pickingFor: string]: string;
-  }>({});
-  const [pickingFor, setPickingFor] = useState<string>("");
-  const [anchorEl, setAnchorEl] = useState(null);
 
-  const handleClick = (event: any, from: string) => {
-    setAnchorEl(event.currentTarget);
-    setPickingFor(from);
-  };
+  // All lists come from the RESOLVED view (ref chain), never raw storage.
+  const resolvedOf = useMemo(() => makeResolvedOf(nodes), [nodes]);
 
-  const handleClose = () => {
-    setAnchorEl(null);
-    setPickingFor("");
-  };
-
-  const open = Boolean(anchorEl);
-  const id = open ? "switch-popover" : undefined;
-
-  useEffect(() => {
-    if (!currentVisibleNode?.id) return;
-    const nodesQuery = query(
-      collection(db, INHERITANCE_FOR_PARTS_COLLECTION_NAME),
-      where("nodeId", "==", currentVisibleNode.id),
-    );
-    const unsubscribeNodes = onSnapshot(nodesQuery, (snapshot) => {
-      const docChanges = snapshot.docChanges();
-      if (docChanges.length > 0) {
-        if (docChanges[0].type === "removed") {
-          setInheritanceForParts({});
-          return;
-        }
-        const docChange = docChanges[0].doc;
-        const dataChange = docChange.data().inheritedFrom || {};
-        setInheritanceForParts(dataChange);
-      }
-    });
-    return () => unsubscribeNodes();
-  }, [currentVisibleNode.id]);
   useEffect(() => {
     // Set the first generalization as the active tab initially
     if (generalizations.length > 0 && !activeTab) {
@@ -146,40 +99,37 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
     }
   }, [currentVisibleNode.id]); // Use node ID to avoid infinite loop
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: string) => {
-    setActiveTab(newValue);
-  };
-
   if (selectedProperty !== "parts") return null;
 
-  const handleSelectedGenChange = (
-    event: React.SyntheticEvent,
-    newValue: number,
-  ): void => {
-    setSelectedGeneralizationIndex(newValue);
-  };
-
   const getPartOptionalStatus = (partId: string, nodeId: string): boolean => {
-    const node = nodes[nodeId];
-    if (!node?.properties?.parts) return false;
-
-    for (const collection of node.properties.parts) {
-      const part = collection.nodes.find((n: any) => n.id === partId);
-      if (part) return !!part.optional;
-    }
-    return false;
+    return !!resolvedOf(nodeId).find((n) => n.id === partId)?.optional;
   };
 
   const getCurrentPartOptionalStatus = (partId: string): boolean => {
-    const currentNodeParts = currentVisibleNode.properties?.["parts"];
+    return !!resolvedParts.find((n) => n.id === partId)?.optional;
+  };
 
-    if (!currentNodeParts) return false;
-
-    for (const collection of currentNodeParts) {
-      const part = collection.nodes.find((n: any) => n.id === partId);
-      if (part) return !!part.optional;
-    }
-    return false;
+  // The generalization title a part is specifically inherited from.
+  const getPartSpecificSourceTitle = (partId: string): string | null => {
+    const part = resolvedParts.find((n) => n.id === partId);
+    if (!part?.inheritedFrom) return null;
+    const providers = getPartGeneralizationSources(
+      partId,
+      generalizations,
+      nodes,
+    );
+    if (providers.length < 2) return null;
+    const current = providers.find((p) => {
+      const genPart = resolvedOf(p.generalizationId).find(
+        (n) => n.id === partId,
+      );
+      return (
+        (genPart?.inheritedFrom || p.generalizationId) === part.inheritedFrom
+      );
+    });
+    return (
+      current?.generalizationTitle ?? nodes[part.inheritedFrom]?.title ?? null
+    );
   };
 
   const formatPartTitle = (
@@ -228,8 +178,7 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
 
   const getTabContent = (generalizationId: string): JSX.Element => {
     // Check if node has any parts at all
-    const hasParts =
-      currentVisibleNode.properties?.parts?.[0]?.nodes?.length > 0;
+    const hasParts = resolvedParts.length > 0;
 
     if (!hasParts) {
       return (
@@ -291,32 +240,6 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
 
     const details = cachedGeneralizationData.details || [];
 
-    // Convert nonPickedOnes from {[key]: [{id, title}]} to {[key]: [id]}
-    const nonPickedOnes = Object.entries(
-      cachedGeneralizationData.nonPickedOnes || {},
-    ).reduce(
-      (acc, [key, value]) => {
-        acc[key] = (value as { id: any }[]).map((item) => item.id);
-        return acc;
-      },
-      {} as { [key: string]: string[] },
-    );
-
-    const handleSelect = (option: string) => {
-      const _previous = { ...inheritanceForParts };
-      _previous[pickingFor] = option;
-      setInheritanceForParts(_previous);
-      const inheritanceRef = doc(
-        collection(db, INHERITANCE_FOR_PARTS_COLLECTION_NAME),
-        currentVisibleNode.id,
-      );
-      setDoc(inheritanceRef, {
-        inheritedFrom: _previous,
-        nodeId: currentVisibleNode.id,
-      });
-      handleClose();
-    };
-
     return (
       <>
         <List
@@ -342,219 +265,194 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                     : "removed"
                 : "none";
             return (
-            <ListItem
-              key={`${entry.from}-${entry.to}`}
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 1,
-                px: 0,
-                py: 0,
-                backgroundImage:
-                  index !== 0
-                    ? "repeating-linear-gradient(to right, gray 0, gray 1px, transparent 1px, transparent 6px)"
-                    : "",
-                backgroundPosition: index !== 0 ? "top" : "",
-                backgroundRepeat: "repeat-x",
-                backgroundSize: "100% 1px",
-              }}
-            >
-              {!readOnly && entry.symbol === "x" && !!addPart && (
-                <Tooltip title={"Add Part"} placement="top">
-                  <IconButton
-                    sx={{ p: 0.5 }}
-                    onClick={() => {
-                      addPart(entry.from);
-                    }}
-                  >
-                    <AddIcon
-                      sx={{
-                        fontSize: 20,
-                        color: "green",
-                        border: "1px solid green",
-                        borderRadius: "50%",
+              <ListItem
+                key={`${entry.from}-${entry.to}`}
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1,
+                  px: 0,
+                  py: 0,
+                  backgroundImage:
+                    index !== 0
+                      ? "repeating-linear-gradient(to right, gray 0, gray 1px, transparent 1px, transparent 6px)"
+                      : "",
+                  backgroundPosition: index !== 0 ? "top" : "",
+                  backgroundRepeat: "repeat-x",
+                  backgroundSize: "100% 1px",
+                }}
+              >
+                {!readOnly && entry.symbol === "x" && !!addPart && (
+                  <Tooltip title={"Add Part"} placement="top">
+                    <IconButton
+                      sx={{ p: 0.5 }}
+                      onClick={() => {
+                        addPart(entry.from);
                       }}
-                    />
-                  </IconButton>
-                </Tooltip>
-              )}
-
-              {!readOnly && entry.symbol === "=" && !!removePart && (
-                <Tooltip title={"Remove part"} placement="top">
-                  <IconButton
-                    sx={{ p: 0.5 }}
-                    onClick={() => {
-                      removePart(entry.to);
-                    }}
-                  >
-                    <RemoveIcon
-                      sx={{
-                        fontSize: 20,
-                        color: "red",
-                        border: "1px solid red",
-                        borderRadius: "50%",
-                      }}
-                    />
-                  </IconButton>
-                </Tooltip>
-              )}
-
-              {!readOnly &&
-                entry.from &&
-                entry.symbol !== "x" &&
-                entry.symbol !== "=" && (
-                  <ListItemIcon sx={{ minWidth: "auto" }}>
-                    <Tooltip title="Search it below" placement="left">
-                      <IconButton
-                        sx={{ p: 0.4 }}
-                        onClick={() =>
-                          triggerSearch({
-                            id: entry.from,
-                            title: nodes[entry.from]?.title || "Unknown",
-                          })
-                        }
-                      >
-                        <SearchIcon sx={{ fontSize: 19, color: "orange" }} />
-                      </IconButton>
-                    </Tooltip>
-                  </ListItemIcon>
+                    >
+                      <AddIcon
+                        sx={{
+                          fontSize: 20,
+                          color: "green",
+                          border: "1px solid green",
+                          borderRadius: "50%",
+                        }}
+                      />
+                    </IconButton>
+                  </Tooltip>
                 )}
 
-              <ListItemText
-                primary={
-                  entry.from ? (
-                    <Link
-                      underline={!!navigateToNode ? "hover" : "none"}
-                      onClick={(e) => {
-                        if (!navigateToNode) return;
-
-                        if (e.metaKey || e.ctrlKey) {
-                          const url = `${window.location.origin}${window.location.pathname}#${entry.from}`;
-                          window.open(url, "_blank");
-                        } else {
-                          navigateToNode(entry.from);
-                        }
-                      }}
-                      sx={{
-                        cursor: !!navigateToNode ? "pointer" : "",
-                        color: (them) =>
-                          them.palette.mode === "dark" ? "white" : "black",
-                        fontSize: "0.9rem",
+                {!readOnly && entry.symbol === "=" && !!removePart && (
+                  <Tooltip title={"Remove part"} placement="top">
+                    <IconButton
+                      sx={{ p: 0.5 }}
+                      onClick={() => {
+                        removePart(entry.to);
                       }}
                     >
-                      {formatPartTitle(
-                        entry.fromTitle,
-                        entry.fromOptional || false,
-                      )}
-                    </Link>
-                  ) : null
-                }
-                sx={{ flex: 1, minWidth: 0.3 }}
-              />
+                      <RemoveIcon
+                        sx={{
+                          fontSize: 20,
+                          color: "red",
+                          border: "1px solid red",
+                          borderRadius: "50%",
+                        }}
+                      />
+                    </IconButton>
+                  </Tooltip>
+                )}
 
-              <ListItemIcon sx={{ minWidth: "auto" }}>
-                {entry.symbol === "x" ? (
-                  <CloseIcon sx={{ fontSize: 20, color: "orange" }} />
-                ) : entry.symbol === ">" ? (
-                  <ArrowForwardIosIcon
-                    sx={{
-                      fontSize: 20,
-                      color: pickingFor === entry.from ? "white" : "orange",
-                      p: 0.2,
-                      borderRadius: "50%",
-                    }}
-                  />
-                ) : entry.symbol === "=" ? (
-                  <DragHandleIcon sx={{ fontSize: 20, color: "orange" }} />
-                ) : entry.symbol === "+" ? (
-                  <AddIcon sx={{ fontSize: 20, color: "orange" }} />
-                ) : null}
-              </ListItemIcon>
+                {!readOnly &&
+                  entry.from &&
+                  entry.symbol !== "x" &&
+                  entry.symbol !== "=" && (
+                    <ListItemIcon sx={{ minWidth: "auto" }}>
+                      <Tooltip title="Search it below" placement="left">
+                        <IconButton
+                          sx={{ p: 0.4 }}
+                          onClick={() =>
+                            triggerSearch({
+                              id: entry.from,
+                              title: nodes[entry.from]?.title || "Unknown",
+                            })
+                          }
+                        >
+                          <SearchIcon sx={{ fontSize: 19, color: "orange" }} />
+                        </IconButton>
+                      </Tooltip>
+                    </ListItemIcon>
+                  )}
 
-              <ListItemText
-                primary={
-                  entry.to ? (
-                    <Link
-                      underline={!!navigateToNode ? "hover" : "none"}
-                      onClick={(e) => {
-                        if (!navigateToNode) return;
+                <ListItemText
+                  primary={
+                    entry.from ? (
+                      <Link
+                        underline={!!navigateToNode ? "hover" : "none"}
+                        onClick={(e) => {
+                          if (!navigateToNode) return;
 
-                        if (e.metaKey || e.ctrlKey) {
-                          const url = `${window.location.origin}${window.location.pathname}#${entry.to}`;
-                          window.open(url, "_blank");
-                        } else {
-                          navigateToNode(entry.to);
-                        }
-                      }}
+                          if (e.metaKey || e.ctrlKey) {
+                            const url = `${window.location.origin}${window.location.pathname}#${entry.from}`;
+                            window.open(url, "_blank");
+                          } else {
+                            navigateToNode(entry.from);
+                          }
+                        }}
+                        sx={{
+                          cursor: !!navigateToNode ? "pointer" : "",
+                          color: (them) =>
+                            them.palette.mode === "dark" ? "white" : "black",
+                          fontSize: "0.9rem",
+                        }}
+                      >
+                        {formatPartTitle(
+                          entry.fromTitle,
+                          entry.fromOptional || false,
+                        )}
+                      </Link>
+                    ) : null
+                  }
+                  sx={{ flex: 1, minWidth: 0.3 }}
+                />
+
+                <ListItemIcon sx={{ minWidth: "auto" }}>
+                  {entry.symbol === "x" ? (
+                    <CloseIcon sx={{ fontSize: 20, color: "orange" }} />
+                  ) : entry.symbol === ">" ? (
+                    <ArrowForwardIosIcon
                       sx={{
-                        cursor: !!navigateToNode ? "pointer" : "",
-                        color: (them) =>
-                          them.palette.mode === "dark" ? "white" : "black",
-                        fontSize: "0.9rem",
+                        fontSize: 20,
+                        color: "orange",
+                        p: 0.2,
+                        borderRadius: "50%",
                       }}
-                    >
-                      {formatPartTitle(
-                        entry.toTitle,
-                        liveToOptional,
-                        liveOptionalChange,
-                      )}
-                    </Link>
-                  ) : null
-                }
-                sx={{ flex: 1, minWidth: 0.3 }}
-              />
-            </ListItem>
+                    />
+                  ) : entry.symbol === "=" ? (
+                    <DragHandleIcon sx={{ fontSize: 20, color: "orange" }} />
+                  ) : entry.symbol === "+" ? (
+                    <AddIcon sx={{ fontSize: 20, color: "orange" }} />
+                  ) : null}
+                </ListItemIcon>
+
+                <ListItemText
+                  primary={
+                    entry.to ? (
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                      >
+                        <Link
+                          underline={!!navigateToNode ? "hover" : "none"}
+                          onClick={(e) => {
+                            if (!navigateToNode) return;
+
+                            if (e.metaKey || e.ctrlKey) {
+                              const url = `${window.location.origin}${window.location.pathname}#${entry.to}`;
+                              window.open(url, "_blank");
+                            } else {
+                              navigateToNode(entry.to);
+                            }
+                          }}
+                          sx={{
+                            cursor: !!navigateToNode ? "pointer" : "",
+                            color: (them) =>
+                              them.palette.mode === "dark" ? "white" : "black",
+                            fontSize: "0.9rem",
+                          }}
+                        >
+                          {formatPartTitle(
+                            entry.toTitle,
+                            liveToOptional,
+                            liveOptionalChange,
+                          )}
+                        </Link>
+                        {(() => {
+                          const sourceTitle = getPartSpecificSourceTitle(
+                            entry.to,
+                          );
+                          return sourceTitle ? (
+                            <Typography
+                              sx={{
+                                ml: "auto",
+                                flexShrink: 0,
+                                fontSize: "0.72rem",
+                                fontStyle: "italic",
+                                color: "gray",
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              {`(Inherited from "${sourceTitle}")`}
+                            </Typography>
+                          ) : null;
+                        })()}
+                      </Box>
+                    ) : null
+                  }
+                  sx={{ flex: 1, minWidth: 0.3 }}
+                />
+              </ListItem>
             );
           })}
         </List>
-        <Popover
-          id={id}
-          open={open}
-          anchorEl={anchorEl}
-          onClose={handleClose}
-          anchorOrigin={{
-            vertical: "center",
-            horizontal: "right",
-          }}
-          transformOrigin={{
-            vertical: "center",
-            horizontal: "left",
-          }}
-          PaperProps={{
-            sx: {
-              border: "1.5px solid orange",
-              borderRadius: "10px",
-              backgroundColor: (theme) =>
-                theme.palette.mode === "light" ? "#cccccc" : "#524e4e",
-            },
-          }}
-        >
-          <List sx={{ p: 0, mx: "4px" }}>
-            {(nonPickedOnes[pickingFor] || []).map((option: string) => (
-              <ListItem
-                disablePadding
-                key={option}
-                sx={{
-                  px: 2,
-                  cursor: "pointer",
-                  ":hover": {
-                    backgroundColor: "gray",
-                  },
-                  gap: "5px",
-                  border: "1px solid gray",
-                  borderRadius: "25px",
-                  my: "4px",
-                }}
-              >
-                <SwapHorizIcon />
-                <ListItemText
-                  primary={nodes[option]?.title || "Unknown"}
-                  onClick={() => handleSelect(option)}
-                />
-              </ListItem>
-            ))}
-          </List>
-        </Popover>
       </>
     );
   };
@@ -632,12 +530,6 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
             )}
           </Box>
 
-          <GeneralizationTabs
-            generalizations={generalizations}
-            activeTab={activeTab}
-            onChange={handleTabChange}
-          />
-
           {activeGenId && activeGenTitle && (
             <Box key={activeGenId} sx={{ px: "10px" }}>
               <Box
@@ -647,6 +539,8 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                   height: 40,
                   position: "relative",
                   mx: 2,
+                  mt: 2,
+                  mb: 2.5,
                 }}
               >
                 {/* Left Text */}
@@ -654,22 +548,90 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                   sx={{
                     flex: 1,
                     minWidth: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
                     pr: "30px", // space to avoid overlap with center icon
                   }}
                 >
-                  <Tooltip title={activeGenTitle}>
-                    <Typography
-                      sx={{
-                        color: "orange",
-                        fontWeight: "bold",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
+                  {generalizations.length > 1 ? (
+                    <TextField
+                      value={activeGenId}
+                      onChange={(e) => setActiveTab(e.target.value)}
+                      select
+                      label="Generalizations"
+                      sx={{ flex: 1, minWidth: 0 }}
+                      slotProps={{
+                        input: {
+                          sx: {
+                            height: "40px",
+                            borderRadius: "18px",
+                            color: "orange",
+                            fontWeight: 700,
+                            fontSize: "1.15rem",
+                            backgroundColor: (theme) =>
+                              theme.palette.background.paper,
+                          },
+                        },
+                        inputLabel: { style: { color: "grey" } },
+                        select: {
+                          MenuProps: {
+                            PaperProps: {
+                              sx: {
+                                border: "2px solid orange",
+                                borderRadius: "12px",
+                                "&::-webkit-scrollbar": { display: "none" },
+                              },
+                            },
+                            MenuListProps: {
+                              sx: { paddingTop: 0, paddingBottom: 0 },
+                            },
+                          },
+                          renderValue: () => (
+                            <Box
+                              sx={{
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              {activeGenTitle}
+                            </Box>
+                          ),
+                        },
                       }}
                     >
-                      {activeGenTitle}
-                    </Typography>
-                  </Tooltip>
+                      {generalizations.map((gen) => (
+                        <MenuItem
+                          key={gen.id}
+                          value={gen.id}
+                          sx={{
+                            border: "1px solid gray",
+                            borderRadius: "25px",
+                            my: "4px",
+                            mx: "8px",
+                          }}
+                        >
+                          <Typography>{gen.title}</Typography>
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  ) : (
+                    <Tooltip title={activeGenTitle}>
+                      <Typography
+                        sx={{
+                          color: "orange",
+                          fontWeight: 700,
+                          fontSize: "1.15rem",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {activeGenTitle}
+                      </Typography>
+                    </Tooltip>
+                  )}
                 </Box>
 
                 <Box
@@ -679,10 +641,36 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                     transform: "translateX(-50%)",
                   }}
                 >
-                  <ArrowRightAltIcon
-                    sx={{ color: "orange", fontSize: "50px" }}
-                  />
+                  {/* Rows keep rendering; only the arrow hints that the
+                      annotation is recomputing. */}
+                  {inheritedPartsRepairing ? (
+                    <SyncedSpinner size={20} />
+                  ) : (
+                    <ArrowRightAltIcon
+                      sx={{ color: "orange", fontSize: "50px" }}
+                    />
+                  )}
                 </Box>
+
+                {inheritedPartsRepairing && (
+                  <Typography
+                    sx={{
+                      position: "absolute",
+                      top: "100%",
+                      left: "50%",
+                      transform: "translateX(-50%)",
+                      mt: "1px",
+                      fontSize: "0.75rem",
+                      fontWeight: "bold",
+                      fontStyle: "italic",
+                      color: "orange",
+                      whiteSpace: "nowrap",
+                      pointerEvents: "none",
+                    }}
+                  >
+                    Calculating inheritance…
+                  </Typography>
+                )}
 
                 <Box
                   sx={{
@@ -696,8 +684,8 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                   <Tooltip title={currentVisibleNode.title}>
                     <Typography
                       sx={{
-                        fontWeight: 500,
-                        fontSize: "0.95rem",
+                        fontWeight: 700,
+                        fontSize: "1.15rem",
                         overflow: "hidden",
                         textOverflow: "ellipsis",
                         whiteSpace: "nowrap",
