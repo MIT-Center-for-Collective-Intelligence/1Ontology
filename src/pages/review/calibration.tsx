@@ -15,6 +15,7 @@ import Head from "next/head";
 import ReviewCard, {
   ReviewSubmission,
 } from "@components/components/SomReview/ReviewCard";
+import CalibrationReviewIntro from "@components/components/SomReview/CalibrationReviewIntro";
 import ThemeModeToggle from "@components/components/SomReview/ThemeModeToggle";
 import { reviewInteractiveSurfaceSx } from "@components/components/SomReview/reviewStyles";
 import { useAuth } from "@components/components/context/AuthContext";
@@ -57,9 +58,7 @@ export const CalibrationReviewPage = () => {
 
   const assignment = overview?.active;
   const card = assignment?.cards[0];
-  const completed = assignment
-    ? assignment.cursor >= assignment.total
-    : false;
+  const completed = assignment ? assignment.cursor >= assignment.total : false;
 
   const submitResponse = async (submission: ReviewSubmission) => {
     if (!assignment || !card || !user?.userId) {
@@ -89,7 +88,7 @@ export const CalibrationReviewPage = () => {
   return (
     <>
       <Head>
-        <title>Ontology calibration | 1Ontology</title>
+        <title>Work activity repository review | 1Ontology</title>
       </Head>
       <Box
         component="main"
@@ -138,54 +137,10 @@ export const CalibrationReviewPage = () => {
           )}
 
           {!loading && !loadError && assignment && !started && !completed && (
-            <Stack
-              justifyContent="center"
-              spacing={3}
-              sx={{ minHeight: "70dvh", maxWidth: 720, mx: "auto" }}
-            >
-              <Box>
-                <Typography
-                  component="h1"
-                  sx={{
-                    fontSize: { xs: "1.65rem", sm: "2rem" },
-                    fontWeight: 850,
-                  }}
-                >
-                  {assignment.title}
-                </Typography>
-                <Typography
-                  sx={{
-                    mt: 0.75,
-                    color: "text.secondary",
-                    fontSize: "1.05rem",
-                    fontWeight: 700,
-                  }}
-                >
-                  {assignment.taskLabel}
-                </Typography>
-              </Box>
-              <Typography sx={{ fontSize: "1.05rem", lineHeight: 1.7 }}>
-                {assignment.introduction}
-              </Typography>
-              <Typography sx={{ color: "text.secondary", lineHeight: 1.6 }}>
-                Review all {assignment.total} items in this task set. Your
-                answers are saved independently and will not change the
-                questions shown to other reviewers.
-              </Typography>
-              <Button
-                disableElevation
-                variant="contained"
-                onClick={() => setStarted(true)}
-                sx={{
-                  alignSelf: { xs: "stretch", sm: "flex-start" },
-                  minHeight: 50,
-                  px: 3,
-                  fontWeight: 800,
-                }}
-              >
-                Begin review
-              </Button>
-            </Stack>
+            <CalibrationReviewIntro
+              itemCount={assignment.total}
+              onContinue={() => setStarted(true)}
+            />
           )}
 
           {!loading &&
