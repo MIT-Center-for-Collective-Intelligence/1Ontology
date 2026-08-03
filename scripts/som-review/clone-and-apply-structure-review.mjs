@@ -565,36 +565,67 @@ function createIntermediateGrouping(nodes, targetAppId, grouping) {
   };
 }
 
-function applyCollectionDesign(nodes, targetAppId, design) {
+function applyCollectionDesign(nodes, design) {
   const parent = activeNodeByTitle(nodes, design.parentTitle);
-  const branches = [];
-  for (const branch of design.branches) {
-    const branchNode = newActivityNode({
-      nodes,
-      targetAppId,
-      title: branch.title,
-      description: branch.description,
-      seed: `${design.proposalId}\u001f${branch.title}`,
-    });
-    addReciprocalEdge(nodes, parent, branchNode, design.collectionName);
-    const movedChildren = (branch.children || []).map((childTitle) =>
-      moveNode(nodes, {
-        nodeTitle: childTitle,
-        currentParentTitle: design.parentTitle,
-        proposedParentTitle: branch.title,
-      }),
+  const proposedCollectionName = collectionKey(design.collectionName);
+  if (proposedCollectionName === "main") {
+    throw new Error(
+      "A collection design must use an explicit, non-main collection name",
     );
-    branches.push({
-      title: branch.title,
-      nodeId: branchNode.id,
-      movedChildren,
-    });
   }
+  if (!Array.isArray(design.branches) || design.branches.length === 0) {
+    throw new Error("A collection design must assign at least one child");
+  }
+  const assignedChildren = new Set();
+  const children = [];
+  for (const branch of design.branches) {
+    if (branch.status !== "existing") {
+      throw new Error(
+        `Collection design cannot create activity nodes: ${branch.title}`,
+      );
+    }
+    if ((branch.children || []).length > 0) {
+      throw new Error(
+        `Collection design cannot alter hierarchy beneath ${branch.title}`,
+      );
+    }
+    const child = activeNodeByTitle(nodes, branch.title);
+    if (!hasDirectLink(parent.specializations, child.id)) {
+      throw new Error(
+        `Collection design child is not directly under ${parent.title}: ${branch.title}`,
+      );
+    }
+    if (assignedChildren.has(child.id)) {
+      throw new Error(
+        `Collection design assigns a child more than once: ${branch.title}`,
+      );
+    }
+    assignedChildren.add(child.id);
+    children.push(child);
+  }
+
+  for (const child of children) {
+    parent.specializations = removeLinkFromCollections(
+      parent.specializations,
+      child.id,
+    );
+  }
+  parent.specializations = addLinksToCollections(parent.specializations, [
+    {
+      collectionName: proposedCollectionName,
+      nodes: children.map((child) => ({ id: child.id, title: child.title })),
+    },
+  ]);
+
   return {
     proposalId: design.proposalId,
     parentTitle: design.parentTitle,
-    collectionName: design.collectionName,
-    branches,
+    collectionName: proposedCollectionName,
+    applicationMode: "collections-only",
+    assignedChildren: children.map((child) => ({
+      nodeId: child.id,
+      title: child.title,
+    })),
   };
 }
 
@@ -843,11 +874,13 @@ function validatePlan(plan, planFile) {
     const context = proposal?.reviewerView?.context;
     const plannedBranches = (design.branches || []).map((branch) => ({
       title: branch.title,
+      status: branch.status,
       children: branch.children || [],
     }));
     const proposedBranches = (context?.proposedBranches || []).map(
       (branch) => ({
         title: branch.title,
+        status: branch.status,
         children: branch.children || [],
       }),
     );
@@ -1035,10 +1068,14 @@ function cloneAndApply(sourceDocuments, plan) {
 
   const collectionResults = [];
   for (const design of plan.collectionDesigns || []) {
-    const result = applyCollectionDesign(targetDocuments, targetAppId, design);
+    const result = applyCollectionDesign(targetDocuments, design);
     collectionResults.push(result);
     changedTitles.add(design.parentTitle);
-    for (const branch of design.branches) changedTitles.add(branch.title);
+    for (const branch of design.branches) {
+      for (const childTitle of branch.children || []) {
+        changedTitles.add(childTitle);
+      }
+    }
   }
 
   const relocationResults = [];
@@ -1271,8 +1308,8 @@ function runSelfTest() {
         parentTitle: "Sell",
         collectionName: "Sell what kind of usage?",
         branches: [
-          { title: "Sell ownership", children: [] },
-          { title: "Sell temporary use", children: ["Rent out"] },
+          { title: "Sell physical objects", status: "existing", children: [] },
+          { title: "Rent out", status: "existing", children: [] },
         ],
       },
     ],
@@ -1293,11 +1330,11 @@ function runSelfTest() {
   const group = activeNodeByTitle(result.targetDocuments, "Sell AB");
   const promote = activeNodeByTitle(result.targetDocuments, "Promote");
   const sellC = activeNodeByTitle(result.targetDocuments, "Sell C");
-  const temporaryUse = activeNodeByTitle(
-    result.targetDocuments,
-    "Sell temporary use",
-  );
+  const sell = activeNodeByTitle(result.targetDocuments, "Sell");
   const rentOut = activeNodeByTitle(result.targetDocuments, "Rent out");
+  const usageCollection = (sell.specializations || []).find(
+    (collection) => collection.collectionName === "Sell what kind of usage?",
+  );
   if (
     !hasDirectLink(
       group.specializations,
@@ -1308,9 +1345,43 @@ function runSelfTest() {
       activeNodeByTitle(result.targetDocuments, "Sell B").id,
     ) ||
     !hasDirectLink(promote.specializations, sellC.id) ||
-    !hasDirectLink(temporaryUse.specializations, rentOut.id)
+    !(usageCollection?.nodes || []).some((link) => linkId(link) === rentOut.id)
   ) {
     throw new Error("Structure application self-test failed");
+  }
+
+  const invalidPlan = {
+    sourceOntology: { appId: "source" },
+    targetOntology: { appId: "target-invalid" },
+    createdNodes: [],
+    groupings: [],
+    rejectedGroupings: [],
+    collectionDesigns: [
+      {
+        proposalId: "invalid-collection",
+        parentTitle: "Sell",
+        collectionName: "Sell what kind of usage?",
+        branches: [
+          {
+            title: "Sell temporary use",
+            status: "new",
+            children: ["Rent out"],
+          },
+        ],
+      },
+    ],
+    relocations: [],
+  };
+  let rejectedNodeCreation = false;
+  try {
+    cloneAndApply(source, invalidPlan);
+  } catch (error) {
+    rejectedNodeCreation = /cannot create activity nodes/i.test(
+      String(error?.message || error),
+    );
+  }
+  if (!rejectedNodeCreation) {
+    throw new Error("Collection design node-creation guard self-test failed");
   }
   process.stdout.write("PASS: structure clone and application self-test\n");
 }

@@ -121,9 +121,14 @@ appropriate only for generalizable failures.
 | Empty nodes or named collections remain after propagation                                                                | final cleanup                                | Detect deterministically after regeneration and ask the expert before deletion                                          |
 
 The funeral-products lineage is preserved through its O\*NET task and exact
-evidence reassignment. The `Sell ownership` and `Sell temporary use` lineage is
-also explicit: proposal `som-f0464db076534dd0bde0` was shown to Rob, accepted,
-and then applied to a new ontology copy.
+evidence reassignment. The collection-design lineage is also explicit:
+proposal `som-f0464db076534dd0bde0` was shown to Rob and accepted, but the card
+contract incorrectly allowed new activity branches and the application created
+them as ontology nodes.
+That invalid application was rolled back on August 2: `Sell ownership` and
+`Sell temporary use` were retired and `Rent out` was restored directly under
+`Sell`. The prior answer remains preserved but is not reinterpreted as approval
+for a different collection-only design.
 
 ## Acceptance criteria
 

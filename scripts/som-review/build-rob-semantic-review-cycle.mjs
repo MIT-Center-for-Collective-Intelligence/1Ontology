@@ -48,6 +48,12 @@ const acceptedStructureApplicationAuditFile = path.join(
   "diagnostics",
   "structure_application_audit.json",
 );
+const collectionNodeRepairAuditFile = path.join(
+  repoRoot,
+  "artifacts",
+  "rob-structure-review-2026-07-25",
+  "collection-design-node-repair-2026-08-02.json",
+);
 const acceptedUsageSynonymBenchmarkFile = path.join(
   repoRoot,
   "artifacts",
@@ -192,6 +198,7 @@ const loadAcceptedStructureProvenance = () => {
     acceptedUsageMergeApplicationAuditFile,
     "utf8",
   );
+  const correctionText = fs.readFileSync(collectionNodeRepairAuditFile, "utf8");
   const initialSnapshotText = fs.readFileSync(
     initialReviewSnapshotFile,
     "utf8",
@@ -201,6 +208,7 @@ const loadAcceptedStructureProvenance = () => {
   const synonymBenchmark = JSON.parse(synonymBenchmarkText);
   const mergeBenchmark = JSON.parse(mergeBenchmarkText);
   const mergeApplicationAudit = JSON.parse(mergeApplicationText);
+  const correctionAudit = JSON.parse(correctionText);
   const initialSnapshot = JSON.parse(initialSnapshotText);
   const judgment = (benchmark.judgments || []).find(
     (item) => item.proposalId === usageCollectionProposalId,
@@ -230,6 +238,13 @@ const loadAcceptedStructureProvenance = () => {
   ) {
     throw new Error("Cannot verify the Rent out / Lease out merge sequence");
   }
+  if (
+    correctionAudit.mode !== "apply" ||
+    correctionAudit.invalidProposalId !== usageCollectionProposalId ||
+    !Object.values(correctionAudit.verification || {}).every(Boolean)
+  ) {
+    throw new Error("Cannot verify the collection-node correction");
+  }
   const initialNodesById = new Map(
     (initialSnapshot.nodes || []).map((node) => [node.id, node]),
   );
@@ -250,9 +265,9 @@ const loadAcceptedStructureProvenance = () => {
     };
   });
   return {
-    schemaVersion: "som-accepted-structure-provenance-v3",
+    schemaVersion: "som-accepted-structure-provenance-v4",
     proposalId: usageCollectionProposalId,
-    origin: "human-accepted-wrapper-over-machine-derived-baseline-nodes",
+    origin: "invalid-collection-node-conflation-rolled-back",
     baseline: {
       capturedAt: initialSnapshot.capturedAt,
       ontologyAppId: initialSnapshot.ontologyAppId,
@@ -313,7 +328,7 @@ const loadAcceptedStructureProvenance = () => {
       sourceFile: path.relative(repoRoot, acceptedStructureBenchmarkFile),
       sourceSha256: sha256(benchmarkText),
     },
-    application: {
+    invalidApplication: {
       sourceOntology: applicationAudit.sourceOntology,
       targetOntology: applicationAudit.targetOntology,
       collectionName: appliedDesign.collectionName,
@@ -327,8 +342,23 @@ const loadAcceptedStructureProvenance = () => {
         applicationAudit.verification?.targetDigestMatches === true,
       sourceUnchanged: applicationAudit.verification?.sourceUnchanged === true,
     },
+    correction: {
+      finding:
+        "The collection-design contract incorrectly allowed new activity branches, and the application path materialized them as ontology nodes.",
+      policy:
+        "Collection-design agents may create or reuse a collection label and assign existing direct children to it, but may not create ontology nodes or alter parent-child relations.",
+      treatmentOfPriorDecision:
+        "Rob's agreement remains preserved as review evidence, but it is not reinterpreted as approval for a different collection-only transformation.",
+      ontologyAppId: correctionAudit.ontologyAppId,
+      retiredSyntheticNodes:
+        correctionAudit.correction?.retiredSyntheticNodes || [],
+      restoredRelation: correctionAudit.correction?.restoredRelation,
+      auditFile: path.relative(repoRoot, collectionNodeRepairAuditFile),
+      auditSha256: sha256(correctionText),
+      verified: true,
+    },
     conclusion:
-      'The collection-design proposal did not invent "Rent out", "Lease out", or temporary-use selling. Both activity nodes were already direct children of "Sell" in the machine-derived July 15 baseline. Rob then accepted a synonym decision and exact merge that absorbed "Lease out" into "Rent out". The later collection-design proposal created the "Sell temporary use" wrapper and moved the surviving "Rent out" node beneath it. The wrapper and move were human-reviewed, while the underlying activity nodes came from the earlier machine-derived ontology.',
+      '"Rent out" and "Lease out" were pre-existing machine-derived activities, and Rob approved merging "Lease out" into "Rent out". A later collection-design implementation incorrectly created "Sell ownership" and "Sell temporary use" as activity nodes. That application has been rolled back: the two synthetic wrappers are retired and "Rent out" is again a direct child of "Sell". No alternative collection structure has been inferred from Rob\'s prior answer.',
   };
 };
 
@@ -1551,6 +1581,8 @@ ${JSON.stringify(genericEvidenceFacts)}
       rejectedAgentCandidates: "diagnostics/rejected_agent_candidates.jsonl",
       acceptedStructureProvenance:
         "diagnostics/accepted_structure_provenance.json",
+      collectionDesignNodeRepair:
+        "diagnostics/collection_design_node_repair.json",
       proposalSchema: "schema/review-proposal.schema.json",
       responseSchema: "schema/review-response.schema.json",
       ontologySnapshot: "ontology-snapshot.json",
@@ -1592,6 +1624,7 @@ ${JSON.stringify(genericEvidenceFacts)}
       "O*NET specializations are released only when a deterministic text rule verifies an explicit modifier; broader model suggestions remain diagnostic.",
       "Empty-node and empty-collection findings are deterministic and intentionally unreleased until upstream changes propagate.",
       "Descriptions and broad missing-activity generation remain deferred.",
+      "Collection design is constrained to assigning existing direct children to a named bucket; new activity branches require a separate intermediate-node review.",
     ],
     sourceSnapshot: {
       file: "ontology-snapshot.json",
@@ -1624,6 +1657,10 @@ ${JSON.stringify(genericEvidenceFacts)}
   writeJson(
     path.join(outputDir, "diagnostics", "accepted_structure_provenance.json"),
     acceptedStructureProvenance,
+  );
+  fs.copyFileSync(
+    collectionNodeRepairAuditFile,
+    path.join(outputDir, "diagnostics", "collection_design_node_repair.json"),
   );
   writeJsonl(
     path.join(outputDir, "diagnostics", "rejected_agent_candidates.jsonl"),
@@ -1689,9 +1726,10 @@ O*NET-derived Sell specializations before downstream regeneration.
 - Safety: responses are review records only. A separately reviewed application
   plan is required before any ontology mutation.
 - Provenance: \`Rent out\` and \`Lease out\` already existed in the July 15
-  baseline. Rob accepted merging \`Lease out\` into \`Rent out\`; afterward he
-  accepted proposal \`${usageCollectionProposalId}\`, which created the
-  \`Sell temporary use\` wrapper and moved \`Rent out\` beneath it. See
+  baseline, and Rob accepted merging \`Lease out\` into \`Rent out\`. A later
+  collection-design contract incorrectly allowed new activity branches, which
+  the application materialized as nodes. Those wrappers were retired, and
+  \`Rent out\` is again a direct child of \`Sell\`. See
   \`diagnostics/accepted_structure_provenance.json\`.
 - Cleanup: empty nodes and named empty collections are detected now but remain
   unreleased until upstream decisions are propagated and the branch is

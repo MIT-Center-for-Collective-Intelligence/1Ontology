@@ -384,6 +384,69 @@ describe("Society of Mind review dataset", () => {
     ).toMatchObject({ subjectNodeId: "sell", parentNodeId: "sell" });
   });
 
+  it("validates existing collection members without requiring a node for the label", () => {
+    const snapshot = {
+      schemaVersion: "som-ontology-snapshot-v1" as const,
+      ontologyAppId: "ontology",
+      ontologyName: "Ontology",
+      firestoreProjectId: "project",
+      environment: "production" as const,
+      capturedAt: "2026-08-02T00:00:00.000Z",
+      branchRootNodeId: "sell",
+      branchRootTitle: "Sell",
+      nodes: [
+        { id: "sell", title: "Sell" },
+        { id: "rent", title: "Rent out" },
+        { id: "products", title: "Sell Products" },
+      ],
+      edges: [
+        { parentId: "sell", childId: "rent", collectionName: "main" },
+        { parentId: "sell", childId: "products", collectionName: "main" },
+      ],
+      collections: [{ parentId: "sell", collectionName: "main" }],
+    };
+    const record = {
+      proposalId: "collection-design",
+      subject: { path: [] },
+      reviewerView: {
+        context: {
+          type: "collection-design",
+          parentTitle: "Sell",
+          currentChildren: ["Rent out"],
+          proposedCollectionName: "Sell by duration",
+          proposedBranches: [
+            {
+              title: "Rent out",
+              status: "existing",
+              children: [],
+            },
+            {
+              title: "Sell Products",
+              status: "existing",
+              children: [],
+            },
+          ],
+        },
+      },
+      provenance: {
+        sourceOntologyAppId: "ontology",
+        sourceOntologyName: "Ontology",
+        sourceSnapshotSha256: "snapshot",
+        subjectNodeId: "",
+        parentNodeId: "sell",
+        referencedNodeIds: ["products", "rent", "sell"],
+      },
+    };
+
+    expect(
+      validateProposalAgainstSnapshot(
+        record,
+        buildSnapshotIndex(snapshot),
+        "snapshot",
+      ),
+    ).toMatchObject({ subjectNodeId: "", parentNodeId: "sell" });
+  });
+
   it("enables supported types by default and honors the disable list", () => {
     const previous = process.env.SOM_REVIEW_DISABLED_ISSUE_TYPES;
     delete process.env.SOM_REVIEW_DISABLED_ISSUE_TYPES;

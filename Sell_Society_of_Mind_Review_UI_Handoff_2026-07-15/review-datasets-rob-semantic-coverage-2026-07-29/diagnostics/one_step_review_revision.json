@@ -1,13 +1,14 @@
 {
   "schemaVersion": "som-review-revision-v1",
-  "contentRevision": 2,
+  "contentRevision": 3,
   "sourceDatasetVersion": "sell-rob-semantic-coverage-2026-07-29-v1",
   "reason": "Rob requested one review decision with the proposed alternative visible immediately and enough ancestor context to interpret the current placement.",
   "changes": [
     "Replaced 8 diagnosis-plus-relocation pairs with 8 one-step move proposals.",
     "Added current and proposed hierarchy paths to every move proposal.",
     "Preserved prior responses under their original proposal IDs rather than reinterpret them as approvals of a newly expanded question.",
-    "Corrected the provenance distinction between the accepted wrapper proposal and its machine-derived baseline nodes."
+    "Corrected the provenance distinction between the accepted wrapper proposal and its machine-derived baseline nodes.",
+    "Removed the invalid collection-generated activity wrappers from the current snapshot and restored Rent out directly under Sell."
   ],
   "retiredProposalIds": [
     "som-03c75772f02aef876ae1",
@@ -36,5 +37,10 @@
     "som-b8c5ba1c90158e6784c7",
     "som-f7564256227086773936",
     "som-b876e1950ee85f53d266"
-  ]
+  ],
+  "collectionNodeRepair": {
+    "auditFile": "Sell_Society_of_Mind_Review_UI_Handoff_2026-07-15/review-datasets-rob-semantic-coverage-2026-07-29/diagnostics/collection_design_node_repair.json",
+    "auditSha256": "a2a3359b6e2a926c6bfa00e554c5cf05224f817b9d4f7167bb372ed7c9414cfc",
+    "sourceSnapshotSha256": "96161f04fb1a4b146b79256be16ba2bebefcb9892308025b9937a400699fa884"
+  }
 }

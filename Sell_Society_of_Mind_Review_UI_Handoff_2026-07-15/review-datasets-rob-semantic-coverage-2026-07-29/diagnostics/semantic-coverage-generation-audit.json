@@ -3,7 +3,7 @@
   "generatedAt": "2026-07-30T01:01:43.000Z",
   "datasetVersion": "sell-rob-semantic-coverage-2026-07-29-v1",
   "sourceOntologyAppId": "final-hierarchy-with-o*net-rob-structure-applied-2026-07-25",
-  "sourceSnapshotSha256": "c362f9d3587dbed1303a7355b7d5feef8057684544857139f0178a1038b687b2",
+  "sourceSnapshotSha256": "96161f04fb1a4b146b79256be16ba2bebefcb9892308025b9937a400699fa884",
   "detectorVersion": "sell-semantic-coverage-v1",
   "prompts": {
     "semanticJudgeSha256": "abe2a74974d167d51e58f98563cfacbd01e2c4cd83ddbe823a4b635e42878e29",
@@ -5768,19 +5768,6 @@
           "collectionName": "Sell -- miscellaneous"
         }
       ]
-    },
-    {
-      "id": "2dfe6a4a3194a23d73d3681eb844",
-      "title": "Sell ownership",
-      "description": "Transfer ownership of something in exchange for payment.",
-      "synonyms": [],
-      "parents": [
-        {
-          "id": "9c347b3345120c1df2554b834c13",
-          "title": "Sell",
-          "collectionName": "Sell what kind of usage?"
-        }
-      ]
     }
   ],
   "emptyCollectionCandidates": [],
@@ -5803,8 +5790,7 @@
   ],
   "manualCheckIds": [
     "som-ab3d78b6bef69cc7afe9",
-    "som-c936209753da4ab48410",
-    "som-fbcb665a0931bc89fb65"
+    "som-c936209753da4ab48410"
   ],
   "ontologyMutated": false,
   "contentRevision": 2,
@@ -5841,5 +5827,20 @@
       "som-f7564256227086773936",
       "som-b876e1950ee85f53d266"
     ]
-  }
+  },
+  "originalSourceSnapshotSha256": "c362f9d3587dbed1303a7355b7d5feef8057684544857139f0178a1038b687b2",
+  "postGenerationRepairs": [
+    {
+      "type": "collection-node-conflation",
+      "auditFile": "Sell_Society_of_Mind_Review_UI_Handoff_2026-07-15/review-datasets-rob-semantic-coverage-2026-07-29/diagnostics/collection_design_node_repair.json",
+      "auditSha256": "a2a3359b6e2a926c6bfa00e554c5cf05224f817b9d4f7167bb372ed7c9414cfc",
+      "retiredSyntheticNodeIds": [
+        "2dfe6a4a3194a23d73d3681eb844",
+        "bc3a0d85a3dcd1e3ea729857acc3"
+      ],
+      "restoredParentId": "9c347b3345120c1df2554b834c13",
+      "restoredChildId": "df319ef0372ddc12e45ccbd4b4b0",
+      "sourceSnapshotSha256": "96161f04fb1a4b146b79256be16ba2bebefcb9892308025b9937a400699fa884"
+    }
+  ]
 }

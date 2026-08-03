@@ -975,50 +975,61 @@ const CollectionDesign = ({
   context,
 }: {
   context: Extract<SomReviewContext, { type: "collection-design" }>;
-}) => (
-  <Box>
-    <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
-      <Box sx={comparisonPanelSx} aria-label="Collections before redesign">
-        <Typography sx={sectionLabelSx}>Before</Typography>
-        <Typography sx={{ mt: 1, fontWeight: 750 }}>
-          {context.parentTitle}
-        </Typography>
-        {context.currentChildren.map((title) => (
-          <OutlineItem key={title} title={title} highlighted indent={1} />
-        ))}
+}) => {
+  const includesHierarchyChange = context.proposedBranches.some(
+    (branch) => branch.status === "new" || branch.children.length > 0,
+  );
+
+  return (
+    <Box>
+      <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
+        <Box sx={comparisonPanelSx} aria-label="Collections before redesign">
+          <Typography sx={sectionLabelSx}>Before</Typography>
+          <Typography sx={{ mt: 1, fontWeight: 750 }}>
+            {context.parentTitle}
+          </Typography>
+          {context.currentChildren.map((title) => (
+            <OutlineItem key={title} title={title} highlighted indent={1} />
+          ))}
+        </Box>
+        <Box sx={comparisonPanelSx} aria-label="Collections after redesign">
+          <Typography sx={sectionLabelSx}>After</Typography>
+          <Typography sx={{ mt: 1, fontWeight: 750 }}>
+            {context.parentTitle}
+          </Typography>
+          <Typography
+            sx={{ mt: 1.25, color: reviewAccentColor, fontWeight: 750 }}
+          >
+            Collection: {context.proposedCollectionName}
+          </Typography>
+          {context.proposedBranches.map((branch) => (
+            <Box key={branch.title}>
+              <OutlineItem
+                title={branch.title}
+                highlighted
+                indent={1}
+                statusLabel={
+                  branch.status === "new" ? "Proposed new activity" : undefined
+                }
+              />
+              {branch.children.map((title) => (
+                <OutlineItem key={title} title={title} highlighted indent={2} />
+              ))}
+            </Box>
+          ))}
+        </Box>
+      </Stack>
+      <Box sx={{ mt: 1 }}>
+        <SourceTasks tasks={context.sourceTasks || []} />
       </Box>
-      <Box sx={comparisonPanelSx} aria-label="Collections after redesign">
-        <Typography sx={sectionLabelSx}>After</Typography>
-        <Typography sx={{ mt: 1, fontWeight: 750 }}>
-          {context.parentTitle}
-        </Typography>
-        <Typography
-          sx={{ mt: 1.25, color: reviewAccentColor, fontWeight: 750 }}
-        >
-          Collection: {context.proposedCollectionName}
-        </Typography>
-        {context.proposedBranches.map((branch) => (
-          <Box key={branch.title}>
-            <OutlineItem
-              title={branch.title}
-              highlighted
-              indent={1}
-              statusLabel={
-                branch.status === "new" ? "Proposed new activity" : undefined
-              }
-            />
-            {branch.children.map((title) => (
-              <OutlineItem key={title} title={title} highlighted indent={2} />
-            ))}
-          </Box>
-        ))}
-      </Box>
-    </Stack>
-    <Box sx={{ mt: 1 }}>
-      <SourceTasks tasks={context.sourceTasks || []} />
+      <BoundaryNote>
+        {includesHierarchyChange
+          ? "This historical proposal includes new activity branches or hierarchy changes. It cannot be applied as a collection-only change."
+          : "This proposal only assigns existing direct children to a named collection. It does not create activities or change parent-child relationships."}
+      </BoundaryNote>
     </Box>
-  </Box>
-);
+  );
+};
 
 const SenseRelocationAction = ({
   context,

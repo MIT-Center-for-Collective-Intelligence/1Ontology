@@ -20,9 +20,9 @@ describe("Sell semantic coverage review wave", () => {
       ontologyAppId:
         "final-hierarchy-with-o*net-rob-structure-applied-2026-07-25",
       environment: "production",
-      nodeCount: 144,
-      edgeCount: 180,
-      collectionCount: 146,
+      nodeCount: 142,
+      edgeCount: 178,
+      collectionCount: 144,
     });
     expect(dataset.manifest.safety).toMatchObject({
       reviewOnly: true,
@@ -54,6 +54,10 @@ describe("Sell semantic coverage review wave", () => {
           record.reviewerView.context.candidateHome === "Rent out" &&
           record.reviewerView.context.currentPathTitles?.[0] === "Buy" &&
           record.reviewerView.context.proposedPathTitles?.[0] === "Sell" &&
+          !record.reviewerView.context.proposedPathTitles?.includes(
+            "Sell temporary use",
+          ) &&
+          record.reviewerView.context.proposedPathTitles?.[1] === "Rent out" &&
           record.reviewerView.context.proposedPathTitles?.at(-1) ===
             record.subject.title,
       ),
@@ -110,7 +114,6 @@ describe("Sell semantic coverage review wave", () => {
     expect(emptyNodes.map((record) => record.subject.title).sort()).toEqual([
       "Rent out",
       "Sell (Other)",
-      "Sell ownership",
     ]);
     expect(
       emptyNodes.every(
@@ -137,10 +140,24 @@ describe("Sell semantic coverage review wave", () => {
     ).toContain("empty-collection");
   });
 
-  it("records that the usage branches came from Rob's accepted proposal", () => {
+  it("records and corrects the invalid collection-node application", () => {
+    const snapshot = JSON.parse(
+      fs.readFileSync(path.join(datasetRoot, "ontology-snapshot.json"), "utf8"),
+    );
+    expect(snapshot.nodes.map((node: any) => node.title)).not.toEqual(
+      expect.arrayContaining(["Sell ownership", "Sell temporary use"]),
+    );
+    expect(
+      snapshot.edges.some(
+        (edge: any) =>
+          edge.parentId === "9c347b3345120c1df2554b834c13" &&
+          edge.childId === "df319ef0372ddc12e45ccbd4b4b0" &&
+          edge.collectionName === "main",
+      ),
+    ).toBe(true);
     expect(dataset.manifest.acceptedStructureProvenance).toEqual({
       proposalId: "som-f0464db076534dd0bde0",
-      origin: "human-accepted-wrapper-over-machine-derived-baseline-nodes",
+      origin: "invalid-collection-node-conflation-rolled-back",
       file: "diagnostics/accepted_structure_provenance.json",
     });
     const provenance = JSON.parse(
@@ -156,10 +173,20 @@ describe("Sell semantic coverage review wave", () => {
       decision: "agree",
       reviewerLabel: "Rob Laubacher",
     });
-    expect(provenance.application).toMatchObject({
+    expect(provenance.invalidApplication).toMatchObject({
       collectionName: "Sell what kind of usage?",
       targetDigestVerified: true,
       sourceUnchanged: true,
+    });
+    expect(provenance.correction).toMatchObject({
+      verified: true,
+      treatmentOfPriorDecision:
+        "Rob's agreement remains preserved as review evidence, but it is not reinterpreted as approval for a different collection-only transformation.",
+      restoredRelation: {
+        parentTitle: "Sell",
+        childTitle: "Rent out",
+        collectionName: "main",
+      },
     });
     expect(provenance.baseline).toMatchObject({
       ontologyAppId: "final-hierarchy-with-o*net",
@@ -196,7 +223,10 @@ describe("Sell semantic coverage review wave", () => {
       },
     });
     expect(provenance.conclusion).toContain(
-      'absorbed "Lease out" into "Rent out"',
+      'approved merging "Lease out" into "Rent out"',
+    );
+    expect(provenance.conclusion).toContain(
+      '"Rent out" is again a direct child of "Sell"',
     );
   });
 });

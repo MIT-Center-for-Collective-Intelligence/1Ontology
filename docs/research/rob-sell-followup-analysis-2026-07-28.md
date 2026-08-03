@@ -64,9 +64,13 @@ requires reviewed proposal IDs.
 - `Sell Postal Products` has O\*NET evidence while `Sell Postal Supplies` has
   semantic descendants. Inspect both before choosing merge versus grouping.
 - `Sell Equipment` and `Sell Items` cannot be merged from broad labels alone.
-- `Sell temporary use` has only `Rent out`, whose recorded synonym is
-  `Lease out`. Remove the wrapper only if the expert confirms no additional
-  temporary-use specialization is needed.
+- Historical note: `Sell temporary use` had only `Rent out`, whose recorded
+  synonym is `Lease out`. The wrapper was subsequently found to be an invalid
+  activity node created under an overly broad collection-design contract and
+  was retired. Future collection design is restricted to assigning existing
+  direct children to a named collection; new intermediate nodes require their
+  own proposal. Remove a valid semantic wrapper only if the expert confirms no
+  additional temporary-use specialization is needed.
 
 ## Prompt and pipeline changes
 

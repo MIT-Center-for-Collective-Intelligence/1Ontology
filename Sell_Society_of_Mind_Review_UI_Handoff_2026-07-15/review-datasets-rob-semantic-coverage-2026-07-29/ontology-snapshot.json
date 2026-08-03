@@ -4,7 +4,7 @@
   "ontologyName": "Final Hierarchy with O*Net - Rob Structure Applied 2026-07-25",
   "firestoreProjectId": "ontology-41607",
   "environment": "production",
-  "capturedAt": "2026-07-30T01:01:43.000Z",
+  "capturedAt": "2026-08-02T23:46:38.051Z",
   "sellRootNodeId": "9c347b3345120c1df2554b834c13",
   "nodes": [
     {
@@ -342,15 +342,6 @@
       "id": "2c2991d73ac14d024e85e0d659c1",
       "title": "Sell Tonic",
       "description": "",
-      "synsets": "",
-      "actionAlternatives": [],
-      "oNet": false,
-      "oNetTask": false
-    },
-    {
-      "id": "2dfe6a4a3194a23d73d3681eb844",
-      "title": "Sell ownership",
-      "description": "Transfer ownership of something in exchange for payment.",
       "synsets": "",
       "actionAlternatives": [],
       "oNet": false,
@@ -973,15 +964,6 @@
       "actionAlternatives": [],
       "oNet": false,
       "oNetTask": true
-    },
-    {
-      "id": "bc3a0d85a3dcd1e3ea729857acc3",
-      "title": "Sell temporary use",
-      "description": "Transfer temporary use of something in exchange for payment.",
-      "synsets": "",
-      "actionAlternatives": [],
-      "oNet": false,
-      "oNetTask": false
     },
     {
       "id": "bc79143256196ddced5c6094082f",
@@ -1838,18 +1820,13 @@
     },
     {
       "parentId": "9c347b3345120c1df2554b834c13",
+      "childId": "df319ef0372ddc12e45ccbd4b4b0",
+      "collectionName": "main"
+    },
+    {
+      "parentId": "9c347b3345120c1df2554b834c13",
       "childId": "ad1be9f1b47666a180ce7ee2b96c",
       "collectionName": "Sell -- miscellaneous"
-    },
-    {
-      "parentId": "9c347b3345120c1df2554b834c13",
-      "childId": "2dfe6a4a3194a23d73d3681eb844",
-      "collectionName": "Sell what kind of usage?"
-    },
-    {
-      "parentId": "9c347b3345120c1df2554b834c13",
-      "childId": "bc3a0d85a3dcd1e3ea729857acc3",
-      "collectionName": "Sell what kind of usage?"
     },
     {
       "parentId": "9c347b3345120c1df2554b834c13",
@@ -1914,11 +1891,6 @@
     {
       "parentId": "bab1e5f5d5b391e8bf14e9bb4b68",
       "childId": "3fabb7474bad46bf1b3fad9fcba7",
-      "collectionName": "main"
-    },
-    {
-      "parentId": "bc3a0d85a3dcd1e3ea729857acc3",
-      "childId": "df319ef0372ddc12e45ccbd4b4b0",
       "collectionName": "main"
     },
     {
@@ -2608,10 +2580,6 @@
     },
     {
       "parentId": "9c347b3345120c1df2554b834c13",
-      "collectionName": "Sell what kind of usage?"
-    },
-    {
-      "parentId": "9c347b3345120c1df2554b834c13",
       "collectionName": "Sell what?"
     },
     {
@@ -2664,10 +2632,6 @@
     },
     {
       "parentId": "bb849755d79cc41aec01ee2a1e5d",
-      "collectionName": "main"
-    },
-    {
-      "parentId": "bc3a0d85a3dcd1e3ea729857acc3",
       "collectionName": "main"
     },
     {

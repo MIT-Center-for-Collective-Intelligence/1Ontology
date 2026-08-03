@@ -224,7 +224,12 @@ export type SomReviewContext =
       type: "collection-design";
       parentTitle: string;
       currentChildren: string[];
+      /** Human-readable name for the proposed collection organization. */
       proposedCollectionName: string;
+      /**
+       * Activity branches shown in historical records. New collection-only
+       * proposals must reference existing direct children with no descendants.
+       */
       proposedBranches: Array<{
         title: string;
         status: "existing" | "new";

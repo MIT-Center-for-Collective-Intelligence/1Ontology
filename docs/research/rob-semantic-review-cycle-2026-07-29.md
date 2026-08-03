@@ -33,25 +33,31 @@ Sources:
   `c362f9d3587dbed1303a7355b7d5feef8057684544857139f0178a1038b687b2`
 - Released one-step missing-node moves: 8
 - Released O\*NET specializations: 3
-- Deferred empty-node checks: 3
+- Deferred empty-node checks: 2
 - Deferred empty-collection checks: 0
 
 ## Provenance resolution
 
-The earlier provenance statement was incomplete. Collection-design proposal
-`som-f0464db076534dd0bde0` was presented to Rob in the July 24 structure wave;
-Rob agreed, and the audited application created the `Sell ownership` and
-`Sell temporary use` wrappers in a new ontology copy. But the July 15 baseline
-already contained `Rent out` and `Lease out` as direct children of `Sell`.
-Firestore lineage traces predecessor records for those nodes to February 10,
-with Gemini listed as a contributor. Before the structure wave, Rob accepted
-both the synonym diagnosis and the exact merge that absorbed `Lease out` into
-`Rent out`. The later collection proposal then created `Sell temporary use`
-and moved the surviving `Rent out` node beneath it. The proposal therefore
-organized a machine-derived baseline node; it did not originate the underlying
-activity. The released dataset records this full sequence, source hashes, and
-the verified target digests in
-`diagnostics/accepted_structure_provenance.json`.
+The earlier provenance statement was incomplete, and the subsequent audit
+identified a collection/node type error. The July 15 baseline already contained
+`Rent out` and `Lease out` as direct children of `Sell`; Firestore lineage traces
+their predecessor records to February 10, with Gemini listed as a contributor.
+Rob then accepted the synonym diagnosis and exact merge that absorbed
+`Lease out` into `Rent out`.
+
+Collection-design proposal `som-f0464db076534dd0bde0` was later shown to Rob,
+but the collection-design contract incorrectly allowed it to propose new
+activity branches, and the application code materialized those branches as
+ontology nodes. Rob's agreement therefore cannot be treated as authorization
+for those nodes or silently reinterpreted as a different collection-only plan.
+The two synthetic nodes, `Sell ownership` and `Sell temporary use`, have been
+retired, and `Rent out` has been restored as a direct child of `Sell`. Future
+collection designs may create or reuse one collection label and assign existing
+direct children to it; a new activity or intermediate node requires a separate
+proposal and review. The released dataset records the
+original review, invalid application, correction, and verified source hashes in
+`diagnostics/accepted_structure_provenance.json` and
+`diagnostics/collection_design_node_repair.json`.
 
 ## Deferred until current review propagates
 
