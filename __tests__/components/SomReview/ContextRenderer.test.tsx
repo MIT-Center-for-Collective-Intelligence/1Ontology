@@ -613,7 +613,29 @@ describe("Society of Mind context renderers", () => {
     expect(
       screen.getByLabelText("Collections after redesign"),
     ).toHaveTextContent("Sell what kind of usage?");
-    expect(screen.getByText("Sell temporary use")).toBeInTheDocument();
+    expect(screen.getAllByText("Proposed new activity")).toHaveLength(2);
+    expect(
+      screen.getByText(/cannot be applied as a collection-only change/i),
+    ).toBeInTheDocument();
+
+    rerender(
+      <ContextRenderer
+        context={{
+          type: "collection-design",
+          parentTitle: "Sell",
+          currentChildren: ["Sell Products", "Rent out"],
+          proposedCollectionName: "Sell what kind of usage?",
+          proposedBranches: [
+            { title: "Sell Products", status: "existing", children: [] },
+            { title: "Rent out", status: "existing", children: [] },
+          ],
+        }}
+      />,
+    );
+    expect(screen.queryByText("Proposed new activity")).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/only assigns existing direct children/i),
+    ).toBeInTheDocument();
 
     rerender(
       <ContextRenderer

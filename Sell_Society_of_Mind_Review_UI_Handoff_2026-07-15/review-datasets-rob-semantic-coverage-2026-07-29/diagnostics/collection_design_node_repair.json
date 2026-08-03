@@ -1,0 +1,143 @@
+{
+  "schemaVersion": "som-collection-node-repair-v1",
+  "generatedAt": "2026-08-02T23:46:38.051Z",
+  "mode": "apply",
+  "environment": "production",
+  "firestoreProjectId": "ontology-41607",
+  "ontologyAppId": "final-hierarchy-with-o*net-rob-structure-applied-2026-07-25",
+  "invalidProposalId": "som-f0464db076534dd0bde0",
+  "reason": "The collection-design contract incorrectly allowed new activity branches, and the application materialized them as ontology nodes.",
+  "alreadyCorrected": false,
+  "beforeDigest": "68557b0603a65fbb6d4153d81370b82071a69bf3edd479d344a1be6d50d5bf77",
+  "expectedAfterDigest": "1dfcc240f91862c01d5eb04b83e70fe40e0a6f6208c70e320e64ac9d69a4beba",
+  "before": {
+    "sellChildren": [
+      {
+        "collectionName": "main",
+        "nodeIds": [
+          "126b0f1051d40fabc1a06aa627c7"
+        ]
+      },
+      {
+        "collectionName": "Sell -- miscellaneous",
+        "nodeIds": [
+          "ad1be9f1b47666a180ce7ee2b96c"
+        ]
+      },
+      {
+        "collectionName": "Sell what?",
+        "nodeIds": [
+          "64a0dfd908529ee455e1c0aed2e7",
+          "da8b4b175d8e1475f595d880d34b",
+          "c578ae350a21084904b779a83dca"
+        ]
+      },
+      {
+        "collectionName": "Sell what kind of usage?",
+        "nodeIds": [
+          "2dfe6a4a3194a23d73d3681eb844",
+          "bc3a0d85a3dcd1e3ea729857acc3"
+        ]
+      }
+    ],
+    "ownershipDeleted": false,
+    "ownershipChildren": [],
+    "temporaryUseDeleted": false,
+    "temporaryUseChildren": [
+      "df319ef0372ddc12e45ccbd4b4b0"
+    ],
+    "rentOutParents": [
+      "bc3a0d85a3dcd1e3ea729857acc3"
+    ]
+  },
+  "expectedAfter": {
+    "sellChildren": [
+      {
+        "collectionName": "main",
+        "nodeIds": [
+          "126b0f1051d40fabc1a06aa627c7",
+          "df319ef0372ddc12e45ccbd4b4b0"
+        ]
+      },
+      {
+        "collectionName": "Sell -- miscellaneous",
+        "nodeIds": [
+          "ad1be9f1b47666a180ce7ee2b96c"
+        ]
+      },
+      {
+        "collectionName": "Sell what?",
+        "nodeIds": [
+          "64a0dfd908529ee455e1c0aed2e7",
+          "da8b4b175d8e1475f595d880d34b",
+          "c578ae350a21084904b779a83dca"
+        ]
+      }
+    ],
+    "ownershipDeleted": true,
+    "ownershipChildren": [],
+    "temporaryUseDeleted": true,
+    "temporaryUseChildren": [],
+    "rentOutParents": [
+      "9c347b3345120c1df2554b834c13"
+    ]
+  },
+  "correction": {
+    "retiredSyntheticNodes": [
+      {
+        "id": "2dfe6a4a3194a23d73d3681eb844",
+        "title": "Sell ownership"
+      },
+      {
+        "id": "bc3a0d85a3dcd1e3ea729857acc3",
+        "title": "Sell temporary use"
+      }
+    ],
+    "restoredRelation": {
+      "parentId": "9c347b3345120c1df2554b834c13",
+      "parentTitle": "Sell",
+      "childId": "df319ef0372ddc12e45ccbd4b4b0",
+      "childTitle": "Rent out",
+      "collectionName": "main"
+    },
+    "removedCollectionLabel": "Sell what kind of usage?"
+  },
+  "actualAfterDigest": "1dfcc240f91862c01d5eb04b83e70fe40e0a6f6208c70e320e64ac9d69a4beba",
+  "after": {
+    "sellChildren": [
+      {
+        "collectionName": "main",
+        "nodeIds": [
+          "126b0f1051d40fabc1a06aa627c7",
+          "df319ef0372ddc12e45ccbd4b4b0"
+        ]
+      },
+      {
+        "collectionName": "Sell -- miscellaneous",
+        "nodeIds": [
+          "ad1be9f1b47666a180ce7ee2b96c"
+        ]
+      },
+      {
+        "collectionName": "Sell what?",
+        "nodeIds": [
+          "64a0dfd908529ee455e1c0aed2e7",
+          "da8b4b175d8e1475f595d880d34b",
+          "c578ae350a21084904b779a83dca"
+        ]
+      }
+    ],
+    "ownershipDeleted": true,
+    "ownershipChildren": [],
+    "temporaryUseDeleted": true,
+    "temporaryUseChildren": [],
+    "rentOutParents": [
+      "9c347b3345120c1df2554b834c13"
+    ]
+  },
+  "verification": {
+    "expectedStateReached": true,
+    "wrappersRetired": true,
+    "rentOutRestoredDirectlyUnderSell": true
+  }
+}

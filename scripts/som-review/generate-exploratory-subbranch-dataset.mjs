@@ -274,12 +274,20 @@ polysemy: {nodeTitle,currentParentTitle,proposedSenses:[{title,meaning}],rationa
     role: `${STRUCTURE_AGENT_GUIDANCE}
 Inspect sibling structure, compound objects, and genuinely distinct
 specialization dimensions. Return only flat-list-grouping,
-compound-object-grouping, or collection-design candidates.`,
+compound-object-grouping, or collection-design candidates.
+
+A collection is a named display bucket on a parent's existing child links; it
+is not an ontology activity node. A collection-design candidate may create or
+reuse one collection label and assign existing direct activity children to it,
+but it must never invent a new activity, insert an intermediate node, or change
+a parent-child relation. proposedCollectionName is the collection label. Every
+proposedBranches item identifies one exact existing direct child activity: use
+status "existing" and an empty children array.`,
     schema: `
 flat-list-grouping or compound-object-grouping:
   {parentTitle,proposedGroupTitle,proposedChildren:[at least 2 exact direct child titles],rationale}
 collection-design:
-  {parentTitle,proposedCollectionName,proposedBranches:[{title,status:"existing"|"new",children:[exact titles]}],rationale}`,
+  {parentTitle,proposedCollectionName,proposedBranches:[{title:exact existing direct child title,status:"existing",children:[]}],rationale}`,
   },
   {
     id: "placement-boundary-agent",
@@ -1168,16 +1176,23 @@ function preflightCandidate(candidate, index) {
     }
     if (issueType === "collection-design") {
       const direct = new Set(currentChildren(index, candidate.parentTitle));
-      const children = (candidate.proposedBranches || []).flatMap(
-        (branch) => branch.children || [],
+      const assignedTitles = (candidate.proposedBranches || []).map((branch) =>
+        clean(branch.title),
       );
       if (
         !clean(candidate.proposedCollectionName) ||
+        clean(candidate.proposedCollectionName) === "main" ||
         !Array.isArray(candidate.proposedBranches) ||
         candidate.proposedBranches.length < 2 ||
-        children.some((title) => !direct.has(clean(title)))
+        new Set(assignedTitles).size !== assignedTitles.length ||
+        candidate.proposedBranches.some(
+          (branch) =>
+            branch.status !== "existing" ||
+            (branch.children || []).length > 0 ||
+            !direct.has(clean(branch.title)),
+        )
       ) {
-        return "collection design does not partition exact direct children";
+        return "collection design must assign existing direct activity children to one named collection without creating nodes";
       }
     }
     if (issueType === "placement" || issueType === "wrong-verb") {
@@ -1627,8 +1642,17 @@ function deriveRefs(context, index, subject) {
       parentNodeId = addTitle(context.parentTitle);
       for (const title of context.currentChildren || []) addTitle(title);
       for (const branch of context.proposedBranches || []) {
-        if (branch.status === "existing") addTitle(branch.title);
-        for (const title of branch.children || []) addTitle(title);
+        if (branch.status !== "existing" || (branch.children || []).length) {
+          throw new Error(
+            "collection design cannot create activities or alter their descendants",
+          );
+        }
+        const childId = addTitle(branch.title);
+        if (!index.edgePairs.has(edgePair(parentNodeId, childId))) {
+          throw new Error(
+            "collection design is not bound to an existing direct child",
+          );
+        }
       }
       break;
     case "placement-comparison":
@@ -1962,7 +1986,7 @@ function recordForCandidate(candidate, config) {
       })),
       sourceTasks: sourceTasksForNodes(
         index,
-        candidate.proposedBranches.flatMap((item) => item.children || []),
+        candidate.proposedBranches.map((item) => item.title),
       ),
     };
     subject = {
@@ -1971,7 +1995,7 @@ function recordForCandidate(candidate, config) {
       path:
         index.pathsById.get(uniqueIdForTitle(index, candidate.parentTitle)) ||
         [],
-      relatedTitles: context.proposedBranches.flatMap((item) => item.children),
+      relatedTitles: context.proposedBranches.map((item) => item.title),
     };
     reviewerView = {
       question: candidate.collectionPolicy
@@ -1990,7 +2014,7 @@ function recordForCandidate(candidate, config) {
         : "The current direct children are not organized along this dimension.",
       proposedState: candidate.collectionPolicy
         ? `Account for every current child under "${candidate.proposedCollectionName}", then retire the redundant generic collection or placeholder in a separately reviewed application plan.`
-        : "Create the proposed collection and branches.",
+        : `Place the listed existing direct children in the "${candidate.proposedCollectionName}" collection without changing the hierarchy.`,
       reasoning: rationale,
     };
   } else if (issueType === "placement" || issueType === "wrong-verb") {

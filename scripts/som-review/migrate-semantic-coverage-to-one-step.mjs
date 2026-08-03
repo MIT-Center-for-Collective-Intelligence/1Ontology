@@ -37,6 +37,12 @@ const usageMergeApplicationAuditFile = path.join(
   "diagnostics",
   "content_application_audit.json",
 );
+const collectionNodeRepairAuditFile = path.join(
+  repoRoot,
+  "artifacts",
+  "rob-structure-review-2026-07-25",
+  "collection-design-node-repair-2026-08-02.json",
+);
 const usageSynonymProposalId = "som-af5752d64f929944a380";
 const usageMergeProposalId = "som-9551307c7a40c479a755";
 
@@ -206,7 +212,7 @@ manifest.limitations = manifest.limitations.map((value) =>
     : value,
 );
 manifest.acceptedStructureProvenance.origin =
-  "human-accepted-wrapper-over-machine-derived-baseline-nodes";
+  "invalid-collection-node-conflation-rolled-back";
 writeJson(manifestFile, manifest);
 
 const schemaFile = path.join(
@@ -326,9 +332,16 @@ const provenanceFile = path.join(
   "accepted_structure_provenance.json",
 );
 const provenance = readJson(provenanceFile);
-provenance.schemaVersion = "som-accepted-structure-provenance-v3";
-provenance.origin =
-  "human-accepted-wrapper-over-machine-derived-baseline-nodes";
+const correctionText = fs.readFileSync(collectionNodeRepairAuditFile, "utf8");
+const correctionAudit = JSON.parse(correctionText);
+if (
+  correctionAudit.mode !== "apply" ||
+  !Object.values(correctionAudit.verification || {}).every(Boolean)
+) {
+  throw new Error("The collection-node correction is not verified");
+}
+provenance.schemaVersion = "som-accepted-structure-provenance-v4";
+provenance.origin = "invalid-collection-node-conflation-rolled-back";
 provenance.baseline = {
   capturedAt: initialSnapshot.capturedAt,
   ontologyAppId: initialSnapshot.ontologyAppId,
@@ -369,9 +382,32 @@ provenance.contentPrerequisite = {
       mergeApplicationAudit.verification?.sourceUnchanged === true,
   },
 };
+if (!provenance.invalidApplication && provenance.application) {
+  provenance.invalidApplication = provenance.application;
+}
+delete provenance.application;
+provenance.correction = {
+  finding:
+    "The collection-design contract incorrectly allowed new activity branches, and the application path materialized them as ontology nodes.",
+  policy:
+    "Collection-design agents may create or reuse a collection label and assign existing direct children to it, but may not create ontology nodes or alter parent-child relations.",
+  treatmentOfPriorDecision:
+    "Rob's agreement remains preserved as review evidence, but it is not reinterpreted as approval for a different collection-only transformation.",
+  ontologyAppId: correctionAudit.ontologyAppId,
+  retiredSyntheticNodes:
+    correctionAudit.correction?.retiredSyntheticNodes || [],
+  restoredRelation: correctionAudit.correction?.restoredRelation,
+  auditFile: path.relative(repoRoot, collectionNodeRepairAuditFile),
+  auditSha256: sha256(correctionText),
+  verified: true,
+};
 provenance.conclusion =
-  'The collection-design proposal did not invent "Rent out", "Lease out", or temporary-use selling. Both activity nodes were already direct children of "Sell" in the machine-derived July 15 baseline. Rob then accepted a synonym decision and exact merge that absorbed "Lease out" into "Rent out". The later collection-design proposal created the "Sell temporary use" wrapper and moved the surviving "Rent out" node beneath it. The wrapper and move were human-reviewed, while the underlying activity nodes came from the earlier machine-derived ontology.';
+  '"Rent out" and "Lease out" were pre-existing machine-derived activities, and Rob approved merging "Lease out" into "Rent out". A later collection-design implementation incorrectly created "Sell ownership" and "Sell temporary use" as activity nodes. That application has been rolled back: the two synthetic wrappers are retired and "Rent out" is again a direct child of "Sell". No alternative collection structure has been inferred from Rob\'s prior answer.';
 writeJson(provenanceFile, provenance);
+fs.copyFileSync(
+  collectionNodeRepairAuditFile,
+  path.join(datasetDir, "diagnostics", "collection_design_node_repair.json"),
+);
 
 writeJson(
   path.join(datasetDir, "diagnostics", "one_step_review_revision.json"),
@@ -385,7 +421,7 @@ writeJson(
       "Replaced 8 diagnosis-plus-relocation pairs with 8 one-step move proposals.",
       "Added current and proposed hierarchy paths to every move proposal.",
       "Preserved prior responses under their original proposal IDs rather than reinterpret them as approvals of a newly expanded question.",
-      "Corrected the provenance distinction between the accepted wrapper proposal and its machine-derived baseline nodes.",
+      "Recorded that the invalid collection-generated activity wrappers were rolled back without reinterpreting the prior review answer.",
     ],
     retiredProposalIds: [
       ...diagnoses.map((record) => record.proposalId),
