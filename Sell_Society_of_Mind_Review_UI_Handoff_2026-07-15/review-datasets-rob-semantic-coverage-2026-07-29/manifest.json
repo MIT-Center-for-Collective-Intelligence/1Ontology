@@ -100,6 +100,68 @@
     "origin": "invalid-collection-node-conflation-rolled-back",
     "file": "diagnostics/accepted_structure_provenance.json"
   },
+  "responseCarryForward": {
+    "schemaVersion": "som-response-carry-forward-v1",
+    "policy": "Carry forward only the prior exact relocation decision whose subject, current parent, proposed parent, and descendant-preserving move match the replacement one-step card. The broader diagnosis response remains historical and is not reinterpreted.",
+    "mappings": [
+      {
+        "sourceProposalId": "som-a129fc5e2012529a5814",
+        "sourceIssueType": "relocation",
+        "targetProposalId": "som-756a156508bbc6756859",
+        "targetIssueType": "cross-branch-recall",
+        "subjectTitle": "Lease Property"
+      },
+      {
+        "sourceProposalId": "som-b0618ed6153588a186ba",
+        "sourceIssueType": "relocation",
+        "targetProposalId": "som-465816b46486fcf5d2bf",
+        "targetIssueType": "cross-branch-recall",
+        "subjectTitle": "Rent Clothing"
+      },
+      {
+        "sourceProposalId": "som-27afd77fd2d9b2564529",
+        "sourceIssueType": "relocation",
+        "targetProposalId": "som-0b734eb0be482c04eef1",
+        "targetIssueType": "cross-branch-recall",
+        "subjectTitle": "Rent Box"
+      },
+      {
+        "sourceProposalId": "som-3ce0cf5a80839238edf9",
+        "sourceIssueType": "relocation",
+        "targetProposalId": "som-2712192fe57dd0dbf045",
+        "targetIssueType": "cross-branch-recall",
+        "subjectTitle": "Rent Merchandise"
+      },
+      {
+        "sourceProposalId": "som-3f7e33c2a810735c6d56",
+        "sourceIssueType": "relocation",
+        "targetProposalId": "som-ed212c77f550f328ce1d",
+        "targetIssueType": "cross-branch-recall",
+        "subjectTitle": "Rent Accommodation"
+      },
+      {
+        "sourceProposalId": "som-fecda86541f0949e2d50",
+        "sourceIssueType": "relocation",
+        "targetProposalId": "som-b8c5ba1c90158e6784c7",
+        "targetIssueType": "cross-branch-recall",
+        "subjectTitle": "Rent Supply"
+      },
+      {
+        "sourceProposalId": "som-15fba4ccfad0dd29cbc5",
+        "sourceIssueType": "relocation",
+        "targetProposalId": "som-f7564256227086773936",
+        "targetIssueType": "cross-branch-recall",
+        "subjectTitle": "Rent Equipment"
+      },
+      {
+        "sourceProposalId": "som-2349d16033acaead6103",
+        "sourceIssueType": "relocation",
+        "targetProposalId": "som-b876e1950ee85f53d266",
+        "targetIssueType": "cross-branch-recall",
+        "subjectTitle": "Rent Item"
+      }
+    ]
+  },
   "limitations": [
     "Embedding similarity retrieves candidates but never authorizes an ontology change.",
     "A semantic-direction judge filters embedding candidates; direct provider-side O*NET evidence is scanned across the full ontology candidate set so the embedding cutoff cannot hide it.",
@@ -151,5 +213,5 @@
     "reviewedCandidateCount": 57,
     "directEvidenceCandidateCount": 8
   },
-  "contentRevision": 3
+  "contentRevision": 4
 }

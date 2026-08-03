@@ -172,6 +172,28 @@ const oneStepMoves = diagnoses.map((diagnosis) => {
     },
   };
 });
+const oneStepMoveByDiagnosisId = new Map(
+  diagnoses.map((diagnosis, index) => [
+    diagnosis.proposalId,
+    oneStepMoves[index],
+  ]),
+);
+const responseCarryForwardMappings = relocations.map((relocation) => {
+  const diagnosisId = relocation.workflow.dependsOnProposalIds[0];
+  const replacement = oneStepMoveByDiagnosisId.get(diagnosisId);
+  if (!replacement || replacement.subject.title !== relocation.subject.title) {
+    throw new Error(
+      `Cannot verify exact response carry-forward for ${relocation.proposalId}`,
+    );
+  }
+  return {
+    sourceProposalId: relocation.proposalId,
+    sourceIssueType: "relocation",
+    targetProposalId: replacement.proposalId,
+    targetIssueType: "cross-branch-recall",
+    subjectTitle: replacement.subject.title,
+  };
+});
 
 const retainedRecords = records.filter(
   (record) =>
@@ -213,6 +235,12 @@ manifest.limitations = manifest.limitations.map((value) =>
 );
 manifest.acceptedStructureProvenance.origin =
   "invalid-collection-node-conflation-rolled-back";
+manifest.responseCarryForward = {
+  schemaVersion: "som-response-carry-forward-v1",
+  policy:
+    "Carry forward only the prior exact relocation decision whose subject, current parent, proposed parent, and descendant-preserving move match the replacement one-step card. The broader diagnosis response remains historical and is not reinterpreted.",
+  mappings: responseCarryForwardMappings,
+};
 writeJson(manifestFile, manifest);
 
 const schemaFile = path.join(
@@ -420,7 +448,8 @@ writeJson(
     changes: [
       "Replaced 8 diagnosis-plus-relocation pairs with 8 one-step move proposals.",
       "Added current and proposed hierarchy paths to every move proposal.",
-      "Preserved prior responses under their original proposal IDs rather than reinterpret them as approvals of a newly expanded question.",
+      "Carried prior exact relocation responses forward to their equivalent one-step cards without changing the stored source records.",
+      "Kept the broader prior diagnosis responses under their original proposal IDs rather than reinterpret them as exact move approvals.",
       "Recorded that the invalid collection-generated activity wrappers were rolled back without reinterpreting the prior review answer.",
     ],
     retiredProposalIds: [
@@ -428,5 +457,6 @@ writeJson(
       ...relocations.map((record) => record.proposalId),
     ],
     replacementProposalIds: oneStepMoves.map((record) => record.proposalId),
+    responseCarryForwardMappings,
   },
 );

@@ -20,7 +20,7 @@ import {
   SomDeliberationResolutionDecision,
   SomReviewDecision,
 } from "../../types/ISomReview";
-import { SomDataset } from "./dataset";
+import { getDatasetByVersion, SomDataset } from "./dataset";
 import {
   resolveReviewerRole,
   reviewerRoleLabel,
@@ -32,6 +32,10 @@ import {
   applicableReviewResponses,
   remainingIndependentReviewCount,
 } from "./reviewWorkflow";
+import {
+  carryForwardResponseRecords,
+  responseCarryForwardSources,
+} from "./responseCarryForward";
 
 export interface UserProfile {
   userId: string;
@@ -210,12 +214,22 @@ const loadBundle = async (
   datasetVersion: string,
   proposalId?: string,
 ): Promise<DeliberationBundle> => {
+  const dataset = getDatasetByVersion(datasetVersion);
+  const responseProposalIds = proposalId
+    ? [proposalId, ...responseCarryForwardSources(dataset, proposalId)]
+    : [];
   let responseQuery: any = db
     .collection(SOM_REVIEW_RESPONSES)
     .where("datasetVersion", "==", datasetVersion)
     .where("status", "==", "current");
   if (proposalId) {
-    responseQuery = responseQuery.where("proposalId", "==", proposalId);
+    responseQuery = responseQuery.where(
+      "proposalId",
+      responseProposalIds.length === 1 ? "==" : "in",
+      responseProposalIds.length === 1
+        ? responseProposalIds[0]
+        : responseProposalIds,
+    );
   }
   const [
     responseSnapshot,
@@ -230,7 +244,10 @@ const loadBundle = async (
   ]);
 
   const responses = latestBy<ResponseRecord>(
-    responseSnapshot.docs.map((doc: any) => doc.data() as ResponseRecord),
+    carryForwardResponseRecords(
+      dataset,
+      responseSnapshot.docs.map((doc: any) => doc.data() as ResponseRecord),
+    ),
     (record) => `${record.proposalId}|${record.reviewerId}`,
     (record) => record.updatedAt || record.response.reviewedAt,
   );
@@ -410,10 +427,19 @@ export const assertIndependentReview = async (
   proposalId: string,
   reviewerId: string,
 ): Promise<void> => {
+  const dataset = getDatasetByVersion(datasetVersion);
+  const proposalIds = [
+    proposalId,
+    ...responseCarryForwardSources(dataset, proposalId),
+  ];
   const snapshot = await db
     .collection(SOM_REVIEW_RESPONSES)
     .where("datasetVersion", "==", datasetVersion)
-    .where("proposalId", "==", proposalId)
+    .where(
+      "proposalId",
+      proposalIds.length === 1 ? "==" : "in",
+      proposalIds.length === 1 ? proposalIds[0] : proposalIds,
+    )
     .where("reviewerId", "==", reviewerId)
     .where("status", "==", "current")
     .limit(1)
@@ -508,11 +534,20 @@ export const saveDeliberationPosition = async ({
   decision: SomReviewDecision;
   rationale: string;
 }) => {
+  const dataset = getDatasetByVersion(datasetVersion);
+  const proposalIds = [
+    proposalId,
+    ...responseCarryForwardSources(dataset, proposalId),
+  ];
   await db.runTransaction(async (transaction) => {
     const originalQuery = db
       .collection(SOM_REVIEW_RESPONSES)
       .where("datasetVersion", "==", datasetVersion)
-      .where("proposalId", "==", proposalId)
+      .where(
+        "proposalId",
+        proposalIds.length === 1 ? "==" : "in",
+        proposalIds.length === 1 ? proposalIds[0] : proposalIds,
+      )
       .where("reviewerId", "==", reviewerId)
       .where("status", "==", "current")
       .limit(1);

@@ -5793,7 +5793,7 @@
     "som-c936209753da4ab48410"
   ],
   "ontologyMutated": false,
-  "contentRevision": 2,
+  "contentRevision": 4,
   "postGenerationRevision": {
     "script": "scripts/som-review/migrate-semantic-coverage-to-one-step.mjs",
     "reason": "Replace diagnosis-plus-relocation pairs with one review item showing evidence and both exact hierarchy locations.",

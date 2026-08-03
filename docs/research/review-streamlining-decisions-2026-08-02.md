@@ -17,6 +17,11 @@
   Future exploratory dataset generation marks that card as the action and no
   longer generates a second relocation card for the same move. Historical
   diagnosis-only records remain inspectable but cannot authorize a move.
+- When a one-step card exactly preserves an earlier relocation card's subject,
+  current parent, proposed parent, and move scope, the earlier relocation answer
+  is carried forward at read time. The stored source response and audit history
+  are unchanged, broader diagnosis answers are not reinterpreted, and a response
+  saved directly on the new card takes precedence.
 
 ## Deferred until the Sell sequence is complete
 

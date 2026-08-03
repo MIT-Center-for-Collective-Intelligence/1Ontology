@@ -27,6 +27,7 @@ import {
   inspectionIssueTypeFromTaskKey,
   inspectionTasks,
 } from "./inspectionPolicy";
+import { carryForwardResponseRecords } from "./responseCarryForward";
 
 interface StoredResponseRecord {
   datasetVersion: string;
@@ -117,9 +118,10 @@ const currentResponsesForDataset = async (
     query = query.where("reviewerId", "==", reviewerId);
   }
   const snapshot = await query.get();
-  return snapshot.docs
-    .map((doc: any) => doc.data() as StoredResponseRecord)
-    .filter((record: StoredResponseRecord) => Boolean(record.response));
+  return carryForwardResponseRecords<StoredResponseRecord>(
+    getDatasetByVersion(datasetVersion),
+    snapshot.docs.map((doc: any) => doc.data() as StoredResponseRecord),
+  ).filter((record: StoredResponseRecord) => Boolean(record.response));
 };
 
 const availableReviewers = async (

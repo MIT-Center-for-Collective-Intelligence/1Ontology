@@ -143,7 +143,7 @@ writeJsonl(manualChecksFile, manualChecks);
 
 const manifestFile = path.join(datasetDir, "manifest.json");
 const manifest = readJson(manifestFile);
-manifest.contentRevision = 3;
+manifest.contentRevision = 4;
 manifest.sourceOntologySha256 = snapshotHash;
 manifest.counts.manualChecks = manualChecks.length;
 manifest.sourceSnapshot = {
@@ -172,6 +172,7 @@ const generationAuditFile = path.join(
   "semantic-coverage-generation-audit.json",
 );
 const generationAudit = readJson(generationAuditFile);
+generationAudit.contentRevision = 4;
 generationAudit.originalSourceSnapshotSha256 ??=
   generationAudit.sourceSnapshotSha256;
 generationAudit.sourceSnapshotSha256 = snapshotHash;
@@ -233,7 +234,7 @@ const revisionFile = path.join(
   "one_step_review_revision.json",
 );
 const revision = readJson(revisionFile);
-revision.contentRevision = 3;
+revision.contentRevision = 4;
 revision.changes = [
   ...revision.changes.filter(
     (change) => !change.startsWith("Removed the invalid collection-generated"),
