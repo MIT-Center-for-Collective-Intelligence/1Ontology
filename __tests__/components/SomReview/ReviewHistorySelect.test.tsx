@@ -17,6 +17,7 @@ const history: SomReviewHistoryItem[] = [
     disagreementReason: "",
     suggestedCorrection: "",
     reviewedAt: "2026-07-15T12:00:00.000Z",
+    fastTracked: true,
   },
   {
     proposalId: "proposal-2",
@@ -76,5 +77,20 @@ describe("Review history selector", () => {
     );
 
     expect(screen.getByText("Revising item 11")).toBeInTheDocument();
+  });
+
+  it("marks answers included in the trusted propagation draft", () => {
+    render(
+      <ReviewHistorySelect
+        history={history}
+        selectedProposalId=""
+        onSelect={jest.fn()}
+      />,
+    );
+
+    fireEvent.mouseDown(
+      screen.getByRole("combobox", { name: "Revise an earlier review" }),
+    );
+    expect(screen.getByText(/Agreed \| Fast-tracked/)).toBeInTheDocument();
   });
 });

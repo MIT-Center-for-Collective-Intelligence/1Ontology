@@ -14,6 +14,9 @@ import {
 import { reviewRequestData } from "../../../lib/somReview/request";
 import { SomReviseResult } from "../../../types/ISomReview";
 import { toLinkedFollowUps } from "../../../lib/somReview/followUps";
+import { trustedPropagationAccessForToken } from "../../../lib/somReview/access";
+import { trustedPropagationDirective } from "../../../lib/somReview/trustedPropagation";
+import { reviewDatasetConfigByVersion } from "../../../lib/somReview/reviewWorkspaces";
 
 const responseValidators = new Map<
   string,
@@ -27,6 +30,15 @@ const handler = async (request: NextApiRequest, res: NextApiResponse) => {
   try {
     const data = reviewRequestData(req.body);
     const payload = data.response as ResponsePayload;
+    if (
+      Object.prototype.hasOwnProperty.call(data, "trustedPropagation") &&
+      typeof data.trustedPropagation !== "boolean"
+    ) {
+      return res
+        .status(400)
+        .json({ error: "trustedPropagation must be a boolean" });
+    }
+    const trustedPropagationRequested = data.trustedPropagation === true;
     if (!payload)
       return res.status(400).json({ error: "Missing response payload" });
 
@@ -61,7 +73,26 @@ const handler = async (request: NextApiRequest, res: NextApiResponse) => {
         .json({ error: "Disagree requires a non-whitespace reason" });
     }
 
-    const { changed } = await reviseResponse(record.issueType, payload);
+    const trustedPropagationAccess = trustedPropagationAccessForToken(req.user);
+    if (trustedPropagationRequested && !trustedPropagationAccess.allowed) {
+      return res.status(403).json({
+        error: "This reviewer is not authorized for trusted propagation",
+      });
+    }
+    const propagationDirective = trustedPropagationDirective({
+      requested: trustedPropagationRequested,
+      allowed: trustedPropagationAccess.allowed,
+      currentRound: reviewDatasetConfigByVersion(dataset.datasetVersion)
+        .current,
+      dataset,
+      record,
+    });
+
+    const { changed, propagationStatus } = await reviseResponse(
+      record.issueType,
+      payload,
+      propagationDirective,
+    );
     const followUpRecords =
       payload.decision === "agree"
         ? await reviewerReadyDependentRecords(
@@ -74,6 +105,13 @@ const handler = async (request: NextApiRequest, res: NextApiResponse) => {
       ok: true,
       changed,
       followUps: toLinkedFollowUps(dataset, followUpRecords),
+      propagation: {
+        status: propagationStatus,
+        policyVersion: propagationDirective.policyVersion,
+        ...(propagationDirective.reason
+          ? { reason: propagationDirective.reason }
+          : {}),
+      },
     };
     return res.status(200).json(body);
   } catch (error: any) {

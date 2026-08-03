@@ -322,6 +322,19 @@ export interface SomReviewHistoryItem {
   disagreementReason: string;
   suggestedCorrection: string;
   reviewedAt: string;
+  /** True when this answer is in the snapshot-bound trusted propagation draft. */
+  fastTracked?: boolean;
+}
+
+export interface SomTrustedPropagationAccess {
+  allowed: boolean;
+  policyVersion: string;
+}
+
+export interface SomTrustedPropagationResult {
+  status: "not-requested" | "ready" | "ineligible";
+  policyVersion: string;
+  reason?: string;
 }
 
 export interface SomFollowUpSource {
@@ -353,6 +366,7 @@ export interface SomOverviewResponse {
   readyFollowUps: SomLinkedFollowUp[];
   canDeliberate: boolean;
   canInspectPriorReview: boolean;
+  trustedPropagation?: SomTrustedPropagationAccess;
 }
 
 export interface SomReviewRoundOption {
@@ -405,6 +419,7 @@ export interface SomRespondResult {
   cursor: number;
   completed: boolean;
   followUps: SomLinkedFollowUp[];
+  propagation?: SomTrustedPropagationResult;
 }
 
 export interface SomUndoResult {
@@ -416,6 +431,7 @@ export interface SomReviseResult {
   ok: boolean;
   changed: boolean;
   followUps: SomLinkedFollowUp[];
+  propagation?: SomTrustedPropagationResult;
 }
 
 export interface SomDeliberationRoleSummary {

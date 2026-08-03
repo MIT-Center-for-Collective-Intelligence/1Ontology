@@ -77,7 +77,8 @@ const ReviewHistorySelect = ({
               }
               secondary={
                 "Current answer: " +
-                (item.decision === "agree" ? "Agreed" : "Disagreed")
+                (item.decision === "agree" ? "Agreed" : "Disagreed") +
+                (item.fastTracked ? " | Fast-tracked" : "")
               }
               primaryTypographyProps={{
                 sx: {

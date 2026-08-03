@@ -16,6 +16,7 @@ import { SomIssueType, SomOverviewResponse } from "../../../types/ISomReview";
 import {
   reviewAccessForToken,
   reviewSurfaceCapabilities,
+  trustedPropagationAccessForToken,
 } from "../../../lib/somReview/access";
 import { toLinkedFollowUps } from "../../../lib/somReview/followUps";
 import { numberReviewIssues } from "../../../lib/somReview/reviewTaxonomy";
@@ -90,6 +91,7 @@ const handler = async (request: NextApiRequest, res: NextApiResponse) => {
     }));
 
     const reviewAccess = reviewAccessForToken(req.user);
+    const trustedPropagation = trustedPropagationAccessForToken(req.user);
     const capabilities = reviewSurfaceCapabilities(
       reviewAccess,
       process.env.SOM_REVIEW_DELIBERATION_ENABLED === "true",
@@ -109,6 +111,7 @@ const handler = async (request: NextApiRequest, res: NextApiResponse) => {
       ),
       issueTypes,
       readyFollowUps: toLinkedFollowUps(dataset, readyFollowUpRecords),
+      trustedPropagation,
       ...capabilities,
     };
     return res.status(200).json(body);

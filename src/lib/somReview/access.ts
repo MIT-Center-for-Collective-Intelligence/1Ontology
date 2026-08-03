@@ -1,4 +1,5 @@
 import { SomReviewerRole } from "../../types/ISomReview";
+import { TRUSTED_PROPAGATION_POLICY_VERSION } from "./trustedPropagation";
 
 export interface ReviewIdentity {
   uid: string;
@@ -19,12 +20,20 @@ export interface ReviewSurfaceCapabilities {
   canInspectPriorReview: boolean;
 }
 
+export interface TrustedPropagationAccess {
+  allowed: boolean;
+  policyVersion: string;
+}
+
 const DEFAULT_STEWARD_EMAILS = ["malone@mit.edu", "rjl@mit.edu"];
 
 const DEFAULT_STEWARD_UIDS = [
   "ScOrQGUXCNPSniAIFc8nz2epK4l1",
   "vFCAkxKTwjcDKohmiWfiZWz2lZf1",
 ];
+
+// Reliable-reviewer status is intentionally narrower than the steward role.
+const DEFAULT_TRUSTED_PROPAGATION_EMAILS = ["rjl@mit.edu"];
 
 const DEFAULT_RESEARCHER_EMAILS = [
   "oneweb@umich.edu",
@@ -164,3 +173,47 @@ export const reviewSurfaceCapabilities = (
   canDeliberate: deliberationEnabled && access.canDeliberate,
   canInspectPriorReview: access.canDeliberate,
 });
+
+export const trustedPropagationAccessForIdentity = (
+  identity: ReviewIdentity,
+): TrustedPropagationAccess => {
+  const explicitlyConfigured = identity.claims?.somReviewTrustedPropagator;
+  if (explicitlyConfigured === false) {
+    return {
+      allowed: false,
+      policyVersion: TRUSTED_PROPAGATION_POLICY_VERSION,
+    };
+  }
+  if (explicitlyConfigured === true) {
+    return {
+      allowed: true,
+      policyVersion: TRUSTED_PROPAGATION_POLICY_VERSION,
+    };
+  }
+
+  const email = (identity.email || "").trim().toLowerCase();
+  const trustedEmails = normalizedSet(
+    DEFAULT_TRUSTED_PROPAGATION_EMAILS,
+    process.env.SOM_REVIEW_TRUSTED_PROPAGATION_EMAILS,
+  );
+  const trustedUids = uidSet(
+    [],
+    process.env.SOM_REVIEW_TRUSTED_PROPAGATION_UIDS,
+  );
+  return {
+    allowed:
+      trustedUids.has(identity.uid) ||
+      (identity.emailVerified === true && trustedEmails.has(email)),
+    policyVersion: TRUSTED_PROPAGATION_POLICY_VERSION,
+  };
+};
+
+export const trustedPropagationAccessForToken = (
+  token: Record<string, unknown>,
+): TrustedPropagationAccess =>
+  trustedPropagationAccessForIdentity({
+    uid: String(token.uid || token.sub || ""),
+    email: typeof token.email === "string" ? token.email : "",
+    emailVerified: token.email_verified === true,
+    claims: token,
+  });

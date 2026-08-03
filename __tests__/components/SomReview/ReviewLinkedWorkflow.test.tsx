@@ -170,6 +170,7 @@ describe("linked proposal review journey", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     window.sessionStorage.clear();
+    window.localStorage.clear();
     window.localStorage.setItem(
       "som-review-task-intro-dataset-1-placement",
       "seen",
@@ -177,12 +178,20 @@ describe("linked proposal review journey", () => {
   });
 
   it("opens the exact follow-up and returns to the preserved source queue", async () => {
+    window.localStorage.setItem(
+      "som-review-trusted-propagation-reviewer-1",
+      "true",
+    );
     const postMock = Post as jest.Mock;
     postMock.mockImplementation((url: string, body: any) => {
       if (url === "/som-review/overview") {
         return Promise.resolve({
           ...overviewMetadata,
           canDeliberate: false,
+          trustedPropagation: {
+            allowed: true,
+            policyVersion: "trusted-reviewer-fast-track-v1",
+          },
           readyFollowUps: [],
           issueTypes: [
             {
@@ -283,6 +292,17 @@ describe("linked proposal review journey", () => {
     );
     fireEvent.click(
       await screen.findByRole("button", { name: "Submit placement-1" }),
+    );
+
+    await waitFor(() =>
+      expect(postMock).toHaveBeenCalledWith(
+        "/som-review/respond",
+        expect.objectContaining({
+          trustedPropagation: true,
+          response: expect.objectContaining({ proposalId: "placement-1" }),
+        }),
+        false,
+      ),
     );
 
     expect(
