@@ -43,7 +43,7 @@ export const reviewerQuestion = (
     case "flat-list":
       return `Is it reasonable to leave these activities directly under "${context.parentTitle}"?`;
     case "duplicate-comparison":
-      return `Should "${context.candidateSynonymTitle}" be recorded as a synonym of "${context.canonicalTitle}"?`;
+      return `Do "${context.canonicalTitle}" and "${context.candidateSynonymTitle}" name the same activity?`;
     case "placement-comparison":
       if ((context.affectedNodes || []).length > 1) {
         return context.placementIssue === "wrong-verb"
@@ -141,12 +141,14 @@ const placementReviewerText = (
           : `These activities appear to belong under "${
               context.candidateHome || "a more specific category"
             }".`,
-      agreeLabel:
-        context.placementIssue === "wrong-verb"
+      agreeLabel: context.candidateHome
+        ? "Approve all moves"
+        : context.placementIssue === "wrong-verb"
           ? "Yes, different action"
-          : "Yes, move together",
-      disagreeLabel:
-        context.placementIssue === "wrong-verb"
+          : "Yes, misplaced",
+      disagreeLabel: context.candidateHome
+        ? "Review individually"
+        : context.placementIssue === "wrong-verb"
           ? "No, review separately"
           : "No, review separately",
     };
@@ -167,30 +169,31 @@ const placementReviewerText = (
           : context.candidateHome
             ? `"${context.nodeTitle}" appears to belong under the more specific category "${context.candidateHome}".`
             : `"${context.nodeTitle}" does not belong under "${context.currentParentTitle}".`,
-    agreeLabel:
-      context.placementIssue === "missing-from-branch"
-        ? "Approve move"
-        : context.placementIssue === "wrong-verb"
-          ? "Yes, different action"
-          : "Yes, misplaced",
-    disagreeLabel:
-      context.placementIssue === "missing-from-branch"
-        ? "Keep current location"
-        : context.placementIssue === "wrong-verb"
-          ? "No, it belongs here"
-          : "No, keep here",
+    agreeLabel: context.candidateHome
+      ? "Approve move"
+      : context.placementIssue === "wrong-verb"
+        ? "Yes, different action"
+        : "Yes, misplaced",
+    disagreeLabel: context.candidateHome
+      ? "Reject proposed move"
+      : context.placementIssue === "wrong-verb"
+        ? "No, it belongs here"
+        : "No, keep here",
   };
 };
 
 const duplicateReviewerText = (
   context: Extract<SomReviewContext, { type: "duplicate-comparison" }>,
 ) => ({
+  currentState: `"${context.canonicalTitle}" and "${context.candidateSynonymTitle}" are currently represented as separate activity nodes.`,
   proposedState:
-    'Record "' +
-    context.candidateSynonymTitle +
-    '" as a synonym of "' +
+    'If they name the same activity, keep "' +
     context.canonicalTitle +
-    '".',
+    '" as the node title and record "' +
+    context.candidateSynonymTitle +
+    '" as its synonym. The exact consolidation is reviewed separately.',
+  agreeLabel: "Same activity",
+  disagreeLabel: "Different activities",
 });
 
 export const toReviewerCard = (record: any): SomReviewCard => {
@@ -212,7 +215,10 @@ export const toReviewerCard = (record: any): SomReviewCard => {
     issueType: record.issueType as SomIssueType,
     reviewerView: {
       question: reviewerQuestion(context, branch),
-      currentState: placementText?.currentState || cleanText(view.currentState),
+      currentState:
+        placementText?.currentState ||
+        duplicateText?.currentState ||
+        cleanText(view.currentState),
       proposedState:
         placementText?.proposedState ||
         duplicateText?.proposedState ||
@@ -223,9 +229,13 @@ export const toReviewerCard = (record: any): SomReviewCard => {
           : sanitizeReasoning(view.reasoning),
       context,
       agreeLabel:
-        placementText?.agreeLabel || cleanText(view.agreeLabel) || "Agree",
+        placementText?.agreeLabel ||
+        duplicateText?.agreeLabel ||
+        cleanText(view.agreeLabel) ||
+        "Agree",
       disagreeLabel:
         placementText?.disagreeLabel ||
+        duplicateText?.disagreeLabel ||
         cleanText(view.disagreeLabel) ||
         "Disagree",
     },

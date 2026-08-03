@@ -177,7 +177,7 @@ describe("Society of Mind context renderers", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("shows the suggested destination while preserving a separate move step", () => {
+  it("presents the current parent and suggested destination as one move decision", () => {
     render(
       <ContextRenderer
         context={{
@@ -193,7 +193,7 @@ describe("Society of Mind context renderers", () => {
     );
     expect(
       screen.getByText(
-        'The suggested category is "Rent out". Agreeing confirms that the current parent is too broad. The exact move remains a separate review step.',
+        'This is one complete move decision. Approve only if the current parent is incorrect and "Rent out" is the better parent.',
       ),
     ).toBeInTheDocument();
     expect(screen.getByText(/Rent out/)).toBeInTheDocument();
@@ -234,8 +234,10 @@ describe("Society of Mind context renderers", () => {
     );
 
     expect(
-      screen.getByText(
-        /compare the source evidence with both hierarchy locations/i,
+      screen.getByText((content) =>
+        content.includes(
+          "Compare the evidence with both hierarchy locations and approve only if",
+        ),
       ),
     ).toBeInTheDocument();
     expect(
@@ -350,7 +352,7 @@ describe("Society of Mind context renderers", () => {
     expect(screen.getByText("Market Vacant Space")).toBeInTheDocument();
     expect(
       screen.getByText(
-        /Agreeing confirms the shared diagnosis.*Each exact move remains a separate review step/,
+        'One answer applies the displayed destination, "Promote", to every listed activity. Approve all moves only if every item has the same placement issue; otherwise review them individually.',
       ),
     ).toBeInTheDocument();
   });

@@ -30,6 +30,7 @@ import { reviewInteractiveSurfaceSx } from "@components/components/SomReview/rev
 import { useAuth } from "@components/components/context/AuthContext";
 import withAuthUser from "@components/components/hoc/withAuthUser";
 import { Post } from "@components/lib/utils/Post";
+import { reviewPathForIssueTypes } from "@components/lib/somReview/reviewDependencies";
 import {
   SomInspectionItem,
   SomInspectionMutationResult,
@@ -70,7 +71,11 @@ export const ReviewInspectionPage = () => {
         setOverview(result);
         if (
           result.selectedReviewerId &&
-          result.selectedReviewerId !== requestedReviewerId
+          (result.selectedReviewerId !== requestedReviewerId ||
+            Boolean(
+              result.selectedTaskKey &&
+              result.selectedTaskKey !== requestedTaskKey,
+            ))
         ) {
           await router.replace(
             {
@@ -116,7 +121,7 @@ export const ReviewInspectionPage = () => {
   };
 
   const selectTask = async (taskKey: string) => {
-    await router.replace(
+    await router.push(
       {
         pathname: "/review/inspection",
         query: {
@@ -209,6 +214,39 @@ export const ReviewInspectionPage = () => {
         .includes(normalizedSearch);
     });
   }, [itemFilter, overview?.items, search]);
+  const taskGroups = useMemo(() => {
+    const tasks = overview?.tasks || [];
+    return reviewPathForIssueTypes(tasks.map((task) => task.issueType)).map(
+      (step) => ({
+        ...step,
+        tasks: tasks.filter((task) => step.issueTypes.includes(task.issueType)),
+      }),
+    );
+  }, [overview?.tasks]);
+  const visibleItemGroups = useMemo(() => {
+    const groups: Array<{
+      datasetId: string;
+      datasetLabel: string;
+      currentRound: boolean;
+      items: SomInspectionItem[];
+    }> = [];
+    for (const item of visibleItems) {
+      const existing = groups.find(
+        (group) => group.datasetId === item.datasetId,
+      );
+      if (existing) {
+        existing.items.push(item);
+      } else {
+        groups.push({
+          datasetId: item.datasetId,
+          datasetLabel: item.datasetLabel,
+          currentRound: item.currentRound,
+          items: [item],
+        });
+      }
+    }
+    return groups;
+  }, [visibleItems]);
 
   return (
     <>
@@ -380,99 +418,125 @@ export const ReviewInspectionPage = () => {
                         severity={inspectingOwnReview ? "success" : "info"}
                       >
                         {inspectingOwnReview
-                          ? "These are your saved review tasks. Open a task to check every answer, rationale, and proposed alternative before another reviewer inspects them."
-                          : "The tasks below preserve the original review order. Open one task to inspect all of its responses without mixing different kinds of ontology decisions."}
+                          ? "These are your saved answers, combined by decision type across review rounds. Open a task to check every answer, rationale, and proposed alternative before another reviewer inspects them."
+                          : "The tasks below combine the same decision type across review rounds and group related work into phases. Open one task to inspect all of its responses together."}
                       </Alert>
-                      <Stack spacing={1.25}>
-                        {overview.tasks.map((task) => (
-                          <Card
-                            key={task.key}
-                            variant="outlined"
-                            sx={{ borderRadius: 2 }}
-                          >
-                            <CardActionArea
-                              onClick={() => selectTask(task.key)}
-                              sx={{ p: { xs: 1.75, sm: 2.25 } }}
+                      <Stack spacing={3}>
+                        {taskGroups.map((group) => (
+                          <Box key={group.id}>
+                            <Typography
+                              component="h2"
+                              sx={{ fontSize: "1.1rem", fontWeight: 850 }}
                             >
-                              <Stack
-                                direction={{ xs: "column", sm: "row" }}
-                                alignItems={{ xs: "stretch", sm: "center" }}
-                                justifyContent="space-between"
-                                spacing={1.5}
-                              >
-                                <Box sx={{ minWidth: 0 }}>
-                                  <Stack
-                                    direction="row"
-                                    alignItems="center"
-                                    flexWrap="wrap"
-                                    gap={0.75}
+                              Phase {group.number}: {group.title}
+                            </Typography>
+                            <Typography
+                              sx={{
+                                mt: 0.35,
+                                mb: 1.25,
+                                color: "text.secondary",
+                              }}
+                            >
+                              {group.description}
+                            </Typography>
+                            <Stack spacing={1.25}>
+                              {group.tasks.map((task) => (
+                                <Card
+                                  key={task.key}
+                                  variant="outlined"
+                                  sx={{ borderRadius: 2 }}
+                                >
+                                  <CardActionArea
+                                    onClick={() => selectTask(task.key)}
+                                    sx={{ p: { xs: 1.75, sm: 2.25 } }}
                                   >
-                                    <Typography
-                                      component="h2"
-                                      sx={{
-                                        fontSize: "1.05rem",
-                                        fontWeight: 850,
+                                    <Stack
+                                      direction={{ xs: "column", sm: "row" }}
+                                      alignItems={{
+                                        xs: "stretch",
+                                        sm: "center",
                                       }}
+                                      justifyContent="space-between"
+                                      spacing={1.5}
                                     >
-                                      {task.issueLabel}
-                                    </Typography>
-                                    {task.currentRound && (
-                                      <Chip
-                                        size="small"
-                                        color="primary"
-                                        label="Current round"
+                                      <Box sx={{ minWidth: 0 }}>
+                                        <Stack
+                                          direction="row"
+                                          alignItems="center"
+                                          flexWrap="wrap"
+                                          gap={0.75}
+                                        >
+                                          <Typography
+                                            component="h3"
+                                            sx={{
+                                              fontSize: "1.05rem",
+                                              fontWeight: 850,
+                                            }}
+                                          >
+                                            {task.issueLabel}
+                                          </Typography>
+                                          {task.currentRound && (
+                                            <Chip
+                                              size="small"
+                                              color="primary"
+                                              label="Includes current round"
+                                            />
+                                          )}
+                                        </Stack>
+                                        <Typography
+                                          sx={{
+                                            mt: 0.45,
+                                            color: "text.secondary",
+                                            lineHeight: 1.45,
+                                          }}
+                                        >
+                                          {task.roundCount === 1
+                                            ? task.datasetLabel
+                                            : `Combined across ${task.roundCount} review rounds`}
+                                        </Typography>
+                                        <Stack
+                                          direction="row"
+                                          flexWrap="wrap"
+                                          gap={0.75}
+                                          sx={{ mt: 1 }}
+                                        >
+                                          <Chip
+                                            size="small"
+                                            label={`${task.responseCount} responses`}
+                                            variant="outlined"
+                                          />
+                                          <Chip
+                                            size="small"
+                                            label={`${task.agreeCount} agreed`}
+                                            color="success"
+                                            variant="outlined"
+                                          />
+                                          <Chip
+                                            size="small"
+                                            label={`${task.disagreeCount} disagreed`}
+                                            color="error"
+                                            variant="outlined"
+                                          />
+                                          {task.exceptionCount > 0 && (
+                                            <Chip
+                                              size="small"
+                                              label={`${task.exceptionCount} not aligned`}
+                                              color="warning"
+                                              variant="outlined"
+                                            />
+                                          )}
+                                        </Stack>
+                                      </Box>
+                                      <ArrowForwardIcon
+                                        aria-hidden="true"
+                                        color="action"
                                       />
-                                    )}
-                                  </Stack>
-                                  <Typography
-                                    sx={{
-                                      mt: 0.45,
-                                      color: "text.secondary",
-                                      lineHeight: 1.45,
-                                    }}
-                                  >
-                                    {task.datasetLabel}
-                                  </Typography>
-                                  <Stack
-                                    direction="row"
-                                    flexWrap="wrap"
-                                    gap={0.75}
-                                    sx={{ mt: 1 }}
-                                  >
-                                    <Chip
-                                      size="small"
-                                      label={`${task.responseCount} responses`}
-                                      variant="outlined"
-                                    />
-                                    <Chip
-                                      size="small"
-                                      label={`${task.agreeCount} agreed`}
-                                      color="success"
-                                      variant="outlined"
-                                    />
-                                    <Chip
-                                      size="small"
-                                      label={`${task.disagreeCount} disagreed`}
-                                      color="error"
-                                      variant="outlined"
-                                    />
-                                    {task.exceptionCount > 0 && (
-                                      <Chip
-                                        size="small"
-                                        label={`${task.exceptionCount} not aligned`}
-                                        color="warning"
-                                        variant="outlined"
-                                      />
-                                    )}
-                                  </Stack>
-                                </Box>
-                                <ArrowForwardIcon
-                                  aria-hidden="true"
-                                  color="action"
-                                />
-                              </Stack>
-                            </CardActionArea>
-                          </Card>
+                                    </Stack>
+                                  </CardActionArea>
+                                </Card>
+                              ))}
+                            </Stack>
+                          </Box>
                         ))}
                       </Stack>
                     </>
@@ -558,20 +622,54 @@ export const ReviewInspectionPage = () => {
                             <Typography
                               sx={{ mt: 0.35, color: "text.secondary" }}
                             >
-                              {selectedTask.datasetLabel}
+                              {selectedTask.roundCount === 1
+                                ? selectedTask.datasetLabel
+                                : `${selectedTask.roundCount} review rounds combined`}
                             </Typography>
                           </Box>
-                          {visibleItems.map((item) => (
-                            <InspectionItemCard
-                              key={`${item.card.datasetVersion}-${item.card.proposalId}`}
-                              item={item}
-                              reviewerName={
-                                selectedReviewer?.displayName ||
-                                "Prior reviewer"
-                              }
-                              canAnnotate={!inspectingOwnReview}
-                              onSaveException={saveException}
-                            />
+                          {visibleItemGroups.map((group) => (
+                            <Box key={group.datasetId}>
+                              <Stack
+                                direction="row"
+                                alignItems="center"
+                                flexWrap="wrap"
+                                gap={0.75}
+                                sx={{ mb: 1 }}
+                              >
+                                <Typography
+                                  component="h3"
+                                  sx={{ fontWeight: 850 }}
+                                >
+                                  {group.datasetLabel}
+                                </Typography>
+                                {group.currentRound && (
+                                  <Chip
+                                    size="small"
+                                    color="primary"
+                                    label="Current round"
+                                  />
+                                )}
+                                <Chip
+                                  size="small"
+                                  variant="outlined"
+                                  label={`${group.items.length} responses`}
+                                />
+                              </Stack>
+                              <Stack spacing={1.5}>
+                                {group.items.map((item) => (
+                                  <InspectionItemCard
+                                    key={`${item.card.datasetVersion}-${item.card.proposalId}`}
+                                    item={item}
+                                    reviewerName={
+                                      selectedReviewer?.displayName ||
+                                      "Prior reviewer"
+                                    }
+                                    canAnnotate={!inspectingOwnReview}
+                                    onSaveException={saveException}
+                                  />
+                                ))}
+                              </Stack>
+                            </Box>
                           ))}
                         </Stack>
                       )}

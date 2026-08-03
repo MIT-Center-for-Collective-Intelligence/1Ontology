@@ -43,3 +43,26 @@ test("exploratory candidates retain confidence without using it as a gate", () =
     /if\s*\([^)]*(?:detectorConfidence|judgeConfidence)[^)]*\)\s*\{[^}]*apply/is,
   );
 });
+
+test("future placement reviews combine the diagnosis and exact move", () => {
+  const source = read(
+    "scripts/som-review/generate-exploratory-subbranch-dataset.mjs",
+  );
+  assert.match(source, /const oneStepMove\s*=/);
+  assert.match(
+    source,
+    /Should \"\$\{candidate\.nodeTitle\}\" move from \"\$\{candidate\.currentParentTitle\}\" to \"\$\{candidate\.candidateHome\}\"\?/,
+  );
+  assert.doesNotMatch(
+    source,
+    /key:\s*`relocation:\$\{candidate\.candidateId\}`/,
+  );
+  assert.match(
+    source,
+    /A target-known placement move is reviewed as one complete decision/,
+  );
+  assert.doesNotMatch(
+    source,
+    /Every exact merge or relocation is separately gated/,
+  );
+});

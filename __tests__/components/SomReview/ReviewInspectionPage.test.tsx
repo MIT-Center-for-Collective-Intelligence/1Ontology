@@ -17,12 +17,13 @@ jest.mock("../../../src/components/context/AuthContext", () => ({
 }));
 
 const replace = jest.fn().mockResolvedValue(true);
+const push = jest.fn().mockResolvedValue(true);
 let routerQuery: Record<string, string> = { workspace: "sell" };
 jest.mock("next/router", () => ({
   useRouter: () => ({
     isReady: true,
     query: routerQuery,
-    push: jest.fn(),
+    push,
     replace,
   }),
 }));
@@ -102,12 +103,15 @@ describe("Tom's prior-review inspection page", () => {
       selectedReviewerId: "rob",
       tasks: [
         {
-          key: "sell-initial-review::duplicate-synonym",
+          key: "issue::duplicate-synonym",
           datasetId: "sell-initial-review",
           datasetLabel: "Initial review",
+          datasetIds: ["sell-initial-review"],
+          datasetLabels: ["Initial review"],
+          roundCount: 1,
           currentRound: false,
           issueType: "duplicate-synonym",
-          issueLabel: "4. Undetected synonyms",
+          issueLabel: "Possible duplicate activities",
           responseCount: 2,
           agreeCount: 2,
           disagreeCount: 0,
@@ -122,21 +126,26 @@ describe("Tom's prior-review inspection page", () => {
   it("shows a task dashboard instead of mixing every prior response", async () => {
     render(<ReviewInspectionPage />);
 
-    expect(await screen.findByText("4. Undetected synonyms")).toBeVisible();
+    expect(
+      await screen.findByText("Possible duplicate activities"),
+    ).toBeVisible();
+    expect(
+      screen.getByText(/Phase 1: Resolve meaning and identity/),
+    ).toBeVisible();
     expect(screen.getByText("2 responses")).toBeVisible();
     expect(screen.queryByText("First reviewed proposal")).toBeNull();
     expect(
       screen.queryByText(/independent hierarchy scan/i),
     ).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByText("4. Undetected synonyms"));
-    expect(replace).toHaveBeenCalledWith(
+    fireEvent.click(screen.getByText("Possible duplicate activities"));
+    expect(push).toHaveBeenCalledWith(
       {
         pathname: "/review/inspection",
         query: {
           workspace: "sell",
           reviewer: "rob",
-          task: "sell-initial-review::duplicate-synonym",
+          task: "issue::duplicate-synonym",
         },
       },
       undefined,
@@ -161,7 +170,7 @@ describe("Tom's prior-review inspection page", () => {
     routerQuery = {
       workspace: "sell",
       reviewer: "rob",
-      task: "sell-initial-review::duplicate-synonym",
+      task: "issue::duplicate-synonym",
     };
     (Post as jest.Mock).mockResolvedValue({
       workspaceId: "sell",
@@ -175,15 +184,18 @@ describe("Tom's prior-review inspection page", () => {
         },
       ],
       selectedReviewerId: "rob",
-      selectedTaskKey: "sell-initial-review::duplicate-synonym",
+      selectedTaskKey: "issue::duplicate-synonym",
       tasks: [
         {
-          key: "sell-initial-review::duplicate-synonym",
+          key: "issue::duplicate-synonym",
           datasetId: "sell-initial-review",
           datasetLabel: "Initial review",
+          datasetIds: ["sell-initial-review"],
+          datasetLabels: ["Initial review"],
+          roundCount: 1,
           currentRound: false,
           issueType: "duplicate-synonym",
-          issueLabel: "4. Undetected synonyms",
+          issueLabel: "Possible duplicate activities",
           responseCount: 2,
           agreeCount: 2,
           disagreeCount: 0,
@@ -208,7 +220,7 @@ describe("Tom's prior-review inspection page", () => {
         {
           workspaceId: "sell",
           reviewerId: "rob",
-          taskKey: "sell-initial-review::duplicate-synonym",
+          taskKey: "issue::duplicate-synonym",
         },
         false,
       ),

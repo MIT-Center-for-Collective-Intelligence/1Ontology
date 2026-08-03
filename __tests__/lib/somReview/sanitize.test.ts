@@ -58,11 +58,14 @@ describe("Society of Mind reviewer card blinding", () => {
       },
     });
     expect(card.reviewerView.question).toBe(
-      'Should "Sell merchandise" be recorded as a synonym of "Sell products"?',
+      'Do "Sell products" and "Sell merchandise" name the same activity?',
     );
     expect(card.reviewerView.question).not.toMatch(/merge|delete/i);
+    expect(card.reviewerView.currentState).toBe(
+      '"Sell products" and "Sell merchandise" are currently represented as separate activity nodes.',
+    );
     expect(card.reviewerView.proposedState).toBe(
-      'Record "Sell merchandise" as a synonym of "Sell products".',
+      'If they name the same activity, keep "Sell products" as the node title and record "Sell merchandise" as its synonym. The exact consolidation is reviewed separately.',
     );
     expect(card.reviewerView.proposedState).not.toMatch(
       /merge|delete|downstream/i,
@@ -99,7 +102,7 @@ describe("Society of Mind reviewer card blinding", () => {
     );
   });
 
-  it("shows a clear finer-grained destination while keeping the move separate", () => {
+  it("combines a placement finding with its exact destination", () => {
     const card = toReviewerCard({
       proposalId: "placement-example",
       datasetVersion: dataset.datasetVersion,
@@ -127,8 +130,8 @@ describe("Society of Mind reviewer card blinding", () => {
       currentState: '"Sell Service" is currently under "Sell (Information)".',
       proposedState:
         '"Sell Service" appears to belong under the more specific category "Actors and Activities".',
-      agreeLabel: "Yes, misplaced",
-      disagreeLabel: "No, keep here",
+      agreeLabel: "Approve move",
+      disagreeLabel: "Reject proposed move",
     });
     expect(JSON.stringify(card)).not.toMatch(
       /advisory candidate home|exact move remains|separate human decision|H1/i,
@@ -180,7 +183,7 @@ describe("Society of Mind reviewer card blinding", () => {
       proposedState:
         'Move "Rent Equipment" to "Rent out" because its evidence expresses a provider-side "Sell" action.',
       agreeLabel: "Approve move",
-      disagreeLabel: "Keep current location",
+      disagreeLabel: "Reject proposed move",
       context: {
         currentPathTitles: [
           "Buy",
@@ -231,8 +234,8 @@ describe("Society of Mind reviewer card blinding", () => {
         'Do these 2 activities use "Market" as a different main action from the "Sell" action?',
       proposedState:
         'These activities appear to use "Market" as a different main action from the "Sell" action; "Promote" is the suggested category.',
-      agreeLabel: "Yes, different action",
-      disagreeLabel: "No, review separately",
+      agreeLabel: "Approve all moves",
+      disagreeLabel: "Review individually",
     });
     expect(card.reviewerView.context).toMatchObject({
       candidateHome: "Promote",
