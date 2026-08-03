@@ -967,11 +967,28 @@ const StructuredProperty = ({
 
       const sourceTitle =
         relatedNodes[sourceId]?.title || "this generalization";
-      const willDiscard = discarded.length
-        ? `\n\nThese parts will be removed: ${discarded.join(", ")}.`
-        : "";
       const ok = await confirmIt(
-        `Inherit parts from "${sourceTitle}"? Its parts replace this node's, in its order. Only parts this node owns are kept.${willDiscard}`,
+        <Box>
+          <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+            {`Inherit parts from "${sourceTitle}"?`}
+          </Typography>
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ fontWeight: 400, lineHeight: 1.5 }}
+          >
+            {`This node's parts will be replaced by that generalization's, in the same order. Only parts owned by this node will be kept.`}
+          </Typography>
+          {discarded.length > 0 && (
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ fontWeight: 400, mt: 1.5, lineHeight: 1.5 }}
+            >
+              {`These parts will be removed: ${discarded.join(", ")}.`}
+            </Typography>
+          )}
+        </Box>,
         "Inherit",
         "Cancel",
       );

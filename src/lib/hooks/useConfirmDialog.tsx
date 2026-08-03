@@ -98,15 +98,19 @@ const useDialog = () => {
       }}
     >
       <DialogContent sx={{ textAlign: "center", pt: 4 }}>
-        <Typography
-          variant="h6"
-          sx={{
-            fontWeight: 600,
-            mb: 1,
-          }}
-        >
-          {dialogMessage}
-        </Typography>
+        {typeof dialogMessage === "string" ? (
+          <Typography
+            variant="h6"
+            sx={{
+              fontWeight: 600,
+              mb: 1,
+            }}
+          >
+            {dialogMessage}
+          </Typography>
+        ) : (
+          dialogMessage
+        )}
 
         {isPrompt && (
           <TextField
