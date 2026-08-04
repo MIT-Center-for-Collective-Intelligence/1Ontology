@@ -15,6 +15,7 @@ import {
   writeChangeLog,
 } from "@components/lib/server/hierarchy";
 import {
+  absorbDescendantOwnership,
   applyIsPartOfOwnerOnly,
   asPartsCollections,
   partsNodes,
@@ -123,6 +124,19 @@ async function applyAdd(ctx: {
     nodeData.title ?? "",
     addedOwn,
     [],
+    cache,
+    parentLog,
+    uname,
+    appName,
+    childLogs,
+  );
+
+  // A descendant that already owned one of these parts loses that ownership:
+  // the part is now provided from above, so its copy converts to inherited.
+  await absorbDescendantOwnership(
+    nodeId,
+    additions.map((p) => ({ partId: p.id, owner: p.inheritedFrom ?? nodeId })),
+    updatedRelated,
     cache,
     parentLog,
     uname,

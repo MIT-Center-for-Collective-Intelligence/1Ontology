@@ -310,6 +310,7 @@ async function applyClone(ctx: {
     await applyPartsForGenChange(
       currentNodeId,
       leftRootId ? [leftRootId] : [],
+      [newNodeId],
       cache,
       parentLog,
       uname,

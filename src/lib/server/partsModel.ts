@@ -620,3 +620,104 @@ export function applyGenChange(
   }
   return { parts, partsInheritance: { source: next.id, overrides } };
 }
+
+/**
+ * An ancestor (`owner`) now provides `partId`, so this node stops owning its
+ * copy. If the source chain provides it, the entry is deleted (an optional
+ * difference becomes an override); otherwise it's re-tagged as inherited.
+ */
+export function absorbOwnedPart(
+  nodeId: string,
+  graph: PartsGraph,
+  partId: string,
+  owner: string,
+): {
+  parts: PartEntry[];
+  partsInheritance: PartsInheritance;
+  changed: boolean;
+} {
+  const node = graph.get(nodeId);
+  const entry = node?.parts.find((e) => e.id === partId && isOwnedPart(e));
+  if (!node || !entry) {
+    return {
+      parts: node?.parts ?? [],
+      partsInheritance: node?.partsInheritance ?? {
+        source: null,
+        overrides: {},
+      },
+      changed: false,
+    };
+  }
+  const { source, overrides } = node.partsInheritance;
+  const provided =
+    source && graph.has(source)
+      ? resolveParts(source, graph).find((p) => p.id === partId)
+      : undefined;
+
+  if (!provided) {
+    const parts = node.parts.map((e) =>
+      e.id === partId ? { ...e, inheritedFrom: owner } : e,
+    );
+    return { parts, partsInheritance: node.partsInheritance, changed: true };
+  }
+
+  const parts = node.parts.filter((e) => e.id !== partId);
+  const nextOverrides = { ...overrides };
+  delete nextOverrides[partId];
+  if (!!entry.optional !== !!provided.optional) {
+    nextOverrides[partId] = { optional: !!entry.optional };
+  }
+  return {
+    parts,
+    partsInheritance: { source, overrides: nextOverrides },
+    changed: true,
+  };
+}
+
+/**
+ * Absorb every owned entry that a newly linked gen provides. `converted`
+ * lists the absorbed parts so the caller can repeat this on descendants.
+ */
+export function absorbOwnedForGens(
+  nodeId: string,
+  graph: PartsGraph,
+  genIds: string[],
+): {
+  parts: PartEntry[];
+  partsInheritance: PartsInheritance;
+  converted: { partId: string; owner: string }[];
+} {
+  const node = graph.get(nodeId);
+  if (!node) {
+    return {
+      parts: [],
+      partsInheritance: { source: null, overrides: {} },
+      converted: [],
+    };
+  }
+  let current = node;
+  const converted: { partId: string; owner: string }[] = [];
+  for (const genId of genIds) {
+    for (const p of resolveParts(genId, graph)) {
+      if (!current.parts.some((e) => e.id === p.id && isOwnedPart(e))) {
+        continue;
+      }
+      const owner = childSourceOf(p, genId);
+      const scratch: PartsGraph = new Map(graph);
+      scratch.set(nodeId, current);
+      const result = absorbOwnedPart(nodeId, scratch, p.id, owner);
+      if (!result.changed) continue;
+      current = {
+        id: nodeId,
+        parts: result.parts,
+        partsInheritance: result.partsInheritance,
+      };
+      converted.push({ partId: p.id, owner });
+    }
+  }
+  return {
+    parts: current.parts,
+    partsInheritance: current.partsInheritance,
+    converted,
+  };
+}

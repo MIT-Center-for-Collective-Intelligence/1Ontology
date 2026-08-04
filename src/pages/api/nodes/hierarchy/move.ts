@@ -128,6 +128,7 @@ async function applyMove(ctx: {
     leftRootId && leftRootId !== fromParentId
       ? [fromParentId, leftRootId]
       : [fromParentId],
+    [toParentId],
     cache,
     parentLog,
     uname,
