@@ -55,6 +55,36 @@ export function isOwnedPart(part: ILinkNode): boolean {
 }
 
 /**
+ * Query index for stored entries' inheritedFrom tags: one "partId:ownerId"
+ * key per non-owned entry. Every write of `properties.parts` MUST write
+ * this alongside; a missing field means empty.
+ */
+export function partSourcesOf(parts: PartEntry[]): string[] {
+  return parts
+    .filter((e) => e.inheritedFrom)
+    .map((e) => `${e.id}:${e.inheritedFrom}`);
+}
+
+/**
+ * Re-point entries tracking `fromOwner`'s copy of `partId` to `toOwner`
+ * (ownership moved). Exact matches only; owned entries never change.
+ */
+export function repointTracked(
+  parts: PartEntry[],
+  partId: string,
+  fromOwner: string,
+  toOwner: string,
+): { parts: PartEntry[]; changed: boolean } {
+  let changed = false;
+  const next = parts.map((e) => {
+    if (e.id !== partId || e.inheritedFrom !== fromOwner) return e;
+    changed = true;
+    return { ...e, inheritedFrom: toOwner };
+  });
+  return { parts: changed ? next : parts, changed };
+}
+
+/**
  * The owner a CHILD records for a part it inherits from parent `parentId`:
  * the parent if the parent owns it, else whoever the parent inherited it from.
  * This is what skips a pass-through parent — per part.
