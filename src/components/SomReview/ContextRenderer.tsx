@@ -196,9 +196,20 @@ const TitleComparison = ({
       openLabel="Hide source O*NET evidence"
       initiallyOpen
     >
-      <List dense disablePadding sx={{ pl: 1, pb: 1 }}>
+      <List
+        component="ul"
+        dense
+        disablePadding
+        sx={{ pl: 3, pb: 1, listStyleType: "disc" }}
+      >
         {tasks.map((task) => (
-          <ListItem key={task} disableGutters alignItems="flex-start">
+          <ListItem
+            component="li"
+            key={task}
+            disableGutters
+            alignItems="flex-start"
+            sx={{ display: "list-item", pl: 0.5 }}
+          >
             <ListItemText
               primary={task}
               primaryTypographyProps={{ sx: { lineHeight: 1.5 } }}
@@ -232,7 +243,12 @@ const TitleSplit = ({
         <Typography sx={{ ...sectionLabelSx, mt: 2 }}>
           Source O*NET evidence
         </Typography>
-        <List component="ol" dense disablePadding sx={{ pl: 3, mt: 0.5 }}>
+        <List
+          component="ul"
+          dense
+          disablePadding
+          sx={{ pl: 3, mt: 0.5, listStyleType: "disc" }}
+        >
           {tasks.map((task, index) => (
             <ListItem
               component="li"
@@ -813,9 +829,20 @@ const SourceTasks = ({ tasks }: { tasks: string[] }) => {
       openLabel="Hide source O*NET evidence"
       initiallyOpen
     >
-      <List dense disablePadding sx={{ pl: 1, pb: 1 }}>
+      <List
+        component="ul"
+        dense
+        disablePadding
+        sx={{ pl: 3, pb: 1, listStyleType: "disc" }}
+      >
         {uniqueTasks.map((task) => (
-          <ListItem key={task} disableGutters alignItems="flex-start">
+          <ListItem
+            component="li"
+            key={task}
+            disableGutters
+            alignItems="flex-start"
+            sx={{ display: "list-item", pl: 0.5 }}
+          >
             <ListItemText
               primary={task}
               primaryTypographyProps={{ sx: { lineHeight: 1.5 } }}

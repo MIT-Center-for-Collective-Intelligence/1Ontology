@@ -2,16 +2,13 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Alert,
   Box,
+  Breadcrumbs,
   Button,
   Card,
   CardActionArea,
   Chip,
   CircularProgress,
   Container,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
   Stack,
   TextField,
   ToggleButton,
@@ -115,17 +112,6 @@ export const ReviewInspectionPage = () => {
   useEffect(() => {
     if (user && router.isReady) loadOverview();
   }, [loadOverview, router.isReady, user]);
-
-  const selectReviewer = async (reviewerId: string) => {
-    await router.replace(
-      {
-        pathname: "/review/inspection",
-        query: { workspace: workspaceId, reviewer: reviewerId },
-      },
-      undefined,
-      { shallow: true },
-    );
-  };
 
   const selectTask = async (taskKey: string) => {
     await router.push(
@@ -279,26 +265,44 @@ export const ReviewInspectionPage = () => {
             spacing={2}
             sx={{ mb: 2 }}
           >
-            <Button
-              disableElevation
-              color="inherit"
-              startIcon={<ArrowBackIcon />}
-              onClick={() =>
-                router.push({
-                  pathname: "/review",
-                  query: {
-                    dataset:
-                      overview?.activeDatasetId ||
-                      (workspaceId === "sell"
-                        ? "sell-semantic-coverage"
-                        : "buy-content-identity"),
-                  },
-                })
-              }
-              sx={{ minHeight: 44, fontWeight: 750 }}
+            <Breadcrumbs
+              aria-label="Review navigation"
+              sx={{
+                minWidth: 0,
+                "& .MuiBreadcrumbs-ol": { flexWrap: "wrap" },
+              }}
             >
-              Proposal review
-            </Button>
+              <Button
+                disableElevation
+                color="inherit"
+                startIcon={<ArrowBackIcon />}
+                onClick={() =>
+                  router.push({
+                    pathname: "/review",
+                    query: {
+                      dataset:
+                        overview?.activeDatasetId ||
+                        (workspaceId === "sell"
+                          ? "sell-semantic-coverage"
+                          : "buy-content-identity"),
+                    },
+                  })
+                }
+                sx={{ minHeight: 44, fontWeight: 750, whiteSpace: "nowrap" }}
+              >
+                Proposal review
+              </Button>
+              {selectedTask && (
+                <Button
+                  disableElevation
+                  color="inherit"
+                  onClick={returnToTasks}
+                  sx={{ minHeight: 44, fontWeight: 750, whiteSpace: "nowrap" }}
+                >
+                  All review tasks
+                </Button>
+              )}
+            </Breadcrumbs>
             <ThemeModeToggle />
           </Stack>
 
@@ -375,40 +379,21 @@ export const ReviewInspectionPage = () => {
                     alignItems={{ xs: "stretch", md: "center" }}
                     spacing={1.5}
                   >
-                    {selectedTask && (
-                      <Button
-                        disableElevation
-                        color="inherit"
-                        variant="outlined"
-                        startIcon={<ArrowBackIcon />}
-                        onClick={returnToTasks}
-                        sx={{ minHeight: 56, fontWeight: 750 }}
+                    <Box sx={{ minWidth: 260 }} aria-label="Prior reviewer">
+                      <Typography
+                        sx={{
+                          color: "text.secondary",
+                          fontSize: "0.78rem",
+                          fontWeight: 700,
+                        }}
                       >
-                        All review tasks
-                      </Button>
-                    )}
-                    <FormControl sx={{ minWidth: 260 }}>
-                      <InputLabel id="prior-reviewer-label">
-                        Prior reviewer
-                      </InputLabel>
-                      <Select
-                        labelId="prior-reviewer-label"
-                        value={overview.selectedReviewerId || ""}
-                        label="Prior reviewer"
-                        onChange={(event) =>
-                          selectReviewer(String(event.target.value))
-                        }
-                      >
-                        {overview.reviewers.map((reviewer) => (
-                          <MenuItem
-                            key={reviewer.reviewerId}
-                            value={reviewer.reviewerId}
-                          >
-                            {reviewer.displayName} ({reviewer.responseCount})
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
+                        Reviewing prior decisions by
+                      </Typography>
+                      <Typography sx={{ mt: 0.25, fontWeight: 800 }}>
+                        {selectedReviewer?.displayName || "Robert Laubacher"} (
+                        {selectedReviewer?.responseCount || 0} responses)
+                      </Typography>
+                    </Box>
                     {selectedTask && (
                       <TextField
                         fullWidth

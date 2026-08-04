@@ -22,6 +22,9 @@ describe("Society of Mind context renderers", () => {
     expect(
       screen.getByText("Recommend and sell lotions or tonics."),
     ).toBeInTheDocument();
+    expect(screen.getByRole("list")).toContainElement(
+      screen.getByRole("listitem"),
+    );
     const collapseButton = screen.getByRole("button", {
       name: "Hide source O*NET evidence",
     });
@@ -56,7 +59,7 @@ describe("Society of Mind context renderers", () => {
     expect(screen.getAllByText("Sell products or services.")).toHaveLength(1);
   });
 
-  it("shows a title split with numbered evidence and existing-node status", () => {
+  it("shows a title split with bulleted evidence and existing-node status", () => {
     render(
       <ContextRenderer
         context={{
@@ -92,6 +95,7 @@ describe("Society of Mind context renderers", () => {
     expect(screen.getByText("Uses source item 1")).toBeInTheDocument();
     expect(screen.getByText("Uses source item 2")).toBeInTheDocument();
     expect(screen.getAllByText("Sell agricultural products.")).toHaveLength(1);
+    expect(screen.getAllByRole("listitem")).toHaveLength(2);
   });
 
   it("keeps the current children alphabetized and labels only the after split", () => {
