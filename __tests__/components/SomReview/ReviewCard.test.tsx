@@ -257,11 +257,9 @@ describe("Society of Mind review card", () => {
       ),
     ).toBeInTheDocument();
     expect(screen.getAllByText("Actors and Activities")).not.toHaveLength(0);
+    expect(screen.getByRole("button", { name: "Agree" })).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Approve move" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Reject proposed move" }),
+      screen.getByRole("button", { name: "Disagree" }),
     ).toBeInTheDocument();
     expect(
       screen.queryByText(/advisory candidate home/i),
@@ -271,7 +269,7 @@ describe("Society of Mind review card", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("uses explicit same-activity choices for possible synonyms", () => {
+  it("uses the same verdict choices for possible synonyms", () => {
     const synonymCard: SomReviewCard = {
       proposalId: "synonym-1",
       datasetVersion: "dataset-1",
@@ -302,15 +300,13 @@ describe("Society of Mind review card", () => {
       />,
     );
 
-    expect(screen.getByRole("button", { name: "Same activity" })).toBeVisible();
-    fireEvent.click(
-      screen.getByRole("button", { name: "Different activities" }),
-    );
+    expect(screen.getByRole("button", { name: "Agree" })).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "Disagree" }));
     expect(
       screen.getByLabelText(/What meaningfully distinguishes/i),
     ).toBeVisible();
     expect(
-      screen.getByRole("button", { name: "Save as different activities" }),
+      screen.getByRole("button", { name: "Save disagreement" }),
     ).toBeDisabled();
   });
 
@@ -369,11 +365,9 @@ describe("Society of Mind review card", () => {
     expect(
       screen.queryByText(/parent that is too broad/i),
     ).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Agree" })).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Approve move" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Reject proposed move" }),
+      screen.getByRole("button", { name: "Disagree" }),
     ).toBeInTheDocument();
   });
 

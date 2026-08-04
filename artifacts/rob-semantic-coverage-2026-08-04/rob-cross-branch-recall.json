@@ -1,0 +1,640 @@
+{
+  "schemaVersion": "som-reviewer-benchmark-v1",
+  "exportedAt": "2026-08-04T21:19:30.821Z",
+  "firestoreProjectId": "ontology-41607",
+  "datasetVersion": "sell-rob-semantic-coverage-2026-07-29-v1",
+  "sourceOntology": "firestore://ontology-41607/final-hierarchy-with-o*net-rob-structure-applied-2026-07-25",
+  "sourceOntologySha256": "96161f04fb1a4b146b79256be16ba2bebefcb9892308025b9937a400699fa884",
+  "issueType": "cross-branch-recall",
+  "reviewer": {
+    "label": "rob"
+  },
+  "counts": {
+    "expected": 8,
+    "reviewed": 8,
+    "agreed": 7,
+    "disagreed": 1,
+    "missing": 0,
+    "orphanedHistoricalResponses": 8
+  },
+  "missingProposalIds": [],
+  "orphanedResponses": [
+    {
+      "proposalId": "som-03c75772f02aef876ae1",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-152c3617d61c68732b2b",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-2b26108a6a522921055e",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-530b4d746f060412f399",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-5d15d4f7220de932be23",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-5fbed1619f03f4a1bc30",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-cd8212e05c8a5640b40d",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    },
+    {
+      "proposalId": "som-e028ab9536c3a5dcf0d5",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1
+    }
+  ],
+  "sourceNodeEvidence": [
+    {
+      "nodeId": "d3b13d5a832ae6660a02a7b8a5e3",
+      "title": "Lease Property",
+      "appName": "final-hierarchy-with-o*net-rob-structure-applied-2026-07-25",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "0fd2fc376658f99acd0f6b8b792d",
+              "linkTitle": "(O*Net) 2470 - Rent or lease properties on behalf of clients.",
+              "title": "(O*Net) 2470 - Rent or lease properties on behalf of clients.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Lease Property"
+              ]
+            },
+            {
+              "nodeId": "81fa404c77270aeaef087763f5ec",
+              "linkTitle": "(O*Net) 4612 - Rent properties or manage rental properties.",
+              "title": "(O*Net) 4612 - Rent properties or manage rental properties.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Lease Property",
+                "Manage Property"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "2c0e7f8c6385a583070f537c100b",
+      "title": "Rent Accommodation",
+      "appName": "final-hierarchy-with-o*net-rob-structure-applied-2026-07-25",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "7b743c9698fc94cd1ab2dc457a3f",
+              "linkTitle": "(O*Net) 1114 - Show, rent, or assign accommodations.",
+              "title": "(O*Net) 1114 - Show, rent, or assign accommodations.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Show Accommodation",
+                "Rent Accommodation",
+                "Assign Accommodation"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "46c6136396258d624dc13f6fcf19",
+      "title": "Rent Box",
+      "appName": "final-hierarchy-with-o*net-rob-structure-applied-2026-07-25",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "ec7e8256c4b3057da37735673d0c",
+              "linkTitle": "(O*Net) 11332 - Rent post office boxes to customers.",
+              "title": "(O*Net) 11332 - Rent post office boxes to customers.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Rent Box"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "e9453292b42a36f1ee44bfeb9a9b",
+      "title": "Rent Clothing",
+      "appName": "final-hierarchy-with-o*net-rob-structure-applied-2026-07-25",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "d2cc3a79b128d4154994d5533812",
+              "linkTitle": "(O*Net) 13170 - Sell or rent equipment, clothing, and supplies related to expeditions.",
+              "title": "(O*Net) 13170 - Sell or rent equipment, clothing, and supplies related to expeditions.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Rent Clothing",
+                "Rent Equipment",
+                "Rent Supply",
+                "Sell Expedition Clothing",
+                "Sell Expedition Equipment",
+                "Sell Expedition Supplies"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "03d8487c224612ee7a930e4785f0",
+      "title": "Rent Equipment",
+      "appName": "final-hierarchy-with-o*net-rob-structure-applied-2026-07-25",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "d2cc3a79b128d4154994d5533812",
+              "linkTitle": "(O*Net) 13170 - Sell or rent equipment, clothing, and supplies related to expeditions.",
+              "title": "(O*Net) 13170 - Sell or rent equipment, clothing, and supplies related to expeditions.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Rent Clothing",
+                "Rent Equipment",
+                "Rent Supply",
+                "Sell Expedition Clothing",
+                "Sell Expedition Equipment",
+                "Sell Expedition Supplies"
+              ]
+            },
+            {
+              "nodeId": "64fc66fb71ca60ed1fff6a00ff0a",
+              "linkTitle": "(O*Net) 17739 - Purchase or rent equipment for solar energy system installation.",
+              "title": "(O*Net) 17739 - Purchase or rent equipment for solar energy system installation.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Purchase Equipment",
+                "Rent Equipment"
+              ]
+            },
+            {
+              "nodeId": "9a2f1cc2c19eec098cb1f9382b5e",
+              "linkTitle": "(O*Net) 5127 - Rent, sell, or issue sporting equipment and supplies, such as bowling shoes, golf balls, swimming suits, or beach chairs.",
+              "title": "(O*Net) 5127 - Rent, sell, or issue sporting equipment and supplies, such as bowling shoes, golf balls, swimming suits, or beach chairs.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Rent Equipment",
+                "Sell Sporting Equipment",
+                "Supply Equipment"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "ec07d44c56346febb6e2c5d80c0f",
+      "title": "Rent Item",
+      "appName": "final-hierarchy-with-o*net-rob-structure-applied-2026-07-25",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "3779c527b0e45610f8d842d2576e",
+              "linkTitle": "(O*Net) 690 - Rent items, arrange for provision of services to customers, and accept returns.",
+              "title": "(O*Net) 690 - Rent items, arrange for provision of services to customers, and accept returns.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Rent Item",
+                "Accept Return",
+                "Arrange Service"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "3ed2848b752f08d507bdd822d9c4",
+      "title": "Rent Merchandise",
+      "appName": "final-hierarchy-with-o*net-rob-structure-applied-2026-07-25",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "2a3acf7a2c408321831e68d91aa8",
+              "linkTitle": "(O*Net) 717 - Rent merchandise to customers.",
+              "title": "(O*Net) 717 - Rent merchandise to customers.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Rent Merchandise"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "fa9f0b2b8332ea554de104de2f23",
+      "title": "Rent Supply",
+      "appName": "final-hierarchy-with-o*net-rob-structure-applied-2026-07-25",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": [
+            {
+              "nodeId": "d2cc3a79b128d4154994d5533812",
+              "linkTitle": "(O*Net) 13170 - Sell or rent equipment, clothing, and supplies related to expeditions.",
+              "title": "(O*Net) 13170 - Sell or rent equipment, clothing, and supplies related to expeditions.",
+              "oNet": false,
+              "generalizationTitles": [
+                "Rent Clothing",
+                "Rent Equipment",
+                "Rent Supply",
+                "Sell Expedition Clothing",
+                "Sell Expedition Equipment",
+                "Sell Expedition Supplies"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "judgments": [
+    {
+      "proposalId": "som-b876e1950ee85f53d266",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "ec07d44c56346febb6e2c5d80c0f",
+      "parentNodeId": "412f9a026c089649ff3f27dfd9f6",
+      "subjectTitle": "Rent Item",
+      "subjectParentTitle": "Lease (Physical Object)",
+      "currentTitle": "",
+      "proposedTitle": "",
+      "currentParentTitle": "Lease (Physical Object)",
+      "proposedParentTitle": "Rent out",
+      "context": {
+        "type": "placement-comparison",
+        "nodeTitle": "Rent Item",
+        "currentParentTitle": "Lease (Physical Object)",
+        "candidateHome": "Rent out",
+        "placementIssue": "missing-from-branch",
+        "sourceTasks": [
+          "(O*Net) 690 - Rent items, arrange for provision of services to customers, and accept returns."
+        ],
+        "currentPathTitles": [
+          "Buy",
+          "Rent (pay for time-limited use)",
+          "Lease",
+          "Lease (Physical Object)",
+          "Rent Item"
+        ],
+        "proposedPathTitles": [
+          "Sell",
+          "Rent out",
+          "Rent Item"
+        ]
+      },
+      "linkedTasks": [],
+      "proposedNodes": [],
+      "agentReasoning": "Direct source evidence uses rent or lease in a provider-side context: '(O*Net) 690 - Rent items, arrange for provision of services to customers, and accept returns.'.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1,
+      "carriedForwardFromProposalId": "som-2349d16033acaead6103"
+    },
+    {
+      "proposalId": "som-2712192fe57dd0dbf045",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "3ed2848b752f08d507bdd822d9c4",
+      "parentNodeId": "412f9a026c089649ff3f27dfd9f6",
+      "subjectTitle": "Rent Merchandise",
+      "subjectParentTitle": "Lease (Physical Object)",
+      "currentTitle": "",
+      "proposedTitle": "",
+      "currentParentTitle": "Lease (Physical Object)",
+      "proposedParentTitle": "Rent out",
+      "context": {
+        "type": "placement-comparison",
+        "nodeTitle": "Rent Merchandise",
+        "currentParentTitle": "Lease (Physical Object)",
+        "candidateHome": "Rent out",
+        "placementIssue": "missing-from-branch",
+        "sourceTasks": [
+          "(O*Net) 717 - Rent merchandise to customers."
+        ],
+        "currentPathTitles": [
+          "Buy",
+          "Rent (pay for time-limited use)",
+          "Lease",
+          "Lease (Physical Object)",
+          "Rent Merchandise"
+        ],
+        "proposedPathTitles": [
+          "Sell",
+          "Rent out",
+          "Rent Merchandise"
+        ]
+      },
+      "linkedTasks": [],
+      "proposedNodes": [],
+      "agentReasoning": "Direct source evidence uses rent or lease in a provider-side context: '(O*Net) 717 - Rent merchandise to customers.'.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1,
+      "carriedForwardFromProposalId": "som-3ce0cf5a80839238edf9"
+    },
+    {
+      "proposalId": "som-0b734eb0be482c04eef1",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "46c6136396258d624dc13f6fcf19",
+      "parentNodeId": "412f9a026c089649ff3f27dfd9f6",
+      "subjectTitle": "Rent Box",
+      "subjectParentTitle": "Lease (Physical Object)",
+      "currentTitle": "",
+      "proposedTitle": "",
+      "currentParentTitle": "Lease (Physical Object)",
+      "proposedParentTitle": "Rent out",
+      "context": {
+        "type": "placement-comparison",
+        "nodeTitle": "Rent Box",
+        "currentParentTitle": "Lease (Physical Object)",
+        "candidateHome": "Rent out",
+        "placementIssue": "missing-from-branch",
+        "sourceTasks": [
+          "(O*Net) 11332 - Rent post office boxes to customers."
+        ],
+        "currentPathTitles": [
+          "Buy",
+          "Rent (pay for time-limited use)",
+          "Lease",
+          "Lease (Physical Object)",
+          "Rent Box"
+        ],
+        "proposedPathTitles": [
+          "Sell",
+          "Rent out",
+          "Rent Box"
+        ]
+      },
+      "linkedTasks": [],
+      "proposedNodes": [],
+      "agentReasoning": "Direct source evidence uses rent or lease in a provider-side context: '(O*Net) 11332 - Rent post office boxes to customers.'.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1,
+      "carriedForwardFromProposalId": "som-27afd77fd2d9b2564529"
+    },
+    {
+      "proposalId": "som-756a156508bbc6756859",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "d3b13d5a832ae6660a02a7b8a5e3",
+      "parentNodeId": "412f9a026c089649ff3f27dfd9f6",
+      "subjectTitle": "Lease Property",
+      "subjectParentTitle": "Lease (Physical Object)",
+      "currentTitle": "",
+      "proposedTitle": "",
+      "currentParentTitle": "Lease (Physical Object)",
+      "proposedParentTitle": "Rent out",
+      "context": {
+        "type": "placement-comparison",
+        "nodeTitle": "Lease Property",
+        "currentParentTitle": "Lease (Physical Object)",
+        "candidateHome": "Rent out",
+        "placementIssue": "missing-from-branch",
+        "sourceTasks": [
+          "(O*Net) 2470 - Rent or lease properties on behalf of clients.",
+          "(O*Net) 4612 - Rent properties or manage rental properties."
+        ],
+        "currentPathTitles": [
+          "Buy",
+          "Rent (pay for time-limited use)",
+          "Lease",
+          "Lease (Physical Object)",
+          "Lease Property"
+        ],
+        "proposedPathTitles": [
+          "Sell",
+          "Rent out",
+          "Lease Property"
+        ]
+      },
+      "linkedTasks": [],
+      "proposedNodes": [],
+      "agentReasoning": "Direct source evidence uses rent or lease in a provider-side context: '(O*Net) 2470 - Rent or lease properties on behalf of clients.'; '(O*Net) 4612 - Rent properties or manage rental properties.'.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1,
+      "carriedForwardFromProposalId": "som-a129fc5e2012529a5814"
+    },
+    {
+      "proposalId": "som-ed212c77f550f328ce1d",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "2c0e7f8c6385a583070f537c100b",
+      "parentNodeId": "412f9a026c089649ff3f27dfd9f6",
+      "subjectTitle": "Rent Accommodation",
+      "subjectParentTitle": "Lease (Physical Object)",
+      "currentTitle": "",
+      "proposedTitle": "",
+      "currentParentTitle": "Lease (Physical Object)",
+      "proposedParentTitle": "Rent out",
+      "context": {
+        "type": "placement-comparison",
+        "nodeTitle": "Rent Accommodation",
+        "currentParentTitle": "Lease (Physical Object)",
+        "candidateHome": "Rent out",
+        "placementIssue": "missing-from-branch",
+        "sourceTasks": [
+          "(O*Net) 1114 - Show, rent, or assign accommodations."
+        ],
+        "currentPathTitles": [
+          "Buy",
+          "Rent (pay for time-limited use)",
+          "Lease",
+          "Lease (Physical Object)",
+          "Rent Accommodation"
+        ],
+        "proposedPathTitles": [
+          "Sell",
+          "Rent out",
+          "Rent Accommodation"
+        ]
+      },
+      "linkedTasks": [],
+      "proposedNodes": [],
+      "agentReasoning": "Direct source evidence uses rent or lease in a provider-side context: '(O*Net) 1114 - Show, rent, or assign accommodations.'.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1,
+      "carriedForwardFromProposalId": "som-3f7e33c2a810735c6d56"
+    },
+    {
+      "proposalId": "som-f7564256227086773936",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "03d8487c224612ee7a930e4785f0",
+      "parentNodeId": "412f9a026c089649ff3f27dfd9f6",
+      "subjectTitle": "Rent Equipment",
+      "subjectParentTitle": "Lease (Physical Object)",
+      "currentTitle": "",
+      "proposedTitle": "",
+      "currentParentTitle": "Lease (Physical Object)",
+      "proposedParentTitle": "Rent out",
+      "context": {
+        "type": "placement-comparison",
+        "nodeTitle": "Rent Equipment",
+        "currentParentTitle": "Lease (Physical Object)",
+        "candidateHome": "Rent out",
+        "placementIssue": "missing-from-branch",
+        "sourceTasks": [
+          "(O*Net) 13170 - Sell or rent equipment, clothing, and supplies related to expeditions.",
+          "(O*Net) 17739 - Purchase or rent equipment for solar energy system installation.",
+          "(O*Net) 5127 - Rent, sell, or issue sporting equipment and supplies, such as bowling shoes, golf balls, swimming suits, or beach chairs."
+        ],
+        "currentPathTitles": [
+          "Buy",
+          "Rent (pay for time-limited use)",
+          "Lease",
+          "Lease (Physical Object)",
+          "Rent Equipment"
+        ],
+        "proposedPathTitles": [
+          "Sell",
+          "Rent out",
+          "Rent Equipment"
+        ]
+      },
+      "linkedTasks": [],
+      "proposedNodes": [],
+      "agentReasoning": "Direct source evidence uses rent or lease in a provider-side context: '(O*Net) 13170 - Sell or rent equipment, clothing, and supplies related to expeditions.'; '(O*Net) 5127 - Rent, sell, or issue sporting equipment and supplies, such as bowling shoes, golf balls, swimming suits, or beach chairs.'.",
+      "decision": "disagree",
+      "disagreementReason": "O*NET items 13170 and 5127 should be moved to Rent out. But O*NET item 17739 should be kept in its original place.",
+      "suggestedCorrection": "O*NET 13170 and 5127 move so they are under Rent equipment. O*NET 17739 stays under Lease.",
+      "revisionCount": 1,
+      "carriedForwardFromProposalId": "som-15fba4ccfad0dd29cbc5"
+    },
+    {
+      "proposalId": "som-465816b46486fcf5d2bf",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "e9453292b42a36f1ee44bfeb9a9b",
+      "parentNodeId": "412f9a026c089649ff3f27dfd9f6",
+      "subjectTitle": "Rent Clothing",
+      "subjectParentTitle": "Lease (Physical Object)",
+      "currentTitle": "",
+      "proposedTitle": "",
+      "currentParentTitle": "Lease (Physical Object)",
+      "proposedParentTitle": "Rent out",
+      "context": {
+        "type": "placement-comparison",
+        "nodeTitle": "Rent Clothing",
+        "currentParentTitle": "Lease (Physical Object)",
+        "candidateHome": "Rent out",
+        "placementIssue": "missing-from-branch",
+        "sourceTasks": [
+          "(O*Net) 13170 - Sell or rent equipment, clothing, and supplies related to expeditions."
+        ],
+        "currentPathTitles": [
+          "Buy",
+          "Rent (pay for time-limited use)",
+          "Lease",
+          "Lease (Physical Object)",
+          "Rent Clothing"
+        ],
+        "proposedPathTitles": [
+          "Sell",
+          "Rent out",
+          "Rent Clothing"
+        ]
+      },
+      "linkedTasks": [],
+      "proposedNodes": [],
+      "agentReasoning": "Direct source evidence uses rent or lease in a provider-side context: '(O*Net) 13170 - Sell or rent equipment, clothing, and supplies related to expeditions.'.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1,
+      "carriedForwardFromProposalId": "som-b0618ed6153588a186ba"
+    },
+    {
+      "proposalId": "som-b8c5ba1c90158e6784c7",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "fa9f0b2b8332ea554de104de2f23",
+      "parentNodeId": "412f9a026c089649ff3f27dfd9f6",
+      "subjectTitle": "Rent Supply",
+      "subjectParentTitle": "Lease (Physical Object)",
+      "currentTitle": "",
+      "proposedTitle": "",
+      "currentParentTitle": "Lease (Physical Object)",
+      "proposedParentTitle": "Rent out",
+      "context": {
+        "type": "placement-comparison",
+        "nodeTitle": "Rent Supply",
+        "currentParentTitle": "Lease (Physical Object)",
+        "candidateHome": "Rent out",
+        "placementIssue": "missing-from-branch",
+        "sourceTasks": [
+          "(O*Net) 13170 - Sell or rent equipment, clothing, and supplies related to expeditions."
+        ],
+        "currentPathTitles": [
+          "Buy",
+          "Rent (pay for time-limited use)",
+          "Lease",
+          "Lease (Physical Object)",
+          "Rent Supply"
+        ],
+        "proposedPathTitles": [
+          "Sell",
+          "Rent out",
+          "Rent Supply"
+        ]
+      },
+      "linkedTasks": [],
+      "proposedNodes": [],
+      "agentReasoning": "Direct source evidence uses rent or lease in a provider-side context: '(O*Net) 13170 - Sell or rent equipment, clothing, and supplies related to expeditions.'.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1,
+      "carriedForwardFromProposalId": "som-fecda86541f0949e2d50"
+    }
+  ]
+}

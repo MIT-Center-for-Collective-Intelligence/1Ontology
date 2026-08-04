@@ -113,38 +113,49 @@ export const ReviewPage = () => {
   const [completedSequence, setCompletedSequence] =
     useState<CompletedSequence | null>(null);
 
-  const loadOverview = useCallback(async (requestedDatasetId?: string) => {
-    setPhase("loading");
-    setLoadError("");
-    setRetryIssueType(null);
-    try {
-      const targetDatasetId = requestedDatasetId || datasetIdRef.current;
-      const overview = await Post<SomOverviewResponse>(
-        "/som-review/overview",
-        targetDatasetId ? { datasetId: targetDatasetId } : {},
-      );
-      datasetIdRef.current = overview.datasetId;
-      setDatasetId(overview.datasetId);
-      setDatasetVersion(overview.datasetVersion);
-      setWorkspaceId(overview.workspaceId);
-      setWorkspaces(overview.workspaces);
-      setRoundLabel(overview.roundLabel);
-      setCurrentRound(overview.currentRound);
-      setBranch(overview.branch);
-      setOntologyName(overview.ontologyName);
-      setIssueTypes(overview.issueTypes);
-      setReadyFollowUps(overview.readyFollowUps || []);
-      setCanDeliberate(overview.canDeliberate);
-      setCanInspectPriorReview(overview.canInspectPriorReview);
-      setTrustedPropagationAllowed(
-        Boolean(overview.trustedPropagation?.allowed),
-      );
-      setPhase("select");
-    } catch {
-      setLoadError("The review queues could not be loaded. Please try again.");
-      setPhase("select");
-    }
+  const applyOverview = useCallback((overview: SomOverviewResponse) => {
+    datasetIdRef.current = overview.datasetId;
+    setDatasetId(overview.datasetId);
+    setDatasetVersion(overview.datasetVersion);
+    setWorkspaceId(overview.workspaceId);
+    setWorkspaces(overview.workspaces);
+    setRoundLabel(overview.roundLabel);
+    setCurrentRound(overview.currentRound);
+    setBranch(overview.branch);
+    setOntologyName(overview.ontologyName);
+    setIssueTypes(overview.issueTypes);
+    setReadyFollowUps(overview.readyFollowUps || []);
+    setCanDeliberate(overview.canDeliberate);
+    setCanInspectPriorReview(overview.canInspectPriorReview);
+    setTrustedPropagationAllowed(Boolean(overview.trustedPropagation?.allowed));
   }, []);
+
+  const loadOverview = useCallback(
+    async (
+      requestedDatasetId?: string,
+    ): Promise<SomOverviewResponse | null> => {
+      setPhase("loading");
+      setLoadError("");
+      setRetryIssueType(null);
+      try {
+        const targetDatasetId = requestedDatasetId || datasetIdRef.current;
+        const overview = await Post<SomOverviewResponse>(
+          "/som-review/overview",
+          targetDatasetId ? { datasetId: targetDatasetId } : {},
+        );
+        applyOverview(overview);
+        setPhase("select");
+        return overview;
+      } catch {
+        setLoadError(
+          "The review queues could not be loaded. Please try again.",
+        );
+        setPhase("select");
+        return null;
+      }
+    },
+    [applyOverview],
+  );
 
   useEffect(() => {
     if (!user?.userId || !trustedPropagationAllowed) {
@@ -152,13 +163,12 @@ export const ReviewPage = () => {
       return;
     }
     try {
-      setTrustedPropagationEnabled(
-        window.localStorage.getItem(
-          `som-review-trusted-propagation-${user.userId}`,
-        ) === "true",
+      const stored = window.localStorage.getItem(
+        `som-review-continuous-expert-${user.userId}`,
       );
+      setTrustedPropagationEnabled(stored === null ? true : stored === "true");
     } catch {
-      setTrustedPropagationEnabled(false);
+      setTrustedPropagationEnabled(true);
     }
   }, [trustedPropagationAllowed, user?.userId]);
 
@@ -168,7 +178,7 @@ export const ReviewPage = () => {
       if (!user?.userId) return;
       try {
         window.localStorage.setItem(
-          `som-review-trusted-propagation-${user.userId}`,
+          `som-review-continuous-expert-${user.userId}`,
           String(enabled),
         );
       } catch {
@@ -291,18 +301,41 @@ export const ReviewPage = () => {
     (followUp: SomLinkedFollowUp, source?: SomFollowUpSource) => {
       const linkedSource = source || followUp.sources[0];
       if (!linkedSource) {
-        startSession(followUp.issueType, {
+        return startSession(followUp.issueType, {
           preferredProposalId: followUp.proposalId,
         });
-        return;
       }
-      startSession(followUp.issueType, {
+      return startSession(followUp.issueType, {
         preferredProposalId: followUp.proposalId,
         sequence: { source: linkedSource, followUp },
       });
     },
     [startSession],
   );
+
+  const continueContinuousReview = useCallback(async () => {
+    clearActiveReview();
+    const overview = await loadOverview();
+    if (!overview) return;
+
+    const nextFollowUp = overview.readyFollowUps?.[0];
+    if (nextFollowUp) {
+      await startLinkedFollowUp(nextFollowUp);
+      return;
+    }
+    const nextIssue = overview.issueTypes.find(
+      (candidate) =>
+        candidate.enabled &&
+        candidate.released &&
+        candidate.pending > 0 &&
+        !(candidate.blockedBy || []).length,
+    );
+    if (nextIssue) {
+      await startSession(nextIssue.id);
+      return;
+    }
+    setPhase("select");
+  }, [clearActiveReview, loadOverview, startLinkedFollowUp, startSession]);
 
   const introStorageKey = useCallback(
     (issue: SomIssueType) =>
@@ -456,13 +489,22 @@ export const ReviewPage = () => {
         const sourceIssue = issueTypes.find(
           (candidate) => candidate.id === card.issueType,
         );
+        const source = {
+          proposalId: card.proposalId,
+          issueType: card.issueType,
+          issueLabel: sourceIssue?.label || "Earlier review",
+          question: card.reviewerView.question,
+        };
+        if (
+          trustedPropagationAllowed &&
+          currentRound &&
+          trustedPropagationEnabled
+        ) {
+          await startLinkedFollowUp(followUps[0], source);
+          return;
+        }
         setFollowUpOffer({
-          source: {
-            proposalId: card.proposalId,
-            issueType: card.issueType,
-            issueLabel: sourceIssue?.label || "Earlier review",
-            question: card.reviewerView.question,
-          },
+          source,
           followUps,
           sourceQueueCompleted: result.completed,
         });
@@ -470,6 +512,14 @@ export const ReviewPage = () => {
         return;
       }
       if (activeSequence?.followUp.proposalId === card.proposalId) {
+        if (
+          trustedPropagationAllowed &&
+          currentRound &&
+          trustedPropagationEnabled
+        ) {
+          await continueContinuousReview();
+          return;
+        }
         setCompletedSequence({
           sequence: activeSequence,
           followUpQueueCompleted: result.completed,
@@ -477,15 +527,27 @@ export const ReviewPage = () => {
         setPhase("sequence-complete");
         return;
       }
-      if (result.completed) setPhase("complete");
+      if (result.completed) {
+        if (
+          trustedPropagationAllowed &&
+          currentRound &&
+          trustedPropagationEnabled
+        ) {
+          await continueContinuousReview();
+          return;
+        }
+        setPhase("complete");
+      }
     },
     [
       activeSequence,
       cards,
       currentRound,
       cursor,
+      continueContinuousReview,
       issueTypes,
       sessionId,
+      startLinkedFollowUp,
       trustedPropagationAllowed,
       trustedPropagationEnabled,
       user?.userId,
@@ -563,14 +625,23 @@ export const ReviewPage = () => {
         const sourceIssue = issueTypes.find(
           (candidate) => candidate.id === card.issueType,
         );
+        const source = {
+          proposalId: card.proposalId,
+          issueType: card.issueType,
+          issueLabel: sourceIssue?.label || "Earlier review",
+          question: card.reviewerView.question,
+        };
         setRevisionProposalId("");
+        if (
+          trustedPropagationAllowed &&
+          currentRound &&
+          trustedPropagationEnabled
+        ) {
+          await startLinkedFollowUp(followUps[0], source);
+          return;
+        }
         setFollowUpOffer({
-          source: {
-            proposalId: card.proposalId,
-            issueType: card.issueType,
-            issueLabel: sourceIssue?.label || "Earlier review",
-            question: card.reviewerView.question,
-          },
+          source,
           followUps,
           sourceQueueCompleted: cards.length === 0 || cursor >= cards.length,
         });
@@ -607,6 +678,7 @@ export const ReviewPage = () => {
       issueTypes,
       issueType,
       revisionProposalId,
+      startLinkedFollowUp,
       startSession,
       trustedPropagationAllowed,
       trustedPropagationEnabled,

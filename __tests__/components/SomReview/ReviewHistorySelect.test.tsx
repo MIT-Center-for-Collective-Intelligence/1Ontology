@@ -91,6 +91,8 @@ describe("Review history selector", () => {
     fireEvent.mouseDown(
       screen.getByRole("combobox", { name: "Revise an earlier review" }),
     );
-    expect(screen.getByText(/Agreed \| Fast-tracked/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Agreed \| Staged for checkpoint/),
+    ).toBeInTheDocument();
   });
 });

@@ -33,22 +33,24 @@ const TrustedPropagationControl = ({
     >
       <Box sx={{ minWidth: 0 }}>
         <Typography sx={{ fontWeight: 800 }}>
-          Trusted-reviewer fast path
+          Continuous expert review
         </Typography>
         <Typography sx={{ color: "text.secondary", lineHeight: 1.45 }}>
-          Eligible answers enter an audited, snapshot-bound propagation draft.
-          Ontology changes still require a separate batch application.
+          Save each decision immediately, open already-generated dependent
+          questions automatically, and continue into the next ready review type.
+          The session pauses only when accepted changes require an auditable
+          ontology-regeneration checkpoint.
         </Typography>
       </Box>
       <FormControlLabel
-        label={enabled ? "Fast path on" : "Review only"}
+        label={enabled ? "Continuous review on" : "Manual navigation"}
         labelPlacement="start"
         control={
           <Switch
             checked={enabled}
             onChange={(event) => onChange(event.target.checked)}
             slotProps={{
-              input: { "aria-label": "Trusted-reviewer fast path" },
+              input: { "aria-label": "Continuous expert review" },
             }}
           />
         }
