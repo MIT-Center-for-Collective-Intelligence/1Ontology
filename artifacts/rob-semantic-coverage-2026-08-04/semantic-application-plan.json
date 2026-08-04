@@ -1,0 +1,158 @@
+{
+  "schemaVersion": "som-semantic-application-plan-v1",
+  "status": "reviewed-and-ready-for-isolated-application",
+  "applicationAllowed": true,
+  "sourceDataset": {
+    "directory": "Sell_Society_of_Mind_Review_UI_Handoff_2026-07-15/review-datasets-rob-semantic-coverage-2026-07-29",
+    "version": "sell-rob-semantic-coverage-2026-07-29-v1",
+    "manifestSha256": "de9848c5ee2dc24f5a3c51be2dc781696de3f3a094f71befd10a3377bed6b5d9"
+  },
+  "sourceOntology": {
+    "appId": "final-hierarchy-with-o*net-rob-structure-applied-2026-07-25",
+    "name": "Final Hierarchy with O*Net - Rob Structure Applied 2026-07-25",
+    "snapshotFile": "ontology-snapshot.json",
+    "snapshotSha256": "96161f04fb1a4b146b79256be16ba2bebefcb9892308025b9937a400699fa884"
+  },
+  "targetOntology": {
+    "appId": "final-hierarchy-with-o*net-rob-semantic-applied-2026-08-04",
+    "name": "Final Hierarchy with O*Net - Rob Semantic Applied 2026-08-04"
+  },
+  "benchmarks": [
+    {
+      "file": "rob-cross-branch-recall.json",
+      "issueType": "cross-branch-recall",
+      "sha256": "012e69241761c3bde525270b3eed40171c727006d0a536f32a14ae3ee7f9de55"
+    },
+    {
+      "file": "rob-evidence-specialization.json",
+      "issueType": "evidence-specialization",
+      "sha256": "fe09999b5fbf6eac0f4800fc76649d9f819bb915938bf57940f8cea9b203d5b0"
+    }
+  ],
+  "acceptedWholeNodeMoves": [
+    {
+      "proposalId": "som-756a156508bbc6756859",
+      "sourceNodeId": "d3b13d5a832ae6660a02a7b8a5e3",
+      "nodeTitle": "Lease Property",
+      "currentParentId": "412f9a026c089649ff3f27dfd9f6",
+      "currentParentTitle": "Lease (Physical Object)",
+      "targetParentId": "df319ef0372ddc12e45ccbd4b4b0",
+      "targetParentTitle": "Rent out"
+    },
+    {
+      "proposalId": "som-465816b46486fcf5d2bf",
+      "sourceNodeId": "e9453292b42a36f1ee44bfeb9a9b",
+      "nodeTitle": "Rent Clothing",
+      "currentParentId": "412f9a026c089649ff3f27dfd9f6",
+      "currentParentTitle": "Lease (Physical Object)",
+      "targetParentId": "df319ef0372ddc12e45ccbd4b4b0",
+      "targetParentTitle": "Rent out"
+    },
+    {
+      "proposalId": "som-0b734eb0be482c04eef1",
+      "sourceNodeId": "46c6136396258d624dc13f6fcf19",
+      "nodeTitle": "Rent Box",
+      "currentParentId": "412f9a026c089649ff3f27dfd9f6",
+      "currentParentTitle": "Lease (Physical Object)",
+      "targetParentId": "df319ef0372ddc12e45ccbd4b4b0",
+      "targetParentTitle": "Rent out"
+    },
+    {
+      "proposalId": "som-2712192fe57dd0dbf045",
+      "sourceNodeId": "3ed2848b752f08d507bdd822d9c4",
+      "nodeTitle": "Rent Merchandise",
+      "currentParentId": "412f9a026c089649ff3f27dfd9f6",
+      "currentParentTitle": "Lease (Physical Object)",
+      "targetParentId": "df319ef0372ddc12e45ccbd4b4b0",
+      "targetParentTitle": "Rent out"
+    },
+    {
+      "proposalId": "som-ed212c77f550f328ce1d",
+      "sourceNodeId": "2c0e7f8c6385a583070f537c100b",
+      "nodeTitle": "Rent Accommodation",
+      "currentParentId": "412f9a026c089649ff3f27dfd9f6",
+      "currentParentTitle": "Lease (Physical Object)",
+      "targetParentId": "df319ef0372ddc12e45ccbd4b4b0",
+      "targetParentTitle": "Rent out"
+    },
+    {
+      "proposalId": "som-b8c5ba1c90158e6784c7",
+      "sourceNodeId": "fa9f0b2b8332ea554de104de2f23",
+      "nodeTitle": "Rent Supply",
+      "currentParentId": "412f9a026c089649ff3f27dfd9f6",
+      "currentParentTitle": "Lease (Physical Object)",
+      "targetParentId": "df319ef0372ddc12e45ccbd4b4b0",
+      "targetParentTitle": "Rent out"
+    },
+    {
+      "proposalId": "som-b876e1950ee85f53d266",
+      "sourceNodeId": "ec07d44c56346febb6e2c5d80c0f",
+      "nodeTitle": "Rent Item",
+      "currentParentId": "412f9a026c089649ff3f27dfd9f6",
+      "currentParentTitle": "Lease (Physical Object)",
+      "targetParentId": "df319ef0372ddc12e45ccbd4b4b0",
+      "targetParentTitle": "Rent out"
+    }
+  ],
+  "splitEvidenceMove": {
+    "proposalId": "som-f7564256227086773936",
+    "sourceNodeId": "03d8487c224612ee7a930e4785f0",
+    "nodeTitle": "Rent Equipment",
+    "currentParentId": "412f9a026c089649ff3f27dfd9f6",
+    "currentParentTitle": "Lease (Physical Object)",
+    "targetParentId": "df319ef0372ddc12e45ccbd4b4b0",
+    "targetParentTitle": "Rent out",
+    "providerEvidenceIds": [
+      "d2cc3a79b128d4154994d5533812",
+      "9a2f1cc2c19eec098cb1f9382b5e"
+    ],
+    "buyerEvidenceIdsKeptInOriginalBranch": [
+      "64fc66fb71ca60ed1fff6a00ff0a"
+    ],
+    "disagreementReason": "O*NET items 13170 and 5127 should be moved to Rent out. But O*NET item 17739 should be kept in its original place.",
+    "suggestedCorrection": "O*NET 13170 and 5127 move so they are under Rent equipment. O*NET 17739 stays under Lease."
+  },
+  "evidenceSpecializations": [
+    {
+      "proposalId": "som-c3c0349e84b76c8ea6e1",
+      "decision": "expert-correction",
+      "sourceTaskId": "7d3b4037617aaee4825b696c3b59",
+      "genericParentId": "126b0f1051d40fabc1a06aa627c7",
+      "genericParentTitle": "Sell Products",
+      "targetTitle": "Sell Non-Pharmaceutical Products",
+      "targetStatus": "new",
+      "targetParentTitle": "Sell Products",
+      "description": "Sell products that are not pharmaceuticals.",
+      "suggestedCorrection": "Sell Non-Pharmaceutical Products"
+    },
+    {
+      "proposalId": "som-1e8507f5e5299d55a476",
+      "decision": "agree",
+      "sourceTaskId": "6284bf15ece4581e8d4f0b41ca68",
+      "genericParentId": "126b0f1051d40fabc1a06aa627c7",
+      "genericParentTitle": "Sell Products",
+      "targetTitle": "Sell Funeral Products",
+      "targetStatus": "existing",
+      "targetParentTitle": "Sell Funeral Products"
+    },
+    {
+      "proposalId": "som-c7d33b475e51802c7ba0",
+      "decision": "agree",
+      "sourceTaskId": "6284bf15ece4581e8d4f0b41ca68",
+      "genericParentId": "2bdf7edf2a4a6cb8ab52781f59f8",
+      "genericParentTitle": "Sell Services",
+      "targetTitle": "Sell Funeral Services",
+      "targetStatus": "new",
+      "targetParentTitle": "Sell Services",
+      "description": "Sell services associated with funerals."
+    }
+  ],
+  "forbiddenActivityTitles": [
+    "Sell ownership",
+    "Sell temporary use"
+  ],
+  "pendingCollectionDesign": {
+    "applicationMode": "review-only",
+    "policy": "Collections may reorganize existing direct children but may not create activity nodes or hierarchy edges."
+  }
+}

@@ -1504,9 +1504,21 @@ if (process.argv[1] && path.resolve(process.argv[1]) === SCRIPT_FILE) {
 }
 
 export {
+  activeNodeByTitle,
+  addReciprocalEdge,
+  assertActiveGraphIntegrity,
   allRecordedSynonyms,
+  cloneAndRemap,
   cloneAndApply,
   deterministicNodeId,
+  digestDocument,
   digestDocuments,
+  hasDirectLink,
+  isOnetEvidence,
+  linkId,
+  newActivityNode,
+  refreshLinkTitles,
+  removeReciprocalEdge,
   removeRecordedSynonyms,
+  synchronizeHierarchyFields,
 };

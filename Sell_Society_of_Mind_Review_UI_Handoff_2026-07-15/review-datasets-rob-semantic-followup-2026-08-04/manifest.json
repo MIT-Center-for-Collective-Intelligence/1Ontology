@@ -1,0 +1,112 @@
+{
+  "schemaVersion": "som-review-v1",
+  "datasetVersion": "sell-rob-semantic-followup-2026-08-04-v1",
+  "branch": "Sell",
+  "generatedAt": "2026-08-04T22:39:56.121Z",
+  "sourceOntology": "firestore://ontology-41607/final-hierarchy-with-o*net-rob-semantic-applied-2026-08-04",
+  "sourceOntologySha256": "cc26a680cc5f471e7de24cff2480f0692a54cf41326d55da72c1b34d1a8dec77",
+  "counts": {
+    "proposals": 1,
+    "controls": 0,
+    "manualChecks": 1
+  },
+  "files": {
+    "allProposals": "all_proposals.jsonl",
+    "allControls": "all_controls.jsonl",
+    "manualChecks": "manual_checks.jsonl",
+    "proposalsByIssue": "proposals/<issue-type>.jsonl",
+    "controlsByIssue": "controls/<issue-type>.jsonl",
+    "proposalSchema": "schema/review-proposal.schema.json",
+    "responseSchema": "schema/review-response.schema.json",
+    "ontologySnapshot": "ontology-snapshot.json",
+    "regenerationAudit": "diagnostics/regeneration-audit.json"
+  },
+  "uiContract": {
+    "issueHomogeneousSessions": true,
+    "defaultSessionSize": 10,
+    "maximumSessionSize": 15,
+    "oneAtomicItemAtATime": true,
+    "agreeAutoAdvancesWithoutPageReload": true,
+    "disagreeRequiresReason": true,
+    "optionalContextCollapsedByDefault": true,
+    "allowSaveAndExit": true
+  },
+  "issueTypes": [
+    {
+      "id": "empty-node",
+      "label": "1. Remove empty nodes",
+      "taskIds": [],
+      "stage": "final-action",
+      "contextType": "empty-node-action",
+      "proposals": 0,
+      "controls": 0,
+      "manualChecks": 1
+    },
+    {
+      "id": "empty-collection",
+      "label": "2. Remove empty collections",
+      "taskIds": [],
+      "stage": "final-action",
+      "contextType": "empty-collection-action",
+      "proposals": 0,
+      "controls": 0,
+      "manualChecks": 0
+    },
+    {
+      "id": "collection-design",
+      "label": "3. Organize ownership and temporary use",
+      "taskIds": [],
+      "stage": "final-action",
+      "contextType": "collection-design",
+      "proposals": 1,
+      "controls": 0,
+      "manualChecks": 0
+    }
+  ],
+  "reviewRelease": {
+    "strategy": "post-semantic-checkpoint",
+    "currentWave": "cleanup-and-collection-design",
+    "releasedIssueTypes": [
+      "empty-node",
+      "empty-collection",
+      "collection-design"
+    ],
+    "awaitingRegenerationIssueTypes": [],
+    "message": "The accepted semantic decisions have been applied to an isolated, verified ontology copy. Review the remaining deterministic cleanup and collection-only organization items."
+  },
+  "safety": {
+    "reviewOnly": true,
+    "mutatesOntology": false,
+    "approvalAuthorizesAutomaticWrite": false,
+    "modelConfidenceVisibleToReviewer": false
+  },
+  "sourceSnapshot": {
+    "file": "ontology-snapshot.json",
+    "sha256": "cc26a680cc5f471e7de24cff2480f0692a54cf41326d55da72c1b34d1a8dec77",
+    "capturedAt": "2026-08-04T22:39:56.121Z",
+    "ontologyAppId": "final-hierarchy-with-o*net-rob-semantic-applied-2026-08-04",
+    "ontologyName": "Final Hierarchy with O*Net - Rob Semantic Applied 2026-08-04",
+    "environment": "production",
+    "branchRootTitle": "Sell",
+    "branchRootNodeId": "e9c97c03cb12e0af2ac2147ee24a",
+    "sellRootNodeId": "e9c97c03cb12e0af2ac2147ee24a",
+    "nodeCount": 198,
+    "edgeCount": 232,
+    "collectionCount": 202
+  },
+  "propagationCheckpoint": {
+    "priorDatasetVersion": "sell-rob-semantic-coverage-2026-07-29-v1",
+    "applicationAuditFile": "artifacts/rob-semantic-coverage-2026-08-04/semantic-application-audit.json",
+    "applicationAuditSha256": "2f285df60bf8d6c9d309dcab0f258af1ba55bf8782a0164643a0dd820ecd1e12",
+    "sourceUnchanged": true,
+    "targetDigestVerified": true,
+    "buyerEvidenceRetainedInOriginalBranch": true
+  },
+  "limitations": [
+    "This round contains only deterministic cleanup and a collection-only design proposal.",
+    "The collection proposal can reorganize existing direct Sell children but cannot create activity nodes or hierarchy edges.",
+    "Sell ownership and Sell temporary use must not be recreated as activity nodes.",
+    "The empty-collection scan excludes default main placeholders and reference-only nodes outside the Sell branch."
+  ],
+  "contentRevision": 1
+}

@@ -69,6 +69,10 @@ function edgeKey(edge) {
   return `${edge.parentId}\u001f${edge.collectionName}\u001f${edge.childId}`;
 }
 
+function collectionKey(collection) {
+  return `${collection.parentId}\u001f${collection.collectionName}`;
+}
+
 function sha256(value) {
   return crypto.createHash("sha256").update(value).digest("hex");
 }
@@ -195,6 +199,21 @@ async function main() {
   const uniqueEdges = [
     ...new Map(edges.map((edge) => [edgeKey(edge), edge])).values(),
   ];
+  const includedIds = new Set(nodes.map((node) => node.id));
+  const collections = [
+    ...new Map(
+      [...includedIds]
+        .flatMap((parentId) =>
+          (allNodes.get(parentId)?.specializations || []).map((collection) => ({
+            parentId,
+            collectionName: normalizeCollection(collection.collectionName),
+          })),
+        )
+        .map((collection) => [collectionKey(collection), collection]),
+    ).values(),
+  ].sort((left, right) =>
+    collectionKey(left).localeCompare(collectionKey(right)),
+  );
   const snapshot = {
     schemaVersion: "som-ontology-snapshot-v1",
     ontologyAppId,
@@ -207,12 +226,13 @@ async function main() {
     edges: uniqueEdges.sort((left, right) =>
       edgeKey(left).localeCompare(edgeKey(right)),
     ),
+    collections,
   };
   const serialized = `${JSON.stringify(snapshot, null, 2)}\n`;
   fs.mkdirSync(path.dirname(outputFile), { recursive: true });
   fs.writeFileSync(outputFile, serialized, "utf8");
   process.stdout.write(
-    `PASS: ${nodes.length} Sell/reference nodes, ${uniqueEdges.length} edges, sha256 ${sha256(serialized)}\n${outputFile}\n`,
+    `PASS: ${nodes.length} Sell/reference nodes, ${uniqueEdges.length} edges, ${collections.length} collections, sha256 ${sha256(serialized)}\n${outputFile}\n`,
   );
 }
 
