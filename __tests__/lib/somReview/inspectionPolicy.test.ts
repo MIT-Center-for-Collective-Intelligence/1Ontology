@@ -2,9 +2,45 @@ import {
   confidenceAuthorizesOntologyMutation,
   inspectableReviewerCounts,
   inspectionRecordSource,
+  inspectionSubjectAllowed,
 } from "../../../src/lib/somReview/inspectionPolicy";
 
 describe("inspection policy", () => {
+  const originalEnv = { ...process.env };
+
+  afterEach(() => {
+    process.env = { ...originalEnv };
+  });
+
+  it("exposes only Rob's expert review as the meta-review subject", () => {
+    expect(
+      inspectionSubjectAllowed({
+        reviewerId: "vFCAkxKTwjcDKohmiWfiZWz2lZf1",
+      }),
+    ).toBe(true);
+    expect(
+      inspectionSubjectAllowed({
+        reviewerId: "another-rob-account",
+        email: "rjl@mit.edu",
+        emailVerified: true,
+      }),
+    ).toBe(true);
+    expect(
+      inspectionSubjectAllowed({
+        reviewerId: "development-reviewer",
+        email: "oneman@mit.edu",
+        emailVerified: true,
+      }),
+    ).toBe(false);
+    expect(
+      inspectionSubjectAllowed({
+        reviewerId: "unverified-account",
+        email: "rjl@mit.edu",
+        emailVerified: false,
+      }),
+    ).toBe(false);
+  });
+
   it.each([
     ["proposed-change", "proposed-change"],
     ["status-quo-audit", "status-quo-audit"],

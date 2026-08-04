@@ -21,6 +21,7 @@ import { reviewDatasetConfig, reviewWorkspaceConfig } from "./reviewWorkspaces";
 import { toReviewerCard } from "./sanitize";
 import {
   inspectableReviewerCounts,
+  inspectionSubjectAllowed,
   inspectionIssueLabel,
   inspectionRecordSource,
   selectInspectionReviewer,
@@ -137,11 +138,25 @@ const availableReviewers = async (
   const counts = inspectableReviewerCounts(rounds);
   const profiles = await loadUserProfiles([...counts.keys()]);
   return [...counts.entries()]
-    .map(([reviewerId, responseCount]) => ({
-      reviewerId,
-      displayName: profiles.get(reviewerId)?.displayName || "Ontology reviewer",
-      responseCount,
-    }))
+    .flatMap(([reviewerId, responseCount]) => {
+      const profile = profiles.get(reviewerId);
+      if (
+        !inspectionSubjectAllowed({
+          reviewerId,
+          email: profile?.email,
+          emailVerified: profile?.emailVerified,
+        })
+      ) {
+        return [];
+      }
+      return [
+        {
+          reviewerId,
+          displayName: profile?.displayName || "Robert Laubacher",
+          responseCount,
+        },
+      ];
+    })
     .sort(
       (left, right) =>
         right.responseCount - left.responseCount ||
@@ -325,6 +340,21 @@ const assertInspectableResponse = async ({
   subjectReviewerId: string;
   inspectorId: string;
 }) => {
+  const subjectProfile = (await loadUserProfiles([subjectReviewerId])).get(
+    subjectReviewerId,
+  );
+  if (
+    !inspectionSubjectAllowed({
+      reviewerId: subjectReviewerId,
+      email: subjectProfile?.email,
+      emailVerified: subjectProfile?.emailVerified,
+    })
+  ) {
+    throw new InspectionStoreError(
+      403,
+      "Only the designated expert review can be inspected",
+    );
+  }
   if (subjectReviewerId === inspectorId) {
     throw new InspectionStoreError(
       400,

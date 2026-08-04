@@ -15,20 +15,24 @@ jest.mock("../../../src/lib/utils/Post", () => ({
   Post: jest.fn(),
 }));
 
+const mockUser = { userId: "tom" };
 jest.mock("../../../src/components/context/AuthContext", () => ({
-  useAuth: () => [{ user: { userId: "tom" } }],
+  useAuth: () => [{ user: mockUser }],
 }));
 
 const replace = jest.fn().mockResolvedValue(true);
 const push = jest.fn().mockResolvedValue(true);
 let routerQuery: Record<string, string> = { workspace: "sell" };
+const mockRouter = {
+  isReady: true,
+  get query() {
+    return routerQuery;
+  },
+  push,
+  replace,
+};
 jest.mock("next/router", () => ({
-  useRouter: () => ({
-    isReady: true,
-    query: routerQuery,
-    push,
-    replace,
-  }),
+  useRouter: () => mockRouter,
 }));
 
 jest.mock("../../../src/components/hoc/withAuthUser", () => ({
@@ -136,6 +140,12 @@ describe("Tom's prior-review inspection page", () => {
       screen.getByText(/Phase 1: Resolve meaning and identity/),
     ).toBeVisible();
     expect(screen.getByText("2 responses")).toBeVisible();
+    expect(screen.getByLabelText("Prior reviewer")).toHaveTextContent(
+      /Reviewing prior decisions by\s*Rob Laubacher \(2 responses\)/,
+    );
+    expect(
+      screen.queryByRole("combobox", { name: "Prior reviewer" }),
+    ).not.toBeInTheDocument();
     expect(screen.queryByText("First reviewed proposal")).toBeNull();
     expect(
       screen.queryByText(/independent hierarchy scan/i),
@@ -217,6 +227,18 @@ describe("Tom's prior-review inspection page", () => {
     expect(await screen.findByText("First reviewed proposal")).toBeVisible();
     expect(screen.getByText("Second reviewed proposal")).toBeVisible();
     expect(screen.getByText("2 shown")).toBeVisible();
+    expect(
+      screen.getByRole("navigation", { name: "Review navigation" }),
+    ).toHaveTextContent("Proposal review/All review tasks");
+    fireEvent.click(screen.getByRole("button", { name: "All review tasks" }));
+    expect(replace).toHaveBeenCalledWith(
+      {
+        pathname: "/review/inspection",
+        query: { workspace: "sell", reviewer: "rob" },
+      },
+      undefined,
+      { shallow: true },
+    );
     await waitFor(() =>
       expect(Post).toHaveBeenCalledWith(
         "/som-review/inspection/overview",

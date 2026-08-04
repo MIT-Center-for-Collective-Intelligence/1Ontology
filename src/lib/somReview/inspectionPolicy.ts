@@ -7,6 +7,49 @@ import {
 } from "../../types/ISomReview";
 import { SOM_REVIEW_PATH } from "./reviewDependencies";
 
+export interface InspectionSubjectIdentity {
+  reviewerId: string;
+  email?: string | null;
+  emailVerified?: boolean;
+}
+
+const DEFAULT_INSPECTION_SUBJECT_EMAILS = ["rjl@mit.edu"];
+const DEFAULT_INSPECTION_SUBJECT_UIDS = ["vFCAkxKTwjcDKohmiWfiZWz2lZf1"];
+
+const configuredValues = (
+  defaults: string[],
+  configured: string | undefined,
+  normalize = false,
+): Set<string> =>
+  new Set(
+    [...defaults, ...(configured || "").split(",")]
+      .map((value) => value.trim())
+      .filter(Boolean)
+      .map((value) => (normalize ? value.toLowerCase() : value)),
+  );
+
+/**
+ * The current meta-review protocol evaluates Rob's expert review. Development
+ * team responses are UI test data and must not appear as review subjects.
+ */
+export const inspectionSubjectAllowed = (
+  identity: InspectionSubjectIdentity,
+): boolean => {
+  const allowedUids = configuredValues(
+    DEFAULT_INSPECTION_SUBJECT_UIDS,
+    process.env.SOM_REVIEW_INSPECTION_SUBJECT_UIDS,
+  );
+  if (allowedUids.has(identity.reviewerId)) return true;
+
+  const email = (identity.email || "").trim().toLowerCase();
+  const allowedEmails = configuredValues(
+    DEFAULT_INSPECTION_SUBJECT_EMAILS,
+    process.env.SOM_REVIEW_INSPECTION_SUBJECT_EMAILS,
+    true,
+  );
+  return identity.emailVerified === true && allowedEmails.has(email);
+};
+
 export const inspectableReviewerCounts = (
   rounds: Array<{
     proposalIds: ReadonlySet<string>;
