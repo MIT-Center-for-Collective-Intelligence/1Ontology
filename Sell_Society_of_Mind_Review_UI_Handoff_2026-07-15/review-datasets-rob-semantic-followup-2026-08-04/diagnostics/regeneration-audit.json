@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "som-semantic-followup-generation-audit-v1",
+  "generatedAt": "2026-08-04T22:39:56.121Z",
+  "sourceSnapshotSha256": "cc26a680cc5f471e7de24cff2480f0692a54cf41326d55da72c1b34d1a8dec77",
+  "sourceApplicationAudit": {
+    "file": "artifacts/rob-semantic-coverage-2026-08-04/semantic-application-audit.json",
+    "sha256": "2f285df60bf8d6c9d309dcab0f258af1ba55bf8782a0164643a0dd820ecd1e12"
+  },
+  "counts": {
+    "emptyNodes": 1,
+    "emptyNamedCollections": 0,
+    "collectionDesigns": 1
+  },
+  "emptyNodes": [
+    {
+      "id": "c606b7a91f3f2fdcee29138cd73d",
+      "title": "Sell (Other)"
+    }
+  ],
+  "emptyNamedCollections": [],
+  "collectionInvariant": {
+    "createsActivityNodes": false,
+    "createsHierarchyEdges": false,
+    "proposedBranches": [
+      "Rent out",
+      "Sell information",
+      "Sell physical objects",
+      "Sell Products",
+      "Sell service"
+    ],
+    "temporaryUseBranch": "Rent out",
+    "ownershipDefaultBranches": [
+      "Sell information",
+      "Sell physical objects",
+      "Sell Products",
+      "Sell service"
+    ],
+    "deferredEmptyBranch": "Sell (Other)"
+  }
+}
