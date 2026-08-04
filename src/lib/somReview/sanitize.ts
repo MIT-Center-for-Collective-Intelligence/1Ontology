@@ -228,16 +228,8 @@ export const toReviewerCard = (record: any): SomReviewCard => {
           ? firstSentence(sanitizeReasoning(view.reasoning))
           : sanitizeReasoning(view.reasoning),
       context,
-      agreeLabel:
-        placementText?.agreeLabel ||
-        duplicateText?.agreeLabel ||
-        cleanText(view.agreeLabel) ||
-        "Agree",
-      disagreeLabel:
-        placementText?.disagreeLabel ||
-        duplicateText?.disagreeLabel ||
-        cleanText(view.disagreeLabel) ||
-        "Disagree",
+      agreeLabel: "Agree",
+      disagreeLabel: "Disagree",
     },
   };
 };

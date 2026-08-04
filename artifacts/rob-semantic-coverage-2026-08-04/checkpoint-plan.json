@@ -1,0 +1,131 @@
+{
+  "schemaVersion": "som-semantic-regeneration-checkpoint-v1",
+  "createdAt": "2026-08-04T21:26:06.000Z",
+  "status": "regeneration-required-before-application",
+  "applicationAllowed": false,
+  "sourceDataset": {
+    "version": "sell-rob-semantic-coverage-2026-07-29-v1",
+    "manifestSha256": "de9848c5ee2dc24f5a3c51be2dc781696de3f3a094f71befd10a3377bed6b5d9"
+  },
+  "sourceOntology": {
+    "uri": "firestore://ontology-41607/final-hierarchy-with-o*net-rob-structure-applied-2026-07-25",
+    "snapshotSha256": "96161f04fb1a4b146b79256be16ba2bebefcb9892308025b9937a400699fa884"
+  },
+  "benchmarks": [
+    {
+      "file": "rob-cross-branch-recall.json",
+      "sha256": "012e69241761c3bde525270b3eed40171c727006d0a536f32a14ae3ee7f9de55",
+      "reviewed": 8,
+      "agreed": 7,
+      "disagreed": 1
+    },
+    {
+      "file": "rob-evidence-specialization.json",
+      "sha256": "fe09999b5fbf6eac0f4800fc76649d9f819bb915938bf57940f8cea9b203d5b0",
+      "reviewed": 3,
+      "agreed": 2,
+      "disagreed": 1
+    }
+  ],
+  "acceptedWholeNodeMoves": [
+    {
+      "proposalId": "som-756a156508bbc6756859",
+      "nodeId": "d3b13d5a832ae6660a02a7b8a5e3",
+      "title": "Lease Property",
+      "from": "Lease (Physical Object)",
+      "to": "Rent out"
+    },
+    {
+      "proposalId": "som-465816b46486fcf5d2bf",
+      "nodeId": "e9453292b42a36f1ee44bfeb9a9b",
+      "title": "Rent Clothing",
+      "from": "Lease (Physical Object)",
+      "to": "Rent out"
+    },
+    {
+      "proposalId": "som-0b734eb0be482c04eef1",
+      "nodeId": "46c6136396258d624dc13f6fcf19",
+      "title": "Rent Box",
+      "from": "Lease (Physical Object)",
+      "to": "Rent out"
+    },
+    {
+      "proposalId": "som-2712192fe57dd0dbf045",
+      "nodeId": "3ed2848b752f08d507bdd822d9c4",
+      "title": "Rent Merchandise",
+      "from": "Lease (Physical Object)",
+      "to": "Rent out"
+    },
+    {
+      "proposalId": "som-ed212c77f550f328ce1d",
+      "nodeId": "2c0e7f8c6385a583070f537c100b",
+      "title": "Rent Accommodation",
+      "from": "Lease (Physical Object)",
+      "to": "Rent out"
+    },
+    {
+      "proposalId": "som-b8c5ba1c90158e6784c7",
+      "nodeId": "fa9f0b2b8332ea554de104de2f23",
+      "title": "Rent Supply",
+      "from": "Lease (Physical Object)",
+      "to": "Rent out"
+    },
+    {
+      "proposalId": "som-b876e1950ee85f53d266",
+      "nodeId": "ec07d44c56346febb6e2c5d80c0f",
+      "title": "Rent Item",
+      "from": "Lease (Physical Object)",
+      "to": "Rent out"
+    }
+  ],
+  "expertCorrections": [
+    {
+      "proposalId": "som-f7564256227086773936",
+      "type": "split-evidence-by-transaction-direction",
+      "nodeId": "03d8487c224612ee7a930e4785f0",
+      "title": "Rent Equipment",
+      "providerSideEvidenceToPlaceUnderRentOut": [
+        "(O*Net) 13170",
+        "(O*Net) 5127"
+      ],
+      "buyerSideEvidenceToKeepUnderLease": ["(O*Net) 17739"],
+      "requiresRegeneration": true
+    },
+    {
+      "proposalId": "som-c3c0349e84b76c8ea6e1",
+      "type": "correct-specialization-title",
+      "rejectedTitle": "Sell Non-Pharmaceutical Merchandise",
+      "acceptedCorrection": "Sell Non-Pharmaceutical Products",
+      "parentTitle": "Sell Products",
+      "requiresRegeneration": true
+    }
+  ],
+  "acceptedEvidenceSpecializations": [
+    {
+      "proposalId": "som-1e8507f5e5299d55a476",
+      "sourceTaskId": "6284bf15ece4581e8d4f0b41ca68",
+      "targetTitle": "Sell Funeral Products",
+      "targetStatus": "existing"
+    },
+    {
+      "proposalId": "som-c7d33b475e51802c7ba0",
+      "sourceTaskId": "6284bf15ece4581e8d4f0b41ca68",
+      "targetTitle": "Sell Funeral Services",
+      "targetStatus": "new"
+    }
+  ],
+  "pendingCollectionDesign": {
+    "status": "requires-separate-review",
+    "policy": "Collections may reorganize existing direct children but may not create activity nodes or hierarchy edges.",
+    "candidate": "After regeneration, show one collection-only proposal that assigns explicit Rent/Lease activities to temporary usage and treats the remaining Sell children as ownership by default.",
+    "forbiddenInterpretation": "Do not recreate Sell ownership or Sell temporary use as activity nodes."
+  },
+  "nextSteps": [
+    "Clone the pinned source ontology into a new checkpoint application.",
+    "Apply the seven accepted whole-node moves.",
+    "Regenerate Rent Equipment so provider-side and buyer-side evidence remain in their correct transaction directions.",
+    "Apply the two accepted funeral specializations and regenerate the corrected non-pharmaceutical-products specialization.",
+    "Emit and inspect the revised Sell outline before any production application.",
+    "Regenerate downstream empty-node, empty-collection, and collection-design review items from that revised snapshot."
+  ]
+}

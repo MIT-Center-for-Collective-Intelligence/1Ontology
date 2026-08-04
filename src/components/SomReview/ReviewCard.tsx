@@ -259,32 +259,10 @@ const ReviewCard = ({
   const affectedPlacementNodes = placementContext?.affectedNodes || [];
   const groupedPlacement = affectedPlacementNodes.length > 1;
   const exactPlacement = Boolean(placementContext?.candidateHome);
-  const agreeLabel = duplicateContext
-    ? "Same activity"
-    : groupedPlacement
-      ? view.agreeLabel
-      : missingFromBranch
-        ? "Approve move"
-        : exactPlacement
-          ? "Approve move"
-          : wrongVerb
-            ? "Yes, different action"
-            : placementContext
-              ? "Yes, misplaced"
-              : view.agreeLabel;
-  const disagreeLabel = duplicateContext
-    ? "Different activities"
-    : groupedPlacement
-      ? view.disagreeLabel
-      : exactPlacement
-        ? "Reject proposed move"
-        : missingFromBranch
-          ? "Keep current location"
-          : wrongVerb
-            ? "No, it belongs here"
-            : placementContext
-              ? "No, keep here"
-              : view.disagreeLabel;
+  // Keep the verdict vocabulary stable across every review task. The question
+  // and comparison panels carry the task-specific meaning.
+  const agreeLabel = "Agree";
+  const disagreeLabel = "Disagree";
 
   return (
     <Box
@@ -617,13 +595,7 @@ const ReviewCard = ({
               >
                 {mode === "revise"
                   ? "Save revised answer"
-                  : duplicateContext
-                    ? "Save as different activities"
-                    : placementContext
-                      ? exactPlacement
-                        ? "Reject proposed move"
-                        : "Keep current placement"
-                      : "Save disagreement"}
+                  : "Save disagreement"}
               </Button>
             </Stack>
           </Stack>

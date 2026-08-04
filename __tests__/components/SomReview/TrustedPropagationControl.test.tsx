@@ -7,21 +7,21 @@ import "@testing-library/jest-dom";
 
 import TrustedPropagationControl from "../../../src/components/SomReview/TrustedPropagationControl";
 
-describe("trusted propagation control", () => {
-  it("starts in review-only mode and requires an explicit opt-in", () => {
+describe("continuous expert review control", () => {
+  it("explains continuous review and lets the reviewer change navigation mode", () => {
     const onChange = jest.fn();
     const { rerender } = render(
       <TrustedPropagationControl enabled={false} onChange={onChange} />,
     );
 
-    expect(screen.getByText("Review only")).toBeInTheDocument();
-    expect(screen.getByText(/separate batch application/i)).toBeInTheDocument();
+    expect(screen.getByText("Manual navigation")).toBeInTheDocument();
+    expect(screen.getByText(/regeneration checkpoint/i)).toBeInTheDocument();
     fireEvent.click(
-      screen.getByRole("checkbox", { name: "Trusted-reviewer fast path" }),
+      screen.getByRole("checkbox", { name: "Continuous expert review" }),
     );
     expect(onChange).toHaveBeenCalledWith(true);
 
     rerender(<TrustedPropagationControl enabled onChange={onChange} />);
-    expect(screen.getByText("Fast path on")).toBeInTheDocument();
+    expect(screen.getByText("Continuous review on")).toBeInTheDocument();
   });
 });

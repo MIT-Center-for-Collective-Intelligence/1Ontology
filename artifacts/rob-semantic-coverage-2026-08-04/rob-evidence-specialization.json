@@ -1,0 +1,174 @@
+{
+  "schemaVersion": "som-reviewer-benchmark-v1",
+  "exportedAt": "2026-08-04T21:19:32.499Z",
+  "firestoreProjectId": "ontology-41607",
+  "datasetVersion": "sell-rob-semantic-coverage-2026-07-29-v1",
+  "sourceOntology": "firestore://ontology-41607/final-hierarchy-with-o*net-rob-structure-applied-2026-07-25",
+  "sourceOntologySha256": "96161f04fb1a4b146b79256be16ba2bebefcb9892308025b9937a400699fa884",
+  "issueType": "evidence-specialization",
+  "reviewer": {
+    "label": "rob"
+  },
+  "counts": {
+    "expected": 3,
+    "reviewed": 3,
+    "agreed": 2,
+    "disagreed": 1,
+    "missing": 0,
+    "orphanedHistoricalResponses": 0
+  },
+  "missingProposalIds": [],
+  "orphanedResponses": [],
+  "sourceNodeEvidence": [
+    {
+      "nodeId": "7d3b4037617aaee4825b696c3b59",
+      "title": "(O*Net) 1822 - Manage pharmacy operations, hiring or supervising staff, performing administrative duties, or buying or selling non-pharmaceutical merchandise.",
+      "appName": "final-hierarchy-with-o*net-rob-structure-applied-2026-07-25",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": []
+        }
+      ]
+    },
+    {
+      "nodeId": "6284bf15ece4581e8d4f0b41ca68",
+      "title": "(O*Net) 18843 - Sell funeral services, products, or merchandise to clients.",
+      "appName": "final-hierarchy-with-o*net-rob-structure-applied-2026-07-25",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": []
+        }
+      ]
+    }
+  ],
+  "judgments": [
+    {
+      "proposalId": "som-c3c0349e84b76c8ea6e1",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "7d3b4037617aaee4825b696c3b59",
+      "parentNodeId": "126b0f1051d40fabc1a06aa627c7",
+      "subjectTitle": "(O*Net) 1822 - Manage pharmacy operations, hiring or supervising staff, performing administrative duties, or buying or selling non-pharmaceutical merchandise.",
+      "subjectParentTitle": "Sell Products",
+      "currentTitle": "",
+      "proposedTitle": "Sell Non-Pharmaceutical Merchandise",
+      "currentParentTitle": "",
+      "proposedParentTitle": "",
+      "context": {
+        "type": "evidence-specialization",
+        "genericNodeTitle": "Sell Products",
+        "sourceTask": "(O*Net) 1822 - Manage pharmacy operations, hiring or supervising staff, performing administrative duties, or buying or selling non-pharmaceutical merchandise.",
+        "currentParentTitles": [
+          "Buy Merchandise",
+          "Hire Staff",
+          "Manage Operation",
+          "Oversee Staff",
+          "Perform Duty",
+          "Sell Products"
+        ],
+        "proposedTitle": "Sell Non-Pharmaceutical Merchandise",
+        "proposedTitleStatus": "new",
+        "targetParentTitle": "Sell Products",
+        "removedParentTitles": [
+          "Sell Products"
+        ],
+        "retainedParentTitles": [
+          "Buy Merchandise",
+          "Hire Staff",
+          "Manage Operation",
+          "Oversee Staff",
+          "Perform Duty"
+        ]
+      },
+      "linkedTasks": [],
+      "proposedNodes": [],
+      "agentReasoning": "The task explicitly says \"non-pharmaceutical merchandise\", so the generic Sell Products assignment can be reviewed against a more specific activity.",
+      "decision": "disagree",
+      "disagreementReason": "I disagree with use of the word \"Merchandise.\" The prior term, \"Products,\" works well, and there is no reason to change it.",
+      "suggestedCorrection": "Sell Non-Pharmaceutical Products",
+      "revisionCount": 1,
+      "carriedForwardFromProposalId": ""
+    },
+    {
+      "proposalId": "som-1e8507f5e5299d55a476",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "6284bf15ece4581e8d4f0b41ca68",
+      "parentNodeId": "126b0f1051d40fabc1a06aa627c7",
+      "subjectTitle": "(O*Net) 18843 - Sell funeral services, products, or merchandise to clients.",
+      "subjectParentTitle": "Sell Products",
+      "currentTitle": "",
+      "proposedTitle": "Sell Funeral Products",
+      "currentParentTitle": "",
+      "proposedParentTitle": "",
+      "context": {
+        "type": "evidence-specialization",
+        "genericNodeTitle": "Sell Products",
+        "sourceTask": "(O*Net) 18843 - Sell funeral services, products, or merchandise to clients.",
+        "currentParentTitles": [
+          "Sell Funeral Products",
+          "Sell Products",
+          "Sell Services"
+        ],
+        "proposedTitle": "Sell Funeral Products",
+        "proposedTitleStatus": "existing",
+        "targetParentTitle": "Sell Funeral Products",
+        "removedParentTitles": [
+          "Sell Products"
+        ],
+        "retainedParentTitles": [
+          "Sell Funeral Products",
+          "Sell Services"
+        ]
+      },
+      "linkedTasks": [],
+      "proposedNodes": [],
+      "agentReasoning": "The task explicitly says \"funeral products\", so the generic Sell Products assignment can be reviewed against a more specific activity.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1,
+      "carriedForwardFromProposalId": ""
+    },
+    {
+      "proposalId": "som-c7d33b475e51802c7ba0",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "6284bf15ece4581e8d4f0b41ca68",
+      "parentNodeId": "2bdf7edf2a4a6cb8ab52781f59f8",
+      "subjectTitle": "(O*Net) 18843 - Sell funeral services, products, or merchandise to clients.",
+      "subjectParentTitle": "Sell Services",
+      "currentTitle": "",
+      "proposedTitle": "Sell Funeral Services",
+      "currentParentTitle": "",
+      "proposedParentTitle": "",
+      "context": {
+        "type": "evidence-specialization",
+        "genericNodeTitle": "Sell Services",
+        "sourceTask": "(O*Net) 18843 - Sell funeral services, products, or merchandise to clients.",
+        "currentParentTitles": [
+          "Sell Funeral Products",
+          "Sell Products",
+          "Sell Services"
+        ],
+        "proposedTitle": "Sell Funeral Services",
+        "proposedTitleStatus": "new",
+        "targetParentTitle": "Sell Services",
+        "removedParentTitles": [
+          "Sell Services"
+        ],
+        "retainedParentTitles": [
+          "Sell Funeral Products",
+          "Sell Products"
+        ]
+      },
+      "linkedTasks": [],
+      "proposedNodes": [],
+      "agentReasoning": "The task explicitly says \"funeral services\", so the generic Sell Services assignment can be reviewed against a more specific activity.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1,
+      "carriedForwardFromProposalId": ""
+    }
+  ]
+}

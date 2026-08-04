@@ -177,14 +177,16 @@ describe("linked proposal review journey", () => {
     );
   });
 
-  it("opens the exact follow-up and returns to the preserved source queue", async () => {
+  it("opens the exact follow-up automatically and continues without a handoff", async () => {
     window.localStorage.setItem(
-      "som-review-trusted-propagation-reviewer-1",
+      "som-review-continuous-expert-reviewer-1",
       "true",
     );
     const postMock = Post as jest.Mock;
+    let overviewCalls = 0;
     postMock.mockImplementation((url: string, body: any) => {
       if (url === "/som-review/overview") {
+        overviewCalls += 1;
         return Promise.resolve({
           ...overviewMetadata,
           canDeliberate: false,
@@ -199,8 +201,8 @@ describe("linked proposal review journey", () => {
               label: "10. Wrong place within Sub-branch",
               stage: "within-branch",
               robTaskIds: [11],
-              reviewed: 0,
-              pending: 1,
+              reviewed: overviewCalls > 1 ? 1 : 0,
+              pending: overviewCalls > 1 ? 0 : 1,
               waiting: 0,
               notApplicable: 0,
               total: 1,
@@ -212,9 +214,9 @@ describe("linked proposal review journey", () => {
               label: "14. Review approved relocations",
               stage: "final-action",
               robTaskIds: [11],
-              reviewed: 0,
+              reviewed: overviewCalls > 1 ? 1 : 0,
               pending: 0,
-              waiting: 1,
+              waiting: overviewCalls > 1 ? 0 : 1,
               notApplicable: 0,
               total: 1,
               enabled: true,
@@ -305,15 +307,6 @@ describe("linked proposal review journey", () => {
       ),
     );
 
-    expect(
-      await screen.findByText("Continue with the related decision"),
-    ).toBeInTheDocument();
-    fireEvent.click(
-      screen.getByRole("button", {
-        name: `Review this next: ${followUp.question}`,
-      }),
-    );
-
     await waitFor(() =>
       expect(postMock).toHaveBeenCalledWith("/som-review/session", {
         datasetId: "buy-title-followup",
@@ -325,21 +318,20 @@ describe("linked proposal review journey", () => {
       await screen.findByRole("button", { name: "Submit relocation-1" }),
     );
 
-    expect(
-      await screen.findByText("Related decisions completed"),
-    ).toBeInTheDocument();
-    fireEvent.click(
-      screen.getByRole("button", {
-        name: "Return to 10. Wrong place within Sub-branch",
-      }),
-    );
-
     await waitFor(() =>
-      expect(postMock).toHaveBeenLastCalledWith("/som-review/session", {
-        datasetId: "buy-title-followup",
-        issueType: "placement",
-      }),
+      expect(
+        postMock.mock.calls.filter(([url]) => url === "/som-review/overview"),
+      ).toHaveLength(2),
     );
+    expect(
+      await screen.findByRole("heading", { name: "Proposal review" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText("Continue with the related decision"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Related decisions completed"),
+    ).not.toBeInTheDocument();
   });
 
   it("replaces queue progress with an unambiguous saved-answer status while revising", async () => {

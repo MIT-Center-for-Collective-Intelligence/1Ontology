@@ -130,8 +130,8 @@ describe("Society of Mind reviewer card blinding", () => {
       currentState: '"Sell Service" is currently under "Sell (Information)".',
       proposedState:
         '"Sell Service" appears to belong under the more specific category "Actors and Activities".',
-      agreeLabel: "Approve move",
-      disagreeLabel: "Reject proposed move",
+      agreeLabel: "Agree",
+      disagreeLabel: "Disagree",
     });
     expect(JSON.stringify(card)).not.toMatch(
       /advisory candidate home|exact move remains|separate human decision|H1/i,
@@ -182,8 +182,8 @@ describe("Society of Mind reviewer card blinding", () => {
         'Should "Rent Equipment" move from "Lease (Physical Object)" to "Rent out" in the Sell sub-branch?',
       proposedState:
         'Move "Rent Equipment" to "Rent out" because its evidence expresses a provider-side "Sell" action.',
-      agreeLabel: "Approve move",
-      disagreeLabel: "Reject proposed move",
+      agreeLabel: "Agree",
+      disagreeLabel: "Disagree",
       context: {
         currentPathTitles: [
           "Buy",
@@ -234,8 +234,8 @@ describe("Society of Mind reviewer card blinding", () => {
         'Do these 2 activities use "Market" as a different main action from the "Sell" action?',
       proposedState:
         'These activities appear to use "Market" as a different main action from the "Sell" action; "Promote" is the suggested category.',
-      agreeLabel: "Approve all moves",
-      disagreeLabel: "Review individually",
+      agreeLabel: "Agree",
+      disagreeLabel: "Disagree",
     });
     expect(card.reviewerView.context).toMatchObject({
       candidateHome: "Promote",

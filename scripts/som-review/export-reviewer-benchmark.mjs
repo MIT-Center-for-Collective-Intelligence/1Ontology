@@ -4,6 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
 import { createRequire } from "node:module";
+import { fileURLToPath } from "node:url";
 
 const require = createRequire(import.meta.url);
 const { loadEnvConfig } = require("@next/env");
@@ -48,6 +49,46 @@ function readJsonl(file) {
     .split("\n")
     .filter((line) => line.trim())
     .map((line) => JSON.parse(line));
+}
+
+function currentRecordsForIssue(records, manifest, issueType) {
+  const mappings = Array.isArray(manifest.responseCarryForward?.mappings)
+    ? manifest.responseCarryForward.mappings.filter(
+        (mapping) => mapping.targetIssueType === issueType,
+      )
+    : [];
+  const mappingBySource = new Map(
+    mappings.map((mapping) => [mapping.sourceProposalId, mapping]),
+  );
+  const selected = new Map();
+
+  for (const record of records) {
+    const mapping = mappingBySource.get(record.proposalId);
+    const carriedForward = Boolean(
+      mapping && record.issueType === mapping.sourceIssueType,
+    );
+    if (!carriedForward && record.issueType !== issueType) continue;
+
+    const projected = carriedForward
+      ? {
+          ...record,
+          proposalId: mapping.targetProposalId,
+          issueType: mapping.targetIssueType,
+          response: record.response
+            ? { ...record.response, proposalId: mapping.targetProposalId }
+            : record.response,
+          carriedForwardFromProposalId: mapping.sourceProposalId,
+        }
+      : record;
+    const previous = selected.get(projected.proposalId);
+    if (!previous || (previous.carriedForward && !carriedForward)) {
+      selected.set(projected.proposalId, {
+        record: projected,
+        carriedForward,
+      });
+    }
+  }
+  return [...selected.values()].map(({ record }) => record);
 }
 
 function credentials() {
@@ -122,12 +163,15 @@ async function main() {
   const snapshot = await db
     .collection("somReviewResponses")
     .where("datasetVersion", "==", manifest.datasetVersion)
-    .where("issueType", "==", issueType)
     .where("reviewerId", "==", reviewer.uid)
     .where("status", "==", "current")
     .get();
 
-  const currentRecords = snapshot.docs.map((doc) => doc.data());
+  const currentRecords = currentRecordsForIssue(
+    snapshot.docs.map((doc) => doc.data()),
+    manifest,
+    issueType,
+  );
   const orphanedResponses = currentRecords
     .filter((record) => !proposalsById.has(record.proposalId))
     .map((record) => ({
@@ -147,8 +191,17 @@ async function main() {
         reviewMode: proposal.reviewMode,
         subjectNodeId: proposal.provenance?.subjectNodeId || "",
         parentNodeId: proposal.provenance?.parentNodeId || "",
+        subjectTitle: proposal.subject?.title || "",
+        subjectParentTitle: proposal.subject?.parentTitle || "",
         currentTitle: proposal.reviewerView?.context?.currentTitle || "",
         proposedTitle: proposal.reviewerView?.context?.proposedTitle || "",
+        currentParentTitle:
+          proposal.reviewerView?.context?.currentParentTitle || "",
+        proposedParentTitle:
+          proposal.reviewerView?.context?.proposedParentTitle ||
+          proposal.reviewerView?.context?.candidateHome ||
+          "",
+        context: proposal.reviewerView?.context || {},
         linkedTasks: proposal.reviewerView?.context?.linkedTasks || [],
         proposedNodes: proposal.reviewerView?.context?.proposedNodes || [],
         agentReasoning: proposal.reviewerView?.reasoning || "",
@@ -156,6 +209,7 @@ async function main() {
         disagreementReason: record.response?.disagreementReason || "",
         suggestedCorrection: record.response?.suggestedCorrection || "",
         revisionCount: record.revisionCount || 0,
+        carriedForwardFromProposalId: record.carriedForwardFromProposalId || "",
       };
     })
     .sort((left, right) =>
@@ -254,7 +308,14 @@ async function main() {
   );
 }
 
-main().catch((error) => {
-  console.error(error instanceof Error ? error.message : error);
-  process.exitCode = 1;
-});
+if (
+  process.argv[1] &&
+  path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)
+) {
+  main().catch((error) => {
+    console.error(error instanceof Error ? error.message : error);
+    process.exitCode = 1;
+  });
+}
+
+export { currentRecordsForIssue };
