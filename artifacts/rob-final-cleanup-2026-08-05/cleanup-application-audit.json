@@ -1,0 +1,86 @@
+{
+  "schemaVersion": "som-cleanup-application-audit-v1",
+  "generatedAt": "2026-08-05T16:02:35.129Z",
+  "mode": "apply",
+  "environment": "production",
+  "firestoreProjectId": "ontology-41607",
+  "sourceOntology": {
+    "appId": "final-hierarchy-with-o*net-rob-semantic-applied-2026-08-04",
+    "name": "Final Hierarchy with O*Net - Rob Semantic Applied 2026-08-04",
+    "snapshotFile": "ontology-snapshot.json",
+    "snapshotSha256": "cc26a680cc5f471e7de24cff2480f0692a54cf41326d55da72c1b34d1a8dec77"
+  },
+  "targetOntology": {
+    "appId": "final-hierarchy-with-o*net-rob-cleanup-applied-2026-08-05-v2",
+    "name": "Final Hierarchy with O*Net - Rob Cleanup Applied 2026-08-05 v2"
+  },
+  "sourceDataset": {
+    "version": "sell-rob-semantic-followup-2026-08-04-v1",
+    "directory": "Sell_Society_of_Mind_Review_UI_Handoff_2026-07-15/review-datasets-rob-semantic-followup-2026-08-04",
+    "manifestSha256": "0c75283d5346a0b44cc18ba079feba10b1bcf9389ea76e84b8a1a296ec5e5cf7"
+  },
+  "planSha256": "c711a97398b63de63df7107a1399f6621055a44dfc824a47fd3975b77df6accd",
+  "benchmarkFiles": [
+    {
+      "file": "rob-collection-design.json",
+      "issueType": "collection-design",
+      "sha256": "1e30e37dd0a02bdb7c6ddf63bb2e8fbde5457ee7aadaad9c4d07a0b60dfa4f03"
+    },
+    {
+      "file": "rob-empty-node.json",
+      "issueType": "empty-node",
+      "sha256": "4448a051c5653ab685657d6ce86e1f01eb1618e4e0cae1d5eb27603f80345159"
+    }
+  ],
+  "sourceDigestBefore": "7800b8a6745c4b23ce8a5881903e91e573d0fc17c520ba949db762d980e5422e",
+  "expectedTargetDigest": "7e0f7140f2da00fdaed0e080ca03490dcb9831536fb6c061fd9a6b15260e8817",
+  "existingTargetNodeCount": 0,
+  "nodesRemainingToWrite": 52311,
+  "resume": false,
+  "unsupportedLegacyAddNodes": {
+    "proposalCount": 10,
+    "sourceTaskCount": 0,
+    "detectorNames": [
+      "GapScanner"
+    ],
+    "disposition": "exclude-until-onet-grounded"
+  },
+  "sourceNodeCount": 52311,
+  "targetNodeCount": 52311,
+  "activeTargetNodeCount": 39637,
+  "removal": {
+    "proposalId": "som-839bd4362530ac7fc961",
+    "sourceNodeId": "c606b7a91f3f2fdcee29138cd73d",
+    "targetNodeId": "239bead9fe2ee27e5ac49a85efab",
+    "nodeTitle": "Sell (Other)",
+    "parentTitle": "Sell",
+    "removedCollectionName": "Sell -- miscellaneous",
+    "applicationMode": "accepted-empty-node-removal"
+  },
+  "rejectedCollection": {
+    "proposalId": "som-cff4c587a90074765acb",
+    "proposedCollectionName": "Sell ownership or temporary use?",
+    "applicationMode": "not-applied"
+  },
+  "changeScope": {
+    "changedDocumentCount": 2,
+    "changedTargetNodeIds": [
+      "239bead9fe2ee27e5ac49a85efab",
+      "9f67420a9f2ec05394e08956b1ff"
+    ],
+    "exactReviewedScope": true
+  },
+  "integrity": {
+    "activeNodeCount": 39637,
+    "deletedNodeCount": 12674,
+    "checkedReciprocalEdgeCount": 59629
+  },
+  "sourceDigestAfter": "7800b8a6745c4b23ce8a5881903e91e573d0fc17c520ba949db762d980e5422e",
+  "targetDigestAfter": "7e0f7140f2da00fdaed0e080ca03490dcb9831536fb6c061fd9a6b15260e8817",
+  "targetNodeCountAfter": 52311,
+  "verification": {
+    "sourceUnchanged": true,
+    "targetCountMatches": true,
+    "targetDigestMatches": true
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "som-cleanup-application-plan-v1",
+  "status": "reviewed-and-ready-for-isolated-application",
+  "applicationAllowed": true,
+  "sourceDataset": {
+    "version": "sell-rob-semantic-followup-2026-08-04-v1",
+    "directory": "Sell_Society_of_Mind_Review_UI_Handoff_2026-07-15/review-datasets-rob-semantic-followup-2026-08-04",
+    "manifestSha256": "0c75283d5346a0b44cc18ba079feba10b1bcf9389ea76e84b8a1a296ec5e5cf7"
+  },
+  "sourceOntology": {
+    "appId": "final-hierarchy-with-o*net-rob-semantic-applied-2026-08-04",
+    "name": "Final Hierarchy with O*Net - Rob Semantic Applied 2026-08-04",
+    "snapshotFile": "ontology-snapshot.json",
+    "snapshotSha256": "cc26a680cc5f471e7de24cff2480f0692a54cf41326d55da72c1b34d1a8dec77"
+  },
+  "targetOntology": {
+    "appId": "final-hierarchy-with-o*net-rob-cleanup-applied-2026-08-05-v2",
+    "name": "Final Hierarchy with O*Net - Rob Cleanup Applied 2026-08-05 v2"
+  },
+  "supersededTargetOntology": {
+    "appId": "final-hierarchy-with-o*net-rob-cleanup-applied-2026-08-05",
+    "reason": "An isolated pre-release clone compacted unrelated empty collection containers. It was never registered as a review source and is superseded by the exact-scope v2 clone."
+  },
+  "benchmarks": [
+    {
+      "issueType": "collection-design",
+      "file": "rob-collection-design.json",
+      "sha256": "1e30e37dd0a02bdb7c6ddf63bb2e8fbde5457ee7aadaad9c4d07a0b60dfa4f03"
+    },
+    {
+      "issueType": "empty-node",
+      "file": "rob-empty-node.json",
+      "sha256": "4448a051c5653ab685657d6ce86e1f01eb1618e4e0cae1d5eb27603f80345159"
+    }
+  ],
+  "acceptedRemoval": {
+    "proposalId": "som-839bd4362530ac7fc961",
+    "sourceNodeId": "c606b7a91f3f2fdcee29138cd73d",
+    "nodeTitle": "Sell (Other)",
+    "sourceParentId": "e9c97c03cb12e0af2ac2147ee24a",
+    "parentTitle": "Sell",
+    "parentCollection": "Sell -- miscellaneous"
+  },
+  "rejectedCollection": {
+    "proposalId": "som-cff4c587a90074765acb",
+    "proposedCollectionName": "Sell ownership or temporary use?",
+    "expertDisagreementReason": "\"Sell ownership or temporary use\" does not seem to me to be a collection. In my understanding, a collection is based on an abstract categorization. In this instance, I would propose that the collection could be called \"Legal rights conveyed in sale,\" with the two nodes directly under it being \"Sell ownership\" and \"Sell temporary use.\"",
+    "expertSuggestedCorrection": "Create new collection called: Legal rights conveyed in sale.  Include two nodes in this collection: Sell ownerhip, Sell temporary use",
+    "applicationMode": "do-not-apply-rejected-proposal"
+  },
+  "unsupportedLegacyAddNodes": {
+    "datasetDirectory": "Sell_Society_of_Mind_Review_UI_Handoff_2026-07-15/review-datasets",
+    "issueType": "missing-activity",
+    "expectedProposalCount": 10,
+    "requiredDetectorName": "GapScanner",
+    "requiredSourceTaskCount": 0,
+    "disposition": "exclude-until-onet-grounded"
+  }
+}

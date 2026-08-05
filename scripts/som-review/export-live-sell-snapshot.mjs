@@ -10,7 +10,7 @@ import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
 const { loadEnvConfig } = require("@next/env");
 const { cert, initializeApp } = require("firebase-admin/app");
-const { getFirestore } = require("firebase-admin/firestore");
+const { FieldPath, getFirestore } = require("firebase-admin/firestore");
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(SCRIPT_DIR, "../..");
@@ -100,27 +100,41 @@ async function main() {
     `som-sell-snapshot-${environment}-${Date.now()}`,
   );
   const db = getFirestore(app);
-  const result = await db
-    .collection("nodes")
-    .where("appName", "==", ontologyAppId)
-    .where("deleted", "==", false)
-    .select(
-      "title",
-      "specializations",
-      "generalizations",
-      "properties.description",
-      "synsets",
-      "actionAlternatives",
-      "oNet",
-      "oNetTask",
-    )
-    .get();
-  const allNodes = new Map(
-    result.docs.map((document) => [
-      document.id,
-      { id: document.id, ...document.data() },
-    ]),
-  );
+  const allNodes = new Map();
+  let cursor = null;
+  let page = 0;
+  const pageSize = 750;
+  while (true) {
+    let query = db
+      .collection("nodes")
+      .where("appName", "==", ontologyAppId)
+      .where("deleted", "==", false)
+      .orderBy(FieldPath.documentId())
+      .limit(pageSize)
+      .select(
+        "title",
+        "specializations",
+        "generalizations",
+        "properties.description",
+        "synsets",
+        "actionAlternatives",
+        "oNet",
+        "oNetTask",
+      );
+    if (cursor) query = query.startAfter(cursor);
+    const result = await query.get();
+    for (const document of result.docs) {
+      allNodes.set(document.id, { id: document.id, ...document.data() });
+    }
+    page += 1;
+    if (result.empty || result.size < pageSize) break;
+    cursor = result.docs[result.docs.length - 1];
+    if (page % 10 === 0) {
+      process.stderr.write(
+        `Read ${allNodes.size} active nodes from ${ontologyAppId}\n`,
+      );
+    }
+  }
   const sellRoots = [...allNodes.values()].filter(
     (node) => node.title === "Sell",
   );

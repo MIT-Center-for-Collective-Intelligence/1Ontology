@@ -15,6 +15,7 @@ test("all application scripts require explicit apply and reviewed decisions", ()
     "scripts/som-review/clone-and-apply-content-review.mjs",
     "scripts/som-review/clone-and-apply-structure-review.mjs",
     "scripts/som-review/clone-and-apply-semantic-checkpoint.mjs",
+    "scripts/som-review/clone-and-apply-cleanup-checkpoint.mjs",
   ]) {
     const source = read(file);
     assert.match(source, /args\.apply === true \|\| args\.apply === "true"/);

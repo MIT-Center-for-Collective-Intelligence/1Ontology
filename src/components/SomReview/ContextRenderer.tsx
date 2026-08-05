@@ -1048,7 +1048,7 @@ const CollectionDesign = ({
       </Box>
       <BoundaryNote>
         {includesHierarchyChange
-          ? "This historical proposal includes new activity branches or hierarchy changes. It cannot be applied as a collection-only change."
+          ? "This proposal includes new activity branches or hierarchy changes. It cannot be applied as a collection-only change; agreement records a review decision and requires a separate reviewed application before any ontology write."
           : "This proposal only assigns existing direct children to a named collection. It does not create activities or change parent-child relationships."}
       </BoundaryNote>
     </Box>
