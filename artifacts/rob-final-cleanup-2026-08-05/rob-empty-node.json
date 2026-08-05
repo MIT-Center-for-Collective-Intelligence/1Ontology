@@ -1,0 +1,63 @@
+{
+  "schemaVersion": "som-reviewer-benchmark-v1",
+  "exportedAt": "2026-08-05T14:26:47.435Z",
+  "firestoreProjectId": "ontology-41607",
+  "datasetVersion": "sell-rob-semantic-followup-2026-08-04-v1",
+  "sourceOntology": "firestore://ontology-41607/final-hierarchy-with-o*net-rob-semantic-applied-2026-08-04",
+  "sourceOntologySha256": "cc26a680cc5f471e7de24cff2480f0692a54cf41326d55da72c1b34d1a8dec77",
+  "issueType": "empty-node",
+  "reviewer": {
+    "label": "Rob"
+  },
+  "counts": {
+    "expected": 1,
+    "reviewed": 1,
+    "agreed": 1,
+    "disagreed": 0,
+    "missing": 0,
+    "orphanedHistoricalResponses": 0
+  },
+  "missingProposalIds": [],
+  "orphanedResponses": [],
+  "sourceNodeEvidence": [
+    {
+      "nodeId": "c606b7a91f3f2fdcee29138cd73d",
+      "title": "Sell (Other)",
+      "appName": "final-hierarchy-with-o*net-rob-semantic-applied-2026-08-04",
+      "specializations": [
+        {
+          "collectionName": "main",
+          "nodes": []
+        }
+      ]
+    }
+  ],
+  "judgments": [
+    {
+      "proposalId": "som-839bd4362530ac7fc961",
+      "reviewMode": "manual-check",
+      "subjectNodeId": "c606b7a91f3f2fdcee29138cd73d",
+      "parentNodeId": "e9c97c03cb12e0af2ac2147ee24a",
+      "subjectTitle": "Sell (Other)",
+      "subjectParentTitle": "Sell",
+      "currentTitle": "",
+      "proposedTitle": "",
+      "currentParentTitle": "",
+      "proposedParentTitle": "",
+      "context": {
+        "type": "empty-node-action",
+        "parentTitle": "Sell",
+        "parentCollection": "Sell -- miscellaneous",
+        "nodeTitle": "Sell (Other)"
+      },
+      "linkedTasks": [],
+      "proposedNodes": [],
+      "agentReasoning": "This is a deterministic empty-node finding after the accepted semantic changes were applied. It is not an automatic deletion.",
+      "decision": "agree",
+      "disagreementReason": "",
+      "suggestedCorrection": "",
+      "revisionCount": 1,
+      "carriedForwardFromProposalId": ""
+    }
+  ]
+}

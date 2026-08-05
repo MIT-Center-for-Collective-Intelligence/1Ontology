@@ -56,6 +56,17 @@ const buyDatasets: SomReviewDatasetConfig[] = [
 const sellDatasets: SomReviewDatasetConfig[] = [
   {
     id: "sell-semantic-coverage",
+    datasetVersion: "sell-rob-legal-rights-followup-2026-08-05-v1",
+    workspaceId: "sell",
+    label: "Exact legal-rights follow-up after cleanup",
+    relativeDir: [
+      "Sell_Society_of_Mind_Review_UI_Handoff_2026-07-15",
+      "review-datasets-rob-legal-rights-followup-2026-08-05",
+    ],
+    current: true,
+  },
+  {
+    id: "sell-semantic-cleanup",
     datasetVersion: "sell-rob-semantic-followup-2026-08-04-v1",
     workspaceId: "sell",
     label: "Cleanup and collection design after semantic propagation",
@@ -63,7 +74,7 @@ const sellDatasets: SomReviewDatasetConfig[] = [
       "Sell_Society_of_Mind_Review_UI_Handoff_2026-07-15",
       "review-datasets-rob-semantic-followup-2026-08-04",
     ],
-    current: true,
+    current: false,
   },
   {
     id: "sell-semantic-coverage-initial",

@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "som-legal-rights-followup-generation-audit-v1",
+  "generatedAt": "2026-08-05T16:02:35.129Z",
+  "datasetVersion": "sell-rob-legal-rights-followup-2026-08-05-v1",
+  "sourceOntologyAppId": "final-hierarchy-with-o*net-rob-cleanup-applied-2026-08-05-v2",
+  "sourceSnapshotSha256": "6eaf337757c0db857218d9e246ea1c8d69fe396f69bb6f531e1d238b64c5c07a",
+  "cleanupApplicationAuditSha256": "cdb199a5dc0cba8451eb45b95f4771c6ae57689ddf90409d8533839055e81cd4",
+  "cleanupApplicationPlanSha256": "c711a97398b63de63df7107a1399f6621055a44dfc824a47fd3975b77df6accd",
+  "priorCollectionReviewSha256": "1e30e37dd0a02bdb7c6ddf63bb2e8fbde5457ee7aadaad9c4d07a0b60dfa4f03",
+  "acceptedEmptyNodeRemovalApplied": true,
+  "rejectedCollectionApplied": false,
+  "expertCorrectionProjected": true,
+  "llmCalls": 0,
+  "legacyAddNodes": {
+    "sourceDatasetVersion": "sell-final-hierarchy-onet-2026-07-15-v4",
+    "proposalCount": 10,
+    "sourceTaskCount": 0,
+    "detectorNames": [
+      "GapScanner"
+    ],
+    "disposition": "exclude-until-onet-grounded"
+  },
+  "proposalIds": [
+    "som-dc2dd5ba2f876c3b7c35"
+  ],
+  "ontologyMutatedByGeneration": false
+}

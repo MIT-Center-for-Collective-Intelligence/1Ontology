@@ -1,0 +1,85 @@
+{
+  "schemaVersion": "som-reviewer-benchmark-v1",
+  "exportedAt": "2026-08-05T14:26:45.907Z",
+  "firestoreProjectId": "ontology-41607",
+  "datasetVersion": "sell-rob-semantic-followup-2026-08-04-v1",
+  "sourceOntology": "firestore://ontology-41607/final-hierarchy-with-o*net-rob-semantic-applied-2026-08-04",
+  "sourceOntologySha256": "cc26a680cc5f471e7de24cff2480f0692a54cf41326d55da72c1b34d1a8dec77",
+  "issueType": "collection-design",
+  "reviewer": {
+    "label": "Rob"
+  },
+  "counts": {
+    "expected": 1,
+    "reviewed": 1,
+    "agreed": 0,
+    "disagreed": 1,
+    "missing": 0,
+    "orphanedHistoricalResponses": 0
+  },
+  "missingProposalIds": [],
+  "orphanedResponses": [],
+  "sourceNodeEvidence": [],
+  "judgments": [
+    {
+      "proposalId": "som-cff4c587a90074765acb",
+      "reviewMode": "proposed-change",
+      "subjectNodeId": "",
+      "parentNodeId": "e9c97c03cb12e0af2ac2147ee24a",
+      "subjectTitle": "Sell ownership or temporary use?",
+      "subjectParentTitle": "Sell",
+      "currentTitle": "",
+      "proposedTitle": "",
+      "currentParentTitle": "",
+      "proposedParentTitle": "",
+      "context": {
+        "type": "collection-design",
+        "parentTitle": "Sell",
+        "currentChildren": [
+          "Rent out",
+          "Sell information",
+          "Sell physical objects",
+          "Sell Products",
+          "Sell service"
+        ],
+        "proposedCollectionName": "Sell ownership or temporary use?",
+        "proposedBranches": [
+          {
+            "title": "Rent out",
+            "status": "existing",
+            "children": []
+          },
+          {
+            "title": "Sell information",
+            "status": "existing",
+            "children": []
+          },
+          {
+            "title": "Sell physical objects",
+            "status": "existing",
+            "children": []
+          },
+          {
+            "title": "Sell Products",
+            "status": "existing",
+            "children": []
+          },
+          {
+            "title": "Sell service",
+            "status": "existing",
+            "children": []
+          }
+        ],
+        "sourceTasks": []
+      },
+      "linkedTasks": [],
+      "proposedNodes": [],
+      "agentReasoning": "The revised hierarchy now contains an explicit seller-side temporary-use branch. A collection can expose that distinction without recreating Sell ownership or Sell temporary use as activity nodes.",
+      "decision": "disagree",
+      "disagreementReason": "\"Sell ownership or temporary use\" does not seem to me to be a collection. In my understanding, a collection is based on an abstract categorization. In this instance, I would propose that the collection could be called \"Legal rights conveyed in sale,\" with the two nodes directly under it being \"Sell ownership\" and \"Sell temporary use.\"",
+      "suggestedCorrection": "Create new collection called: Legal rights conveyed in sale.  Include two nodes in this collection: Sell ownerhip, Sell temporary use",
+      "revisionCount": 1,
+      "carriedForwardFromProposalId": ""
+    }
+  ]
+}
