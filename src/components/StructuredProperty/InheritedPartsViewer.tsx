@@ -540,7 +540,7 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                   position: "relative",
                   mx: 2,
                   mt: 2,
-                  mb: 2.5,
+                  mb: inheritedPartsRepairing ? 4 : 2.5,
                 }}
               >
                 {/* Left Text */}

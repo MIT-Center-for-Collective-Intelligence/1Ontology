@@ -871,6 +871,7 @@ export function buildSpecializationNode(
   delete newNode.root;
   delete newNode.oNetTask;
   delete newNode.resolvedParts;
+  delete newNode.partSources;
   delete newNode.partsOverallSource;
   delete newNode.inheritanceParts;
   if (newNode?.textValue?.specializations)

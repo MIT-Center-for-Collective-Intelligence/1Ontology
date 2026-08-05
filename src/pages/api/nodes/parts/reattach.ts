@@ -11,6 +11,7 @@ import {
 import { asPartsCollections, toParts } from "@components/lib/server/parts";
 import {
   convertToOverlay,
+  partSourcesOf,
   toPartsNode,
   PartsGraph,
 } from "@components/lib/server/partsModel";
@@ -67,6 +68,7 @@ async function applyReattach(ctx: {
     .update({
       "properties.parts": side,
       partsInheritance,
+      partSources: partSourcesOf(parts),
       inheritedPartsDetails: computeInheritedPartsDetails({
         currentNode: updatedNode,
         relatedNodes: updatedRelated,

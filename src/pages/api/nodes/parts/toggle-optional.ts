@@ -11,6 +11,7 @@ import {
 import { asPartsCollections, toParts } from "@components/lib/server/parts";
 import {
   applyToggleOptional,
+  partSourcesOf,
   toPartsNode,
   PartsGraph,
 } from "@components/lib/server/partsModel";
@@ -63,6 +64,7 @@ async function applyToggle(ctx: {
     .update({
       "properties.parts": side,
       partsInheritance,
+      partSources: partSourcesOf(parts),
       inheritedPartsDetails: computeInheritedPartsDetails({
         currentNode: updatedNode,
         relatedNodes: updatedRelated,

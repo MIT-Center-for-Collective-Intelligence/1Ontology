@@ -10,6 +10,7 @@ import {
   writeChangeLog,
 } from "@components/lib/server/hierarchy";
 import {
+  absorbDescendantOwnership,
   applyIsPartOfOwnerOnly,
   asPartsCollections,
   propagateOwnedPartChange,
@@ -18,6 +19,7 @@ import {
 import {
   applyReplace,
   isOwnedPart,
+  partSourcesOf,
   toPartsNode,
   PartsGraph,
 } from "@components/lib/server/partsModel";
@@ -79,6 +81,7 @@ async function applyReplaceParts(ctx: {
     .update({
       "properties.parts": side,
       partsInheritance,
+      partSources: partSourcesOf(parts),
       inheritedPartsDetails: computeInheritedPartsDetails({
         currentNode: updatedNode,
         relatedNodes: updatedRelated,
@@ -115,6 +118,19 @@ async function applyReplaceParts(ctx: {
       { fromId, to: { id: toId, title: toNode.title ?? "" } },
     ]);
   }
+
+  // The replacement is owned here now — a descendant's own copy of it
+  // converts to inherited.
+  await absorbDescendantOwnership(
+    nodeId,
+    [{ partId: toId, owner: nodeId }],
+    updatedRelated,
+    cache,
+    parentLog,
+    uname,
+    appName,
+    childLogs,
+  );
 
   if (uname) {
     await writeChangeLog(

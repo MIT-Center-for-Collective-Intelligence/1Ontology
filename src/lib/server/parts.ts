@@ -1,4 +1,7 @@
-import { db } from "@components/lib/firestoreServer/admin";
+import {
+  db,
+  MAX_TRANSACTION_WRITES,
+} from "@components/lib/firestoreServer/admin";
 import { NODES } from "@components/lib/firestoreClient/collections";
 import {
   ICollection,
@@ -6,8 +9,19 @@ import {
   INode,
   NodeChange,
 } from "@components/types/INode";
-import { NodeCache, getNode, walkSpecializations } from "./hierarchy";
-import { applyGenChange, toPartsNode, PartsGraph } from "./partsModel";
+import { NodeCache, generalizationIds, getNode } from "./hierarchy";
+import {
+  absorbOwnedForGens,
+  absorbOwnedPart,
+  applyGenChange,
+  childSourceOf,
+  isOwnedPart,
+  partSourcesOf,
+  repointTracked,
+  resolveParts,
+  toPartsNode,
+  PartsGraph,
+} from "./partsModel";
 import {
   computeInheritedPartsDetails,
   fetchPartsContext,
@@ -40,15 +54,14 @@ export function asPartsCollections(value: any): ICollection[] {
 }
 
 /**
- * Applies a generalization change to `nodeId`'s parts: stored entries tracked
- * through a removed gen drop unless a remaining gen still provides them, and
- * losing the attached source re-attaches to the first remaining gen by MERGE.
- * The gen list changed, so the annotation pair is refreshed even when the
- * stored parts came out identical.
+ * Apply a gen change to `nodeId`'s parts: entries tracked through a removed
+ * gen drop unless another gen provides them; losing the source re-attaches to
+ * the first remaining gen. Added gens absorb owned copies, here and below.
  */
 export async function applyPartsForGenChange(
   nodeId: string,
   removedGenIds: string[],
+  addedGenIds: string[],
   cache: NodeCache,
   parentLog: NodeChange["triggeredBy"],
   uname: string | undefined,
@@ -69,12 +82,23 @@ export async function applyPartsForGenChange(
   const remainingGenIds = (current.generalizations ?? []).flatMap((c) =>
     (c.nodes ?? []).map((n) => n.id),
   );
-  const { parts, partsInheritance } = applyGenChange(
+  let { parts, partsInheritance } = applyGenChange(
     nodeId,
     graph,
     removedGenIds,
     remainingGenIds,
   );
+
+  const presentAddedGens = addedGenIds.filter((id) => graph.has(id));
+  let ownConverted: { partId: string; owner: string }[] = [];
+  if (presentAddedGens.length > 0) {
+    const scratch: PartsGraph = new Map(graph);
+    scratch.set(nodeId, { id: nodeId, parts, partsInheritance });
+    const absorbed = absorbOwnedForGens(nodeId, scratch, presentAddedGens);
+    parts = absorbed.parts;
+    partsInheritance = absorbed.partsInheritance;
+    ownConverted = absorbed.converted;
+  }
 
   const beforeEntries = partsNodes(current.properties?.parts);
   const beforeCol = asPartsCollections(current.properties?.parts);
@@ -87,12 +111,14 @@ export async function applyPartsForGenChange(
   const updatedRelated = { ...relatedNodes, [nodeId]: updatedNode };
   const resolvedOfUpdated = makeResolvedOf(updatedRelated);
 
+  // Gen list changed ⇒ refresh the pair even if the stored parts are identical.
   await db
     .collection(NODES)
     .doc(nodeId)
     .update({
       "properties.parts": side,
       partsInheritance,
+      partSources: partSourcesOf(parts),
       inheritedPartsDetails: computeInheritedPartsDetails({
         currentNode: updatedNode,
         relatedNodes: updatedRelated,
@@ -102,22 +128,63 @@ export async function applyPartsForGenChange(
     });
   cache.set(nodeId, updatedNode);
 
+  // Entries elsewhere still tracking a copy this node just stopped owning
+  // follow it to the new owner.
+  for (const { partId, owner } of ownConverted) {
+    await repointTrackedEntries(nodeId, partId, owner);
+  }
+
+  // Strip isPartOf for entries that dropped AND for entries this node no
+  // longer OWNS (an absorb re-tags them in place).
   const keptIds = new Set(parts.map((p) => p.id));
-  const dropped = beforeEntries
-    .map((e) => e.id)
-    .filter((id) => !keptIds.has(id));
-  if (dropped.length > 0) {
+  const ownedAfter = new Set(parts.filter(isOwnedPart).map((p) => p.id));
+  const stripped = [
+    ...new Set(
+      beforeEntries
+        .filter(
+          (e) =>
+            !keptIds.has(e.id) || (isOwnedPart(e) && !ownedAfter.has(e.id)),
+        )
+        .map((e) => e.id),
+    ),
+  ];
+  if (stripped.length > 0) {
     await applyIsPartOfOwnerOnly(
       nodeId,
       current.title ?? "",
       [],
-      dropped,
+      stripped,
       cache,
       parentLog,
       uname,
       appName,
       childLogs,
     );
+  }
+
+  // Every part an added gen provides may also be owned somewhere below.
+  if (presentAddedGens.length > 0) {
+    const seen = new Set<string>();
+    const genProvided: { partId: string; owner: string }[] = [];
+    for (const genId of presentAddedGens) {
+      for (const p of resolveParts(genId, graph)) {
+        if (seen.has(p.id)) continue;
+        seen.add(p.id);
+        genProvided.push({ partId: p.id, owner: childSourceOf(p, genId) });
+      }
+    }
+    if (genProvided.length > 0) {
+      await absorbDescendantOwnership(
+        nodeId,
+        genProvided,
+        updatedRelated,
+        cache,
+        parentLog,
+        uname,
+        appName,
+        childLogs,
+      );
+    }
   }
 
   const changed =
@@ -226,17 +293,42 @@ export async function applyIsPartOfOwnerOnly(
   }
 }
 
+/** Docs holding a stored entry that tracks `owner`'s copy of `partId`. */
+async function queryTrackingDocs(
+  partId: string,
+  owner: string,
+): Promise<Map<string, INode>> {
+  const snap = await db
+    .collection(NODES)
+    .where("partSources", "array-contains", `${partId}:${owner}`)
+    .get();
+  const docs = new Map<string, INode>();
+  for (const d of snap.docs) {
+    const data = d.data() as INode;
+    if (!data.deleted) docs.set(d.id, { ...data, id: d.id });
+  }
+  return docs;
+}
+
 /**
- * v1 truth propagation for an OWNER's remove/replace: walk the spec subtree
- * and update stored entries that track `ownerId` — broken-node and switched
- * recorders — dropping them, or morphing them when `to` is given. Resolved
- * copies are left stale on purpose; the read-repair path refreshes per node.
+ * After an owner's remove/replace: every stored entry tracking `ownerId`,
+ * found via partSources (so nodes outside the subtree are reached too),
+ * drops — or morphs when `to` is given. resolvedParts stay stale; read-repair fixes them.
  */
 export async function propagateOwnedPartChange(
   ownerId: string,
   changes: { fromId: string; to?: { id: string; title: string } }[],
 ): Promise<void> {
-  await walkSpecializations(ownerId, (node) => {
+  const docs = new Map<string, INode>();
+  for (const c of changes) {
+    for (const [id, data] of await queryTrackingDocs(c.fromId, ownerId)) {
+      if (!docs.has(id)) docs.set(id, data);
+    }
+  }
+
+  let batch = db.batch();
+  let pending = 0;
+  for (const [id, node] of docs) {
     const entries = partsNodes(asPartsCollections(node.properties?.parts));
     const presentIds = new Set(entries.map((e) => e.id));
     const droppedIds = new Set<string>();
@@ -258,7 +350,7 @@ export async function propagateOwnedPartChange(
         droppedIds.add(e.id);
       }
     }
-    if (!touched) return null;
+    if (!touched) continue;
     const byId = new Map(entries.map((e) => [e.id, e]));
     const rePointed = next.map((e) => {
       if (e.after == null || !droppedIds.has(e.after)) return e;
@@ -271,6 +363,186 @@ export async function propagateOwnedPartChange(
       else copy.after = cursor;
       return copy;
     });
-    return { "properties.parts": toParts(rePointed) };
-  });
+    batch.update(db.collection(NODES).doc(id), {
+      "properties.parts": toParts(rePointed),
+      partSources: partSourcesOf(rePointed),
+    });
+    pending += 1;
+    if (pending >= MAX_TRANSACTION_WRITES) {
+      await batch.commit();
+      batch = db.batch();
+      pending = 0;
+    }
+  }
+  if (pending > 0) await batch.commit();
+}
+
+/**
+ * `exOwnerId`'s copy of `partId` moved to `newOwner` (absorption lifted it):
+ * re-point every stored entry still tracking the old copy, wherever it lives,
+ * so the new owner's future removals and morphs keep reaching it.
+ */
+export async function repointTrackedEntries(
+  exOwnerId: string,
+  partId: string,
+  newOwner: string,
+): Promise<void> {
+  const docs = await queryTrackingDocs(partId, exOwnerId);
+  let batch = db.batch();
+  let pending = 0;
+  for (const [id, node] of docs) {
+    const entries = partsNodes(asPartsCollections(node.properties?.parts));
+    const { parts, changed } = repointTracked(
+      entries,
+      partId,
+      exOwnerId,
+      newOwner,
+    );
+    if (!changed) continue;
+    batch.update(db.collection(NODES).doc(id), {
+      "properties.parts": toParts(parts),
+      partSources: partSourcesOf(parts),
+    });
+    pending += 1;
+    if (pending >= MAX_TRANSACTION_WRITES) {
+      await batch.commit();
+      batch = db.batch();
+      pending = 0;
+    }
+  }
+  if (pending > 0) await batch.commit();
+}
+
+/**
+ * `editedNodeId` now provides these parts, so descendants that owned a copy
+ * stop owning it; the parts' isPartOf drops them. Descendants' resolvedParts
+ * are left stale on purpose — read-repair fixes them per node.
+ */
+export async function absorbDescendantOwnership(
+  editedNodeId: string,
+  absorptions: { partId: string; owner: string }[],
+  relatedNodes: { [id: string]: INode },
+  cache: NodeCache,
+  parentLog: NodeChange["triggeredBy"],
+  uname: string | undefined,
+  appName: string | undefined,
+  childLogs: NodeChange[],
+): Promise<void> {
+  for (const [id, n] of Object.entries(relatedNodes)) {
+    if (!cache.has(id)) cache.set(id, n);
+  }
+
+  // Ancestor test: pathIds is a quick positive (primary-parent spine); the
+  // upward generalization walk is authoritative for multi-gen paths.
+  const isDescendant = async (nodeId: string): Promise<boolean> => {
+    const direct = await getNode(nodeId, cache);
+    if (((direct as any)?.pathIds ?? []).includes(editedNodeId)) return true;
+    const visited = new Set<string>([nodeId]);
+    const queue = [nodeId];
+    while (queue.length > 0) {
+      const doc = await getNode(queue.shift() as string, cache);
+      if (!doc) continue;
+      for (const gid of generalizationIds(doc)) {
+        if (gid === editedNodeId) return true;
+        if (!visited.has(gid)) {
+          visited.add(gid);
+          queue.push(gid);
+        }
+      }
+    }
+    return false;
+  };
+
+  const chainGraphFor = async (nodeId: string): Promise<PartsGraph> => {
+    const graph: PartsGraph = new Map();
+    let cursor: string | null | undefined = nodeId;
+    while (cursor && !graph.has(cursor)) {
+      const doc = await getNode(cursor, cache);
+      if (!doc) break;
+      const partsNode = toPartsNode({ ...doc, id: cursor });
+      graph.set(cursor, partsNode);
+      cursor = partsNode.partsInheritance.source;
+    }
+    return graph;
+  };
+
+  for (const { partId, owner } of absorptions) {
+    const partDoc = await getNode(partId, cache);
+    if (!partDoc) continue;
+    const candidateIds = [
+      ...new Set(
+        (partDoc.properties?.isPartOf ?? [])
+          .flatMap((c: ICollection) => c.nodes ?? [])
+          .map((n: ILinkNode) => n.id)
+          .filter((id: string) => id !== owner && id !== editedNodeId),
+      ),
+    ];
+
+    const convertedIds: string[] = [];
+    for (const candidateId of candidateIds) {
+      const candidate = await getNode(candidateId, cache);
+      if (!candidate || candidate.deleted) continue;
+      const entries = partsNodes(
+        asPartsCollections(candidate.properties?.parts),
+      );
+      if (!entries.some((e) => e.id === partId && isOwnedPart(e))) continue;
+      if (!(await isDescendant(candidateId))) continue;
+
+      const graph = await chainGraphFor(candidateId);
+      const { parts, partsInheritance, changed } = absorbOwnedPart(
+        candidateId,
+        graph,
+        partId,
+        owner,
+      );
+      if (!changed) continue;
+      const side = toParts(parts);
+      await db
+        .collection(NODES)
+        .doc(candidateId)
+        .update({
+          "properties.parts": side,
+          partsInheritance,
+          partSources: partSourcesOf(parts),
+        });
+      cache.set(candidateId, {
+        ...candidate,
+        properties: { ...candidate.properties, parts: side },
+        partsInheritance,
+      } as INode);
+      convertedIds.push(candidateId);
+      // Deeper entries still tracking the dissolved owner follow the copy.
+      await repointTrackedEntries(candidateId, partId, owner);
+    }
+    if (convertedIds.length === 0) continue;
+
+    const before = asPartsCollections(partDoc.properties?.isPartOf);
+    const dropSet = new Set(convertedIds);
+    const after: ICollection[] = JSON.parse(JSON.stringify(before));
+    for (const c of after) {
+      c.nodes = (c.nodes || []).filter((n) => !dropSet.has(n.id));
+    }
+    await db
+      .collection(NODES)
+      .doc(partId)
+      .update({ "properties.isPartOf": after });
+    cache.set(partId, {
+      ...partDoc,
+      properties: { ...partDoc.properties, isPartOf: after },
+    } as INode);
+    if (uname) {
+      childLogs.push({
+        nodeId: partId,
+        modifiedBy: uname,
+        modifiedProperty: "isPartOf",
+        previousValue: before,
+        newValue: after,
+        modifiedAt: new Date(),
+        changeType: "remove element",
+        fullNode: partDoc,
+        triggeredBy: parentLog,
+        ...(appName ? { appName } : {}),
+      } as NodeChange);
+    }
+  }
 }

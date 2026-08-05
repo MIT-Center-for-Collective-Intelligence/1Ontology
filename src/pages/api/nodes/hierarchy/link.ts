@@ -141,6 +141,7 @@ async function applyLink(ctx: ChangeCtx): Promise<{ ok: true }> {
       leftRootId && !removed.includes(leftRootId)
         ? [...removed, leftRootId]
         : removed,
+      added,
       cache,
       parentLog,
       uname,
@@ -157,6 +158,7 @@ async function applyLink(ctx: ChangeCtx): Promise<{ ok: true }> {
       await applyPartsForGenChange(
         id,
         removedGens,
+        added.includes(id) ? [nodeId] : [],
         cache,
         parentLog,
         uname,

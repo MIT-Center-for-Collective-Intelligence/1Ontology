@@ -73,7 +73,10 @@ async function applyUnlink(ctx: {
     changeType: "modify elements" as const,
   };
 
-  await db.collection(NODES).doc(nodeId).update({ [side]: value });
+  await db
+    .collection(NODES)
+    .doc(nodeId)
+    .update({ [side]: value });
 
   const childLogs: NodeChange[] = [];
   await applyReciprocityRemove(
@@ -109,6 +112,7 @@ async function applyUnlink(ctx: {
     await applyPartsForGenChange(
       nodeId,
       removed,
+      [],
       cache,
       parentLog,
       uname,
@@ -122,6 +126,7 @@ async function applyUnlink(ctx: {
       await applyPartsForGenChange(
         id,
         [nodeId],
+        [],
         cache,
         parentLog,
         uname,
@@ -179,14 +184,22 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     return fail(res, 400, "nodeId is required");
   }
   if (side !== "specializations" && side !== "generalizations") {
-    return fail(res, 400, "side must be 'specializations' or 'generalizations'");
+    return fail(
+      res,
+      400,
+      "side must be 'specializations' or 'generalizations'",
+    );
   }
   const rawIds: any[] | null = Array.isArray(data.removeIds)
     ? data.removeIds
     : typeof data.removeId === "string"
       ? [data.removeId]
       : null;
-  if (!rawIds || !rawIds.length || !rawIds.every((id) => typeof id === "string")) {
+  if (
+    !rawIds ||
+    !rawIds.length ||
+    !rawIds.every((id) => typeof id === "string")
+  ) {
     return fail(res, 400, "removeIds must be a non-empty array of node ids");
   }
   const removeIds: string[] = [
@@ -215,7 +228,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     });
     return res.status(200).json(result);
   } catch (error: any) {
-    if (error instanceof HttpError) return fail(res, error.status, error.message);
+    if (error instanceof HttpError)
+      return fail(res, error.status, error.message);
     console.error("nodes/hierarchy/unlink error", error);
     recordLogs(
       {

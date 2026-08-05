@@ -11,6 +11,7 @@ import {
 import { asPartsCollections, toParts } from "@components/lib/server/parts";
 import {
   classifySort,
+  partSourcesOf,
   toPartsNode,
   PartsGraph,
 } from "@components/lib/server/partsModel";
@@ -78,6 +79,7 @@ async function applySort(ctx: {
     .update({
       "properties.parts": side,
       partsInheritance,
+      partSources: partSourcesOf(result.parts),
       inheritedPartsDetails: computeInheritedPartsDetails({
         currentNode: updatedNode,
         relatedNodes: updatedRelated,

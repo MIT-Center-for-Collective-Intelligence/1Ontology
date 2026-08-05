@@ -18,6 +18,7 @@ import {
 import {
   applyRemove,
   isOwnedPart,
+  partSourcesOf,
   toPartsNode,
   PartsGraph,
 } from "@components/lib/server/partsModel";
@@ -72,6 +73,7 @@ async function applyRemoveParts(ctx: {
     .update({
       "properties.parts": side,
       partsInheritance,
+      partSources: partSourcesOf(parts),
       inheritedPartsDetails: computeInheritedPartsDetails({
         currentNode: updatedNode,
         relatedNodes: updatedRelated,

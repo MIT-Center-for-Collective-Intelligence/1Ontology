@@ -12,6 +12,7 @@ import { asPartsCollections, toParts } from "@components/lib/server/parts";
 import {
   applySwitchSource,
   isOwnedPart,
+  partSourcesOf,
   toPartsNode,
   PartsGraph,
 } from "@components/lib/server/partsModel";
@@ -83,6 +84,7 @@ async function applySwitch(ctx: {
     .update({
       "properties.parts": side,
       partsInheritance,
+      partSources: partSourcesOf(parts),
       inheritedPartsDetails: computeInheritedPartsDetails({
         currentNode: updatedNode,
         relatedNodes: updatedRelated,

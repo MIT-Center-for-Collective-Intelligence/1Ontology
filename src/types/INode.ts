@@ -99,6 +99,11 @@ export type INode = {
    * Never shown in the UI directly and never copied to other nodes.
    */
   resolvedParts?: ILinkNode[];
+  /**
+   * Query index: one "partId:ownerId" key per stored entry inherited
+   * from another node. It's used to find who tracks an owner's part. Missing means empty.
+   */
+  partSources?: string[];
   specializations: ICollection[];
   generalizations: ICollection[];
   root: string;

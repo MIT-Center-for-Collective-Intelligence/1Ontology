@@ -15,12 +15,17 @@ import {
   writeChangeLog,
 } from "@components/lib/server/hierarchy";
 import {
+  absorbDescendantOwnership,
   applyIsPartOfOwnerOnly,
   asPartsCollections,
   partsNodes,
   toParts,
 } from "@components/lib/server/parts";
-import { childSourceOf, isOwnedPart } from "@components/lib/server/partsModel";
+import {
+  childSourceOf,
+  isOwnedPart,
+  partSourcesOf,
+} from "@components/lib/server/partsModel";
 import {
   computeInheritedPartsDetails,
   fetchPartsContext,
@@ -86,7 +91,8 @@ async function applyAdd(ctx: {
     throw new HttpError(400, "all of the parts are already on this node");
   }
 
-  const side = toParts([...entries, ...additions]);
+  const nextEntries = [...entries, ...additions];
+  const side = toParts(nextEntries);
   const updatedNode = {
     ...nodeData,
     properties: { ...nodeData.properties, parts: side },
@@ -99,6 +105,7 @@ async function applyAdd(ctx: {
     .doc(nodeId)
     .update({
       "properties.parts": side,
+      partSources: partSourcesOf(nextEntries),
       inheritedPartsDetails: computeInheritedPartsDetails({
         currentNode: updatedNode,
         relatedNodes: updatedRelated,
@@ -123,6 +130,19 @@ async function applyAdd(ctx: {
     nodeData.title ?? "",
     addedOwn,
     [],
+    cache,
+    parentLog,
+    uname,
+    appName,
+    childLogs,
+  );
+
+  // A descendant that already owned one of these parts loses that ownership:
+  // the part is now provided from above, so its copy converts to inherited.
+  await absorbDescendantOwnership(
+    nodeId,
+    additions.map((p) => ({ partId: p.id, owner: p.inheritedFrom ?? nodeId })),
+    updatedRelated,
     cache,
     parentLog,
     uname,

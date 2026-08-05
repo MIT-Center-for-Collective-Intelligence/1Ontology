@@ -23,6 +23,7 @@ import {
   partsNodes,
   toParts,
 } from "@components/lib/server/parts";
+import { partSourcesOf } from "@components/lib/server/partsModel";
 import {
   computeInheritedPartsDetails,
   fetchPartsContext,
@@ -216,7 +217,8 @@ async function applyClone(ctx: {
     // The new clone is an owned part (its isPartOf backlink was seeded above):
     // append it to the stored entries; appending never breaks attachment.
     sideBefore = asCollections(currentNode.properties?.parts);
-    side = toParts([...partsNodes(sideBefore), { id: newNodeId, title }]);
+    const nextEntries = [...partsNodes(sideBefore), { id: newNodeId, title }];
+    side = toParts(nextEntries);
     const updatedCurrent = {
       ...currentNode,
       properties: { ...currentNode.properties, parts: side },
@@ -228,6 +230,7 @@ async function applyClone(ctx: {
       .doc(currentNodeId)
       .update({
         "properties.parts": side,
+        partSources: partSourcesOf(nextEntries),
         inheritedPartsDetails: computeInheritedPartsDetails({
           currentNode: updatedCurrent,
           relatedNodes,
@@ -310,6 +313,7 @@ async function applyClone(ctx: {
     await applyPartsForGenChange(
       currentNodeId,
       leftRootId ? [leftRootId] : [],
+      [newNodeId],
       cache,
       parentLog,
       uname,
