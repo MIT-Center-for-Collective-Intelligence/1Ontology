@@ -14,6 +14,7 @@ import {
   absorbOwnedForGens,
   absorbOwnedPart,
   applyGenChange,
+  applyViaFollowerChange,
   childSourceOf,
   isOwnedPart,
   partSourcesOf,
@@ -366,6 +367,49 @@ export async function propagateOwnedPartChange(
     batch.update(db.collection(NODES).doc(id), {
       "properties.parts": toParts(rePointed),
       partSources: partSourcesOf(rePointed),
+    });
+    pending += 1;
+    if (pending >= MAX_TRANSACTION_WRITES) {
+      await batch.commit();
+      batch = db.batch();
+      pending = 0;
+    }
+  }
+  if (pending > 0) await batch.commit();
+}
+
+/**
+ * Entries elsewhere that FOLLOW `genId` (`via`, found by the "partId@genId"
+ * key) mirror its remove/replace — for EVERY edited part, owned or not:
+ * that is the point of a pick.
+ */
+export async function propagateViaFollowers(
+  genId: string,
+  changes: { fromId: string; to?: { id: string; title: string } }[],
+): Promise<void> {
+  const docs = new Map<string, INode>();
+  for (const c of changes) {
+    const snap = await db
+      .collection(NODES)
+      .where("partSources", "array-contains", `${c.fromId}@${genId}`)
+      .get();
+    for (const d of snap.docs) {
+      const data = d.data() as INode;
+      if (!data.deleted && !docs.has(d.id)) {
+        docs.set(d.id, { ...data, id: d.id });
+      }
+    }
+  }
+
+  let batch = db.batch();
+  let pending = 0;
+  for (const [id, node] of docs) {
+    const entries = partsNodes(asPartsCollections(node.properties?.parts));
+    const { parts, changed } = applyViaFollowerChange(entries, genId, changes);
+    if (!changed) continue;
+    batch.update(db.collection(NODES).doc(id), {
+      "properties.parts": toParts(parts),
+      partSources: partSourcesOf(parts),
     });
     pending += 1;
     if (pending >= MAX_TRANSACTION_WRITES) {

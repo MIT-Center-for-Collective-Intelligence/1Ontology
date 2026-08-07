@@ -49,6 +49,12 @@ export type ILinkNode = {
    * their array order is authoritative.
    */
   after?: string | null;
+  /**
+   * The generalization the user picked this inherited part to follow. Edits
+   * made AT that gen (remove/replace) reach this entry, on top of the owner's
+   * changes via `inheritedFrom`. Empty means no generalization is picked.
+   */
+  via?: string;
 };
 
 /**
@@ -100,8 +106,9 @@ export type INode = {
    */
   resolvedParts?: ILinkNode[];
   /**
-   * Query index: one "partId:ownerId" key per stored entry inherited
-   * from another node. It's used to find who tracks an owner's part. Missing means empty.
+   * Query index: a "partId:ownerId" key per stored entry inherited from another
+   * node, plus a "partId@genId" key when the entry follows a picked gen (via).
+   * Used to find who tracks an owner's part or follows a gen. Missing = empty.
    */
   partSources?: string[];
   specializations: ICollection[];
