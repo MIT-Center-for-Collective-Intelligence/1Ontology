@@ -267,6 +267,8 @@ const analyzeInheritance = (
   for (const generalizationPart of generalizationParts) {
     if (!matchedParts.has(generalizationPart)) {
       for (const currentPart of currentParts) {
+        // a current part matched exactly is never picked as a specialized part ">"
+        if (usedGeneralizationParts.has(currentPart)) continue;
         const hops = findHierarchicalDistance(generalizationPart, currentPart);
         if (hops !== -1) {
           const fromOptional = getPartOptionalStatus(
@@ -317,7 +319,8 @@ const analyzeInheritance = (
 
   const currentPartsOrder = currentParts;
 
-  const hasSeenTo = new Set();
+  // Parts already matched by "=" are off-limits to ">" picks
+  const hasSeenTo = new Set(usedGeneralizationParts);
   const filteredSpecializations: TransferInheritance[] = Object.entries(
     groupedByGeneralization,
   ).reduce((acc, [from, entries]) => {
