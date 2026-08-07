@@ -13,6 +13,7 @@ import {
   applyIsPartOfOwnerOnly,
   asPartsCollections,
   propagateOwnedPartChange,
+  propagateViaFollowers,
   toParts,
 } from "@components/lib/server/parts";
 import {
@@ -112,6 +113,12 @@ async function applyRemoveParts(ctx: {
       ownedRemoved.map((fromId) => ({ fromId })),
     );
   }
+
+  // Followers that PICKED this node mirror every removal, owned or not.
+  await propagateViaFollowers(
+    nodeId,
+    removed.map((p) => ({ fromId: p.id })),
+  );
 
   if (uname) {
     await writeChangeLog(

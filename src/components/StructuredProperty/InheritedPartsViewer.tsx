@@ -109,7 +109,8 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
     return !!resolvedParts.find((n) => n.id === partId)?.optional;
   };
 
-  // The generalization title a part is specifically inherited from.
+  // The generalization title a part is specifically inherited from: the
+  // picked gen (via) when recorded, else the gen its owner resolves through.
   const getPartSpecificSourceTitle = (partId: string): string | null => {
     const part = resolvedParts.find((n) => n.id === partId);
     if (!part?.inheritedFrom) return null;
@@ -119,14 +120,19 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
       nodes,
     );
     if (providers.length < 2) return null;
-    const current = providers.find((p) => {
-      const genPart = resolvedOf(p.generalizationId).find(
-        (n) => n.id === partId,
-      );
-      return (
-        (genPart?.inheritedFrom || p.generalizationId) === part.inheritedFrom
-      );
-    });
+    const picked = part.via
+      ? providers.find((p) => p.generalizationId === part.via)
+      : undefined;
+    const current =
+      picked ??
+      providers.find((p) => {
+        const genPart = resolvedOf(p.generalizationId).find(
+          (n) => n.id === partId,
+        );
+        return (
+          (genPart?.inheritedFrom || p.generalizationId) === part.inheritedFrom
+        );
+      });
     return (
       current?.generalizationTitle ?? nodes[part.inheritedFrom]?.title ?? null
     );

@@ -772,6 +772,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
           toOptional: liveOptional,
           optionalChange,
           inheritedFrom: partNode.inheritedFrom,
+          via: partNode.via,
         };
       }
       return {
@@ -790,6 +791,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
         hops: 0,
         pending: true,
         inheritedFrom: partNode.inheritedFrom,
+        via: partNode.via,
       };
     });
 
@@ -1496,67 +1498,91 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                           This part is specifically inherited
                                           from:
                                         </ListSubheader>
-                                        {[
-                                          ...(partSourcesLookup[entry.to] ??
-                                            []),
-                                        ]
-                                          .sort(
-                                            (a, b) =>
-                                              (b.owner === entry.inheritedFrom
-                                                ? 1
-                                                : 0) -
-                                              (a.owner === entry.inheritedFrom
-                                                ? 1
-                                                : 0),
-                                          )
-                                          .map((source) => {
-                                            const isCurrent =
-                                              source.owner ===
-                                              entry.inheritedFrom;
-                                            return (
-                                              <MenuItem
-                                                key={`source-${source.genId}`}
-                                                disabled={isCurrent}
-                                                onClick={() => {
-                                                  if (
-                                                    isCurrent ||
-                                                    savingPartIds.has(entry.to)
-                                                  ) {
-                                                    return;
+                                        {(() => {
+                                          // Check sits on the picked gen (via),
+                                          // else on the resolution path. Picking
+                                          // a relay records the pick; picking
+                                          // another owner repoints.
+                                          const sources =
+                                            partSourcesLookup[entry.to] ?? [];
+                                          const matching = sources
+                                            .filter(
+                                              (s) =>
+                                                s.owner === entry.inheritedFrom,
+                                            )
+                                            .map((s) => s.genId);
+                                          const overallSource =
+                                            currentVisibleNode.partsInheritance
+                                              ?.source ?? "";
+                                          const currentGenId =
+                                            entry.via &&
+                                            sources.some(
+                                              (s) => s.genId === entry.via,
+                                            )
+                                              ? entry.via
+                                              : matching.includes(overallSource)
+                                                ? overallSource
+                                                : matching[0];
+                                          return [...sources]
+                                            .sort(
+                                              (a, b) =>
+                                                (b.genId === currentGenId
+                                                  ? 1
+                                                  : 0) -
+                                                (a.genId === currentGenId
+                                                  ? 1
+                                                  : 0),
+                                            )
+                                            .map((source) => {
+                                              const isCurrent =
+                                                source.genId === currentGenId;
+                                              return (
+                                                <MenuItem
+                                                  key={`source-${source.genId}`}
+                                                  disabled={isCurrent}
+                                                  onClick={() => {
+                                                    if (
+                                                      isCurrent ||
+                                                      savingPartIds.has(
+                                                        entry.to,
+                                                      )
+                                                    ) {
+                                                      return;
+                                                    }
+                                                    switchPartSource(
+                                                      entry.to,
+                                                      source.genId,
+                                                    );
+                                                  }}
+                                                  sx={
+                                                    isCurrent
+                                                      ? currentSourceItemSx
+                                                      : optionItemSx
                                                   }
-                                                  switchPartSource(
-                                                    entry.to,
-                                                    source.genId,
-                                                  );
-                                                }}
-                                                sx={
-                                                  isCurrent
-                                                    ? currentSourceItemSx
-                                                    : optionItemSx
-                                                }
-                                              >
-                                                <CheckIcon
-                                                  sx={{
-                                                    fontSize: 18,
-                                                    color: "#f2a43a",
-                                                    visibility: isCurrent
-                                                      ? "visible"
-                                                      : "hidden",
-                                                  }}
-                                                />
-                                                <Typography
-                                                  sx={{
-                                                    fontSize: "1rem",
-                                                    fontWeight: isCurrent
-                                                      ? 700
-                                                      : 400,
-                                                  }}
                                                 >
-                                                  {source.title}
-                                                </Typography>
-                                              </MenuItem>
-                                            );
-                                          })}
+                                                  <CheckIcon
+                                                    sx={{
+                                                      fontSize: 18,
+                                                      color: "#f2a43a",
+                                                      visibility: isCurrent
+                                                        ? "visible"
+                                                        : "hidden",
+                                                    }}
+                                                  />
+                                                  <Typography
+                                                    sx={{
+                                                      fontSize: "1rem",
+                                                      fontWeight: isCurrent
+                                                        ? 700
+                                                        : 400,
+                                                    }}
+                                                  >
+                                                    {source.title}
+                                                  </Typography>
+                                                </MenuItem>
+                                              );
+                                            });
+                                        })()}
                                       </Select>
                                     </Box>
                                   </Tooltip>

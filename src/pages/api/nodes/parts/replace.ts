@@ -14,6 +14,7 @@ import {
   applyIsPartOfOwnerOnly,
   asPartsCollections,
   propagateOwnedPartChange,
+  propagateViaFollowers,
   toParts,
 } from "@components/lib/server/parts";
 import {
@@ -118,6 +119,11 @@ async function applyReplaceParts(ctx: {
       { fromId, to: { id: toId, title: toNode.title ?? "" } },
     ]);
   }
+
+  // Followers that PICKED this node mirror the replace, owned or not.
+  await propagateViaFollowers(nodeId, [
+    { fromId, to: { id: toId, title: toNode.title ?? "" } },
+  ]);
 
   // The replacement is owned here now — a descendant's own copy of it
   // converts to inherited.

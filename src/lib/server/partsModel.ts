@@ -55,14 +55,19 @@ export function isOwnedPart(part: ILinkNode): boolean {
 }
 
 /**
- * Query index for stored entries' inheritedFrom tags: one "partId:ownerId"
- * key per non-owned entry. Every write of `properties.parts` MUST write
- * this alongside; a missing field means empty.
+ * Query index for stored entries' provenance: one "partId:ownerId" key per
+ * non-owned entry, plus one "partId@genId" key when the entry follows a
+ * picked gen (`via`). Every write of `properties.parts` MUST write this
+ * alongside; a missing field means empty.
  */
 export function partSourcesOf(parts: PartEntry[]): string[] {
-  return parts
-    .filter((e) => e.inheritedFrom)
-    .map((e) => `${e.id}:${e.inheritedFrom}`);
+  const keys: string[] = [];
+  for (const e of parts) {
+    if (!e.inheritedFrom) continue;
+    keys.push(`${e.id}:${e.inheritedFrom}`);
+    if (e.via) keys.push(`${e.id}@${e.via}`);
+  }
+  return keys;
 }
 
 /**
@@ -98,6 +103,7 @@ function toResolved(e: PartEntry): ILinkNode {
   if (e.title !== undefined) p.title = e.title;
   if (e.optional) p.optional = true;
   if (e.inheritedFrom) p.inheritedFrom = e.inheritedFrom;
+  if (e.via) p.via = e.via;
   return p;
 }
 
@@ -446,12 +452,9 @@ export function applyReplace(
 }
 
 /**
- * Switch which generalization a part is SPECIFICALLY inherited from: the part
- * starts tracking the owner resolved through `genId`. A virtual part mints a
- * stored entry in its slot (flags fold in, its override moves onto the entry);
- * an existing entry just repoints. Membership and order don't change, so
- * attachment is untouched. No-ops (`changed: false`): part absent or owned,
- * or the gen doesn't provide it.
+ * Switch a part's specific inheritance to the owner resolved through `genId`,
+ * recording `via: genId` when the gen is a relay so edits made AT it follow.
+ * Virtual parts mint an entry, existing ones repoint; attachment and order never change.
  */
 export function applySwitchSource(
   nodeId: string,
@@ -481,15 +484,32 @@ export function applySwitchSource(
     };
   }
   const owner = childSourceOf(genPart, genId);
+  const via = owner === genId ? undefined : genId;
 
-  if (node.parts.some((e) => e.id === partId)) {
-    const parts = node.parts.map((e) =>
-      e.id === partId ? { ...e, inheritedFrom: owner } : e,
-    );
+  const existing = node.parts.find((e) => e.id === partId);
+  if (existing) {
+    if (
+      existing.inheritedFrom === owner &&
+      (existing.via ?? undefined) === via
+    ) {
+      return {
+        parts: node.parts,
+        partsInheritance: node.partsInheritance,
+        changed: false,
+      };
+    }
+    const parts = node.parts.map((e) => {
+      if (e.id !== partId) return e;
+      const copy = { ...e, inheritedFrom: owner };
+      if (via) copy.via = via;
+      else delete copy.via;
+      return copy;
+    });
     return { parts, partsInheritance: node.partsInheritance, changed: true };
   }
 
   const minted: PartEntry = { id: partId, inheritedFrom: owner };
+  if (via) minted.via = via;
   if (viewed.title !== undefined) minted.title = viewed.title;
   if (viewed.optional) minted.optional = true;
   const overrides = { ...node.partsInheritance.overrides };
@@ -583,27 +603,34 @@ export function applyGenChange(
     return p ? childSourceOf(p, g.id) : null;
   };
 
+  // A pick through a removed gen loses its path — fall back to owner-only.
+  const keepEntry = (e: PartEntry): PartEntry => {
+    const copy = { ...e };
+    if (copy.via && removedGenIds.includes(copy.via)) delete copy.via;
+    return copy;
+  };
+
   const kept: PartEntry[] = [];
   for (const e of node.parts) {
     if (isOwnedPart(e)) {
-      kept.push({ ...e });
+      kept.push(keepEntry(e));
       continue;
     }
     const tracked = removed.some(
       (g) => ownerThrough(g, e.id) === e.inheritedFrom,
     );
     if (!tracked) {
-      kept.push({ ...e });
+      kept.push(keepEntry(e));
       continue;
     }
     if (remaining.some((g) => ownerThrough(g, e.id) === e.inheritedFrom)) {
-      kept.push({ ...e });
+      kept.push(keepEntry(e));
       continue;
     }
     const provider = remaining.find((g) => g.parts.some((p) => p.id === e.id));
     if (provider) {
       kept.push({
-        ...e,
+        ...keepEntry(e),
         inheritedFrom: ownerThrough(provider, e.id) as string,
       });
     }
@@ -649,6 +676,56 @@ export function applyGenChange(
     }
   }
   return { parts, partsInheritance: { source: next.id, overrides } };
+}
+
+/**
+ * `genId` removed/replaced parts in its own view; entries that FOLLOW it
+ * (`via: genId`) mirror that: drop, or morph onto the replacement (which the
+ * gen now owns, so `via` clears). Morph collisions drop; anchors re-point.
+ */
+export function applyViaFollowerChange(
+  parts: PartEntry[],
+  genId: string,
+  changes: { fromId: string; to?: { id: string; title: string } }[],
+): { parts: PartEntry[]; changed: boolean } {
+  const presentIds = new Set(parts.map((e) => e.id));
+  const droppedIds = new Set<string>();
+  let changed = false;
+  const next: PartEntry[] = [];
+  for (const e of parts) {
+    const change = changes.find((c) => c.fromId === e.id && e.via === genId);
+    if (!change) {
+      next.push(e);
+      continue;
+    }
+    changed = true;
+    if (change.to && !presentIds.has(change.to.id)) {
+      const morphed = {
+        ...e,
+        id: change.to.id,
+        title: change.to.title,
+        inheritedFrom: genId,
+      };
+      delete morphed.via;
+      next.push(morphed);
+    } else {
+      droppedIds.add(e.id);
+    }
+  }
+  if (!changed) return { parts, changed };
+  const byId = new Map(parts.map((e) => [e.id, e]));
+  const rePointed = next.map((e) => {
+    if (e.after == null || !droppedIds.has(e.after)) return e;
+    let cursor: string | null | undefined = e.after;
+    while (cursor != null && droppedIds.has(cursor)) {
+      cursor = byId.get(cursor)?.after;
+    }
+    const copy = { ...e };
+    if (cursor === undefined) delete copy.after;
+    else copy.after = cursor;
+    return copy;
+  });
+  return { parts: rePointed, changed };
 }
 
 /**

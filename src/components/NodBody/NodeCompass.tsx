@@ -350,20 +350,25 @@ const NodeCompass: React.FC<Props> = ({
     ],
   );
 
-  // Parts are read straight from this node's `properties.parts` and will no longer follow `inheritance.parts.ref`.
-  const ids = useMemo(
-    () => ({
+  // Parts come from the node's stored `resolvedParts` snapshot
+  const ids = useMemo(() => {
+    const resolved = currentVisibleNode.resolvedParts;
+    const partIds = Array.isArray(resolved)
+      ? resolved
+          .map((p) => p?.id)
+          .filter((id): id is string => !!id)
+      : flattenIds(
+          currentVisibleNode.properties?.parts as ICollection[] | undefined,
+        );
+    return {
       left: flattenIds(currentVisibleNode.generalizations),
       right: flattenIds(currentVisibleNode.specializations),
       top: flattenIds(
         currentVisibleNode.properties?.isPartOf as ICollection[] | undefined,
       ),
-      bottom: flattenIds(
-        currentVisibleNode.properties?.parts as ICollection[] | undefined,
-      ),
-    }),
-    [currentVisibleNode],
-  );
+      bottom: partIds,
+    };
+  }, [currentVisibleNode]);
 
   const layout = useMemo(
     () =>
@@ -396,6 +401,9 @@ const NodeCompass: React.FC<Props> = ({
       currentVisibleNode.properties?.isPartOf as ICollection[] | undefined,
     );
     collect(currentVisibleNode.properties?.parts as ICollection[] | undefined);
+    for (const p of currentVisibleNode.resolvedParts ?? []) {
+      if (p?.id && p?.title) m[p.id] = p.title;
+    }
     return m;
   }, [currentVisibleNode]);
 
