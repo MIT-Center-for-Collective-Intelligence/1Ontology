@@ -199,6 +199,11 @@ export const ONTOLOGY_APPS = development
         name: "Final Hierarchy with O*Net",
       },
       {
+        id: "ssg-skills-framework",
+        name: "SSG Skills Framework",
+        type: "other",
+      },
+      {
         id: "final-hierarchy-with-o*net-rob-title-review-2026-07-22",
         name: "Final Hierarchy with O*Net - Rob Title Review 2026-07-22",
         type: "other",
