@@ -57,7 +57,10 @@ async function applySort(ctx: {
     throw new HttpError(400, "orderedIds must be a permutation of the parts");
   }
 
-  const result = classifySort(nodeId, graph, orderedIds);
+  const genIds = (nodeData.generalizations ?? []).flatMap((c) =>
+    (c.nodes ?? []).map((n) => n.id),
+  );
+  const result = classifySort(nodeId, graph, orderedIds, genIds);
   const side = toParts(result.parts);
   const partsInheritance = result.breaks
     ? result.partsInheritance

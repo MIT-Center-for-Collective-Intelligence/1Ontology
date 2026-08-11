@@ -49,10 +49,14 @@ async function applyRemoveParts(ctx: {
   const graph: PartsGraph = new Map(
     Object.values(relatedNodes).map((n) => [n.id, toPartsNode(n)]),
   );
+  const genIds = (nodeData.generalizations ?? []).flatMap((c) =>
+    (c.nodes ?? []).map((n) => n.id),
+  );
   const { parts, partsInheritance, removed } = applyRemove(
     nodeId,
     graph,
     removeIds,
+    genIds,
   );
   if (removed.length === 0) {
     throw new HttpError(400, "none of the parts are on this node");

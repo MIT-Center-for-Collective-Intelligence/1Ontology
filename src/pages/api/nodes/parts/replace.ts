@@ -61,10 +61,16 @@ async function applyReplaceParts(ctx: {
     throw new HttpError(400, "toId is already a part of this node");
   }
 
-  const { parts, partsInheritance } = applyReplace(nodeId, graph, fromId, {
-    id: toId,
-    title: toNode.title ?? "",
-  });
+  const genIds = (nodeData.generalizations ?? []).flatMap((c) =>
+    (c.nodes ?? []).map((n) => n.id),
+  );
+  const { parts, partsInheritance } = applyReplace(
+    nodeId,
+    graph,
+    fromId,
+    { id: toId, title: toNode.title ?? "" },
+    genIds,
+  );
 
   const oldPartsCol = asPartsCollections(nodeData.properties?.parts);
   const side = toParts(parts);
