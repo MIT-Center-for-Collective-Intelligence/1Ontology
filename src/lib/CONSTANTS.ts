@@ -169,7 +169,7 @@ export const PROPERTIES_TO_IMPROVE: { [nodeType: string]: string[] } | any = {
 export const MODEL = "o3";
 export const GEMINI_MODEL = "gemini-3.1-pro-preview";
 
-export const ONTOLOGY_APPS = development
+export const ONTOLOGY_APPS: any = development
   ? [
       {
         id: "final-hierarchy-with-o*net",
@@ -202,6 +202,7 @@ export const ONTOLOGY_APPS = development
         id: "ssg-skills-framework",
         name: "SSG Skills Framework",
         type: "other",
+        editAccess: true,
       },
       {
         id: "final-hierarchy-with-o*net-rob-title-review-2026-07-22",
