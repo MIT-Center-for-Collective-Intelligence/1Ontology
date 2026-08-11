@@ -1255,6 +1255,8 @@ const StructuredProperty = ({
           (n: ILinkNode) => n.id === partId,
         );
         node.inheritedFrom = genPart?.inheritedFrom || genId;
+        // Record the picked gen when it relays the copy, so edits AT it follow.
+        if (node.inheritedFrom !== genId) node.via = genId;
         if (!node.title) node.title = genPart?.title ?? "";
       }
       newParts[0].nodes.push(node);

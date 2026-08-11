@@ -84,6 +84,8 @@ async function applyAdd(ctx: {
         );
       }
       node.inheritedFrom = childSourceOf(genPart, genId);
+      // Record the picked gen when it relays the copy, so edits AT it follow.
+      if (node.inheritedFrom !== genId) node.via = genId;
     }
     additions.push(node);
   }
