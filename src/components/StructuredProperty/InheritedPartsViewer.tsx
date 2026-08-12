@@ -212,6 +212,8 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
   };
 
   const getTabContent = (generalizationId: string): JSX.Element => {
+    const genTitle =
+      generalizations.find((g) => g.id === generalizationId)?.title ?? "";
     // Check if node has any parts at all
     const hasParts = resolvedParts.length > 0;
 
@@ -412,16 +414,26 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
 
                 <ListItemIcon sx={{ minWidth: "auto" }}>
                   {entry.symbol === "x" ? (
-                    <CloseIcon sx={{ fontSize: 20, color: "orange" }} />
+                    <Tooltip
+                      title={`"${genTitle}" has this part, but this node does not inherit it.`}
+                      placement="top"
+                    >
+                      <CloseIcon sx={{ fontSize: 20, color: "orange" }} />
+                    </Tooltip>
                   ) : entry.symbol === ">" ? (
-                    <ArrowForwardIosIcon
-                      sx={{
-                        fontSize: 20,
-                        color: "orange",
-                        p: 0.2,
-                        borderRadius: "50%",
-                      }}
-                    />
+                    <Tooltip
+                      title={`"${genTitle}" has the part "${entry.fromTitle}". This node has "${entry.toTitle}", a descendant of it.`}
+                      placement="top"
+                    >
+                      <ArrowForwardIosIcon
+                        sx={{
+                          fontSize: 20,
+                          color: "orange",
+                          p: 0.2,
+                          borderRadius: "50%",
+                        }}
+                      />
+                    </Tooltip>
                   ) : entry.symbol === "=" ? (
                     // A part specifically inherited through ANOTHER gen is
                     // not "equal" on this tab — hide the symbol but keep its
@@ -429,20 +441,30 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                     (() => {
                       const src = getPartCurrentSourceGenId(entry.to);
                       return (
-                        <DragHandleIcon
-                          sx={{
-                            fontSize: 20,
-                            color: "orange",
-                            visibility:
-                              src === undefined || src === generalizationId
-                                ? "visible"
-                                : "hidden",
-                          }}
-                        />
+                        <Tooltip
+                          title={`This part is inherited from "${genTitle}". If it changes there, it changes here too.`}
+                          placement="top"
+                        >
+                          <DragHandleIcon
+                            sx={{
+                              fontSize: 20,
+                              color: "orange",
+                              visibility:
+                                src === undefined || src === generalizationId
+                                  ? "visible"
+                                  : "hidden",
+                            }}
+                          />
+                        </Tooltip>
                       );
                     })()
                   ) : entry.symbol === "+" ? (
-                    <AddIcon sx={{ fontSize: 20, color: "orange" }} />
+                    <Tooltip
+                      title={`This part was added directly to this node. "${genTitle}" does not have it, so it is not inherited.`}
+                      placement="top"
+                    >
+                      <AddIcon sx={{ fontSize: 20, color: "orange" }} />
+                    </Tooltip>
                   ) : null}
                 </ListItemIcon>
 
