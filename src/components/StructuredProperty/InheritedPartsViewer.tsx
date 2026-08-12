@@ -109,6 +109,35 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
     return !!resolvedParts.find((n) => n.id === partId)?.optional;
   };
 
+  // Which gen this part is inherited through right now: the user's pick (via)
+  // if still valid, else the overall source, else the first gen that provides
+  // the part with the same owner. Undefined for owned parts or no match.
+  const getPartCurrentSourceGenId = (partId: string): string | undefined => {
+    const part = resolvedParts.find((n) => n.id === partId);
+    if (!part?.inheritedFrom) return undefined;
+    const withOwners = getPartGeneralizationSources(
+      partId,
+      generalizations,
+      nodes,
+    ).map((p) => {
+      const genPart = resolvedOf(p.generalizationId).find(
+        (n) => n.id === partId,
+      );
+      return {
+        genId: p.generalizationId,
+        owner: genPart?.inheritedFrom || p.generalizationId,
+      };
+    });
+    if (part.via && withOwners.some((s) => s.genId === part.via)) {
+      return part.via;
+    }
+    const matching = withOwners
+      .filter((s) => s.owner === part.inheritedFrom)
+      .map((s) => s.genId);
+    const overallSource = currentVisibleNode.partsInheritance?.source ?? "";
+    return matching.includes(overallSource) ? overallSource : matching[0];
+  };
+
   // The generalization title a part is specifically inherited from: the
   // picked gen (via) when recorded, else the gen its owner resolves through.
   const getPartSpecificSourceTitle = (partId: string): string | null => {
@@ -394,7 +423,24 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                       }}
                     />
                   ) : entry.symbol === "=" ? (
-                    <DragHandleIcon sx={{ fontSize: 20, color: "orange" }} />
+                    // A part specifically inherited through ANOTHER gen is
+                    // not "equal" on this tab — hide the symbol but keep its
+                    // space so the row columns stay aligned.
+                    (() => {
+                      const src = getPartCurrentSourceGenId(entry.to);
+                      return (
+                        <DragHandleIcon
+                          sx={{
+                            fontSize: 20,
+                            color: "orange",
+                            visibility:
+                              src === undefined || src === generalizationId
+                                ? "visible"
+                                : "hidden",
+                          }}
+                        />
+                      );
+                    })()
                   ) : entry.symbol === "+" ? (
                     <AddIcon sx={{ fontSize: 20, color: "orange" }} />
                   ) : null}

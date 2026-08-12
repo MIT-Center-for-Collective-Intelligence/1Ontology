@@ -846,6 +846,23 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
       });
     }
 
+    // The source a part currently resolves to: the picked gen (via) if it's
+    // still a valid source, else the overall source, else the first match.
+    const getCurrentSource = (entry: any) => {
+      const sources = partSourcesLookup[entry.to] ?? [];
+      const matching = sources
+        .filter((s) => s.owner === entry.inheritedFrom)
+        .map((s) => s.genId);
+      const overallSource = currentVisibleNode.partsInheritance?.source ?? "";
+      const currentGenId =
+        entry.via && sources.some((s) => s.genId === entry.via)
+          ? entry.via
+          : matching.includes(overallSource)
+            ? overallSource
+            : matching[0];
+      return sources.find((s) => s.genId === currentGenId);
+    };
+
     const nonDraggableItems = Object.keys(nonPickedOnes).filter((id) => {
       const index = details.findIndex((d) => d.from === id);
       return index === -1;
@@ -1116,7 +1133,16 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                           </Tooltip>
                         ) : entry.symbol === "=" ? (
                           <DragHandleIcon
-                            sx={{ fontSize: 20, color: "orange" }}
+                            sx={{
+                              fontSize: 20,
+                              color: "orange",
+                              visibility:
+                                !entry.inheritedFrom ||
+                                (getCurrentSource(entry)?.genId ??
+                                  generalizationId) === generalizationId
+                                  ? "visible"
+                                  : "hidden",
+                            }}
                           />
                         ) : entry.symbol === "+" ? (
                           <AddIcon sx={{ fontSize: 20, color: "orange" }} />
@@ -1434,7 +1460,9 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                   <Tooltip
                                     title={`Exists in ${
                                       (partSourcesLookup[entry.to] ?? []).length
-                                    } generalizations`}
+                                    } generalizations, but inherited from ${
+                                      getCurrentSource(entry)?.title ?? ""
+                                    }`}
                                     placement="top"
                                   >
                                     {/* Span, not the input: InputBase fires an
@@ -1505,24 +1533,8 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                           // another owner repoints.
                                           const sources =
                                             partSourcesLookup[entry.to] ?? [];
-                                          const matching = sources
-                                            .filter(
-                                              (s) =>
-                                                s.owner === entry.inheritedFrom,
-                                            )
-                                            .map((s) => s.genId);
-                                          const overallSource =
-                                            currentVisibleNode.partsInheritance
-                                              ?.source ?? "";
                                           const currentGenId =
-                                            entry.via &&
-                                            sources.some(
-                                              (s) => s.genId === entry.via,
-                                            )
-                                              ? entry.via
-                                              : matching.includes(overallSource)
-                                                ? overallSource
-                                                : matching[0];
+                                            getCurrentSource(entry)?.genId;
                                           return [...sources]
                                             .sort(
                                               (a, b) =>
