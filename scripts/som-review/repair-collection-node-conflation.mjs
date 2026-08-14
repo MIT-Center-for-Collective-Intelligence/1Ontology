@@ -12,7 +12,7 @@ import { getFirestore } from "firebase-admin/firestore";
 import { digestDocuments } from "./clone-and-apply-structure-review.mjs";
 
 const require = createRequire(import.meta.url);
-const { loadEnvConfig } = require("@next/env");
+require("../load-env.cjs");
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(scriptDir, "../..");
 const defaultAppId =
@@ -240,7 +240,6 @@ const writeAudit = (file, audit) => {
 };
 
 const main = async () => {
-  loadEnvConfig(repoRoot);
   const args = parseArgs();
   const environment = String(args.environment || "production");
   const appId = String(args["app-id"] || defaultAppId);

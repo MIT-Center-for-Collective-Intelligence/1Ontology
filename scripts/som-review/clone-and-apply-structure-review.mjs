@@ -8,7 +8,7 @@ import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 
 const require = createRequire(import.meta.url);
-const { loadEnvConfig } = require("@next/env");
+require("../load-env.cjs");
 const { cert, initializeApp } = require("firebase-admin/app");
 const { getFirestore } = require("firebase-admin/firestore");
 
@@ -1392,7 +1392,6 @@ async function main() {
     runSelfTest();
     return;
   }
-  loadEnvConfig(REPO_ROOT);
   const planFile = path.resolve(
     args.plan ||
       path.join(DEFAULT_ARTIFACT_DIR, "structure-application-plan.json"),

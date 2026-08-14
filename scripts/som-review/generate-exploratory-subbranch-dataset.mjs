@@ -18,7 +18,7 @@ import {
 } from "./audit-policy.mjs";
 
 const require = createRequire(import.meta.url);
-const { loadEnvConfig } = require("@next/env");
+require("../load-env.cjs");
 const { GoogleGenAI } = require("@google/genai");
 const { cert, initializeApp } = require("firebase-admin/app");
 const { getFirestore } = require("firebase-admin/firestore");
@@ -2396,7 +2396,6 @@ function writeDataset({
 }
 
 async function main() {
-  loadEnvConfig(REPO_ROOT);
   const args = parseArgs();
   const branch = clean(args.branch || "Buy");
   const environment = clean(args.environment || "production");

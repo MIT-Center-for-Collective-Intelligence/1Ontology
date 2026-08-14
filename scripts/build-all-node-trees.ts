@@ -1,6 +1,28 @@
-import { db } from "../src/lib/firestoreServer/admin";
-import { NODES } from "../src/lib/firestoreClient/collections";
-import { INode, TreeViewNode } from "../src/types/INode";
+import "./load-env";
+import { db } from "./admin";
+
+const NODES = "nodes";
+
+type INode = {
+  id: string;
+  title: string;
+  category?: boolean;
+  root?: boolean;
+  unclassified?: boolean;
+  nodeType?: string;
+  specializations?: { collectionName?: string; nodes?: { id: string }[] }[];
+  [key: string]: any;
+};
+
+interface TreeViewNode {
+  id: string;
+  nodeId: string;
+  name: string;
+  category: boolean;
+  nodeType?: string;
+  unclassified?: boolean;
+  childIds: string[];
+}
 
 type NodeTreeData = any;
 
