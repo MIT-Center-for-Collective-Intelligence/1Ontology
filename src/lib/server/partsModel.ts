@@ -176,15 +176,48 @@ function resolveInner(
 }
 
 /**
+ * Stamp each inherited entry with the gen it resolves through (`via`), so a
+ * broken node's parts keep following their gens. Source-first order breaks
+ * ties; an owner gen needs no via; existing picks are kept.
+ */
+function stampVia(
+  parts: PartEntry[],
+  graph: PartsGraph,
+  genIds: string[],
+): PartEntry[] {
+  if (genIds.length === 0) return parts;
+  const memo = new Map<string, ILinkNode[]>();
+  const resolutionOf = (gid: string) => {
+    if (!memo.has(gid)) memo.set(gid, resolveParts(gid, graph));
+    return memo.get(gid)!;
+  };
+  return parts.map((e) => {
+    if (!e.inheritedFrom || e.via) return e;
+    const gen = genIds.find((gid) => {
+      if (gid === e.inheritedFrom) return false;
+      const p = resolutionOf(gid).find((x) => x.id === e.id);
+      return !!p && childSourceOf(p, gid) === e.inheritedFrom;
+    });
+    return gen ? { ...e, via: gen } : e;
+  });
+}
+
+/**
  * Break = copy-on-write: the resolved view becomes the stored list (origins
- * kept, no anchors, overrides folded into the entries), source goes null.
+ * kept, no anchors, overrides folded in), source goes null. With `genIds`,
+ * inherited parts get `via` stamps so they keep following their gens.
  */
 export function materializeBreak(
   nodeId: string,
   graph: PartsGraph,
+  genIds: string[] = [],
 ): { parts: PartEntry[]; partsInheritance: PartsInheritance } {
+  const source = graph.get(nodeId)?.partsInheritance.source ?? null;
+  const ordered = source
+    ? [source, ...genIds.filter((g) => g !== source)]
+    : genIds;
   return {
-    parts: resolveParts(nodeId, graph),
+    parts: stampVia(resolveParts(nodeId, graph), graph, ordered),
     partsInheritance: { source: null, overrides: {} },
   };
 }
@@ -200,6 +233,7 @@ export function classifySort(
   nodeId: string,
   graph: PartsGraph,
   orderedIds: string[],
+  genIds: string[] = [],
 ):
   | { breaks: false; parts: PartEntry[] }
   | { breaks: true; parts: PartEntry[]; partsInheritance: PartsInheritance } {
@@ -228,7 +262,10 @@ export function classifySort(
     orderedSlots.every((id, i) => id === arrangement[i]);
 
   if (!preserved) {
-    const resolved = resolveParts(nodeId, graph);
+    const resolved = stampVia(resolveParts(nodeId, graph), graph, [
+      source,
+      ...genIds.filter((g) => g !== source),
+    ]);
     const byId = new Map(resolved.map((p) => [p.id, p]));
     const parts: PartEntry[] = [];
     for (const id of orderedIds) {
@@ -276,6 +313,7 @@ export function applyRemove(
   nodeId: string,
   graph: PartsGraph,
   removeIds: string[],
+  genIds: string[] = [],
 ): {
   parts: PartEntry[];
   partsInheritance: PartsInheritance;
@@ -308,7 +346,7 @@ export function applyRemove(
       : new Set<string>();
 
   if ([...removedIds].some((id) => sourceProvides.has(id))) {
-    const broken = materializeBreak(nodeId, graph);
+    const broken = materializeBreak(nodeId, graph, genIds);
     return {
       parts: broken.parts.filter((p) => !removedIds.has(p.id)),
       partsInheritance: broken.partsInheritance,
@@ -403,6 +441,7 @@ export function applyReplace(
   graph: PartsGraph,
   fromId: string,
   to: { id: string; title: string },
+  genIds: string[] = [],
 ): {
   parts: PartEntry[];
   partsInheritance: PartsInheritance;
@@ -435,7 +474,7 @@ export function applyReplace(
       : new Set<string>();
 
   if (sourceProvides.has(fromId)) {
-    const broken = materializeBreak(nodeId, graph);
+    const broken = materializeBreak(nodeId, graph, genIds);
     return {
       parts: broken.parts.map((p) => (p.id === fromId ? swapped : p)),
       partsInheritance: broken.partsInheritance,
@@ -452,15 +491,17 @@ export function applyReplace(
 }
 
 /**
- * Switch a part's specific inheritance to the owner resolved through `genId`,
- * recording `via: genId` when the gen is a relay so edits made AT it follow.
- * Virtual parts mint an entry, existing ones repoint; attachment and order never change.
+ * Switch a part's specific inheritance to the owner resolved through `genId`
+ * (`via` recorded when the gen is a relay). Switching a SOURCE-PROVIDED part
+ * to another gen — even a same-owner relay — BREAKS overall inheritance:
+ * materialize with via stamps, then repoint the entry. Floats/broken just repoint.
  */
 export function applySwitchSource(
   nodeId: string,
   graph: PartsGraph,
   partId: string,
   genId: string,
+  genIds: string[] = [],
 ): {
   parts: PartEntry[];
   partsInheritance: PartsInheritance;
@@ -487,17 +528,39 @@ export function applySwitchSource(
   const via = owner === genId ? undefined : genId;
 
   const existing = node.parts.find((e) => e.id === partId);
+  if (
+    existing &&
+    existing.inheritedFrom === owner &&
+    (existing.via ?? undefined) === via
+  ) {
+    return {
+      parts: node.parts,
+      partsInheritance: node.partsInheritance,
+      changed: false,
+    };
+  }
+
+  const { source } = node.partsInheritance;
+  const sourceProvides =
+    source && graph.has(source)
+      ? resolveParts(source, graph).some((p) => p.id === partId)
+      : false;
+
+  // Picking another gen for a source-provided part diverges from the source's
+  // arrangement: the node breaks and every part mirrors its specific gen.
+  if (source && sourceProvides && genId !== source) {
+    const broken = materializeBreak(nodeId, graph, genIds);
+    const parts = broken.parts.map((e) => {
+      if (e.id !== partId) return e;
+      const copy = { ...e, inheritedFrom: owner };
+      if (via) copy.via = via;
+      else delete copy.via;
+      return copy;
+    });
+    return { parts, partsInheritance: broken.partsInheritance, changed: true };
+  }
+
   if (existing) {
-    if (
-      existing.inheritedFrom === owner &&
-      (existing.via ?? undefined) === via
-    ) {
-      return {
-        parts: node.parts,
-        partsInheritance: node.partsInheritance,
-        changed: false,
-      };
-    }
     const parts = node.parts.map((e) => {
       if (e.id !== partId) return e;
       const copy = { ...e, inheritedFrom: owner };
@@ -506,6 +569,15 @@ export function applySwitchSource(
       return copy;
     });
     return { parts, partsInheritance: node.partsInheritance, changed: true };
+  }
+
+  // Virtual part + genId === source: the canonical pick — nothing to record.
+  if (source && sourceProvides && genId === source) {
+    return {
+      parts: node.parts,
+      partsInheritance: node.partsInheritance,
+      changed: false,
+    };
   }
 
   const minted: PartEntry = { id: partId, inheritedFrom: owner };

@@ -66,6 +66,7 @@ async function applySwitch(ctx: {
     graph,
     partId,
     genId,
+    [...nodeGenIds],
   );
 
   const oldPartsCol = asPartsCollections(nodeData.properties?.parts);
