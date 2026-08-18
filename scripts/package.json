@@ -1,0 +1,25 @@
+{
+  "name": "ontology-scripts",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "classify": "tsx classification/batch-classifications.ts",
+    "test": "node --test som-review/*.test.mjs"
+  },
+  "dependencies": {
+    "@google/genai": "^2.0.0",
+    "chromadb": "^2.4.6",
+    "dotenv": "^16.4.5",
+    "fast-csv": "^5.0.2",
+    "firebase-admin": "^12.7.0",
+    "googleapis": "^144.0.0",
+    "openai": "^4.82.0",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "tsx": "^4.19.2",
+    "typescript": "^5"
+  }
+}

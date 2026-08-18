@@ -25,7 +25,7 @@ import {
 } from "./clone-and-apply-structure-review.mjs";
 
 const require = createRequire(import.meta.url);
-const { loadEnvConfig } = require("@next/env");
+require("../load-env.cjs");
 const { cert, initializeApp } = require("firebase-admin/app");
 const { getFirestore } = require("firebase-admin/firestore");
 
@@ -881,7 +881,6 @@ async function main() {
     runSelfTest();
     return;
   }
-  loadEnvConfig(REPO_ROOT);
   const planFile = path.resolve(
     args.plan ||
       path.join(DEFAULT_ARTIFACT_DIR, "semantic-application-plan.json"),

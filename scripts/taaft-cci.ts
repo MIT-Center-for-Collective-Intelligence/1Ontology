@@ -1,4 +1,5 @@
-import { db } from "@components/lib/firestoreServer/admin";
+import "./load-env";
+import { db } from "./admin";
 import {
   Content,
   GoogleGenAI,

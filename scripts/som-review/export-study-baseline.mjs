@@ -19,7 +19,7 @@ import {
 } from "./study-baseline-lib.mjs";
 
 const require = createRequire(import.meta.url);
-const { loadEnvConfig } = require("@next/env");
+require("../load-env.cjs");
 const { cert, initializeApp } = require("firebase-admin/app");
 const { getAuth } = require("firebase-admin/auth");
 const { getFirestore } = require("firebase-admin/firestore");
@@ -254,7 +254,6 @@ const write = (file, value) => {
 };
 
 const main = async () => {
-  loadEnvConfig(REPO_ROOT);
   const args = parseArgs();
   const environment = args.environment || "production";
   const capturedAt = args["captured-at"] || new Date().toISOString();

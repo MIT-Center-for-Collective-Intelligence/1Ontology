@@ -7,7 +7,7 @@ import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 
 const require = createRequire(import.meta.url);
-const { loadEnvConfig } = require("@next/env");
+require("../load-env.cjs");
 const { cert, initializeApp } = require("firebase-admin/app");
 const { getAuth } = require("firebase-admin/auth");
 const { getFirestore } = require("firebase-admin/firestore");
@@ -132,7 +132,6 @@ function linkedNodeTitles(collections) {
 }
 
 async function main() {
-  loadEnvConfig(REPO_ROOT);
   const args = parseArgs();
   const datasetDir = path.resolve(args["dataset-dir"] || DEFAULT_DATASET_DIR);
   const issueType = args["issue-type"] || "title-clarity";

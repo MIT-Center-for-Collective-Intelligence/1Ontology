@@ -24,7 +24,7 @@ import {
 } from "./semantic-review-lib.mjs";
 
 const require = createRequire(import.meta.url);
-const { loadEnvConfig } = require("@next/env");
+require("../load-env.cjs");
 const { cert, initializeApp } = require("firebase-admin/app");
 const { getFirestore } = require("firebase-admin/firestore");
 const { GoogleGenAI } = require("@google/genai");
@@ -816,7 +816,6 @@ const serializeNode = (node, referenceOnly = false) => ({
 });
 
 const main = async () => {
-  loadEnvConfig(repoRoot);
   const args = parseArgs();
   const generatedAt = clean(args["generated-at"]);
   if (!generatedAt || Number.isNaN(Date.parse(generatedAt))) {

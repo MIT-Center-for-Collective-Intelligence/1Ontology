@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
-const { loadEnvConfig } = require("@next/env");
+require("../load-env.cjs");
 const { cert, initializeApp } = require("firebase-admin/app");
 const { FieldPath, getFirestore } = require("firebase-admin/firestore");
 
@@ -87,7 +87,6 @@ function isOnetEvidence(node) {
 }
 
 async function main() {
-  loadEnvConfig(REPO_ROOT);
   const args = parseArgs();
   const environment = args.environment || "production";
   const ontologyAppId = required(args["app-id"], "--app-id");

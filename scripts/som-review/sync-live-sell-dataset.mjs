@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
-const { loadEnvConfig } = require("@next/env");
+require("../load-env.cjs");
 const { cert, initializeApp } = require("firebase-admin/app");
 const { getFirestore } = require("firebase-admin/firestore");
 
@@ -776,7 +776,6 @@ function extendProposalSchema(directory) {
 }
 
 async function main() {
-  loadEnvConfig(REPO_ROOT);
   const args = parseArgs();
   ONTOLOGY_APP_ID =
     args["ontology-app-id"] ||
