@@ -483,6 +483,17 @@ export function applyReplace(
   }
   const swapped: PartEntry = { id: to.id, title: to.title };
   if (replaced.optional) swapped.optional = true;
+  // A replacement some generalization provides is INHERITED from the first
+  // providing gen instead of owned — same rule as a plain add.
+  const provider = providersOf(
+    to.id,
+    (id) => resolveParts(id, graph),
+    genIds,
+  )[0];
+  if (provider) {
+    swapped.inheritedFrom = provider.owner;
+    if (provider.owner !== provider.genId) swapped.via = provider.genId;
+  }
 
   const { source } = node.partsInheritance;
   const sourceProvides =
@@ -787,7 +798,10 @@ export function applyGenChange(
 export function applyViaFollowerChange(
   parts: PartEntry[],
   genId: string,
-  changes: { fromId: string; to?: { id: string; title: string } }[],
+  changes: {
+    fromId: string;
+    to?: { id: string; title: string; owner?: string };
+  }[],
 ): { parts: PartEntry[]; changed: boolean } {
   const presentIds = new Set(parts.map((e) => e.id));
   const droppedIds = new Set<string>();
@@ -801,13 +815,16 @@ export function applyViaFollowerChange(
     }
     changed = true;
     if (change.to && !presentIds.has(change.to.id)) {
+      // The gen owns its replacement unless it inherited it (`owner`); a
+      // relayed replacement keeps the pick — the gen still provides it.
+      const owner = change.to.owner ?? genId;
       const morphed = {
         ...e,
         id: change.to.id,
         title: change.to.title,
-        inheritedFrom: genId,
+        inheritedFrom: owner,
       };
-      delete morphed.via;
+      if (owner === genId) delete morphed.via;
       next.push(morphed);
     } else {
       droppedIds.add(e.id);

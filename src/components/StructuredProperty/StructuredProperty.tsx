@@ -1326,17 +1326,34 @@ const StructuredProperty = ({
         if (!currentVisibleNode?.id || !user?.uname) return;
         if (!oldPartId || !newPartId || oldPartId === newPartId) return;
 
-        // Instant state via the same pure model the endpoint runs: replacing a
-        // source-provided part breaks; a floating entry swaps in place.
+        // Instant state via the same pure model the endpoint runs (see applyReplace).
         const genIds = nodeGenIds();
+        const graph = clientPartsGraph(genIds);
         const { parts, partsInheritance, replaced } = applyReplace(
           currentVisibleNode.id,
-          clientPartsGraph(genIds),
+          graph,
           oldPartId,
           { id: newPartId, title: relatedNodes[newPartId]?.title || "" },
           genIds,
         );
         if (!replaced) return;
+
+        // Several gens provide the replacement: inform which one it follows.
+        const providers = providersOf(
+          newPartId,
+          (id) => resolveParts(id, graph),
+          genIds,
+        );
+        if (providers.length >= 2) {
+          const genTitle =
+            relatedNodes[providers[0].genId]?.title ||
+            "the first generalization";
+          void confirmIt(
+            `"${relatedNodes[newPartId]?.title || "The replacement"}" is provided by ${providers.length} of this node's generalizations, so it now inherits from the first one, "${genTitle}". You can pick a different generalization with the part's "Inherited from" selector.`,
+            "OK",
+            "",
+          );
+        }
 
         await savePartsDelta(
           "/nodes/parts/replace",
@@ -1373,6 +1390,7 @@ const StructuredProperty = ({
       savePartsDelta,
       clientPartsGraph,
       nodeGenIds,
+      confirmIt,
     ],
   );
 
