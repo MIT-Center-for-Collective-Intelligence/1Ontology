@@ -98,6 +98,23 @@ export function childSourceOf(parentPart: ILinkNode, parentId: string): string {
   return parentPart.inheritedFrom ?? parentId;
 }
 
+/**
+ * The generalizations (in the given order) whose resolved view provides
+ * `partId`, each with the owner a part inherited through that gen would record.
+ */
+export function providersOf(
+  partId: string,
+  resolvedOf: (id: string) => ILinkNode[],
+  genIds: string[],
+): { genId: string; owner: string }[] {
+  const out: { genId: string; owner: string }[] = [];
+  for (const genId of genIds) {
+    const p = resolvedOf(genId).find((x) => x.id === partId);
+    if (p) out.push({ genId, owner: childSourceOf(p, genId) });
+  }
+  return out;
+}
+
 function toResolved(e: PartEntry): ILinkNode {
   const p: ILinkNode = { id: e.id };
   if (e.title !== undefined) p.title = e.title;

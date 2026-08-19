@@ -25,6 +25,7 @@ import {
   childSourceOf,
   isOwnedPart,
   partSourcesOf,
+  providersOf,
 } from "@components/lib/server/partsModel";
 import {
   computeInheritedPartsDetails,
@@ -49,12 +50,10 @@ async function applyAdd(ctx: {
   const { nodeId, nodeData, partIds, genId, uname, appName } = ctx;
   const cache: NodeCache = new Map([[nodeId, nodeData]]);
 
-  const nodeGenIds = new Set(
-    (nodeData.generalizations ?? []).flatMap((c) =>
-      (c.nodes ?? []).map((n) => n.id),
-    ),
+  const genIdList = (nodeData.generalizations ?? []).flatMap((c) =>
+    (c.nodes ?? []).map((n) => n.id),
   );
-  if (genId && !nodeGenIds.has(genId)) {
+  if (genId && !genIdList.includes(genId)) {
     throw new HttpError(400, "genId is not a generalization of this node");
   }
 
@@ -86,6 +85,14 @@ async function applyAdd(ctx: {
       node.inheritedFrom = childSourceOf(genPart, genId);
       // Record the picked gen when it relays the copy, so edits AT it follow.
       if (node.inheritedFrom !== genId) node.via = genId;
+    } else {
+      // A plain add of a part some generalization provides INHERITS from the
+      // first providing gen instead of taking ownership.
+      const provider = providersOf(partId, resolvedOf, genIdList)[0];
+      if (provider) {
+        node.inheritedFrom = provider.owner;
+        if (provider.owner !== provider.genId) node.via = provider.genId;
+      }
     }
     additions.push(node);
   }

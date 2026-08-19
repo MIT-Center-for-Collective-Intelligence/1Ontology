@@ -38,6 +38,7 @@ import {
   applyToggleOptional,
   classifySort,
   convertToOverlay,
+  providersOf,
   resolveParts,
   toPartsNode,
   PartsGraph,
@@ -1274,6 +1275,28 @@ const StructuredProperty = ({
         // Record the picked gen when it relays the copy, so edits AT it follow.
         if (node.inheritedFrom !== genId) node.via = genId;
         if (!node.title) node.title = genPart?.title ?? "";
+      } else {
+        // A plain add of a part some generalization provides inherits from the
+        // first providing gen instead of taking ownership (mirrors the server).
+        const providers = providersOf(
+          partId,
+          makeResolvedOf(relatedNodes),
+          nodeGenIds(),
+        );
+        const first = providers[0];
+        if (first) {
+          node.inheritedFrom = first.owner;
+          if (first.owner !== first.genId) node.via = first.genId;
+          if (providers.length >= 2) {
+            const genTitle =
+              relatedNodes[first.genId]?.title || "the first generalization";
+            void confirmIt(
+              `"${node.title || "This part"}" is provided by ${providers.length} of this node's generalizations, so it was added as inherited from the first one, "${genTitle}". You can pick a different generalization with the part's "Inherited from" selector.`,
+              "OK",
+              "",
+            );
+          }
+        }
       }
       newParts[0].nodes.push(node);
       await savePartsDelta(
