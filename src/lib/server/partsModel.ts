@@ -594,24 +594,30 @@ export function applySwitchSource(
 }
 
 /**
- * Reattach (or switch the overall source): a HARD RESET of everything the node
- * does not OWN. Only owned entries survive — one the source also provides
- * keeps its slot, the rest are anchored below the source's parts in their
- * current relative order. The node's optional flag on a kept virtual part is
- * preserved as an override; parts it never had take the source's flag.
+ * Hard reset onto `sourceId`. Owned parts the source also provides are ABSORBED:
+ * dropped here and returned in `absorbed` with the owner resolved through the source.
+ * Other owned parts keep their order below the source's; optional diffs become overrides.
  */
 export function convertToOverlay(
   nodeId: string,
   graph: PartsGraph,
   sourceId: string,
-): { parts: PartEntry[]; partsInheritance: PartsInheritance } {
+): {
+  parts: PartEntry[];
+  partsInheritance: PartsInheritance;
+  absorbed: { partId: string; owner: string }[];
+} {
   const node = graph.get(nodeId);
   if (!node) {
-    return { parts: [], partsInheritance: { source: sourceId, overrides: {} } };
+    return {
+      parts: [],
+      partsInheritance: { source: sourceId, overrides: {} },
+      absorbed: [],
+    };
   }
   const current = resolveParts(nodeId, graph);
   const sourceResolved = resolveParts(sourceId, graph);
-  const sourceIds = new Set(sourceResolved.map((p) => p.id));
+  const sourceById = new Map(sourceResolved.map((p) => [p.id, p]));
   const lastSourceId = sourceResolved.length
     ? sourceResolved[sourceResolved.length - 1].id
     : null;
@@ -623,35 +629,41 @@ export function convertToOverlay(
       (a, b) =>
         (orderIndex.get(a.id) ?? Infinity) - (orderIndex.get(b.id) ?? Infinity),
     );
-  const ownedIds = new Set(owned.map((e) => e.id));
-  const parts = owned.map((e) =>
-    sourceIds.has(e.id)
-      ? withoutAnchor(e)
-      : { ...withoutAnchor(e), after: lastSourceId },
-  );
 
+  const absorbed: { partId: string; owner: string }[] = [];
+  const parts: PartEntry[] = [];
   const overrides: PartsInheritance["overrides"] = {};
+  for (const e of owned) {
+    const sp = sourceById.get(e.id);
+    if (sp) {
+      // The source provides it — ownership lifts to the source's line.
+      absorbed.push({ partId: e.id, owner: childSourceOf(sp, sourceId) });
+      if (!!e.optional !== !!sp.optional) {
+        overrides[e.id] = { optional: !!e.optional };
+      }
+      continue;
+    }
+    parts.push({ ...withoutAnchor(e), after: lastSourceId });
+  }
+
   const currentById = new Map(current.map((p) => [p.id, p]));
   for (const sp of sourceResolved) {
-    if (ownedIds.has(sp.id)) continue;
+    if (overrides[sp.id]) continue;
     const cur = currentById.get(sp.id);
-    if (!cur) continue;
-    if (!!cur.optional !== !!sp.optional) {
-      overrides[sp.id] = { optional: !!cur.optional };
+    if (!cur || !isOwnedPart(cur)) {
+      if (cur && !!cur.optional !== !!sp.optional) {
+        overrides[sp.id] = { optional: !!cur.optional };
+      }
     }
   }
-  return { parts, partsInheritance: { source: sourceId, overrides } };
+  return { parts, partsInheritance: { source: sourceId, overrides }, absorbed };
 }
 
 /**
- * Update a node when its generalizations change. Call with the graph still
- * containing the node's PRE-change state and every gen involved. Stored
- * entries tracked through a removed gen are dropped unless a remaining gen
- * still resolves (or re-provides) them. When the SOURCE itself is removed the
- * node re-attaches to the first remaining gen by MERGE: stored entries stay,
- * the old source's parts survive only where a remaining gen provides them
- * (minted as stored entries when it isn't the new source), the rest disappear
- * (5.4). No remaining gens — or an already-broken node — means broken stays.
+ * Update parts after a generalization change; the graph must hold the node's
+ * pre-change state. Parts from a removed gen survive only if another gen still
+ * provides them. If the source itself was removed, the node merge-attaches to
+ * the first remaining gen, or stays broken.
  */
 export function applyGenChange(
   nodeId: string,

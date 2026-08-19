@@ -983,10 +983,10 @@ const StructuredProperty = ({
         return;
       }
 
-      // The same pure reset the endpoint runs names exactly what disappears.
+      // The endpoint's same pure reset — names what's discarded and what's absorbed.
       const graph = clientPartsGraph([sourceId]);
       const before = resolveParts(nodeId, graph);
-      const { parts, partsInheritance } = convertToOverlay(
+      const { parts, partsInheritance, absorbed } = convertToOverlay(
         nodeId,
         graph,
         sourceId,
@@ -1021,6 +1021,22 @@ const StructuredProperty = ({
               sx={{ fontWeight: 400, mt: 1.5, lineHeight: 1.5 }}
             >
               {`These parts will be removed: ${discarded.join(", ")}.`}
+            </Typography>
+          )}
+          {absorbed.length > 0 && (
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ fontWeight: 400, mt: 1.5, lineHeight: 1.5 }}
+            >
+              {`These parts will become inherited from "${sourceTitle}" instead of owned here: ${absorbed
+                .map(
+                  (a) =>
+                    relatedNodes[a.partId]?.title ||
+                    before.find((p) => p.id === a.partId)?.title ||
+                    a.partId,
+                )
+                .join(", ")}.`}
             </Typography>
           )}
         </Box>,

@@ -1,14 +1,20 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import fbAuth from "@components/middlewares/fbAuth";
 import { db } from "@components/lib/firestoreServer/admin";
-import { NODES } from "@components/lib/firestoreClient/collections";
+import { NODES, NODES_LOGS } from "@components/lib/firestoreClient/collections";
 import { ICollection, INode, NodeChange } from "@components/types/INode";
 import {
   HttpError,
+  NodeCache,
   recordLogs,
   writeChangeLog,
 } from "@components/lib/server/hierarchy";
-import { asPartsCollections, toParts } from "@components/lib/server/parts";
+import {
+  applyIsPartOfOwnerOnly,
+  asPartsCollections,
+  repointTrackedEntries,
+  toParts,
+} from "@components/lib/server/parts";
 import {
   convertToOverlay,
   partSourcesOf,
@@ -22,11 +28,8 @@ import {
 } from "@components/lib/server/partsAnnotation";
 
 /**
- * Attaches a node's overall parts inheritance to one of its generalizations —
- * repairing a break, or moving a healthy node to another source. Both are the
- * same HARD RESET: only owned entries survive (one the source also provides
- * keeps its slot), everything else follows the source virtually. Destructive:
- * the client confirms first. Owned parts survive, so isPartOf is invariant.
+ * Reattach or switch the node's overall parts source — the hard reset in
+ * convertToOverlay. Destructive: the client confirms first.
  */
 async function applyReattach(ctx: {
   nodeId: string;
@@ -36,6 +39,7 @@ async function applyReattach(ctx: {
   appName?: string;
 }): Promise<{ ok: true; parts: ICollection[] }> {
   const { nodeId, nodeData, sourceId, uname, appName } = ctx;
+  const cache: NodeCache = new Map([[nodeId, nodeData]]);
 
   const nodeGenIds = new Set(
     (nodeData.generalizations ?? []).flatMap((c) =>
@@ -50,7 +54,11 @@ async function applyReattach(ctx: {
   const graph: PartsGraph = new Map(
     Object.values(relatedNodes).map((n) => [n.id, toPartsNode(n)]),
   );
-  const { parts, partsInheritance } = convertToOverlay(nodeId, graph, sourceId);
+  const { parts, partsInheritance, absorbed } = convertToOverlay(
+    nodeId,
+    graph,
+    sourceId,
+  );
 
   const oldPartsCol = asPartsCollections(nodeData.properties?.parts);
   const side = toParts(parts);
@@ -77,19 +85,50 @@ async function applyReattach(ctx: {
       resolvedParts: resolvedOfUpdated(nodeId),
     });
 
-  if (uname) {
-    await writeChangeLog({
+  const parentLogId = db.collection(NODES_LOGS).doc().id;
+  const parentLog = {
+    logId: parentLogId,
+    nodeId,
+    nodeTitle: nodeData.title ?? "",
+    changeType: "modify elements" as const,
+  };
+  const childLogs: NodeChange[] = [];
+
+  // Absorbed parts changed owner: strip this node from their isPartOf, re-point trackers.
+  if (absorbed.length > 0) {
+    await applyIsPartOfOwnerOnly(
       nodeId,
-      modifiedBy: uname,
-      modifiedProperty: "parts",
-      previousValue: oldPartsCol,
-      newValue: side,
-      modifiedAt: new Date(),
-      changeType: "modify elements",
-      fullNode: nodeData,
-      ...(appName ? { appName } : {}),
-    } as NodeChange);
+      nodeData.title ?? "",
+      [],
+      absorbed.map((a) => a.partId),
+      cache,
+      parentLog,
+      uname,
+      appName,
+      childLogs,
+    );
+    for (const { partId, owner } of absorbed) {
+      await repointTrackedEntries(nodeId, partId, owner);
+    }
   }
+
+  if (uname) {
+    await writeChangeLog(
+      {
+        nodeId,
+        modifiedBy: uname,
+        modifiedProperty: "parts",
+        previousValue: oldPartsCol,
+        newValue: side,
+        modifiedAt: new Date(),
+        changeType: "modify elements",
+        fullNode: nodeData,
+        ...(appName ? { appName } : {}),
+      } as NodeChange,
+      parentLogId,
+    );
+  }
+  for (const log of childLogs) await writeChangeLog(log);
 
   return { ok: true, parts: side };
 }
