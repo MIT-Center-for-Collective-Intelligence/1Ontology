@@ -862,6 +862,15 @@ const StructuredProperty = ({
     ],
   );
 
+  // The node's gen ids — break paths stamp each part's `via` from these.
+  const nodeGenIds = useCallback(
+    () =>
+      (currentVisibleNode?.generalizations ?? []).flatMap((c: ICollection) =>
+        (c.nodes ?? []).map((n) => n.id),
+      ),
+    [currentVisibleNode?.generalizations],
+  );
+
   // Reorder of the RESOLVED view; the instant state runs the same classify
   // the endpoint does (local-entry moves re-anchor, source-order moves break).
   const sortParts = useCallback(
@@ -870,10 +879,12 @@ const StructuredProperty = ({
       inheritedPartsDetails?: InheritedPartsDetail[] | null,
     ) => {
       if (!currentVisibleNode?.id) return;
+      const genIds = nodeGenIds();
       const result = classifySort(
         currentVisibleNode.id,
-        clientPartsGraph(),
+        clientPartsGraph(genIds),
         orderedIds,
+        genIds,
       );
       await savePartsDelta(
         "/nodes/parts/sort",
@@ -886,7 +897,7 @@ const StructuredProperty = ({
         result.breaks ? result.partsInheritance : undefined,
       );
     },
-    [savePartsDelta, currentVisibleNode?.id, clientPartsGraph],
+    [savePartsDelta, currentVisibleNode?.id, clientPartsGraph, nodeGenIds],
   );
 
   // Instant state via the pure model: a stored entry flips its flag, a
@@ -913,17 +924,34 @@ const StructuredProperty = ({
   );
 
   // Switch which generalization a part is specifically inherited from. The
-  // instant tag mirrors the server: the owner resolved through the picked gen.
+  // instant state mirrors the server: switching a source-provided part to
+  // another gen BREAKS overall inheritance, so the user confirms first.
   const switchPartSource = useCallback(
     async (partId: string, genId: string) => {
       if (!currentVisibleNode?.id) return;
+      const genIds = nodeGenIds();
       const result = applySwitchSource(
         currentVisibleNode.id,
-        clientPartsGraph([genId]),
+        clientPartsGraph([genId, ...genIds]),
         partId,
         genId,
+        genIds,
       );
       if (!result.changed) return;
+
+      const oldSource = currentVisibleNode.partsInheritance?.source ?? null;
+      if (oldSource && result.partsInheritance.source === null) {
+        const sourceTitle =
+          relatedNodes[oldSource]?.title || "its current source";
+        const genTitle = relatedNodes[genId]?.title || "this generalization";
+        const ok = await confirmIt(
+          `Inherit this part from "${genTitle}"? This disconnects the node's overall parts inheritance from "${sourceTitle}". All parts stay and keep following the generalizations they are inherited from, but future part additions and reordering from "${sourceTitle}" will no longer apply.`,
+          "Inherit",
+          "Cancel",
+        );
+        if (!ok) return;
+      }
+
       await savePartsDelta(
         "/nodes/parts/switch-source",
         { partId, genId },
@@ -932,7 +960,14 @@ const StructuredProperty = ({
         result.partsInheritance,
       );
     },
-    [currentVisibleNode?.id, clientPartsGraph, savePartsDelta],
+    [
+      currentVisibleNode,
+      relatedNodes,
+      clientPartsGraph,
+      savePartsDelta,
+      confirmIt,
+      nodeGenIds,
+    ],
   );
 
   /**
@@ -1023,10 +1058,12 @@ const StructuredProperty = ({
       // removal the source provides breaks and materializes the view.
       if (property === "parts") {
         if (!currentVisibleNode) return;
+        const genIds = nodeGenIds();
         const { parts, partsInheritance } = applyRemove(
           currentVisibleNode.id,
-          clientPartsGraph(),
+          clientPartsGraph(genIds),
           [linkId],
+          genIds,
         );
         await savePartsDelta(
           "/nodes/parts/remove",
@@ -1218,6 +1255,8 @@ const StructuredProperty = ({
           (n: ILinkNode) => n.id === partId,
         );
         node.inheritedFrom = genPart?.inheritedFrom || genId;
+        // Record the picked gen when it relays the copy, so edits AT it follow.
+        if (node.inheritedFrom !== genId) node.via = genId;
         if (!node.title) node.title = genPart?.title ?? "";
       }
       newParts[0].nodes.push(node);
@@ -1250,11 +1289,13 @@ const StructuredProperty = ({
 
         // Instant state via the same pure model the endpoint runs: replacing a
         // source-provided part breaks; a floating entry swaps in place.
+        const genIds = nodeGenIds();
         const { parts, partsInheritance, replaced } = applyReplace(
           currentVisibleNode.id,
-          clientPartsGraph(),
+          clientPartsGraph(genIds),
           oldPartId,
           { id: newPartId, title: relatedNodes[newPartId]?.title || "" },
+          genIds,
         );
         if (!replaced) return;
 
@@ -1292,6 +1333,7 @@ const StructuredProperty = ({
       user,
       savePartsDelta,
       clientPartsGraph,
+      nodeGenIds,
     ],
   );
 

@@ -573,6 +573,8 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
   };
 
   const getTabContent = (generalizationId: string): JSX.Element => {
+    const genTitle =
+      generalizations.find((g) => g.id === generalizationId)?.title ?? "";
     // Check if node has any parts at all
     const hasParts = resolvedParts.length > 0;
 
@@ -846,6 +848,23 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
       });
     }
 
+    // The source a part currently resolves to: the picked gen (via) if it's
+    // still a valid source, else the overall source, else the first match.
+    const getCurrentSource = (entry: any) => {
+      const sources = partSourcesLookup[entry.to] ?? [];
+      const matching = sources
+        .filter((s) => s.owner === entry.inheritedFrom)
+        .map((s) => s.genId);
+      const overallSource = currentVisibleNode.partsInheritance?.source ?? "";
+      const currentGenId =
+        entry.via && sources.some((s) => s.genId === entry.via)
+          ? entry.via
+          : matching.includes(overallSource)
+            ? overallSource
+            : matching[0];
+      return sources.find((s) => s.genId === currentGenId);
+    };
+
     const nonDraggableItems = Object.keys(nonPickedOnes).filter((id) => {
       const index = details.findIndex((d) => d.from === id);
       return index === -1;
@@ -1066,14 +1085,26 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                             </span>
                           </Tooltip>
                         ) : entry.symbol === "x" ? (
-                          <CloseIcon sx={{ fontSize: 20, color: "orange" }} />
+                          <Tooltip
+                            title={`"${genTitle}" has this part, but this node does not inherit it.`}
+                            placement="top"
+                          >
+                            <CloseIcon sx={{ fontSize: 20, color: "orange" }} />
+                          </Tooltip>
                         ) : entry.symbol === ">" ? (
                           <Tooltip
-                            title={
+                            title={`"${genTitle}" has the part "${
+                              allNodes[entry.from]?.title ||
+                              entry.fromTitle ||
+                              ""
+                            }". This node has "${
+                              allNodes[entry.to]?.title || entry.toTitle || ""
+                            }", a descendant of it.${
                               (nonPickedOnes[entry.from] || []).length > 0
-                                ? "Switch To"
+                                ? " Click to switch."
                                 : ""
-                            }
+                            }`}
+                            placement="top"
                           >
                             <ArrowForwardIosIcon
                               sx={{
@@ -1115,11 +1146,30 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                             />
                           </Tooltip>
                         ) : entry.symbol === "=" ? (
-                          <DragHandleIcon
-                            sx={{ fontSize: 20, color: "orange" }}
-                          />
+                          <Tooltip
+                            title={`This part is inherited from "${genTitle}". If it changes there, it changes here too.`}
+                            placement="top"
+                          >
+                            <DragHandleIcon
+                              sx={{
+                                fontSize: 20,
+                                color: "orange",
+                                visibility:
+                                  !entry.inheritedFrom ||
+                                  (getCurrentSource(entry)?.genId ??
+                                    generalizationId) === generalizationId
+                                    ? "visible"
+                                    : "hidden",
+                              }}
+                            />
+                          </Tooltip>
                         ) : entry.symbol === "+" ? (
-                          <AddIcon sx={{ fontSize: 20, color: "orange" }} />
+                          <Tooltip
+                            title={`This part was added directly to this node. "${genTitle}" does not have it, so it is not inherited.`}
+                            placement="top"
+                          >
+                            <AddIcon sx={{ fontSize: 20, color: "orange" }} />
+                          </Tooltip>
                         ) : null}
                       </ListItemIcon>
 
@@ -1434,7 +1484,9 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                   <Tooltip
                                     title={`Exists in ${
                                       (partSourcesLookup[entry.to] ?? []).length
-                                    } generalizations`}
+                                    } generalizations, but inherited from ${
+                                      getCurrentSource(entry)?.title ?? ""
+                                    }`}
                                     placement="top"
                                   >
                                     {/* Span, not the input: InputBase fires an
@@ -1505,24 +1557,8 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                           // another owner repoints.
                                           const sources =
                                             partSourcesLookup[entry.to] ?? [];
-                                          const matching = sources
-                                            .filter(
-                                              (s) =>
-                                                s.owner === entry.inheritedFrom,
-                                            )
-                                            .map((s) => s.genId);
-                                          const overallSource =
-                                            currentVisibleNode.partsInheritance
-                                              ?.source ?? "";
                                           const currentGenId =
-                                            entry.via &&
-                                            sources.some(
-                                              (s) => s.genId === entry.via,
-                                            )
-                                              ? entry.via
-                                              : matching.includes(overallSource)
-                                                ? overallSource
-                                                : matching[0];
+                                            getCurrentSource(entry)?.genId;
                                           return [...sources]
                                             .sort(
                                               (a, b) =>
@@ -1633,7 +1669,12 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                 />
 
                 <ListItemIcon sx={{ minWidth: "auto" }}>
-                  <CloseIcon sx={{ fontSize: 20, color: "orange" }} />
+                  <Tooltip
+                    title={`"${genTitle}" has this part, but this node does not inherit it.`}
+                    placement="top"
+                  >
+                    <CloseIcon sx={{ fontSize: 20, color: "orange" }} />
+                  </Tooltip>
                 </ListItemIcon>
 
                 {/* Inherits the part specifically through this tab's
@@ -1749,7 +1790,12 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                 />
 
                 <ListItemIcon sx={{ minWidth: "auto" }}>
-                  <CloseIcon sx={{ fontSize: 24, color: "orange" }} />
+                  <Tooltip
+                    title={`"${genTitle}" has this part, but this node does not inherit it.`}
+                    placement="top"
+                  >
+                    <CloseIcon sx={{ fontSize: 24, color: "orange" }} />
+                  </Tooltip>
                 </ListItemIcon>
 
                 {!!addPart && (
