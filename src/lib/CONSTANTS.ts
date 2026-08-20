@@ -174,53 +174,67 @@ export const ONTOLOGY_APPS: any = development
       {
         id: "final-hierarchy-with-o*net",
         name: "Final Hierarchy with O*Net",
+        group: "main",
       },
       {
         id: "final-hierarchy-with-o*net-rob-title-review-2026-07-22",
         name: "Final Hierarchy with O*Net - Rob Title Review 2026-07-22",
         type: "other",
         editAccess: true,
+        group: "main",
       },
       {
         id: "ontology-development-version",
         name: "Ontology - Development Version",
         type: "other",
+        group: "sandbox",
       },
-
       {
         id: "final-hierarchy-with-o*net-parts",
         name: "Final Hierarchy with Parts",
         type: "other",
+        group: "other",
       },
     ]
   : [
       {
         id: "final-hierarchy-with-o*net",
         name: "Final Hierarchy with O*Net",
+        group: "main",
       },
       {
         id: "ssg-skills-framework",
         name: "SSG Skills Framework",
         type: "other",
         editAccess: true,
+        group: "other",
       },
       {
         id: "final-hierarchy-with-o*net-rob-title-review-2026-07-22",
         name: "Final Hierarchy with O*Net - Rob Title Review 2026-07-22",
         type: "other",
         editAccess: true,
+        group: "main",
       },
-      { id: "sandbox", name: "Sandbox", type: "other", editAccess: true },
+      {
+        id: "sandbox",
+        name: "Sandbox (Final Hierarchy with O*Net)",
+        type: "other",
+        editAccess: true,
+        group: "sandbox",
+      },
       /*  {
         id: "sandbox-5",
         name: "AI-Peer Result",
         type: "other",
         adminAccess: true,
+        group: "sandbox",
       }, */
       /* {
         id: "ontology-demo-version",
         name: "Ontology - Demo Version",
         type: "other",
+        group: "other",
       }, */
       {
         id: "ontology-development-version",
@@ -231,17 +245,25 @@ export const ONTOLOGY_APPS: any = development
         id: "final-hierarchy-with-o*net-parts",
         name: "Final Hierarchy with Parts",
         type: "other",
+        group: "other",
       }, */
-      { id: "noun-ontology", name: "Noun Ontology", type: "other" },
+      {
+        id: "noun-ontology",
+        name: "Noun Ontology",
+        type: "other",
+        group: "other",
+      },
       {
         id: "onet-ontology",
         name: "O*NET Ontology Including Tasks",
         type: "other",
+        group: "other",
       },
       {
         id: "onet-ontology-no-tasks",
         name: "O*NET Ontology Excluding Tasks",
         type: "other",
+        group: "other",
       },
     ];
 

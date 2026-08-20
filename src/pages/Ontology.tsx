@@ -287,14 +287,23 @@ const Ontology = ({
     new Set(),
   );
   const ontologyAppsTopGroup = useMemo(
-    () => ONTOLOGY_APPS.filter((app) => app.type !== "other"),
+    () => ONTOLOGY_APPS.filter((app: any) => app.group === "main"),
     [],
   );
+  const ontologyAppsSandboxGroup = useMemo(() => {
+    const editAccess = !!user?.claims?.editAccess;
+    return ONTOLOGY_APPS.filter(
+      (app: any) =>
+        app.group === "sandbox" &&
+        (editAccess || app.editAccess) &&
+        (user?.claims?.admin || !app.adminAccess),
+    );
+  }, [user]);
   const ontologyAppsOtherGroup = useMemo(() => {
     const editAccess = !!user?.claims?.editAccess;
     return ONTOLOGY_APPS.filter(
-      (app) =>
-        app.type === "other" &&
+      (app: any) =>
+        app.group === "other" &&
         (editAccess || app.editAccess) &&
         (user?.claims?.admin || !app.adminAccess),
     );
@@ -2211,24 +2220,118 @@ const Ontology = ({
                     router.replace(`/${app}`);
                     setCurrentNodeTreeData([]);
                   }}
+                  renderValue={(selected) => {
+                    const app = ONTOLOGY_APPS.find(
+                      (a: any) => a.id === selected,
+                    );
+                    return app ? app.name : selected;
+                  }}
                   label="Property Type"
                   sx={{ borderRadius: "20px" }}
                 >
-                  {ontologyAppsTopGroup.map(({ id, name }) => (
-                    <MenuItem key={id} value={id}>
-                      {name}
-                    </MenuItem>
-                  ))}
-                  {ontologyAppsOtherGroup.length > 0 && (
-                    <ListSubheader disableSticky>
-                      Other Ontologies
+                  <ListSubheader
+                    disableSticky
+                    sx={{
+                      fontSize: "12px",
+                      fontWeight: 600,
+                      letterSpacing: "0.5px",
+                      textTransform: "uppercase",
+                      color: (theme) =>
+                        theme.palette.mode === "dark"
+                          ? "rgba(255,255,255,0.45)"
+                          : "rgba(0,0,0,0.45)",
+                      lineHeight: "26px",
+                      mt: "4px",
+                      mb: "2px",
+                      backgroundColor: "transparent",
+                      borderBottom: "1px solid",
+                      borderColor: (theme) =>
+                        theme.palette.mode === "dark"
+                          ? "rgba(255,255,255,0.12)"
+                          : "rgba(0,0,0,0.1)",
+                      mx: "8px",
+                      px: "4px",
+                    }}
+                  >
+                    Final Hierarchy
+                  </ListSubheader>
+                  {ontologyAppsTopGroup.map(
+                    ({ id, name }: { id: string; name: string }) => (
+                      <MenuItem key={id} value={id}>
+                        {name}
+                      </MenuItem>
+                    ),
+                  )}
+                  {ontologyAppsSandboxGroup.length > 0 && (
+                    <ListSubheader
+                      disableSticky
+                      sx={{
+                        fontSize: "12px",
+                        fontWeight: 600,
+                        letterSpacing: "0.5px",
+                        textTransform: "uppercase",
+                        color: (theme) =>
+                          theme.palette.mode === "dark"
+                            ? "rgba(255,255,255,0.45)"
+                            : "rgba(0,0,0,0.45)",
+                        lineHeight: "26px",
+                        mt: "12px",
+                        mb: "2px",
+                        backgroundColor: "transparent",
+                        borderBottom: "1px solid",
+                        borderColor: (theme) =>
+                          theme.palette.mode === "dark"
+                            ? "rgba(255,255,255,0.12)"
+                            : "rgba(0,0,0,0.1)",
+                        mx: "8px",
+                        px: "4px",
+                      }}
+                    >
+                      To Try
                     </ListSubheader>
                   )}
-                  {ontologyAppsOtherGroup.map(({ id, name }) => (
-                    <MenuItem key={id} value={id}>
-                      {name}
-                    </MenuItem>
-                  ))}
+                  {ontologyAppsSandboxGroup.map(
+                    ({ id, name }: { id: string; name: string }) => (
+                      <MenuItem key={id} value={id}>
+                        {name}
+                      </MenuItem>
+                    ),
+                  )}
+                  {ontologyAppsOtherGroup.length > 0 && (
+                    <ListSubheader
+                      disableSticky
+                      sx={{
+                        fontSize: "12px",
+                        fontWeight: 600,
+                        letterSpacing: "0.5px",
+                        textTransform: "uppercase",
+                        color: (theme) =>
+                          theme.palette.mode === "dark"
+                            ? "rgba(255,255,255,0.45)"
+                            : "rgba(0,0,0,0.45)",
+                        lineHeight: "26px",
+                        mt: "12px",
+                        mb: "2px",
+                        backgroundColor: "transparent",
+                        borderBottom: "1px solid",
+                        borderColor: (theme) =>
+                          theme.palette.mode === "dark"
+                            ? "rgba(255,255,255,0.12)"
+                            : "rgba(0,0,0,0.1)",
+                        mx: "8px",
+                        px: "4px",
+                      }}
+                    >
+                      Others
+                    </ListSubheader>
+                  )}
+                  {ontologyAppsOtherGroup.map(
+                    ({ id, name }: { id: string; name: string }) => (
+                      <MenuItem key={id} value={id}>
+                        {name}
+                      </MenuItem>
+                    ),
+                  )}
                 </Select>
               </FormControl>
             </Box>
@@ -2417,6 +2520,12 @@ const Ontology = ({
                         const app = event.target.value.replaceAll(" ", "_");
                         router.replace(`/${app}`);
                       }}
+                      renderValue={(selected) => {
+                        const app = ONTOLOGY_APPS.find(
+                          (a: any) => a.id === selected,
+                        );
+                        return app ? app.name : selected;
+                      }}
                       label="Ontology Type"
                       sx={{
                         borderRadius: "20px",
@@ -2439,63 +2548,166 @@ const Ontology = ({
                         },
                       }}
                     >
-                      {ontologyAppsTopGroup.map(({ id, name }) => (
-                        <MenuItem
-                          key={id}
-                          value={id}
+                      <ListSubheader
+                        disableSticky
+                        sx={{
+                          fontSize: "13px",
+                          fontWeight: 600,
+                          letterSpacing: "0.5px",
+                          textTransform: "uppercase",
+                          color: (theme) =>
+                            theme.palette.mode === "dark"
+                              ? "rgba(255,255,255,0.45)"
+                              : "rgba(0,0,0,0.45)",
+                          lineHeight: "28px",
+                          mt: "4px",
+                          mb: "2px",
+                          backgroundColor: "transparent",
+                          borderBottom: "1px solid",
+                          borderColor: (theme) =>
+                            theme.palette.mode === "dark"
+                              ? "rgba(255,255,255,0.12)"
+                              : "rgba(0,0,0,0.1)",
+                          mx: "8px",
+                          px: "4px",
+                        }}
+                      >
+                        Final Hierarchy
+                      </ListSubheader>
+                      {ontologyAppsTopGroup.map(
+                        ({ id, name }: { id: string; name: string }) => (
+                          <MenuItem
+                            key={id}
+                            value={id}
+                            sx={{
+                              borderRadius: "25px",
+                              mt: "3px",
+                              border: "1px solid gray",
+                              background:
+                                "linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.02))",
+                              fontSize: "15px",
+                              fontWeight: appName === id ? "bold" : "400",
+                              color:
+                                appName === id
+                                  ? (theme) =>
+                                      theme.palette.mode === "light"
+                                        ? "#FF6600"
+                                        : "orange"
+                                  : "",
+                            }}
+                          >
+                            {name}
+                          </MenuItem>
+                        ),
+                      )}
+                      {ontologyAppsSandboxGroup.length > 0 && (
+                        <ListSubheader
+                          disableSticky
                           sx={{
-                            borderRadius: "25px",
-                            mt: "3px",
-                            border: "1px solid gray",
-                            background:
-                              "linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.02))",
-                            fontSize: "15px",
-                            fontWeight: appName === id ? "bold" : "400",
-                            color:
-                              appName === id
-                                ? (theme) =>
-                                    theme.palette.mode === "light"
-                                      ? "#FF6600"
-                                      : "orange"
-                                : "",
+                            fontSize: "13px",
+                            fontWeight: 600,
+                            letterSpacing: "0.5px",
+                            textTransform: "uppercase",
+                            color: (theme) =>
+                              theme.palette.mode === "dark"
+                                ? "rgba(255,255,255,0.45)"
+                                : "rgba(0,0,0,0.45)",
+                            lineHeight: "28px",
+                            mt: "14px",
+                            mb: "2px",
+                            backgroundColor: "transparent",
+                            borderBottom: "1px solid",
+                            borderColor: (theme) =>
+                              theme.palette.mode === "dark"
+                                ? "rgba(255,255,255,0.12)"
+                                : "rgba(0,0,0,0.1)",
+                            mx: "8px",
+                            px: "4px",
                           }}
                         >
-                          {name}
-                        </MenuItem>
-                      ))}
+                          To Try
+                        </ListSubheader>
+                      )}
+                      {ontologyAppsSandboxGroup.map(
+                        ({ id, name }: { id: string; name: string }) => (
+                          <MenuItem
+                            key={id}
+                            value={id}
+                            sx={{
+                              borderRadius: "25px",
+                              mt: "3px",
+                              border: "1px solid gray",
+                              background:
+                                "linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.02))",
+                              fontSize: "15px",
+                              fontWeight: appName === id ? "bold" : "400",
+                              color:
+                                appName === id
+                                  ? (theme) =>
+                                      theme.palette.mode === "light"
+                                        ? "#FF6600"
+                                        : "orange"
+                                  : "",
+                            }}
+                          >
+                            {name}
+                          </MenuItem>
+                        ),
+                      )}
                       {ontologyAppsOtherGroup.length > 0 && (
                         <ListSubheader
                           disableSticky
-                          sx={{ fontSize: "16px", mt: "12px" }}
-                        >
-                          Other Ontologies:
-                        </ListSubheader>
-                      )}
-                      {ontologyAppsOtherGroup.map(({ id, name }) => (
-                        <MenuItem
-                          key={id}
-                          value={id}
                           sx={{
-                            borderRadius: "25px",
-                            mt: "3px",
-                            mx: "13px",
-                            border: "1px solid gray",
-                            background:
-                              "linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.02))",
-                            fontSize: "15px",
-                            fontWeight: appName === id ? "bold" : "400",
-                            color:
-                              appName === id
-                                ? (theme) =>
-                                    theme.palette.mode === "light"
-                                      ? "#FF6600"
-                                      : "orange"
-                                : "",
+                            fontSize: "13px",
+                            fontWeight: 600,
+                            letterSpacing: "0.5px",
+                            textTransform: "uppercase",
+                            color: (theme) =>
+                              theme.palette.mode === "dark"
+                                ? "rgba(255,255,255,0.45)"
+                                : "rgba(0,0,0,0.45)",
+                            lineHeight: "28px",
+                            mt: "14px",
+                            mb: "2px",
+                            backgroundColor: "transparent",
+                            borderBottom: "1px solid",
+                            borderColor: (theme) =>
+                              theme.palette.mode === "dark"
+                                ? "rgba(255,255,255,0.12)"
+                                : "rgba(0,0,0,0.1)",
+                            mx: "8px",
+                            px: "4px",
                           }}
                         >
-                          {name}
-                        </MenuItem>
-                      ))}
+                          Others
+                        </ListSubheader>
+                      )}
+                      {ontologyAppsOtherGroup.map(
+                        ({ id, name }: { id: string; name: string }) => (
+                          <MenuItem
+                            key={id}
+                            value={id}
+                            sx={{
+                              borderRadius: "25px",
+                              mt: "3px",
+                              border: "1px solid gray",
+                              background:
+                                "linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.02))",
+                              fontSize: "15px",
+                              fontWeight: appName === id ? "bold" : "400",
+                              color:
+                                appName === id
+                                  ? (theme) =>
+                                      theme.palette.mode === "light"
+                                        ? "#FF6600"
+                                        : "orange"
+                                  : "",
+                            }}
+                          >
+                            {name}
+                          </MenuItem>
+                        ),
+                      )}
                     </Select>
                   </FormControl>
                 </Box>
