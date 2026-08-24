@@ -1809,11 +1809,11 @@ const Node = ({
         if (structured) {
           return currentVisibleNode?.textValue?.[property] || "";
         }
-        return currentVisibleNode.properties?.parts;
+        return currentVisibleNode?.properties?.parts;
       }
       const inheritedProperty = getPropertyValue(
         relatedNodes,
-        currentVisibleNode.inheritance[property]?.ref,
+        currentVisibleNode?.inheritance?.[property]?.ref,
         property,
         structured,
       );
@@ -1823,13 +1823,13 @@ const Node = ({
       }
       if (
         structured ||
-        Array.isArray(currentVisibleNode.properties[property])
+        Array.isArray(currentVisibleNode?.properties?.[property])
       ) {
         return currentVisibleNode?.textValue
           ? currentVisibleNode?.textValue[property] || ""
           : "";
       }
-      return currentVisibleNode.properties[property];
+      return currentVisibleNode?.properties?.[property];
     },
     [currentVisibleNode, relatedNodes],
   );
@@ -1961,7 +1961,7 @@ const Node = ({
         mb: "90px",
       }}
     >
-      {isLoadingNodeDetails ? (
+      {isLoadingNodeDetails || !currentVisibleNode?.properties ? (
         <NodeLoadingSkeleton width={width} />
       ) : (
         <>
@@ -2101,7 +2101,7 @@ const Node = ({
             }}
           >
             {/* alternatives of title of the node */}
-            {currentVisibleNode?.properties.hasOwnProperty("alternatives") && (
+            {currentVisibleNode?.properties?.hasOwnProperty("alternatives") && (
               <ChipsProperty
                 currentVisibleNode={currentVisibleNode}
                 property={"alternatives"}
@@ -2150,7 +2150,7 @@ const Node = ({
             )}
 
             {/* actors of the node if it's exist */}
-            {currentVisibleNode?.properties.hasOwnProperty("actor") && (
+            {currentVisibleNode?.properties?.hasOwnProperty("actor") && (
               <StructuredProperty
                 selectedDiffNode={selectedDiffNode}
                 confirmIt={confirmIt}

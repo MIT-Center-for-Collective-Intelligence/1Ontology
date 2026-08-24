@@ -42,8 +42,10 @@ import FullPageLogoLoading from "../../components/layouts/FullPageLogoLoading";
 import {
   batchGetNodesByIds,
   buildPathTreeWithSiblings,
+  collectOutlineSiblingIds,
   collectSpecializationChildIds,
   mapTreeAtId,
+  prepareNodesForOutline,
   replaceWithOneLevel,
   resolvePathIds,
 } from "../../lib/utils/loadOutlineFromPathIds";
@@ -391,15 +393,21 @@ export const NavigateLandingSection = ({
         const byId = await batchGetNodesByIds(db, pathIds, appName);
         if (cancelled) return;
         if (!byId[focused.id]) byId[focused.id] = focused;
-        const childIds = pathIds.flatMap((id) =>
-          byId[id] ? collectSpecializationChildIds(byId[id]) : [],
+        const childIds = pathIds.flatMap((id, index) =>
+          byId[id]
+            ? collectOutlineSiblingIds(byId[id], pathIds[index + 1])
+            : [],
         );
         const childrenById = await batchGetNodesByIds(db, childIds, appName);
         if (cancelled) return;
+        const outlineNodes = prepareNodesForOutline(
+          { ...byId, ...childrenById },
+          pathIds,
+        );
         const tree = buildPathTreeWithSiblings(
           pathIds,
-          byId,
-          childrenById,
+          outlineNodes,
+          outlineNodes,
           focused.id,
         );
         setHierarchyTree(tree);

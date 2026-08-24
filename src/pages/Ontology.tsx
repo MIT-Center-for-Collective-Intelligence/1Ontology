@@ -151,9 +151,12 @@ import {
 import {
   batchGetNodesByIds,
   buildPathTreeWithSiblings,
+  collectOutlineSiblingIds,
   collectSpecializationChildIds,
+  mapTreeAtId,
   mergePreservedSubtrees,
   nodeHasNonEmptySpecializations,
+  prepareNodesForOutline,
   replaceSpineWithOneLevel,
   replaceWithOneLevel,
   resolvePathIds,
@@ -437,17 +440,22 @@ const Ontology = ({
         byId[focused.id] = focused;
       }
 
-      // Also show siblings for every node on the displayed path:
-      // fetch direct children for each path node (still no grandchildren).
-      const childIds = pathIds.flatMap((id) => {
+      // Sibling rows along the path — skip enumerating unclassified buckets
+      // (can be tens of thousands); the path child is injected separately.
+      const childIds = pathIds.flatMap((id, index) => {
         const n = byId[id];
-        return n ? collectSpecializationChildIds(n) : [];
+        if (!n) return [];
+        return collectOutlineSiblingIds(n, pathIds[index + 1]);
       });
       const childrenById = await batchGetNodesByIds(db, childIds, appName);
+      const outlineNodes = prepareNodesForOutline(
+        { ...byId, ...childrenById },
+        pathIds,
+      );
       const pathTree = buildPathTreeWithSiblings(
         pathIds,
-        byId,
-        childrenById,
+        outlineNodes,
+        outlineNodes,
         focused.id,
       );
 
@@ -468,7 +476,8 @@ const Ontology = ({
       const otherRoots = rootNodes
         .filter((r) => r.id !== pathRootId)
         .map((r) => {
-          const hasKids = nodeHasNonEmptySpecializations(r);
+          const hasKids =
+            !r.unclassified && nodeHasNonEmptySpecializations(r);
           return {
             id: r.id,
             nodeId: r.id,
@@ -505,13 +514,50 @@ const Ontology = ({
       if (!full) {
         return;
       }
-      const childIds = collectSpecializationChildIds(full);
+      // Unclassified buckets omit most children from stored specializations;
+      // never try to materialize tens of thousands of outline rows.
+      if (full.unclassified) {
+        setCurrentNodeTreeData((prev) =>
+          mapTreeAtId(prev, d.id, (node) => ({
+            ...node,
+            outlineLoadChildren: false,
+            outlineSpineOnly: false,
+            hasUnresolvedChildren: (node.children || []).length > 0,
+          })),
+        );
+        return;
+      }
+      // Expand without enumerating the unclassified collection; path injection
+      // already placed the focused child there when needed.
+      const withoutUnclassifiedBucket: INode = {
+        ...full,
+        specializations: (full.specializations || []).map((c) =>
+          c.collectionName === "unclassified" ? { ...c, nodes: [] } : c,
+        ),
+      };
+      const childIds = collectSpecializationChildIds(withoutUnclassifiedBucket);
+      if (
+        currentVisibleNode?.id &&
+        !childIds.includes(currentVisibleNode.id)
+      ) {
+        childIds.push(currentVisibleNode.id);
+      }
       const childDocs = await batchGetNodesByIds(db, childIds, appName);
       const merged: Record<string, INode> = { ...childDocs, [full.id]: full };
       setCurrentNodeTreeData((prev) => {
         const next = d.outlineSpineOnly
-          ? replaceSpineWithOneLevel(prev, d.id, full, merged)
-          : replaceWithOneLevel(prev, d.id, full, merged);
+          ? replaceSpineWithOneLevel(
+              prev,
+              d.id,
+              withoutUnclassifiedBucket,
+              merged,
+            )
+          : replaceWithOneLevel(
+              prev,
+              d.id,
+              withoutUnclassifiedBucket,
+              merged,
+            );
         return currentVisibleNode
           ? filterTreeForTargetNode(next, currentVisibleNode.id)
           : next;
@@ -1603,13 +1649,13 @@ const Ontology = ({
 
       // Get the node from cache or fetch it
       let node: INode | null = relatedNodes[nodeId] || null;
-      const needsFetch = !node;
+      const needsFetch = !node?.properties;
 
-      if (!node) {
+      if (!node?.properties) {
         // Create minimal node with just id and title for instant highlighting
         node = {
           id: nodeId,
-          title: nodeTitle || "",
+          title: nodeTitle || node?.title || "",
           appName,
           _isMinimal: true,
         } as any;
@@ -1631,16 +1677,23 @@ const Ontology = ({
       // If node wasn't in cache, fetch it in background
       if (needsFetch) {
         try {
-          const fullNode = await fetchSingleNode(db, nodeId);
+          const fullNode = await fetchSingleNode(db, nodeId, appName);
           if (fullNode && !fullNode.category) {
             setCurrentVisibleNode(fullNode);
+            setIsLoadingNodeDetails(false);
+          } else if (!fullNode) {
+            setIsLoadingNodeDetails(false);
+            setNavigationError({ type: "not-found" });
+          } else {
+            setIsLoadingNodeDetails(false);
           }
-        } finally {
+        } catch {
           setIsLoadingNodeDetails(false);
+          setNavigationError({ type: "not-found" });
         }
       }
     },
-    [relatedNodes, db, user],
+    [relatedNodes, db, user, appName],
   );
 
   // Function to handle opening node tree
@@ -1660,13 +1713,13 @@ const Ontology = ({
 
       // Get the node from cache or fetch it
       let node: INode | null = relatedNodes[nodeId] || null;
-      const needsFetch = !node;
+      const needsFetch = !node?.properties;
 
-      if (!node) {
+      if (!node?.properties) {
         // Create minimal node with just id and title for instant highlighting
         node = {
           id: nodeId,
-          title: nodeTitle || "",
+          title: nodeTitle || node?.title || "",
           appName,
           _isMinimal: true,
         } as any;
@@ -1689,16 +1742,23 @@ const Ontology = ({
       // If node wasn't in cache, fetch it in background
       if (needsFetch) {
         try {
-          const fullNode = await fetchSingleNode(db, nodeId);
+          const fullNode = await fetchSingleNode(db, nodeId, appName);
           if (fullNode && !fullNode.category) {
             setCurrentVisibleNode(fullNode);
+            setIsLoadingNodeDetails(false);
+          } else if (!fullNode) {
+            setIsLoadingNodeDetails(false);
+            setNavigationError({ type: "not-found" });
+          } else {
+            setIsLoadingNodeDetails(false);
           }
-        } finally {
+        } catch {
           setIsLoadingNodeDetails(false);
+          setNavigationError({ type: "not-found" });
         }
       }
     },
-    [relatedNodes, db, user],
+    [relatedNodes, db, user, appName],
   );
 
   // Function to retrieve main specializations from tree visualization data
