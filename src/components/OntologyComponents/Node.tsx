@@ -266,7 +266,11 @@ const NodeLoadingSkeleton = ({ width }: { width: number }) => {
       </Paper>
 
       {/* Generalizations & Specializations Skeletons */}
-      <Stack direction="column" spacing={3} sx={{ mb: 2 }}>
+      <Stack
+        direction={width < 1050 ? "column" : "row"}
+        spacing={3}
+        sx={{ mb: 2 }}
+      >
         {/* Generalizations Skeleton */}
         <Paper
           elevation={9}
@@ -2209,7 +2213,7 @@ const Node = ({
             )}
             {/* specializations and generalizations*/}
             <Stack
-              direction="column"
+              direction={width < 1050 ? "column" : "row"}
               sx={{
                 gap: 3,
               }}
@@ -2276,7 +2280,7 @@ const Node = ({
             {/* isPartOf and isPartOf*/}
             <Stack
               mt={1}
-              direction="column"
+              direction={width < 1050 ? "column" : "row"}
               sx={{
                 gap: 3,
               }}
