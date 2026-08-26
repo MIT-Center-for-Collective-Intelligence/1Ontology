@@ -8,6 +8,8 @@ import { Post } from "@components/lib/utils/Post";
 import { getFirestore, doc, onSnapshot } from "firebase/firestore";
 import { NODES } from "@components/lib/firestoreClient/collections";
 import { pendingWrites } from "@components/lib/utils/pendingWrites";
+import { annotationCoversGen } from "@components/lib/server/partsModel";
+import { makeResolvedOf } from "@components/lib/hooks/useResolvedParts";
 
 /**
  * Read-repair for the parts annotation: the stored pair (inheritedPartsDetails
@@ -36,6 +38,7 @@ export const useInheritedPartsDetails = (
   currentVisibleNode?: INode | null,
   resolvedParts?: ILinkNode[],
   resolvedPartsLoading?: boolean,
+  nodes?: { [id: string]: INode },
 ): {
   data: InheritedPartsDetail[] | null;
   repairing: boolean;
@@ -138,17 +141,44 @@ export const useInheritedPartsDetails = (
     }
 
     const fresh = resolvedParts ?? [];
-    if (sameResolvedView(fresh, currentVisibleNode.resolvedParts)) {
+    const viewFresh = sameResolvedView(fresh, currentVisibleNode.resolvedParts);
+
+    // The view comparison misses a gen GAINING a part (a broken node's view never
+    // moves), so also require every gen part to appear in its tab's rows. Checking
+    // additions only is safe: a partial cache only shortens a gen's resolution, and
+    // removed-part staleness is covered by the live gen listeners.
+    let genDrift = "";
+    if (viewFresh && nodes) {
+      const resolvedOf = makeResolvedOf(nodes);
+      const details = currentVisibleNode.inheritedPartsDetails ?? [];
+      for (const c of currentVisibleNode.generalizations) {
+        for (const n of c.nodes ?? []) {
+          const genPartIds = resolvedOf(n.id).map((p) => p.id);
+          if (genPartIds.length === 0) continue;
+          const tab = details.find(
+            (d: any) => d.generalizationId === n.id,
+          ) as any;
+          const fromIds = (tab?.details ?? [])
+            .map((d: any) => d.from)
+            .filter(Boolean);
+          if (!annotationCoversGen(genPartIds, fromIds)) {
+            genDrift += `${n.id}:${genPartIds.join(".")};`;
+          }
+        }
+      }
+    }
+
+    if (viewFresh && !genDrift) {
       setData(currentVisibleNode.inheritedPartsDetails ?? []);
       return;
     }
     const key = `${nodeId}::${fresh
       .map((p) => `${p.id}|${p.inheritedFrom ?? ""}|${p.optional ? 1 : 0}`)
-      .join(",")}`;
+      .join(",")}::${genDrift}`;
     if (lastRepairKeyRef.current === key) return;
     lastRepairKeyRef.current = key;
     repairRef.current();
-  }, [currentVisibleNode, resolvedParts, resolvedPartsLoading]);
+  }, [currentVisibleNode, resolvedParts, resolvedPartsLoading, nodes]);
 
   return { data, repairing, mutateData };
 };
