@@ -6,9 +6,179 @@ import {
   where,
 } from "firebase/firestore";
 import { NODES } from "@components/lib/firestoreClient/collections";
+import { UNCLASSIFIED_COLLECTION } from "@components/lib/CONSTANTS";
+import {
+  choosePrimaryParentId,
+  parentIdsFromGeneralizations,
+} from "@components/lib/utils/derivedNavigation";
 import { INode, TreeData } from "@components/types/INode";
 
 const DOC_ID_IN_LIMIT = 30;
+
+function isRootNode(n: INode): boolean {
+  const root = (n as { root?: unknown }).root;
+  return root === true || root === "true";
+}
+
+function unclassifiedCategoryName(): string {
+  return `[${UNCLASSIFIED_COLLECTION}]`;
+}
+
+/** Find a non-category row's tree id by Firestore nodeId. */
+function findTreeIdByNodeId(
+  items: TreeData[],
+  nodeId: string,
+): string | null {
+  for (const item of items) {
+    if (!item.category && item.nodeId === nodeId) return item.id;
+    if (item.children?.length) {
+      const found = findTreeIdByNodeId(item.children, nodeId);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+/**
+ * Missing path children under a root (or a node that has an unclassified
+ * collection) nest under `[unclassified]`. Under an `unclassified: true`
+ * bucket node they are direct children.
+ */
+function shouldNestMissingUnderUnclassifiedCategory(parent: INode): boolean {
+  if (parent.unclassified) return false;
+  if (isRootNode(parent)) return true;
+  return (parent.specializations || []).some(
+    (c) => c.collectionName === UNCLASSIFIED_COLLECTION,
+  );
+}
+
+/**
+ * Sibling ids safe for outline loading. Skips enumerating huge unclassified
+ * buckets (tens of thousands of nodes); only keeps the next path child.
+ */
+export function collectOutlineSiblingIds(
+  n: INode,
+  pathChildId?: string,
+): string[] {
+  if (n.unclassified) {
+    return pathChildId ? [pathChildId] : [];
+  }
+  const ids: string[] = [];
+  for (const c of n.specializations || []) {
+    if (c.collectionName === UNCLASSIFIED_COLLECTION) {
+      if (
+        pathChildId &&
+        (c.nodes || []).some((link) => link.id === pathChildId)
+      ) {
+        ids.push(pathChildId);
+      }
+      continue;
+    }
+    for (const link of c.nodes || []) {
+      if (link.id) ids.push(link.id);
+    }
+  }
+  return ids;
+}
+
+/**
+ * Strip/limit unclassified bucket contents on path nodes so outline builders
+ * never materialize tens of thousands of sibling rows from the document.
+ * Keeps only the next path child under `[unclassified]` when present.
+ */
+export function prepareNodesForOutline(
+  nodesById: Record<string, INode>,
+  pathIds: string[],
+): Record<string, INode> {
+  const out: Record<string, INode> = { ...nodesById };
+  for (let i = 0; i < pathIds.length; i++) {
+    const id = pathIds[i];
+    const n = out[id];
+    if (!n) continue;
+    const pathChildId = pathIds[i + 1];
+    if (n.unclassified) {
+      out[id] = { ...n, specializations: [] };
+      continue;
+    }
+    const specs = n.specializations || [];
+    if (!specs.some((c) => c.collectionName === UNCLASSIFIED_COLLECTION)) {
+      continue;
+    }
+    out[id] = {
+      ...n,
+      specializations: specs.map((c) => {
+        if (c.collectionName !== UNCLASSIFIED_COLLECTION) return c;
+        const keep = pathChildId
+          ? (c.nodes || []).filter((link) => link.id === pathChildId)
+          : [];
+        return { ...c, nodes: keep };
+      }),
+    };
+  }
+  return out;
+}
+
+/**
+ * Place `nextTree` under the parent row when it is on the path but missing
+ * from stored specializations (common for unclassified parking).
+ */
+export function injectMissingPathChild(
+  oneLevel: TreeData[],
+  parent: INode,
+  parentTreeId: string,
+  nextTree: TreeData,
+): TreeData[] {
+  const existingId = findTreeIdByNodeId(oneLevel, nextTree.nodeId);
+  if (existingId) {
+    return attachChildAlongPath(
+      oneLevel,
+      existingId,
+      nextTree.nodeId,
+      nextTree,
+    );
+  }
+
+  if (shouldNestMissingUnderUnclassifiedCategory(parent)) {
+    const catName = unclassifiedCategoryName();
+    const idx = oneLevel.findIndex(
+      (c) => c.category && c.name === catName,
+    );
+    if (idx >= 0) {
+      return oneLevel.map((c, i) => {
+        if (i !== idx) return c;
+        const kids = c.children || [];
+        if (findTreeIdByNodeId(kids, nextTree.nodeId)) {
+          return {
+            ...c,
+            children: attachChildAlongPath(
+              kids,
+              nextTree.id,
+              nextTree.nodeId,
+              nextTree,
+            ),
+          };
+        }
+        return { ...c, children: [...kids, nextTree] };
+      });
+    }
+    const collectionPathId = `${parentTreeId}-${UNCLASSIFIED_COLLECTION}`;
+    const nested =
+      nextTree.id === `${collectionPathId}-${nextTree.nodeId}`
+        ? nextTree
+        : { ...nextTree, id: `${collectionPathId}-${nextTree.nodeId}` };
+    const catRow: TreeData = {
+      id: collectionPathId,
+      nodeId: parent.id,
+      name: catName,
+      nodeType: parent.nodeType,
+      category: true,
+      children: [nested],
+    };
+    return [...oneLevel, catRow];
+  }
+
+  return [...oneLevel, nextTree];
+}
 
 /**
  * Batched node fetch by id (Firestore `in` limit per query).
@@ -315,7 +485,8 @@ export function buildPathTreeWithSiblings(
       };
     }
 
-    const hasKids = nodeHasNonEmptySpecializations(node);
+    const hasKids =
+      !node.unclassified && nodeHasNonEmptySpecializations(node);
     if (isLast) {
       return {
         id: treeId,
@@ -333,9 +504,9 @@ export function buildPathTreeWithSiblings(
 
     const oneLevel = buildOneLevelFromSpecializations(node, treeId, childById);
     let actualNextTreeId = `${treeId}-${nextNodeId}`;
-    const findId = (items: TreeData[]) => {
+    const findId = (items: TreeData[]): boolean => {
       for (const item of items) {
-        if (item.nodeId === nextNodeId) {
+        if (!item.category && item.nodeId === nextNodeId) {
           actualNextTreeId = item.id;
           return true;
         }
@@ -345,9 +516,27 @@ export function buildPathTreeWithSiblings(
       }
       return false;
     };
-    findId(oneLevel);
+    const foundInSpecializations = findId(oneLevel);
+
+    // Path child not listed on parent specializations (e.g. unclassified
+    // parking with too many children to store): nest under [unclassified]
+    // when the parent is a root / has that collection.
+    if (
+      !foundInSpecializations &&
+      shouldNestMissingUnderUnclassifiedCategory(node)
+    ) {
+      actualNextTreeId = `${treeId}-${UNCLASSIFIED_COLLECTION}-${nextNodeId}`;
+    }
 
     const nextTree = build(index + 1, actualNextTreeId);
+    const children = foundInSpecializations
+      ? attachChildAlongPath(
+          oneLevel,
+          actualNextTreeId,
+          nextNodeId,
+          nextTree,
+        )
+      : injectMissingPathChild(oneLevel, node, treeId, nextTree);
 
     return {
       id: treeId,
@@ -355,12 +544,7 @@ export function buildPathTreeWithSiblings(
       name: node.title,
       nodeType: node.nodeType,
       ...(node.unclassified && { unclassified: true }),
-      children: attachChildAlongPath(
-        oneLevel,
-        actualNextTreeId,
-        nextNodeId,
-        nextTree,
-      ),
+      children,
       hasUnresolvedChildren: true,
       outlineSpineOnly: false,
     };
@@ -370,25 +554,50 @@ export function buildPathTreeWithSiblings(
 }
 
 /**
- * Resolve `pathIds` on the node document, or walk `primaryParentId` and fetch until null.
+ * Resolve `pathIds` on the node document, or walk primaryParentId /
+ * generalizations upward until a root.
+ *
+ * Stale pathIds often look like `[self]` for nodes parked under unclassified
+ * when the reverse specialization was never written (too many children). In
+ * that case walk parents from generalizations instead of treating the node
+ * as an outline root.
  */
 export async function resolvePathIds(
   node: INode,
   fetchNode: (id: string) => Promise<INode | null>,
 ): Promise<{ pathIds: string[]; usedPrimaryParentFallback: boolean }> {
-  if (node.pathIds && node.pathIds.length > 0) {
+  const parentHintIds = parentIdsFromGeneralizations(node.generalizations);
+  const hasParentHint = !!node.primaryParentId || parentHintIds.length > 0;
+  const looksLikeOrphanRoot =
+    !isRootNode(node) &&
+    Array.isArray(node.pathIds) &&
+    node.pathIds.length === 1 &&
+    node.pathIds[0] === node.id;
+
+  if (
+    node.pathIds &&
+    node.pathIds.length > 0 &&
+    !(looksLikeOrphanRoot && hasParentHint)
+  ) {
     return { pathIds: node.pathIds, usedPrimaryParentFallback: false };
   }
+
   const chain: string[] = [node.id];
   let cur: INode | null = node;
   const seen = new Set<string>([node.id]);
-  while (cur?.primaryParentId) {
-    if (seen.has(cur.primaryParentId)) break;
-    seen.add(cur.primaryParentId);
-    const p = await fetchNode(cur.primaryParentId);
+
+  const nextParentId = (n: INode): string | null =>
+    n.primaryParentId || choosePrimaryParentId(n.generalizations);
+
+  let parentId = nextParentId(cur);
+  while (parentId) {
+    if (seen.has(parentId)) break;
+    seen.add(parentId);
+    const p = await fetchNode(parentId);
     if (!p) break;
     chain.push(p.id);
     cur = p;
+    parentId = nextParentId(cur);
   }
   chain.reverse();
   return { pathIds: chain, usedPrimaryParentFallback: true };
@@ -492,10 +701,10 @@ export function replaceWithOneLevel(
     );
     return {
       ...node,
-      children: next,
+      children: mergePreservedSubtrees(next, node.children) as any,
       outlineLoadChildren: false,
       outlineSpineOnly: false,
-      hasUnresolvedChildren: next.length > 0,
+      hasUnresolvedChildren: next.length > 0 || (node.children || []).length > 0,
     };
   });
 }

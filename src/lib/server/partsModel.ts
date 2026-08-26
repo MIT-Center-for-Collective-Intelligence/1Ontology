@@ -115,6 +115,19 @@ export function providersOf(
   return out;
 }
 
+/**
+ * Whether a gen tab's stored annotation still covers everything the gen
+ * provides: every gen part must appear as some row's `from` (=, > and x alike).
+ * A missing one means the gen gained a part after the annotation was computed.
+ */
+export function annotationCoversGen(
+  genPartIds: string[],
+  detailFromIds: string[],
+): boolean {
+  const mentioned = new Set(detailFromIds);
+  return genPartIds.every((id) => mentioned.has(id));
+}
+
 function toResolved(e: PartEntry): ILinkNode {
   const p: ILinkNode = { id: e.id };
   if (e.title !== undefined) p.title = e.title;
