@@ -318,7 +318,10 @@ async function queryTrackingDocs(
  */
 export async function propagateOwnedPartChange(
   ownerId: string,
-  changes: { fromId: string; to?: { id: string; title: string } }[],
+  changes: {
+    fromId: string;
+    to?: { id: string; title: string; owner?: string };
+  }[],
 ): Promise<void> {
   const docs = new Map<string, INode>();
   for (const c of changes) {
@@ -345,8 +348,14 @@ export async function propagateOwnedPartChange(
       }
       touched = true;
       // Morph keeps the recorder; a collision with an existing entry drops it.
+      // Trackers follow the replacement's true owner, not necessarily the editor.
       if (change.to && !presentIds.has(change.to.id)) {
-        next.push({ ...e, id: change.to.id, title: change.to.title });
+        next.push({
+          ...e,
+          id: change.to.id,
+          title: change.to.title,
+          inheritedFrom: change.to.owner ?? ownerId,
+        });
       } else {
         droppedIds.add(e.id);
       }
@@ -385,7 +394,10 @@ export async function propagateOwnedPartChange(
  */
 export async function propagateViaFollowers(
   genId: string,
-  changes: { fromId: string; to?: { id: string; title: string } }[],
+  changes: {
+    fromId: string;
+    to?: { id: string; title: string; owner?: string };
+  }[],
 ): Promise<void> {
   const docs = new Map<string, INode>();
   for (const c of changes) {

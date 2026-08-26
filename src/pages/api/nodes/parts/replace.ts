@@ -71,6 +71,10 @@ async function applyReplaceParts(ctx: {
     { id: toId, title: toNode.title ?? "" },
     genIds,
   );
+  // The minted entry decides ownership: a replacement some generalization
+  // provides came out INHERITED from it (same rule as a plain add).
+  const replacement = parts.find((e) => e.id === toId);
+  const replacementOwner = replacement?.inheritedFrom;
 
   const oldPartsCol = asPartsCollections(nodeData.properties?.parts);
   const side = toParts(parts);
@@ -110,7 +114,7 @@ async function applyReplaceParts(ctx: {
   await applyIsPartOfOwnerOnly(
     nodeId,
     nodeData.title ?? "",
-    [toId],
+    replacementOwner ? [] : [toId],
     [fromId],
     cache,
     parentLog,
@@ -119,23 +123,25 @@ async function applyReplaceParts(ctx: {
     childLogs,
   );
 
-  // An OWNED part's replace morphs descendants' stored recorders in place.
+  // An OWNED part's replace morphs descendants' stored recorders in place;
+  // when the replacement is inherited, they track its true owner instead.
+  const morphTo = {
+    id: toId,
+    title: toNode.title ?? "",
+    ...(replacementOwner ? { owner: replacementOwner } : {}),
+  };
   if (isOwnedPart(from)) {
-    await propagateOwnedPartChange(nodeId, [
-      { fromId, to: { id: toId, title: toNode.title ?? "" } },
-    ]);
+    await propagateOwnedPartChange(nodeId, [{ fromId, to: morphTo }]);
   }
 
   // Followers that PICKED this node mirror the replace, owned or not.
-  await propagateViaFollowers(nodeId, [
-    { fromId, to: { id: toId, title: toNode.title ?? "" } },
-  ]);
+  await propagateViaFollowers(nodeId, [{ fromId, to: morphTo }]);
 
-  // The replacement is owned here now — a descendant's own copy of it
-  // converts to inherited.
+  // The node now provides the replacement — a descendant's own copy of it
+  // converts to inherited (toward the true owner).
   await absorbDescendantOwnership(
     nodeId,
-    [{ partId: toId, owner: nodeId }],
+    [{ partId: toId, owner: replacementOwner ?? nodeId }],
     updatedRelated,
     cache,
     parentLog,

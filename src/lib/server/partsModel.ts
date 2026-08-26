@@ -99,6 +99,23 @@ export function childSourceOf(parentPart: ILinkNode, parentId: string): string {
 }
 
 /**
+ * The generalizations (in the given order) whose resolved view provides
+ * `partId`, each with the owner a part inherited through that gen would record.
+ */
+export function providersOf(
+  partId: string,
+  resolvedOf: (id: string) => ILinkNode[],
+  genIds: string[],
+): { genId: string; owner: string }[] {
+  const out: { genId: string; owner: string }[] = [];
+  for (const genId of genIds) {
+    const p = resolvedOf(genId).find((x) => x.id === partId);
+    if (p) out.push({ genId, owner: childSourceOf(p, genId) });
+  }
+  return out;
+}
+
+/**
  * Whether a gen tab's stored annotation still covers everything the gen
  * provides: every gen part must appear as some row's `from` (=, > and x alike).
  * A missing one means the gen gained a part after the annotation was computed.
@@ -479,6 +496,17 @@ export function applyReplace(
   }
   const swapped: PartEntry = { id: to.id, title: to.title };
   if (replaced.optional) swapped.optional = true;
+  // A replacement some generalization provides is INHERITED from the first
+  // providing gen instead of owned — same rule as a plain add.
+  const provider = providersOf(
+    to.id,
+    (id) => resolveParts(id, graph),
+    genIds,
+  )[0];
+  if (provider) {
+    swapped.inheritedFrom = provider.owner;
+    if (provider.owner !== provider.genId) swapped.via = provider.genId;
+  }
 
   const { source } = node.partsInheritance;
   const sourceProvides =
@@ -607,24 +635,30 @@ export function applySwitchSource(
 }
 
 /**
- * Reattach (or switch the overall source): a HARD RESET of everything the node
- * does not OWN. Only owned entries survive — one the source also provides
- * keeps its slot, the rest are anchored below the source's parts in their
- * current relative order. The node's optional flag on a kept virtual part is
- * preserved as an override; parts it never had take the source's flag.
+ * Hard reset onto `sourceId`. Owned parts the source also provides are ABSORBED:
+ * dropped here and returned in `absorbed` with the owner resolved through the source.
+ * Other owned parts keep their order below the source's; optional diffs become overrides.
  */
 export function convertToOverlay(
   nodeId: string,
   graph: PartsGraph,
   sourceId: string,
-): { parts: PartEntry[]; partsInheritance: PartsInheritance } {
+): {
+  parts: PartEntry[];
+  partsInheritance: PartsInheritance;
+  absorbed: { partId: string; owner: string }[];
+} {
   const node = graph.get(nodeId);
   if (!node) {
-    return { parts: [], partsInheritance: { source: sourceId, overrides: {} } };
+    return {
+      parts: [],
+      partsInheritance: { source: sourceId, overrides: {} },
+      absorbed: [],
+    };
   }
   const current = resolveParts(nodeId, graph);
   const sourceResolved = resolveParts(sourceId, graph);
-  const sourceIds = new Set(sourceResolved.map((p) => p.id));
+  const sourceById = new Map(sourceResolved.map((p) => [p.id, p]));
   const lastSourceId = sourceResolved.length
     ? sourceResolved[sourceResolved.length - 1].id
     : null;
@@ -636,35 +670,41 @@ export function convertToOverlay(
       (a, b) =>
         (orderIndex.get(a.id) ?? Infinity) - (orderIndex.get(b.id) ?? Infinity),
     );
-  const ownedIds = new Set(owned.map((e) => e.id));
-  const parts = owned.map((e) =>
-    sourceIds.has(e.id)
-      ? withoutAnchor(e)
-      : { ...withoutAnchor(e), after: lastSourceId },
-  );
 
+  const absorbed: { partId: string; owner: string }[] = [];
+  const parts: PartEntry[] = [];
   const overrides: PartsInheritance["overrides"] = {};
+  for (const e of owned) {
+    const sp = sourceById.get(e.id);
+    if (sp) {
+      // The source provides it — ownership lifts to the source's line.
+      absorbed.push({ partId: e.id, owner: childSourceOf(sp, sourceId) });
+      if (!!e.optional !== !!sp.optional) {
+        overrides[e.id] = { optional: !!e.optional };
+      }
+      continue;
+    }
+    parts.push({ ...withoutAnchor(e), after: lastSourceId });
+  }
+
   const currentById = new Map(current.map((p) => [p.id, p]));
   for (const sp of sourceResolved) {
-    if (ownedIds.has(sp.id)) continue;
+    if (overrides[sp.id]) continue;
     const cur = currentById.get(sp.id);
-    if (!cur) continue;
-    if (!!cur.optional !== !!sp.optional) {
-      overrides[sp.id] = { optional: !!cur.optional };
+    if (!cur || !isOwnedPart(cur)) {
+      if (cur && !!cur.optional !== !!sp.optional) {
+        overrides[sp.id] = { optional: !!cur.optional };
+      }
     }
   }
-  return { parts, partsInheritance: { source: sourceId, overrides } };
+  return { parts, partsInheritance: { source: sourceId, overrides }, absorbed };
 }
 
 /**
- * Update a node when its generalizations change. Call with the graph still
- * containing the node's PRE-change state and every gen involved. Stored
- * entries tracked through a removed gen are dropped unless a remaining gen
- * still resolves (or re-provides) them. When the SOURCE itself is removed the
- * node re-attaches to the first remaining gen by MERGE: stored entries stay,
- * the old source's parts survive only where a remaining gen provides them
- * (minted as stored entries when it isn't the new source), the rest disappear
- * (5.4). No remaining gens — or an already-broken node — means broken stays.
+ * Update parts after a generalization change; the graph must hold the node's
+ * pre-change state. Parts from a removed gen survive only if another gen still
+ * provides them. If the source itself was removed, the node merge-attaches to
+ * the first remaining gen, or stays broken.
  */
 export function applyGenChange(
   nodeId: string,
@@ -771,7 +811,10 @@ export function applyGenChange(
 export function applyViaFollowerChange(
   parts: PartEntry[],
   genId: string,
-  changes: { fromId: string; to?: { id: string; title: string } }[],
+  changes: {
+    fromId: string;
+    to?: { id: string; title: string; owner?: string };
+  }[],
 ): { parts: PartEntry[]; changed: boolean } {
   const presentIds = new Set(parts.map((e) => e.id));
   const droppedIds = new Set<string>();
@@ -785,13 +828,16 @@ export function applyViaFollowerChange(
     }
     changed = true;
     if (change.to && !presentIds.has(change.to.id)) {
+      // The gen owns its replacement unless it inherited it (`owner`); a
+      // relayed replacement keeps the pick — the gen still provides it.
+      const owner = change.to.owner ?? genId;
       const morphed = {
         ...e,
         id: change.to.id,
         title: change.to.title,
-        inheritedFrom: genId,
+        inheritedFrom: owner,
       };
-      delete morphed.via;
+      if (owner === genId) delete morphed.via;
       next.push(morphed);
     } else {
       droppedIds.add(e.id);
