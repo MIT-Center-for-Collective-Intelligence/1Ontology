@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import AddIcon from "@mui/icons-material/Add";
 import {
   Box,
@@ -446,16 +446,58 @@ const StructuredProperty = ({
     db,
   ]);
 
-  const isReparenting =
-    property === "generalizations" &&
-    !(
-      typeof currentVisibleNode?.root === "boolean" && currentVisibleNode.root
-    ) &&
-    (currentVisibleNode?.generalizations || []).flatMap(
-      (c: ICollection) => c.nodes,
-    ).length === 0;
+  const generalizationCount = (
+    currentVisibleNode?.generalizations || []
+  ).flatMap((c: ICollection) => c.nodes).length;
 
-  const reparentRootName = useMemo(() => {
+  const [isReParentPending, setIsReParentPending] = useState(false);
+  const prevGenMetaRef = useRef({
+    nodeId: currentVisibleNode?.id as string | undefined,
+    count: generalizationCount,
+  });
+
+  useEffect(() => {
+    const nodeId = currentVisibleNode?.id;
+    const isRootNode =
+      typeof currentVisibleNode?.root === "boolean" && currentVisibleNode.root;
+    const prev = prevGenMetaRef.current;
+
+    if (nodeId !== prev.nodeId) {
+      prevGenMetaRef.current = { nodeId, count: generalizationCount };
+      setIsReParentPending(false);
+      return;
+    }
+
+    if (
+      property === "generalizations" &&
+      !isRootNode &&
+      prev.count > 0 &&
+      generalizationCount === 0
+    ) {
+      setIsReParentPending(true);
+    } else if (generalizationCount > 0 || isRootNode) {
+      setIsReParentPending(false);
+    }
+
+    prevGenMetaRef.current = { nodeId, count: generalizationCount };
+  }, [
+    currentVisibleNode?.id,
+    currentVisibleNode?.root,
+    generalizationCount,
+    property,
+  ]);
+
+  useEffect(() => {
+    if (!isReParentPending) return;
+    const timeoutId = window.setTimeout(() => {
+      setIsReParentPending(false);
+    }, 8000);
+    return () => window.clearTimeout(timeoutId);
+  }, [isReParentPending]);
+
+  const isReParenting = property === "generalizations" && isReParentPending;
+
+  const reParentRootName = useMemo(() => {
     const nt = currentVisibleNode?.nodeType;
     const root = Object.values(relatedNodes).find(
       (n: any) => n?.root && n?.nodeType === nt && !n?.deleted,
@@ -1703,7 +1745,7 @@ const StructuredProperty = ({
               </Box>
             )}
         </Box>
-        {isReparenting && (
+        {isReParenting && (
           <Box
             sx={{
               display: "flex",
@@ -1720,11 +1762,11 @@ const StructuredProperty = ({
                 color: "text.secondary",
               }}
             >
-              {`Moving under "${reparentRootName}"…`}
+              {`Moving under "${reParentRootName}"…`}
             </Typography>
           </Box>
         )}
-        {!isReparenting &&
+        {!isReParenting &&
           (property !== "parts" || !enableEdit) &&
           currentVisibleNode.propertyType[property] !== "string-array" && (
             <CollectionStructure
