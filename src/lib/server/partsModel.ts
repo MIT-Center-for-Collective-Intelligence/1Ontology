@@ -55,19 +55,87 @@ export function isOwnedPart(part: ILinkNode): boolean {
 }
 
 /**
- * Query index for stored entries' provenance: one "partId:ownerId" key per
- * non-owned entry, plus one "partId@genId" key when the entry follows a
- * picked gen (`via`). Every write of `properties.parts` MUST write this
- * alongside; a missing field means empty.
+ * Query index for stored provenance: one "partId:ownerId" key per non-owned
+ * entry, one "partId@genId" key when the entry follows a picked gen (`via`),
+ * and one "partId!" key per optional override. Every write of
+ * `properties.parts` MUST write this alongside; a missing field means empty.
  */
-export function partSourcesOf(parts: PartEntry[]): string[] {
+export function partSourcesOf(
+  parts: PartEntry[],
+  overrideIds: string[] = [],
+): string[] {
   const keys: string[] = [];
   for (const e of parts) {
     if (!e.inheritedFrom) continue;
     keys.push(`${e.id}:${e.inheritedFrom}`);
     if (e.via) keys.push(`${e.id}@${e.via}`);
   }
+  for (const id of overrideIds) keys.push(`${id}!`);
   return keys;
+}
+
+/**
+ * `ownerId` set its copy of `partId` to `optional`: stored entries tracking
+ * that copy mirror the flag (last writer wins between a node and its line).
+ */
+export function applyTrackerFlag(
+  parts: PartEntry[],
+  partId: string,
+  ownerId: string,
+  optional: boolean,
+): { parts: PartEntry[]; changed: boolean } {
+  let changed = false;
+  const next = parts.map((e) => {
+    if (e.id !== partId || e.inheritedFrom !== ownerId) return e;
+    if (!!e.optional === optional) return e;
+    changed = true;
+    const copy = { ...e };
+    if (optional) copy.optional = true;
+    else delete copy.optional;
+    return copy;
+  });
+  return { parts: changed ? next : parts, changed };
+}
+
+/**
+ * The picked gen `genId` set `partId`'s flag to `optional`: entries that
+ * FOLLOW it (`via: genId`) mirror the flag.
+ */
+export function applyViaFlag(
+  parts: PartEntry[],
+  partId: string,
+  genId: string,
+  optional: boolean,
+): { parts: PartEntry[]; changed: boolean } {
+  let changed = false;
+  const next = parts.map((e) => {
+    if (e.id !== partId || e.via !== genId) return e;
+    if (!!e.optional === optional) return e;
+    changed = true;
+    const copy = { ...e };
+    if (optional) copy.optional = true;
+    else delete copy.optional;
+    return copy;
+  });
+  return { parts: changed ? next : parts, changed };
+}
+
+/**
+ * An override that matches its line's current flag dissolves — the node
+ * follows the line again.
+ */
+export function dissolveMatchingOverride(
+  pi: PartsInheritance,
+  partId: string,
+  lineOptional: boolean,
+): { partsInheritance: PartsInheritance; changed: boolean } {
+  const o = pi.overrides[partId];
+  if (!o || !!o.optional !== lineOptional) {
+    return { partsInheritance: pi, changed: false };
+  }
+  const overrides = { ...pi.overrides };
+  delete overrides[partId];
+  return { partsInheritance: { source: pi.source, overrides }, changed: true };
 }
 
 /**
@@ -395,10 +463,10 @@ export function applyRemove(
 }
 
 /**
- * Set a part's optional flag as this node sees it. A stored entry — own,
- * other-gen, switched or sticky — flips its own flag; a VIRTUAL part records
- * an override in partsInheritance instead (never auto-cleaned: the node's
- * flag is authoritative once set). Never breaks attachment.
+ * Set a part's optional flag as this node sees it. A stored entry flips its
+ * own flag; a virtual part records an override — unless the new value matches
+ * the line's flag, which clears the override instead (matching means following).
+ * Never breaks attachment.
  */
 export function applyToggleOptional(
   nodeId: string,
@@ -435,11 +503,33 @@ export function applyToggleOptional(
       changed: false,
     };
   }
+  // Virtual ⇒ the part comes through the source; its line flag is the
+  // source's chain-effective value (this node's own override excluded).
+  const { source, overrides } = node.partsInheritance;
+  const lineFlag = !!(
+    source && resolveParts(source, graph).find((p) => p.id === partId)?.optional
+  );
+  if (optional === lineFlag) {
+    if (!(partId in overrides)) {
+      return {
+        parts: node.parts,
+        partsInheritance: node.partsInheritance,
+        changed: false,
+      };
+    }
+    const next = { ...overrides };
+    delete next[partId];
+    return {
+      parts: node.parts,
+      partsInheritance: { source, overrides: next },
+      changed: true,
+    };
+  }
   return {
     parts: node.parts,
     partsInheritance: {
-      source: node.partsInheritance.source,
-      overrides: { ...node.partsInheritance.overrides, [partId]: { optional } },
+      source,
+      overrides: { ...overrides, [partId]: { optional } },
     },
     changed: true,
   };

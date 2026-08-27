@@ -14,8 +14,11 @@ import {
   absorbOwnedForGens,
   absorbOwnedPart,
   applyGenChange,
+  applyTrackerFlag,
+  applyViaFlag,
   applyViaFollowerChange,
   childSourceOf,
+  dissolveMatchingOverride,
   isOwnedPart,
   partSourcesOf,
   repointTracked,
@@ -119,7 +122,10 @@ export async function applyPartsForGenChange(
     .update({
       "properties.parts": side,
       partsInheritance,
-      partSources: partSourcesOf(parts),
+      partSources: partSourcesOf(
+        parts,
+        Object.keys(partsInheritance.overrides),
+      ),
       inheritedPartsDetails: computeInheritedPartsDetails({
         currentNode: updatedNode,
         relatedNodes: updatedRelated,
@@ -375,7 +381,10 @@ export async function propagateOwnedPartChange(
     });
     batch.update(db.collection(NODES).doc(id), {
       "properties.parts": toParts(rePointed),
-      partSources: partSourcesOf(rePointed),
+      partSources: partSourcesOf(
+        rePointed,
+        Object.keys(node.partsInheritance?.overrides ?? {}),
+      ),
     });
     pending += 1;
     if (pending >= MAX_TRANSACTION_WRITES) {
@@ -421,7 +430,10 @@ export async function propagateViaFollowers(
     if (!changed) continue;
     batch.update(db.collection(NODES).doc(id), {
       "properties.parts": toParts(parts),
-      partSources: partSourcesOf(parts),
+      partSources: partSourcesOf(
+        parts,
+        Object.keys(node.partsInheritance?.overrides ?? {}),
+      ),
     });
     pending += 1;
     if (pending >= MAX_TRANSACTION_WRITES) {
@@ -457,7 +469,104 @@ export async function repointTrackedEntries(
     if (!changed) continue;
     batch.update(db.collection(NODES).doc(id), {
       "properties.parts": toParts(parts),
-      partSources: partSourcesOf(parts),
+      partSources: partSourcesOf(
+        parts,
+        Object.keys(node.partsInheritance?.overrides ?? {}),
+      ),
+    });
+    pending += 1;
+    if (pending >= MAX_TRANSACTION_WRITES) {
+      await batch.commit();
+      batch = db.batch();
+      pending = 0;
+    }
+  }
+  if (pending > 0) await batch.commit();
+}
+
+/**
+ * Deliver a flag toggle: trackers of the toggler's copy and followers of its
+ * pick mirror the flag; overrides that now match their line dissolve. Receivers
+ * get no logs — their resolvedParts stay stale for read-repair to fix.
+ */
+export async function propagateFlagChange(
+  togglerId: string,
+  partId: string,
+  optional: boolean,
+  ownsPart: boolean,
+): Promise<void> {
+  const docs = new Map<string, INode>();
+  if (ownsPart) {
+    for (const [id, data] of await queryTrackingDocs(partId, togglerId)) {
+      docs.set(id, data);
+    }
+  }
+  for (const key of [`${partId}@${togglerId}`, `${partId}!`]) {
+    const snap = await db
+      .collection(NODES)
+      .where("partSources", "array-contains", key)
+      .get();
+    for (const d of snap.docs) {
+      const data = d.data() as INode;
+      if (!data.deleted && !docs.has(d.id)) {
+        docs.set(d.id, { ...data, id: d.id });
+      }
+    }
+  }
+
+  const cache: NodeCache = new Map();
+  for (const [id, n] of docs) cache.set(id, n);
+  // Chain graph for a node's line flag; the toggler's doc reads fresh (its
+  // own write already landed), so the resolved flag is the post-toggle one.
+  const chainGraphFor = async (startId: string): Promise<PartsGraph> => {
+    const graph: PartsGraph = new Map();
+    let cursor: string | null | undefined = startId;
+    while (cursor && !graph.has(cursor)) {
+      const doc = await getNode(cursor, cache);
+      if (!doc) break;
+      const partsNode = toPartsNode(doc);
+      graph.set(cursor, partsNode);
+      cursor = partsNode.partsInheritance.source;
+    }
+    return graph;
+  };
+
+  let batch = db.batch();
+  let pending = 0;
+  for (const [id, node] of docs) {
+    let parts = partsNodes(asPartsCollections(node.properties?.parts));
+    let touched = false;
+    if (ownsPart) {
+      const r = applyTrackerFlag(parts, partId, togglerId, optional);
+      if (r.changed) {
+        parts = r.parts;
+        touched = true;
+      }
+    }
+    const v = applyViaFlag(parts, partId, togglerId, optional);
+    if (v.changed) {
+      parts = v.parts;
+      touched = true;
+    }
+    let pi = node.partsInheritance ?? { source: null, overrides: {} };
+    if (pi.overrides?.[partId] && pi.source) {
+      const graph = await chainGraphFor(pi.source);
+      const linePart = resolveParts(pi.source, graph).find(
+        (p) => p.id === partId,
+      );
+      if (linePart) {
+        const r = dissolveMatchingOverride(pi, partId, !!linePart.optional);
+        if (r.changed) {
+          pi = r.partsInheritance;
+          touched = true;
+        }
+      }
+    }
+    if (!touched) continue;
+    batch.update(db.collection(NODES).doc(id), {
+      "properties.parts": toParts(parts),
+      partsInheritance: pi,
+      partSources: partSourcesOf(parts, Object.keys(pi.overrides ?? {})),
     });
     pending += 1;
     if (pending >= MAX_TRANSACTION_WRITES) {
@@ -559,7 +668,10 @@ export async function absorbDescendantOwnership(
         .update({
           "properties.parts": side,
           partsInheritance,
-          partSources: partSourcesOf(parts),
+          partSources: partSourcesOf(
+            parts,
+            Object.keys(partsInheritance.overrides),
+          ),
         });
       cache.set(candidateId, {
         ...candidate,

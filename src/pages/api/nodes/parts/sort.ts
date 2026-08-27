@@ -82,7 +82,10 @@ async function applySort(ctx: {
     .update({
       "properties.parts": side,
       partsInheritance,
-      partSources: partSourcesOf(result.parts),
+      partSources: partSourcesOf(
+        result.parts,
+        Object.keys(partsInheritance.overrides),
+      ),
       inheritedPartsDetails: computeInheritedPartsDetails({
         currentNode: updatedNode,
         relatedNodes: updatedRelated,
