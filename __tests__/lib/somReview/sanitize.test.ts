@@ -16,13 +16,17 @@ describe("Society of Mind reviewer card blinding", () => {
     }
   });
 
-  it("never serves internal model or critic metadata", () => {
+  it("serves only the allowlisted agent disclosure, not raw internal metadata", () => {
     for (const record of dataset.recordsById.values()) {
-      const serialized = JSON.stringify(toReviewerCard(record));
+      const card = toReviewerCard(record);
+      const serialized = JSON.stringify(card);
       expect(serialized).not.toMatch(
-        /internalModelEvidence|detector|judge|promptVersion|rolloutStatus/i,
+        /internalModelEvidence|detectorConfidence|judgeConfidence|reviewerVisible|rolloutStatus/i,
       );
-      expect(serialized).not.toMatch(/\b[HJ]\d+\s*(?::|not\s+run\b)/i);
+      expect(card.agentTrace?.stages.length).toBeGreaterThan(0);
+      expect(Object.keys(card)).toEqual(
+        expect.arrayContaining(["agentTrace", "reviewerView"]),
+      );
     }
   });
 

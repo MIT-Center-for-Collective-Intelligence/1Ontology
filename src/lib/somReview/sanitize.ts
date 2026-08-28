@@ -3,6 +3,7 @@ import {
   SomReviewCard,
   SomReviewContext,
 } from "../../types/ISomReview";
+import { agentTraceForRecord } from "./agentTransparency";
 
 const cleanText = (value: unknown): string =>
   typeof value === "string" ? value.trim() : "";
@@ -213,6 +214,7 @@ export const toReviewerCard = (record: any): SomReviewCard => {
     datasetVersion: record.datasetVersion,
     branch,
     issueType: record.issueType as SomIssueType,
+    ...(record.issueType ? { agentTrace: agentTraceForRecord(record) } : {}),
     reviewerView: {
       question: reviewerQuestion(context, branch),
       currentState:
