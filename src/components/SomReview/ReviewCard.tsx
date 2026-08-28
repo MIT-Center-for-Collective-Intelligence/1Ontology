@@ -18,6 +18,7 @@ import ContextRenderer, {
   contextShowsStateComparison,
   DiffedTitle,
 } from "./ContextRenderer";
+import AgentTracePanel from "./AgentTracePanel";
 import { reviewAccentColor } from "./reviewStyles";
 import {
   clearReviewDraft,
@@ -287,6 +288,8 @@ const ReviewCard = ({
       >
         {view.question}
       </Typography>
+
+      {card.agentTrace && <AgentTracePanel trace={card.agentTrace} prominent />}
 
       {showStatePanels && (
         <Stack

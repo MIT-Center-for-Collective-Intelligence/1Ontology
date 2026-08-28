@@ -40,6 +40,48 @@ export interface SomReviewWorkflow {
 
 export type SomReviewDecision = "agree" | "disagree";
 
+export type SomAgentKind =
+  | "model"
+  | "deterministic"
+  | "human-derived"
+  | "recorded-component";
+
+export type SomAgentTraceRole =
+  | "issue-detection"
+  | "solution-generation"
+  | "issue-solution-evaluation"
+  | "content-verification"
+  | "proposal-generation";
+
+export interface SomAgentTraceStage {
+  id: string;
+  sequence: number;
+  role: SomAgentTraceRole;
+  roleLabel: string;
+  actorId: string;
+  actorName: string;
+  actorKind: SomAgentKind;
+  actorKindLabel: string;
+  summary: string;
+  promptVersion: string;
+  promptLabel:
+    | "Prompt template"
+    | "Decision rules"
+    | "Expert instructions"
+    | "Prompt unavailable";
+  prompt: string;
+  promptDisclosureNote?: string;
+  sharedExecutionId?: string;
+  sharedExecutionNote?: string;
+}
+
+export interface SomAgentTrace {
+  title: string;
+  summary: string;
+  runtimeInputNote: string;
+  stages: SomAgentTraceStage[];
+}
+
 export type SomReviewerRole = "steward" | "researcher" | "contributor";
 
 export type SomDeliberationRecommendation =
@@ -255,6 +297,8 @@ export interface SomReviewCard {
   datasetVersion: string;
   branch: string;
   issueType: SomIssueType;
+  /** Reviewer-safe lineage and source-backed prompt or decision-rule text. */
+  agentTrace?: SomAgentTrace;
   /** Zero-based position within the complete issue-type queue. */
   proposalIndex?: number;
   reviewerView: {
