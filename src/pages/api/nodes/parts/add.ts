@@ -114,7 +114,10 @@ async function applyAdd(ctx: {
     .doc(nodeId)
     .update({
       "properties.parts": side,
-      partSources: partSourcesOf(nextEntries),
+      partSources: partSourcesOf(
+        nextEntries,
+        Object.keys(nodeData.partsInheritance?.overrides ?? {}),
+      ),
       inheritedPartsDetails: computeInheritedPartsDetails({
         currentNode: updatedNode,
         relatedNodes: updatedRelated,

@@ -8,10 +8,16 @@ import {
   recordLogs,
   writeChangeLog,
 } from "@components/lib/server/hierarchy";
-import { asPartsCollections, toParts } from "@components/lib/server/parts";
+import {
+  asPartsCollections,
+  propagateFlagChange,
+  toParts,
+} from "@components/lib/server/parts";
 import {
   applyToggleOptional,
+  isOwnedPart,
   partSourcesOf,
+  resolveParts,
   toPartsNode,
   PartsGraph,
 } from "@components/lib/server/partsModel";
@@ -46,7 +52,16 @@ async function applyToggle(ctx: {
     partId,
     optional,
   );
-  if (!changed) throw new HttpError(400, "partId is not a part of this node");
+  if (!changed) {
+    // Displayed but already at the line's flag with no override: a no-op.
+    if (resolveParts(nodeId, graph).some((p) => p.id === partId)) {
+      return {
+        ok: true,
+        parts: asPartsCollections(nodeData.properties?.parts),
+      };
+    }
+    throw new HttpError(400, "partId is not a part of this node");
+  }
 
   const oldPartsCol = asPartsCollections(nodeData.properties?.parts);
   const side = toParts(parts);
@@ -64,7 +79,10 @@ async function applyToggle(ctx: {
     .update({
       "properties.parts": side,
       partsInheritance,
-      partSources: partSourcesOf(parts),
+      partSources: partSourcesOf(
+        parts,
+        Object.keys(partsInheritance.overrides),
+      ),
       inheritedPartsDetails: computeInheritedPartsDetails({
         currentNode: updatedNode,
         relatedNodes: updatedRelated,
@@ -86,6 +104,15 @@ async function applyToggle(ctx: {
       ...(appName ? { appName } : {}),
     } as NodeChange);
   }
+
+  // After the own-node write, so receivers resolve the post-toggle flag.
+  const entry = parts.find((e) => e.id === partId);
+  await propagateFlagChange(
+    nodeId,
+    partId,
+    optional,
+    !!entry && isOwnedPart(entry),
+  );
 
   return { ok: true, parts: side };
 }

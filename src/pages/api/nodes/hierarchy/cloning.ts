@@ -230,7 +230,10 @@ async function applyClone(ctx: {
       .doc(currentNodeId)
       .update({
         "properties.parts": side,
-        partSources: partSourcesOf(nextEntries),
+        partSources: partSourcesOf(
+          nextEntries,
+          Object.keys(currentNode.partsInheritance?.overrides ?? {}),
+        ),
         inheritedPartsDetails: computeInheritedPartsDetails({
           currentNode: updatedCurrent,
           relatedNodes,

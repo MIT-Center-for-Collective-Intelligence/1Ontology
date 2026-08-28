@@ -76,7 +76,10 @@ async function applyReattach(ctx: {
     .update({
       "properties.parts": side,
       partsInheritance,
-      partSources: partSourcesOf(parts),
+      partSources: partSourcesOf(
+        parts,
+        Object.keys(partsInheritance.overrides),
+      ),
       inheritedPartsDetails: computeInheritedPartsDetails({
         currentNode: updatedNode,
         relatedNodes: updatedRelated,
