@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "homogeneous-title-testbed-quality-report-v4",
+  "generatedAt": "2026-08-29T16:01:28.264Z",
+  "sourceHierarchySha256": "f19ce789bce298b0564045fb87427eebd1193b89c133d17519c097dc3e0eb319",
+  "packagedSnapshotSha256": "5cef5fa217bf7650f53e47f3cdf38b89ee3348c70a664fcdc51bf9db31687fb3",
+  "counts": {
+    "sampledAtomicActivities": 18,
+    "titleKeep": 5,
+    "titleRename": 3,
+    "titleSplit": 8,
+    "titleDefer": 2,
+    "homogeneousGroups": 30,
+    "reviewCards": 18,
+    "projectedFullRunHomogeneousGroupScenarios": {
+      "noSplit": 20491,
+      "stratifiedPilot": 26765,
+      "oneGroupPerSourceRecord": 53608,
+      "interpretation": "Sensitivity scenarios, not a confidence interval. The middle scenario preserves branch-by-evidence-bucket weights; the upper scenario assumes one resulting group per O*NET record and is not an absolute bound because a multi-object record can yield multiple claims."
+    },
+    "projectedFullRunStratifiedModelCalls": 47256,
+    "projectedFullRunStratifiedAccessTokens": {
+      "low": 53539268,
+      "central": 76191005,
+      "high": 113134892
+    }
+  },
+  "safeguards": {
+    "everySourceRecordRepresented": true,
+    "repeatedRecordRequiresDistinctDirectObjectClaim": true,
+    "exactEvidenceQuotesBoundToSource": true,
+    "evidenceQuotesIncludeRecordedAction": true,
+    "titleWordCountBetweenTwoAndFive": true,
+    "leadingActionPreserved": true,
+    "duplicateResultingTitlesRejected": true,
+    "titleStatusDerivedFromFullOntologyInventory": true,
+    "newNodesMarkedProvisional": true,
+    "allCandidateWordNetDeferredUntilTitleAcceptance": true,
+    "ontologyMutationDisabled": true
+  },
+  "evaluationStatus": {
+    "semanticAccuracyMeasured": false,
+    "independentGoldLabels": false,
+    "blindHoldout": false,
+    "repeatedRuns": false,
+    "note": "This is a source-bound review pilot. Keep cards are not independent controls, and deterministic safeguards do not validate semantic judgments."
+  }
+}

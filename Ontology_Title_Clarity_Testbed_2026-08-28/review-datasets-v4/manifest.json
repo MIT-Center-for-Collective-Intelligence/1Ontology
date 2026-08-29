@@ -1,0 +1,170 @@
+{
+  "schemaVersion": "som-review-v1",
+  "datasetVersion": "ontology-title-homogeneous-testbed-2026-08-29-v4",
+  "branch": "Ontology-wide title test bed",
+  "generatedAt": "2026-08-29T16:01:28.264Z",
+  "sourceOntology": "artifact://0401_FINALHIERARCHY.json",
+  "sourceOntologySha256": "5cef5fa217bf7650f53e47f3cdf38b89ee3348c70a664fcdc51bf9db31687fb3",
+  "upstreamSource": {
+    "file": "0401_FINALHIERARCHY.json",
+    "sha256": "f19ce789bce298b0564045fb87427eebd1193b89c133d17519c097dc3e0eb319",
+    "atomicActivityOccurrences": 20491,
+    "uniqueExactTitles": 15994,
+    "singleOccurrenceTitles": 11992,
+    "sampledAtomicActivities": 18,
+    "resultingHomogeneousGroups": 30
+  },
+  "safety": {
+    "reviewOnly": true,
+    "mutatesOntology": false,
+    "approvalAuthorizesAutomaticWrite": false,
+    "modelConfidenceVisibleToReviewer": false
+  },
+  "uiContract": {
+    "issueHomogeneousSessions": true,
+    "defaultSessionSize": 10,
+    "maximumSessionSize": 15,
+    "oneAtomicItemAtATime": true,
+    "agreeAutoAdvancesWithoutPageReload": true,
+    "disagreeRequiresReason": true,
+    "optionalContextCollapsedByDefault": true,
+    "allowSaveAndExit": true
+  },
+  "issueTypes": [
+    {
+      "id": "title-clarity",
+      "label": "Clarify titles through homogeneous evidence groups",
+      "stage": "content",
+      "robTaskIds": [
+        1
+      ],
+      "rolloutStatus": "experimental",
+      "view": "title-split",
+      "proposals": 11,
+      "controls": 5
+    }
+  ],
+  "files": {
+    "allProposals": "all_proposals.jsonl",
+    "allControls": "all_controls.jsonl",
+    "manualChecks": "manual_checks.jsonl",
+    "proposalsByIssue": "proposals/<issue-type>.jsonl",
+    "controlsByIssue": "controls/<issue-type>.jsonl",
+    "rejectedAgentCandidates": "diagnostics/rejected_agent_candidates.jsonl",
+    "fullRunEstimate": "diagnostics/full-run-estimate.json",
+    "proposalSchema": "schema/review-proposal.schema.json",
+    "responseSchema": "schema/review-response.schema.json",
+    "schemaSource": "scripts/som-review/build-homogeneous-title-review-dataset.mjs",
+    "ontologySnapshot": "ontology-snapshot.json"
+  },
+  "counts": {
+    "proposals": 11,
+    "controls": 5,
+    "manualChecks": 2,
+    "rejectedAgentCandidates": 0
+  },
+  "limitations": [
+    "This deterministic 18-title sample is a reviewer-interface pilot, not ground truth, an accuracy evaluation, or a claim that the full ontology has been corrected.",
+    "Every O*NET record contributes at least one source-supported predicate-object claim. One record may support multiple groups only when the current action explicitly governs distinct direct objects not already represented by another linked title.",
+    "The pilot includes repeated titles and a 21+-record case in every top-level branch, but one medium and one large case per branch cannot establish reliability.",
+    "New specific titles remain provisional children until a later placement review.",
+    "Title grouping preserves the leading action; WordNet sense alignment and wrong-main-verb checks are deliberately deferred.",
+    "The separate generic-action diagnostic found 147 Act/Perform occurrences (135 unique titles); none is silently rewritten here.",
+    "No generated proposal or expert agreement writes to the ontology automatically."
+  ],
+  "sourceSnapshot": {
+    "file": "ontology-snapshot.json",
+    "sha256": "5cef5fa217bf7650f53e47f3cdf38b89ee3348c70a664fcdc51bf9db31687fb3",
+    "ontologyAppId": "final-hierarchy-with-onet-homogeneous-title-testbed-2026-08-29",
+    "ontologyName": "Final Hierarchy with O*NET - Claim-aware title test bed 2026-08-29",
+    "environment": "production",
+    "capturedAt": "2026-08-29T16:01:28.264Z",
+    "branchRootNodeId": "node-0368e65a11318373d75faee7",
+    "branchRootTitle": "Act",
+    "nodeCount": 82,
+    "branchNodeCount": 82,
+    "referenceNodeCount": 0,
+    "edgeCount": 81
+  },
+  "coverage": {
+    "snapshotBound": true,
+    "exhaustiveWithinPackagedDetectorOutputs": true,
+    "semanticCompletenessGuaranteed": false,
+    "detectorAgents": [
+      "access-homogeneous-title-grouping-v4"
+    ],
+    "criticAgents": [],
+    "note": "Each packaged card passed exact source and claim binding, 2-5-word title, leading-action, title-status, and cardinality validation. These checks do not establish semantic correctness; the expert reviewer remains the evaluator."
+  },
+  "fullRunEstimate": {
+    "modelPlan": [
+      {
+        "stages": [
+          "claim-aware homogeneous title grouping"
+        ],
+        "model": "gpt-5.6-terra",
+        "reasoningEffort": "high",
+        "role": "one structured semantic call per atomic-title occurrence"
+      },
+      {
+        "stages": [
+          "all-candidate WordNet alignment after title acceptance"
+        ],
+        "model": "gpt-5.6-terra",
+        "reasoningEffort": "high",
+        "role": "one comparison call per accepted homogeneous group after deterministic local candidate retrieval"
+      },
+      {
+        "stages": [
+          "source and claim binding",
+          "2-5-word title validation",
+          "title status",
+          "local WordNet retrieval"
+        ],
+        "model": null,
+        "reasoningEffort": null,
+        "role": "deterministic local validation"
+      }
+    ],
+    "atomicActivityOccurrences": 20491,
+    "homogeneousGroupScenarios": {
+      "noSplit": 20491,
+      "stratifiedPilot": 26765,
+      "oneGroupPerSourceRecord": 53608,
+      "interpretation": "Sensitivity scenarios, not a confidence interval. The middle scenario preserves branch-by-evidence-bucket weights; the upper scenario assumes one resulting group per O*NET record and is not an absolute bound because a multi-object record can yield multiple claims."
+    },
+    "stratifiedPilotModelCalls": 47256,
+    "stratifiedPilotVisiblePacketTokens": {
+      "low": 40700718,
+      "central": 45788305,
+      "high": 52329492
+    },
+    "stratifiedPilotTotalAccessTokensPlanningRange": {
+      "low": 53539268,
+      "central": 76191005,
+      "high": 113134892
+    },
+    "elapsedWallTimeHours": {
+      "noSplit": 4.9,
+      "stratifiedPilot": 8.5,
+      "oneGroupPerSourceRecord": 22.2,
+      "assumptions": "32 concurrent calls, stage-specific latency scenarios, and 15% retry or repair overhead. Provider throughput and ACCESS concurrency limits can dominate elapsed time."
+    },
+    "directApiCharge": {
+      "amountUsd": 0,
+      "interpretation": "The requested execution path uses the approved ACCESS allocation rather than a separately billed external API. Allocation consumption is not zero."
+    },
+    "note": "These are sensitivity scenarios, not a validated forecast. They use one claim-aware title call per activity and, only after title acceptance, one all-candidate WordNet call per accepted group."
+  },
+  "reviewRelease": {
+    "strategy": "title-review-before-all-candidate-wordnet",
+    "currentWave": "homogeneous-title-grouping",
+    "releasedIssueTypes": [
+      "title-clarity"
+    ],
+    "awaitingRegenerationIssueTypes": [
+      "synset-alignment"
+    ],
+    "message": "Review title groups first. After a group is accepted, retrieve every local candidate sense and compare them together with the inherited assignment, accepted title, and exact evidence in one call."
+  }
+}
