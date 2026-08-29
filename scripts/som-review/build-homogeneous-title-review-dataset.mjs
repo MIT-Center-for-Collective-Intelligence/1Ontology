@@ -15,15 +15,12 @@ const artifactDir = path.join(
 );
 const outputDir = path.join(
   repoRoot,
-  "Ontology_Title_Clarity_Testbed_2026-08-28/review-datasets-v1",
+  "Ontology_Title_Clarity_Testbed_2026-08-28/review-datasets-v2",
 );
-
 const inputPaths = {
   sample: path.join(artifactDir, "sample-packet.json"),
-  groupings: path.join(artifactDir, "validated-groupings.json"),
-  bundles: path.join(artifactDir, "wordnet-candidate-bundles.json"),
-  alignments: path.join(artifactDir, "validated-wordnet-alignments.json"),
-  estimate: path.join(artifactDir, "full-run-estimate.json"),
+  groupings: path.join(artifactDir, "validated-groupings-v2.json"),
+  estimate: path.join(artifactDir, "full-run-estimate-v2.json"),
 };
 
 const readJson = (filePath) => JSON.parse(fs.readFileSync(filePath, "utf8"));
@@ -45,21 +42,15 @@ const writeJsonl = (filePath, records) =>
 
 const samplePacket = readJson(inputPaths.sample);
 const validatedGroupings = readJson(inputPaths.groupings);
-const wordNetBundles = readJson(inputPaths.bundles);
-const validatedAlignments = readJson(inputPaths.alignments);
 const fullRunEstimate = readJson(inputPaths.estimate);
-
-const sourceHashes = new Set([
-  samplePacket.sourceSha256,
-  validatedGroupings.sourceSha256,
-  wordNetBundles.sourceSha256,
-  validatedAlignments.sourceSha256,
-  fullRunEstimate.sourceSha256,
-]);
-if (sourceHashes.size !== 1) {
-  throw new Error(
-    "The title and WordNet artifacts do not share one source hash",
-  );
+if (
+  new Set([
+    samplePacket.sourceSha256,
+    validatedGroupings.sourceSha256,
+    fullRunEstimate.sourceSha256,
+  ]).size !== 1
+) {
+  throw new Error("The title artifacts do not share one source hash");
 }
 
 const recordsByOccurrence = new Map(
@@ -71,53 +62,42 @@ const groupingsByOccurrence = new Map(
     assessment,
   ]),
 );
-const bundlesByGroup = new Map(
-  wordNetBundles.bundles.map((bundle) => [bundle.groupId, bundle]),
-);
-const alignmentsByGroup = new Map(
-  validatedAlignments.assessments.map((assessment) => [
-    assessment.groupId,
-    assessment,
-  ]),
-);
-
 if (
   recordsByOccurrence.size !== 18 ||
   groupingsByOccurrence.size !== recordsByOccurrence.size ||
-  bundlesByGroup.size !== 42 ||
-  alignmentsByGroup.size !== bundlesByGroup.size
+  validatedGroupings.counts.resultingGroups !== 48
 ) {
   throw new Error(
-    "Expected 18 sampled atomic activities and 42 validated homogeneous groups",
+    "Expected 18 sampled activities and 48 validated one-record-one-group results",
   );
 }
 
-const datasetVersion = "ontology-title-homogeneous-testbed-2026-08-28-v1";
-const generatedAt = validatedAlignments.generatedAt;
+const datasetVersion = "ontology-title-homogeneous-testbed-2026-08-29-v2";
+const generatedAt = validatedGroupings.generatedAt;
 const ontologyAppId =
-  "final-hierarchy-with-onet-homogeneous-title-testbed-2026-08-28";
+  "final-hierarchy-with-onet-homogeneous-title-testbed-2026-08-29";
 const ontologyName =
-  "Final Hierarchy with O*NET - Ontology-wide title test bed 2026-08-28";
+  "Final Hierarchy with O*NET - Streamlined title test bed 2026-08-29";
 
 const titleToNodeId = new Map();
 const snapshotNodes = [];
 const snapshotEdges = [];
 const snapshotEdgeKeys = new Set();
-
 const ensureNode = (title, metadata = {}) => {
   if (!titleToNodeId.has(title)) {
     const id = stableId("node", title);
     titleToNodeId.set(title, id);
     snapshotNodes.push({ id, title, ...metadata });
   } else if (Object.keys(metadata).length) {
-    const node = snapshotNodes.find(
-      (candidate) => candidate.id === titleToNodeId.get(title),
+    Object.assign(
+      snapshotNodes.find(
+        (candidate) => candidate.id === titleToNodeId.get(title),
+      ),
+      metadata,
     );
-    Object.assign(node, metadata);
   }
   return titleToNodeId.get(title);
 };
-
 const addEdge = (parentTitle, childTitle) => {
   const parentId = ensureNode(parentTitle);
   const childId = ensureNode(childTitle);
@@ -126,19 +106,18 @@ const addEdge = (parentTitle, childTitle) => {
   snapshotEdgeKeys.add(key);
   snapshotEdges.push({ parentId, childId, collectionName: "main" });
 };
-
 for (const record of samplePacket.sample) {
   for (let index = 0; index < record.path.length; index += 1) {
     const title = record.path[index];
-    const metadata =
+    ensureNode(
+      title,
       title === record.ownerTitle && record.assignedSynsetIds.length
         ? { synsets: record.assignedSynsetIds.join(", ") }
-        : {};
-    ensureNode(title, metadata);
+        : {},
+    );
     if (index > 0) addEdge(record.path[index - 1], title);
   }
 }
-
 snapshotNodes.sort((left, right) =>
   left.title.localeCompare(right.title, "en"),
 );
@@ -148,11 +127,8 @@ snapshotEdges.sort((left, right) =>
     "en",
   ),
 );
-
-const rootTitle = "Act";
-const rootNodeId = titleToNodeId.get(rootTitle);
+const rootNodeId = titleToNodeId.get("Act");
 if (!rootNodeId) throw new Error("The test bed snapshot is missing Act");
-
 const snapshot = {
   schemaVersion: "som-ontology-snapshot-v1",
   ontologyAppId,
@@ -161,27 +137,24 @@ const snapshot = {
   environment: "production",
   capturedAt: generatedAt,
   branchRootNodeId: rootNodeId,
-  branchRootTitle: rootTitle,
+  branchRootTitle: "Act",
   nodes: snapshotNodes,
   edges: snapshotEdges,
 };
 
-fs.mkdirSync(path.join(outputDir, "proposals"), { recursive: true });
-fs.mkdirSync(path.join(outputDir, "controls"), { recursive: true });
-fs.mkdirSync(path.join(outputDir, "schema"), { recursive: true });
-fs.mkdirSync(path.join(outputDir, "diagnostics"), { recursive: true });
+for (const dir of ["proposals", "controls", "schema", "diagnostics"]) {
+  fs.mkdirSync(path.join(outputDir, dir), { recursive: true });
+}
 fs.copyFileSync(
   inputPaths.estimate,
   path.join(outputDir, "diagnostics/full-run-estimate.json"),
 );
-
 const snapshotPath = path.join(outputDir, "ontology-snapshot.json");
 writeJson(snapshotPath, snapshot);
 const snapshotSha256 = sha256File(snapshotPath);
-
 const sourceUri = `artifact://${samplePacket.sourceFile}`;
 const sourceArtifact =
-  "access://homogeneous-title-testbed-2026-08-28/validated-results";
+  "access://homogeneous-title-testbed-2026-08-29/streamlined-results";
 
 const pipelineStage = (role, actorId, actorKind, promptVersion) => ({
   role,
@@ -189,68 +162,28 @@ const pipelineStage = (role, actorId, actorKind, promptVersion) => ({
   actorKind,
   model:
     actorKind === "model"
-      ? "OpenAI Codex using the approved ACCESS allocation"
+      ? "gpt-5.6-terra with high reasoning using the approved ACCESS allocation"
       : "deterministic local computation",
   promptVersion,
 });
-
 const titlePipeline = [
   pipelineStage(
     "detector",
-    "access-homogeneous-title-grouping-v1",
+    "access-homogeneous-title-grouping-v2",
     "model",
     validatedGroupings.promptVersions.grouping,
   ),
   pipelineStage(
-    "critic",
-    "access-homogeneous-title-grouping-auditor-v1",
-    "model",
-    validatedGroupings.promptVersions.audit,
-  ),
-  pipelineStage(
     "verifier",
-    "homogeneous-title-grouping-validator-v1",
+    "homogeneous-title-grouping-validator-v2",
     "deterministic",
     validatedGroupings.promptVersions.validator,
   ),
   pipelineStage(
     "assembler",
-    "homogeneous-title-testbed-card-assembler-v1",
+    "homogeneous-title-testbed-card-assembler-v2",
     "deterministic",
-    "homogeneous-title-testbed-card-assembler-2026-08-28-v1",
-  ),
-];
-
-const wordNetPipeline = [
-  pipelineStage(
-    "detector",
-    "access-wordnet-alignment-v1",
-    "model",
-    validatedAlignments.promptVersions.alignment,
-  ),
-  pipelineStage(
-    "verifier",
-    "local-wordnet-candidate-retrieval-v1",
-    "deterministic",
-    "local-wordnet-candidate-retrieval-2026-08-28-v1",
-  ),
-  pipelineStage(
-    "critic",
-    "access-wordnet-alignment-auditor-v1",
-    "model",
-    validatedAlignments.promptVersions.audit,
-  ),
-  pipelineStage(
-    "verifier",
-    "wordnet-alignment-validator-v1",
-    "deterministic",
-    validatedAlignments.promptVersions.validator,
-  ),
-  pipelineStage(
-    "assembler",
-    "wordnet-testbed-card-assembler-v1",
-    "deterministic",
-    "wordnet-testbed-card-assembler-2026-08-28-v1",
+    "homogeneous-title-testbed-card-assembler-2026-08-29-v2",
   ),
 ];
 
@@ -266,43 +199,37 @@ const sourceRefs = (record) => {
     referencedNodeIds: sortedUnique([subjectNodeId, parentNodeId]),
   };
 };
-
-const provenanceFor = (record, sourceRecord) => ({
+const provenanceFor = (record) => ({
   sourceOntology: sourceUri,
   sourceOntologySha256: snapshotSha256,
   upstreamSourceSha256: samplePacket.sourceSha256,
   sourceArtifact,
-  sourceRecord,
+  sourceRecord: record.occurrenceId,
   sourceOntologyAppId: ontologyAppId,
   sourceOntologyName: ontologyName,
   sourceSnapshotSha256: snapshotSha256,
   ...sourceRefs(record),
 });
 
-const titleProposalIdByOccurrence = new Map();
-const titleCards = [];
-for (const record of samplePacket.sample) {
+const titleCards = samplePacket.sample.map((record) => {
   const assessment = groupingsByOccurrence.get(record.occurrenceId);
-  if (!assessment) {
-    throw new Error(`Missing grouping for ${record.occurrenceId}`);
-  }
-  const proposalId = stableId(
-    "som",
-    `${datasetVersion}|title|${record.occurrenceId}`,
-  );
-  titleProposalIdByOccurrence.set(record.occurrenceId, proposalId);
+  if (!assessment) throw new Error(`Missing grouping for ${record.exactTitle}`);
   const proposedTitles = assessment.groups.map((group) => group.title);
-  const currentState = `${record.exactTitle} currently contains ${record.sourceRecords.length} exact O*NET ${record.sourceRecords.length === 1 ? "record" : "records"}.`;
   const proposedState =
     assessment.decision === "keep"
       ? `Keep all evidence together under ${record.exactTitle}.`
       : assessment.decision === "rename"
         ? `Replace the title with ${proposedTitles[0]}.`
-        : `Represent the evidence with ${proposedTitles.length} homogeneous activity groups: ${proposedTitles.join(", ")}.`;
-  titleCards.push({
+        : assessment.decision === "split"
+          ? `Represent the evidence with ${proposedTitles.length} homogeneous activity groups: ${proposedTitles.join(", ")}.`
+          : "Defer this complete case for expert clarification.";
+  return {
     schemaVersion: "som-review-v1",
     datasetVersion,
-    proposalId,
+    proposalId: stableId(
+      "som",
+      `${datasetVersion}|title|${record.occurrenceId}`,
+    ),
     branch: "Ontology-wide title test bed",
     issueType: "title-clarity",
     reviewMode:
@@ -330,7 +257,7 @@ for (const record of samplePacket.sample) {
     },
     reviewerView: {
       question: "Review the proposed homogeneous title grouping.",
-      currentState,
+      currentState: `${record.exactTitle} currently contains ${record.sourceRecords.length} exact O*NET ${record.sourceRecords.length === 1 ? "record" : "records"}.`,
       proposedState,
       reasoning: assessment.reason,
       context: {
@@ -351,155 +278,38 @@ for (const record of samplePacket.sample) {
       hideModelConfidence: true,
     },
     internalModelEvidence: {
-      detectorId: "access-homogeneous-title-grouping-v1",
-      detectorName: "Homogeneous title-grouping agent",
+      detectorId: "access-homogeneous-title-grouping-v2",
+      detectorName: "Streamlined homogeneous title-grouping agent",
       detectorPromptVersion: validatedGroupings.promptVersions.grouping,
-      judgeId: "access-homogeneous-title-grouping-auditor-v1",
-      judgeName: "Independent title-grouping auditor",
-      judgePromptVersion: validatedGroupings.promptVersions.audit,
       detectorConfidence: assessment.confidence,
-      judgeConfidence: assessment.audit.confidence,
       reviewerVisible: false,
       pipelineStages: titlePipeline,
     },
-    provenance: provenanceFor(record, record.occurrenceId),
+    provenance: provenanceFor(record),
     createdAt: generatedAt,
-  });
-}
+  };
+});
 
-const synsetDetails = (ids, candidateSynsets) => {
-  const byId = new Map(candidateSynsets.map((synset) => [synset.id, synset]));
-  return ids.map((id) => {
-    const synset = byId.get(id);
-    if (!synset) throw new Error(`Selected synset ${id} is not a candidate`);
-    return synset;
-  });
-};
-
-const wordNetCards = [];
-for (const bundle of wordNetBundles.bundles) {
-  const assessment = alignmentsByGroup.get(bundle.groupId);
-  const record = recordsByOccurrence.get(bundle.occurrenceId);
-  const titleProposalId = titleProposalIdByOccurrence.get(bundle.occurrenceId);
-  if (!assessment || !record || !titleProposalId) {
-    throw new Error(`Incomplete WordNet lineage for ${bundle.groupId}`);
-  }
-  const selectedSynsets = synsetDetails(
-    assessment.selectedSynsetIds,
-    bundle.candidateSynsets,
-  );
-  const proposalId = stableId(
-    "som",
-    `${datasetVersion}|wordnet|${bundle.groupId}`,
-  );
-  const inheritedIds = bundle.assignedSynsets.map((synset) => synset.id);
-  const selectedIds = selectedSynsets.map((synset) => synset.id);
-  const proposedState =
-    assessment.decision === "keep-assigned"
-      ? `Keep the inherited assignment: ${inheritedIds.join(", ")}.`
-      : assessment.decision === "replace"
-        ? `Use ${selectedIds.join(", ")} instead of ${inheritedIds.join(", ") || "the empty inherited assignment"}.`
-        : assessment.decision === "no-suitable-synset"
-          ? "Record that no retrieved WordNet sense adequately fits this homogeneous activity."
-          : "Leave the WordNet assignment unresolved for expert follow-up.";
-  wordNetCards.push({
-    schemaVersion: "som-review-v1",
-    datasetVersion,
-    proposalId,
-    branch: "Ontology-wide title test bed",
-    issueType: "synset-alignment",
-    reviewMode:
-      assessment.decision === "keep-assigned"
-        ? "status-quo-audit"
-        : assessment.decision === "uncertain"
-          ? "manual-check"
-          : "proposed-change",
-    rolloutStatus: "experimental",
-    workflow: {
-      robTaskIds: [],
-      stage: "content",
-      proposalKind: "diagnosis",
-      dependsOnProposalIds: [titleProposalId],
-    },
-    subject: {
-      title: record.exactTitle,
-      parentTitle: record.parentTitle,
-      path: record.path,
-      relatedTitles: [bundle.groupTitle],
-    },
-    reviewerView: {
-      question: "Review the proposed WordNet alignment.",
-      currentState: inheritedIds.length
-        ? `${bundle.groupTitle} inherits ${inheritedIds.join(", ")} from ${bundle.ownerTitle}.`
-        : `${bundle.groupTitle} has no inherited WordNet assignment.`,
-      proposedState,
-      reasoning: assessment.reason,
-      context: {
-        type: "synset-alignment",
-        currentAtomicTitle: bundle.currentAtomicTitle,
-        groupTitle: bundle.groupTitle,
-        groupStatus: bundle.groupStatus,
-        ownerTitle: bundle.ownerTitle,
-        decision: assessment.decision,
-        sourceTasks: bundle.sourceRecords.map(
-          (sourceRecord) => sourceRecord.task,
-        ),
-        assignedSynsets: bundle.assignedSynsets,
-        selectedSynsets,
-        candidateSynsets: bundle.candidateSynsets,
-      },
-      agreeLabel: "Agree",
-      disagreeLabel: "Disagree",
-      rejectionReasonRequired: true,
-      autoAdvanceOnAgree: true,
-      hideModelConfidence: true,
-    },
-    internalModelEvidence: {
-      detectorId: "access-wordnet-alignment-v1",
-      detectorName: "WordNet alignment agent",
-      detectorPromptVersion: validatedAlignments.promptVersions.alignment,
-      judgeId: "access-wordnet-alignment-auditor-v1",
-      judgeName: "Independent WordNet alignment auditor",
-      judgePromptVersion: validatedAlignments.promptVersions.audit,
-      detectorConfidence: assessment.confidence,
-      judgeConfidence: assessment.audit.confidence,
-      reviewerVisible: false,
-      pipelineStages: wordNetPipeline,
-    },
-    provenance: provenanceFor(record, bundle.groupId),
-    createdAt: generatedAt,
-  });
-}
-
-const allCards = [...titleCards, ...wordNetCards];
-const proposals = allCards.filter(
+const proposals = titleCards.filter(
   (record) => record.reviewMode === "proposed-change",
 );
-const controls = allCards.filter(
+const controls = titleCards.filter(
   (record) => record.reviewMode === "status-quo-audit",
 );
-const manualChecks = allCards.filter(
+const manualChecks = titleCards.filter(
   (record) => record.reviewMode === "manual-check",
 );
-
 writeJsonl(path.join(outputDir, "all_proposals.jsonl"), proposals);
 writeJsonl(path.join(outputDir, "all_controls.jsonl"), controls);
 writeJsonl(path.join(outputDir, "manual_checks.jsonl"), manualChecks);
-for (const issueType of ["title-clarity", "synset-alignment"]) {
-  writeJsonl(
-    path.join(outputDir, "proposals", `${issueType}.jsonl`),
-    proposals.filter((record) => record.issueType === issueType),
-  );
-  writeJsonl(
-    path.join(outputDir, "controls", `${issueType}.jsonl`),
-    controls.filter((record) => record.issueType === issueType),
-  );
-}
+writeJsonl(path.join(outputDir, "proposals/title-clarity.jsonl"), proposals);
+writeJsonl(path.join(outputDir, "controls/title-clarity.jsonl"), controls);
 writeJsonl(
   path.join(outputDir, "diagnostics/rejected_agent_candidates.jsonl"),
   [],
 );
 
+const streamlined = fullRunEstimate.projection.streamlinedConditionalPipeline;
 const manifest = {
   schemaVersion: "som-review-v1",
   datasetVersion,
@@ -516,7 +326,7 @@ const manifest = {
     singleOccurrenceTitles:
       samplePacket.inventoryCounts.singleOccurrenceTitleCount,
     sampledAtomicActivities: titleCards.length,
-    resultingHomogeneousGroups: wordNetCards.length,
+    resultingHomogeneousGroups: validatedGroupings.counts.resultingGroups,
   },
   safety: {
     reviewOnly: true,
@@ -542,26 +352,8 @@ const manifest = {
       robTaskIds: [1],
       rolloutStatus: "experimental",
       view: "title-split",
-      proposals: proposals.filter(
-        (record) => record.issueType === "title-clarity",
-      ).length,
-      controls: controls.filter(
-        (record) => record.issueType === "title-clarity",
-      ).length,
-    },
-    {
-      id: "synset-alignment",
-      label: "Align homogeneous activities with WordNet",
-      stage: "content",
-      robTaskIds: [],
-      rolloutStatus: "experimental",
-      view: "synset-alignment",
-      proposals: proposals.filter(
-        (record) => record.issueType === "synset-alignment",
-      ).length,
-      controls: controls.filter(
-        (record) => record.issueType === "synset-alignment",
-      ).length,
+      proposals: proposals.length,
+      controls: controls.length,
     },
   ],
   files: {
@@ -586,11 +378,11 @@ const manifest = {
   },
   limitations: [
     "This deterministic 18-title sample is a test bed, not ground truth or a claim that the full ontology has been corrected.",
+    "Each O*NET record is assigned exactly once; clauses outside the current atomic title remain for their linked activity or a later coverage review.",
     "New specific titles remain provisional children until a later placement review.",
-    "Title grouping preserves the leading action; wrong-main-verb and ontology-wide placement checks are deliberately deferred.",
+    "Title grouping preserves the leading action; WordNet sense alignment and wrong-main-verb checks are deliberately deferred.",
     `The separate generic-action diagnostic found ${samplePacket.genericActionDiagnostic.occurrenceCount} Act/Perform occurrences (${samplePacket.genericActionDiagnostic.uniqueTitleCount} unique titles); none is silently rewritten here.`,
-    "WordNet decisions are limited to locally retrieved senses for the exact leading action and explicitly allow no-suitable-synset or uncertain outcomes.",
-    "No generated proposal, expert agreement, or test-bed action writes to the ontology automatically.",
+    "No generated proposal or expert agreement writes to the ontology automatically.",
   ],
   sourceSnapshot: {
     file: "ontology-snapshot.json",
@@ -600,7 +392,7 @@ const manifest = {
     environment: "production",
     capturedAt: generatedAt,
     branchRootNodeId: rootNodeId,
-    branchRootTitle: rootTitle,
+    branchRootTitle: "Act",
     nodeCount: snapshot.nodes.length,
     branchNodeCount: snapshot.nodes.length,
     referenceNodeCount: 0,
@@ -610,58 +402,48 @@ const manifest = {
     snapshotBound: true,
     exhaustiveWithinPackagedDetectorOutputs: true,
     semanticCompletenessGuaranteed: false,
-    detectorAgents: [
-      "access-homogeneous-title-grouping-v1",
-      "access-wordnet-alignment-v1",
-    ],
-    criticAgents: [
-      "access-homogeneous-title-grouping-auditor-v1",
-      "access-wordnet-alignment-auditor-v1",
-    ],
-    note: "Every packaged title and WordNet card passed an independent semantic audit plus deterministic source, evidence, title, action, and candidate-set safeguards.",
+    detectorAgents: ["access-homogeneous-title-grouping-v2"],
+    criticAgents: [],
+    note: "Each packaged title card passed exact source binding and deterministic one-record-one-group, leading-action, title-status, and cardinality validation. The expert reviewer is the semantic evaluator.",
   },
   fullRunEstimate: {
     modelPlan: fullRunEstimate.recommendedModelPlan,
     atomicActivityOccurrences:
       fullRunEstimate.inventory.atomicActivityOccurrences,
     homogeneousGroupPlanningRange: fullRunEstimate.projection.homogeneousGroups,
-    centralModelCalls:
-      fullRunEstimate.projection.fullIndependentAudit.centralScenario
-        .modelCalls,
-    centralVisiblePacketTokens:
-      fullRunEstimate.projection.fullIndependentAudit.centralScenario
-        .visiblePacketTokens,
+    centralModelCalls: streamlined.centralScenario.modelCalls,
+    centralVisiblePacketTokens: streamlined.centralScenario.visiblePacketTokens,
     centralTotalAccessTokensPlanningRange:
-      fullRunEstimate.projection.fullIndependentAudit.centralScenario
-        .totalAccessTokensPlanningRange,
-    elapsedWallTimeHours:
-      fullRunEstimate.projection.fullIndependentAudit.elapsedWallTimeHours,
-    directApiCharge:
-      fullRunEstimate.projection.fullIndependentAudit.directApiCharge,
-    note: "This is a planning estimate from exact serialized sample packets, not metered model usage. The packaged diagnostic contains assumptions and caveats.",
+      streamlined.centralScenario.totalAccessTokensPlanningRange,
+    elapsedWallTimeHours: streamlined.elapsedWallTimeHours,
+    directApiCharge: streamlined.directApiCharge,
+    note: "This planning estimate uses one title call per activity, one assigned-synset check per accepted group, and conditional candidate selection only when the assigned sense fails. It is not metered usage.",
   },
   reviewRelease: {
-    strategy: "dependency-gated-title-then-wordnet-testbed",
+    strategy: "title-review-before-conditional-wordnet",
     currentWave: "homogeneous-title-grouping",
-    releasedIssueTypes: ["title-clarity", "synset-alignment"],
-    awaitingRegenerationIssueTypes: [],
+    releasedIssueTypes: ["title-clarity"],
+    awaitingRegenerationIssueTypes: ["synset-alignment"],
     message:
-      "Review each homogeneous title decision first. Its WordNet cards remain waiting until that exact title decision is accepted and become not applicable if it is rejected.",
+      "Review title groups first. After a group is accepted, compare only its assigned synset with the accepted title and evidence; retrieve all local candidate senses only when that check fails.",
   },
 };
 writeJson(path.join(outputDir, "manifest.json"), manifest);
 
 const nonEmptyString = { type: "string", minLength: 1 };
 const stringArray = { type: "array", items: nonEmptyString };
-const synsetSchema = {
+const pipelineStageSchema = {
   type: "object",
   properties: {
-    id: nonEmptyString,
-    definition: nonEmptyString,
-    lemmas: stringArray,
-    examples: stringArray,
+    role: {
+      enum: ["detector", "verifier", "assembler", "proposal-assembler"],
+    },
+    actorId: nonEmptyString,
+    actorKind: { enum: ["model", "deterministic", "human-derived"] },
+    model: nonEmptyString,
+    promptVersion: nonEmptyString,
   },
-  required: ["id", "definition", "lemmas", "examples"],
+  required: ["role", "actorId", "actorKind", "model", "promptVersion"],
   additionalProperties: false,
 };
 const proposalSchema = {
@@ -672,7 +454,7 @@ const proposalSchema = {
     datasetVersion: nonEmptyString,
     proposalId: nonEmptyString,
     branch: nonEmptyString,
-    issueType: { enum: ["title-clarity", "synset-alignment"] },
+    issueType: { const: "title-clarity" },
     reviewMode: {
       enum: ["proposed-change", "status-quo-audit", "manual-check"],
     },
@@ -707,109 +489,61 @@ const proposalSchema = {
         proposedState: nonEmptyString,
         reasoning: nonEmptyString,
         context: {
-          oneOf: [
-            {
-              type: "object",
-              properties: {
-                type: { const: "title-split" },
-                currentTitle: nonEmptyString,
-                decision: { enum: ["keep", "rename", "split", "defer"] },
-                linkedTasks: {
-                  type: "array",
-                  items: nonEmptyString,
-                  minItems: 1,
-                },
-                proposedNodes: {
-                  type: "array",
-                  minItems: 1,
-                  items: {
-                    type: "object",
-                    properties: {
-                      title: nonEmptyString,
-                      status: { enum: ["current", "existing", "new"] },
-                      sourceTaskIndexes: {
-                        type: "array",
-                        minItems: 1,
-                        items: { type: "integer", minimum: 1 },
-                      },
-                      sourceTasks: {
-                        type: "array",
-                        minItems: 1,
-                        items: nonEmptyString,
-                      },
-                      reason: nonEmptyString,
-                    },
-                    required: [
-                      "title",
-                      "status",
-                      "sourceTaskIndexes",
-                      "sourceTasks",
-                      "reason",
-                    ],
-                    additionalProperties: false,
+          type: "object",
+          properties: {
+            type: { const: "title-split" },
+            currentTitle: nonEmptyString,
+            decision: { enum: ["keep", "rename", "split", "defer"] },
+            linkedTasks: {
+              type: "array",
+              items: nonEmptyString,
+              minItems: 1,
+            },
+            proposedNodes: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  title: nonEmptyString,
+                  status: { enum: ["current", "existing", "new"] },
+                  sourceTaskIndexes: {
+                    type: "array",
+                    minItems: 1,
+                    items: { type: "integer", minimum: 1 },
                   },
+                  sourceTasks: {
+                    type: "array",
+                    minItems: 1,
+                    items: nonEmptyString,
+                  },
+                  reason: nonEmptyString,
                 },
-                deferredTaskIndexes: {
-                  type: "array",
-                  items: { type: "integer", minimum: 1 },
-                },
-                deferredTasks: stringArray,
+                required: [
+                  "title",
+                  "status",
+                  "sourceTaskIndexes",
+                  "sourceTasks",
+                  "reason",
+                ],
+                additionalProperties: false,
               },
-              required: [
-                "type",
-                "currentTitle",
-                "decision",
-                "linkedTasks",
-                "proposedNodes",
-                "deferredTaskIndexes",
-                "deferredTasks",
-              ],
-              additionalProperties: false,
             },
-            {
-              type: "object",
-              properties: {
-                type: { const: "synset-alignment" },
-                currentAtomicTitle: nonEmptyString,
-                groupTitle: nonEmptyString,
-                groupStatus: { enum: ["current", "existing", "new"] },
-                ownerTitle: nonEmptyString,
-                decision: {
-                  enum: [
-                    "keep-assigned",
-                    "replace",
-                    "no-suitable-synset",
-                    "uncertain",
-                  ],
-                },
-                sourceTasks: {
-                  type: "array",
-                  items: nonEmptyString,
-                  minItems: 1,
-                },
-                assignedSynsets: { type: "array", items: synsetSchema },
-                selectedSynsets: { type: "array", items: synsetSchema },
-                candidateSynsets: {
-                  type: "array",
-                  items: synsetSchema,
-                  minItems: 1,
-                },
-              },
-              required: [
-                "type",
-                "currentAtomicTitle",
-                "groupTitle",
-                "groupStatus",
-                "ownerTitle",
-                "decision",
-                "sourceTasks",
-                "assignedSynsets",
-                "selectedSynsets",
-                "candidateSynsets",
-              ],
-              additionalProperties: false,
+            deferredTaskIndexes: {
+              type: "array",
+              items: { type: "integer", minimum: 1 },
             },
+            deferredTasks: stringArray,
+          },
+          required: [
+            "type",
+            "currentTitle",
+            "decision",
+            "linkedTasks",
+            "proposedNodes",
+            "deferredTaskIndexes",
+            "deferredTasks",
           ],
+          additionalProperties: false,
         },
         agreeLabel: nonEmptyString,
         disagreeLabel: nonEmptyString,
@@ -837,55 +571,19 @@ const proposalSchema = {
         detectorId: nonEmptyString,
         detectorName: nonEmptyString,
         detectorPromptVersion: nonEmptyString,
-        judgeId: nonEmptyString,
-        judgeName: nonEmptyString,
-        judgePromptVersion: nonEmptyString,
         detectorConfidence: { enum: ["high", "medium", "low"] },
-        judgeConfidence: { enum: ["high", "medium", "low"] },
         reviewerVisible: { const: false },
         pipelineStages: {
           type: "array",
-          minItems: 4,
-          items: {
-            type: "object",
-            properties: {
-              role: {
-                enum: [
-                  "detector",
-                  "proposer",
-                  "solution-proposer",
-                  "critic",
-                  "judge",
-                  "verifier",
-                  "assembler",
-                  "proposal-assembler",
-                ],
-              },
-              actorId: nonEmptyString,
-              actorKind: { enum: ["model", "deterministic", "human-derived"] },
-              model: nonEmptyString,
-              promptVersion: nonEmptyString,
-            },
-            required: [
-              "role",
-              "actorId",
-              "actorKind",
-              "model",
-              "promptVersion",
-            ],
-            additionalProperties: false,
-          },
+          minItems: 3,
+          items: pipelineStageSchema,
         },
       },
       required: [
         "detectorId",
         "detectorName",
         "detectorPromptVersion",
-        "judgeId",
-        "judgeName",
-        "judgePromptVersion",
         "detectorConfidence",
-        "judgeConfidence",
         "reviewerVisible",
         "pipelineStages",
       ],
@@ -948,18 +646,16 @@ writeJson(
   path.join(outputDir, "schema/review-proposal.schema.json"),
   proposalSchema,
 );
-
-const responseSchemaSource = path.join(
-  repoRoot,
-  "Buy_Society_of_Mind_Title_Followup_2026-07-25/review-datasets-title-followup-v1/schema/review-response.schema.json",
-);
 fs.copyFileSync(
-  responseSchemaSource,
+  path.join(
+    repoRoot,
+    "Buy_Society_of_Mind_Title_Followup_2026-07-25/review-datasets-title-followup-v1/schema/review-response.schema.json",
+  ),
   path.join(outputDir, "schema/review-response.schema.json"),
 );
 
-const qualityReport = {
-  schemaVersion: "homogeneous-title-testbed-quality-report-v1",
+writeJson(path.join(outputDir, "diagnostics/quality-report.json"), {
+  schemaVersion: "homogeneous-title-testbed-quality-report-v2",
   generatedAt,
   sourceHierarchySha256: samplePacket.sourceSha256,
   packagedSnapshotSha256: snapshotSha256,
@@ -968,41 +664,30 @@ const qualityReport = {
     titleKeep: validatedGroupings.counts.keep,
     titleRename: validatedGroupings.counts.rename,
     titleSplit: validatedGroupings.counts.split,
-    homogeneousGroups: wordNetCards.length,
-    wordNetKeepAssigned: validatedAlignments.counts.keepAssigned,
-    wordNetReplace: validatedAlignments.counts.replace,
-    wordNetNoSuitable: validatedAlignments.counts.noSuitableSynset,
-    wordNetUncertain: validatedAlignments.counts.uncertain,
-    reviewCards: allCards.length,
+    titleDefer: validatedGroupings.counts.defer,
+    homogeneousGroups: validatedGroupings.counts.resultingGroups,
+    reviewCards: titleCards.length,
     projectedFullRunHomogeneousGroups:
       fullRunEstimate.projection.homogeneousGroups,
-    projectedFullRunCentralModelCalls:
-      fullRunEstimate.projection.fullIndependentAudit.centralScenario
-        .modelCalls,
+    projectedFullRunCentralModelCalls: streamlined.centralScenario.modelCalls,
     projectedFullRunCentralAccessTokens:
-      fullRunEstimate.projection.fullIndependentAudit.centralScenario
-        .totalAccessTokensPlanningRange,
+      streamlined.centralScenario.totalAccessTokensPlanningRange,
   },
   safeguards: {
-    everySourceRecordAccountedFor: true,
-    duplicateSourceRecordsPreserved: true,
+    everySourceRecordAssignedExactlyOnce: true,
     leadingActionPreserved: true,
-    existingExactLinksAudited: true,
     duplicateResultingTitlesRejected: true,
+    titleStatusDerivedFromSnapshot: true,
     newNodesMarkedProvisional: true,
-    selectedSynsetsBoundToLocalCandidates: true,
-    noSuitableAndUncertainPathsSupported: true,
-    titleDependenciesEnforced: true,
+    wordNetDeferredUntilTitleAcceptance: true,
     ontologyMutationDisabled: true,
   },
-};
-writeJson(
-  path.join(outputDir, "diagnostics/quality-report.json"),
-  qualityReport,
-);
+});
 
-const readme = `# Ontology-wide homogeneous title test bed\n\nThis review-only dataset packages the deterministic 18-title sample discussed by Iman and Rob. It contains 18 homogeneous title decisions and 42 dependent WordNet alignment decisions.\n\n## Review order\n\n1. Review **Clarify titles through homogeneous evidence groups**.\n2. Accepting one title decision releases only its corresponding WordNet card or cards. Rejecting it makes those dependent cards not applicable.\n3. No decision writes to the ontology. New split titles remain provisional until a later placement review.\n\n## Full-run planning estimate\n\nThe source contains ${fullRunEstimate.inventory.atomicActivityOccurrences.toLocaleString("en-US")} atomic occurrences and ${fullRunEstimate.inventory.oNetRecords.toLocaleString("en-US")} O*NET records. The central projection produces about ${fullRunEstimate.projection.homogeneousGroups.central.toLocaleString("en-US")} homogeneous groups and ${fullRunEstimate.projection.fullIndependentAudit.centralScenario.modelCalls.toLocaleString("en-US")} model calls. Its central planning estimate is ${Math.round(fullRunEstimate.projection.fullIndependentAudit.centralScenario.totalAccessTokensPlanningRange.central / 1_000_000)} million ACCESS tokens and ${fullRunEstimate.projection.fullIndependentAudit.elapsedWallTimeHours.central} hours at the stated concurrency assumptions. These are planning values, not metered usage; see \`diagnostics/full-run-estimate.json\` for the range and caveats.\n\n## Reproduce\n\nRun the local grouping and WordNet validators, regenerate \`full-run-estimate.json\`, then run \`node scripts/som-review/build-homogeneous-title-review-dataset.mjs\`. The source hierarchy hash is \`${samplePacket.sourceSha256}\`.\n`;
-fs.writeFileSync(path.join(outputDir, "README.md"), readme);
+fs.writeFileSync(
+  path.join(outputDir, "README.md"),
+  `# Streamlined ontology-wide title test bed\n\nThis review-only dataset packages the deterministic 18-title sample discussed by Iman and Rob. It contains ${validatedGroupings.counts.keep} keep, ${validatedGroupings.counts.rename} rename, ${validatedGroupings.counts.split} split, and ${validatedGroupings.counts.defer} defer decisions, producing ${validatedGroupings.counts.resultingGroups} homogeneous groups.\n\n## Procedure\n\n1. One concise model call groups each title's O*NET records. Each record is assigned exactly once.\n2. Deterministic validation derives title status and the keep/rename/split/defer decision.\n3. Rob reviews the title proposal. No review action mutates the ontology.\n4. Only after title acceptance, compare the accepted group with its assigned synset. Retrieve all local candidates and make a second model call only when the assigned sense fails.\n\n## Full-run estimate\n\nThe central projection is ${fullRunEstimate.projection.homogeneousGroups.central.toLocaleString("en-US")} groups, ${streamlined.centralScenario.modelCalls.toLocaleString("en-US")} model calls, about ${Math.round(streamlined.centralScenario.totalAccessTokensPlanningRange.central / 1_000_000)} million ACCESS tokens, and ${streamlined.elapsedWallTimeHours.central} hours at 32-way concurrency. These are planning values, not metered usage.\n`,
+);
 
 console.log(
   JSON.stringify(
@@ -1011,7 +696,7 @@ console.log(
       datasetVersion,
       snapshotSha256,
       titleCards: titleCards.length,
-      wordNetCards: wordNetCards.length,
+      resultingGroups: validatedGroupings.counts.resultingGroups,
       proposals: proposals.length,
       controls: controls.length,
       manualChecks: manualChecks.length,

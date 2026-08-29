@@ -1,0 +1,393 @@
+{
+  "schemaVersion": "homogeneous-title-grouping-assessments-v2",
+  "generatedAt": "2026-08-29T13:00:00.000Z",
+  "sourceFile": "0401_FINALHIERARCHY.json",
+  "sourceSha256": "f19ce789bce298b0564045fb87427eebd1193b89c133d17519c097dc3e0eb319",
+  "promptVersion": "access-homogeneous-title-grouping-2026-08-29-v2",
+  "assessments": [
+    {
+      "occurrenceId": "atomic-ed7f926d6f8a2afe185c",
+      "groups": [
+        {
+          "title": "Outline Pattern",
+          "sourceTaskIndexes": [1],
+          "reason": "The linked clause explicitly describes outlining patterns, so the current title is already accurate."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "The one relevant clause is represented without needing a modifier.",
+      "confidence": "high"
+    },
+    {
+      "occurrenceId": "atomic-9161b89ea9fa3b0fb108",
+      "groups": [
+        {
+          "title": "Compare Environmental Impact",
+          "sourceTaskIndexes": [1],
+          "reason": "The record's impact object is specifically environmental; performance is already represented by another linked atomic title."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "Adding the source-supported environmental modifier makes the title informative without importing incidental context.",
+      "confidence": "high"
+    },
+    {
+      "occurrenceId": "atomic-4443f0439ebf52a58824",
+      "groups": [
+        {
+          "title": "Document Alternative",
+          "sourceTaskIndexes": [1, 2],
+          "reason": "Both duplicate records use document with alternatives as its object, and the other coordinated actions have their own linked titles."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "The current title accurately covers both records at the same useful level of generality.",
+      "confidence": "high"
+    },
+    {
+      "occurrenceId": "atomic-5ea2fd867a90d0098f88",
+      "groups": [
+        {
+          "title": "Store Data",
+          "sourceTaskIndexes": [1, 2, 3, 4],
+          "reason": "All four records describe storing data; the conventional mass-noun form is clearer than the singular datum."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "One grammatical clarification accurately covers the complete evidence set.",
+      "confidence": "high"
+    },
+    {
+      "occurrenceId": "atomic-003bf5b0b1e789d2c9cd",
+      "groups": [
+        {
+          "title": "Diagnose Disease",
+          "sourceTaskIndexes": [3],
+          "reason": "This record refers to diseases generally rather than one anatomical or clinical domain."
+        },
+        {
+          "title": "Diagnose Genetic Disease",
+          "sourceTaskIndexes": [1],
+          "reason": "The genetic modifier defines a more specific disease activity."
+        },
+        {
+          "title": "Diagnose Eye Disease",
+          "sourceTaskIndexes": [2],
+          "reason": "The record is limited to diseases of the eye and eye structures."
+        },
+        {
+          "title": "Diagnose Genitourinary Disease",
+          "sourceTaskIndexes": [4],
+          "reason": "The record is limited to diseases of genitourinary organs and tracts."
+        },
+        {
+          "title": "Diagnose Oral Disease",
+          "sourceTaskIndexes": [5],
+          "reason": "The record is limited to diseases of teeth, gums, and related oral structures."
+        },
+        {
+          "title": "Diagnose Foot Disease",
+          "sourceTaskIndexes": [6],
+          "reason": "The record is limited to diseases of the foot."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "One generic record can retain the current title, while five records require source-supported domain modifiers.",
+      "confidence": "high"
+    },
+    {
+      "occurrenceId": "atomic-3d45a7c27254ef2c9666",
+      "groups": [
+        {
+          "title": "Plan Menu",
+          "sourceTaskIndexes": [1, 4, 5, 6],
+          "reason": "These records describe menu planning generally, with constraints that do not define a separate menu type."
+        },
+        {
+          "title": "Plan Special Menu",
+          "sourceTaskIndexes": [2],
+          "reason": "The record explicitly identifies special menus as a distinct object."
+        },
+        {
+          "title": "Plan Bar Menu",
+          "sourceTaskIndexes": [3],
+          "reason": "The record explicitly limits the activity to bar menus."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "The evidence forms one generic group and two modifier-defined specializations.",
+      "confidence": "high"
+    },
+    {
+      "occurrenceId": "atomic-2ab12fbc2f7fd9dfa849",
+      "groups": [
+        {
+          "title": "Use Staple",
+          "sourceTaskIndexes": [1],
+          "reason": "The sentence explicitly includes using staples; the alternative fastening objects are handled by their own activity links."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "The current title accurately names the relevant clause.",
+      "confidence": "high"
+    },
+    {
+      "occurrenceId": "atomic-24ab2b4c7b61722902f4",
+      "groups": [
+        {
+          "title": "Melt Material",
+          "sourceTaskIndexes": [1],
+          "reason": "Metal, plastic, and other materials are presented as examples of the generic material object."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "The current generic title accurately covers the complete record.",
+      "confidence": "high"
+    },
+    {
+      "occurrenceId": "atomic-1aa7265cee80ea6c10a6",
+      "groups": [
+        {
+          "title": "Create Print (Synonyms: Produce Print)",
+          "sourceTaskIndexes": [1],
+          "reason": "The first record describes prints generally."
+        },
+        {
+          "title": "Create Timed Print",
+          "sourceTaskIndexes": [2],
+          "reason": "Timed is a source-supported modifier that defines the second record's more specific print activity."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "The generic and timed-print records require two titles while retaining the current leading action and recorded synonym.",
+      "confidence": "high"
+    },
+    {
+      "occurrenceId": "atomic-27c77557905a65623673",
+      "groups": [
+        {
+          "title": "Insert Wedge",
+          "sourceTaskIndexes": [1, 2, 3],
+          "reason": "All three records describe inserting wedges; the different work settings do not change the activity object."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "One title accurately represents all three records without adding incidental context.",
+      "confidence": "high"
+    },
+    {
+      "occurrenceId": "atomic-562c8c4a5a9e35c27ec4",
+      "groups": [
+        {
+          "title": "Cut Tree",
+          "sourceTaskIndexes": [1, 2, 3, 4, 5, 6, 7, 8, 9],
+          "reason": "Every record includes cutting trees; other objects and coordinated actions already have separate linked titles where applicable."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "The current title remains accurate across the complete evidence set.",
+      "confidence": "high"
+    },
+    {
+      "occurrenceId": "atomic-2df83a138d7509dae376",
+      "groups": [
+        {
+          "title": "Lubricate Machinery",
+          "sourceTaskIndexes": [1, 2, 3, 4, 5, 6],
+          "reason": "Each record includes lubricating machinery, while equipment, vehicles, tools, and other objects are represented by separate linked titles."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "The current title accurately captures the shared clause in all six records.",
+      "confidence": "high"
+    },
+    {
+      "occurrenceId": "atomic-6e0324051de0289bdcb7",
+      "groups": [
+        {
+          "title": "Assist with Personnel Handbooks",
+          "sourceTaskIndexes": [1],
+          "reason": "The clearer wording restores the missing relation and the source-supported personnel modifier without splitting one record into preparation and maintenance groups."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "One natural title covers the handbook clause exactly once; the personnel-record clause has another linked title.",
+      "confidence": "high"
+    },
+    {
+      "occurrenceId": "atomic-d45a0bee58d5bb67dd39",
+      "groups": [
+        {
+          "title": "Operate Zoom Lens",
+          "sourceTaskIndexes": [1],
+          "reason": "Zoom is the smallest source-supported modifier needed to identify the lens activity."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "The one record supports a direct, more informative title.",
+      "confidence": "high"
+    },
+    {
+      "occurrenceId": "atomic-3ff5239b88576c658e83",
+      "groups": [
+        {
+          "title": "Coordinate Patient Care",
+          "sourceTaskIndexes": [1],
+          "reason": "The record explicitly limits the care activity to patients."
+        },
+        {
+          "title": "Coordinate Client or Patient Care",
+          "sourceTaskIndexes": [2],
+          "reason": "The record explicitly covers client or patient care and remains one evidence unit rather than being duplicated for rehabilitation."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "Both records add a meaning-defining care-recipient modifier, but they do not support the same exact title.",
+      "confidence": "high"
+    },
+    {
+      "occurrenceId": "atomic-1edc77ce0d8914824b75",
+      "groups": [
+        {
+          "title": "Devise Fixture",
+          "sourceTaskIndexes": [1],
+          "reason": "This record describes fixtures generically; jigs have a separate linked title."
+        },
+        {
+          "title": "Devise Test Fixture",
+          "sourceTaskIndexes": [2],
+          "reason": "Test is an explicit modifier that distinguishes the second record's fixture activity."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "The generic fixture record can remain under the current title, while the test-fixture record needs one specialization.",
+      "confidence": "high"
+    },
+    {
+      "occurrenceId": "atomic-958d35daa6723089727c",
+      "groups": [
+        {
+          "title": "Direct Distribution Personnel",
+          "sourceTaskIndexes": [1],
+          "reason": "The personnel are specifically engaged in controlling or operating distribution equipment or machinery."
+        },
+        {
+          "title": "Direct Testing Personnel",
+          "sourceTaskIndexes": [2],
+          "reason": "The personnel are specifically directed in test procedures."
+        },
+        {
+          "title": "Direct Nursing or Healthcare Personnel",
+          "sourceTaskIndexes": [3],
+          "reason": "The record explicitly limits the personnel to nursing or healthcare roles."
+        },
+        {
+          "title": "Direct Supportive Personnel",
+          "sourceTaskIndexes": [4],
+          "reason": "The record explicitly identifies supportive personnel."
+        },
+        {
+          "title": "Direct Construction or Extraction Personnel",
+          "sourceTaskIndexes": [5],
+          "reason": "The record explicitly limits the personnel to construction or extraction work."
+        },
+        {
+          "title": "Direct Technical Support Personnel",
+          "sourceTaskIndexes": [6],
+          "reason": "The remaining personnel clause explicitly concerns technical support; technicians and designers have separate linked titles."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "Every record supplies an occupational modifier that identifies a different personnel activity, so none remains under the generic title.",
+      "confidence": "high"
+    },
+    {
+      "occurrenceId": "atomic-d671e93fb7a19bc7d1b2",
+      "groups": [
+        {
+          "title": "Oversee Equipment Operation",
+          "sourceTaskIndexes": [1],
+          "reason": "The operation clause is limited to machines or equipment."
+        },
+        {
+          "title": "Oversee Vessel Operation",
+          "sourceTaskIndexes": [2],
+          "reason": "The record explicitly limits operation to vessels."
+        },
+        {
+          "title": "Oversee Geothermal Plant Operation",
+          "sourceTaskIndexes": [3],
+          "reason": "The geothermal-plant modifier defines the operation."
+        },
+        {
+          "title": "Oversee Contingency Plan Operation",
+          "sourceTaskIndexes": [4],
+          "reason": "The relevant operation clause concerns a contingency plan; integration has another linked title."
+        },
+        {
+          "title": "Oversee MEMS Equipment Operation",
+          "sourceTaskIndexes": [5],
+          "reason": "The record concerns operation of MEMS fabrication or assembly equipment."
+        },
+        {
+          "title": "Oversee Imaging Equipment Operation",
+          "sourceTaskIndexes": [6],
+          "reason": "The record concerns radiologic or magnetic imaging equipment."
+        },
+        {
+          "title": "Oversee Nuclear Facility Operation",
+          "sourceTaskIndexes": [7],
+          "reason": "The operation clause is limited to nuclear reactors, plants, or reprocessing systems."
+        },
+        {
+          "title": "Oversee Property Operation",
+          "sourceTaskIndexes": [8],
+          "reason": "The record concerns operation of commercial, industrial, or residential properties."
+        },
+        {
+          "title": "Oversee Biomass Plant or Substation Operation",
+          "sourceTaskIndexes": [9],
+          "reason": "One record names biomass plants or substations under the same operation clause and is kept as one evidence unit."
+        },
+        {
+          "title": "Oversee Hydroelectric Facility Operation",
+          "sourceTaskIndexes": [10],
+          "reason": "The hydroelectric-facility modifier defines the operation."
+        },
+        {
+          "title": "Oversee Pest or Weed Control Operation",
+          "sourceTaskIndexes": [11],
+          "reason": "One record covers pest or weed control operations and is assigned once rather than duplicated."
+        },
+        {
+          "title": "Oversee Electronic Equipment or System Operation",
+          "sourceTaskIndexes": [12],
+          "reason": "One record covers electronic equipment or systems under the same operation clause."
+        },
+        {
+          "title": "Oversee Library Operation",
+          "sourceTaskIndexes": [13],
+          "reason": "The record explicitly limits operation to a library."
+        },
+        {
+          "title": "Oversee Mine Construction Operation",
+          "sourceTaskIndexes": [14],
+          "reason": "The record explicitly concerns mine construction operations."
+        },
+        {
+          "title": "Oversee Food Processing or Manufacturing Plant Operation",
+          "sourceTaskIndexes": [15],
+          "reason": "The record explicitly concerns food-processing or manufacturing-plant operations."
+        },
+        {
+          "title": "Oversee Forest Nursery Operation",
+          "sourceTaskIndexes": [16],
+          "reason": "The operation clause concerns forest nurseries; harvesting, other activities, and programs have separate linked titles."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "Every record is more specific than the generic current title and is assigned exactly once to the smallest source-supported operation title.",
+      "confidence": "medium"
+    }
+  ]
+}

@@ -1,0 +1,421 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "const": "som-review-v1"
+    },
+    "datasetVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "proposalId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "branch": {
+      "type": "string",
+      "minLength": 1
+    },
+    "issueType": {
+      "const": "title-clarity"
+    },
+    "reviewMode": {
+      "enum": [
+        "proposed-change",
+        "status-quo-audit",
+        "manual-check"
+      ]
+    },
+    "rolloutStatus": {
+      "enum": [
+        "prototype",
+        "experimental",
+        "control"
+      ]
+    },
+    "workflow": {
+      "type": "object",
+      "properties": {
+        "robTaskIds": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "stage": {
+          "const": "content"
+        },
+        "proposalKind": {
+          "const": "diagnosis"
+        },
+        "dependsOnProposalIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "required": [
+        "robTaskIds",
+        "stage",
+        "proposalKind",
+        "dependsOnProposalIds"
+      ],
+      "additionalProperties": false
+    },
+    "subject": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "parentTitle": {
+          "type": "string",
+          "minLength": 1
+        },
+        "path": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 2
+        },
+        "relatedTitles": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "required": [
+        "title",
+        "parentTitle",
+        "path",
+        "relatedTitles"
+      ],
+      "additionalProperties": false
+    },
+    "reviewerView": {
+      "type": "object",
+      "properties": {
+        "question": {
+          "type": "string",
+          "minLength": 1
+        },
+        "currentState": {
+          "type": "string",
+          "minLength": 1
+        },
+        "proposedState": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reasoning": {
+          "type": "string",
+          "minLength": 1
+        },
+        "context": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "title-split"
+            },
+            "currentTitle": {
+              "type": "string",
+              "minLength": 1
+            },
+            "decision": {
+              "enum": [
+                "keep",
+                "rename",
+                "split",
+                "defer"
+              ]
+            },
+            "linkedTasks": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "minItems": 1
+            },
+            "proposedNodes": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "status": {
+                    "enum": [
+                      "current",
+                      "existing",
+                      "new"
+                    ]
+                  },
+                  "sourceTaskIndexes": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "type": "integer",
+                      "minimum": 1
+                    }
+                  },
+                  "sourceTasks": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "title",
+                  "status",
+                  "sourceTaskIndexes",
+                  "sourceTasks",
+                  "reason"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "deferredTaskIndexes": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 1
+              }
+            },
+            "deferredTasks": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          },
+          "required": [
+            "type",
+            "currentTitle",
+            "decision",
+            "linkedTasks",
+            "proposedNodes",
+            "deferredTaskIndexes",
+            "deferredTasks"
+          ],
+          "additionalProperties": false
+        },
+        "agreeLabel": {
+          "type": "string",
+          "minLength": 1
+        },
+        "disagreeLabel": {
+          "type": "string",
+          "minLength": 1
+        },
+        "rejectionReasonRequired": {
+          "type": "boolean"
+        },
+        "autoAdvanceOnAgree": {
+          "type": "boolean"
+        },
+        "hideModelConfidence": {
+          "const": true
+        }
+      },
+      "required": [
+        "question",
+        "currentState",
+        "proposedState",
+        "reasoning",
+        "context",
+        "agreeLabel",
+        "disagreeLabel",
+        "rejectionReasonRequired",
+        "autoAdvanceOnAgree",
+        "hideModelConfidence"
+      ],
+      "additionalProperties": false
+    },
+    "internalModelEvidence": {
+      "type": "object",
+      "properties": {
+        "detectorId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "detectorName": {
+          "type": "string",
+          "minLength": 1
+        },
+        "detectorPromptVersion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "detectorConfidence": {
+          "enum": [
+            "high",
+            "medium",
+            "low"
+          ]
+        },
+        "reviewerVisible": {
+          "const": false
+        },
+        "pipelineStages": {
+          "type": "array",
+          "minItems": 3,
+          "items": {
+            "type": "object",
+            "properties": {
+              "role": {
+                "enum": [
+                  "detector",
+                  "verifier",
+                  "assembler",
+                  "proposal-assembler"
+                ]
+              },
+              "actorId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "actorKind": {
+                "enum": [
+                  "model",
+                  "deterministic",
+                  "human-derived"
+                ]
+              },
+              "model": {
+                "type": "string",
+                "minLength": 1
+              },
+              "promptVersion": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "role",
+              "actorId",
+              "actorKind",
+              "model",
+              "promptVersion"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "detectorId",
+        "detectorName",
+        "detectorPromptVersion",
+        "detectorConfidence",
+        "reviewerVisible",
+        "pipelineStages"
+      ],
+      "additionalProperties": false
+    },
+    "provenance": {
+      "type": "object",
+      "properties": {
+        "sourceOntology": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sourceOntologySha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "upstreamSourceSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "sourceArtifact": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sourceRecord": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sourceOntologyAppId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sourceOntologyName": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sourceSnapshotSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "subjectNodeId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "parentNodeId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "referencedNodeIds": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "required": [
+        "sourceOntology",
+        "sourceOntologySha256",
+        "upstreamSourceSha256",
+        "sourceArtifact",
+        "sourceRecord",
+        "sourceOntologyAppId",
+        "sourceOntologyName",
+        "sourceSnapshotSha256",
+        "subjectNodeId",
+        "parentNodeId",
+        "referencedNodeIds"
+      ],
+      "additionalProperties": false
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "datasetVersion",
+    "proposalId",
+    "branch",
+    "issueType",
+    "reviewMode",
+    "rolloutStatus",
+    "workflow",
+    "subject",
+    "reviewerView",
+    "internalModelEvidence",
+    "provenance",
+    "createdAt"
+  ],
+  "additionalProperties": false
+}

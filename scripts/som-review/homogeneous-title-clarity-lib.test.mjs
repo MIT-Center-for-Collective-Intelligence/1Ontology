@@ -7,6 +7,7 @@ import {
   normalizeTitle,
   selectStratifiedSample,
   validateGroupingAssessment,
+  validateSimpleGroupingAssessment,
   validateWordNetAssessment,
 } from "./homogeneous-title-clarity-lib.mjs";
 
@@ -279,6 +280,88 @@ test("blocks action changes, duplicate groups, and false new-node claims", () =>
         },
       }),
     /already exists/,
+  );
+});
+
+test("streamlined grouping derives decisions and title status deterministically", () => {
+  const record = {
+    occurrenceId: "sell-product",
+    exactTitle: "Sell Product",
+    normalizedTitle: "sell product",
+    leadingAction: "Sell",
+    sourceRecords: [
+      { index: 1, task: "Sell products." },
+      { index: 2, task: "Sell agricultural products." },
+      { index: 3, task: "Sell farm products." },
+    ],
+  };
+  const validated = validateSimpleGroupingAssessment({
+    record,
+    existingTitles: new Set(["sell product", "sell agricultural product"]),
+    assessment: {
+      occurrenceId: "sell-product",
+      groups: [
+        {
+          title: "Sell Product",
+          sourceTaskIndexes: [1],
+          reason: "The evidence is generic.",
+        },
+        {
+          title: "Sell Agricultural Product",
+          sourceTaskIndexes: [2, 3],
+          reason: "Both records identify agricultural products.",
+        },
+      ],
+      deferredTaskIndexes: [],
+      reason: "The specific records need one shared modifier.",
+      confidence: "high",
+    },
+  });
+  assert.equal(validated.decision, "split");
+  assert.deepEqual(
+    validated.groups.map((group) => group.status),
+    ["current", "existing"],
+  );
+});
+
+test("streamlined grouping rejects assigning one O*NET record to two titles", () => {
+  const record = {
+    occurrenceId: "coordinate-care",
+    exactTitle: "Coordinate Care",
+    normalizedTitle: "coordinate care",
+    leadingAction: "Coordinate",
+    sourceRecords: [
+      {
+        index: 1,
+        task: "Coordinate client care and rehabilitation.",
+      },
+    ],
+  };
+  assert.throws(
+    () =>
+      validateSimpleGroupingAssessment({
+        record,
+        existingTitles: new Set(["coordinate care"]),
+        assessment: {
+          occurrenceId: "coordinate-care",
+          groups: [
+            {
+              title: "Coordinate Care",
+              sourceTaskIndexes: [1],
+              reason: "The record mentions care.",
+            },
+            {
+              title: "Coordinate Rehabilitation",
+              sourceTaskIndexes: [1],
+              reason: "The record also mentions rehabilitation.",
+            },
+          ],
+          deferredTaskIndexes: [],
+          reason: "Invalid duplicate assignment.",
+          confidence: "high",
+        },
+      }),
+    /appears in more than one group/,
   );
 });
 

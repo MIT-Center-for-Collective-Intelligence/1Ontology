@@ -6,12 +6,11 @@ import process from "node:process";
 
 import {
   extractAtomicActivities,
-  groupingAuditPromptTemplate,
-  groupingPromptTemplate,
-  groupingValidationRules,
   normalizeTitle,
+  simpleGroupingPromptTemplate,
+  simpleGroupingValidationRules,
   stableHash,
-  validateGroupingAssessments,
+  validateSimpleGroupingAssessments,
 } from "./homogeneous-title-clarity-lib.mjs";
 
 const parseArgs = () => {
@@ -36,14 +35,12 @@ const args = parseArgs();
 const sourceFile = required(args.source, "--source");
 const sampleFile = required(args.sample, "--sample");
 const assessmentsFile = required(args.assessments, "--assessments");
-const auditsFile = required(args.audits, "--audits");
 const outputFile = required(args.out, "--out");
 
 const sourceBuffer = fs.readFileSync(sourceFile);
 const sourceSha256 = stableHash(sourceBuffer);
 const samplePacket = readJson(sampleFile);
 const assessmentPacket = readJson(assessmentsFile);
-const auditPacket = readJson(auditsFile);
 
 if (samplePacket.sourceSha256 !== sourceSha256) {
   throw new Error(
@@ -52,9 +49,6 @@ if (samplePacket.sourceSha256 !== sourceSha256) {
 }
 if (assessmentPacket.sourceSha256 !== sourceSha256) {
   throw new Error("The grouping assessments do not match the source hierarchy");
-}
-if (auditPacket.sourceSha256 !== sourceSha256) {
-  throw new Error("The grouping audits do not match the source hierarchy");
 }
 
 const fullInventory = extractAtomicActivities(JSON.parse(sourceBuffer));
@@ -74,39 +68,17 @@ for (const sampled of samplePacket.sample) {
   }
 }
 
-const auditsById = new Map(
-  auditPacket.audits.map((audit) => [
-    audit.occurrenceId,
-    {
-      ...audit,
-      checks: {
-        ...(auditPacket.defaultChecks || {}),
-        ...(audit.checks || {}),
-      },
-    },
-  ]),
-);
-const mergedAssessments = assessmentPacket.assessments.map((assessment) => ({
-  ...assessment,
-  audit: auditsById.get(assessment.occurrenceId),
-}));
 const existingTitles = new Set(
   fullInventory.map((record) => normalizeTitle(record.exactTitle)),
 );
-const validated = validateGroupingAssessments({
+const validated = validateSimpleGroupingAssessments({
   occurrences: samplePacket.sample,
-  assessments: mergedAssessments,
+  assessments: assessmentPacket.assessments,
   existingTitles,
 });
 
-if (auditsById.size !== validated.length) {
-  throw new Error(
-    `Expected ${validated.length} audits; received ${auditsById.size}`,
-  );
-}
-
 const output = {
-  schemaVersion: "homogeneous-title-testbed-validated-v1",
+  schemaVersion: "homogeneous-title-testbed-validated-v2",
   generatedAt: new Date().toISOString(),
   sourceFile: path.basename(sourceFile),
   sourceSha256,
@@ -114,17 +86,13 @@ const output = {
   sampleSha256: stableHash(fs.readFileSync(sampleFile)),
   assessmentsFile: path.basename(assessmentsFile),
   assessmentsSha256: stableHash(fs.readFileSync(assessmentsFile)),
-  auditsFile: path.basename(auditsFile),
-  auditsSha256: stableHash(fs.readFileSync(auditsFile)),
   promptVersions: {
-    grouping: "access-homogeneous-title-grouping-2026-08-28-v1",
-    audit: "access-homogeneous-title-grouping-audit-2026-08-28-v1",
-    validator: "homogeneous-title-grouping-validator-2026-08-28-v1",
+    grouping: "access-homogeneous-title-grouping-2026-08-29-v2",
+    validator: "homogeneous-title-grouping-validator-2026-08-29-v2",
   },
   promptSha256: {
-    grouping: stableHash(groupingPromptTemplate),
-    audit: stableHash(groupingAuditPromptTemplate),
-    validator: stableHash(groupingValidationRules),
+    grouping: stableHash(simpleGroupingPromptTemplate),
+    validator: stableHash(simpleGroupingValidationRules),
   },
   counts: {
     cases: validated.length,
@@ -143,5 +111,5 @@ const output = {
 fs.mkdirSync(path.dirname(outputFile), { recursive: true });
 fs.writeFileSync(outputFile, `${JSON.stringify(output, null, 2)}\n`, "utf8");
 process.stdout.write(
-  `PASS: validated ${validated.length} audited title-grouping cases\n${outputFile}\n`,
+  `PASS: validated ${validated.length} streamlined title-grouping cases\n${outputFile}\n`,
 );

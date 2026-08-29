@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "homogeneous-title-testbed-quality-report-v2",
+  "generatedAt": "2026-08-29T13:51:42.172Z",
+  "sourceHierarchySha256": "f19ce789bce298b0564045fb87427eebd1193b89c133d17519c097dc3e0eb319",
+  "packagedSnapshotSha256": "27e59dab2a6cd0e695eb074968f16832755511138916abf726f784580dc1336e",
+  "counts": {
+    "sampledAtomicActivities": 18,
+    "titleKeep": 7,
+    "titleRename": 4,
+    "titleSplit": 7,
+    "titleDefer": 0,
+    "homogeneousGroups": 48,
+    "reviewCards": 18,
+    "projectedFullRunHomogeneousGroups": {
+      "low": 20491,
+      "central": 37464,
+      "high": 49952,
+      "interpretation": "Planning range, not a statistical confidence interval. The central case applies observed v2 sample rates by evidence bucket and the medium-record rate to unsampled large cases; the high case adds one third for sample and large-case uncertainty."
+    },
+    "projectedFullRunCentralModelCalls": 72227,
+    "projectedFullRunCentralAccessTokens": {
+      "low": 55296566,
+      "central": 83239622,
+      "high": 130439198
+    }
+  },
+  "safeguards": {
+    "everySourceRecordAssignedExactlyOnce": true,
+    "leadingActionPreserved": true,
+    "duplicateResultingTitlesRejected": true,
+    "titleStatusDerivedFromSnapshot": true,
+    "newNodesMarkedProvisional": true,
+    "wordNetDeferredUntilTitleAcceptance": true,
+    "ontologyMutationDisabled": true
+  }
+}

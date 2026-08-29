@@ -35,6 +35,28 @@ describe("Society of Mind agent transparency", () => {
     expect(followUpDetector?.prompt).toMatch(/choose exactly one decision/i);
   });
 
+  it("shows the streamlined title workflow as one model call plus deterministic checks", () => {
+    const record = [
+      ...getDataset("ontology-title-testbed").recordsById.values(),
+    ][0];
+    const trace = toReviewerCard(record).agentTrace;
+
+    expect(trace?.stages.map((stage) => stage.actorId)).toEqual([
+      "access-homogeneous-title-grouping-v2",
+      "homogeneous-title-grouping-validator-v2",
+      "homogeneous-title-testbed-card-assembler-v2",
+    ]);
+    expect(trace?.stages[0]).toMatchObject({
+      roleLabel: "Group the evidence and propose titles",
+      promptVersion: "access-homogeneous-title-grouping-2026-08-29-v2",
+      promptLabel: "Prompt template",
+    });
+    expect(trace?.stages[0].prompt).toMatch(
+      /Do not divide one O\*NET record among multiple groups/i,
+    );
+    expect(trace?.stages[1].prompt).toMatch(/appear exactly once/i);
+  });
+
   it("classifies every recorded component in every configured round", () => {
     const unclassified: Array<{
       datasetId: string;
