@@ -32,6 +32,19 @@ describe("ontology-wide homogeneous title test bed", () => {
     });
   });
 
+  it("packages the active title dataset into the production image", () => {
+    const dockerfile = fs.readFileSync(
+      path.join(process.cwd(), "Dockerfile"),
+      "utf8",
+    );
+    expect(dockerfile).toMatch(
+      /COPY --chown=nextjs:nodejs Ontology_Title_Clarity_Testbed_2026-08-28 \.\/Ontology_Title_Clarity_Testbed_2026-08-28/,
+    );
+    expect(dockerfile).toContain(
+      "RUN test -f ./Ontology_Title_Clarity_Testbed_2026-08-28/review-datasets-v4/manifest.json",
+    );
+  });
+
   it("packages a source-bound full-run ACCESS estimate", () => {
     const estimate = JSON.parse(
       fs.readFileSync(
