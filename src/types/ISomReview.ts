@@ -113,7 +113,16 @@ export type SomReviewContext =
       linkedTasks: string[];
       proposedNodes: Array<{
         title: string;
+        canonicalDirectObject?: string;
         status: "current" | "existing" | "new";
+        existingOccurrenceCount?: number;
+        sourceClaims?: Array<{
+          claimId: string;
+          sourceTaskIndex: number;
+          directObject: string;
+          evidenceQuote: string;
+          sourceTask: string;
+        }>;
         sourceTaskIndexes: number[];
         sourceTasks: string[];
         reason: string;

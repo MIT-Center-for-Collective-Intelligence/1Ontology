@@ -35,26 +35,30 @@ describe("Society of Mind agent transparency", () => {
     expect(followUpDetector?.prompt).toMatch(/choose exactly one decision/i);
   });
 
-  it("shows the streamlined title workflow as one model call plus deterministic checks", () => {
+  it("shows the claim-aware title workflow as one model call plus deterministic checks", () => {
     const record = [
       ...getDataset("ontology-title-testbed").recordsById.values(),
     ][0];
     const trace = toReviewerCard(record).agentTrace;
 
     expect(trace?.stages.map((stage) => stage.actorId)).toEqual([
-      "access-homogeneous-title-grouping-v2",
-      "homogeneous-title-grouping-validator-v2",
-      "homogeneous-title-testbed-card-assembler-v2",
+      "access-homogeneous-title-grouping-v3",
+      "homogeneous-title-grouping-validator-v3",
+      "homogeneous-title-testbed-card-assembler-v3",
     ]);
     expect(trace?.stages[0]).toMatchObject({
       roleLabel: "Group the evidence and propose titles",
-      promptVersion: "access-homogeneous-title-grouping-2026-08-29-v2",
+      promptVersion: "access-homogeneous-title-grouping-2026-08-29-v3",
       promptLabel: "Prompt template",
     });
     expect(trace?.stages[0].prompt).toMatch(
-      /Do not divide one O\*NET record among multiple groups/i,
+      /A sentence may supply more than one claim/i,
     );
-    expect(trace?.stages[1].prompt).toMatch(/appear exactly once/i);
+    expect(trace?.stages[1].prompt).toMatch(/exact evidence quote/i);
+    expect(trace?.stages[1].prompt).toMatch(
+      /existing-title occurrence count/i,
+    );
+    expect(trace?.stages[1].prompt).toMatch(/placement remains a later review/i);
   });
 
   it("classifies every recorded component in every configured round", () => {

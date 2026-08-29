@@ -169,12 +169,12 @@ const sellDatasets: SomReviewDatasetConfig[] = [
 const ontologyTitleTestbedDatasets: SomReviewDatasetConfig[] = [
   {
     id: "ontology-title-testbed",
-    datasetVersion: "ontology-title-homogeneous-testbed-2026-08-29-v2",
+    datasetVersion: "ontology-title-homogeneous-testbed-2026-08-29-v3",
     workspaceId: "ontology-title-testbed",
-    label: "Streamlined homogeneous title review",
+    label: "Claim-aware homogeneous title review",
     relativeDir: [
       "Ontology_Title_Clarity_Testbed_2026-08-28",
-      "review-datasets-v2",
+      "review-datasets-v3",
     ],
     current: true,
   },

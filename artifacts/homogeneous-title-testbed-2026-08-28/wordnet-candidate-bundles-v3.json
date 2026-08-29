@@ -1,0 +1,4045 @@
+{
+  "schemaVersion": "wordnet-all-candidate-bundles-v3",
+  "generatedAt": "2026-08-29T15:32:34.539850+00:00",
+  "sourceSha256": "f19ce789bce298b0564045fb87427eebd1193b89c133d17519c097dc3e0eb319",
+  "sampleSha256": "f04b58d1143c03f2801a4a0871788d4eabbdff2233ed29177622a5d5dfa30642",
+  "groupingsSha256": "92a5c4a26963bf3f901ec07599f9c583768b867e11ee6f4a85dc72605fc7d0a8",
+  "mode": "planning-preview",
+  "retrievalRule": "Derive the complete action phrase from the accepted title minus its declared canonical direct object. Retrieve every verb synset for that exact local WordNet lemma and retain inherited synsets only when they contain the same exact action lemma. No web or model lookup is used.",
+  "acceptanceGate": "Review bundles require explicit accepted occurrence IDs. Planning preview bundles are estimation inputs only and must not be published as proposals.",
+  "counts": {
+    "groups": 28,
+    "groupsWithCandidates": 28,
+    "groupsWithoutCandidates": 0,
+    "groupsWithMatchingInheritedSynsets": 25,
+    "genericActionFlags": 0
+  },
+  "bundles": [
+    {
+      "groupId": "wordnet-92d34850eda586bb903c",
+      "occurrenceId": "atomic-a61bf28bc554d802743f",
+      "currentAtomicTitle": "Review Programming",
+      "groupTitle": "Review Programming",
+      "canonicalDirectObject": "Programming",
+      "groupStatus": "current",
+      "actionPhrase": "review",
+      "sourceClaims": [
+        {
+          "claimId": "claim-cd26d83f57ae0c4d721e",
+          "sourceTaskIndex": 1,
+          "directObject": "programming",
+          "evidenceQuote": "review programming",
+          "sourceTask": "Monitor and review programming to ensure that schedules are met, guidelines are adhered to, and performances are of adequate quality."
+        }
+      ],
+      "ownerTitle": "Review (Review.v.01, Review.v.02)",
+      "allInheritedSynsets": [
+        {
+          "id": "review.v.01",
+          "definition": "look at again; examine again",
+          "lemmas": [
+            "reexamine",
+            "review"
+          ],
+          "examples": [
+            "let's review your situation"
+          ]
+        },
+        {
+          "id": "review.v.02",
+          "definition": "appraise critically",
+          "lemmas": [
+            "critique",
+            "review"
+          ],
+          "examples": [
+            "She reviews books for the New York Times",
+            "Please critique this performance"
+          ]
+        }
+      ],
+      "inheritedSynsets": [
+        {
+          "id": "review.v.01",
+          "definition": "look at again; examine again",
+          "lemmas": [
+            "reexamine",
+            "review"
+          ],
+          "examples": [
+            "let's review your situation"
+          ]
+        },
+        {
+          "id": "review.v.02",
+          "definition": "appraise critically",
+          "lemmas": [
+            "critique",
+            "review"
+          ],
+          "examples": [
+            "She reviews books for the New York Times",
+            "Please critique this performance"
+          ]
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "review.v.01",
+          "definition": "look at again; examine again",
+          "lemmas": [
+            "reexamine",
+            "review"
+          ],
+          "examples": [
+            "let's review your situation"
+          ]
+        },
+        {
+          "id": "review.v.02",
+          "definition": "appraise critically",
+          "lemmas": [
+            "critique",
+            "review"
+          ],
+          "examples": [
+            "She reviews books for the New York Times",
+            "Please critique this performance"
+          ]
+        },
+        {
+          "id": "review.v.03",
+          "definition": "hold a review (of troops)",
+          "lemmas": [
+            "go over",
+            "review",
+            "survey"
+          ],
+          "examples": []
+        },
+        {
+          "id": "review.v.04",
+          "definition": "refresh one's memory",
+          "lemmas": [
+            "brush up",
+            "refresh",
+            "review"
+          ],
+          "examples": [
+            "I reviewed the material before the test"
+          ]
+        },
+        {
+          "id": "review.v.05",
+          "definition": "look back upon (a period of time, sequence of events); remember",
+          "lemmas": [
+            "look back",
+            "retrospect",
+            "review"
+          ],
+          "examples": [
+            "she reviewed her achievements with pride"
+          ]
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-d39b67ef6bbbed14ad6e",
+      "occurrenceId": "atomic-ed7f926d6f8a2afe185c",
+      "currentAtomicTitle": "Outline Pattern",
+      "groupTitle": "Outline Pattern",
+      "canonicalDirectObject": "Pattern",
+      "groupStatus": "current",
+      "actionPhrase": "outline",
+      "sourceClaims": [
+        {
+          "claimId": "claim-ad57eebe2c03dd9ca9e5",
+          "sourceTaskIndex": 1,
+          "directObject": "patterns",
+          "evidenceQuote": "outline patterns on work pieces",
+          "sourceTask": "Draw patterns, using measurements, designs, plaster casts, or customer specifications, and position or outline patterns on work pieces."
+        }
+      ],
+      "ownerTitle": "Delineate (Delineate.v.03)",
+      "allInheritedSynsets": [
+        {
+          "id": "delineate.v.03",
+          "definition": "trace the shape of",
+          "lemmas": [
+            "delineate",
+            "limn",
+            "outline"
+          ],
+          "examples": []
+        }
+      ],
+      "inheritedSynsets": [
+        {
+          "id": "delineate.v.03",
+          "definition": "trace the shape of",
+          "lemmas": [
+            "delineate",
+            "limn",
+            "outline"
+          ],
+          "examples": []
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "sketch.v.02",
+          "definition": "describe roughly or briefly or give the main points or summary of",
+          "lemmas": [
+            "adumbrate",
+            "outline",
+            "sketch"
+          ],
+          "examples": [
+            "sketch the outline of the book",
+            "outline his ideas"
+          ]
+        },
+        {
+          "id": "draft.v.01",
+          "definition": "draw up an outline or sketch for something",
+          "lemmas": [
+            "draft",
+            "outline"
+          ],
+          "examples": [
+            "draft a speech"
+          ]
+        },
+        {
+          "id": "delineate.v.03",
+          "definition": "trace the shape of",
+          "lemmas": [
+            "delineate",
+            "limn",
+            "outline"
+          ],
+          "examples": []
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-a25de73c070f10e1af57",
+      "occurrenceId": "atomic-8e5831117afa863e98ca",
+      "currentAtomicTitle": "Monitor Panel",
+      "groupTitle": "Monitor Control Panel",
+      "canonicalDirectObject": "Control Panel",
+      "groupStatus": "new",
+      "actionPhrase": "monitor",
+      "sourceClaims": [
+        {
+          "claimId": "claim-2ef9e26d9fa445750d2e",
+          "sourceTaskIndex": 1,
+          "directObject": "control panels",
+          "evidenceQuote": "Monitor gauges, warning devices, and control panels",
+          "sourceTask": "Monitor gauges, warning devices, and control panels to verify aircraft performance and to regulate engine speed."
+        },
+        {
+          "claimId": "claim-2589af56f08bf8e1a723",
+          "sourceTaskIndex": 2,
+          "directObject": "control panels",
+          "evidenceQuote": "Monitor control panels during pumping operations",
+          "sourceTask": "Monitor control panels during pumping operations to ensure that materials are being pumped at the correct pressure, density, rate, and concentration."
+        }
+      ],
+      "ownerTitle": "Monitor (Monitor.v.01)",
+      "allInheritedSynsets": [
+        {
+          "id": "monitor.v.01",
+          "definition": "keep tabs on; keep an eye on; keep under surveillance",
+          "lemmas": [
+            "monitor",
+            "supervise"
+          ],
+          "examples": [
+            "we are monitoring the air quality",
+            "the police monitor the suspect's moves"
+          ]
+        }
+      ],
+      "inheritedSynsets": [
+        {
+          "id": "monitor.v.01",
+          "definition": "keep tabs on; keep an eye on; keep under surveillance",
+          "lemmas": [
+            "monitor",
+            "supervise"
+          ],
+          "examples": [
+            "we are monitoring the air quality",
+            "the police monitor the suspect's moves"
+          ]
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "monitor.v.01",
+          "definition": "keep tabs on; keep an eye on; keep under surveillance",
+          "lemmas": [
+            "monitor",
+            "supervise"
+          ],
+          "examples": [
+            "we are monitoring the air quality",
+            "the police monitor the suspect's moves"
+          ]
+        },
+        {
+          "id": "monitor.v.02",
+          "definition": "check, track, or observe by means of a receiver",
+          "lemmas": [
+            "monitor"
+          ],
+          "examples": []
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-054ffa4de47ea2958a86",
+      "occurrenceId": "atomic-4443f0439ebf52a58824",
+      "currentAtomicTitle": "Document Alternative",
+      "groupTitle": "Document Alternative",
+      "canonicalDirectObject": "Alternative",
+      "groupStatus": "current",
+      "actionPhrase": "document",
+      "sourceClaims": [
+        {
+          "claimId": "claim-5b30db3ee5bd727a2bb2",
+          "sourceTaskIndex": 1,
+          "directObject": "alternatives",
+          "evidenceQuote": "document, rate, or select alternatives for Web architecture or technologies",
+          "sourceTask": "Research, document, rate, or select alternatives for Web architecture or technologies."
+        },
+        {
+          "claimId": "claim-2a4ea191832db1dfc166",
+          "sourceTaskIndex": 2,
+          "directObject": "alternatives",
+          "evidenceQuote": "document, rate, or select alternatives for Web architecture or technologies",
+          "sourceTask": "Research, document, rate, or select alternatives for Web architecture or technologies."
+        }
+      ],
+      "ownerTitle": "Document (Document.v.01, Inventory.v.01, Keep.v.08, Log.v.01, Register.v.01)",
+      "allInheritedSynsets": [
+        {
+          "id": "document.v.01",
+          "definition": "record in detail",
+          "lemmas": [
+            "document"
+          ],
+          "examples": [
+            "The parents documented every step of their child's development"
+          ]
+        },
+        {
+          "id": "inventory.v.01",
+          "definition": "make or include in an itemized record or report",
+          "lemmas": [
+            "inventory",
+            "stock-take",
+            "take stock"
+          ],
+          "examples": [
+            "Inventory all books before the end of the year"
+          ]
+        },
+        {
+          "id": "keep.v.08",
+          "definition": "maintain by writing regular records",
+          "lemmas": [
+            "keep",
+            "maintain"
+          ],
+          "examples": [
+            "keep a diary",
+            "maintain a record",
+            "keep notes"
+          ]
+        },
+        {
+          "id": "log.v.01",
+          "definition": "enter into a log, as on ships and planes",
+          "lemmas": [
+            "log"
+          ],
+          "examples": []
+        },
+        {
+          "id": "register.v.01",
+          "definition": "record in writing; enter into a book of names or events or transactions",
+          "lemmas": [
+            "register"
+          ],
+          "examples": []
+        }
+      ],
+      "inheritedSynsets": [
+        {
+          "id": "document.v.01",
+          "definition": "record in detail",
+          "lemmas": [
+            "document"
+          ],
+          "examples": [
+            "The parents documented every step of their child's development"
+          ]
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "document.v.01",
+          "definition": "record in detail",
+          "lemmas": [
+            "document"
+          ],
+          "examples": [
+            "The parents documented every step of their child's development"
+          ]
+        },
+        {
+          "id": "document.v.02",
+          "definition": "support or supply with references",
+          "lemmas": [
+            "document"
+          ],
+          "examples": [
+            "Can you document your claims?"
+          ]
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-5569e8c15cad2b005bae",
+      "occurrenceId": "atomic-2859d08d7545509478a7",
+      "currentAtomicTitle": "Measure Equipment (Synonyms: Evaluate Equipment)",
+      "groupTitle": "Measure Equipment (Synonyms: Evaluate Equipment)",
+      "canonicalDirectObject": "Equipment",
+      "groupStatus": "current",
+      "actionPhrase": "measure",
+      "sourceClaims": [
+        {
+          "claimId": "claim-8ca7d764db5f598618de",
+          "sourceTaskIndex": 1,
+          "directObject": "equipment",
+          "evidenceQuote": "measure materials, equipment, or products",
+          "sourceTask": "Weigh or measure materials, equipment, or products to maintain relevant records, using volume meters, scales, rules, or calipers."
+        },
+        {
+          "claimId": "claim-0d27a22b2864e2ebf473",
+          "sourceTaskIndex": 2,
+          "directObject": "equipment",
+          "evidenceQuote": "Measure and mark equipment, objects, or parts",
+          "sourceTask": "Measure and mark equipment, objects, or parts to ensure grinding and polishing standards are met."
+        },
+        {
+          "claimId": "claim-7e246809a121cd894890",
+          "sourceTaskIndex": 3,
+          "directObject": "equipment",
+          "evidenceQuote": "evaluate workplace environments, equipment, or practices",
+          "sourceTask": "Inspect or evaluate workplace environments, equipment, or practices to ensure compliance with safety standards and government regulations."
+        },
+        {
+          "claimId": "claim-406235608117e070a465",
+          "sourceTaskIndex": 4,
+          "directObject": "equipment",
+          "evidenceQuote": "Evaluate new supplies and equipment",
+          "sourceTask": "Evaluate new supplies and equipment to ensure operability in specific laboratory settings."
+        },
+        {
+          "claimId": "claim-8ce3c31dc61a30378d87",
+          "sourceTaskIndex": 5,
+          "directObject": "chemical equipment",
+          "evidenceQuote": "Evaluate chemical equipment and processes",
+          "sourceTask": "Evaluate chemical equipment and processes to identify ways to optimize performance or to ensure compliance with safety and environmental regulations."
+        },
+        {
+          "claimId": "claim-1888ca1a036b1e513dd2",
+          "sourceTaskIndex": 6,
+          "directObject": "medical equipment",
+          "evidenceQuote": "Test, evaluate, and classify excess or in-use medical equipment",
+          "sourceTask": "Test, evaluate, and classify excess or in-use medical equipment and determine serviceability, condition, and disposition, in accordance with regulations."
+        }
+      ],
+      "ownerTitle": "Measure (Measure.v.04, Quantify.v.02)",
+      "allInheritedSynsets": [
+        {
+          "id": "measure.v.04",
+          "definition": "evaluate or estimate the nature, quality, ability, extent, or significance of",
+          "lemmas": [
+            "appraise",
+            "assess",
+            "evaluate",
+            "measure",
+            "valuate",
+            "value"
+          ],
+          "examples": [
+            "I will have the family jewels appraised by a professional",
+            "access all the factors when taking a risk"
+          ]
+        },
+        {
+          "id": "quantify.v.02",
+          "definition": "express as a number or measure or quantity",
+          "lemmas": [
+            "measure",
+            "quantify"
+          ],
+          "examples": [
+            "Can you quantify your results?"
+          ]
+        }
+      ],
+      "inheritedSynsets": [
+        {
+          "id": "measure.v.04",
+          "definition": "evaluate or estimate the nature, quality, ability, extent, or significance of",
+          "lemmas": [
+            "appraise",
+            "assess",
+            "evaluate",
+            "measure",
+            "valuate",
+            "value"
+          ],
+          "examples": [
+            "I will have the family jewels appraised by a professional",
+            "access all the factors when taking a risk"
+          ]
+        },
+        {
+          "id": "quantify.v.02",
+          "definition": "express as a number or measure or quantity",
+          "lemmas": [
+            "measure",
+            "quantify"
+          ],
+          "examples": [
+            "Can you quantify your results?"
+          ]
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "measure.v.01",
+          "definition": "determine the measurements of something or somebody, take measurements of",
+          "lemmas": [
+            "measure",
+            "measure out",
+            "mensurate"
+          ],
+          "examples": [
+            "Measure the length of the wall"
+          ]
+        },
+        {
+          "id": "quantify.v.02",
+          "definition": "express as a number or measure or quantity",
+          "lemmas": [
+            "measure",
+            "quantify"
+          ],
+          "examples": [
+            "Can you quantify your results?"
+          ]
+        },
+        {
+          "id": "measure.v.03",
+          "definition": "have certain dimensions",
+          "lemmas": [
+            "measure"
+          ],
+          "examples": [
+            "This table surfaces measures 20inches by 36 inches"
+          ]
+        },
+        {
+          "id": "measure.v.04",
+          "definition": "evaluate or estimate the nature, quality, ability, extent, or significance of",
+          "lemmas": [
+            "appraise",
+            "assess",
+            "evaluate",
+            "measure",
+            "valuate",
+            "value"
+          ],
+          "examples": [
+            "I will have the family jewels appraised by a professional",
+            "access all the factors when taking a risk"
+          ]
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-41eeb8eaf2ebc83c8874",
+      "occurrenceId": "atomic-2859d08d7545509478a7",
+      "currentAtomicTitle": "Measure Equipment (Synonyms: Evaluate Equipment)",
+      "groupTitle": "Measure Equipment Safety",
+      "canonicalDirectObject": "Equipment Safety",
+      "groupStatus": "new",
+      "actionPhrase": "measure",
+      "sourceClaims": [
+        {
+          "claimId": "claim-b2c8fbc898c519b74641",
+          "sourceTaskIndex": 7,
+          "directObject": "safety",
+          "evidenceQuote": "Evaluate the safety, efficiency, and effectiveness of biomedical equipment",
+          "sourceTask": "Evaluate the safety, efficiency, and effectiveness of biomedical equipment."
+        }
+      ],
+      "ownerTitle": "Measure (Measure.v.04, Quantify.v.02)",
+      "allInheritedSynsets": [
+        {
+          "id": "measure.v.04",
+          "definition": "evaluate or estimate the nature, quality, ability, extent, or significance of",
+          "lemmas": [
+            "appraise",
+            "assess",
+            "evaluate",
+            "measure",
+            "valuate",
+            "value"
+          ],
+          "examples": [
+            "I will have the family jewels appraised by a professional",
+            "access all the factors when taking a risk"
+          ]
+        },
+        {
+          "id": "quantify.v.02",
+          "definition": "express as a number or measure or quantity",
+          "lemmas": [
+            "measure",
+            "quantify"
+          ],
+          "examples": [
+            "Can you quantify your results?"
+          ]
+        }
+      ],
+      "inheritedSynsets": [
+        {
+          "id": "measure.v.04",
+          "definition": "evaluate or estimate the nature, quality, ability, extent, or significance of",
+          "lemmas": [
+            "appraise",
+            "assess",
+            "evaluate",
+            "measure",
+            "valuate",
+            "value"
+          ],
+          "examples": [
+            "I will have the family jewels appraised by a professional",
+            "access all the factors when taking a risk"
+          ]
+        },
+        {
+          "id": "quantify.v.02",
+          "definition": "express as a number or measure or quantity",
+          "lemmas": [
+            "measure",
+            "quantify"
+          ],
+          "examples": [
+            "Can you quantify your results?"
+          ]
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "measure.v.01",
+          "definition": "determine the measurements of something or somebody, take measurements of",
+          "lemmas": [
+            "measure",
+            "measure out",
+            "mensurate"
+          ],
+          "examples": [
+            "Measure the length of the wall"
+          ]
+        },
+        {
+          "id": "quantify.v.02",
+          "definition": "express as a number or measure or quantity",
+          "lemmas": [
+            "measure",
+            "quantify"
+          ],
+          "examples": [
+            "Can you quantify your results?"
+          ]
+        },
+        {
+          "id": "measure.v.03",
+          "definition": "have certain dimensions",
+          "lemmas": [
+            "measure"
+          ],
+          "examples": [
+            "This table surfaces measures 20inches by 36 inches"
+          ]
+        },
+        {
+          "id": "measure.v.04",
+          "definition": "evaluate or estimate the nature, quality, ability, extent, or significance of",
+          "lemmas": [
+            "appraise",
+            "assess",
+            "evaluate",
+            "measure",
+            "valuate",
+            "value"
+          ],
+          "examples": [
+            "I will have the family jewels appraised by a professional",
+            "access all the factors when taking a risk"
+          ]
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-ba4f878d926a7c875ca1",
+      "occurrenceId": "atomic-2859d08d7545509478a7",
+      "currentAtomicTitle": "Measure Equipment (Synonyms: Evaluate Equipment)",
+      "groupTitle": "Measure Equipment Efficiency",
+      "canonicalDirectObject": "Equipment Efficiency",
+      "groupStatus": "new",
+      "actionPhrase": "measure",
+      "sourceClaims": [
+        {
+          "claimId": "claim-a918f44f7deec859fe5b",
+          "sourceTaskIndex": 7,
+          "directObject": "efficiency",
+          "evidenceQuote": "Evaluate the safety, efficiency, and effectiveness of biomedical equipment",
+          "sourceTask": "Evaluate the safety, efficiency, and effectiveness of biomedical equipment."
+        }
+      ],
+      "ownerTitle": "Measure (Measure.v.04, Quantify.v.02)",
+      "allInheritedSynsets": [
+        {
+          "id": "measure.v.04",
+          "definition": "evaluate or estimate the nature, quality, ability, extent, or significance of",
+          "lemmas": [
+            "appraise",
+            "assess",
+            "evaluate",
+            "measure",
+            "valuate",
+            "value"
+          ],
+          "examples": [
+            "I will have the family jewels appraised by a professional",
+            "access all the factors when taking a risk"
+          ]
+        },
+        {
+          "id": "quantify.v.02",
+          "definition": "express as a number or measure or quantity",
+          "lemmas": [
+            "measure",
+            "quantify"
+          ],
+          "examples": [
+            "Can you quantify your results?"
+          ]
+        }
+      ],
+      "inheritedSynsets": [
+        {
+          "id": "measure.v.04",
+          "definition": "evaluate or estimate the nature, quality, ability, extent, or significance of",
+          "lemmas": [
+            "appraise",
+            "assess",
+            "evaluate",
+            "measure",
+            "valuate",
+            "value"
+          ],
+          "examples": [
+            "I will have the family jewels appraised by a professional",
+            "access all the factors when taking a risk"
+          ]
+        },
+        {
+          "id": "quantify.v.02",
+          "definition": "express as a number or measure or quantity",
+          "lemmas": [
+            "measure",
+            "quantify"
+          ],
+          "examples": [
+            "Can you quantify your results?"
+          ]
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "measure.v.01",
+          "definition": "determine the measurements of something or somebody, take measurements of",
+          "lemmas": [
+            "measure",
+            "measure out",
+            "mensurate"
+          ],
+          "examples": [
+            "Measure the length of the wall"
+          ]
+        },
+        {
+          "id": "quantify.v.02",
+          "definition": "express as a number or measure or quantity",
+          "lemmas": [
+            "measure",
+            "quantify"
+          ],
+          "examples": [
+            "Can you quantify your results?"
+          ]
+        },
+        {
+          "id": "measure.v.03",
+          "definition": "have certain dimensions",
+          "lemmas": [
+            "measure"
+          ],
+          "examples": [
+            "This table surfaces measures 20inches by 36 inches"
+          ]
+        },
+        {
+          "id": "measure.v.04",
+          "definition": "evaluate or estimate the nature, quality, ability, extent, or significance of",
+          "lemmas": [
+            "appraise",
+            "assess",
+            "evaluate",
+            "measure",
+            "valuate",
+            "value"
+          ],
+          "examples": [
+            "I will have the family jewels appraised by a professional",
+            "access all the factors when taking a risk"
+          ]
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-77485f5fbb18dc333d87",
+      "occurrenceId": "atomic-2859d08d7545509478a7",
+      "currentAtomicTitle": "Measure Equipment (Synonyms: Evaluate Equipment)",
+      "groupTitle": "Measure Equipment Effectiveness",
+      "canonicalDirectObject": "Equipment Effectiveness",
+      "groupStatus": "new",
+      "actionPhrase": "measure",
+      "sourceClaims": [
+        {
+          "claimId": "claim-7116ad5d8ee77dab07ab",
+          "sourceTaskIndex": 7,
+          "directObject": "effectiveness",
+          "evidenceQuote": "Evaluate the safety, efficiency, and effectiveness of biomedical equipment",
+          "sourceTask": "Evaluate the safety, efficiency, and effectiveness of biomedical equipment."
+        }
+      ],
+      "ownerTitle": "Measure (Measure.v.04, Quantify.v.02)",
+      "allInheritedSynsets": [
+        {
+          "id": "measure.v.04",
+          "definition": "evaluate or estimate the nature, quality, ability, extent, or significance of",
+          "lemmas": [
+            "appraise",
+            "assess",
+            "evaluate",
+            "measure",
+            "valuate",
+            "value"
+          ],
+          "examples": [
+            "I will have the family jewels appraised by a professional",
+            "access all the factors when taking a risk"
+          ]
+        },
+        {
+          "id": "quantify.v.02",
+          "definition": "express as a number or measure or quantity",
+          "lemmas": [
+            "measure",
+            "quantify"
+          ],
+          "examples": [
+            "Can you quantify your results?"
+          ]
+        }
+      ],
+      "inheritedSynsets": [
+        {
+          "id": "measure.v.04",
+          "definition": "evaluate or estimate the nature, quality, ability, extent, or significance of",
+          "lemmas": [
+            "appraise",
+            "assess",
+            "evaluate",
+            "measure",
+            "valuate",
+            "value"
+          ],
+          "examples": [
+            "I will have the family jewels appraised by a professional",
+            "access all the factors when taking a risk"
+          ]
+        },
+        {
+          "id": "quantify.v.02",
+          "definition": "express as a number or measure or quantity",
+          "lemmas": [
+            "measure",
+            "quantify"
+          ],
+          "examples": [
+            "Can you quantify your results?"
+          ]
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "measure.v.01",
+          "definition": "determine the measurements of something or somebody, take measurements of",
+          "lemmas": [
+            "measure",
+            "measure out",
+            "mensurate"
+          ],
+          "examples": [
+            "Measure the length of the wall"
+          ]
+        },
+        {
+          "id": "quantify.v.02",
+          "definition": "express as a number or measure or quantity",
+          "lemmas": [
+            "measure",
+            "quantify"
+          ],
+          "examples": [
+            "Can you quantify your results?"
+          ]
+        },
+        {
+          "id": "measure.v.03",
+          "definition": "have certain dimensions",
+          "lemmas": [
+            "measure"
+          ],
+          "examples": [
+            "This table surfaces measures 20inches by 36 inches"
+          ]
+        },
+        {
+          "id": "measure.v.04",
+          "definition": "evaluate or estimate the nature, quality, ability, extent, or significance of",
+          "lemmas": [
+            "appraise",
+            "assess",
+            "evaluate",
+            "measure",
+            "valuate",
+            "value"
+          ],
+          "examples": [
+            "I will have the family jewels appraised by a professional",
+            "access all the factors when taking a risk"
+          ]
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-938ef5c7d33aed00474e",
+      "occurrenceId": "atomic-a54b49bd2d355cd32613",
+      "currentAtomicTitle": "Negotiate Contract",
+      "groupTitle": "Negotiate Contract",
+      "canonicalDirectObject": "Contract",
+      "groupStatus": "current",
+      "actionPhrase": "negotiate",
+      "sourceClaims": [
+        {
+          "claimId": "claim-5b4b963f3202d20c715a",
+          "sourceTaskIndex": 1,
+          "directObject": "contracts",
+          "evidenceQuote": "Negotiate contracts with clients",
+          "sourceTask": "Negotiate contracts with clients for desired training outcomes, fees, or expenses."
+        },
+        {
+          "claimId": "claim-aaad5291020b8735eff7",
+          "sourceTaskIndex": 2,
+          "directObject": "contracts",
+          "evidenceQuote": "Negotiate, renegotiate, and administer contracts",
+          "sourceTask": "Negotiate, renegotiate, and administer contracts with suppliers, vendors, and other representatives."
+        },
+        {
+          "claimId": "claim-8c98294fac0925e548f1",
+          "sourceTaskIndex": 3,
+          "directObject": "contracts",
+          "evidenceQuote": "Negotiate contracts with such service providers and suppliers",
+          "sourceTask": "Negotiate contracts with such service providers and suppliers as hotels, convention centers, and speakers."
+        },
+        {
+          "claimId": "claim-c1391ea03ffffa6a2cd8",
+          "sourceTaskIndex": 4,
+          "directObject": "contracts",
+          "evidenceQuote": "Negotiate contracts with farmers",
+          "sourceTask": "Negotiate contracts with farmers for the production or purchase of farm products."
+        },
+        {
+          "claimId": "claim-9dab2c00b9d2cdf6dbd0",
+          "sourceTaskIndex": 5,
+          "directObject": "wind farm contracts",
+          "evidenceQuote": "negotiate, or approve wind farm contracts",
+          "sourceTask": "Review, negotiate, or approve wind farm contracts."
+        },
+        {
+          "claimId": "claim-4ed09ae8ed121464f2b0",
+          "sourceTaskIndex": 6,
+          "directObject": "contracts",
+          "evidenceQuote": "Negotiate contracts for services or materials",
+          "sourceTask": "Negotiate contracts for services or materials needed for environmental remediation."
+        },
+        {
+          "claimId": "claim-b07a770a08221cd40d2c",
+          "sourceTaskIndex": 7,
+          "directObject": "contracts",
+          "evidenceQuote": "Negotiate contracts with waste management or other firms",
+          "sourceTask": "Negotiate contracts with waste management or other firms."
+        },
+        {
+          "claimId": "claim-1f6533983d9b54986c87",
+          "sourceTaskIndex": 8,
+          "directObject": "contracts",
+          "evidenceQuote": "negotiate contracts, royalties, and payments",
+          "sourceTask": "Interview and hire writers and reporters or negotiate contracts, royalties, and payments for authors or freelancers."
+        },
+        {
+          "claimId": "claim-4869515deab2b03ca2c6",
+          "sourceTaskIndex": 9,
+          "directObject": "contracts",
+          "evidenceQuote": "Negotiate contracts for prearranged funeral services",
+          "sourceTask": "Negotiate contracts for prearranged funeral services."
+        },
+        {
+          "claimId": "claim-19b5f7139131aad03156",
+          "sourceTaskIndex": 10,
+          "directObject": "details of contracts",
+          "evidenceQuote": "Negotiate details of contracts and payments",
+          "sourceTask": "Negotiate details of contracts and payments."
+        },
+        {
+          "claimId": "claim-886eb78c31162c18523a",
+          "sourceTaskIndex": 12,
+          "directObject": "contracts",
+          "evidenceQuote": "negotiate contracts, and place orders",
+          "sourceTask": "Evaluate vendor products and performance, negotiate contracts, and place orders."
+        },
+        {
+          "claimId": "claim-21b7b8804c0c0b42a839",
+          "sourceTaskIndex": 13,
+          "directObject": "contracts",
+          "evidenceQuote": "negotiate contracts with actors",
+          "sourceTask": "Hold auditions for parts or negotiate contracts with actors determined suitable for specific roles."
+        },
+        {
+          "claimId": "claim-09006fc6ffa03af0527d",
+          "sourceTaskIndex": 14,
+          "directObject": "contracts",
+          "evidenceQuote": "Negotiate prices or contracts",
+          "sourceTask": "Negotiate prices or contracts for securities or commodities sales or purchases."
+        },
+        {
+          "claimId": "claim-25f4c916fd2b9d0a66bf",
+          "sourceTaskIndex": 15,
+          "directObject": "advertising and sales contracts",
+          "evidenceQuote": "negotiate advertising and sales contracts",
+          "sourceTask": "Prepare and negotiate advertising and sales contracts."
+        },
+        {
+          "claimId": "claim-a4211f20b301395e7d40",
+          "sourceTaskIndex": 16,
+          "directObject": "contracts",
+          "evidenceQuote": "Negotiate contracts or agreements",
+          "sourceTask": "Negotiate contracts or agreements."
+        },
+        {
+          "claimId": "claim-52117be10dd12d850abe",
+          "sourceTaskIndex": 17,
+          "directObject": "contracts",
+          "evidenceQuote": "Negotiate contracts for transportation, distribution, or logistics services",
+          "sourceTask": "Negotiate contracts for transportation, distribution, or logistics services."
+        },
+        {
+          "claimId": "claim-77175d6f5bc704b6fcd9",
+          "sourceTaskIndex": 18,
+          "directObject": "contracts",
+          "evidenceQuote": "Negotiate purchases or contracts",
+          "sourceTask": "Negotiate purchases or contracts."
+        },
+        {
+          "claimId": "claim-4e5c9deb3c32a8b67247",
+          "sourceTaskIndex": 19,
+          "directObject": "contracts",
+          "evidenceQuote": "Negotiate contracts for environmental remediation, green energy, or renewable resources",
+          "sourceTask": "Negotiate contracts for environmental remediation, green energy, or renewable resources."
+        },
+        {
+          "claimId": "claim-19daf4d18c5cb7a9ccc3",
+          "sourceTaskIndex": 20,
+          "directObject": "contracts",
+          "evidenceQuote": "Negotiate contracts with clients or service providers",
+          "sourceTask": "Negotiate contracts with clients or service providers."
+        },
+        {
+          "claimId": "claim-f977e69267c0c653610f",
+          "sourceTaskIndex": 21,
+          "directObject": "contracts",
+          "evidenceQuote": "Negotiate or approve contracts or agreements",
+          "sourceTask": "Negotiate or approve contracts or agreements with suppliers, distributors, federal or state agencies, or other organizational entities."
+        },
+        {
+          "claimId": "claim-579e28373fc1be4b4f82",
+          "sourceTaskIndex": 22,
+          "directObject": "contracts",
+          "evidenceQuote": "Negotiate contracts with vendors or distributors",
+          "sourceTask": "Negotiate contracts with vendors or distributors to manage product distribution, establishing distribution networks or developing distribution strategies."
+        }
+      ],
+      "ownerTitle": "Negotiate (Negociate.v.06)",
+      "allInheritedSynsets": [
+        {
+          "id": "negociate.v.06",
+          "definition": "discuss the terms of an arrangement",
+          "lemmas": [
+            "negociate",
+            "negotiate",
+            "talk terms"
+          ],
+          "examples": [
+            "They negotiated the sale of the house"
+          ]
+        }
+      ],
+      "inheritedSynsets": [
+        {
+          "id": "negociate.v.06",
+          "definition": "discuss the terms of an arrangement",
+          "lemmas": [
+            "negociate",
+            "negotiate",
+            "talk terms"
+          ],
+          "examples": [
+            "They negotiated the sale of the house"
+          ]
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "negociate.v.06",
+          "definition": "discuss the terms of an arrangement",
+          "lemmas": [
+            "negociate",
+            "negotiate",
+            "talk terms"
+          ],
+          "examples": [
+            "They negotiated the sale of the house"
+          ]
+        },
+        {
+          "id": "negotiate.v.02",
+          "definition": "succeed in passing through, around, or over",
+          "lemmas": [
+            "negociate",
+            "negotiate"
+          ],
+          "examples": [
+            "The hiker negociated the high mountain pass"
+          ]
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-764db242ddfd61578e3d",
+      "occurrenceId": "atomic-a54b49bd2d355cd32613",
+      "currentAtomicTitle": "Negotiate Contract",
+      "groupTitle": "Negotiate Price",
+      "canonicalDirectObject": "Price",
+      "groupStatus": "existing",
+      "actionPhrase": "negotiate",
+      "sourceClaims": [
+        {
+          "claimId": "claim-13654443421e097398dd",
+          "sourceTaskIndex": 11,
+          "directObject": "prices",
+          "evidenceQuote": "Negotiate with contractors on prices for new contracts or modifications to existing contracts",
+          "sourceTask": "Negotiate with contractors on prices for new contracts or modifications to existing contracts."
+        }
+      ],
+      "ownerTitle": "Negotiate (Negociate.v.06)",
+      "allInheritedSynsets": [
+        {
+          "id": "negociate.v.06",
+          "definition": "discuss the terms of an arrangement",
+          "lemmas": [
+            "negociate",
+            "negotiate",
+            "talk terms"
+          ],
+          "examples": [
+            "They negotiated the sale of the house"
+          ]
+        }
+      ],
+      "inheritedSynsets": [
+        {
+          "id": "negociate.v.06",
+          "definition": "discuss the terms of an arrangement",
+          "lemmas": [
+            "negociate",
+            "negotiate",
+            "talk terms"
+          ],
+          "examples": [
+            "They negotiated the sale of the house"
+          ]
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "negociate.v.06",
+          "definition": "discuss the terms of an arrangement",
+          "lemmas": [
+            "negociate",
+            "negotiate",
+            "talk terms"
+          ],
+          "examples": [
+            "They negotiated the sale of the house"
+          ]
+        },
+        {
+          "id": "negotiate.v.02",
+          "definition": "succeed in passing through, around, or over",
+          "lemmas": [
+            "negociate",
+            "negotiate"
+          ],
+          "examples": [
+            "The hiker negociated the high mountain pass"
+          ]
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-52b848ced60c3fef5edf",
+      "occurrenceId": "atomic-1aa2c1f7abf6cf574efd",
+      "currentAtomicTitle": "Batch Ticket",
+      "groupTitle": "Batch Packaging Ticket",
+      "canonicalDirectObject": "Packaging Ticket",
+      "groupStatus": "new",
+      "actionPhrase": "batch",
+      "sourceClaims": [
+        {
+          "claimId": "claim-817ed5e7e7645f606108",
+          "sourceTaskIndex": 1,
+          "directObject": "packaging tickets",
+          "evidenceQuote": "batch packaging tickets",
+          "sourceTask": "Inspect bundle packaging for conformance to regulations or customer requirements, and remove and batch packaging tickets."
+        }
+      ],
+      "ownerTitle": "Bundle (Batch.v.01, Bunch.v.02)",
+      "allInheritedSynsets": [
+        {
+          "id": "batch.v.01",
+          "definition": "batch together; assemble or process as a batch",
+          "lemmas": [
+            "batch"
+          ],
+          "examples": []
+        },
+        {
+          "id": "bunch.v.02",
+          "definition": "gather or cause to gather into a cluster",
+          "lemmas": [
+            "bunch",
+            "bunch up",
+            "bundle",
+            "clump",
+            "cluster"
+          ],
+          "examples": [
+            "She bunched her fingers into a fist"
+          ]
+        }
+      ],
+      "inheritedSynsets": [
+        {
+          "id": "batch.v.01",
+          "definition": "batch together; assemble or process as a batch",
+          "lemmas": [
+            "batch"
+          ],
+          "examples": []
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "batch.v.01",
+          "definition": "batch together; assemble or process as a batch",
+          "lemmas": [
+            "batch"
+          ],
+          "examples": []
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-9baa2b72a43a52ee1c53",
+      "occurrenceId": "atomic-2ab12fbc2f7fd9dfa849",
+      "currentAtomicTitle": "Use Staple",
+      "groupTitle": "Use Staple",
+      "canonicalDirectObject": "Staple",
+      "groupStatus": "current",
+      "actionPhrase": "use",
+      "sourceClaims": [
+        {
+          "claimId": "claim-87f9b490046ca084c47b",
+          "sourceTaskIndex": 1,
+          "directObject": "staples",
+          "evidenceQuote": "use staples",
+          "sourceTask": "Stretch carpet to align with walls and ensure a smooth surface, and press carpet in place over tack strips or use staples, tape, tacks or glue to hold carpet in place."
+        }
+      ],
+      "ownerTitle": "Apply (physical) (Put_on.v.07)",
+      "allInheritedSynsets": [
+        {
+          "id": "put_on.v.07",
+          "definition": "apply to a surface",
+          "lemmas": [
+            "apply",
+            "put on"
+          ],
+          "examples": [
+            "She applied paint to the back of the house",
+            "Put on make-up!"
+          ]
+        }
+      ],
+      "inheritedSynsets": [],
+      "candidateSynsets": [
+        {
+          "id": "use.v.01",
+          "definition": "put into service; make work or employ for a particular purpose or for its inherent or natural purpose",
+          "lemmas": [
+            "apply",
+            "employ",
+            "use",
+            "utilise",
+            "utilize"
+          ],
+          "examples": [
+            "use your head!",
+            "we only use Spanish at home",
+            "I can't use this tool",
+            "Apply a magnetic field here",
+            "This thinking was applied to many projects",
+            "How do you utilize this tool?",
+            "I apply this rule to get good results",
+            "use the plastic bags to store the food",
+            "He doesn't know how to use a computer"
+          ]
+        },
+        {
+          "id": "use.v.02",
+          "definition": "take or consume (regularly or habitually)",
+          "lemmas": [
+            "habituate",
+            "use"
+          ],
+          "examples": [
+            "She uses drugs rarely"
+          ]
+        },
+        {
+          "id": "use.v.03",
+          "definition": "use up, consume fully",
+          "lemmas": [
+            "expend",
+            "use"
+          ],
+          "examples": [
+            "The legislature expended its time on school questions"
+          ]
+        },
+        {
+          "id": "use.v.04",
+          "definition": "seek or achieve an end by using to one's advantage",
+          "lemmas": [
+            "use"
+          ],
+          "examples": [
+            "She uses her influential friends to get jobs",
+            "The president's wife used her good connections"
+          ]
+        },
+        {
+          "id": "practice.v.04",
+          "definition": "avail oneself to",
+          "lemmas": [
+            "apply",
+            "practice",
+            "use"
+          ],
+          "examples": [
+            "apply a principle",
+            "practice a religion",
+            "use care when going down the stairs",
+            "use your common sense",
+            "practice non-violent resistance"
+          ]
+        },
+        {
+          "id": "use.v.06",
+          "definition": "habitually do something (use only in the past tense)",
+          "lemmas": [
+            "use"
+          ],
+          "examples": [
+            "She used to call her mother every week but now she calls only occasionally",
+            "I used to get sick when I ate in that dining hall",
+            "They used to vacation in the Bahamas"
+          ]
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-60326fdde8d60050ca71",
+      "occurrenceId": "atomic-1aa7265cee80ea6c10a6",
+      "currentAtomicTitle": "Create Print (Synonyms: Produce Print)",
+      "groupTitle": "Create Print (Synonyms: Produce Print)",
+      "canonicalDirectObject": "Print",
+      "groupStatus": "current",
+      "actionPhrase": "create",
+      "sourceClaims": [
+        {
+          "claimId": "claim-d8fc039849c177b0ff71",
+          "sourceTaskIndex": 1,
+          "directObject": "prints",
+          "evidenceQuote": "Create prints",
+          "sourceTask": "Create prints according to customer specifications and laboratory protocols."
+        }
+      ],
+      "ownerTitle": "Create physical objects (Develop.v.01, Form.v.01, Make.v.03)",
+      "allInheritedSynsets": [
+        {
+          "id": "develop.v.01",
+          "definition": "make something new, such as a product or a mental or artistic creation",
+          "lemmas": [
+            "develop"
+          ],
+          "examples": [
+            "Her company developed a new kind of building material that withstands all kinds of weather",
+            "They developed a new technique"
+          ]
+        },
+        {
+          "id": "form.v.01",
+          "definition": "create (as an entity)",
+          "lemmas": [
+            "form",
+            "organise",
+            "organize"
+          ],
+          "examples": [
+            "social groups form everywhere",
+            "They formed a company"
+          ]
+        },
+        {
+          "id": "make.v.03",
+          "definition": "make or cause to be or to become",
+          "lemmas": [
+            "create",
+            "make"
+          ],
+          "examples": [
+            "make a mess in one's office",
+            "create a furor"
+          ]
+        }
+      ],
+      "inheritedSynsets": [
+        {
+          "id": "make.v.03",
+          "definition": "make or cause to be or to become",
+          "lemmas": [
+            "create",
+            "make"
+          ],
+          "examples": [
+            "make a mess in one's office",
+            "create a furor"
+          ]
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "make.v.03",
+          "definition": "make or cause to be or to become",
+          "lemmas": [
+            "create",
+            "make"
+          ],
+          "examples": [
+            "make a mess in one's office",
+            "create a furor"
+          ]
+        },
+        {
+          "id": "create.v.02",
+          "definition": "bring into existence",
+          "lemmas": [
+            "create"
+          ],
+          "examples": [
+            "The company was created 25 years ago",
+            "He created a new movement in painting"
+          ]
+        },
+        {
+          "id": "create.v.03",
+          "definition": "pursue a creative activity; be engaged in a creative activity",
+          "lemmas": [
+            "create"
+          ],
+          "examples": [
+            "Don't disturb him--he is creating"
+          ]
+        },
+        {
+          "id": "create.v.04",
+          "definition": "invest with a new title, office, or rank",
+          "lemmas": [
+            "create"
+          ],
+          "examples": [
+            "Create one a peer"
+          ]
+        },
+        {
+          "id": "create.v.05",
+          "definition": "create by artistic means",
+          "lemmas": [
+            "create",
+            "make"
+          ],
+          "examples": [
+            "create a poem",
+            "Schoenberg created twelve-tone music",
+            "Picasso created Cubism",
+            "Auden made verses"
+          ]
+        },
+        {
+          "id": "produce.v.02",
+          "definition": "create or manufacture a man-made product",
+          "lemmas": [
+            "create",
+            "make",
+            "produce"
+          ],
+          "examples": [
+            "We produce more cars than we can sell",
+            "The company has been making toys for two centuries"
+          ]
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-5e7ce932882ca57eb1a6",
+      "occurrenceId": "atomic-1aa7265cee80ea6c10a6",
+      "currentAtomicTitle": "Create Print (Synonyms: Produce Print)",
+      "groupTitle": "Create Timed Print",
+      "canonicalDirectObject": "Timed Print",
+      "groupStatus": "new",
+      "actionPhrase": "create",
+      "sourceClaims": [
+        {
+          "claimId": "claim-ecf0d7b3bfe2e870f829",
+          "sourceTaskIndex": 2,
+          "directObject": "timed prints",
+          "evidenceQuote": "Produce timed prints",
+          "sourceTask": "Produce timed prints with separate densities or color settings for each scene of a production."
+        }
+      ],
+      "ownerTitle": "Create physical objects (Develop.v.01, Form.v.01, Make.v.03)",
+      "allInheritedSynsets": [
+        {
+          "id": "develop.v.01",
+          "definition": "make something new, such as a product or a mental or artistic creation",
+          "lemmas": [
+            "develop"
+          ],
+          "examples": [
+            "Her company developed a new kind of building material that withstands all kinds of weather",
+            "They developed a new technique"
+          ]
+        },
+        {
+          "id": "form.v.01",
+          "definition": "create (as an entity)",
+          "lemmas": [
+            "form",
+            "organise",
+            "organize"
+          ],
+          "examples": [
+            "social groups form everywhere",
+            "They formed a company"
+          ]
+        },
+        {
+          "id": "make.v.03",
+          "definition": "make or cause to be or to become",
+          "lemmas": [
+            "create",
+            "make"
+          ],
+          "examples": [
+            "make a mess in one's office",
+            "create a furor"
+          ]
+        }
+      ],
+      "inheritedSynsets": [
+        {
+          "id": "make.v.03",
+          "definition": "make or cause to be or to become",
+          "lemmas": [
+            "create",
+            "make"
+          ],
+          "examples": [
+            "make a mess in one's office",
+            "create a furor"
+          ]
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "make.v.03",
+          "definition": "make or cause to be or to become",
+          "lemmas": [
+            "create",
+            "make"
+          ],
+          "examples": [
+            "make a mess in one's office",
+            "create a furor"
+          ]
+        },
+        {
+          "id": "create.v.02",
+          "definition": "bring into existence",
+          "lemmas": [
+            "create"
+          ],
+          "examples": [
+            "The company was created 25 years ago",
+            "He created a new movement in painting"
+          ]
+        },
+        {
+          "id": "create.v.03",
+          "definition": "pursue a creative activity; be engaged in a creative activity",
+          "lemmas": [
+            "create"
+          ],
+          "examples": [
+            "Don't disturb him--he is creating"
+          ]
+        },
+        {
+          "id": "create.v.04",
+          "definition": "invest with a new title, office, or rank",
+          "lemmas": [
+            "create"
+          ],
+          "examples": [
+            "Create one a peer"
+          ]
+        },
+        {
+          "id": "create.v.05",
+          "definition": "create by artistic means",
+          "lemmas": [
+            "create",
+            "make"
+          ],
+          "examples": [
+            "create a poem",
+            "Schoenberg created twelve-tone music",
+            "Picasso created Cubism",
+            "Auden made verses"
+          ]
+        },
+        {
+          "id": "produce.v.02",
+          "definition": "create or manufacture a man-made product",
+          "lemmas": [
+            "create",
+            "make",
+            "produce"
+          ],
+          "examples": [
+            "We produce more cars than we can sell",
+            "The company has been making toys for two centuries"
+          ]
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-06960a1a7e09e6d11870",
+      "occurrenceId": "atomic-4d2739c0803c967e2c1d",
+      "currentAtomicTitle": "Collect Specimen",
+      "groupTitle": "Collect Animal Specimen",
+      "canonicalDirectObject": "Animal Specimen",
+      "groupStatus": "new",
+      "actionPhrase": "collect",
+      "sourceClaims": [
+        {
+          "claimId": "claim-c861c17478e0a005e71b",
+          "sourceTaskIndex": 1,
+          "directObject": "animal specimens",
+          "evidenceQuote": "Collect and dissect animal specimens",
+          "sourceTask": "Collect and dissect animal specimens and examine specimens under microscope."
+        }
+      ],
+      "ownerTitle": "Collect (physical) (Roll_up.v.02)",
+      "allInheritedSynsets": [
+        {
+          "id": "roll_up.v.02",
+          "definition": "get or gather together",
+          "lemmas": [
+            "accumulate",
+            "amass",
+            "collect",
+            "compile",
+            "hoard",
+            "pile up",
+            "roll up"
+          ],
+          "examples": [
+            "I am accumulating evidence for the man's unfaithfulness to his wife",
+            "She is amassing a lot of data for her thesis",
+            "She rolled up a small fortune"
+          ]
+        }
+      ],
+      "inheritedSynsets": [
+        {
+          "id": "roll_up.v.02",
+          "definition": "get or gather together",
+          "lemmas": [
+            "accumulate",
+            "amass",
+            "collect",
+            "compile",
+            "hoard",
+            "pile up",
+            "roll up"
+          ],
+          "examples": [
+            "I am accumulating evidence for the man's unfaithfulness to his wife",
+            "She is amassing a lot of data for her thesis",
+            "She rolled up a small fortune"
+          ]
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "roll_up.v.02",
+          "definition": "get or gather together",
+          "lemmas": [
+            "accumulate",
+            "amass",
+            "collect",
+            "compile",
+            "hoard",
+            "pile up",
+            "roll up"
+          ],
+          "examples": [
+            "I am accumulating evidence for the man's unfaithfulness to his wife",
+            "She is amassing a lot of data for her thesis",
+            "She rolled up a small fortune"
+          ]
+        },
+        {
+          "id": "collect.v.02",
+          "definition": "call for and obtain payment of",
+          "lemmas": [
+            "collect",
+            "take in"
+          ],
+          "examples": [
+            "we collected over a million dollars in outstanding debts",
+            "he collected the rent"
+          ]
+        },
+        {
+          "id": "gather.v.01",
+          "definition": "assemble or get together",
+          "lemmas": [
+            "collect",
+            "garner",
+            "gather",
+            "pull together"
+          ],
+          "examples": [
+            "gather some stones",
+            "pull your thoughts together"
+          ]
+        },
+        {
+          "id": "collect.v.04",
+          "definition": "get or bring together",
+          "lemmas": [
+            "collect",
+            "pull in"
+          ],
+          "examples": [
+            "accumulate evidence"
+          ]
+        },
+        {
+          "id": "collect.v.05",
+          "definition": "gather or collect",
+          "lemmas": [
+            "call for",
+            "collect",
+            "gather up",
+            "pick up"
+          ],
+          "examples": [
+            "You can get the results on Monday",
+            "She picked up the children at the day care center",
+            "They pick up our trash twice a week"
+          ]
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-e3850f2c7ad17021dd2f",
+      "occurrenceId": "atomic-4d2739c0803c967e2c1d",
+      "currentAtomicTitle": "Collect Specimen",
+      "groupTitle": "Collect Specimen",
+      "canonicalDirectObject": "Specimen",
+      "groupStatus": "current",
+      "actionPhrase": "collect",
+      "sourceClaims": [
+        {
+          "claimId": "claim-9a1a63f00bf25f574feb",
+          "sourceTaskIndex": 2,
+          "directObject": "specimens",
+          "evidenceQuote": "Collect samples or specimens",
+          "sourceTask": "Collect samples or specimens for diagnostic testing."
+        },
+        {
+          "claimId": "claim-3bab7180b9e684122551",
+          "sourceTaskIndex": 3,
+          "directObject": "specimens",
+          "evidenceQuote": "Collect specimens",
+          "sourceTask": "Collect specimens for use in laboratory tests."
+        },
+        {
+          "claimId": "claim-919b2dd73e54a9704dd2",
+          "sourceTaskIndex": 4,
+          "directObject": "specimens",
+          "evidenceQuote": "Collect specimens from patients",
+          "sourceTask": "Collect specimens from patients, using standard medical procedures."
+        },
+        {
+          "claimId": "claim-d561c8dad7a4d7f80124",
+          "sourceTaskIndex": 5,
+          "directObject": "specimens",
+          "evidenceQuote": "Collect specimens for laboratory tests",
+          "sourceTask": "Collect specimens for laboratory tests."
+        },
+        {
+          "claimId": "claim-203d6d1602870d976a92",
+          "sourceTaskIndex": 6,
+          "directObject": "specimens",
+          "evidenceQuote": "Collect specimens, such as urine, feces, or sputum",
+          "sourceTask": "Collect specimens, such as urine, feces, or sputum."
+        },
+        {
+          "claimId": "claim-f9f5f3cbe4febc43b061",
+          "sourceTaskIndex": 7,
+          "directObject": "specimens",
+          "evidenceQuote": "Collect specimens at specific time intervals",
+          "sourceTask": "Collect specimens at specific time intervals for tests, such as those assessing therapeutic drug levels."
+        }
+      ],
+      "ownerTitle": "Collect (physical) (Roll_up.v.02)",
+      "allInheritedSynsets": [
+        {
+          "id": "roll_up.v.02",
+          "definition": "get or gather together",
+          "lemmas": [
+            "accumulate",
+            "amass",
+            "collect",
+            "compile",
+            "hoard",
+            "pile up",
+            "roll up"
+          ],
+          "examples": [
+            "I am accumulating evidence for the man's unfaithfulness to his wife",
+            "She is amassing a lot of data for her thesis",
+            "She rolled up a small fortune"
+          ]
+        }
+      ],
+      "inheritedSynsets": [
+        {
+          "id": "roll_up.v.02",
+          "definition": "get or gather together",
+          "lemmas": [
+            "accumulate",
+            "amass",
+            "collect",
+            "compile",
+            "hoard",
+            "pile up",
+            "roll up"
+          ],
+          "examples": [
+            "I am accumulating evidence for the man's unfaithfulness to his wife",
+            "She is amassing a lot of data for her thesis",
+            "She rolled up a small fortune"
+          ]
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "roll_up.v.02",
+          "definition": "get or gather together",
+          "lemmas": [
+            "accumulate",
+            "amass",
+            "collect",
+            "compile",
+            "hoard",
+            "pile up",
+            "roll up"
+          ],
+          "examples": [
+            "I am accumulating evidence for the man's unfaithfulness to his wife",
+            "She is amassing a lot of data for her thesis",
+            "She rolled up a small fortune"
+          ]
+        },
+        {
+          "id": "collect.v.02",
+          "definition": "call for and obtain payment of",
+          "lemmas": [
+            "collect",
+            "take in"
+          ],
+          "examples": [
+            "we collected over a million dollars in outstanding debts",
+            "he collected the rent"
+          ]
+        },
+        {
+          "id": "gather.v.01",
+          "definition": "assemble or get together",
+          "lemmas": [
+            "collect",
+            "garner",
+            "gather",
+            "pull together"
+          ],
+          "examples": [
+            "gather some stones",
+            "pull your thoughts together"
+          ]
+        },
+        {
+          "id": "collect.v.04",
+          "definition": "get or bring together",
+          "lemmas": [
+            "collect",
+            "pull in"
+          ],
+          "examples": [
+            "accumulate evidence"
+          ]
+        },
+        {
+          "id": "collect.v.05",
+          "definition": "gather or collect",
+          "lemmas": [
+            "call for",
+            "collect",
+            "gather up",
+            "pick up"
+          ],
+          "examples": [
+            "You can get the results on Monday",
+            "She picked up the children at the day care center",
+            "They pick up our trash twice a week"
+          ]
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-33c101c8ca5743180082",
+      "occurrenceId": "atomic-4d2739c0803c967e2c1d",
+      "currentAtomicTitle": "Collect Specimen",
+      "groupTitle": "Collect Laboratory Specimen",
+      "canonicalDirectObject": "Laboratory Specimen",
+      "groupStatus": "new",
+      "actionPhrase": "collect",
+      "sourceClaims": [
+        {
+          "claimId": "claim-f0ffd5937f156353f01c",
+          "sourceTaskIndex": 8,
+          "directObject": "laboratory specimens",
+          "evidenceQuote": "Collect blood, tissue, or other laboratory specimens",
+          "sourceTask": "Collect blood, tissue, or other laboratory specimens, log the specimens, and prepare them for testing."
+        },
+        {
+          "claimId": "claim-24c7f85acd20cf9e5686",
+          "sourceTaskIndex": 11,
+          "directObject": "laboratory specimens",
+          "evidenceQuote": "Collect laboratory specimens",
+          "sourceTask": "Collect laboratory specimens, such as blood, urine, or feces, for testing."
+        }
+      ],
+      "ownerTitle": "Collect (physical) (Roll_up.v.02)",
+      "allInheritedSynsets": [
+        {
+          "id": "roll_up.v.02",
+          "definition": "get or gather together",
+          "lemmas": [
+            "accumulate",
+            "amass",
+            "collect",
+            "compile",
+            "hoard",
+            "pile up",
+            "roll up"
+          ],
+          "examples": [
+            "I am accumulating evidence for the man's unfaithfulness to his wife",
+            "She is amassing a lot of data for her thesis",
+            "She rolled up a small fortune"
+          ]
+        }
+      ],
+      "inheritedSynsets": [
+        {
+          "id": "roll_up.v.02",
+          "definition": "get or gather together",
+          "lemmas": [
+            "accumulate",
+            "amass",
+            "collect",
+            "compile",
+            "hoard",
+            "pile up",
+            "roll up"
+          ],
+          "examples": [
+            "I am accumulating evidence for the man's unfaithfulness to his wife",
+            "She is amassing a lot of data for her thesis",
+            "She rolled up a small fortune"
+          ]
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "roll_up.v.02",
+          "definition": "get or gather together",
+          "lemmas": [
+            "accumulate",
+            "amass",
+            "collect",
+            "compile",
+            "hoard",
+            "pile up",
+            "roll up"
+          ],
+          "examples": [
+            "I am accumulating evidence for the man's unfaithfulness to his wife",
+            "She is amassing a lot of data for her thesis",
+            "She rolled up a small fortune"
+          ]
+        },
+        {
+          "id": "collect.v.02",
+          "definition": "call for and obtain payment of",
+          "lemmas": [
+            "collect",
+            "take in"
+          ],
+          "examples": [
+            "we collected over a million dollars in outstanding debts",
+            "he collected the rent"
+          ]
+        },
+        {
+          "id": "gather.v.01",
+          "definition": "assemble or get together",
+          "lemmas": [
+            "collect",
+            "garner",
+            "gather",
+            "pull together"
+          ],
+          "examples": [
+            "gather some stones",
+            "pull your thoughts together"
+          ]
+        },
+        {
+          "id": "collect.v.04",
+          "definition": "get or bring together",
+          "lemmas": [
+            "collect",
+            "pull in"
+          ],
+          "examples": [
+            "accumulate evidence"
+          ]
+        },
+        {
+          "id": "collect.v.05",
+          "definition": "gather or collect",
+          "lemmas": [
+            "call for",
+            "collect",
+            "gather up",
+            "pick up"
+          ],
+          "examples": [
+            "You can get the results on Monday",
+            "She picked up the children at the day care center",
+            "They pick up our trash twice a week"
+          ]
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-7dab76bf067625f4f099",
+      "occurrenceId": "atomic-4d2739c0803c967e2c1d",
+      "currentAtomicTitle": "Collect Specimen",
+      "groupTitle": "Collect Biological Specimen",
+      "canonicalDirectObject": "Biological Specimen",
+      "groupStatus": "new",
+      "actionPhrase": "collect",
+      "sourceClaims": [
+        {
+          "claimId": "claim-c62d942664adad2b9165",
+          "sourceTaskIndex": 9,
+          "directObject": "biological specimens",
+          "evidenceQuote": "Collect biological specimens from patients",
+          "sourceTask": "Collect biological specimens from patients."
+        },
+        {
+          "claimId": "claim-9417a1316df78f352c85",
+          "sourceTaskIndex": 10,
+          "directObject": "biological specimens",
+          "evidenceQuote": "Collect biological specimens",
+          "sourceTask": "Collect biological specimens."
+        }
+      ],
+      "ownerTitle": "Collect (physical) (Roll_up.v.02)",
+      "allInheritedSynsets": [
+        {
+          "id": "roll_up.v.02",
+          "definition": "get or gather together",
+          "lemmas": [
+            "accumulate",
+            "amass",
+            "collect",
+            "compile",
+            "hoard",
+            "pile up",
+            "roll up"
+          ],
+          "examples": [
+            "I am accumulating evidence for the man's unfaithfulness to his wife",
+            "She is amassing a lot of data for her thesis",
+            "She rolled up a small fortune"
+          ]
+        }
+      ],
+      "inheritedSynsets": [
+        {
+          "id": "roll_up.v.02",
+          "definition": "get or gather together",
+          "lemmas": [
+            "accumulate",
+            "amass",
+            "collect",
+            "compile",
+            "hoard",
+            "pile up",
+            "roll up"
+          ],
+          "examples": [
+            "I am accumulating evidence for the man's unfaithfulness to his wife",
+            "She is amassing a lot of data for her thesis",
+            "She rolled up a small fortune"
+          ]
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "roll_up.v.02",
+          "definition": "get or gather together",
+          "lemmas": [
+            "accumulate",
+            "amass",
+            "collect",
+            "compile",
+            "hoard",
+            "pile up",
+            "roll up"
+          ],
+          "examples": [
+            "I am accumulating evidence for the man's unfaithfulness to his wife",
+            "She is amassing a lot of data for her thesis",
+            "She rolled up a small fortune"
+          ]
+        },
+        {
+          "id": "collect.v.02",
+          "definition": "call for and obtain payment of",
+          "lemmas": [
+            "collect",
+            "take in"
+          ],
+          "examples": [
+            "we collected over a million dollars in outstanding debts",
+            "he collected the rent"
+          ]
+        },
+        {
+          "id": "gather.v.01",
+          "definition": "assemble or get together",
+          "lemmas": [
+            "collect",
+            "garner",
+            "gather",
+            "pull together"
+          ],
+          "examples": [
+            "gather some stones",
+            "pull your thoughts together"
+          ]
+        },
+        {
+          "id": "collect.v.04",
+          "definition": "get or bring together",
+          "lemmas": [
+            "collect",
+            "pull in"
+          ],
+          "examples": [
+            "accumulate evidence"
+          ]
+        },
+        {
+          "id": "collect.v.05",
+          "definition": "gather or collect",
+          "lemmas": [
+            "call for",
+            "collect",
+            "gather up",
+            "pick up"
+          ],
+          "examples": [
+            "You can get the results on Monday",
+            "She picked up the children at the day care center",
+            "They pick up our trash twice a week"
+          ]
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-07bb4a4ce96b6020612e",
+      "occurrenceId": "atomic-a0fd3579dc4aa2b564c3",
+      "currentAtomicTitle": "Acquire Supply (Synonyms: Obtain Supply)",
+      "groupTitle": "Acquire Library Supply",
+      "canonicalDirectObject": "Library Supply",
+      "groupStatus": "new",
+      "actionPhrase": "acquire",
+      "sourceClaims": [
+        {
+          "claimId": "claim-417389b89555ed7acb95",
+          "sourceTaskIndex": 1,
+          "directObject": "library supplies",
+          "evidenceQuote": "Acquire books, pamphlets, periodicals, audio-visual materials, and other library supplies",
+          "sourceTask": "Acquire books, pamphlets, periodicals, audio-visual materials, and other library supplies by checking prices, figuring costs, and preparing appropriate order forms and facilitating the ordering process by providing such information to others."
+        }
+      ],
+      "ownerTitle": "Get physical objects (Get.v.01, Obtain.v.01, Procure.v.01)",
+      "allInheritedSynsets": [
+        {
+          "id": "get.v.01",
+          "definition": "come into the possession of something concrete or abstract",
+          "lemmas": [
+            "acquire",
+            "get"
+          ],
+          "examples": [
+            "She got a lot of paintings from her uncle",
+            "They acquired a new pet",
+            "Get your results the next day",
+            "Get permission to take a few days off from work"
+          ]
+        },
+        {
+          "id": "obtain.v.01",
+          "definition": "come into possession of",
+          "lemmas": [
+            "obtain"
+          ],
+          "examples": [
+            "How did you obtain the visa?"
+          ]
+        },
+        {
+          "id": "procure.v.01",
+          "definition": "get by special effort",
+          "lemmas": [
+            "procure",
+            "secure"
+          ],
+          "examples": [
+            "He procured extra cigarettes even though they were rationed"
+          ]
+        }
+      ],
+      "inheritedSynsets": [
+        {
+          "id": "get.v.01",
+          "definition": "come into the possession of something concrete or abstract",
+          "lemmas": [
+            "acquire",
+            "get"
+          ],
+          "examples": [
+            "She got a lot of paintings from her uncle",
+            "They acquired a new pet",
+            "Get your results the next day",
+            "Get permission to take a few days off from work"
+          ]
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "get.v.01",
+          "definition": "come into the possession of something concrete or abstract",
+          "lemmas": [
+            "acquire",
+            "get"
+          ],
+          "examples": [
+            "She got a lot of paintings from her uncle",
+            "They acquired a new pet",
+            "Get your results the next day",
+            "Get permission to take a few days off from work"
+          ]
+        },
+        {
+          "id": "assume.v.03",
+          "definition": "take on a certain form, attribute, or aspect",
+          "lemmas": [
+            "acquire",
+            "adopt",
+            "assume",
+            "take",
+            "take on"
+          ],
+          "examples": [
+            "His voice took on a sad tone",
+            "The story took a new turn",
+            "he adopted an air of superiority",
+            "She assumed strange manners",
+            "The gods assume human or animal form in these fables"
+          ]
+        },
+        {
+          "id": "grow.v.08",
+          "definition": "come to have or undergo a change of (physical features and attributes)",
+          "lemmas": [
+            "acquire",
+            "develop",
+            "get",
+            "grow",
+            "produce"
+          ],
+          "examples": [
+            "He grew a beard",
+            "The patient developed abdominal pains",
+            "I got funny spots all over my body",
+            "Well-developed breasts"
+          ]
+        },
+        {
+          "id": "acquire.v.04",
+          "definition": "locate (a moving entity) by means of a tracking system such as radar",
+          "lemmas": [
+            "acquire"
+          ],
+          "examples": []
+        },
+        {
+          "id": "acquire.v.05",
+          "definition": "win something through one's efforts",
+          "lemmas": [
+            "acquire",
+            "gain",
+            "win"
+          ],
+          "examples": [
+            "I acquired a passing knowledge of Chinese",
+            "Gain an understanding of international finance"
+          ]
+        },
+        {
+          "id": "learn.v.01",
+          "definition": "gain knowledge or skills",
+          "lemmas": [
+            "acquire",
+            "larn",
+            "learn"
+          ],
+          "examples": [
+            "She learned dancing from her sister",
+            "I learned Sanskrit",
+            "Children acquire language at an amazing rate"
+          ]
+        },
+        {
+          "id": "develop.v.03",
+          "definition": "gain through experience",
+          "lemmas": [
+            "acquire",
+            "develop",
+            "evolve"
+          ],
+          "examples": [
+            "I acquired a strong aversion to television",
+            "Children must develop a sense of right and wrong",
+            "Dave developed leadership qualities in his new position",
+            "develop a passion for painting"
+          ]
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-0694b18f9f0b5a6b72c5",
+      "occurrenceId": "atomic-a0fd3579dc4aa2b564c3",
+      "currentAtomicTitle": "Acquire Supply (Synonyms: Obtain Supply)",
+      "groupTitle": "Acquire Supply (Synonyms: Obtain Supply)",
+      "canonicalDirectObject": "Supply",
+      "groupStatus": "current",
+      "actionPhrase": "acquire",
+      "sourceClaims": [
+        {
+          "claimId": "claim-da7ccf7b0ccbdb7e0584",
+          "sourceTaskIndex": 2,
+          "directObject": "supplies",
+          "evidenceQuote": "Acquire, distribute and store supplies",
+          "sourceTask": "Acquire, distribute and store supplies."
+        },
+        {
+          "claimId": "claim-97088ede33836da67a05",
+          "sourceTaskIndex": 3,
+          "directObject": "supplies",
+          "evidenceQuote": "Acquire, distribute and store supplies",
+          "sourceTask": "Acquire, distribute and store supplies."
+        },
+        {
+          "claimId": "claim-29a6f4572fe89d47aeb6",
+          "sourceTaskIndex": 4,
+          "directObject": "supplies",
+          "evidenceQuote": "Acquire supplies",
+          "sourceTask": "Acquire supplies or equipment."
+        },
+        {
+          "claimId": "claim-fd782343b62257e209dd",
+          "sourceTaskIndex": 6,
+          "directObject": "supplies",
+          "evidenceQuote": "obtain materials and supplies",
+          "sourceTask": "Select and obtain materials and supplies, such as textbooks."
+        },
+        {
+          "claimId": "claim-c5789ca8bada31660ba4",
+          "sourceTaskIndex": 7,
+          "directObject": "supplies",
+          "evidenceQuote": "obtain materials and supplies",
+          "sourceTask": "Select and obtain materials and supplies, such as textbooks."
+        },
+        {
+          "claimId": "claim-747767d58ae64bb75f0f",
+          "sourceTaskIndex": 8,
+          "directObject": "supplies",
+          "evidenceQuote": "obtain materials and supplies",
+          "sourceTask": "Select and obtain materials and supplies, such as textbooks."
+        },
+        {
+          "claimId": "claim-8e2d9f88c73af3a0c6eb",
+          "sourceTaskIndex": 9,
+          "directObject": "supplies",
+          "evidenceQuote": "obtain materials and supplies",
+          "sourceTask": "Select and obtain materials and supplies, such as textbooks."
+        },
+        {
+          "claimId": "claim-45ff0286ebfb8ae9ac1b",
+          "sourceTaskIndex": 10,
+          "directObject": "supplies",
+          "evidenceQuote": "obtain materials and supplies",
+          "sourceTask": "Select and obtain materials and supplies, such as textbooks."
+        },
+        {
+          "claimId": "claim-3483e28e95c26fde03e8",
+          "sourceTaskIndex": 11,
+          "directObject": "supplies",
+          "evidenceQuote": "obtain materials and supplies",
+          "sourceTask": "Select and obtain materials and supplies, such as textbooks."
+        },
+        {
+          "claimId": "claim-991d8f0871818858dbc3",
+          "sourceTaskIndex": 12,
+          "directObject": "supplies",
+          "evidenceQuote": "obtain materials and supplies",
+          "sourceTask": "Select and obtain materials and supplies, such as textbooks."
+        },
+        {
+          "claimId": "claim-b64d35ffb3b171978d1d",
+          "sourceTaskIndex": 13,
+          "directObject": "supplies",
+          "evidenceQuote": "obtain materials and supplies",
+          "sourceTask": "Select and obtain materials and supplies, such as textbooks."
+        },
+        {
+          "claimId": "claim-1bb839b7b0ca84aadad3",
+          "sourceTaskIndex": 14,
+          "directObject": "supplies",
+          "evidenceQuote": "obtain materials and supplies",
+          "sourceTask": "Select and obtain materials and supplies, such as textbooks."
+        },
+        {
+          "claimId": "claim-6409d959b666a0f86e31",
+          "sourceTaskIndex": 15,
+          "directObject": "supplies",
+          "evidenceQuote": "obtain materials and supplies",
+          "sourceTask": "Select and obtain materials and supplies, such as textbooks."
+        },
+        {
+          "claimId": "claim-dc7a5503556c242c24eb",
+          "sourceTaskIndex": 16,
+          "directObject": "supplies",
+          "evidenceQuote": "obtain materials and supplies",
+          "sourceTask": "Select and obtain materials and supplies, such as textbooks."
+        },
+        {
+          "claimId": "claim-66f0f134071e2ccde9ed",
+          "sourceTaskIndex": 17,
+          "directObject": "supplies",
+          "evidenceQuote": "obtain materials and supplies",
+          "sourceTask": "Select and obtain materials and supplies, such as textbooks."
+        },
+        {
+          "claimId": "claim-17dcf5fef347f094c1b4",
+          "sourceTaskIndex": 18,
+          "directObject": "supplies",
+          "evidenceQuote": "obtain materials and supplies",
+          "sourceTask": "Select and obtain materials and supplies, such as textbooks."
+        },
+        {
+          "claimId": "claim-037a7a4c74b6fdca8699",
+          "sourceTaskIndex": 19,
+          "directObject": "supplies",
+          "evidenceQuote": "obtain materials and supplies",
+          "sourceTask": "Select and obtain materials and supplies, such as textbooks."
+        },
+        {
+          "claimId": "claim-c7e0ef1b8ea370a4313f",
+          "sourceTaskIndex": 20,
+          "directObject": "supplies",
+          "evidenceQuote": "obtain materials and supplies",
+          "sourceTask": "Select and obtain materials and supplies, such as textbooks."
+        },
+        {
+          "claimId": "claim-352db532ee542982d1fc",
+          "sourceTaskIndex": 21,
+          "directObject": "supplies",
+          "evidenceQuote": "obtain materials and supplies",
+          "sourceTask": "Select and obtain materials and supplies, such as textbooks."
+        },
+        {
+          "claimId": "claim-aec72b007dcc2d37defb",
+          "sourceTaskIndex": 22,
+          "directObject": "supplies",
+          "evidenceQuote": "obtain materials and supplies",
+          "sourceTask": "Select and obtain materials and supplies, such as textbooks."
+        },
+        {
+          "claimId": "claim-3226e54154b8c9852de8",
+          "sourceTaskIndex": 23,
+          "directObject": "supplies",
+          "evidenceQuote": "obtain materials and supplies",
+          "sourceTask": "Select and obtain materials and supplies, such as textbooks."
+        },
+        {
+          "claimId": "claim-f20f428806a5528ae8c1",
+          "sourceTaskIndex": 24,
+          "directObject": "supplies",
+          "evidenceQuote": "obtain materials and supplies",
+          "sourceTask": "Select and obtain materials and supplies, such as textbooks and laboratory equipment."
+        },
+        {
+          "claimId": "claim-eebb213e32c1c99e4f83",
+          "sourceTaskIndex": 25,
+          "directObject": "supplies",
+          "evidenceQuote": "obtain materials and supplies",
+          "sourceTask": "Select and obtain materials and supplies, such as textbooks and laboratory equipment."
+        },
+        {
+          "claimId": "claim-046c44479cc3a7e51569",
+          "sourceTaskIndex": 26,
+          "directObject": "supplies",
+          "evidenceQuote": "obtain materials and supplies",
+          "sourceTask": "Select and obtain materials and supplies, such as textbooks and laboratory equipment."
+        },
+        {
+          "claimId": "claim-134c2a1ed6a1d59aed60",
+          "sourceTaskIndex": 27,
+          "directObject": "supplies",
+          "evidenceQuote": "obtain materials and supplies",
+          "sourceTask": "Select and obtain materials and supplies, such as textbooks and laboratory equipment."
+        },
+        {
+          "claimId": "claim-9cdfa92e327a1f5401cf",
+          "sourceTaskIndex": 28,
+          "directObject": "supplies",
+          "evidenceQuote": "obtain materials and supplies",
+          "sourceTask": "Select and obtain materials and supplies, such as textbooks and laboratory equipment."
+        },
+        {
+          "claimId": "claim-4e200fce7e192a067b4d",
+          "sourceTaskIndex": 29,
+          "directObject": "supplies",
+          "evidenceQuote": "obtain materials and supplies",
+          "sourceTask": "Select and obtain materials and supplies, such as textbooks and laboratory equipment."
+        },
+        {
+          "claimId": "claim-b111d1cbc3b43b6364ee",
+          "sourceTaskIndex": 30,
+          "directObject": "supplies",
+          "evidenceQuote": "obtain materials and supplies",
+          "sourceTask": "Select and obtain materials and supplies, such as textbooks and laboratory equipment."
+        },
+        {
+          "claimId": "claim-ef7a91909d157df85897",
+          "sourceTaskIndex": 31,
+          "directObject": "supplies",
+          "evidenceQuote": "obtain materials and supplies",
+          "sourceTask": "Select and obtain materials and supplies, such as textbooks and laboratory equipment."
+        },
+        {
+          "claimId": "claim-3d0204329a466785eb01",
+          "sourceTaskIndex": 32,
+          "directObject": "supplies",
+          "evidenceQuote": "obtain materials and supplies",
+          "sourceTask": "Select and obtain materials and supplies, such as textbooks and laboratory equipment."
+        },
+        {
+          "claimId": "claim-ffede8b8c9875a2580bd",
+          "sourceTaskIndex": 33,
+          "directObject": "supplies",
+          "evidenceQuote": "obtain materials and supplies",
+          "sourceTask": "Select and obtain materials and supplies, such as textbooks and laboratory equipment."
+        },
+        {
+          "claimId": "claim-60663ff6086943ef5dfd",
+          "sourceTaskIndex": 34,
+          "directObject": "supplies",
+          "evidenceQuote": "obtain materials and supplies",
+          "sourceTask": "Select and obtain materials and supplies, such as textbooks and laboratory equipment."
+        },
+        {
+          "claimId": "claim-533e743a08cde56f60a9",
+          "sourceTaskIndex": 35,
+          "directObject": "supplies",
+          "evidenceQuote": "obtain materials and supplies",
+          "sourceTask": "Select and obtain materials and supplies, such as textbooks and laboratory equipment."
+        },
+        {
+          "claimId": "claim-77ba5a6b2cc4cb3b9de6",
+          "sourceTaskIndex": 36,
+          "directObject": "supplies",
+          "evidenceQuote": "obtain materials and supplies",
+          "sourceTask": "Select and obtain materials and supplies, such as textbooks and laboratory equipment."
+        },
+        {
+          "claimId": "claim-a6ba16d03c919de2fb81",
+          "sourceTaskIndex": 37,
+          "directObject": "supplies",
+          "evidenceQuote": "obtain materials and supplies",
+          "sourceTask": "Select and obtain materials and supplies, such as textbooks or laboratory equipment."
+        },
+        {
+          "claimId": "claim-db0f37a70add414f16f5",
+          "sourceTaskIndex": 38,
+          "directObject": "supplies",
+          "evidenceQuote": "obtain materials and supplies",
+          "sourceTask": "Select and obtain materials and supplies, such as textbooks and performance pieces."
+        }
+      ],
+      "ownerTitle": "Get physical objects (Get.v.01, Obtain.v.01, Procure.v.01)",
+      "allInheritedSynsets": [
+        {
+          "id": "get.v.01",
+          "definition": "come into the possession of something concrete or abstract",
+          "lemmas": [
+            "acquire",
+            "get"
+          ],
+          "examples": [
+            "She got a lot of paintings from her uncle",
+            "They acquired a new pet",
+            "Get your results the next day",
+            "Get permission to take a few days off from work"
+          ]
+        },
+        {
+          "id": "obtain.v.01",
+          "definition": "come into possession of",
+          "lemmas": [
+            "obtain"
+          ],
+          "examples": [
+            "How did you obtain the visa?"
+          ]
+        },
+        {
+          "id": "procure.v.01",
+          "definition": "get by special effort",
+          "lemmas": [
+            "procure",
+            "secure"
+          ],
+          "examples": [
+            "He procured extra cigarettes even though they were rationed"
+          ]
+        }
+      ],
+      "inheritedSynsets": [
+        {
+          "id": "get.v.01",
+          "definition": "come into the possession of something concrete or abstract",
+          "lemmas": [
+            "acquire",
+            "get"
+          ],
+          "examples": [
+            "She got a lot of paintings from her uncle",
+            "They acquired a new pet",
+            "Get your results the next day",
+            "Get permission to take a few days off from work"
+          ]
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "get.v.01",
+          "definition": "come into the possession of something concrete or abstract",
+          "lemmas": [
+            "acquire",
+            "get"
+          ],
+          "examples": [
+            "She got a lot of paintings from her uncle",
+            "They acquired a new pet",
+            "Get your results the next day",
+            "Get permission to take a few days off from work"
+          ]
+        },
+        {
+          "id": "assume.v.03",
+          "definition": "take on a certain form, attribute, or aspect",
+          "lemmas": [
+            "acquire",
+            "adopt",
+            "assume",
+            "take",
+            "take on"
+          ],
+          "examples": [
+            "His voice took on a sad tone",
+            "The story took a new turn",
+            "he adopted an air of superiority",
+            "She assumed strange manners",
+            "The gods assume human or animal form in these fables"
+          ]
+        },
+        {
+          "id": "grow.v.08",
+          "definition": "come to have or undergo a change of (physical features and attributes)",
+          "lemmas": [
+            "acquire",
+            "develop",
+            "get",
+            "grow",
+            "produce"
+          ],
+          "examples": [
+            "He grew a beard",
+            "The patient developed abdominal pains",
+            "I got funny spots all over my body",
+            "Well-developed breasts"
+          ]
+        },
+        {
+          "id": "acquire.v.04",
+          "definition": "locate (a moving entity) by means of a tracking system such as radar",
+          "lemmas": [
+            "acquire"
+          ],
+          "examples": []
+        },
+        {
+          "id": "acquire.v.05",
+          "definition": "win something through one's efforts",
+          "lemmas": [
+            "acquire",
+            "gain",
+            "win"
+          ],
+          "examples": [
+            "I acquired a passing knowledge of Chinese",
+            "Gain an understanding of international finance"
+          ]
+        },
+        {
+          "id": "learn.v.01",
+          "definition": "gain knowledge or skills",
+          "lemmas": [
+            "acquire",
+            "larn",
+            "learn"
+          ],
+          "examples": [
+            "She learned dancing from her sister",
+            "I learned Sanskrit",
+            "Children acquire language at an amazing rate"
+          ]
+        },
+        {
+          "id": "develop.v.03",
+          "definition": "gain through experience",
+          "lemmas": [
+            "acquire",
+            "develop",
+            "evolve"
+          ],
+          "examples": [
+            "I acquired a strong aversion to television",
+            "Children must develop a sense of right and wrong",
+            "Dave developed leadership qualities in his new position",
+            "develop a passion for painting"
+          ]
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-18d0b7e1d7c235e11d39",
+      "occurrenceId": "atomic-a0fd3579dc4aa2b564c3",
+      "currentAtomicTitle": "Acquire Supply (Synonyms: Obtain Supply)",
+      "groupTitle": "Acquire Household Supply",
+      "canonicalDirectObject": "Household Supply",
+      "groupStatus": "new",
+      "actionPhrase": "acquire",
+      "sourceClaims": [
+        {
+          "claimId": "claim-11c1b20b881d76ffa2a6",
+          "sourceTaskIndex": 5,
+          "directObject": "household supplies",
+          "evidenceQuote": "obtaining household supplies",
+          "sourceTask": "Perform a variety of duties as requested by client, such as obtaining household supplies or running errands."
+        }
+      ],
+      "ownerTitle": "Get physical objects (Get.v.01, Obtain.v.01, Procure.v.01)",
+      "allInheritedSynsets": [
+        {
+          "id": "get.v.01",
+          "definition": "come into the possession of something concrete or abstract",
+          "lemmas": [
+            "acquire",
+            "get"
+          ],
+          "examples": [
+            "She got a lot of paintings from her uncle",
+            "They acquired a new pet",
+            "Get your results the next day",
+            "Get permission to take a few days off from work"
+          ]
+        },
+        {
+          "id": "obtain.v.01",
+          "definition": "come into possession of",
+          "lemmas": [
+            "obtain"
+          ],
+          "examples": [
+            "How did you obtain the visa?"
+          ]
+        },
+        {
+          "id": "procure.v.01",
+          "definition": "get by special effort",
+          "lemmas": [
+            "procure",
+            "secure"
+          ],
+          "examples": [
+            "He procured extra cigarettes even though they were rationed"
+          ]
+        }
+      ],
+      "inheritedSynsets": [
+        {
+          "id": "get.v.01",
+          "definition": "come into the possession of something concrete or abstract",
+          "lemmas": [
+            "acquire",
+            "get"
+          ],
+          "examples": [
+            "She got a lot of paintings from her uncle",
+            "They acquired a new pet",
+            "Get your results the next day",
+            "Get permission to take a few days off from work"
+          ]
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "get.v.01",
+          "definition": "come into the possession of something concrete or abstract",
+          "lemmas": [
+            "acquire",
+            "get"
+          ],
+          "examples": [
+            "She got a lot of paintings from her uncle",
+            "They acquired a new pet",
+            "Get your results the next day",
+            "Get permission to take a few days off from work"
+          ]
+        },
+        {
+          "id": "assume.v.03",
+          "definition": "take on a certain form, attribute, or aspect",
+          "lemmas": [
+            "acquire",
+            "adopt",
+            "assume",
+            "take",
+            "take on"
+          ],
+          "examples": [
+            "His voice took on a sad tone",
+            "The story took a new turn",
+            "he adopted an air of superiority",
+            "She assumed strange manners",
+            "The gods assume human or animal form in these fables"
+          ]
+        },
+        {
+          "id": "grow.v.08",
+          "definition": "come to have or undergo a change of (physical features and attributes)",
+          "lemmas": [
+            "acquire",
+            "develop",
+            "get",
+            "grow",
+            "produce"
+          ],
+          "examples": [
+            "He grew a beard",
+            "The patient developed abdominal pains",
+            "I got funny spots all over my body",
+            "Well-developed breasts"
+          ]
+        },
+        {
+          "id": "acquire.v.04",
+          "definition": "locate (a moving entity) by means of a tracking system such as radar",
+          "lemmas": [
+            "acquire"
+          ],
+          "examples": []
+        },
+        {
+          "id": "acquire.v.05",
+          "definition": "win something through one's efforts",
+          "lemmas": [
+            "acquire",
+            "gain",
+            "win"
+          ],
+          "examples": [
+            "I acquired a passing knowledge of Chinese",
+            "Gain an understanding of international finance"
+          ]
+        },
+        {
+          "id": "learn.v.01",
+          "definition": "gain knowledge or skills",
+          "lemmas": [
+            "acquire",
+            "larn",
+            "learn"
+          ],
+          "examples": [
+            "She learned dancing from her sister",
+            "I learned Sanskrit",
+            "Children acquire language at an amazing rate"
+          ]
+        },
+        {
+          "id": "develop.v.03",
+          "definition": "gain through experience",
+          "lemmas": [
+            "acquire",
+            "develop",
+            "evolve"
+          ],
+          "examples": [
+            "I acquired a strong aversion to television",
+            "Children must develop a sense of right and wrong",
+            "Dave developed leadership qualities in his new position",
+            "develop a passion for painting"
+          ]
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-e55b9c0d3ad17725acb1",
+      "occurrenceId": "atomic-7e2902dd1801393141f9",
+      "currentAtomicTitle": "Patrol Car",
+      "groupTitle": "Patrol Railroad Car",
+      "canonicalDirectObject": "Railroad Car",
+      "groupStatus": "new",
+      "actionPhrase": "patrol",
+      "sourceClaims": [
+        {
+          "claimId": "claim-588198354833704146e2",
+          "sourceTaskIndex": 1,
+          "directObject": "cars",
+          "evidenceQuote": "Patrol railroad yards, cars, stations, or other facilities",
+          "sourceTask": "Patrol railroad yards, cars, stations, or other facilities to protect company property or shipments and to maintain order."
+        }
+      ],
+      "ownerTitle": "Check (Check.v.01, guard.v.01, patrol.v.01, Stand.v.01, Stand_Guard.v.01, watch.v.02)",
+      "allInheritedSynsets": [
+        {
+          "id": "check.v.01",
+          "definition": "examine so as to determine accuracy, quality, or condition",
+          "lemmas": [
+            "check",
+            "check into",
+            "check out",
+            "check over",
+            "check up on",
+            "go over",
+            "look into",
+            "suss out"
+          ],
+          "examples": [
+            "check the brakes",
+            "Check out the engine"
+          ]
+        },
+        {
+          "id": "guard.v.01",
+          "definition": "to keep watch over",
+          "lemmas": [
+            "guard"
+          ],
+          "examples": [
+            "there would be men guarding the horses"
+          ]
+        },
+        {
+          "id": "patrol.v.01",
+          "definition": "maintain the security of by carrying out a patrol",
+          "lemmas": [
+            "patrol",
+            "police"
+          ],
+          "examples": []
+        },
+        {
+          "id": "stand.v.01",
+          "definition": "be standing; be upright",
+          "lemmas": [
+            "stand",
+            "stand up"
+          ],
+          "examples": [
+            "We had to stand for the entire performance!"
+          ]
+        },
+        {
+          "id": "stand_guard.v.01",
+          "definition": "watch over so as to protect",
+          "lemmas": [
+            "keep guard",
+            "stand guard",
+            "stand sentinel",
+            "stand watch"
+          ],
+          "examples": [
+            "We must stand sentinel to protect ourselves",
+            "The jewels over which they kept guard were stolen"
+          ]
+        },
+        {
+          "id": "watch.v.02",
+          "definition": "follow with the eyes or the mind",
+          "lemmas": [
+            "follow",
+            "keep an eye on",
+            "observe",
+            "watch",
+            "watch over"
+          ],
+          "examples": [
+            "Keep an eye on the baby, please!",
+            "The world is watching Sarajevo",
+            "She followed the men with the binoculars"
+          ]
+        }
+      ],
+      "inheritedSynsets": [
+        {
+          "id": "patrol.v.01",
+          "definition": "maintain the security of by carrying out a patrol",
+          "lemmas": [
+            "patrol",
+            "police"
+          ],
+          "examples": []
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "patrol.v.01",
+          "definition": "maintain the security of by carrying out a patrol",
+          "lemmas": [
+            "patrol",
+            "police"
+          ],
+          "examples": []
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-369a7186eab94ec1c5ad",
+      "occurrenceId": "atomic-c98fde62701a8ea52c02",
+      "currentAtomicTitle": "Teach Astrophysics",
+      "groupTitle": "Teach Astrophysics",
+      "canonicalDirectObject": "Astrophysics",
+      "groupStatus": "current",
+      "actionPhrase": "teach",
+      "sourceClaims": [
+        {
+          "claimId": "claim-c5cc617a8c5f321295af",
+          "sourceTaskIndex": 1,
+          "directObject": "astrophysics",
+          "evidenceQuote": "Teach astronomy or astrophysics",
+          "sourceTask": "Teach astronomy or astrophysics."
+        }
+      ],
+      "ownerTitle": "Teach (Educate.v.01, Prepare.v.05, Teach.v.01)",
+      "allInheritedSynsets": [
+        {
+          "id": "educate.v.01",
+          "definition": "give an education to",
+          "lemmas": [
+            "educate"
+          ],
+          "examples": [
+            "We must educate our youngsters better"
+          ]
+        },
+        {
+          "id": "prepare.v.05",
+          "definition": "educate for a future role or function",
+          "lemmas": [
+            "groom",
+            "prepare",
+            "train"
+          ],
+          "examples": [
+            "He is grooming his son to become his successor",
+            "The prince was prepared to become King one day",
+            "They trained him to be a warrior"
+          ]
+        },
+        {
+          "id": "teach.v.01",
+          "definition": "impart skills or knowledge to",
+          "lemmas": [
+            "instruct",
+            "learn",
+            "teach"
+          ],
+          "examples": [
+            "I taught them French",
+            "He instructed me in building a boat"
+          ]
+        }
+      ],
+      "inheritedSynsets": [
+        {
+          "id": "teach.v.01",
+          "definition": "impart skills or knowledge to",
+          "lemmas": [
+            "instruct",
+            "learn",
+            "teach"
+          ],
+          "examples": [
+            "I taught them French",
+            "He instructed me in building a boat"
+          ]
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "teach.v.01",
+          "definition": "impart skills or knowledge to",
+          "lemmas": [
+            "instruct",
+            "learn",
+            "teach"
+          ],
+          "examples": [
+            "I taught them French",
+            "He instructed me in building a boat"
+          ]
+        },
+        {
+          "id": "teach.v.02",
+          "definition": "accustom gradually to some action or attitude",
+          "lemmas": [
+            "teach"
+          ],
+          "examples": [
+            "The child is taught to obey her parents"
+          ]
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-c4415a790d65ad1cbb99",
+      "occurrenceId": "atomic-1099bfaffac32dca10e4",
+      "currentAtomicTitle": "Stock Area",
+      "groupTitle": "Stock Serving Area",
+      "canonicalDirectObject": "Serving Area",
+      "groupStatus": "new",
+      "actionPhrase": "stock",
+      "sourceClaims": [
+        {
+          "claimId": "claim-5e4971c9279d59925819",
+          "sourceTaskIndex": 1,
+          "directObject": "serving areas",
+          "evidenceQuote": "Stock cabinets or serving areas with condiments",
+          "sourceTask": "Stock cabinets or serving areas with condiments and refill condiment containers."
+        }
+      ],
+      "ownerTitle": "Stock (Stock.v.05, Stock.v.06)",
+      "allInheritedSynsets": [
+        {
+          "id": "stock.v.05",
+          "definition": "amass so as to keep for future use or sale or for a particular occasion or use",
+          "lemmas": [
+            "buy in",
+            "stock",
+            "stock up"
+          ],
+          "examples": [
+            "let's stock coffee as long as prices are low"
+          ]
+        },
+        {
+          "id": "stock.v.06",
+          "definition": "provide or furnish with a stock of something",
+          "lemmas": [
+            "stock"
+          ],
+          "examples": [
+            "stock the larder with meat"
+          ]
+        }
+      ],
+      "inheritedSynsets": [
+        {
+          "id": "stock.v.05",
+          "definition": "amass so as to keep for future use or sale or for a particular occasion or use",
+          "lemmas": [
+            "buy in",
+            "stock",
+            "stock up"
+          ],
+          "examples": [
+            "let's stock coffee as long as prices are low"
+          ]
+        },
+        {
+          "id": "stock.v.06",
+          "definition": "provide or furnish with a stock of something",
+          "lemmas": [
+            "stock"
+          ],
+          "examples": [
+            "stock the larder with meat"
+          ]
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "stock.v.01",
+          "definition": "have on hand",
+          "lemmas": [
+            "carry",
+            "stock",
+            "stockpile"
+          ],
+          "examples": [
+            "Do you carry kerosene heaters?"
+          ]
+        },
+        {
+          "id": "stock.v.02",
+          "definition": "equip with a stock",
+          "lemmas": [
+            "stock"
+          ],
+          "examples": [
+            "stock a rifle"
+          ]
+        },
+        {
+          "id": "stock.v.03",
+          "definition": "supply with fish",
+          "lemmas": [
+            "stock"
+          ],
+          "examples": [
+            "stock a lake"
+          ]
+        },
+        {
+          "id": "stock.v.04",
+          "definition": "supply with livestock",
+          "lemmas": [
+            "stock"
+          ],
+          "examples": [
+            "stock a farm"
+          ]
+        },
+        {
+          "id": "stock.v.05",
+          "definition": "amass so as to keep for future use or sale or for a particular occasion or use",
+          "lemmas": [
+            "buy in",
+            "stock",
+            "stock up"
+          ],
+          "examples": [
+            "let's stock coffee as long as prices are low"
+          ]
+        },
+        {
+          "id": "stock.v.06",
+          "definition": "provide or furnish with a stock of something",
+          "lemmas": [
+            "stock"
+          ],
+          "examples": [
+            "stock the larder with meat"
+          ]
+        },
+        {
+          "id": "sprout.v.02",
+          "definition": "put forth and grow sprouts or shoots",
+          "lemmas": [
+            "sprout",
+            "stock"
+          ],
+          "examples": [
+            "the plant sprouted early this year"
+          ]
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-30fe9114eebed4fede92",
+      "occurrenceId": "atomic-1099bfaffac32dca10e4",
+      "currentAtomicTitle": "Stock Area",
+      "groupTitle": "Stock Dining Area",
+      "canonicalDirectObject": "Dining Area",
+      "groupStatus": "new",
+      "actionPhrase": "stock",
+      "sourceClaims": [
+        {
+          "claimId": "claim-2ce1f504c06d5bcec251",
+          "sourceTaskIndex": 2,
+          "directObject": "dining areas",
+          "evidenceQuote": "Stock serving stations or dining areas with food or supplies",
+          "sourceTask": "Stock serving stations or dining areas with food or supplies."
+        }
+      ],
+      "ownerTitle": "Stock (Stock.v.05, Stock.v.06)",
+      "allInheritedSynsets": [
+        {
+          "id": "stock.v.05",
+          "definition": "amass so as to keep for future use or sale or for a particular occasion or use",
+          "lemmas": [
+            "buy in",
+            "stock",
+            "stock up"
+          ],
+          "examples": [
+            "let's stock coffee as long as prices are low"
+          ]
+        },
+        {
+          "id": "stock.v.06",
+          "definition": "provide or furnish with a stock of something",
+          "lemmas": [
+            "stock"
+          ],
+          "examples": [
+            "stock the larder with meat"
+          ]
+        }
+      ],
+      "inheritedSynsets": [
+        {
+          "id": "stock.v.05",
+          "definition": "amass so as to keep for future use or sale or for a particular occasion or use",
+          "lemmas": [
+            "buy in",
+            "stock",
+            "stock up"
+          ],
+          "examples": [
+            "let's stock coffee as long as prices are low"
+          ]
+        },
+        {
+          "id": "stock.v.06",
+          "definition": "provide or furnish with a stock of something",
+          "lemmas": [
+            "stock"
+          ],
+          "examples": [
+            "stock the larder with meat"
+          ]
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "stock.v.01",
+          "definition": "have on hand",
+          "lemmas": [
+            "carry",
+            "stock",
+            "stockpile"
+          ],
+          "examples": [
+            "Do you carry kerosene heaters?"
+          ]
+        },
+        {
+          "id": "stock.v.02",
+          "definition": "equip with a stock",
+          "lemmas": [
+            "stock"
+          ],
+          "examples": [
+            "stock a rifle"
+          ]
+        },
+        {
+          "id": "stock.v.03",
+          "definition": "supply with fish",
+          "lemmas": [
+            "stock"
+          ],
+          "examples": [
+            "stock a lake"
+          ]
+        },
+        {
+          "id": "stock.v.04",
+          "definition": "supply with livestock",
+          "lemmas": [
+            "stock"
+          ],
+          "examples": [
+            "stock a farm"
+          ]
+        },
+        {
+          "id": "stock.v.05",
+          "definition": "amass so as to keep for future use or sale or for a particular occasion or use",
+          "lemmas": [
+            "buy in",
+            "stock",
+            "stock up"
+          ],
+          "examples": [
+            "let's stock coffee as long as prices are low"
+          ]
+        },
+        {
+          "id": "stock.v.06",
+          "definition": "provide or furnish with a stock of something",
+          "lemmas": [
+            "stock"
+          ],
+          "examples": [
+            "stock the larder with meat"
+          ]
+        },
+        {
+          "id": "sprout.v.02",
+          "definition": "put forth and grow sprouts or shoots",
+          "lemmas": [
+            "sprout",
+            "stock"
+          ],
+          "examples": [
+            "the plant sprouted early this year"
+          ]
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-772c03fc31a547323833",
+      "occurrenceId": "atomic-3ff5239b88576c658e83",
+      "currentAtomicTitle": "Coordinate Care",
+      "groupTitle": "Coordinate Care",
+      "canonicalDirectObject": "Care",
+      "groupStatus": "current",
+      "actionPhrase": "coordinate",
+      "sourceClaims": [
+        {
+          "claimId": "claim-1bd015c9e7be9b4e9a79",
+          "sourceTaskIndex": 1,
+          "directObject": "care of patients",
+          "evidenceQuote": "Coordinate the care of patients",
+          "sourceTask": "Coordinate the care of patients with other health care professionals or support staff."
+        },
+        {
+          "claimId": "claim-a521cd73f84da6e4952e",
+          "sourceTaskIndex": 2,
+          "directObject": "client or patient care",
+          "evidenceQuote": "coordinate client or patient care and rehabilitation",
+          "sourceTask": "Utilize consultation data and social work experience to plan and coordinate client or patient care and rehabilitation, following through to ensure service efficacy."
+        }
+      ],
+      "ownerTitle": "Organize (people or events) (Hold.v.03, Organize.v.05)",
+      "allInheritedSynsets": [
+        {
+          "id": "hold.v.03",
+          "definition": "organize or be responsible for",
+          "lemmas": [
+            "give",
+            "have",
+            "hold",
+            "make",
+            "throw"
+          ],
+          "examples": [
+            "hold a reception",
+            "have, throw, or make a party",
+            "give a course"
+          ]
+        },
+        {
+          "id": "organize.v.05",
+          "definition": "arrange by systematic planning and united effort",
+          "lemmas": [
+            "devise",
+            "get up",
+            "machinate",
+            "organise",
+            "organize",
+            "prepare"
+          ],
+          "examples": [
+            "machinate a plot",
+            "organize a strike",
+            "devise a plan to take over the director's office"
+          ]
+        }
+      ],
+      "inheritedSynsets": [],
+      "candidateSynsets": [
+        {
+          "id": "organize.v.04",
+          "definition": "bring order and organization to",
+          "lemmas": [
+            "coordinate",
+            "organise",
+            "organize"
+          ],
+          "examples": [
+            "Can you help me organize my files?"
+          ]
+        },
+        {
+          "id": "coordinate.v.02",
+          "definition": "bring into common action, movement, or condition",
+          "lemmas": [
+            "coordinate"
+          ],
+          "examples": [
+            "coordinate the painters, masons, and plumbers",
+            "coordinate his actions with that of his colleagues",
+            "coordinate our efforts"
+          ]
+        },
+        {
+          "id": "coordinate.v.03",
+          "definition": "be co-ordinated",
+          "lemmas": [
+            "coordinate"
+          ],
+          "examples": [
+            "These activities coordinate well"
+          ]
+        },
+        {
+          "id": "align.v.04",
+          "definition": "bring (components or parts) into proper or desirable coordination correlation",
+          "lemmas": [
+            "align",
+            "coordinate",
+            "ordinate"
+          ],
+          "examples": [
+            "align the wheels of my car",
+            "ordinate similar parts"
+          ]
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-4685fc69dbf7f6008abd",
+      "occurrenceId": "atomic-3ff5239b88576c658e83",
+      "currentAtomicTitle": "Coordinate Care",
+      "groupTitle": "Coordinate Rehabilitation",
+      "canonicalDirectObject": "Rehabilitation",
+      "groupStatus": "new",
+      "actionPhrase": "coordinate",
+      "sourceClaims": [
+        {
+          "claimId": "claim-ff16b18b7d8b2c870583",
+          "sourceTaskIndex": 2,
+          "directObject": "rehabilitation",
+          "evidenceQuote": "coordinate client or patient care and rehabilitation",
+          "sourceTask": "Utilize consultation data and social work experience to plan and coordinate client or patient care and rehabilitation, following through to ensure service efficacy."
+        }
+      ],
+      "ownerTitle": "Organize (people or events) (Hold.v.03, Organize.v.05)",
+      "allInheritedSynsets": [
+        {
+          "id": "hold.v.03",
+          "definition": "organize or be responsible for",
+          "lemmas": [
+            "give",
+            "have",
+            "hold",
+            "make",
+            "throw"
+          ],
+          "examples": [
+            "hold a reception",
+            "have, throw, or make a party",
+            "give a course"
+          ]
+        },
+        {
+          "id": "organize.v.05",
+          "definition": "arrange by systematic planning and united effort",
+          "lemmas": [
+            "devise",
+            "get up",
+            "machinate",
+            "organise",
+            "organize",
+            "prepare"
+          ],
+          "examples": [
+            "machinate a plot",
+            "organize a strike",
+            "devise a plan to take over the director's office"
+          ]
+        }
+      ],
+      "inheritedSynsets": [],
+      "candidateSynsets": [
+        {
+          "id": "organize.v.04",
+          "definition": "bring order and organization to",
+          "lemmas": [
+            "coordinate",
+            "organise",
+            "organize"
+          ],
+          "examples": [
+            "Can you help me organize my files?"
+          ]
+        },
+        {
+          "id": "coordinate.v.02",
+          "definition": "bring into common action, movement, or condition",
+          "lemmas": [
+            "coordinate"
+          ],
+          "examples": [
+            "coordinate the painters, masons, and plumbers",
+            "coordinate his actions with that of his colleagues",
+            "coordinate our efforts"
+          ]
+        },
+        {
+          "id": "coordinate.v.03",
+          "definition": "be co-ordinated",
+          "lemmas": [
+            "coordinate"
+          ],
+          "examples": [
+            "These activities coordinate well"
+          ]
+        },
+        {
+          "id": "align.v.04",
+          "definition": "bring (components or parts) into proper or desirable coordination correlation",
+          "lemmas": [
+            "align",
+            "coordinate",
+            "ordinate"
+          ],
+          "examples": [
+            "align the wheels of my car",
+            "ordinate similar parts"
+          ]
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-b35638da90e2f0d31b79",
+      "occurrenceId": "atomic-87939a970da50054a476",
+      "currentAtomicTitle": "Open Valve",
+      "groupTitle": "Open Valve",
+      "canonicalDirectObject": "Valve",
+      "groupStatus": "current",
+      "actionPhrase": "open",
+      "sourceClaims": [
+        {
+          "claimId": "claim-f1918271ba8a07d92f9b",
+          "sourceTaskIndex": 1,
+          "directObject": "valves",
+          "evidenceQuote": "Open valves, gates, or chutes",
+          "sourceTask": "Open valves, gates, or chutes or use shovels to load or remove products from ovens or other equipment."
+        },
+        {
+          "claimId": "claim-ff20ab82ba00eaf65871",
+          "sourceTaskIndex": 2,
+          "directObject": "valves",
+          "evidenceQuote": "Open and close valves and switches",
+          "sourceTask": "Open and close valves and switches in sequence to start or shut down auxiliary units."
+        },
+        {
+          "claimId": "claim-4b285a3aff81390f9e29",
+          "sourceTaskIndex": 3,
+          "directObject": "valves",
+          "evidenceQuote": "Open valves or start pumps",
+          "sourceTask": "Open valves or start pumps, agitators, reactors, blowers, or automatic feed of materials."
+        },
+        {
+          "claimId": "claim-45f73b2ff0e59364fc0e",
+          "sourceTaskIndex": 4,
+          "directObject": "valves",
+          "evidenceQuote": "open valves and start pumps",
+          "sourceTask": "Stop mixing or blending machines when specified product qualities are obtained and open valves and start pumps to transfer mixtures."
+        },
+        {
+          "claimId": "claim-5ca4ae1caf46449006b2",
+          "sourceTaskIndex": 5,
+          "directObject": "valves",
+          "evidenceQuote": "open valves to drain slurry",
+          "sourceTask": "Open valves to drain slurry from mixers into storage tanks."
+        },
+        {
+          "claimId": "claim-595d9f542ace87a5eef6",
+          "sourceTaskIndex": 6,
+          "directObject": "valves",
+          "evidenceQuote": "open valves or use automated equipment",
+          "sourceTask": "Start pumps and open valves or use automated equipment to regulate the flow of oil in pipelines and into and out of tanks."
+        },
+        {
+          "claimId": "claim-0dc58dd7ed0837b77743",
+          "sourceTaskIndex": 7,
+          "directObject": "valves",
+          "evidenceQuote": "Open valves to return compressed gas",
+          "sourceTask": "Open valves to return compressed gas to bottoms of specified wells to repressurize them and force oil to surface."
+        }
+      ],
+      "ownerTitle": "Make available (Distribute.v.03, Issue.v.02, open.v.06, Yield.v.01)",
+      "allInheritedSynsets": [
+        {
+          "id": "distribute.v.03",
+          "definition": "make available",
+          "lemmas": [
+            "distribute"
+          ],
+          "examples": [
+            "The publisher wants to distribute the book in Asia"
+          ]
+        },
+        {
+          "id": "issue.v.02",
+          "definition": "circulate or distribute or equip with",
+          "lemmas": [
+            "issue",
+            "supply"
+          ],
+          "examples": [
+            "issue a new uniform to the children",
+            "supply blankets for the beds"
+          ]
+        },
+        {
+          "id": "open.v.06",
+          "definition": "make available",
+          "lemmas": [
+            "open",
+            "open up"
+          ],
+          "examples": [
+            "This opens up new possibilities"
+          ]
+        },
+        {
+          "id": "yield.v.01",
+          "definition": "be the cause or source of",
+          "lemmas": [
+            "afford",
+            "give",
+            "yield"
+          ],
+          "examples": [
+            "He gave me a lot of trouble",
+            "Our meeting afforded much interesting information"
+          ]
+        }
+      ],
+      "inheritedSynsets": [
+        {
+          "id": "open.v.06",
+          "definition": "make available",
+          "lemmas": [
+            "open",
+            "open up"
+          ],
+          "examples": [
+            "This opens up new possibilities"
+          ]
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "open.v.01",
+          "definition": "cause to open or to become open",
+          "lemmas": [
+            "open",
+            "open up"
+          ],
+          "examples": [
+            "Mary opened the car door"
+          ]
+        },
+        {
+          "id": "open.v.02",
+          "definition": "start to operate or function or cause to start operating or functioning",
+          "lemmas": [
+            "open",
+            "open up"
+          ],
+          "examples": [
+            "open a business"
+          ]
+        },
+        {
+          "id": "open.v.03",
+          "definition": "become open",
+          "lemmas": [
+            "open",
+            "open up"
+          ],
+          "examples": [
+            "The door opened"
+          ]
+        },
+        {
+          "id": "open.v.04",
+          "definition": "begin or set in action, of meetings, speeches, recitals, etc.",
+          "lemmas": [
+            "open"
+          ],
+          "examples": [
+            "He opened the meeting with a long speech"
+          ]
+        },
+        {
+          "id": "unfold.v.04",
+          "definition": "spread out or open from a closed or folded state",
+          "lemmas": [
+            "open",
+            "spread",
+            "spread out",
+            "unfold"
+          ],
+          "examples": [
+            "open the map",
+            "spread your arms"
+          ]
+        },
+        {
+          "id": "open.v.06",
+          "definition": "make available",
+          "lemmas": [
+            "open",
+            "open up"
+          ],
+          "examples": [
+            "This opens up new possibilities"
+          ]
+        },
+        {
+          "id": "open.v.07",
+          "definition": "become available",
+          "lemmas": [
+            "open",
+            "open up"
+          ],
+          "examples": [
+            "an opportunity opened up"
+          ]
+        },
+        {
+          "id": "open.v.08",
+          "definition": "have an opening or passage or outlet",
+          "lemmas": [
+            "open"
+          ],
+          "examples": [
+            "The bedrooms open into the hall"
+          ]
+        },
+        {
+          "id": "open.v.09",
+          "definition": "make the opening move",
+          "lemmas": [
+            "open"
+          ],
+          "examples": [
+            "Kasparov opened with a standard opening"
+          ]
+        },
+        {
+          "id": "afford.v.04",
+          "definition": "afford access to",
+          "lemmas": [
+            "afford",
+            "give",
+            "open"
+          ],
+          "examples": [
+            "the door opens to the patio",
+            "The French doors give onto a terrace"
+          ]
+        },
+        {
+          "id": "open.v.11",
+          "definition": "display the contents of a file or start an application as on a computer",
+          "lemmas": [
+            "open"
+          ],
+          "examples": []
+        }
+      ],
+      "genericActionFlag": false
+    }
+  ]
+}

@@ -4,8 +4,12 @@ import test from "node:test";
 import {
   extractAtomicActivities,
   genericActionDiagnostic,
+  matchingInheritedSynsets,
   normalizeTitle,
+  resolveActionPhrase,
   selectStratifiedSample,
+  validateAllCandidateSynsetAssessment,
+  validateClaimGroupingAssessment,
   validateGroupingAssessment,
   validateSimpleGroupingAssessment,
   validateWordNetAssessment,
@@ -77,11 +81,11 @@ test("extracts only list leaves below Atomic Tasks and preserves exact evidence"
   assert(!report.path.includes("(Atomic Tasks)"));
 });
 
-test("selects a deterministic sample across all nine strata", () => {
+test("selects a deterministic sample across all twelve strata", () => {
   const occurrences = [];
   let counter = 0;
   for (const branch of branchNames) {
-    for (const count of [1, 2, 7]) {
+    for (const count of [1, 2, 7, 21]) {
       for (let item = 0; item < 4; item += 1) {
         counter += 1;
         occurrences.push({
@@ -97,7 +101,9 @@ test("selects a deterministic sample across all nine strata", () => {
               ? "single"
               : count <= 5
                 ? "small-multi"
-                : "medium-multi",
+                : count <= 20
+                  ? "medium-multi"
+                  : "large",
         });
       }
     }
@@ -112,7 +118,7 @@ test("selects a deterministic sample across all nine strata", () => {
         (record) => `${record.topLevelBranch}|${record.evidenceBucket}`,
       ),
     ).size,
-    9,
+    12,
   );
 });
 
@@ -324,45 +330,256 @@ test("streamlined grouping derives decisions and title status deterministically"
   );
 });
 
-test("streamlined grouping rejects assigning one O*NET record to two titles", () => {
+test("claim grouping permits distinct direct objects from one O*NET record", () => {
   const record = {
-    occurrenceId: "coordinate-care",
-    exactTitle: "Coordinate Care",
-    normalizedTitle: "coordinate care",
-    leadingAction: "Coordinate",
+    occurrenceId: "sell-product",
+    exactTitle: "Sell Product",
+    normalizedTitle: "sell product",
+    leadingAction: "Sell",
     sourceRecords: [
       {
         index: 1,
-        task: "Coordinate client care and rehabilitation.",
+        task: "Sell funeral services, products, or merchandise.",
       },
     ],
   };
-  assert.throws(
-    () =>
-      validateSimpleGroupingAssessment({
-        record,
-        existingTitles: new Set(["coordinate care"]),
-        assessment: {
-          occurrenceId: "coordinate-care",
-          groups: [
+  const validated = validateClaimGroupingAssessment({
+    record,
+    existingTitles: new Set(["sell product"]),
+    assessment: {
+      occurrenceId: "sell-product",
+      groups: [
+        {
+          title: "Sell Funeral Services",
+          canonicalDirectObject: "funeral services",
+          sourceClaims: [
             {
-              title: "Coordinate Care",
-              sourceTaskIndexes: [1],
-              reason: "The record mentions care.",
-            },
-            {
-              title: "Coordinate Rehabilitation",
-              sourceTaskIndexes: [1],
-              reason: "The record also mentions rehabilitation.",
+              sourceTaskIndex: 1,
+              directObject: "services",
+              evidenceQuote: "Sell funeral services, products, or merchandise",
             },
           ],
-          deferredTaskIndexes: [],
-          reason: "Invalid duplicate assignment.",
-          confidence: "high",
+          reason: "Services are one explicit sold object.",
+        },
+        {
+          title: "Sell Funeral Merchandise",
+          canonicalDirectObject: "funeral merchandise",
+          sourceClaims: [
+            {
+              sourceTaskIndex: 1,
+              directObject: "merchandise",
+              evidenceQuote: "Sell funeral services, products, or merchandise",
+            },
+          ],
+          reason: "Merchandise is a different explicit sold object.",
+        },
+      ],
+      deferredTaskIndexes: [],
+      reason: "The one sentence contains two distinct sold objects.",
+      confidence: "high",
+    },
+  });
+  assert.equal(validated.decision, "split");
+  assert.deepEqual(
+    validated.groups.map((group) => group.sourceTaskIndexes),
+    [[1], [1]],
+  );
+  assert.equal(validated.groups[0].sourceClaims[0].sourceTaskIndex, 1);
+});
+
+test("claim grouping reports repeated existing titles without choosing a target occurrence", () => {
+  const record = {
+    occurrenceId: "negotiate-contract",
+    exactTitle: "Negotiate Contract",
+    normalizedTitle: "negotiate contract",
+    leadingAction: "Negotiate",
+    sourceRecords: [
+      {
+        index: 1,
+        task: "Negotiate prices for contracts.",
+      },
+    ],
+  };
+  const validated = validateClaimGroupingAssessment({
+    record,
+    existingTitles: new Set(["negotiate contract", "negotiate price"]),
+    existingTitleCounts: new Map([
+      ["negotiate contract", 1],
+      ["negotiate price", 2],
+    ]),
+    assessment: {
+      occurrenceId: "negotiate-contract",
+      groups: [
+        {
+          title: "Negotiate Price",
+          canonicalDirectObject: "Price",
+          sourceClaims: [
+            {
+              sourceTaskIndex: 1,
+              directObject: "prices",
+              evidenceQuote: "Negotiate prices",
+            },
+          ],
+          reason: "Price is the explicit object.",
+        },
+      ],
+      deferredTaskIndexes: [],
+      reason: "The source supports the more precise existing title string.",
+      confidence: "high",
+    },
+  });
+
+  assert.equal(validated.groups[0].status, "existing");
+  assert.equal(validated.groups[0].existingOccurrenceCount, 2);
+});
+
+test("claim grouping rejects duplicate claims and titles outside 2-5 words", () => {
+  const record = {
+    occurrenceId: "sell-product",
+    exactTitle: "Sell Product",
+    normalizedTitle: "sell product",
+    leadingAction: "Sell",
+    recordedActionAliases: ["sell"],
+    sourceRecords: [
+      { index: 1, task: "Sell funeral services and merchandise." },
+    ],
+  };
+  const base = {
+    occurrenceId: "sell-product",
+    deferredTaskIndexes: [],
+    reason: "Test proposal.",
+    confidence: "high",
+  };
+  assert.throws(
+    () =>
+      validateClaimGroupingAssessment({
+        record,
+        existingTitles: new Set(["sell product"]),
+        assessment: {
+          ...base,
+          groups: [
+            {
+              title: "Sell Funeral Merchandise",
+              canonicalDirectObject: "funeral merchandise",
+              sourceClaims: [
+                {
+                  sourceTaskIndex: 1,
+                  directObject: "merchandise",
+                  evidenceQuote: "Sell funeral services and merchandise",
+                },
+              ],
+              reason: "First copy.",
+            },
+            {
+              title: "Sell Burial Merchandise",
+              canonicalDirectObject: "burial merchandise",
+              sourceClaims: [
+                {
+                  sourceTaskIndex: 1,
+                  directObject: "merchandise",
+                  evidenceQuote: "Sell funeral services and merchandise",
+                },
+              ],
+              reason: "Duplicate source claim.",
+            },
+          ],
         },
       }),
-    /appears in more than one group/,
+    /appears more than once/,
   );
+  assert.throws(
+    () =>
+      validateClaimGroupingAssessment({
+        record,
+        existingTitles: new Set(["sell product"]),
+        assessment: {
+          ...base,
+          groups: [
+            {
+              title: "Sell Very Specific Funeral Service Products",
+              canonicalDirectObject: "funeral service products",
+              sourceClaims: [
+                {
+                  sourceTaskIndex: 1,
+                  directObject: "services",
+                  evidenceQuote: "Sell funeral services and merchandise",
+                },
+              ],
+              reason: "Too long.",
+            },
+          ],
+        },
+      }),
+    /must contain 2-5 words/,
+  );
+  assert.throws(
+    () =>
+      validateClaimGroupingAssessment({
+        record,
+        existingTitles: new Set(["sell product"]),
+        assessment: {
+          ...base,
+          groups: [
+            {
+              title: "Sell Funeral Merchandise",
+              canonicalDirectObject: "funeral merchandise",
+              sourceClaims: [
+                {
+                  sourceTaskIndex: 1,
+                  directObject: "merchandise",
+                  evidenceQuote: "merchandise",
+                },
+              ],
+              reason: "The quote omits the governing action.",
+            },
+          ],
+        },
+      }),
+    /does not contain the canonical action/,
+  );
+});
+
+test("all-candidate WordNet alignment resolves phrasal verbs and derives decisions", () => {
+  const candidates = [
+    { id: "set.v.01", lemmas: ["set"] },
+    { id: "set_up.v.01", lemmas: ["set_up"] },
+  ];
+  assert.equal(
+    resolveActionPhrase({
+      title: "Set Up Equipment",
+      canonicalDirectObject: "Equipment",
+      candidateSynsets: candidates,
+    }),
+    "set up",
+  );
+  assert.deepEqual(
+    matchingInheritedSynsets({
+      title: "Set Up Equipment",
+      canonicalDirectObject: "Equipment",
+      inheritedSynsets: candidates,
+      candidateSynsets: candidates,
+    }).map((item) => item.id),
+    ["set_up.v.01"],
+  );
+  const validated = validateAllCandidateSynsetAssessment({
+    bundle: {
+      groupId: "set-up-equipment",
+      groupTitle: "Set Up Equipment",
+      canonicalDirectObject: "Equipment",
+      inheritedSynsets: candidates,
+      candidateSynsets: candidates,
+    },
+    assessment: {
+      groupId: "set-up-equipment",
+      outcome: "selected",
+      selectedSynsetId: "set_up.v.01",
+      reason:
+        "The evidence uses the phrasal verb meaning arrange or establish.",
+      confidence: "high",
+    },
+  });
+  assert.equal(validated.actionPhrase, "set up");
+  assert.equal(validated.decision, "keep-assigned");
 });
 
 test("validates WordNet replacements and blocks invented synsets", () => {
