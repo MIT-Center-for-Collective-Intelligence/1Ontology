@@ -5,12 +5,12 @@ import path from "node:path";
 import process from "node:process";
 
 import {
+  claimGroupingPromptTemplate,
+  claimGroupingValidationRules,
   extractAtomicActivities,
   normalizeTitle,
-  simpleGroupingPromptTemplate,
-  simpleGroupingValidationRules,
   stableHash,
-  validateSimpleGroupingAssessments,
+  validateClaimGroupingAssessments,
 } from "./homogeneous-title-clarity-lib.mjs";
 
 const parseArgs = () => {
@@ -71,14 +71,22 @@ for (const sampled of samplePacket.sample) {
 const existingTitles = new Set(
   fullInventory.map((record) => normalizeTitle(record.exactTitle)),
 );
-const validated = validateSimpleGroupingAssessments({
+const existingTitleCounts = fullInventory.reduce((counts, record) => {
+  counts.set(
+    record.normalizedTitle,
+    (counts.get(record.normalizedTitle) || 0) + 1,
+  );
+  return counts;
+}, new Map());
+const validated = validateClaimGroupingAssessments({
   occurrences: samplePacket.sample,
   assessments: assessmentPacket.assessments,
   existingTitles,
+  existingTitleCounts,
 });
 
 const output = {
-  schemaVersion: "homogeneous-title-testbed-validated-v2",
+  schemaVersion: "homogeneous-title-testbed-validated-v3",
   generatedAt: new Date().toISOString(),
   sourceFile: path.basename(sourceFile),
   sourceSha256,
@@ -87,12 +95,12 @@ const output = {
   assessmentsFile: path.basename(assessmentsFile),
   assessmentsSha256: stableHash(fs.readFileSync(assessmentsFile)),
   promptVersions: {
-    grouping: "access-homogeneous-title-grouping-2026-08-29-v2",
-    validator: "homogeneous-title-grouping-validator-2026-08-29-v2",
+    grouping: "access-homogeneous-title-grouping-2026-08-29-v3",
+    validator: "homogeneous-title-grouping-validator-2026-08-29-v3",
   },
   promptSha256: {
-    grouping: stableHash(simpleGroupingPromptTemplate),
-    validator: stableHash(simpleGroupingValidationRules),
+    grouping: stableHash(claimGroupingPromptTemplate),
+    validator: stableHash(claimGroupingValidationRules),
   },
   counts: {
     cases: validated.length,
@@ -111,5 +119,5 @@ const output = {
 fs.mkdirSync(path.dirname(outputFile), { recursive: true });
 fs.writeFileSync(outputFile, `${JSON.stringify(output, null, 2)}\n`, "utf8");
 process.stdout.write(
-  `PASS: validated ${validated.length} streamlined title-grouping cases\n${outputFile}\n`,
+  `PASS: validated ${validated.length} claim-aware title-grouping cases\n${outputFile}\n`,
 );

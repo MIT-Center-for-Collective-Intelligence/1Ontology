@@ -17,6 +17,8 @@ export interface SomOntologySnapshot {
   /** Root metadata for branch-neutral review datasets. */
   branchRootNodeId?: string;
   branchRootTitle?: string;
+  /** Counts from the full source inventory for titles intentionally omitted from a bounded snapshot. */
+  normalizedTitleOccurrenceCounts?: Record<string, number>;
   /** Retained for previously released Sell snapshots. */
   sellRootNodeId?: string;
   nodes: Array<{
@@ -65,6 +67,14 @@ const normalizeCollection = (value?: string): string => {
     .replace(/\]$/, "");
   return !unwrapped || unwrapped === "default" ? "main" : unwrapped;
 };
+
+const normalizedTitleKey = (value: string): string =>
+  value
+    .replace(/\s*\(Synonyms?:[^)]*\)\s*$/i, "")
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
 
 const isCollectionLabel = (value: string): boolean =>
   /^\[[^\]]+\]$/.test(value.trim());
@@ -234,7 +244,22 @@ const validatePath = (index: SnapshotIndex, sourcePath: unknown): void => {
     }
     const ids = index.idsByTitle.get(part) || [];
     if (ids.length === 0) continue;
-    const nodeId = resolveUniqueTitle(index, part);
+    const connectedIds = !parentId
+      ? part === rootTitle
+        ? ids.filter((id) => id === rootNodeId)
+        : ids
+      : ids.filter(
+          (id) =>
+            id === parentId || index.edgePairs.has(edgePair(parentId, id)),
+        );
+    if (connectedIds.length !== 1) {
+      throw new Error(
+        `Current ontology path is ambiguous at ${part} below ${
+          index.nodesById.get(parentId)?.title || "the root"
+        }`,
+      );
+    }
+    const nodeId = connectedIds[0];
     if (parentId && parentId !== nodeId) {
       if (collectionName === "main") requireAnyEdge(index, parentId, nodeId);
       else requireEdge(index, parentId, nodeId, collectionName);
@@ -250,7 +275,15 @@ const sourceParent = (
 ): { id: string; collectionName: string } => {
   const parentTitle = String(record?.subject?.parentTitle || "");
   if (!parentTitle) return { id: "", collectionName: "main" };
+  const recordedParentId = String(record?.provenance?.parentNodeId || "");
   if (!isCollectionLabel(parentTitle)) {
+    if (recordedParentId) {
+      const recordedParent = index.nodesById.get(recordedParentId);
+      if (!recordedParent || recordedParent.title !== parentTitle) {
+        throw new Error(`Recorded parent node does not match ${parentTitle}`);
+      }
+      return { id: recordedParentId, collectionName: "main" };
+    }
     return {
       id: resolveUniqueTitle(index, parentTitle),
       collectionName: "main",
@@ -301,11 +334,15 @@ export const validateProposalAgainstSnapshot = (
   validatePath(index, record?.subject?.path);
 
   const referenced = new Set<string>();
-  const addTitle = (title: string): string => {
-    const id = resolveUniqueTitle(index, title);
+  const addTitle = (title: string, preferredId = ""): string => {
+    const id = preferredId || resolveUniqueTitle(index, title);
+    if (preferredId && index.nodesById.get(preferredId)?.title !== title) {
+      throw new Error(`Recorded node does not match ${title}`);
+    }
     referenced.add(id);
     return id;
   };
+  const recordedSubjectId = String(record?.provenance?.subjectNodeId || "");
   const addDirectChild = (
     parentTitle: string,
     childTitle: string,
@@ -322,7 +359,7 @@ export const validateProposalAgainstSnapshot = (
 
   switch (context.type) {
     case "title-comparison": {
-      subjectNodeId = addTitle(context.currentTitle);
+      subjectNodeId = addTitle(context.currentTitle, recordedSubjectId);
       const parent = sourceParent(index, record);
       parentNodeId = parent.id;
       if (parentNodeId) {
@@ -332,7 +369,7 @@ export const validateProposalAgainstSnapshot = (
       break;
     }
     case "title-split": {
-      subjectNodeId = addTitle(context.currentTitle);
+      subjectNodeId = addTitle(context.currentTitle, recordedSubjectId);
       const parent = sourceParent(index, record);
       parentNodeId = parent.id;
       if (parentNodeId) {
@@ -354,12 +391,28 @@ export const validateProposalAgainstSnapshot = (
           }
           referenced.add(subjectNodeId);
         }
-        if (proposedNode.status === "existing") addTitle(proposedNode.title);
+        if (proposedNode.status === "existing") {
+          const expectedCount = Number(proposedNode.existingOccurrenceCount);
+          if (Number.isInteger(expectedCount) && expectedCount > 0) {
+            const catalogCount = Number(
+              index.snapshot.normalizedTitleOccurrenceCounts?.[
+                normalizedTitleKey(proposedNode.title)
+              ],
+            );
+            if (catalogCount !== expectedCount) {
+              throw new Error(
+                `Existing-title occurrence count does not match the source inventory: ${proposedNode.title}`,
+              );
+            }
+          } else {
+            addTitle(proposedNode.title);
+          }
+        }
       }
       break;
     }
     case "synset-alignment": {
-      subjectNodeId = addTitle(context.currentAtomicTitle);
+      subjectNodeId = addTitle(context.currentAtomicTitle, recordedSubjectId);
       const parent = sourceParent(index, record);
       parentNodeId = parent.id;
       if (parentNodeId) {

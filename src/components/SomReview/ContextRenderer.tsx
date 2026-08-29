@@ -232,14 +232,16 @@ const TitleSplit = ({
   const tasks = (context.linkedTasks || [])
     .map((task) => task.trim())
     .filter(Boolean);
-  const statusLabel = {
-    current: "Keep current node",
-    existing: "Already in ontology",
-    new:
-      context.decision === "rename"
-        ? "Proposed replacement title"
-        : "New provisional child",
-  } as const;
+  const statusLabel = (node: (typeof context.proposedNodes)[number]) => {
+    if (node.status === "current") return "Keep current node";
+    if (node.status === "new") return "New provisional title";
+    if (node.existingOccurrenceCount) {
+      return `Title used by ${node.existingOccurrenceCount} ontology ${
+        node.existingOccurrenceCount === 1 ? "occurrence" : "occurrences"
+      }; placement later`;
+    }
+    return "Title already occurs in ontology; placement later";
+  };
 
   return (
     <Stack direction={{ xs: "column", lg: "row" }} spacing={2} sx={{ mb: 3 }}>
@@ -276,15 +278,15 @@ const TitleSplit = ({
 
       <Box sx={comparisonPanelSx}>
         <Typography sx={sectionLabelSx}>After</Typography>
-        {context.decision === "split" &&
-          context.proposedNodes.some((node) => node.status === "new") && (
-            <Typography
-              sx={{ mt: 0.75, color: "text.secondary", lineHeight: 1.5 }}
-            >
-              New titles remain provisional children of {context.currentTitle}{" "}
-              until the later placement review.
-            </Typography>
-          )}
+        {context.proposedNodes.some((node) => node.status === "new") && (
+          <Typography
+            sx={{ mt: 0.75, color: "text.secondary", lineHeight: 1.5 }}
+          >
+            New titles are provisional. They are shown under{" "}
+            {context.currentTitle} for this review and receive final placement
+            later.
+          </Typography>
+        )}
         <Stack divider={<Divider flexItem />} sx={{ mt: 0.5 }}>
           {context.proposedNodes.map((node) => (
             <Box key={`${node.status}-${node.title}`} sx={{ py: 1.25 }}>
@@ -299,7 +301,7 @@ const TitleSplit = ({
                 <Chip
                   size="small"
                   variant="outlined"
-                  label={statusLabel[node.status]}
+                  label={statusLabel(node)}
                   sx={{ fontWeight: 650 }}
                 />
               </Stack>
@@ -309,7 +311,9 @@ const TitleSplit = ({
               <Typography
                 sx={{ mt: 0.75, color: "text.secondary", fontWeight: 650 }}
               >
-                Source evidence
+                {node.sourceClaims?.length
+                  ? "Predicate-object evidence"
+                  : "Source evidence"}
               </Typography>
               <List
                 component="ul"
@@ -317,21 +321,37 @@ const TitleSplit = ({
                 disablePadding
                 sx={{ pl: 3, mt: 0.25, listStyleType: "disc" }}
               >
-                {node.sourceTaskIndexes.map((sourceIndex, index) => (
+                {(node.sourceClaims?.length
+                  ? node.sourceClaims
+                  : node.sourceTaskIndexes.map((sourceIndex, index) => ({
+                      claimId: `${node.title}-${sourceIndex}-${index}`,
+                      sourceTaskIndex: sourceIndex,
+                      directObject: "",
+                      evidenceQuote: "",
+                      sourceTask:
+                        node.sourceTasks[index] ||
+                        context.linkedTasks[sourceIndex - 1] ||
+                        "Source record",
+                    }))
+                ).map((claim) => (
                   <ListItem
                     component="li"
-                    key={`${node.title}-${sourceIndex}-${index}`}
+                    key={claim.claimId}
                     disableGutters
                     alignItems="flex-start"
                     sx={{ display: "list-item", pl: 0.5 }}
                   >
                     <ListItemText
-                      primary={`${sourceIndex}. ${
-                        node.sourceTasks[index] ||
-                        context.linkedTasks[sourceIndex - 1] ||
-                        "Source record"
-                      }`}
+                      primary={`${claim.sourceTaskIndex}. ${claim.sourceTask}`}
+                      secondary={
+                        claim.directObject
+                          ? `Direct object: ${claim.directObject}. Exact evidence: “${claim.evidenceQuote}”`
+                          : undefined
+                      }
                       primaryTypographyProps={{ sx: { lineHeight: 1.5 } }}
+                      secondaryTypographyProps={{
+                        sx: { mt: 0.35, lineHeight: 1.45 },
+                      }}
                     />
                   </ListItem>
                 ))}

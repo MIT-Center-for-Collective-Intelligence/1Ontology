@@ -5,7 +5,10 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { stableHash } from "./homogeneous-title-clarity-lib.mjs";
+import {
+  normalizeTitle,
+  stableHash,
+} from "./homogeneous-title-clarity-lib.mjs";
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(scriptDir, "../..");
@@ -15,12 +18,12 @@ const artifactDir = path.join(
 );
 const outputDir = path.join(
   repoRoot,
-  "Ontology_Title_Clarity_Testbed_2026-08-28/review-datasets-v2",
+  "Ontology_Title_Clarity_Testbed_2026-08-28/review-datasets-v3",
 );
 const inputPaths = {
-  sample: path.join(artifactDir, "sample-packet.json"),
-  groupings: path.join(artifactDir, "validated-groupings-v2.json"),
-  estimate: path.join(artifactDir, "full-run-estimate-v2.json"),
+  sample: path.join(artifactDir, "sample-packet-v3.json"),
+  groupings: path.join(artifactDir, "validated-groupings-v3.json"),
+  estimate: path.join(artifactDir, "full-run-estimate-v3.json"),
 };
 
 const readJson = (filePath) => JSON.parse(fs.readFileSync(filePath, "utf8"));
@@ -64,43 +67,41 @@ const groupingsByOccurrence = new Map(
 );
 if (
   recordsByOccurrence.size !== 18 ||
-  groupingsByOccurrence.size !== recordsByOccurrence.size ||
-  validatedGroupings.counts.resultingGroups !== 48
+  groupingsByOccurrence.size !== recordsByOccurrence.size
 ) {
-  throw new Error(
-    "Expected 18 sampled activities and 48 validated one-record-one-group results",
-  );
+  throw new Error("Expected 18 sampled activities and 18 validated results");
 }
 
-const datasetVersion = "ontology-title-homogeneous-testbed-2026-08-29-v2";
+const datasetVersion = "ontology-title-homogeneous-testbed-2026-08-29-v3";
 const generatedAt = validatedGroupings.generatedAt;
 const ontologyAppId =
   "final-hierarchy-with-onet-homogeneous-title-testbed-2026-08-29";
 const ontologyName =
-  "Final Hierarchy with O*NET - Streamlined title test bed 2026-08-29";
+  "Final Hierarchy with O*NET - Claim-aware title test bed 2026-08-29";
 
-const titleToNodeId = new Map();
+const nodeIdByPath = new Map();
 const snapshotNodes = [];
 const snapshotEdges = [];
 const snapshotEdgeKeys = new Set();
-const ensureNode = (title, metadata = {}) => {
-  if (!titleToNodeId.has(title)) {
-    const id = stableId("node", title);
-    titleToNodeId.set(title, id);
+const keyForPath = (parts) => parts.join("\u001f");
+const ensureNode = (parts, metadata = {}) => {
+  const key = keyForPath(parts);
+  const title = parts.at(-1);
+  if (!nodeIdByPath.has(key)) {
+    const id = stableId("node", key);
+    nodeIdByPath.set(key, id);
     snapshotNodes.push({ id, title, ...metadata });
   } else if (Object.keys(metadata).length) {
     Object.assign(
-      snapshotNodes.find(
-        (candidate) => candidate.id === titleToNodeId.get(title),
-      ),
+      snapshotNodes.find((candidate) => candidate.id === nodeIdByPath.get(key)),
       metadata,
     );
   }
-  return titleToNodeId.get(title);
+  return nodeIdByPath.get(key);
 };
-const addEdge = (parentTitle, childTitle) => {
-  const parentId = ensureNode(parentTitle);
-  const childId = ensureNode(childTitle);
+const addEdge = (parentPath, childPath) => {
+  const parentId = ensureNode(parentPath);
+  const childId = ensureNode(childPath);
   const key = `${parentId}\u001f${childId}`;
   if (snapshotEdgeKeys.has(key)) return;
   snapshotEdgeKeys.add(key);
@@ -108,14 +109,15 @@ const addEdge = (parentTitle, childTitle) => {
 };
 for (const record of samplePacket.sample) {
   for (let index = 0; index < record.path.length; index += 1) {
-    const title = record.path[index];
+    const nodePath = record.path.slice(0, index + 1);
+    const title = nodePath.at(-1);
     ensureNode(
-      title,
+      nodePath,
       title === record.ownerTitle && record.assignedSynsetIds.length
         ? { synsets: record.assignedSynsetIds.join(", ") }
         : {},
     );
-    if (index > 0) addEdge(record.path[index - 1], title);
+    if (index > 0) addEdge(nodePath.slice(0, -1), nodePath);
   }
 }
 snapshotNodes.sort((left, right) =>
@@ -127,8 +129,21 @@ snapshotEdges.sort((left, right) =>
     "en",
   ),
 );
-const rootNodeId = titleToNodeId.get("Act");
+const rootNodeId = nodeIdByPath.get("Act");
 if (!rootNodeId) throw new Error("The test bed snapshot is missing Act");
+const normalizedTitleOccurrenceCounts = {};
+for (const assessment of validatedGroupings.assessments) {
+  for (const group of assessment.groups) {
+    if (group.status !== "existing") continue;
+    if (!Number.isInteger(group.existingOccurrenceCount)) {
+      throw new Error(
+        `Existing title is missing its full-inventory occurrence count: ${group.title}`,
+      );
+    }
+    normalizedTitleOccurrenceCounts[normalizeTitle(group.title)] =
+      group.existingOccurrenceCount;
+  }
+}
 const snapshot = {
   schemaVersion: "som-ontology-snapshot-v1",
   ontologyAppId,
@@ -138,6 +153,7 @@ const snapshot = {
   capturedAt: generatedAt,
   branchRootNodeId: rootNodeId,
   branchRootTitle: "Act",
+  normalizedTitleOccurrenceCounts,
   nodes: snapshotNodes,
   edges: snapshotEdges,
 };
@@ -154,7 +170,7 @@ writeJson(snapshotPath, snapshot);
 const snapshotSha256 = sha256File(snapshotPath);
 const sourceUri = `artifact://${samplePacket.sourceFile}`;
 const sourceArtifact =
-  "access://homogeneous-title-testbed-2026-08-29/streamlined-results";
+  "access://homogeneous-title-testbed-2026-08-29/claim-aware-results";
 
 const pipelineStage = (role, actorId, actorKind, promptVersion) => ({
   role,
@@ -162,34 +178,35 @@ const pipelineStage = (role, actorId, actorKind, promptVersion) => ({
   actorKind,
   model:
     actorKind === "model"
-      ? "gpt-5.6-terra with high reasoning using the approved ACCESS allocation"
+      ? validatedGroupings.model ||
+        "OpenAI Codex model using the approved ACCESS allocation"
       : "deterministic local computation",
   promptVersion,
 });
 const titlePipeline = [
   pipelineStage(
     "detector",
-    "access-homogeneous-title-grouping-v2",
+    "access-homogeneous-title-grouping-v3",
     "model",
     validatedGroupings.promptVersions.grouping,
   ),
   pipelineStage(
     "verifier",
-    "homogeneous-title-grouping-validator-v2",
+    "homogeneous-title-grouping-validator-v3",
     "deterministic",
     validatedGroupings.promptVersions.validator,
   ),
   pipelineStage(
     "assembler",
-    "homogeneous-title-testbed-card-assembler-v2",
+    "homogeneous-title-testbed-card-assembler-v3",
     "deterministic",
-    "homogeneous-title-testbed-card-assembler-2026-08-29-v2",
+    "homogeneous-title-testbed-card-assembler-2026-08-29-v3",
   ),
 ];
 
 const sourceRefs = (record) => {
-  const subjectNodeId = titleToNodeId.get(record.exactTitle);
-  const parentNodeId = titleToNodeId.get(record.parentTitle);
+  const subjectNodeId = nodeIdByPath.get(keyForPath(record.path));
+  const parentNodeId = nodeIdByPath.get(keyForPath(record.path.slice(0, -1)));
   if (!subjectNodeId || !parentNodeId) {
     throw new Error(`Snapshot nodes are missing for ${record.exactTitle}`);
   }
@@ -219,7 +236,7 @@ const titleCards = samplePacket.sample.map((record) => {
     assessment.decision === "keep"
       ? `Keep all evidence together under ${record.exactTitle}.`
       : assessment.decision === "rename"
-        ? `Replace the title with ${proposedTitles[0]}.`
+        ? `Use ${proposedTitles[0]} as the proposed evidence-aligned title; final placement remains pending.`
         : assessment.decision === "split"
           ? `Represent the evidence with ${proposedTitles.length} homogeneous activity groups: ${proposedTitles.join(", ")}.`
           : "Defer this complete case for expert clarification.";
@@ -278,8 +295,8 @@ const titleCards = samplePacket.sample.map((record) => {
       hideModelConfidence: true,
     },
     internalModelEvidence: {
-      detectorId: "access-homogeneous-title-grouping-v2",
-      detectorName: "Streamlined homogeneous title-grouping agent",
+      detectorId: "access-homogeneous-title-grouping-v3",
+      detectorName: "Claim-aware homogeneous title-grouping agent",
       detectorPromptVersion: validatedGroupings.promptVersions.grouping,
       detectorConfidence: assessment.confidence,
       reviewerVisible: false,
@@ -309,7 +326,9 @@ writeJsonl(
   [],
 );
 
-const streamlined = fullRunEstimate.projection.streamlinedConditionalPipeline;
+const projectedPipeline =
+  fullRunEstimate.projection.claimAwareAllCandidatePipeline;
+const stratifiedScenario = projectedPipeline.stratifiedPilotScenario;
 const manifest = {
   schemaVersion: "som-review-v1",
   datasetVersion,
@@ -377,8 +396,9 @@ const manifest = {
     rejectedAgentCandidates: 0,
   },
   limitations: [
-    "This deterministic 18-title sample is a test bed, not ground truth or a claim that the full ontology has been corrected.",
-    "Each O*NET record is assigned exactly once; clauses outside the current atomic title remain for their linked activity or a later coverage review.",
+    "This deterministic 18-title sample is a reviewer-interface pilot, not ground truth, an accuracy evaluation, or a claim that the full ontology has been corrected.",
+    "Every O*NET record contributes at least one source-supported predicate-object claim. One record may support multiple groups only when the current action explicitly governs distinct direct objects not already represented by another linked title.",
+    "The pilot includes repeated titles and a 21+-record case in every top-level branch, but one medium and one large case per branch cannot establish reliability.",
     "New specific titles remain provisional children until a later placement review.",
     "Title grouping preserves the leading action; WordNet sense alignment and wrong-main-verb checks are deliberately deferred.",
     `The separate generic-action diagnostic found ${samplePacket.genericActionDiagnostic.occurrenceCount} Act/Perform occurrences (${samplePacket.genericActionDiagnostic.uniqueTitleCount} unique titles); none is silently rewritten here.`,
@@ -402,30 +422,31 @@ const manifest = {
     snapshotBound: true,
     exhaustiveWithinPackagedDetectorOutputs: true,
     semanticCompletenessGuaranteed: false,
-    detectorAgents: ["access-homogeneous-title-grouping-v2"],
+    detectorAgents: ["access-homogeneous-title-grouping-v3"],
     criticAgents: [],
-    note: "Each packaged title card passed exact source binding and deterministic one-record-one-group, leading-action, title-status, and cardinality validation. The expert reviewer is the semantic evaluator.",
+    note: "Each packaged card passed exact source and claim binding, 2-5-word title, leading-action, title-status, and cardinality validation. These checks do not establish semantic correctness; the expert reviewer remains the evaluator.",
   },
   fullRunEstimate: {
     modelPlan: fullRunEstimate.recommendedModelPlan,
     atomicActivityOccurrences:
       fullRunEstimate.inventory.atomicActivityOccurrences,
-    homogeneousGroupPlanningRange: fullRunEstimate.projection.homogeneousGroups,
-    centralModelCalls: streamlined.centralScenario.modelCalls,
-    centralVisiblePacketTokens: streamlined.centralScenario.visiblePacketTokens,
-    centralTotalAccessTokensPlanningRange:
-      streamlined.centralScenario.totalAccessTokensPlanningRange,
-    elapsedWallTimeHours: streamlined.elapsedWallTimeHours,
-    directApiCharge: streamlined.directApiCharge,
-    note: "This planning estimate uses one title call per activity, one assigned-synset check per accepted group, and conditional candidate selection only when the assigned sense fails. It is not metered usage.",
+    homogeneousGroupScenarios:
+      fullRunEstimate.projection.homogeneousGroupScenarios,
+    stratifiedPilotModelCalls: stratifiedScenario.modelCalls,
+    stratifiedPilotVisiblePacketTokens: stratifiedScenario.visiblePacketTokens,
+    stratifiedPilotTotalAccessTokensPlanningRange:
+      stratifiedScenario.totalAccessTokensPlanningRange,
+    elapsedWallTimeHours: projectedPipeline.elapsedWallTimeHours,
+    directApiCharge: projectedPipeline.directApiCharge,
+    note: "These are sensitivity scenarios, not a validated forecast. They use one claim-aware title call per activity and, only after title acceptance, one all-candidate WordNet call per accepted group.",
   },
   reviewRelease: {
-    strategy: "title-review-before-conditional-wordnet",
+    strategy: "title-review-before-all-candidate-wordnet",
     currentWave: "homogeneous-title-grouping",
     releasedIssueTypes: ["title-clarity"],
     awaitingRegenerationIssueTypes: ["synset-alignment"],
     message:
-      "Review title groups first. After a group is accepted, compare only its assigned synset with the accepted title and evidence; retrieve all local candidate senses only when that check fails.",
+      "Review title groups first. After a group is accepted, retrieve every local candidate sense and compare them together with the inherited assignment, accepted title, and exact evidence in one call.",
   },
 };
 writeJson(path.join(outputDir, "manifest.json"), manifest);
@@ -505,7 +526,37 @@ const proposalSchema = {
                 type: "object",
                 properties: {
                   title: nonEmptyString,
+                  canonicalDirectObject: nonEmptyString,
                   status: { enum: ["current", "existing", "new"] },
+                  existingOccurrenceCount: {
+                    type: "integer",
+                    minimum: 1,
+                  },
+                  sourceClaims: {
+                    type: "array",
+                    minItems: 1,
+                    items: {
+                      type: "object",
+                      properties: {
+                        claimId: nonEmptyString,
+                        sourceTaskIndex: {
+                          type: "integer",
+                          minimum: 1,
+                        },
+                        directObject: nonEmptyString,
+                        evidenceQuote: nonEmptyString,
+                        sourceTask: nonEmptyString,
+                      },
+                      required: [
+                        "claimId",
+                        "sourceTaskIndex",
+                        "directObject",
+                        "evidenceQuote",
+                        "sourceTask",
+                      ],
+                      additionalProperties: false,
+                    },
+                  },
                   sourceTaskIndexes: {
                     type: "array",
                     minItems: 1,
@@ -520,7 +571,9 @@ const proposalSchema = {
                 },
                 required: [
                   "title",
+                  "canonicalDirectObject",
                   "status",
+                  "sourceClaims",
                   "sourceTaskIndexes",
                   "sourceTasks",
                   "reason",
@@ -655,7 +708,7 @@ fs.copyFileSync(
 );
 
 writeJson(path.join(outputDir, "diagnostics/quality-report.json"), {
-  schemaVersion: "homogeneous-title-testbed-quality-report-v2",
+  schemaVersion: "homogeneous-title-testbed-quality-report-v3",
   generatedAt,
   sourceHierarchySha256: samplePacket.sourceSha256,
   packagedSnapshotSha256: snapshotSha256,
@@ -667,26 +720,37 @@ writeJson(path.join(outputDir, "diagnostics/quality-report.json"), {
     titleDefer: validatedGroupings.counts.defer,
     homogeneousGroups: validatedGroupings.counts.resultingGroups,
     reviewCards: titleCards.length,
-    projectedFullRunHomogeneousGroups:
-      fullRunEstimate.projection.homogeneousGroups,
-    projectedFullRunCentralModelCalls: streamlined.centralScenario.modelCalls,
-    projectedFullRunCentralAccessTokens:
-      streamlined.centralScenario.totalAccessTokensPlanningRange,
+    projectedFullRunHomogeneousGroupScenarios:
+      fullRunEstimate.projection.homogeneousGroupScenarios,
+    projectedFullRunStratifiedModelCalls: stratifiedScenario.modelCalls,
+    projectedFullRunStratifiedAccessTokens:
+      stratifiedScenario.totalAccessTokensPlanningRange,
   },
   safeguards: {
-    everySourceRecordAssignedExactlyOnce: true,
+    everySourceRecordRepresented: true,
+    repeatedRecordRequiresDistinctDirectObjectClaim: true,
+    exactEvidenceQuotesBoundToSource: true,
+    evidenceQuotesIncludeRecordedAction: true,
+    titleWordCountBetweenTwoAndFive: true,
     leadingActionPreserved: true,
     duplicateResultingTitlesRejected: true,
-    titleStatusDerivedFromSnapshot: true,
+    titleStatusDerivedFromFullOntologyInventory: true,
     newNodesMarkedProvisional: true,
-    wordNetDeferredUntilTitleAcceptance: true,
+    allCandidateWordNetDeferredUntilTitleAcceptance: true,
     ontologyMutationDisabled: true,
+  },
+  evaluationStatus: {
+    semanticAccuracyMeasured: false,
+    independentGoldLabels: false,
+    blindHoldout: false,
+    repeatedRuns: false,
+    note: "This is a source-bound review pilot. Keep cards are not independent controls, and deterministic safeguards do not validate semantic judgments.",
   },
 });
 
 fs.writeFileSync(
   path.join(outputDir, "README.md"),
-  `# Streamlined ontology-wide title test bed\n\nThis review-only dataset packages the deterministic 18-title sample discussed by Iman and Rob. It contains ${validatedGroupings.counts.keep} keep, ${validatedGroupings.counts.rename} rename, ${validatedGroupings.counts.split} split, and ${validatedGroupings.counts.defer} defer decisions, producing ${validatedGroupings.counts.resultingGroups} homogeneous groups.\n\n## Procedure\n\n1. One concise model call groups each title's O*NET records. Each record is assigned exactly once.\n2. Deterministic validation derives title status and the keep/rename/split/defer decision.\n3. Rob reviews the title proposal. No review action mutates the ontology.\n4. Only after title acceptance, compare the accepted group with its assigned synset. Retrieve all local candidates and make a second model call only when the assigned sense fails.\n\n## Full-run estimate\n\nThe central projection is ${fullRunEstimate.projection.homogeneousGroups.central.toLocaleString("en-US")} groups, ${streamlined.centralScenario.modelCalls.toLocaleString("en-US")} model calls, about ${Math.round(streamlined.centralScenario.totalAccessTokensPlanningRange.central / 1_000_000)} million ACCESS tokens, and ${streamlined.elapsedWallTimeHours.central} hours at 32-way concurrency. These are planning values, not metered usage.\n`,
+  `# Claim-aware ontology-wide title test bed\n\nThis read-only reviewer-interface pilot contains 18 title occurrences, including repeated-title and 21+-record cases in every top-level branch. It contains ${validatedGroupings.counts.keep} keep, ${validatedGroupings.counts.rename} rename, ${validatedGroupings.counts.split} split, and ${validatedGroupings.counts.defer} defer proposals, producing ${validatedGroupings.counts.resultingGroups} homogeneous groups. These are model-generated proposals, not accuracy results or gold labels.\n\n## Procedure\n\n1. One semantic call extracts source-supported predicate-object claims and groups claims under 2-5-word titles. A record may support multiple titles only through distinct direct objects governed by the current action.\n2. Deterministic validation binds every claim to an exact quote and source record, checks title form and action preservation, and derives title status and keep/rename/split/defer.\n3. Rob reviews the title proposal. No review action mutates the ontology.\n4. Only after title acceptance, retrieve every local WordNet candidate for the exact action phrase and compare all candidates, the inherited assignment, and accepted evidence in one call.\n\n## Full-run planning scenarios\n\nThe branch-by-evidence-bucket extrapolation yields ${fullRunEstimate.projection.homogeneousGroupScenarios.stratifiedPilot.toLocaleString("en-US")} groups and ${stratifiedScenario.modelCalls.toLocaleString("en-US")} model calls. Its central ACCESS planning allowance is about ${Math.round(stratifiedScenario.totalAccessTokensPlanningRange.central / 1_000_000)} million tokens, with ${projectedPipeline.elapsedWallTimeHours.stratifiedPilot} modeled hours at 32-way concurrency. These are fragile sensitivity scenarios, not measured cost or duration.\n`,
 );
 
 console.log(

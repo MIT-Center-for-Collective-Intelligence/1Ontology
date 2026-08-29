@@ -34,6 +34,20 @@ export const titleWords = (title) =>
 
 export const leadingAction = (title) => titleWords(title)[0] || "";
 
+export const recordedActionAliases = (title) => {
+  const value = clean(title);
+  const synonymMatch = value.match(/\(Synonyms?:\s*([^)]*)\)\s*$/i);
+  const variants = [titleWithoutSynonyms(value)];
+  if (synonymMatch?.[1]) variants.push(...synonymMatch[1].split(","));
+  return [
+    ...new Set(
+      variants
+        .map((variant) => leadingAction(variant).toLowerCase())
+        .filter(Boolean),
+    ),
+  ];
+};
+
 export const onetTaskText = (value) =>
   clean(value).replace(/^\(O\*Net\)\s+.+?\s+-\s+/i, "");
 
@@ -110,6 +124,7 @@ export const extractAtomicActivities = (hierarchy) => {
           exactTitle: title,
           normalizedTitle: normalizeTitle(title),
           leadingAction: leadingAction(title),
+          recordedActionAliases: recordedActionAliases(title),
           ownerTitle: nextOwnerTitle,
           assignedSynsetIds: synsetIdsFromTitle(nextOwnerTitle),
           path: displayPath,
@@ -179,9 +194,7 @@ const deterministicOrder = (records, seed) =>
 const eligibleForSample = (record) => {
   const words = titleWords(record.exactTitle);
   return (
-    record.exactTitleOccurrenceCount === 1 &&
     TOP_LEVEL_BRANCHES.includes(record.topLevelBranch) &&
-    record.evidenceCount <= 20 &&
     words.length >= 2 &&
     words.length <= 7 &&
     Boolean(record.leadingAction) &&
@@ -192,23 +205,28 @@ const eligibleForSample = (record) => {
 export const selectStratifiedSample = ({
   occurrences,
   seed,
-  perStratum = 2,
+  bucketQuotas = {
+    single: 2,
+    "small-multi": 2,
+    "medium-multi": 1,
+    large: 1,
+  },
 }) => {
   if (!clean(seed)) throw new Error("A non-empty sample seed is required");
-  if (!Number.isInteger(perStratum) || perStratum < 1) {
-    throw new Error("perStratum must be a positive integer");
+  for (const [bucket, quota] of Object.entries(bucketQuotas)) {
+    if (!Number.isInteger(quota) || quota < 1) {
+      throw new Error(`Sample quota for ${bucket} must be a positive integer`);
+    }
   }
   const eligible = occurrences.filter(eligibleForSample);
   const selected = [];
   const selectedActions = new Set();
   const strata = TOP_LEVEL_BRANCHES.flatMap((branch) =>
-    ["single", "small-multi", "medium-multi"].map((bucket) => ({
-      branch,
-      bucket,
-    })),
+    Object.keys(bucketQuotas).map((bucket) => ({ branch, bucket })),
   );
 
   for (const stratum of strata) {
+    const quota = bucketQuotas[stratum.bucket];
     const candidates = deterministicOrder(
       eligible.filter(
         (record) =>
@@ -217,19 +235,28 @@ export const selectStratifiedSample = ({
       ),
       `${seed}|${stratum.branch}|${stratum.bucket}`,
     );
+    const repeatedTitleCandidate = candidates.find(
+      (record) =>
+        record.exactTitleOccurrenceCount > 1 &&
+        !selectedActions.has(record.leadingAction.toLowerCase()),
+    );
     const distinctActions = candidates.filter(
       (record) => !selectedActions.has(record.leadingAction.toLowerCase()),
     );
-    const pool = [...distinctActions, ...candidates];
+    const pool = [
+      ...(repeatedTitleCandidate ? [repeatedTitleCandidate] : []),
+      ...distinctActions,
+      ...candidates,
+    ];
     const selectedIds = new Set();
     for (const candidate of pool) {
       if (selectedIds.has(candidate.occurrenceId)) continue;
       selectedIds.add(candidate.occurrenceId);
       selected.push(candidate);
       selectedActions.add(candidate.leadingAction.toLowerCase());
-      if (selectedIds.size === perStratum) break;
+      if (selectedIds.size === quota) break;
     }
-    if (selectedIds.size < perStratum) {
+    if (selectedIds.size < quota) {
       throw new Error(
         `Not enough candidates for ${stratum.branch} / ${stratum.bucket}`,
       );
@@ -248,6 +275,52 @@ const assert = (condition, message) => {
 
 const uniqueIntegers = (values) =>
   [...new Set((values || []).map(Number))].sort((left, right) => left - right);
+
+const distinctIntegers = (values, label) => {
+  assert(Array.isArray(values), `${label} must be an array`);
+  const numbers = values.map(Number);
+  assert(
+    numbers.every(Number.isInteger),
+    `${label} must contain only integer indexes`,
+  );
+  assert(
+    new Set(numbers).size === numbers.length,
+    `${label} contains a repeated index`,
+  );
+  return [...numbers].sort((left, right) => left - right);
+};
+
+const normalizedEvidence = (value) =>
+  clean(value)
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "");
+
+const actionForms = (value) => {
+  const words = normalizeTitle(value).split(/\s+/).filter(Boolean);
+  if (!words.length) return [];
+  const base = words.at(-1);
+  const prefix = words.slice(0, -1).join(" ");
+  const inflections = new Set([base, `${base}s`, `${base}ed`, `${base}ing`]);
+  if (base.endsWith("e")) {
+    inflections.add(`${base}d`);
+    inflections.add(`${base.slice(0, -1)}ing`);
+  }
+  if (/[^aeiou]y$/.test(base)) {
+    inflections.add(`${base.slice(0, -1)}ies`);
+    inflections.add(`${base.slice(0, -1)}ied`);
+  }
+  return [...inflections].map((word) => (prefix ? `${prefix} ${word}` : word));
+};
+
+const containsRecordedAction = (quote, aliases) => {
+  const normalizedQuote = ` ${normalizeTitle(quote)} `;
+  return aliases.some((alias) =>
+    actionForms(alias).some((form) =>
+      normalizedQuote.includes(` ${normalizeTitle(form)} `),
+    ),
+  );
+};
 
 const REQUIRED_AUDIT_CHECKS = [
   "evidenceComplete",
@@ -595,6 +668,258 @@ export const validateSimpleGroupingAssessments = ({
   return validated;
 };
 
+/**
+ * Rob's shared Claude example shows that an O*NET sentence is not always the
+ * atomic evidence unit: one sentence can contain multiple direct objects for
+ * the same action. V3 therefore binds groups to source-supported
+ * predicate-object claims while still requiring every source record to be
+ * represented or the complete case to be deferred.
+ */
+export const validateClaimGroupingAssessment = ({
+  record,
+  assessment,
+  existingTitles,
+  existingTitleCounts,
+}) => {
+  assert(record, "Grouping assessment references an unknown record");
+  assert(
+    assessment.occurrenceId === record.occurrenceId,
+    `Grouping assessment ID mismatch for ${record.exactTitle}`,
+  );
+  const groups = Array.isArray(assessment.groups) ? assessment.groups : [];
+  const deferredTaskIndexes = distinctIntegers(
+    assessment.deferredTaskIndexes || [],
+    `Deferred indexes for ${record.exactTitle}`,
+  );
+  const validIndexes = new Set(record.sourceRecords.map((item) => item.index));
+  const representedRecords = new Set();
+  const seenClaims = new Set();
+  const groupTitles = new Set();
+  const currentAction = record.leadingAction.toLowerCase();
+  const acceptedActionAliases = record.recordedActionAliases?.length
+    ? record.recordedActionAliases
+    : [currentAction];
+
+  const validatedGroups = groups.map((group) => {
+    const title = clean(group.title);
+    const normalized = normalizeTitle(title);
+    const canonicalDirectObject = clean(group.canonicalDirectObject);
+    const normalizedDirectObject = normalizeTitle(canonicalDirectObject);
+    assert(normalized, `A group for ${record.exactTitle} has no title`);
+    assert(
+      titleWords(title).length >= 2 && titleWords(title).length <= 5,
+      `Group "${title}" must contain 2-5 words`,
+    );
+    assert(
+      !groupTitles.has(normalized),
+      `Duplicate group title "${title}" for ${record.exactTitle}`,
+    );
+    groupTitles.add(normalized);
+    assert(
+      leadingAction(title).toLowerCase() === currentAction,
+      `Group "${title}" changes the leading action of ${record.exactTitle}`,
+    );
+    assert(
+      normalizedDirectObject,
+      `Group "${title}" needs one canonical direct object`,
+    );
+    assert(
+      normalized.endsWith(normalizedDirectObject),
+      `Group "${title}" must end with its canonical direct object "${canonicalDirectObject}"`,
+    );
+    const sourceClaims = Array.isArray(group.sourceClaims)
+      ? group.sourceClaims
+      : [];
+    assert(sourceClaims.length > 0, `Group "${title}" has no evidence claims`);
+
+    const validatedClaims = sourceClaims.map((claim) => {
+      const sourceTaskIndex = Number(claim.sourceTaskIndex);
+      const directObject = clean(claim.directObject);
+      const evidenceQuote = clean(claim.evidenceQuote);
+      assert(
+        Number.isInteger(sourceTaskIndex) && validIndexes.has(sourceTaskIndex),
+        `Group "${title}" cites invalid source item ${claim.sourceTaskIndex}`,
+      );
+      assert(
+        directObject,
+        `Group "${title}" has a claim without a direct object`,
+      );
+      assert(
+        evidenceQuote,
+        `Group "${title}" has a claim without an evidence quote`,
+      );
+      const sourceTask = record.sourceRecords[sourceTaskIndex - 1].task;
+      assert(
+        normalizedEvidence(sourceTask).includes(
+          normalizedEvidence(evidenceQuote),
+        ),
+        `Evidence quote for source item ${sourceTaskIndex} is not present in the exact O*NET record`,
+      );
+      assert(
+        normalizedEvidence(evidenceQuote).includes(
+          normalizedEvidence(directObject),
+        ),
+        `Direct object "${directObject}" is not present in its evidence quote`,
+      );
+      assert(
+        containsRecordedAction(evidenceQuote, acceptedActionAliases),
+        `Evidence quote for ${record.exactTitle} source item ${sourceTaskIndex} does not contain the canonical action or a recorded title synonym`,
+      );
+      const claimKey = `${sourceTaskIndex}|${normalizeTitle(directObject)}`;
+      assert(
+        !seenClaims.has(claimKey),
+        `Source claim ${sourceTaskIndex} / ${directObject} appears more than once for ${record.exactTitle}`,
+      );
+      seenClaims.add(claimKey);
+      representedRecords.add(sourceTaskIndex);
+      return {
+        claimId: `claim-${stableHash(`${record.occurrenceId}|${claimKey}`).slice(0, 20)}`,
+        sourceTaskIndex,
+        directObject,
+        evidenceQuote,
+        sourceTask,
+      };
+    });
+    assert(clean(group.reason), `Group "${title}" needs a reason`);
+    const status =
+      normalized === record.normalizedTitle
+        ? "current"
+        : existingTitles.has(normalized)
+          ? "existing"
+          : "new";
+    const existingOccurrenceCount =
+      status === "existing"
+        ? existingTitleCounts?.get(normalized) || 1
+        : undefined;
+    const sourceTaskIndexes = [
+      ...new Set(validatedClaims.map((claim) => claim.sourceTaskIndex)),
+    ].sort((left, right) => left - right);
+    return {
+      title: status === "current" ? record.exactTitle : title,
+      canonicalDirectObject,
+      status,
+      ...(existingOccurrenceCount ? { existingOccurrenceCount } : {}),
+      sourceClaims: validatedClaims,
+      sourceTaskIndexes,
+      sourceTasks: sourceTaskIndexes.map(
+        (index) => record.sourceRecords[index - 1].task,
+      ),
+      reason: clean(group.reason),
+    };
+  });
+
+  for (const index of deferredTaskIndexes) {
+    assert(validIndexes.has(index), `Deferred source item ${index} is invalid`);
+    assert(
+      !representedRecords.has(index),
+      `Source item ${index} is both grouped and deferred`,
+    );
+  }
+  const accounted = new Set([...representedRecords, ...deferredTaskIndexes]);
+  assert(
+    accounted.size === record.sourceRecords.length,
+    `${record.exactTitle} accounts for ${accounted.size} of ${record.sourceRecords.length} source records`,
+  );
+  assert(
+    clean(assessment.reason),
+    `Grouping assessment for ${record.exactTitle} needs a reason`,
+  );
+  assert(
+    ["high", "medium", "low"].includes(assessment.confidence),
+    `Grouping assessment for ${record.exactTitle} needs a valid confidence`,
+  );
+  assert(
+    !deferredTaskIndexes.length ||
+      (validatedGroups.length === 0 &&
+        deferredTaskIndexes.length === record.sourceRecords.length),
+    `A deferred ${record.exactTitle} case must defer every record instead of mixing proposals and deferrals`,
+  );
+
+  const decision =
+    validatedGroups.length === 0
+      ? "defer"
+      : validatedGroups.length === 1
+        ? validatedGroups[0].status === "current"
+          ? "keep"
+          : "rename"
+        : "split";
+
+  return {
+    occurrenceId: assessment.occurrenceId,
+    decision,
+    groups: validatedGroups,
+    deferredTaskIndexes,
+    deferredTasks: deferredTaskIndexes.map(
+      (index) => record.sourceRecords[index - 1].task,
+    ),
+    reason: clean(assessment.reason),
+    confidence: assessment.confidence,
+  };
+};
+
+export const validateClaimGroupingAssessments = ({
+  occurrences,
+  assessments,
+  existingTitles: suppliedExistingTitles,
+  existingTitleCounts: suppliedExistingTitleCounts,
+}) => {
+  const recordsById = new Map(
+    occurrences.map((record) => [record.occurrenceId, record]),
+  );
+  const existingTitles =
+    suppliedExistingTitles ||
+    new Set(occurrences.map((record) => record.normalizedTitle));
+  const existingTitleCounts =
+    suppliedExistingTitleCounts ||
+    occurrences.reduce((counts, record) => {
+      counts.set(
+        record.normalizedTitle,
+        (counts.get(record.normalizedTitle) || 0) + 1,
+      );
+      return counts;
+    }, new Map());
+  const assessmentIds = new Set();
+  const validated = assessments.map((assessment) => {
+    assert(
+      !assessmentIds.has(assessment.occurrenceId),
+      `Duplicate assessment for ${assessment.occurrenceId}`,
+    );
+    assessmentIds.add(assessment.occurrenceId);
+    return validateClaimGroupingAssessment({
+      record: recordsById.get(assessment.occurrenceId),
+      assessment,
+      existingTitles,
+      existingTitleCounts,
+    });
+  });
+  assert(
+    validated.length === occurrences.length,
+    `Expected ${occurrences.length} assessments; received ${validated.length}`,
+  );
+  return validated;
+};
+
+export const claimGroupingPromptTemplate = `You are checking one atomic activity title against every exact O*NET record linked to it. The title was originally reduced to a leading verb and one direct object, so a meaning-defining modifier or an additional direct object may have been omitted.
+
+Inputs:
+- Current atomic title: [CURRENT TITLE]
+- Canonical action and any action synonyms recorded in that title: [RECORDED ACTION ALIASES]
+- Numbered exact O*NET records. Each record also lists every other atomic title already linked to that same sentence: [NUMBERED O*NET RECORDS]
+
+For each record, identify every distinct direct-object claim governed by the current title's action that is not already represented by another linked atomic title. A sentence may supply more than one claim when the same action explicitly governs different objects, such as selling funeral services and selling funeral merchandise. Do not split examples of one stated category, incidental context, or different actions into extra claims.
+
+Group claims that can share one accurate activity title. Use the current title when it is already informative enough; otherwise add only the smallest source-supported modifier needed to identify the activity. Every proposed title must:
+- contain 2-5 words;
+- preserve the current leading action;
+- name exactly one canonical direct object; and
+- avoid audience, method, purpose, venue, or other incidental context.
+
+Consolidate claims requiring the same title. A new title is provisional until a later placement review. Do not evaluate WordNet, change the action, or decide final ontology placement. If the evidence cannot be classified without guessing, defer the whole case.
+
+Return structured data only: groups with title, canonicalDirectObject, sourceClaims, and a short reason. Each sourceClaim must contain sourceTaskIndex, a concise directObject phrase copied from the record, and an exact evidenceQuote copied from the record that includes the canonical action or one recorded action synonym. Also return deferredTaskIndexes, one overall reason, and confidence. Do not return title status or a keep/rename/split label; deterministic code derives them.`;
+
+export const claimGroupingValidationRules = `Bind the result to the exact sampled occurrence and source hierarchy hash. Require every O*NET record to contribute at least one validated predicate-object claim or, if unresolved, require the complete case to be deferred. Permit one record in multiple groups only through distinct direct-object claims for the preserved action. Require each direct-object phrase to occur in an exact evidence quote, each quote to occur in its exact source record, and each quote to include the canonical action or an action synonym recorded in the current title. Reject duplicate claims, duplicate group titles, unsupported source indexes, changed leading actions, titles outside 2-5 words, titles that do not end in their one declared canonical direct object, and partial deferrals. Derive source indexes, exact source tasks, title status, existing-title occurrence count, and keep/rename/split/defer deterministically. An existing title string does not choose a merge or placement target; placement remains a later review. This stage performs no semantic correction or independent model audit.`;
+
 export const simpleGroupingPromptTemplate = `You are checking one atomic activity title against every O*NET record linked to it. The title was originally reduced to a leading verb and direct object, so a meaning-defining modifier may have been omitted.
 
 Inputs:
@@ -630,6 +955,132 @@ Inputs:
 Select the one candidate synset that best represents the leading verb across all supplied records. Use no source outside the supplied candidates and never invent an ID. Return replace with one selectedSynsetId, no-suitable-synset, or uncertain, plus a short evidence-grounded reason and confidence. Do not change the title or ontology placement.`;
 
 export const conditionalWordNetProcedureRules = `Run only after a human accepts the homogeneous title group. First compare the accepted title and every grouped O*NET record with only the currently assigned synset. Stop when it is correct for all. For incorrect-for-all or mixed results, retrieve every verb synset for the exact leading verb from the pinned local WordNet corpus and run the conditional selection prompt only on the affected evidence. Validate every displayed definition and selected ID against that local corpus. Never browse for senses, precompute candidates for accepted assignments, or create a WordNet proposal before title acceptance.`;
+
+export const allCandidateSynsetPromptTemplate = `You are aligning one human-accepted homogeneous activity group with WordNet.
+
+Inputs:
+- Accepted activity title: [GROUP TITLE]
+- Every exact O*NET record and accepted predicate-object claim in the group: [GROUP EVIDENCE]
+- The inherited WordNet synset or synsets whose lemmas match the title's exact action phrase: [MATCHING INHERITED SYNSETS]
+- Every WordNet verb synset retrieved locally for that exact action phrase, with ID, definition, lemmas, and examples: [ALL LOCAL CANDIDATE SYNSETS]
+
+Compare all supplied candidates before judging the inherited assignment. Select the one synset whose definition best represents the action as used across every evidence claim. Do not accept a sense merely because its lemma matches the title. If different evidence claims require different senses, return mixed-evidence so title grouping can be reopened. If no supplied sense fits, return no-suitable-synset. If the evidence cannot distinguish candidates, return uncertain.
+
+Use only the supplied local candidates and never invent an ID. Return structured data only: outcome selected, mixed-evidence, no-suitable-synset, or uncertain; selectedSynsetId only for selected; one short evidence-grounded reason; and confidence. Do not change the title or ontology placement.`;
+
+export const allCandidateWordNetProcedureRules = `Run only after a human accepts a homogeneous title group. Resolve the title's action phrase by selecting the longest locally available WordNet verb lemma that matches the start of the accepted title, so phrasal verbs such as "set up" are not reduced to "set." Filter inherited synsets to those containing that exact action lemma. Retrieve every local WordNet verb synset for the same action phrase, then make one model call containing the accepted title, all accepted evidence claims, matching inherited assignments, and all local candidates. Deterministically verify every displayed and selected ID against the pinned local corpus. Derive keep-assigned when the one selected sense is the sole matching inherited assignment, narrow-assignment when it is one of multiple matching inherited assignments, replace when it is not inherited, or reopen-grouping for mixed-evidence. No WordNet proposal is generated before title acceptance.`;
+
+const normalizeLemma = (value) =>
+  normalizeTitle(clean(value).replace(/_/g, " "));
+
+export const resolveActionPhrase = ({
+  title,
+  canonicalDirectObject,
+  candidateSynsets = [],
+}) => {
+  const normalized = normalizeTitle(title);
+  const normalizedObject = normalizeTitle(canonicalDirectObject);
+  if (normalizedObject && normalized.endsWith(` ${normalizedObject}`)) {
+    const declaredAction = normalized.slice(0, -normalizedObject.length).trim();
+    if (declaredAction) return declaredAction;
+  }
+  const matchingLemmas = candidateSynsets
+    .flatMap((synset) => synset.lemmas || [])
+    .map(normalizeLemma)
+    .filter(
+      (lemma) =>
+        lemma && (normalized === lemma || normalized.startsWith(`${lemma} `)),
+    )
+    .sort((left, right) => right.split(" ").length - left.split(" ").length);
+  return matchingLemmas[0] || normalizeTitle(leadingAction(title));
+};
+
+export const matchingInheritedSynsets = ({
+  title,
+  canonicalDirectObject,
+  inheritedSynsets = [],
+  candidateSynsets = [],
+}) => {
+  const actionPhrase = resolveActionPhrase({
+    title,
+    canonicalDirectObject,
+    candidateSynsets,
+  });
+  return inheritedSynsets.filter((synset) =>
+    (synset.lemmas || []).some(
+      (lemma) => normalizeLemma(lemma) === actionPhrase,
+    ),
+  );
+};
+
+export const validateAllCandidateSynsetAssessment = ({
+  bundle,
+  assessment,
+}) => {
+  assert(bundle, "WordNet assessment references an unknown accepted group");
+  assert(
+    assessment.groupId === bundle.groupId,
+    `WordNet group ID mismatch for ${bundle.groupTitle}`,
+  );
+  assert(
+    ["selected", "mixed-evidence", "no-suitable-synset", "uncertain"].includes(
+      assessment.outcome,
+    ),
+    `Unsupported WordNet outcome for ${bundle.groupTitle}`,
+  );
+  assert(
+    clean(assessment.reason),
+    `${bundle.groupTitle} needs a WordNet reason`,
+  );
+  assert(
+    ["high", "medium", "low"].includes(assessment.confidence),
+    `${bundle.groupTitle} needs a valid WordNet confidence`,
+  );
+  const selectedSynsetId = clean(assessment.selectedSynsetId).toLowerCase();
+  const candidates = new Set(
+    (bundle.candidateSynsets || []).map((item) => item.id.toLowerCase()),
+  );
+  if (assessment.outcome === "selected") {
+    assert(
+      candidates.has(selectedSynsetId),
+      `${bundle.groupTitle} selected a synset outside the local candidates: ${selectedSynsetId}`,
+    );
+  } else {
+    assert(
+      !selectedSynsetId,
+      `${assessment.outcome} cannot select a synset for ${bundle.groupTitle}`,
+    );
+  }
+  const inherited = matchingInheritedSynsets({
+    title: bundle.groupTitle,
+    canonicalDirectObject: bundle.canonicalDirectObject,
+    inheritedSynsets: bundle.inheritedSynsets || [],
+    candidateSynsets: bundle.candidateSynsets || [],
+  }).map((item) => item.id.toLowerCase());
+  const decision =
+    assessment.outcome === "mixed-evidence"
+      ? "reopen-grouping"
+      : assessment.outcome === "no-suitable-synset"
+        ? "no-suitable-synset"
+        : assessment.outcome === "uncertain"
+          ? "uncertain"
+          : inherited.includes(selectedSynsetId)
+            ? inherited.length === 1
+              ? "keep-assigned"
+              : "narrow-assignment"
+            : "replace";
+  return {
+    ...assessment,
+    selectedSynsetId: selectedSynsetId || null,
+    actionPhrase: resolveActionPhrase({
+      title: bundle.groupTitle,
+      canonicalDirectObject: bundle.canonicalDirectObject,
+      candidateSynsets: bundle.candidateSynsets || [],
+    }),
+    matchingInheritedSynsetIds: inherited.sort(),
+    decision,
+  };
+};
 
 export const groupingPromptTemplate = `You are reviewing one exact atomic activity from a work-activity ontology. The ontology title was compressed to one leading verb and one direct object from longer O*NET work descriptions. Compression sometimes omitted modifiers needed to distinguish genuinely different activities.
 

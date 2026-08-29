@@ -37,16 +37,15 @@ const seed = args.seed || sourceSha256;
 const sample = selectStratifiedSample({
   occurrences,
   seed,
-  perStratum: Number(args["per-stratum"] || 2),
 });
 const packet = {
-  schemaVersion: "homogeneous-title-testbed-sample-v1",
+  schemaVersion: "homogeneous-title-testbed-sample-v3",
   generatedAt: new Date().toISOString(),
   sourceFile: path.basename(sourceFile),
   sourceSha256,
   seed,
   selectionRule:
-    "Deterministic hash order; two unique-title atomic activities from each of the single, 2-5 record, and 6-20 record strata in each of the three top-level branches.",
+    "Deterministic hash order within every top-level branch and evidence-count bucket: two single-record, two 2-5-record, one 6-20-record, and one 21+-record occurrence per branch. At most one repeated-title occurrence is prioritized in each stratum so the pilot covers repeated as well as unique titles.",
   inventoryCounts: {
     atomicActivityOccurrences: occurrences.length,
     uniqueTitleCount: new Set(
@@ -54,6 +53,9 @@ const packet = {
     ).size,
     singleOccurrenceTitleCount: occurrences.filter(
       (record) => record.exactTitleOccurrenceCount === 1,
+    ).length,
+    repeatedTitleOccurrenceCount: occurrences.filter(
+      (record) => record.exactTitleOccurrenceCount > 1,
     ).length,
   },
   genericActionDiagnostic: genericActionDiagnostic(occurrences),

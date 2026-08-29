@@ -78,6 +78,7 @@ describe("Society of Mind context renderers", () => {
             {
               title: "Sell Products",
               status: "existing",
+              existingOccurrenceCount: 2,
               sourceTaskIndexes: [2],
               sourceTasks: ["Sell products."],
               reason: "The generic source belongs with the existing node.",
@@ -91,11 +92,13 @@ describe("Society of Mind context renderers", () => {
 
     expect(screen.getByText("Before")).toBeInTheDocument();
     expect(screen.getByText("After")).toBeInTheDocument();
-    expect(screen.getByText("New provisional child")).toBeInTheDocument();
-    expect(screen.getByText("Already in ontology")).toBeInTheDocument();
+    expect(screen.getByText("New provisional title")).toBeInTheDocument();
+    expect(
+      screen.getByText("Title used by 2 ontology occurrences; placement later"),
+    ).toBeInTheDocument();
     expect(
       screen.getByText(
-        "New titles remain provisional children of Sell Product until the later placement review.",
+        "New titles are provisional. They are shown under Sell Product for this review and receive final placement later.",
       ),
     ).toBeInTheDocument();
     expect(screen.getAllByText("1. Sell agricultural products.")).toHaveLength(
@@ -103,6 +106,70 @@ describe("Society of Mind context renderers", () => {
     );
     expect(screen.getAllByText("2. Sell products.")).toHaveLength(2);
     expect(screen.getAllByRole("listitem")).toHaveLength(4);
+  });
+
+  it("shows distinct claims when one source record supports multiple titles", () => {
+    const source =
+      "Coordinate client or patient care and rehabilitation with medical providers.";
+    render(
+      <ContextRenderer
+        context={{
+          type: "title-split",
+          currentTitle: "Coordinate Care",
+          decision: "split",
+          linkedTasks: [source],
+          proposedNodes: [
+            {
+              title: "Coordinate Care",
+              canonicalDirectObject: "Care",
+              status: "current",
+              sourceClaims: [
+                {
+                  claimId: "care-claim",
+                  sourceTaskIndex: 1,
+                  directObject: "client or patient care",
+                  evidenceQuote:
+                    "Coordinate client or patient care and rehabilitation",
+                  sourceTask: source,
+                },
+              ],
+              sourceTaskIndexes: [1],
+              sourceTasks: [source],
+              reason: "Care is one coordinated object.",
+            },
+            {
+              title: "Coordinate Rehabilitation",
+              canonicalDirectObject: "Rehabilitation",
+              status: "new",
+              sourceClaims: [
+                {
+                  claimId: "rehabilitation-claim",
+                  sourceTaskIndex: 1,
+                  directObject: "rehabilitation",
+                  evidenceQuote:
+                    "Coordinate client or patient care and rehabilitation",
+                  sourceTask: source,
+                },
+              ],
+              sourceTaskIndexes: [1],
+              sourceTasks: [source],
+              reason: "Rehabilitation is a second coordinated object.",
+            },
+          ],
+          deferredTaskIndexes: [],
+          deferredTasks: [],
+        }}
+      />,
+    );
+
+    expect(screen.getAllByText("Predicate-object evidence")).toHaveLength(2);
+    expect(
+      screen.getByText(/Direct object: client or patient care\./),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Direct object: rehabilitation\./),
+    ).toBeInTheDocument();
+    expect(screen.getAllByText(`1. ${source}`)).toHaveLength(3);
   });
 
   it("compares inherited and selected WordNet senses with all candidates available", () => {

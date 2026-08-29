@@ -5,10 +5,9 @@ import path from "node:path";
 import process from "node:process";
 
 import {
-  assignedSynsetCheckPromptTemplate,
-  conditionalSynsetSelectionPromptTemplate,
+  allCandidateSynsetPromptTemplate,
+  claimGroupingPromptTemplate,
   extractAtomicActivities,
-  simpleGroupingPromptTemplate,
   stableHash,
 } from "./homogeneous-title-clarity-lib.mjs";
 
@@ -34,7 +33,7 @@ const average = (values) =>
     ? values.reduce((total, value) => total + value, 0) / values.length
     : 0;
 
-// Planning estimate only. The provider meter remains authoritative.
+// Planning scenarios only. The provider meter remains authoritative.
 const tokensForChars = (characters, charsPerToken = 4) =>
   ceil(characters / charsPerToken);
 const tokenRangeForChars = (characters) => ({
@@ -47,26 +46,25 @@ const addRanges = (...ranges) => ({
   central: ranges.reduce((total, range) => total + range.central, 0),
   high: ranges.reduce((total, range) => total + range.high, 0),
 });
-
+const stratumKey = (record) =>
+  `${record.topLevelBranch}\u001f${record.evidenceBucket}`;
 const titlePayload = (record) =>
   JSON.stringify({
     currentAtomicTitle: record.exactTitle,
+    recordedActionAliases: record.recordedActionAliases,
     numberedONetRecords: record.sourceRecords.map((sourceRecord) => ({
       index: sourceRecord.index,
       exactRecord: sourceRecord.exactRecord,
       otherLinkedAtomicTitles: sourceRecord.otherLinkedAtomicTitles,
     })),
   });
-const assignedCheckPayload = (bundle) =>
+const wordNetPayload = (bundle) =>
   JSON.stringify({
     groupTitle: bundle.groupTitle,
-    sourceRecords: bundle.sourceRecords,
-    assignedSynsets: bundle.assignedSynsets,
-  });
-const selectionPayload = (bundle) =>
-  JSON.stringify({
-    groupTitle: bundle.groupTitle,
-    sourceRecords: bundle.sourceRecords,
+    canonicalDirectObject: bundle.canonicalDirectObject,
+    actionPhrase: bundle.actionPhrase,
+    sourceClaims: bundle.sourceClaims,
+    inheritedSynsets: bundle.inheritedSynsets,
     candidateSynsets: bundle.candidateSynsets,
   });
 
@@ -75,7 +73,6 @@ const sourceFile = required(args.source, "--source");
 const sampleFile = required(args.sample, "--sample");
 const groupingsFile = required(args.groupings, "--groupings");
 const pilotBundlesFile = required(args.bundles, "--bundles");
-const pilotAlignmentsFile = required(args.alignments, "--alignments");
 const outputFile = required(args.out, "--out");
 
 const sourceBuffer = fs.readFileSync(sourceFile);
@@ -83,13 +80,15 @@ const sourceSha256 = stableHash(sourceBuffer);
 const samplePacket = readJson(sampleFile);
 const groupingPacket = readJson(groupingsFile);
 const pilotBundlePacket = readJson(pilotBundlesFile);
-const pilotAlignmentPacket = readJson(pilotAlignmentsFile);
-for (const packet of [
-  samplePacket,
-  groupingPacket,
-  pilotBundlePacket,
-  pilotAlignmentPacket,
-]) {
+if (
+  pilotBundlePacket.schemaVersion !== "wordnet-all-candidate-bundles-v3" ||
+  pilotBundlePacket.mode !== "planning-preview"
+) {
+  throw new Error(
+    "The estimate requires a v3 all-candidate planning-preview bundle",
+  );
+}
+for (const packet of [samplePacket, groupingPacket, pilotBundlePacket]) {
   if (packet.sourceSha256 !== sourceSha256) {
     throw new Error("An estimate input does not match the source hierarchy");
   }
@@ -102,7 +101,7 @@ const groupingsById = new Map(
     assessment,
   ]),
 );
-const sampleByBucket = new Map();
+const observedByStratum = new Map();
 let sampleTitleInputChars = 0;
 let sampleTitleOutputChars = 0;
 for (const record of samplePacket.sample) {
@@ -111,165 +110,131 @@ for (const record of samplePacket.sample) {
     throw new Error(`Missing grouping assessment for ${record.occurrenceId}`);
   }
   sampleTitleInputChars +=
-    simpleGroupingPromptTemplate.length + titlePayload(record).length;
+    claimGroupingPromptTemplate.length + titlePayload(record).length;
   sampleTitleOutputChars += JSON.stringify({
-    groups: assessment.groups.map(({ title, sourceTaskIndexes, reason }) => ({
-      title,
-      sourceTaskIndexes,
-      reason,
-    })),
+    groups: assessment.groups.map(
+      ({ title, canonicalDirectObject, sourceClaims, reason }) => ({
+        title,
+        canonicalDirectObject,
+        sourceClaims: sourceClaims.map(
+          ({ sourceTaskIndex, directObject, evidenceQuote }) => ({
+            sourceTaskIndex,
+            directObject,
+            evidenceQuote,
+          }),
+        ),
+        reason,
+      }),
+    ),
     deferredTaskIndexes: assessment.deferredTaskIndexes,
     reason: assessment.reason,
     confidence: assessment.confidence,
   }).length;
-  const bucket = sampleByBucket.get(record.evidenceBucket) || {
+  const key = stratumKey(record);
+  const observed = observedByStratum.get(key) || {
+    branch: record.topLevelBranch,
+    evidenceBucket: record.evidenceBucket,
     cases: 0,
     sourceRecords: 0,
+    predicateObjectClaims: 0,
     homogeneousGroups: 0,
   };
-  bucket.cases += 1;
-  bucket.sourceRecords += record.evidenceCount;
-  bucket.homogeneousGroups += assessment.groups.length;
-  sampleByBucket.set(record.evidenceBucket, bucket);
+  observed.cases += 1;
+  observed.sourceRecords += record.evidenceCount;
+  observed.predicateObjectClaims += assessment.groups.reduce(
+    (total, group) => total + group.sourceClaims.length,
+    0,
+  );
+  observed.homogeneousGroups += assessment.groups.length;
+  observedByStratum.set(key, observed);
 }
 
-const inventoryByBucket = Object.fromEntries(
-  ["single", "small-multi", "medium-multi", "large"].map((bucket) => {
-    const records = fullInventory.filter(
-      (record) => record.evidenceBucket === bucket,
+const inventoryByStratum = new Map();
+for (const record of fullInventory) {
+  const key = stratumKey(record);
+  const inventory = inventoryByStratum.get(key) || {
+    branch: record.topLevelBranch,
+    evidenceBucket: record.evidenceBucket,
+    atomicActivityOccurrences: 0,
+    oNetRecords: 0,
+  };
+  inventory.atomicActivityOccurrences += 1;
+  inventory.oNetRecords += record.evidenceCount;
+  inventoryByStratum.set(key, inventory);
+}
+
+let centralHomogeneousGroups = 0;
+for (const [key, inventory] of inventoryByStratum) {
+  const observed = observedByStratum.get(key);
+  if (!observed?.cases) {
+    throw new Error(
+      `No sample observation for ${key.replace("\u001f", " / ")}`,
     );
-    return [
-      bucket,
-      {
-        atomicActivityOccurrences: records.length,
-        oNetRecords: records.reduce(
-          (total, record) => total + record.evidenceCount,
-          0,
-        ),
-      },
-    ];
-  }),
+  }
+  centralHomogeneousGroups +=
+    inventory.atomicActivityOccurrences *
+    (observed.homogeneousGroups / observed.cases);
+}
+centralHomogeneousGroups = round(centralHomogeneousGroups);
+const totalONetRecords = fullInventory.reduce(
+  (total, record) => total + record.evidenceCount,
+  0,
 );
-const groupsPerCase = (bucket) =>
-  sampleByBucket.get(bucket).homogeneousGroups /
-  sampleByBucket.get(bucket).cases;
-const mediumGroupsPerRecord =
-  sampleByBucket.get("medium-multi").homogeneousGroups /
-  sampleByBucket.get("medium-multi").sourceRecords;
-const centralHomogeneousGroups = round(
-  inventoryByBucket.single.atomicActivityOccurrences * groupsPerCase("single") +
-    inventoryByBucket["small-multi"].atomicActivityOccurrences *
-      groupsPerCase("small-multi") +
-    inventoryByBucket["medium-multi"].atomicActivityOccurrences *
-      groupsPerCase("medium-multi") +
-    inventoryByBucket.large.oNetRecords * mediumGroupsPerRecord,
-);
-const homogeneousGroupRange = {
-  low: fullInventory.length,
-  central: centralHomogeneousGroups,
-  high: round((centralHomogeneousGroups * 4) / 3),
+const homogeneousGroupScenarios = {
+  noSplit: fullInventory.length,
+  stratifiedPilot: centralHomogeneousGroups,
+  oneGroupPerSourceRecord: totalONetRecords,
+  interpretation:
+    "Sensitivity scenarios, not a confidence interval. The middle scenario preserves branch-by-evidence-bucket weights; the upper scenario assumes one resulting group per O*NET record and is not an absolute bound because a multi-object record can yield multiple claims.",
 };
 
 const fullTitleInputChars = fullInventory.reduce(
   (total, record) =>
-    total + simpleGroupingPromptTemplate.length + titlePayload(record).length,
+    total + claimGroupingPromptTemplate.length + titlePayload(record).length,
   0,
 );
 const titleOutputCharsPerGroup =
   sampleTitleOutputChars / groupingPacket.counts.resultingGroups;
-const pilotNonKeep = pilotAlignmentPacket.assessments.filter(
-  (assessment) => assessment.decision !== "keep-assigned",
-);
-const conditionalSelectionRate =
-  pilotNonKeep.length / pilotAlignmentPacket.assessments.length;
-const assignedCheckInputCharsPerGroup = average(
+const wordNetInputCharsPerGroup = average(
   pilotBundlePacket.bundles.map(
     (bundle) =>
-      assignedSynsetCheckPromptTemplate.length +
-      assignedCheckPayload(bundle).length,
+      allCandidateSynsetPromptTemplate.length + wordNetPayload(bundle).length,
   ),
 );
-const assignedCheckOutputCharsPerGroup = average(
-  pilotAlignmentPacket.assessments.map(
-    (assessment) =>
-      JSON.stringify({
-        decision:
-          assessment.decision === "keep-assigned"
-            ? "correct-for-all"
-            : "incorrect-for-all",
-        incorrectRecordIndexes:
-          assessment.decision === "keep-assigned" ? [] : [1],
-        reason: assessment.reason,
-        confidence: assessment.confidence,
-      }).length,
-  ),
-);
-const conditionalPilotBundles = pilotBundlePacket.bundles.filter((bundle) =>
-  pilotNonKeep.some((assessment) => assessment.groupId === bundle.groupId),
-);
-const conditionalSelectionInputCharsPerCall = average(
-  conditionalPilotBundles.map(
-    (bundle) =>
-      conditionalSynsetSelectionPromptTemplate.length +
-      selectionPayload(bundle).length,
-  ),
-);
-const conditionalSelectionOutputCharsPerCall = average(
-  pilotNonKeep.map((assessment) => {
-    const { audit, ...withoutAudit } = assessment;
-    return JSON.stringify(withoutAudit).length;
-  }),
-);
+const wordNetOutputCharsPerGroup = JSON.stringify({
+  outcome: "selected",
+  selectedSynsetId: "example.v.01",
+  reason: "One concise evidence-grounded explanation.",
+  confidence: "high",
+}).length;
 
 const scenarioFor = (groupCount) => {
   const titleGroupingCalls = fullInventory.length;
-  const assignedSynsetCheckCalls = groupCount;
-  const conditionalSynsetSelectionCalls = round(
-    groupCount * conditionalSelectionRate,
-  );
-  const modelCalls =
-    titleGroupingCalls +
-    assignedSynsetCheckCalls +
-    conditionalSynsetSelectionCalls;
+  const allCandidateWordNetCalls = groupCount;
+  const modelCalls = titleGroupingCalls + allCandidateWordNetCalls;
   const stageTokens = {
     titleGroupingInput: tokenRangeForChars(fullTitleInputChars),
     titleGroupingOutput: tokenRangeForChars(
       titleOutputCharsPerGroup * groupCount,
     ),
-    assignedSynsetCheckInput: tokenRangeForChars(
-      assignedCheckInputCharsPerGroup * groupCount,
+    allCandidateWordNetInput: tokenRangeForChars(
+      wordNetInputCharsPerGroup * groupCount,
     ),
-    assignedSynsetCheckOutput: tokenRangeForChars(
-      assignedCheckOutputCharsPerGroup * groupCount,
-    ),
-    conditionalSynsetSelectionInput: tokenRangeForChars(
-      conditionalSelectionInputCharsPerCall * conditionalSynsetSelectionCalls,
-    ),
-    conditionalSynsetSelectionOutput: tokenRangeForChars(
-      conditionalSelectionOutputCharsPerCall * conditionalSynsetSelectionCalls,
+    allCandidateWordNetOutput: tokenRangeForChars(
+      wordNetOutputCharsPerGroup * groupCount,
     ),
   };
   const visiblePacketTokens = addRanges(...Object.values(stageTokens));
   const reasoningTokensPlanningAllowance = {
-    low:
-      titleGroupingCalls * 300 +
-      assignedSynsetCheckCalls * 200 +
-      conditionalSynsetSelectionCalls * 300,
-    central:
-      titleGroupingCalls * 700 +
-      assignedSynsetCheckCalls * 450 +
-      conditionalSynsetSelectionCalls * 700,
-    high:
-      titleGroupingCalls * 1400 +
-      assignedSynsetCheckCalls * 900 +
-      conditionalSynsetSelectionCalls * 1400,
+    low: titleGroupingCalls * 300 + allCandidateWordNetCalls * 250,
+    central: titleGroupingCalls * 700 + allCandidateWordNetCalls * 600,
+    high: titleGroupingCalls * 1400 + allCandidateWordNetCalls * 1200,
   };
   return {
     estimatedHomogeneousGroups: groupCount,
     calls: {
       titleGrouping: titleGroupingCalls,
-      assignedSynsetCheck: assignedSynsetCheckCalls,
-      conditionalSynsetSelection: conditionalSynsetSelectionCalls,
+      allCandidateWordNet: allCandidateWordNetCalls,
       total: modelCalls,
     },
     modelCalls,
@@ -283,36 +248,41 @@ const scenarioFor = (groupCount) => {
   };
 };
 
-const lowScenario = scenarioFor(homogeneousGroupRange.low);
-const centralScenario = scenarioFor(homogeneousGroupRange.central);
-const highScenario = scenarioFor(homogeneousGroupRange.high);
+const noSplitScenario = scenarioFor(homogeneousGroupScenarios.noSplit);
+const stratifiedPilotScenario = scenarioFor(
+  homogeneousGroupScenarios.stratifiedPilot,
+);
+const oneGroupPerSourceRecordScenario = scenarioFor(
+  homogeneousGroupScenarios.oneGroupPerSourceRecord,
+);
 const concurrency = 32;
 const retryFactor = 1.15;
 const elapsedFor = (scenario, seconds) =>
   Number(
     (
       ((scenario.calls.titleGrouping * seconds.title +
-        scenario.calls.assignedSynsetCheck * seconds.check +
-        scenario.calls.conditionalSynsetSelection * seconds.selection) *
+        scenario.calls.allCandidateWordNet * seconds.wordNet) *
         retryFactor) /
       concurrency /
       3600
     ).toFixed(1),
   );
 const elapsedWallTimeHours = {
-  low: elapsedFor(lowScenario, { title: 12, check: 10, selection: 14 }),
-  central: elapsedFor(centralScenario, {
+  noSplit: elapsedFor(noSplitScenario, { title: 12, wordNet: 12 }),
+  stratifiedPilot: elapsedFor(stratifiedPilotScenario, {
     title: 18,
-    check: 14,
-    selection: 20,
+    wordNet: 18,
   }),
-  high: elapsedFor(highScenario, { title: 30, check: 24, selection: 35 }),
+  oneGroupPerSourceRecord: elapsedFor(oneGroupPerSourceRecordScenario, {
+    title: 30,
+    wordNet: 30,
+  }),
   assumptions:
-    "32 concurrent calls with stage-specific low/central/high latency assumptions and 15% retry or repair overhead. Provider throughput and ACCESS concurrency limits can dominate this estimate.",
+    "32 concurrent calls, stage-specific latency scenarios, and 15% retry or repair overhead. Provider throughput and ACCESS concurrency limits can dominate elapsed time.",
 };
 
 const output = {
-  schemaVersion: "homogeneous-title-full-run-estimate-v2",
+  schemaVersion: "homogeneous-title-full-run-estimate-v3",
   generatedAt: new Date().toISOString(),
   sourceFile: path.basename(sourceFile),
   sourceSha256,
@@ -320,55 +290,51 @@ const output = {
     sample: stableHash(fs.readFileSync(sampleFile)),
     groupings: stableHash(fs.readFileSync(groupingsFile)),
     priorWordNetPilotBundles: stableHash(fs.readFileSync(pilotBundlesFile)),
-    priorWordNetPilotAlignments: stableHash(
-      fs.readFileSync(pilotAlignmentsFile),
-    ),
   },
   inventory: {
     atomicActivityOccurrences: fullInventory.length,
     uniqueExactTitles: new Set(
       fullInventory.map((record) => record.normalizedTitle),
     ).size,
-    oNetRecords: fullInventory.reduce(
-      (total, record) => total + record.evidenceCount,
-      0,
-    ),
-    byEvidenceBucket: inventoryByBucket,
+    repeatedTitleOccurrences: fullInventory.filter(
+      (record) => record.exactTitleOccurrenceCount > 1,
+    ).length,
+    oNetRecords: totalONetRecords,
+    byStratum: Object.fromEntries(inventoryByStratum),
   },
   sampleBasis: {
+    interpretation:
+      "A review-interface pilot, not an accuracy or reliability evaluation. Keep cards are model-generated status-quo proposals, not independent controls or gold labels.",
     atomicActivityOccurrences: samplePacket.sample.length,
     homogeneousGroups: groupingPacket.counts.resultingGroups,
     titleDecisions: groupingPacket.counts,
-    observedByEvidenceBucket: Object.fromEntries(sampleByBucket),
-    priorWordNetPilot: {
-      groups: pilotAlignmentPacket.assessments.length,
-      groupsNeedingConditionalSelection: pilotNonKeep.length,
-      observedConditionalSelectionRate: conditionalSelectionRate,
-      interpretation:
-        "The conditional rate comes from the prior 42-group pilot and is used only for planning. The accepted v2 groups have not been sent through WordNet alignment.",
-    },
+    observedByStratum: Object.fromEntries(observedByStratum),
     exactSerializedTitlePacketTokens: {
       input: tokenRangeForChars(sampleTitleInputChars),
       output: tokenRangeForChars(sampleTitleOutputChars),
     },
+    wordNetPacketSizingBasis: {
+      priorPilotGroups: pilotBundlePacket.bundles.length,
+      use: "Only serialized candidate-set size is reused. Prior semantic decisions and fallback rates are not extrapolated.",
+    },
   },
   recommendedModelPlan: [
     {
-      stages: ["homogeneous title grouping", "conditional synset selection"],
+      stages: ["claim-aware homogeneous title grouping"],
       model: "gpt-5.6-terra",
       reasoningEffort: "high",
-      role: "single structured semantic call followed by expert review",
+      role: "one structured semantic call per atomic-title occurrence",
     },
     {
-      stages: ["assigned synset fit check"],
+      stages: ["all-candidate WordNet alignment after title acceptance"],
       model: "gpt-5.6-terra",
-      reasoningEffort: "medium",
-      role: "bounded definition-to-evidence check",
+      reasoningEffort: "high",
+      role: "one comparison call per accepted homogeneous group after deterministic local candidate retrieval",
     },
     {
       stages: [
-        "source binding",
-        "one-record-one-group coverage",
+        "source and claim binding",
+        "2-5-word title validation",
         "title status",
         "local WordNet retrieval",
       ],
@@ -378,36 +344,31 @@ const output = {
     },
   ],
   projection: {
-    homogeneousGroups: {
-      ...homogeneousGroupRange,
-      interpretation:
-        "Planning range, not a statistical confidence interval. The central case applies observed v2 sample rates by evidence bucket and the medium-record rate to unsampled large cases; the high case adds one third for sample and large-case uncertainty.",
-    },
-    streamlinedConditionalPipeline: {
-      lowScenario,
-      centralScenario,
-      highScenario,
+    homogeneousGroupScenarios,
+    claimAwareAllCandidatePipeline: {
+      noSplitScenario,
+      stratifiedPilotScenario,
+      oneGroupPerSourceRecordScenario,
       elapsedWallTimeHours,
-      conditionalSelectionRate,
       directApiCharge: {
         amountUsd: 0,
         interpretation:
-          "The requested execution path uses the approved ACCESS allocation rather than a separately billed external API. This does not mean allocation consumption is zero.",
+          "The requested execution path uses the approved ACCESS allocation rather than a separately billed external API. Allocation consumption is not zero.",
       },
     },
   },
   cautions: [
-    "Token counts are planning estimates from exact serialized packets at 3.5-4.5 characters per token; only the model service meter can report exact tokens.",
-    "Reasoning tokens are not present in saved outputs, so the ACCESS total includes a separate stage-specific planning allowance.",
-    "The title sample balances evidence strata and contains only six cases per observed stratum; projected group growth is the largest uncertainty.",
-    "The sample contains no title with more than 20 O*NET records. A dedicated large-case pilot remains necessary before a full run.",
-    "WordNet work starts only after expert acceptance of each title grouping. The conditional-selection estimate comes from the prior pilot, not accepted v2 title groups.",
-    "Human review time is excluded. No model proposal or reviewer response automatically mutates the ontology.",
+    "Token counts are planning scenarios from serialized packets at 3.5-4.5 characters per token; only the model service meter can report exact usage.",
+    "Reasoning tokens are unavailable in saved outputs, so stage-specific allowances are shown separately.",
+    "The 18-case pilot includes repeated and 21+-record occurrences in every top-level branch, but only one medium and one large case per branch; its extrapolation remains fragile.",
+    "The pilot has no independent human gold labels, blind holdout, repeated model runs, or measured latency. It cannot establish semantic accuracy, reliability, or production duration.",
+    "WordNet work begins only after expert acceptance. All candidates are shown in one call to avoid anchoring on the inherited sense demonstrated in Rob's shared Claude dialogue.",
+    "Human review time is excluded. No proposal or reviewer response automatically mutates the ontology.",
   ],
 };
 
 fs.mkdirSync(path.dirname(outputFile), { recursive: true });
 fs.writeFileSync(outputFile, `${JSON.stringify(output, null, 2)}\n`, "utf8");
 process.stdout.write(
-  `PASS: estimated ${fullInventory.length} title cases, ${centralHomogeneousGroups} central groups, and ${centralScenario.modelCalls} central model calls\n${outputFile}\n`,
+  `PASS: projected ${fullInventory.length} title cases and ${centralHomogeneousGroups} stratified-pilot groups\n${outputFile}\n`,
 );

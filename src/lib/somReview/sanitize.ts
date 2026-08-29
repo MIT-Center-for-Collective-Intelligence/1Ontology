@@ -270,7 +270,20 @@ const sanitizeContext = (context: any): SomReviewContext => {
         linkedTasks: context.linkedTasks || [],
         proposedNodes: (context.proposedNodes || []).map((node: any) => ({
           title: node.title,
+          canonicalDirectObject: cleanText(node.canonicalDirectObject),
           status: node.status,
+          existingOccurrenceCount: Number.isInteger(
+            node.existingOccurrenceCount,
+          )
+            ? Number(node.existingOccurrenceCount)
+            : undefined,
+          sourceClaims: (node.sourceClaims || []).map((claim: any) => ({
+            claimId: cleanText(claim.claimId),
+            sourceTaskIndex: Number(claim.sourceTaskIndex),
+            directObject: cleanText(claim.directObject),
+            evidenceQuote: cleanText(claim.evidenceQuote),
+            sourceTask: cleanText(claim.sourceTask),
+          })),
           sourceTaskIndexes: node.sourceTaskIndexes || [],
           sourceTasks: node.sourceTasks || [],
           reason: node.reason,
