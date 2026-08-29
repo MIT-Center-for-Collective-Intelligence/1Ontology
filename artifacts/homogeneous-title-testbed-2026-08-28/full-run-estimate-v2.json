@@ -1,0 +1,312 @@
+{
+  "schemaVersion": "homogeneous-title-full-run-estimate-v2",
+  "generatedAt": "2026-08-29T13:52:07.197Z",
+  "sourceFile": "0401_FINALHIERARCHY.json",
+  "sourceSha256": "f19ce789bce298b0564045fb87427eebd1193b89c133d17519c097dc3e0eb319",
+  "inputHashes": {
+    "sample": "b1ba2ba8820ad18a56aad1d584921d3b5e1bfbb2755edd98c3266abfde232e39",
+    "groupings": "9750eaf2dc6cccb22f440240f37a44d5ae20e02b66e88d0c52f12e09ee839c61",
+    "priorWordNetPilotBundles": "914718f53e2b12935fb48cf01ace13f850f77f35f1556e63391fd35a47ae0245",
+    "priorWordNetPilotAlignments": "1d6471b26861bc60782304347889d699633781320f452d1f55b5dbcff0762761"
+  },
+  "inventory": {
+    "atomicActivityOccurrences": 20491,
+    "uniqueExactTitles": 15994,
+    "oNetRecords": 53608,
+    "byEvidenceBucket": {
+      "single": {
+        "atomicActivityOccurrences": 13720,
+        "oNetRecords": 13720
+      },
+      "small-multi": {
+        "atomicActivityOccurrences": 5159,
+        "oNetRecords": 13913
+      },
+      "medium-multi": {
+        "atomicActivityOccurrences": 1285,
+        "oNetRecords": 12704
+      },
+      "large": {
+        "atomicActivityOccurrences": 327,
+        "oNetRecords": 13271
+      }
+    }
+  },
+  "sampleBasis": {
+    "atomicActivityOccurrences": 18,
+    "homogeneousGroups": 48,
+    "titleDecisions": {
+      "cases": 18,
+      "keep": 7,
+      "rename": 4,
+      "split": 7,
+      "defer": 0,
+      "resultingGroups": 48
+    },
+    "observedByEvidenceBucket": {
+      "single": {
+        "cases": 6,
+        "sourceRecords": 6,
+        "homogeneousGroups": 6
+      },
+      "small-multi": {
+        "cases": 6,
+        "sourceRecords": 15,
+        "homogeneousGroups": 9
+      },
+      "medium-multi": {
+        "cases": 6,
+        "sourceRecords": 49,
+        "homogeneousGroups": 33
+      }
+    },
+    "priorWordNetPilot": {
+      "groups": 42,
+      "groupsNeedingConditionalSelection": 16,
+      "observedConditionalSelectionRate": 0.38095238095238093,
+      "interpretation": "The conditional rate comes from the prior 42-group pilot and is used only for planning. The accepted v2 groups have not been sent through WordNet alignment."
+    },
+    "exactSerializedTitlePacketTokens": {
+      "input": {
+        "low": 10400,
+        "central": 11699,
+        "high": 13371
+      },
+      "output": {
+        "low": 2379,
+        "central": 2676,
+        "high": 3058
+      }
+    }
+  },
+  "recommendedModelPlan": [
+    {
+      "stages": [
+        "homogeneous title grouping",
+        "conditional synset selection"
+      ],
+      "model": "gpt-5.6-terra",
+      "reasoningEffort": "high",
+      "role": "single structured semantic call followed by expert review"
+    },
+    {
+      "stages": [
+        "assigned synset fit check"
+      ],
+      "model": "gpt-5.6-terra",
+      "reasoningEffort": "medium",
+      "role": "bounded definition-to-evidence check"
+    },
+    {
+      "stages": [
+        "source binding",
+        "one-record-one-group coverage",
+        "title status",
+        "local WordNet retrieval"
+      ],
+      "model": null,
+      "reasoningEffort": null,
+      "role": "deterministic local validation"
+    }
+  ],
+  "projection": {
+    "homogeneousGroups": {
+      "low": 20491,
+      "central": 37464,
+      "high": 49952,
+      "interpretation": "Planning range, not a statistical confidence interval. The central case applies observed v2 sample rates by evidence bucket and the medium-record rate to unsampled large cases; the high case adds one third for sample and large-case uncertainty."
+    },
+    "streamlinedConditionalPipeline": {
+      "lowScenario": {
+        "estimatedHomogeneousGroups": 20491,
+        "calls": {
+          "titleGrouping": 20491,
+          "assignedSynsetCheck": 20491,
+          "conditionalSynsetSelection": 7806,
+          "total": 48788
+        },
+        "modelCalls": 48788,
+        "visiblePacketTokens": {
+          "low": 25079430,
+          "central": 28214359,
+          "high": 32244981
+        },
+        "reasoningTokensPlanningAllowance": {
+          "low": 12587300,
+          "central": 29028850,
+          "high": 58057700
+        },
+        "totalAccessTokensPlanningRange": {
+          "low": 37666730,
+          "central": 57243209,
+          "high": 90302681
+        },
+        "stageTokens": {
+          "titleGroupingInput": {
+            "low": 10235640,
+            "central": 11515095,
+            "high": 13160108
+          },
+          "titleGroupingOutput": {
+            "low": 1015349,
+            "central": 1142267,
+            "high": 1305448
+          },
+          "assignedSynsetCheckInput": {
+            "low": 7969156,
+            "central": 8965301,
+            "high": 10246058
+          },
+          "assignedSynsetCheckOutput": {
+            "low": 1162458,
+            "central": 1307765,
+            "high": 1494589
+          },
+          "conditionalSynsetSelectionInput": {
+            "low": 4167103,
+            "central": 4687991,
+            "high": 5357704
+          },
+          "conditionalSynsetSelectionOutput": {
+            "low": 529724,
+            "central": 595940,
+            "high": 681074
+          }
+        }
+      },
+      "centralScenario": {
+        "estimatedHomogeneousGroups": 37464,
+        "calls": {
+          "titleGrouping": 20491,
+          "assignedSynsetCheck": 37464,
+          "conditionalSynsetSelection": 14272,
+          "total": 72227
+        },
+        "modelCalls": 72227,
+        "visiblePacketTokens": {
+          "low": 37374866,
+          "central": 42046722,
+          "high": 48053398
+        },
+        "reasoningTokensPlanningAllowance": {
+          "low": 17921700,
+          "central": 41192900,
+          "high": 82385800
+        },
+        "totalAccessTokensPlanningRange": {
+          "low": 55296566,
+          "central": 83239622,
+          "high": 130439198
+        },
+        "stageTokens": {
+          "titleGroupingInput": {
+            "low": 10235640,
+            "central": 11515095,
+            "high": 13160108
+          },
+          "titleGroupingOutput": {
+            "low": 1856376,
+            "central": 2088423,
+            "high": 2386769
+          },
+          "assignedSynsetCheckInput": {
+            "low": 14570127,
+            "central": 16391392,
+            "high": 18733020
+          },
+          "assignedSynsetCheckOutput": {
+            "low": 2125339,
+            "central": 2391006,
+            "high": 2732579
+          },
+          "conditionalSynsetSelectionInput": {
+            "low": 7618870,
+            "central": 8571228,
+            "high": 9795690
+          },
+          "conditionalSynsetSelectionOutput": {
+            "low": 968514,
+            "central": 1089578,
+            "high": 1245232
+          }
+        }
+      },
+      "highScenario": {
+        "estimatedHomogeneousGroups": 49952,
+        "calls": {
+          "titleGrouping": 20491,
+          "assignedSynsetCheck": 49952,
+          "conditionalSynsetSelection": 19029,
+          "total": 89472
+        },
+        "modelCalls": 89472,
+        "visiblePacketTokens": {
+          "low": 46421073,
+          "central": 52223707,
+          "high": 59684237
+        },
+        "reasoningTokensPlanningAllowance": {
+          "low": 21846400,
+          "central": 50142400,
+          "high": 100284800
+        },
+        "totalAccessTokensPlanningRange": {
+          "low": 68267473,
+          "central": 102366107,
+          "high": 159969037
+        },
+        "stageTokens": {
+          "titleGroupingInput": {
+            "low": 10235640,
+            "central": 11515095,
+            "high": 13160108
+          },
+          "titleGroupingOutput": {
+            "low": 2475168,
+            "central": 2784564,
+            "high": 3182359
+          },
+          "assignedSynsetCheckInput": {
+            "low": 19426835,
+            "central": 21855190,
+            "high": 24977360
+          },
+          "assignedSynsetCheckOutput": {
+            "low": 2833785,
+            "central": 3188008,
+            "high": 3643438
+          },
+          "conditionalSynsetSelectionInput": {
+            "low": 10158315,
+            "central": 11428104,
+            "high": 13060691
+          },
+          "conditionalSynsetSelectionOutput": {
+            "low": 1291330,
+            "central": 1452746,
+            "high": 1660281
+          }
+        }
+      },
+      "elapsedWallTimeHours": {
+        "low": 5.6,
+        "central": 11.8,
+        "high": 24.8,
+        "assumptions": "32 concurrent calls with stage-specific low/central/high latency assumptions and 15% retry or repair overhead. Provider throughput and ACCESS concurrency limits can dominate this estimate."
+      },
+      "conditionalSelectionRate": 0.38095238095238093,
+      "directApiCharge": {
+        "amountUsd": 0,
+        "interpretation": "The requested execution path uses the approved ACCESS allocation rather than a separately billed external API. This does not mean allocation consumption is zero."
+      }
+    }
+  },
+  "cautions": [
+    "Token counts are planning estimates from exact serialized packets at 3.5-4.5 characters per token; only the model service meter can report exact tokens.",
+    "Reasoning tokens are not present in saved outputs, so the ACCESS total includes a separate stage-specific planning allowance.",
+    "The title sample balances evidence strata and contains only six cases per observed stratum; projected group growth is the largest uncertainty.",
+    "The sample contains no title with more than 20 O*NET records. A dedicated large-case pilot remains necessary before a full run.",
+    "WordNet work starts only after expert acceptance of each title grouping. The conditional-selection estimate comes from the prior pilot, not accepted v2 title groups.",
+    "Human review time is excluded. No model proposal or reviewer response automatically mutates the ontology."
+  ]
+}

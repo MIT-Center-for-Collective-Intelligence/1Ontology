@@ -452,6 +452,185 @@ export const validateGroupingAssessments = ({
   return validated;
 };
 
+/**
+ * Rob's streamlined title pass treats an O*NET record as the unit being
+ * grouped. The model proposes titles and record indexes; deterministic code
+ * derives title status and the keep/rename/split/defer decision.
+ */
+export const validateSimpleGroupingAssessment = ({
+  record,
+  assessment,
+  existingTitles,
+}) => {
+  assert(record, "Grouping assessment references an unknown record");
+  assert(
+    assessment.occurrenceId === record.occurrenceId,
+    `Grouping assessment ID mismatch for ${record.exactTitle}`,
+  );
+  const groups = Array.isArray(assessment.groups) ? assessment.groups : [];
+  const deferredTaskIndexes = uniqueIntegers(assessment.deferredTaskIndexes);
+  const validIndexes = new Set(record.sourceRecords.map((item) => item.index));
+  const covered = new Set();
+  const groupTitles = new Set();
+  const currentAction = record.leadingAction.toLowerCase();
+
+  const validatedGroups = groups.map((group) => {
+    const normalized = normalizeTitle(group.title);
+    assert(normalized, `A group for ${record.exactTitle} has no title`);
+    assert(
+      !groupTitles.has(normalized),
+      `Duplicate group title "${group.title}" for ${record.exactTitle}`,
+    );
+    groupTitles.add(normalized);
+    assert(
+      leadingAction(group.title).toLowerCase() === currentAction,
+      `Group "${group.title}" changes the leading action of ${record.exactTitle}`,
+    );
+    const indexes = uniqueIntegers(group.sourceTaskIndexes);
+    assert(indexes.length > 0, `Group "${group.title}" has no evidence`);
+    for (const index of indexes) {
+      assert(
+        validIndexes.has(index),
+        `Group "${group.title}" cites invalid source item ${index}`,
+      );
+      assert(
+        !covered.has(index),
+        `Source item ${index} appears in more than one group for ${record.exactTitle}`,
+      );
+      covered.add(index);
+    }
+    assert(clean(group.reason), `Group "${group.title}" needs a reason`);
+    const status =
+      normalized === record.normalizedTitle
+        ? "current"
+        : existingTitles.has(normalized)
+          ? "existing"
+          : "new";
+    return {
+      title: clean(group.title),
+      status,
+      sourceTaskIndexes: indexes,
+      sourceTasks: indexes.map((index) => record.sourceRecords[index - 1].task),
+      reason: clean(group.reason),
+    };
+  });
+
+  for (const index of deferredTaskIndexes) {
+    assert(validIndexes.has(index), `Deferred source item ${index} is invalid`);
+    assert(
+      !covered.has(index),
+      `Source item ${index} is both grouped and deferred`,
+    );
+  }
+  const accounted = new Set([...covered, ...deferredTaskIndexes]);
+  assert(
+    accounted.size === record.sourceRecords.length,
+    `${record.exactTitle} accounts for ${accounted.size} of ${record.sourceRecords.length} source records`,
+  );
+  assert(
+    clean(assessment.reason),
+    `Grouping assessment for ${record.exactTitle} needs a reason`,
+  );
+  assert(
+    ["high", "medium", "low"].includes(assessment.confidence),
+    `Grouping assessment for ${record.exactTitle} needs a valid confidence`,
+  );
+  assert(
+    !deferredTaskIndexes.length ||
+      (validatedGroups.length === 0 &&
+        deferredTaskIndexes.length === record.sourceRecords.length),
+    `A deferred ${record.exactTitle} case must defer every record instead of mixing proposals and deferrals`,
+  );
+
+  const decision =
+    validatedGroups.length === 0
+      ? "defer"
+      : validatedGroups.length === 1
+        ? validatedGroups[0].status === "current"
+          ? "keep"
+          : "rename"
+        : "split";
+
+  return {
+    occurrenceId: assessment.occurrenceId,
+    decision,
+    groups: validatedGroups,
+    deferredTaskIndexes,
+    deferredTasks: deferredTaskIndexes.map(
+      (index) => record.sourceRecords[index - 1].task,
+    ),
+    reason: clean(assessment.reason),
+    confidence: assessment.confidence,
+  };
+};
+
+export const validateSimpleGroupingAssessments = ({
+  occurrences,
+  assessments,
+  existingTitles: suppliedExistingTitles,
+}) => {
+  const recordsById = new Map(
+    occurrences.map((record) => [record.occurrenceId, record]),
+  );
+  const existingTitles =
+    suppliedExistingTitles ||
+    new Set(occurrences.map((record) => record.normalizedTitle));
+  const assessmentIds = new Set();
+  const validated = assessments.map((assessment) => {
+    assert(
+      !assessmentIds.has(assessment.occurrenceId),
+      `Duplicate assessment for ${assessment.occurrenceId}`,
+    );
+    assessmentIds.add(assessment.occurrenceId);
+    return validateSimpleGroupingAssessment({
+      record: recordsById.get(assessment.occurrenceId),
+      assessment,
+      existingTitles,
+    });
+  });
+  assert(
+    validated.length === occurrences.length,
+    `Expected ${occurrences.length} assessments; received ${validated.length}`,
+  );
+  return validated;
+};
+
+export const simpleGroupingPromptTemplate = `You are checking one atomic activity title against every O*NET record linked to it. The title was originally reduced to a leading verb and direct object, so a meaning-defining modifier may have been omitted.
+
+Inputs:
+- Current atomic title: [CURRENT TITLE]
+- Numbered exact O*NET records. Each record also lists any other atomic titles linked to that same sentence: [NUMBERED O*NET RECORDS]
+
+For each numbered record, consider only the clause represented by the current title's leading verb and direct object. Assign that record exactly once:
+- to the current title when the title already describes the activity at a useful level of generality; or
+- to one clearer title made by adding only the smallest source-supported modifier needed to distinguish a more specific activity.
+
+Put records requiring the same title in one group. Preserve the current leading verb. Do not divide one O*NET record among multiple groups. Other actions or objects in the sentence are handled by their other linked atomic titles or a later coverage review. Do not evaluate WordNet senses, replace the leading verb, decide final ontology placement, or add audience, method, purpose, venue, or other incidental context. A new title is only a provisional child of the current title until later placement review.
+
+If any record cannot be classified without guessing, defer the whole case. Return structured data only: groups with title, sourceTaskIndexes, and a short evidence-grounded reason; deferredTaskIndexes; one overall reason; and confidence. Do not return a keep/rename/split label or title status; deterministic code derives them.`;
+
+export const simpleGroupingValidationRules = `Mechanically bind the result to the sampled source occurrence and exact source hierarchy hash. Require every O*NET record index to appear exactly once across the proposed groups or, when the case is unresolved, require every index to be deferred. Reject duplicate group titles, changed leading verbs, missing or repeated indexes, partial deferrals, and unsupported record indexes. Derive current/existing/new status from the exact ontology title inventory and derive keep, rename, split, or defer from the validated groups. Require concise reasons and confidence. This validator performs no semantic correction and no independent model audit.`;
+
+export const assignedSynsetCheckPromptTemplate = `You are checking the WordNet verb sense currently assigned to one accepted homogeneous activity group.
+
+Inputs:
+- Accepted activity title: [GROUP TITLE]
+- Every exact O*NET record in this accepted group: [GROUP O*NET RECORDS]
+- Current assigned WordNet synset ID, definition, lemmas, and examples: [ASSIGNED SYNSET]
+
+Judge whether the assigned synset accurately represents the leading verb as used in every supplied record. Use the complete title and evidence, not the verb string alone. Return correct-for-all, incorrect-for-all, mixed, or uncertain. For mixed, list the exact record indexes for which the synset is incorrect. Do not search WordNet, suggest a replacement, change the title, or decide placement.`;
+
+export const conditionalSynsetSelectionPromptTemplate = `The assigned WordNet sense was not correct for every record in one accepted homogeneous activity group.
+
+Inputs:
+- Accepted activity title: [GROUP TITLE]
+- The exact O*NET records needing a different sense: [FLAGGED O*NET RECORDS]
+- Every WordNet verb synset retrieved locally for the title's exact leading verb, with IDs, definitions, lemmas, and examples: [LOCAL CANDIDATE SYNSETS]
+
+Select the one candidate synset that best represents the leading verb across all supplied records. Use no source outside the supplied candidates and never invent an ID. Return replace with one selectedSynsetId, no-suitable-synset, or uncertain, plus a short evidence-grounded reason and confidence. Do not change the title or ontology placement.`;
+
+export const conditionalWordNetProcedureRules = `Run only after a human accepts the homogeneous title group. First compare the accepted title and every grouped O*NET record with only the currently assigned synset. Stop when it is correct for all. For incorrect-for-all or mixed results, retrieve every verb synset for the exact leading verb from the pinned local WordNet corpus and run the conditional selection prompt only on the affected evidence. Validate every displayed definition and selected ID against that local corpus. Never browse for senses, precompute candidates for accepted assignments, or create a WordNet proposal before title acceptance.`;
+
 export const groupingPromptTemplate = `You are reviewing one exact atomic activity from a work-activity ontology. The ontology title was compressed to one leading verb and one direct object from longer O*NET work descriptions. Compression sometimes omitted modifiers needed to distinguish genuinely different activities.
 
 Inputs:

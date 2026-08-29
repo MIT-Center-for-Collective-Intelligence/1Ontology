@@ -1,0 +1,780 @@
+{
+  "schemaVersion": "homogeneous-title-testbed-validated-v2",
+  "generatedAt": "2026-08-29T13:51:42.172Z",
+  "sourceFile": "0401_FINALHIERARCHY.json",
+  "sourceSha256": "f19ce789bce298b0564045fb87427eebd1193b89c133d17519c097dc3e0eb319",
+  "sampleFile": "sample-packet.json",
+  "sampleSha256": "b1ba2ba8820ad18a56aad1d584921d3b5e1bfbb2755edd98c3266abfde232e39",
+  "assessmentsFile": "grouping-assessments-v2.json",
+  "assessmentsSha256": "6b1269b4c014cda81623732cc4fafa1c8aa01ee0927a84fd690e53a8a6427f39",
+  "promptVersions": {
+    "grouping": "access-homogeneous-title-grouping-2026-08-29-v2",
+    "validator": "homogeneous-title-grouping-validator-2026-08-29-v2"
+  },
+  "promptSha256": {
+    "grouping": "6fd5eb03853a8019630bf379eb9de2cfe2bb6ef25710dc5a4bbab368bc3b4973",
+    "validator": "713721814c75ada083824251cccd1a355a4d86fc598641865230916bcdceb5c7"
+  },
+  "counts": {
+    "cases": 18,
+    "keep": 7,
+    "rename": 4,
+    "split": 7,
+    "defer": 0,
+    "resultingGroups": 48
+  },
+  "assessments": [
+    {
+      "occurrenceId": "atomic-ed7f926d6f8a2afe185c",
+      "decision": "keep",
+      "groups": [
+        {
+          "title": "Outline Pattern",
+          "status": "current",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Draw patterns, using measurements, designs, plaster casts, or customer specifications, and position or outline patterns on work pieces."
+          ],
+          "reason": "The linked clause explicitly describes outlining patterns, so the current title is already accurate."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "The one relevant clause is represented without needing a modifier.",
+      "confidence": "high"
+    },
+    {
+      "occurrenceId": "atomic-9161b89ea9fa3b0fb108",
+      "decision": "rename",
+      "groups": [
+        {
+          "title": "Compare Environmental Impact",
+          "status": "new",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Compare the performance or environmental impact of nanomaterials by nanoparticle size, shape, or organization."
+          ],
+          "reason": "The record's impact object is specifically environmental; performance is already represented by another linked atomic title."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "Adding the source-supported environmental modifier makes the title informative without importing incidental context.",
+      "confidence": "high"
+    },
+    {
+      "occurrenceId": "atomic-4443f0439ebf52a58824",
+      "decision": "keep",
+      "groups": [
+        {
+          "title": "Document Alternative",
+          "status": "current",
+          "sourceTaskIndexes": [
+            1,
+            2
+          ],
+          "sourceTasks": [
+            "Research, document, rate, or select alternatives for Web architecture or technologies.",
+            "Research, document, rate, or select alternatives for Web architecture or technologies."
+          ],
+          "reason": "Both duplicate records use document with alternatives as its object, and the other coordinated actions have their own linked titles."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "The current title accurately covers both records at the same useful level of generality.",
+      "confidence": "high"
+    },
+    {
+      "occurrenceId": "atomic-5ea2fd867a90d0098f88",
+      "decision": "rename",
+      "groups": [
+        {
+          "title": "Store Data",
+          "status": "new",
+          "sourceTaskIndexes": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "sourceTasks": [
+            "Compress, digitize, duplicate, and store audio and video data.",
+            "Store, retrieve, and manipulate data for analysis of system capabilities and requirements.",
+            "Store, retrieve, and manipulate data for analysis of system capabilities and requirements.",
+            "Store, retrieve, and manipulate data for analysis of system capabilities and requirements."
+          ],
+          "reason": "All four records describe storing data; the conventional mass-noun form is clearer than the singular datum."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "One grammatical clarification accurately covers the complete evidence set.",
+      "confidence": "high"
+    },
+    {
+      "occurrenceId": "atomic-003bf5b0b1e789d2c9cd",
+      "decision": "split",
+      "groups": [
+        {
+          "title": "Diagnose Disease",
+          "status": "current",
+          "sourceTaskIndexes": [
+            3
+          ],
+          "sourceTasks": [
+            "Diagnose diseases or study medical conditions, using techniques such as gross pathology, histology, cytology, cytopathology, clinical chemistry, immunology, flow cytometry, or molecular biology."
+          ],
+          "reason": "This record refers to diseases generally rather than one anatomical or clinical domain."
+        },
+        {
+          "title": "Diagnose Genetic Disease",
+          "status": "new",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Evaluate, diagnose, or treat genetic diseases."
+          ],
+          "reason": "The genetic modifier defines a more specific disease activity."
+        },
+        {
+          "title": "Diagnose Eye Disease",
+          "status": "new",
+          "sourceTaskIndexes": [
+            2
+          ],
+          "sourceTasks": [
+            "Diagnose or treat injuries, disorders, or diseases of the eye and eye structures including the cornea, sclera, conjunctiva, or eyelids."
+          ],
+          "reason": "The record is limited to diseases of the eye and eye structures."
+        },
+        {
+          "title": "Diagnose Genitourinary Disease",
+          "status": "new",
+          "sourceTaskIndexes": [
+            4
+          ],
+          "sourceTasks": [
+            "Diagnose or treat diseases or disorders of genitourinary organs and tracts including erectile dysfunction (ED), infertility, incontinence, bladder cancer, prostate cancer, urethral stones, or premature ejaculation."
+          ],
+          "reason": "The record is limited to diseases of genitourinary organs and tracts."
+        },
+        {
+          "title": "Diagnose Oral Disease",
+          "status": "new",
+          "sourceTaskIndexes": [
+            5
+          ],
+          "sourceTasks": [
+            "Diagnose and treat diseases, injuries, or malformations of teeth, gums, or related oral structures and provide preventive or corrective services."
+          ],
+          "reason": "The record is limited to diseases of teeth, gums, and related oral structures."
+        },
+        {
+          "title": "Diagnose Foot Disease",
+          "status": "new",
+          "sourceTaskIndexes": [
+            6
+          ],
+          "sourceTasks": [
+            "Diagnose diseases and deformities of the foot using medical histories, physical examinations, x-rays, and laboratory test results."
+          ],
+          "reason": "The record is limited to diseases of the foot."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "One generic record can retain the current title, while five records require source-supported domain modifiers.",
+      "confidence": "high"
+    },
+    {
+      "occurrenceId": "atomic-3d45a7c27254ef2c9666",
+      "decision": "split",
+      "groups": [
+        {
+          "title": "Plan Menu",
+          "status": "current",
+          "sourceTaskIndexes": [
+            1,
+            4,
+            5,
+            6
+          ],
+          "sourceTasks": [
+            "Plan menus and food utilization, based on anticipated number of guests, nutritional value, palatability, popularity, and costs.",
+            "Plan menus or diets or guide individuals or families in food selection, preparation, or menu planning, based upon nutritional needs and established guidelines.",
+            "Plan menus that are varied, nutritionally balanced, and appetizing, taking advantage of foods in season and local availability.",
+            "Plan menus according to employers' needs and diet restrictions."
+          ],
+          "reason": "These records describe menu planning generally, with constraints that do not define a separate menu type."
+        },
+        {
+          "title": "Plan Special Menu",
+          "status": "new",
+          "sourceTaskIndexes": [
+            2
+          ],
+          "sourceTasks": [
+            "Assess nutritional needs of patients, plan special menus, supervise the assembly of regular and special diet trays, and oversee the delivery of food trolleys to hospital patients."
+          ],
+          "reason": "The record explicitly identifies special menus as a distinct object."
+        },
+        {
+          "title": "Plan Bar Menu",
+          "status": "new",
+          "sourceTaskIndexes": [
+            3
+          ],
+          "sourceTasks": [
+            "Plan bar menus."
+          ],
+          "reason": "The record explicitly limits the activity to bar menus."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "The evidence forms one generic group and two modifier-defined specializations.",
+      "confidence": "high"
+    },
+    {
+      "occurrenceId": "atomic-2ab12fbc2f7fd9dfa849",
+      "decision": "keep",
+      "groups": [
+        {
+          "title": "Use Staple",
+          "status": "current",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Stretch carpet to align with walls and ensure a smooth surface, and press carpet in place over tack strips or use staples, tape, tacks or glue to hold carpet in place."
+          ],
+          "reason": "The sentence explicitly includes using staples; the alternative fastening objects are handled by their own activity links."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "The current title accurately names the relevant clause.",
+      "confidence": "high"
+    },
+    {
+      "occurrenceId": "atomic-24ab2b4c7b61722902f4",
+      "decision": "keep",
+      "groups": [
+        {
+          "title": "Melt Material",
+          "status": "current",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Melt metal, plastic, or other materials to prepare for production."
+          ],
+          "reason": "Metal, plastic, and other materials are presented as examples of the generic material object."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "The current generic title accurately covers the complete record.",
+      "confidence": "high"
+    },
+    {
+      "occurrenceId": "atomic-1aa7265cee80ea6c10a6",
+      "decision": "split",
+      "groups": [
+        {
+          "title": "Create Print (Synonyms: Produce Print)",
+          "status": "current",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Create prints according to customer specifications and laboratory protocols."
+          ],
+          "reason": "The first record describes prints generally."
+        },
+        {
+          "title": "Create Timed Print",
+          "status": "new",
+          "sourceTaskIndexes": [
+            2
+          ],
+          "sourceTasks": [
+            "Produce timed prints with separate densities or color settings for each scene of a production."
+          ],
+          "reason": "Timed is a source-supported modifier that defines the second record's more specific print activity."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "The generic and timed-print records require two titles while retaining the current leading action and recorded synonym.",
+      "confidence": "high"
+    },
+    {
+      "occurrenceId": "atomic-27c77557905a65623673",
+      "decision": "keep",
+      "groups": [
+        {
+          "title": "Insert Wedge",
+          "status": "current",
+          "sourceTaskIndexes": [
+            1,
+            2,
+            3
+          ],
+          "sourceTasks": [
+            "Position width gauge blocks between blades, and level blades and insert wedges into frames to secure blades to frames.",
+            "Insert jacks or drive wedges behind saws to prevent binding of saws and to start trees falling.",
+            "Insert wedges and feathers into holes, and drive wedges with sledgehammers to split stone sections from masses."
+          ],
+          "reason": "All three records describe inserting wedges; the different work settings do not change the activity object."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "One title accurately represents all three records without adding incidental context.",
+      "confidence": "high"
+    },
+    {
+      "occurrenceId": "atomic-562c8c4a5a9e35c27ec4",
+      "decision": "keep",
+      "groups": [
+        {
+          "title": "Cut Tree",
+          "status": "current",
+          "sourceTaskIndexes": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "sourceTasks": [
+            "Prune, cut down, fertilize, and spray trees as directed by tree surgeons.",
+            "Clear brush from work areas and escape routes, and cut saplings and other trees from direction of falls, using axes, chainsaws, or bulldozers.",
+            "Measure felled trees and cut them into specified log lengths, using chain saws and axes.",
+            "Dig, cut, and transplant seedlings, cuttings, trees, and shrubs.",
+            "Cut trees or other vegetation.",
+            "Cut trees or logs.",
+            "Select or cut trees according to markings or sizes, types, or grades.",
+            "Cut down and remove trees and brush to clear drill sites, to reduce fire hazards, and to make way for roads to sites.",
+            "Drive and maneuver tractors and tree harvesters to shear the tops off of trees, cut and limb the trees, and cut the logs into desired lengths."
+          ],
+          "reason": "Every record includes cutting trees; other objects and coordinated actions already have separate linked titles where applicable."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "The current title remains accurate across the complete evidence set.",
+      "confidence": "high"
+    },
+    {
+      "occurrenceId": "atomic-2df83a138d7509dae376",
+      "decision": "keep",
+      "groups": [
+        {
+          "title": "Lubricate Machinery",
+          "status": "current",
+          "sourceTaskIndexes": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ],
+          "sourceTasks": [
+            "Lubricate, clean, or repair machinery, equipment, or tools.",
+            "Clean, lubricate, or adjust parts, equipment, or machinery.",
+            "Lubricate, adjust, or repair machinery and replace parts, such as gears, bearings, or bucket teeth.",
+            "Lubricate machinery, equipment, or engine parts, such as gears, shafts, or bearings.",
+            "Clean or lubricate vehicles, machinery, equipment, instruments, tools, work areas, and other objects, using hand tools, power tools, and cleaning equipment.",
+            "Lubricate machinery, vehicles, or equipment or perform minor repairs or adjustments, using hand tools."
+          ],
+          "reason": "Each record includes lubricating machinery, while equipment, vehicles, tools, and other objects are represented by separate linked titles."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "The current title accurately captures the shared clause in all six records.",
+      "confidence": "high"
+    },
+    {
+      "occurrenceId": "atomic-6e0324051de0289bdcb7",
+      "decision": "rename",
+      "groups": [
+        {
+          "title": "Assist with Personnel Handbooks",
+          "status": "new",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Assist in preparing and maintaining personnel records and handbooks."
+          ],
+          "reason": "The clearer wording restores the missing relation and the source-supported personnel modifier without splitting one record into preparation and maintenance groups."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "One natural title covers the handbook clause exactly once; the personnel-record clause has another linked title.",
+      "confidence": "high"
+    },
+    {
+      "occurrenceId": "atomic-d45a0bee58d5bb67dd39",
+      "decision": "rename",
+      "groups": [
+        {
+          "title": "Operate Zoom Lens",
+          "status": "new",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Operate zoom lenses, changing images according to specifications and rehearsal instructions."
+          ],
+          "reason": "Zoom is the smallest source-supported modifier needed to identify the lens activity."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "The one record supports a direct, more informative title.",
+      "confidence": "high"
+    },
+    {
+      "occurrenceId": "atomic-3ff5239b88576c658e83",
+      "decision": "split",
+      "groups": [
+        {
+          "title": "Coordinate Patient Care",
+          "status": "new",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Coordinate the care of patients with other health care professionals or support staff."
+          ],
+          "reason": "The record explicitly limits the care activity to patients."
+        },
+        {
+          "title": "Coordinate Client or Patient Care",
+          "status": "new",
+          "sourceTaskIndexes": [
+            2
+          ],
+          "sourceTasks": [
+            "Utilize consultation data and social work experience to plan and coordinate client or patient care and rehabilitation, following through to ensure service efficacy."
+          ],
+          "reason": "The record explicitly covers client or patient care and remains one evidence unit rather than being duplicated for rehabilitation."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "Both records add a meaning-defining care-recipient modifier, but they do not support the same exact title.",
+      "confidence": "high"
+    },
+    {
+      "occurrenceId": "atomic-1edc77ce0d8914824b75",
+      "decision": "split",
+      "groups": [
+        {
+          "title": "Devise Fixture",
+          "status": "current",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Devise or build fixtures or jigs used to hold parts in place during welding, brazing, or soldering."
+          ],
+          "reason": "This record describes fixtures generically; jigs have a separate linked title."
+        },
+        {
+          "title": "Devise Test Fixture",
+          "status": "new",
+          "sourceTaskIndexes": [
+            2
+          ],
+          "sourceTasks": [
+            "Devise automated lab validation test stations or other test fixtures or equipment."
+          ],
+          "reason": "Test is an explicit modifier that distinguishes the second record's fixture activity."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "The generic fixture record can remain under the current title, while the test-fixture record needs one specialization.",
+      "confidence": "high"
+    },
+    {
+      "occurrenceId": "atomic-958d35daa6723089727c",
+      "decision": "split",
+      "groups": [
+        {
+          "title": "Direct Distribution Personnel",
+          "status": "new",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Direct personnel engaged in controlling or operating distribution equipment or machinery, such as instructing control room operators to start boilers or generators."
+          ],
+          "reason": "The personnel are specifically engaged in controlling or operating distribution equipment or machinery."
+        },
+        {
+          "title": "Direct Testing Personnel",
+          "status": "new",
+          "sourceTaskIndexes": [
+            2
+          ],
+          "sourceTasks": [
+            "Direct, coordinate, or advise personnel in test procedures for analyzing components or physical properties of materials."
+          ],
+          "reason": "The personnel are specifically directed in test procedures."
+        },
+        {
+          "title": "Direct Nursing or Healthcare Personnel",
+          "status": "new",
+          "sourceTaskIndexes": [
+            3
+          ],
+          "sourceTasks": [
+            "Direct or supervise less-skilled nursing or healthcare personnel or supervise a particular unit."
+          ],
+          "reason": "The record explicitly limits the personnel to nursing or healthcare roles."
+        },
+        {
+          "title": "Direct Supportive Personnel",
+          "status": "new",
+          "sourceTaskIndexes": [
+            4
+          ],
+          "sourceTasks": [
+            "Direct, supervise, assess, and communicate with supportive personnel."
+          ],
+          "reason": "The record explicitly identifies supportive personnel."
+        },
+        {
+          "title": "Direct Construction or Extraction Personnel",
+          "status": "new",
+          "sourceTaskIndexes": [
+            5
+          ],
+          "sourceTasks": [
+            "Direct construction or extraction personnel."
+          ],
+          "reason": "The record explicitly limits the personnel to construction or extraction work."
+        },
+        {
+          "title": "Direct Technical Support Personnel",
+          "status": "new",
+          "sourceTaskIndexes": [
+            6
+          ],
+          "sourceTasks": [
+            "Direct technicians, engineering designers or other technical support personnel as needed."
+          ],
+          "reason": "The remaining personnel clause explicitly concerns technical support; technicians and designers have separate linked titles."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "Every record supplies an occupational modifier that identifies a different personnel activity, so none remains under the generic title.",
+      "confidence": "high"
+    },
+    {
+      "occurrenceId": "atomic-d671e93fb7a19bc7d1b2",
+      "decision": "split",
+      "groups": [
+        {
+          "title": "Oversee Equipment Operation",
+          "status": "new",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Oversee installation, operation, maintenance, or repair to ensure that machines or equipment are installed and functioning according to specifications."
+          ],
+          "reason": "The operation clause is limited to machines or equipment."
+        },
+        {
+          "title": "Oversee Vessel Operation",
+          "status": "new",
+          "sourceTaskIndexes": [
+            2
+          ],
+          "sourceTasks": [
+            "Oversee operation of vessels used for carrying passengers, motor vehicles, or goods across rivers, harbors, lakes, and coastal waters."
+          ],
+          "reason": "The record explicitly limits operation to vessels."
+        },
+        {
+          "title": "Oversee Geothermal Plant Operation",
+          "status": "new",
+          "sourceTaskIndexes": [
+            3
+          ],
+          "sourceTasks": [
+            "Oversee geothermal plant operations, maintenance, and repairs to ensure compliance with applicable standards or regulations."
+          ],
+          "reason": "The geothermal-plant modifier defines the operation."
+        },
+        {
+          "title": "Oversee Contingency Plan Operation",
+          "status": "new",
+          "sourceTaskIndexes": [
+            4
+          ],
+          "sourceTasks": [
+            "Conduct or oversee contingency plan integration and operation."
+          ],
+          "reason": "The relevant operation clause concerns a contingency plan; integration has another linked title."
+        },
+        {
+          "title": "Oversee MEMS Equipment Operation",
+          "status": "new",
+          "sourceTaskIndexes": [
+            5
+          ],
+          "sourceTasks": [
+            "Oversee operation of microelectromechanical systems (MEMS) fabrication or assembly equipment, such as handling, singulation, assembly, wire-bonding, soldering, or package sealing."
+          ],
+          "reason": "The record concerns operation of MEMS fabrication or assembly equipment."
+        },
+        {
+          "title": "Oversee Imaging Equipment Operation",
+          "status": "new",
+          "sourceTaskIndexes": [
+            6
+          ],
+          "sourceTasks": [
+            "Operate or oversee operation of radiologic or magnetic imaging equipment to produce images of the body for diagnostic purposes."
+          ],
+          "reason": "The record concerns radiologic or magnetic imaging equipment."
+        },
+        {
+          "title": "Oversee Nuclear Facility Operation",
+          "status": "new",
+          "sourceTaskIndexes": [
+            7
+          ],
+          "sourceTasks": [
+            "Design or oversee construction or operation of nuclear reactors, power plants, or nuclear fuels reprocessing and reclamation systems."
+          ],
+          "reason": "The operation clause is limited to nuclear reactors, plants, or reprocessing systems."
+        },
+        {
+          "title": "Oversee Property Operation",
+          "status": "new",
+          "sourceTaskIndexes": [
+            8
+          ],
+          "sourceTasks": [
+            "Manage and oversee operations, maintenance, administration, and improvement of commercial, industrial, or residential properties."
+          ],
+          "reason": "The record concerns operation of commercial, industrial, or residential properties."
+        },
+        {
+          "title": "Oversee Biomass Plant or Substation Operation",
+          "status": "new",
+          "sourceTaskIndexes": [
+            9
+          ],
+          "sourceTasks": [
+            "Supervise biomass plant or substation operations, maintenance, repair, or testing activities."
+          ],
+          "reason": "One record names biomass plants or substations under the same operation clause and is kept as one evidence unit."
+        },
+        {
+          "title": "Oversee Hydroelectric Facility Operation",
+          "status": "new",
+          "sourceTaskIndexes": [
+            10
+          ],
+          "sourceTasks": [
+            "Supervise or monitor hydroelectric facility operations to ensure that generation or mechanical equipment conform to applicable regulations or standards."
+          ],
+          "reason": "The hydroelectric-facility modifier defines the operation."
+        },
+        {
+          "title": "Oversee Pest or Weed Control Operation",
+          "status": "new",
+          "sourceTaskIndexes": [
+            11
+          ],
+          "sourceTasks": [
+            "Supervise pest or weed control operations, including locating and identifying pests or weeds, selecting chemicals and application methods, or scheduling application."
+          ],
+          "reason": "One record covers pest or weed control operations and is assigned once rather than duplicated."
+        },
+        {
+          "title": "Oversee Electronic Equipment or System Operation",
+          "status": "new",
+          "sourceTaskIndexes": [
+            12
+          ],
+          "sourceTasks": [
+            "Supervise the installation or operation of electronic equipment or systems."
+          ],
+          "reason": "One record covers electronic equipment or systems under the same operation clause."
+        },
+        {
+          "title": "Oversee Library Operation",
+          "status": "new",
+          "sourceTaskIndexes": [
+            13
+          ],
+          "sourceTasks": [
+            "Supervise daily library operations, budgeting, planning, and personnel activities, such as hiring, training, scheduling, and performance evaluations."
+          ],
+          "reason": "The record explicitly limits operation to a library."
+        },
+        {
+          "title": "Oversee Mine Construction Operation",
+          "status": "new",
+          "sourceTaskIndexes": [
+            14
+          ],
+          "sourceTasks": [
+            "Lay out, direct, and supervise mine construction operations, such as the construction of shafts and tunnels."
+          ],
+          "reason": "The record explicitly concerns mine construction operations."
+        },
+        {
+          "title": "Oversee Food Processing or Manufacturing Plant Operation",
+          "status": "new",
+          "sourceTaskIndexes": [
+            15
+          ],
+          "sourceTasks": [
+            "Supervise food processing or manufacturing plant operations."
+          ],
+          "reason": "The record explicitly concerns food-processing or manufacturing-plant operations."
+        },
+        {
+          "title": "Oversee Forest Nursery Operation",
+          "status": "new",
+          "sourceTaskIndexes": [
+            16
+          ],
+          "sourceTasks": [
+            "Supervise forest nursery operations, timber harvesting, land use activities such as livestock grazing, and disease or insect control programs."
+          ],
+          "reason": "The operation clause concerns forest nurseries; harvesting, other activities, and programs have separate linked titles."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "Every record is more specific than the generic current title and is assigned exactly once to the smallest source-supported operation title.",
+      "confidence": "medium"
+    }
+  ]
+}
