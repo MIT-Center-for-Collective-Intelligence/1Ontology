@@ -63,6 +63,7 @@ const MODEL_ACTORS = new Set([
   "access-homogeneous-title-grouping-auditor-v1",
   "access-homogeneous-title-grouping-v2",
   "access-homogeneous-title-grouping-v3",
+  "access-homogeneous-title-grouping-v4",
   "access-wordnet-alignment-v1",
   "access-wordnet-alignment-auditor-v1",
   "access-wordnet-assigned-synset-check-v2",
@@ -116,6 +117,8 @@ const DETERMINISTIC_ACTORS = new Set([
   "homogeneous-title-testbed-card-assembler-v2",
   "homogeneous-title-grouping-validator-v3",
   "homogeneous-title-testbed-card-assembler-v3",
+  "homogeneous-title-grouping-validator-v4",
+  "homogeneous-title-testbed-card-assembler-v4",
   "local-wordnet-candidate-retrieval-v1",
   "local-wordnet-conditional-retrieval-v2",
   "wordnet-alignment-validator-v1",
@@ -199,6 +202,9 @@ const TRUSTED_ACTOR_VERSIONS: Record<string, ReadonlySet<string>> = {
   "access-homogeneous-title-grouping-v3": new Set([
     "access-homogeneous-title-grouping-2026-08-29-v3",
   ]),
+  "access-homogeneous-title-grouping-v4": new Set([
+    "access-homogeneous-title-grouping-2026-08-29-v4",
+  ]),
   "access-wordnet-alignment-v1": new Set([
     "access-wordnet-alignment-2026-08-28-v1",
   ]),
@@ -231,6 +237,12 @@ const TRUSTED_ACTOR_VERSIONS: Record<string, ReadonlySet<string>> = {
   ]),
   "homogeneous-title-testbed-card-assembler-v3": new Set([
     "homogeneous-title-testbed-card-assembler-2026-08-29-v3",
+  ]),
+  "homogeneous-title-grouping-validator-v4": new Set([
+    "homogeneous-title-grouping-validator-2026-08-29-v4",
+  ]),
+  "homogeneous-title-testbed-card-assembler-v4": new Set([
+    "homogeneous-title-testbed-card-assembler-2026-08-29-v4",
   ]),
   "local-wordnet-candidate-retrieval-v1": new Set([
     "local-wordnet-candidate-retrieval-2026-08-28-v1",
@@ -439,6 +451,10 @@ const ACTOR_NAMES: Record<string, string> = {
   "homogeneous-title-grouping-validator-v3": "Predicate-object claim validator",
   "homogeneous-title-testbed-card-assembler-v3":
     "Claim-aware title-review card assembler",
+  "homogeneous-title-grouping-validator-v4":
+    "Expert-regression claim validator",
+  "homogeneous-title-testbed-card-assembler-v4":
+    "Expert-regression title-review card assembler",
   "local-wordnet-candidate-retrieval-v1": "Local WordNet candidate retrieval",
   "local-wordnet-conditional-retrieval-v2":
     "Conditional local WordNet retrieval",
@@ -465,6 +481,8 @@ const ACTOR_NAMES: Record<string, string> = {
     "Streamlined homogeneous title-grouping agent",
   "access-homogeneous-title-grouping-v3":
     "Claim-aware homogeneous title-grouping agent",
+  "access-homogeneous-title-grouping-v4":
+    "Expert-calibrated claim-aware title-grouping agent",
   "access-wordnet-alignment-v1": "WordNet alignment agent",
   "access-wordnet-alignment-auditor-v1":
     "Independent WordNet alignment auditor",
@@ -731,6 +749,26 @@ Group claims that can share one accurate activity title. Use the current title w
 Consolidate claims requiring the same title. A new title is provisional until a later placement review. Do not evaluate WordNet, change the action, or decide final ontology placement. If the evidence cannot be classified without guessing, defer the whole case.
 
 Return structured data only: groups with title, canonicalDirectObject, sourceClaims, and a short reason. Each sourceClaim must contain sourceTaskIndex, a concise directObject phrase copied from the record, and an exact evidenceQuote copied from the record that includes the canonical action or one recorded action synonym. Also return deferredTaskIndexes, one overall reason, and confidence. Do not return title status or a keep/rename/split label; deterministic code derives them.`,
+  "access-homogeneous-title-grouping-v4@access-homogeneous-title-grouping-2026-08-29-v4": `You are checking one atomic activity title against every exact O*NET record linked to it. The title was originally reduced to a leading verb and one direct object, so a meaning-defining modifier or an additional direct object may have been omitted.
+
+Inputs:
+- Current atomic title: [CURRENT TITLE]
+- Canonical action and any action synonyms recorded in that title: [RECORDED ACTION ALIASES]
+- Numbered exact O*NET records. Each record also lists every other atomic title already linked to that same sentence: [NUMBERED O*NET RECORDS]
+
+For each record, identify every distinct direct-object claim governed by the current title's action that is not already represented by another linked atomic title. Read the complete clause: a meaning-defining restriction can appear before the object head or after it in a complement or trailing phrase, such as "alternatives for Web architecture or technologies." Carry that restriction into the proposed title when omitting it would make the activity materially broader than the evidence.
+
+A sentence may supply more than one claim when the same action explicitly governs different objects, such as selling funeral services and selling funeral merchandise. Coordinated named subtypes that share a head noun can also require separate claims when the distinction is material, such as storing audio data and storing video data. Do not collapse them merely because they share the word "data." Do not split ordinary examples of one category, incidental audience, method, purpose, or different actions into extra claims.
+
+Group claims that can share one accurate activity title. Use the current title when it is already informative enough; otherwise add only the smallest source-supported modifier needed to identify the activity. Every proposed title must:
+- contain 2-5 words;
+- preserve the current leading action;
+- name exactly one canonical direct object; and
+- avoid audience, method, purpose, venue, or other incidental context.
+
+Consolidate claims requiring the same title. A new title is provisional until a later placement review. Do not evaluate WordNet, change the action, or decide final ontology placement. If the evidence cannot be classified without guessing, defer the whole case.
+
+Return structured data only: groups with title, canonicalDirectObject, sourceClaims, and a short reason. Each sourceClaim must contain sourceTaskIndex, a concise directObject phrase copied from the record, and an exact evidenceQuote copied from the record that includes the canonical action or one recorded action synonym. Also return deferredTaskIndexes, one overall reason, and confidence. Do not return title status or a keep/rename/split label; deterministic code derives them.`,
   "access-wordnet-assigned-synset-check-v2@access-wordnet-assigned-synset-check-2026-08-29-v2": `You are checking the WordNet verb sense currently assigned to one accepted homogeneous activity group.
 
 Inputs:
@@ -885,6 +923,7 @@ const EXACT_SOURCE_MODEL_PROMPT_KEYS = new Set([
   "access-homogeneous-title-grouping-auditor-v1@access-homogeneous-title-grouping-audit-2026-08-28-v1",
   "access-homogeneous-title-grouping-v2@access-homogeneous-title-grouping-2026-08-29-v2",
   "access-homogeneous-title-grouping-v3@access-homogeneous-title-grouping-2026-08-29-v3",
+  "access-homogeneous-title-grouping-v4@access-homogeneous-title-grouping-2026-08-29-v4",
   "access-wordnet-alignment-v1@access-wordnet-alignment-2026-08-28-v1",
   "access-wordnet-alignment-auditor-v1@access-wordnet-alignment-audit-2026-08-28-v1",
   "access-wordnet-assigned-synset-check-v2@access-wordnet-assigned-synset-check-2026-08-29-v2",
@@ -917,6 +956,14 @@ const DETERMINISTIC_RULES: Record<string, string> = {
 4. Report repeated existing-title occurrences without choosing a merge target; mark every new title as provisional and defer final placement and WordNet alignment.
 5. Preserve the single semantic call, deterministic validation, model provenance note, and source hashes.
 6. Describe keep cards as status-quo proposals, not independent controls or accuracy results.
+7. Never mutate the ontology from a generated or expert-reviewed card.`,
+  "homogeneous-title-grouping-validator-v4@homogeneous-title-grouping-validator-2026-08-29-v4": `Bind the result to the exact sampled occurrence and source hierarchy hash. Require every O*NET record to contribute at least one validated predicate-object claim or, if unresolved, require the complete case to be deferred. Permit one record in multiple groups only through distinct direct-object claims for the preserved action, including material coordinated subtypes. Require each direct-object phrase to occur in an exact evidence quote, each quote to occur in its exact source record, and each quote to include the canonical action or an action synonym recorded in the current title. Preserve meaning-defining restrictions wherever they occur in the complete clause, including complements and trailing phrases. Reject duplicate claims, duplicate group titles, unsupported source indexes, changed leading actions, titles outside 2-5 words, titles that do not end in their one declared canonical direct object, and partial deferrals. Derive source indexes, exact source tasks, title status, existing-title occurrence count, and keep/rename/split/defer deterministically. An existing title string does not choose a merge or placement target; placement remains a later review. This stage performs no semantic correction or independent model audit.`,
+  "homogeneous-title-testbed-card-assembler-v4@homogeneous-title-testbed-card-assembler-2026-08-29-v4": `1. Build one read-only title card for every validated sampled atomic-title occurrence, including the expert-feedback regression cases.
+2. Bind repeated titles by exact hierarchy path rather than collapsing same-text nodes.
+3. Show every predicate-object claim with its exact quote and full O*NET source record; one record may appear under multiple titles only through distinct claims.
+4. Report repeated existing-title occurrences without choosing a merge target; mark every new title as provisional and defer final placement and WordNet alignment.
+5. Preserve the single semantic call, deterministic validation, model provenance note, source hashes, and the expert-feedback sampling rationale.
+6. Describe keep cards as status-quo proposals, not controls or accuracy results.
 7. Never mutate the ontology from a generated or expert-reviewed card.`,
   "local-wordnet-conditional-retrieval-v2@local-wordnet-conditional-retrieval-2026-08-29-v2": `1. Run only after an accepted title group fails its assigned-synset check.
 2. Take the exact leading action from that accepted group.
@@ -1157,6 +1204,7 @@ const COMBINED_ISSUE_AND_SOLUTION_ACTORS = new Set([
 const SINGLE_PASS_CANDIDATE_ACTORS = new Set([
   "access-homogeneous-title-grouping-v2",
   "access-homogeneous-title-grouping-v3",
+  "access-homogeneous-title-grouping-v4",
 ]);
 
 const recordedVersion = (
@@ -1225,6 +1273,11 @@ const EVALUATOR_STAGE_COPY: Record<
     roleLabel: "Validate predicate-object claim invariants",
     summary:
       "Mechanically binds direct-object claims to exact quotes and source records, permits repeated records only for distinct claims, enforces 2-5-word titles, and derives title status and decision type.",
+  },
+  "homogeneous-title-grouping-validator-v4": {
+    roleLabel: "Validate expert-calibrated claim invariants",
+    summary:
+      "Mechanically binds claims to exact clauses, preserves trailing restrictions, permits material coordinated subtypes, and derives title status and decision type without making a semantic judgment.",
   },
   "local-wordnet-candidate-retrieval-v1": {
     roleLabel: "Retrieve local WordNet candidates",
@@ -1337,7 +1390,10 @@ export const agentTraceForRecord = (record: any): SomAgentTrace => {
       actorName: detector.name,
       actorKind: detector.kind,
       summary: singlePassCandidateCall
-        ? detector.id === "access-homogeneous-title-grouping-v3"
+        ? [
+            "access-homogeneous-title-grouping-v3",
+            "access-homogeneous-title-grouping-v4",
+          ].includes(detector.id)
           ? "Uses one structured semantic call to extract source-bound predicate-object claims, group compatible claims, and propose only the smallest title distinctions the evidence requires."
           : "Uses one structured semantic call to assign every O*NET record exactly once and propose only the smallest title modifiers the evidence requires."
         : `Checks whether this proposal presents a real instance of ${issueTitle}.`,

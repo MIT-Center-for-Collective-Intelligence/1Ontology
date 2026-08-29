@@ -42,23 +42,29 @@ describe("Society of Mind agent transparency", () => {
     const trace = toReviewerCard(record).agentTrace;
 
     expect(trace?.stages.map((stage) => stage.actorId)).toEqual([
-      "access-homogeneous-title-grouping-v3",
-      "homogeneous-title-grouping-validator-v3",
-      "homogeneous-title-testbed-card-assembler-v3",
+      "access-homogeneous-title-grouping-v4",
+      "homogeneous-title-grouping-validator-v4",
+      "homogeneous-title-testbed-card-assembler-v4",
     ]);
     expect(trace?.stages[0]).toMatchObject({
       roleLabel: "Group the evidence and propose titles",
-      promptVersion: "access-homogeneous-title-grouping-2026-08-29-v3",
+      promptVersion: "access-homogeneous-title-grouping-2026-08-29-v4",
       promptLabel: "Prompt template",
     });
     expect(trace?.stages[0].prompt).toMatch(
       /A sentence may supply more than one claim/i,
     );
-    expect(trace?.stages[1].prompt).toMatch(/exact evidence quote/i);
-    expect(trace?.stages[1].prompt).toMatch(
-      /existing-title occurrence count/i,
+    expect(trace?.stages[0].prompt).toMatch(
+      /restriction can appear before the object head or after it/i,
     );
-    expect(trace?.stages[1].prompt).toMatch(/placement remains a later review/i);
+    expect(trace?.stages[0].prompt).toMatch(
+      /storing audio data and storing video data/i,
+    );
+    expect(trace?.stages[1].prompt).toMatch(/exact evidence quote/i);
+    expect(trace?.stages[1].prompt).toMatch(/existing-title occurrence count/i);
+    expect(trace?.stages[1].prompt).toMatch(
+      /placement remains a later review/i,
+    );
   });
 
   it("classifies every recorded component in every configured round", () => {

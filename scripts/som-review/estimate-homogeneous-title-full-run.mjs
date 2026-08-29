@@ -81,11 +81,11 @@ const samplePacket = readJson(sampleFile);
 const groupingPacket = readJson(groupingsFile);
 const pilotBundlePacket = readJson(pilotBundlesFile);
 if (
-  pilotBundlePacket.schemaVersion !== "wordnet-all-candidate-bundles-v3" ||
+  pilotBundlePacket.schemaVersion !== "wordnet-all-candidate-bundles-v4" ||
   pilotBundlePacket.mode !== "planning-preview"
 ) {
   throw new Error(
-    "The estimate requires a v3 all-candidate planning-preview bundle",
+    "The estimate requires a v4 all-candidate planning-preview bundle",
   );
 }
 for (const packet of [samplePacket, groupingPacket, pilotBundlePacket]) {
@@ -282,7 +282,7 @@ const elapsedWallTimeHours = {
 };
 
 const output = {
-  schemaVersion: "homogeneous-title-full-run-estimate-v3",
+  schemaVersion: "homogeneous-title-full-run-estimate-v4",
   generatedAt: new Date().toISOString(),
   sourceFile: path.basename(sourceFile),
   sourceSha256,

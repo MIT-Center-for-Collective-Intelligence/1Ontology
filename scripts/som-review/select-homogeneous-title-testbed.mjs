@@ -37,15 +37,16 @@ const seed = args.seed || sourceSha256;
 const sample = selectStratifiedSample({
   occurrences,
   seed,
+  priorityExactTitles: ["Document Alternative", "Store Datum"],
 });
 const packet = {
-  schemaVersion: "homogeneous-title-testbed-sample-v3",
+  schemaVersion: "homogeneous-title-testbed-sample-v4",
   generatedAt: new Date().toISOString(),
   sourceFile: path.basename(sourceFile),
   sourceSha256,
   seed,
   selectionRule:
-    "Deterministic hash order within every top-level branch and evidence-count bucket: two single-record, two 2-5-record, one 6-20-record, and one 21+-record occurrence per branch. At most one repeated-title occurrence is prioritized in each stratum so the pilot covers repeated as well as unique titles.",
+    "Two expert-disagreement regressions, Document Alternative and Store Datum, are included first in their shared information/small-multi stratum. Remaining positions use deterministic hash order within every top-level branch and evidence-count bucket: two single-record, two 2-5-record, one 6-20-record, and one 21+-record occurrence per branch. At most one repeated-title occurrence is otherwise prioritized in each stratum.",
   inventoryCounts: {
     atomicActivityOccurrences: occurrences.length,
     uniqueTitleCount: new Set(

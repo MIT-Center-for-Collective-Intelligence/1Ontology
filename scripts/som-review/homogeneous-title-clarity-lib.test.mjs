@@ -120,6 +120,22 @@ test("selects a deterministic sample across all twelve strata", () => {
     ).size,
     12,
   );
+
+  const priorities = occurrences.filter(
+    (record) =>
+      record.topLevelBranch === branchNames[0] &&
+      record.evidenceBucket === "small-multi",
+  );
+  const prioritized = selectStratifiedSample({
+    occurrences,
+    seed: "fixed",
+    priorityExactTitles: priorities
+      .slice(0, 2)
+      .map((record) => record.exactTitle),
+  });
+  const selectedIds = new Set(prioritized.map((record) => record.occurrenceId));
+  assert(selectedIds.has(priorities[0].occurrenceId));
+  assert(selectedIds.has(priorities[1].occurrenceId));
 });
 
 test("flags only exact generic Act and Perform leading actions", () => {
@@ -385,6 +401,118 @@ test("claim grouping permits distinct direct objects from one O*NET record", () 
     [[1], [1]],
   );
   assert.equal(validated.groups[0].sourceClaims[0].sourceTaskIndex, 1);
+});
+
+test("claim grouping preserves a meaning restriction stated after the object", () => {
+  const source =
+    "Research, document, rate, or select alternatives for Web architecture or technologies.";
+  const validated = validateClaimGroupingAssessment({
+    record: {
+      occurrenceId: "document-alternative",
+      exactTitle: "Document Alternative",
+      normalizedTitle: "document alternative",
+      leadingAction: "Document",
+      sourceRecords: [{ index: 1, task: source }],
+    },
+    existingTitles: new Set(["document alternative"]),
+    assessment: {
+      occurrenceId: "document-alternative",
+      groups: [
+        {
+          title: "Document Web Alternative",
+          canonicalDirectObject: "Web Alternative",
+          sourceClaims: [
+            {
+              sourceTaskIndex: 1,
+              directObject: "alternatives",
+              evidenceQuote:
+                "document, rate, or select alternatives for Web architecture or technologies",
+            },
+          ],
+          reason:
+            "The trailing phrase restricts the alternatives to the Web domain.",
+        },
+      ],
+      deferredTaskIndexes: [],
+      reason: "The generic title drops a meaning-defining domain restriction.",
+      confidence: "high",
+    },
+  });
+
+  assert.equal(validated.decision, "rename");
+  assert.equal(validated.groups[0].title, "Document Web Alternative");
+});
+
+test("claim grouping separates coordinated audio and video data subtypes", () => {
+  const generic =
+    "Store, retrieve, and manipulate data for analysis of system capabilities and requirements.";
+  const validated = validateClaimGroupingAssessment({
+    record: {
+      occurrenceId: "store-datum",
+      exactTitle: "Store Datum",
+      normalizedTitle: "store datum",
+      leadingAction: "Store",
+      sourceRecords: [
+        {
+          index: 1,
+          task: "Compress, digitize, duplicate, and store audio and video data.",
+        },
+        { index: 2, task: generic },
+        { index: 3, task: generic },
+        { index: 4, task: generic },
+      ],
+    },
+    existingTitles: new Set(["store datum"]),
+    assessment: {
+      occurrenceId: "store-datum",
+      groups: [
+        {
+          title: "Store Audio Data",
+          canonicalDirectObject: "Audio Data",
+          sourceClaims: [
+            {
+              sourceTaskIndex: 1,
+              directObject: "audio",
+              evidenceQuote: "store audio and video data",
+            },
+          ],
+          reason: "Audio data is one explicitly coordinated data subtype.",
+        },
+        {
+          title: "Store Video Data",
+          canonicalDirectObject: "Video Data",
+          sourceClaims: [
+            {
+              sourceTaskIndex: 1,
+              directObject: "video data",
+              evidenceQuote: "store audio and video data",
+            },
+          ],
+          reason:
+            "Video data is a distinct explicitly coordinated data subtype.",
+        },
+        {
+          title: "Store Data",
+          canonicalDirectObject: "Data",
+          sourceClaims: [2, 3, 4].map((sourceTaskIndex) => ({
+            sourceTaskIndex,
+            directObject: "data",
+            evidenceQuote: "Store, retrieve, and manipulate data",
+          })),
+          reason: "The other records support only the generic data title.",
+        },
+      ],
+      deferredTaskIndexes: [],
+      reason: "The specific and generic data evidence requires three groups.",
+      confidence: "high",
+    },
+  });
+
+  assert.equal(validated.decision, "split");
+  assert.deepEqual(
+    validated.groups.map((group) => group.title),
+    ["Store Audio Data", "Store Video Data", "Store Data"],
+  );
 });
 
 test("claim grouping reports repeated existing titles without choosing a target occurrence", () => {

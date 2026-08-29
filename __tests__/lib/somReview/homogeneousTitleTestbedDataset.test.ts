@@ -7,7 +7,7 @@ import { toReviewerCard } from "../../../src/lib/somReview/sanitize";
 const DATASET_DIR = path.join(
   process.cwd(),
   "Ontology_Title_Clarity_Testbed_2026-08-28",
-  "review-datasets-v3",
+  "review-datasets-v4",
 );
 
 describe("ontology-wide homogeneous title test bed", () => {
@@ -21,10 +21,10 @@ describe("ontology-wide homogeneous title test bed", () => {
     expect(titleRecords).toHaveLength(18);
     expect(
       titleRecords.filter((record) => record.reviewMode === "status-quo-audit"),
-    ).toHaveLength(6);
+    ).toHaveLength(5);
     expect(dataset.manifest.issueTypes).toHaveLength(1);
     expect(dataset.manifest.issueTypes[0].id).toBe("title-clarity");
-    expect(dataset.manifest.upstreamSource.resultingHomogeneousGroups).toBe(28);
+    expect(dataset.manifest.upstreamSource.resultingHomogeneousGroups).toBe(30);
     expect(dataset.manifest.safety).toMatchObject({
       reviewOnly: true,
       mutatesOntology: false,
@@ -47,13 +47,13 @@ describe("ontology-wide homogeneous title test bed", () => {
     });
     expect(estimate.projection.homogeneousGroupScenarios).toMatchObject({
       noSplit: 20491,
-      stratifiedPilot: 24713,
+      stratifiedPilot: 26765,
       oneGroupPerSourceRecord: 53608,
     });
     expect(
       estimate.projection.claimAwareAllCandidatePipeline.stratifiedPilotScenario
         .modelCalls,
-    ).toBe(45204);
+    ).toBe(47256);
     expect(
       estimate.projection.claimAwareAllCandidatePipeline.stratifiedPilotScenario
         .totalAccessTokensPlanningRange.central,
@@ -127,6 +127,27 @@ describe("ontology-wide homogeneous title test bed", () => {
       "client or patient care",
       "rehabilitation",
     ]);
+
+    const trailingRestriction = titleRecords.find(
+      (record) => record.subject.title === "Document Alternative",
+    );
+    expect(
+      trailingRestriction.reviewerView.context.proposedNodes,
+    ).toMatchObject([
+      {
+        title: "Document Web Alternative",
+        sourceTaskIndexes: [1, 2],
+      },
+    ]);
+
+    const coordinatedSubtypes = titleRecords.find(
+      (record) => record.subject.title === "Store Datum",
+    );
+    expect(
+      coordinatedSubtypes.reviewerView.context.proposedNodes.map(
+        (node: any) => node.title,
+      ),
+    ).toEqual(["Store Audio Data", "Store Video Data", "Store Data"]);
   });
 
   it("defers WordNet work until a title group has been accepted", () => {
@@ -145,9 +166,9 @@ describe("ontology-wide homogeneous title test bed", () => {
       const trace = toReviewerCard(record).agentTrace;
       expect(trace?.stages).toHaveLength(3);
       expect(trace?.stages.map((stage) => stage.actorId)).toEqual([
-        "access-homogeneous-title-grouping-v3",
-        "homogeneous-title-grouping-validator-v3",
-        "homogeneous-title-testbed-card-assembler-v3",
+        "access-homogeneous-title-grouping-v4",
+        "homogeneous-title-grouping-validator-v4",
+        "homogeneous-title-testbed-card-assembler-v4",
       ]);
       for (const stage of trace?.stages || []) {
         expect(stage.actorId).not.toMatch(/^no-/);

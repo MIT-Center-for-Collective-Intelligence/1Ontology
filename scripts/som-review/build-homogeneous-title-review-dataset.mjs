@@ -18,12 +18,12 @@ const artifactDir = path.join(
 );
 const outputDir = path.join(
   repoRoot,
-  "Ontology_Title_Clarity_Testbed_2026-08-28/review-datasets-v3",
+  "Ontology_Title_Clarity_Testbed_2026-08-28/review-datasets-v4",
 );
 const inputPaths = {
-  sample: path.join(artifactDir, "sample-packet-v3.json"),
-  groupings: path.join(artifactDir, "validated-groupings-v3.json"),
-  estimate: path.join(artifactDir, "full-run-estimate-v3.json"),
+  sample: path.join(artifactDir, "sample-packet-v4.json"),
+  groupings: path.join(artifactDir, "validated-groupings-v4.json"),
+  estimate: path.join(artifactDir, "full-run-estimate-v4.json"),
 };
 
 const readJson = (filePath) => JSON.parse(fs.readFileSync(filePath, "utf8"));
@@ -72,7 +72,7 @@ if (
   throw new Error("Expected 18 sampled activities and 18 validated results");
 }
 
-const datasetVersion = "ontology-title-homogeneous-testbed-2026-08-29-v3";
+const datasetVersion = "ontology-title-homogeneous-testbed-2026-08-29-v4";
 const generatedAt = validatedGroupings.generatedAt;
 const ontologyAppId =
   "final-hierarchy-with-onet-homogeneous-title-testbed-2026-08-29";
@@ -186,21 +186,21 @@ const pipelineStage = (role, actorId, actorKind, promptVersion) => ({
 const titlePipeline = [
   pipelineStage(
     "detector",
-    "access-homogeneous-title-grouping-v3",
+    "access-homogeneous-title-grouping-v4",
     "model",
     validatedGroupings.promptVersions.grouping,
   ),
   pipelineStage(
     "verifier",
-    "homogeneous-title-grouping-validator-v3",
+    "homogeneous-title-grouping-validator-v4",
     "deterministic",
     validatedGroupings.promptVersions.validator,
   ),
   pipelineStage(
     "assembler",
-    "homogeneous-title-testbed-card-assembler-v3",
+    "homogeneous-title-testbed-card-assembler-v4",
     "deterministic",
-    "homogeneous-title-testbed-card-assembler-2026-08-29-v3",
+    "homogeneous-title-testbed-card-assembler-2026-08-29-v4",
   ),
 ];
 
@@ -295,7 +295,7 @@ const titleCards = samplePacket.sample.map((record) => {
       hideModelConfidence: true,
     },
     internalModelEvidence: {
-      detectorId: "access-homogeneous-title-grouping-v3",
+      detectorId: "access-homogeneous-title-grouping-v4",
       detectorName: "Claim-aware homogeneous title-grouping agent",
       detectorPromptVersion: validatedGroupings.promptVersions.grouping,
       detectorConfidence: assessment.confidence,
@@ -422,7 +422,7 @@ const manifest = {
     snapshotBound: true,
     exhaustiveWithinPackagedDetectorOutputs: true,
     semanticCompletenessGuaranteed: false,
-    detectorAgents: ["access-homogeneous-title-grouping-v3"],
+    detectorAgents: ["access-homogeneous-title-grouping-v4"],
     criticAgents: [],
     note: "Each packaged card passed exact source and claim binding, 2-5-word title, leading-action, title-status, and cardinality validation. These checks do not establish semantic correctness; the expert reviewer remains the evaluator.",
   },
@@ -708,7 +708,7 @@ fs.copyFileSync(
 );
 
 writeJson(path.join(outputDir, "diagnostics/quality-report.json"), {
-  schemaVersion: "homogeneous-title-testbed-quality-report-v3",
+  schemaVersion: "homogeneous-title-testbed-quality-report-v4",
   generatedAt,
   sourceHierarchySha256: samplePacket.sourceSha256,
   packagedSnapshotSha256: snapshotSha256,

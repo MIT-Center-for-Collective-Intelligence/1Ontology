@@ -205,6 +205,7 @@ const eligibleForSample = (record) => {
 export const selectStratifiedSample = ({
   occurrences,
   seed,
+  priorityExactTitles = [],
   bucketQuotas = {
     single: 2,
     "small-multi": 2,
@@ -219,6 +220,7 @@ export const selectStratifiedSample = ({
     }
   }
   const eligible = occurrences.filter(eligibleForSample);
+  const normalizedPriorityTitles = priorityExactTitles.map(normalizeTitle);
   const selected = [];
   const selectedActions = new Set();
   const strata = TOP_LEVEL_BRANCHES.flatMap((branch) =>
@@ -235,6 +237,17 @@ export const selectStratifiedSample = ({
       ),
       `${seed}|${stratum.branch}|${stratum.bucket}`,
     );
+    const priorityCandidates = normalizedPriorityTitles.flatMap((title) => {
+      const match = candidates.find(
+        (record) => record.normalizedTitle === title,
+      );
+      return match ? [match] : [];
+    });
+    if (priorityCandidates.length > quota) {
+      throw new Error(
+        `Priority cases exceed the sample quota for ${stratum.branch} / ${stratum.bucket}`,
+      );
+    }
     const repeatedTitleCandidate = candidates.find(
       (record) =>
         record.exactTitleOccurrenceCount > 1 &&
@@ -244,6 +257,7 @@ export const selectStratifiedSample = ({
       (record) => !selectedActions.has(record.leadingAction.toLowerCase()),
     );
     const pool = [
+      ...priorityCandidates,
       ...(repeatedTitleCandidate ? [repeatedTitleCandidate] : []),
       ...distinctActions,
       ...candidates,
@@ -906,7 +920,9 @@ Inputs:
 - Canonical action and any action synonyms recorded in that title: [RECORDED ACTION ALIASES]
 - Numbered exact O*NET records. Each record also lists every other atomic title already linked to that same sentence: [NUMBERED O*NET RECORDS]
 
-For each record, identify every distinct direct-object claim governed by the current title's action that is not already represented by another linked atomic title. A sentence may supply more than one claim when the same action explicitly governs different objects, such as selling funeral services and selling funeral merchandise. Do not split examples of one stated category, incidental context, or different actions into extra claims.
+For each record, identify every distinct direct-object claim governed by the current title's action that is not already represented by another linked atomic title. Read the complete clause: a meaning-defining restriction can appear before the object head or after it in a complement or trailing phrase, such as "alternatives for Web architecture or technologies." Carry that restriction into the proposed title when omitting it would make the activity materially broader than the evidence.
+
+A sentence may supply more than one claim when the same action explicitly governs different objects, such as selling funeral services and selling funeral merchandise. Coordinated named subtypes that share a head noun can also require separate claims when the distinction is material, such as storing audio data and storing video data. Do not collapse them merely because they share the word "data." Do not split ordinary examples of one category, incidental audience, method, purpose, or different actions into extra claims.
 
 Group claims that can share one accurate activity title. Use the current title when it is already informative enough; otherwise add only the smallest source-supported modifier needed to identify the activity. Every proposed title must:
 - contain 2-5 words;

@@ -143,7 +143,7 @@ def main() -> None:
             )
 
     output = {
-        "schemaVersion": "wordnet-all-candidate-bundles-v3",
+        "schemaVersion": "wordnet-all-candidate-bundles-v4",
         "generatedAt": datetime.now(timezone.utc).isoformat(),
         "sourceSha256": grouping_packet["sourceSha256"],
         "sampleSha256": stable_hash(sample_path.read_text(encoding="utf-8")),
