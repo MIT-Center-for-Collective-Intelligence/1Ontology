@@ -358,6 +358,26 @@ export const validateProposalAgainstSnapshot = (
       }
       break;
     }
+    case "synset-alignment": {
+      subjectNodeId = addTitle(context.currentAtomicTitle);
+      const parent = sourceParent(index, record);
+      parentNodeId = parent.id;
+      if (parentNodeId) {
+        referenced.add(parentNodeId);
+        requireEdge(index, parentNodeId, subjectNodeId, parent.collectionName);
+      }
+      const candidateIds = new Set(
+        (context.candidateSynsets || []).map((synset: any) => synset.id),
+      );
+      for (const synset of context.selectedSynsets || []) {
+        if (!candidateIds.has(synset.id)) {
+          throw new Error(
+            `Selected synset is not present in local candidates: ${synset.id}`,
+          );
+        }
+      }
+      break;
+    }
     case "grouping-outline": {
       if ((index.idsByTitle.get(context.proposedGroupTitle) || []).length > 0) {
         throw new Error(

@@ -22,6 +22,7 @@ import { reviewAccentColor } from "./reviewStyles";
 
 const CONTEXTS_WITH_STATE_COMPARISONS = new Set<SomReviewContext["type"]>([
   "title-split",
+  "synset-alignment",
   "duplicate-comparison",
   "grouping-outline",
   "merge-action",
@@ -73,6 +74,8 @@ const ContextRenderer = ({
       return <TitleComparison context={context} />;
     case "title-split":
       return <TitleSplit context={context} />;
+    case "synset-alignment":
+      return <SynsetAlignment context={context} />;
     case "grouping-outline":
       return <GroupingOutline context={context} />;
     case "flat-list":
@@ -226,11 +229,16 @@ const TitleSplit = ({
 }: {
   context: Extract<SomReviewContext, { type: "title-split" }>;
 }) => {
-  const tasks = uniqueTextValues(context.linkedTasks || []);
+  const tasks = (context.linkedTasks || [])
+    .map((task) => task.trim())
+    .filter(Boolean);
   const statusLabel = {
     current: "Keep current node",
     existing: "Already in ontology",
-    new: "New node",
+    new:
+      context.decision === "rename"
+        ? "Proposed replacement title"
+        : "New provisional child",
   } as const;
 
   return (
@@ -258,7 +266,7 @@ const TitleSplit = ({
               sx={{ display: "list-item", pl: 0.5 }}
             >
               <ListItemText
-                primary={task}
+                primary={`${index + 1}. ${task}`}
                 primaryTypographyProps={{ sx: { lineHeight: 1.5 } }}
               />
             </ListItem>
@@ -268,6 +276,15 @@ const TitleSplit = ({
 
       <Box sx={comparisonPanelSx}>
         <Typography sx={sectionLabelSx}>After</Typography>
+        {context.decision === "split" &&
+          context.proposedNodes.some((node) => node.status === "new") && (
+            <Typography
+              sx={{ mt: 0.75, color: "text.secondary", lineHeight: 1.5 }}
+            >
+              New titles remain provisional children of {context.currentTitle}{" "}
+              until the later placement review.
+            </Typography>
+          )}
         <Stack divider={<Divider flexItem />} sx={{ mt: 0.5 }}>
           {context.proposedNodes.map((node) => (
             <Box key={`${node.status}-${node.title}`} sx={{ py: 1.25 }}>
@@ -292,10 +309,33 @@ const TitleSplit = ({
               <Typography
                 sx={{ mt: 0.75, color: "text.secondary", fontWeight: 650 }}
               >
-                Uses source{" "}
-                {node.sourceTaskIndexes.length === 1 ? "item" : "items"}{" "}
-                {node.sourceTaskIndexes.join(", ")}
+                Source evidence
               </Typography>
+              <List
+                component="ul"
+                dense
+                disablePadding
+                sx={{ pl: 3, mt: 0.25, listStyleType: "disc" }}
+              >
+                {node.sourceTaskIndexes.map((sourceIndex, index) => (
+                  <ListItem
+                    component="li"
+                    key={`${node.title}-${sourceIndex}-${index}`}
+                    disableGutters
+                    alignItems="flex-start"
+                    sx={{ display: "list-item", pl: 0.5 }}
+                  >
+                    <ListItemText
+                      primary={`${sourceIndex}. ${
+                        node.sourceTasks[index] ||
+                        context.linkedTasks[sourceIndex - 1] ||
+                        "Source record"
+                      }`}
+                      primaryTypographyProps={{ sx: { lineHeight: 1.5 } }}
+                    />
+                  </ListItem>
+                ))}
+              </List>
             </Box>
           ))}
         </Stack>
@@ -309,10 +349,146 @@ const TitleSplit = ({
               {context.deferredTaskIndexes.length === 1 ? "item" : "items"}{" "}
               {context.deferredTaskIndexes.join(", ")}
             </Typography>
+            <List
+              component="ul"
+              dense
+              disablePadding
+              sx={{ pl: 3, mt: 0.25, listStyleType: "disc" }}
+            >
+              {context.deferredTaskIndexes.map((sourceIndex, index) => (
+                <ListItem
+                  component="li"
+                  key={`deferred-${sourceIndex}-${index}`}
+                  disableGutters
+                  sx={{ display: "list-item", pl: 0.5 }}
+                >
+                  <ListItemText
+                    primary={`${sourceIndex}. ${
+                      context.deferredTasks[index] ||
+                      context.linkedTasks[sourceIndex - 1] ||
+                      "Source record"
+                    }`}
+                  />
+                </ListItem>
+              ))}
+            </List>
           </Box>
         )}
       </Box>
     </Stack>
+  );
+};
+
+type SynsetDetail = Extract<
+  SomReviewContext,
+  { type: "synset-alignment" }
+>["candidateSynsets"][number];
+
+const SynsetList = ({
+  synsets,
+  emptyText,
+}: {
+  synsets: SynsetDetail[];
+  emptyText: string;
+}) =>
+  synsets.length > 0 ? (
+    <Stack divider={<Divider flexItem />} sx={{ mt: 0.75 }}>
+      {synsets.map((synset) => (
+        <Box key={synset.id} sx={{ py: 1 }}>
+          <Typography sx={{ fontWeight: 800 }}>{synset.id}</Typography>
+          <Typography sx={{ mt: 0.35, lineHeight: 1.5 }}>
+            {synset.definition}
+          </Typography>
+          {synset.lemmas.length > 0 && (
+            <Typography
+              sx={{ mt: 0.4, color: "text.secondary", lineHeight: 1.45 }}
+            >
+              Lemmas: {synset.lemmas.join(", ")}
+            </Typography>
+          )}
+          {synset.examples.length > 0 && (
+            <Typography
+              sx={{ mt: 0.4, color: "text.secondary", lineHeight: 1.45 }}
+            >
+              Example: {synset.examples.join("; ")}
+            </Typography>
+          )}
+        </Box>
+      ))}
+    </Stack>
+  ) : (
+    <Typography sx={{ mt: 0.75, color: "text.secondary", lineHeight: 1.5 }}>
+      {emptyText}
+    </Typography>
+  );
+
+const SynsetAlignment = ({
+  context,
+}: {
+  context: Extract<SomReviewContext, { type: "synset-alignment" }>;
+}) => {
+  const proposedLabel =
+    context.decision === "keep-assigned"
+      ? "Verified assignment"
+      : context.decision === "replace"
+        ? "Proposed assignment"
+        : context.decision === "no-suitable-synset"
+          ? "No suitable WordNet synset"
+          : "Unresolved assignment";
+  return (
+    <Box>
+      <Typography sx={{ fontSize: "1.05rem", fontWeight: 800 }}>
+        {context.groupTitle}
+      </Typography>
+      {context.groupTitle !== context.currentAtomicTitle && (
+        <Typography sx={{ mt: 0.25, color: "text.secondary" }}>
+          Resulting from the title review of {context.currentAtomicTitle}
+        </Typography>
+      )}
+      <Stack
+        direction={{ xs: "column", lg: "row" }}
+        spacing={2}
+        sx={{ mt: 1.5 }}
+      >
+        <Box sx={comparisonPanelSx}>
+          <Typography sx={sectionLabelSx}>Inherited assignment</Typography>
+          <Typography sx={{ mt: 0.5, color: "text.secondary" }}>
+            From {context.ownerTitle}
+          </Typography>
+          <SynsetList
+            synsets={context.assignedSynsets}
+            emptyText="No inherited synset is recorded."
+          />
+        </Box>
+        <Box sx={comparisonPanelSx}>
+          <Typography sx={sectionLabelSx}>{proposedLabel}</Typography>
+          <SynsetList
+            synsets={context.selectedSynsets}
+            emptyText={
+              context.decision === "no-suitable-synset"
+                ? "None of the locally retrieved WordNet senses fits all evidence."
+                : "The evidence does not distinguish a safe WordNet assignment."
+            }
+          />
+        </Box>
+      </Stack>
+      <Box sx={{ mt: 1 }}>
+        <Disclosure
+          closedLabel={`Show all local WordNet candidates (${context.candidateSynsets.length})`}
+          openLabel="Hide local WordNet candidates"
+        >
+          <Box sx={{ px: 1.5, pb: 1 }}>
+            <SynsetList
+              synsets={context.candidateSynsets}
+              emptyText="WordNet returned no verb senses for this exact leading action."
+            />
+          </Box>
+        </Disclosure>
+      </Box>
+      <Box sx={{ mt: 0.5 }}>
+        <SourceTasks tasks={context.sourceTasks} />
+      </Box>
+    </Box>
   );
 };
 

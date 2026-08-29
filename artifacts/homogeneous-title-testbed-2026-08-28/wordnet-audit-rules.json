@@ -1,0 +1,127 @@
+{
+  "schemaVersion": "wordnet-alignment-audit-rules-v1",
+  "sourceSha256": "f19ce789bce298b0564045fb87427eebd1193b89c133d17519c097dc3e0eb319",
+  "promptVersion": "access-wordnet-alignment-audit-2026-08-28-v1",
+  "iterationSummary": [
+    "Candidate retrieval was changed from web lookup to exhaustive local WordNet lookup for the exact leading action.",
+    "The audit removed inherited senses that merely share an owner verb but do not fit all evidence in the homogeneous group.",
+    "The validator includes an explicit no-suitable-synset path and rejects any selected ID outside the local candidate bundle."
+  ],
+  "defaultChecks": {
+    "evidenceComplete": true,
+    "assignedCompared": true,
+    "candidateBound": true,
+    "definitionFit": true,
+    "noForcedChoice": true
+  },
+  "rules": [
+    {
+      "leadingAction": "Outline",
+      "verdict": "approve",
+      "confidence": "high",
+      "reason": "[GROUP TITLE] uses the exact trace-the-shape sense and no source evidence conflicts."
+    },
+    {
+      "leadingAction": "Compare",
+      "verdict": "approve",
+      "confidence": "high",
+      "reason": "[GROUP TITLE] compares measured properties and matches compare.v.01 directly."
+    },
+    {
+      "leadingAction": "Document",
+      "verdict": "approve",
+      "confidence": "high",
+      "reason": "[GROUP TITLE] is fully covered by document.v.01, and each removed inherited sense would add an unsupported record-keeping subtype."
+    },
+    {
+      "leadingAction": "Store",
+      "verdict": "approve",
+      "confidence": "medium",
+      "reason": "[GROUP TITLE] consistently concerns retaining data; store.v.01 is the smallest supplied sense that covers all records."
+    },
+    {
+      "leadingAction": "Diagnose",
+      "verdict": "approve",
+      "confidence": "high",
+      "reason": "[GROUP TITLE] remains disease diagnosis after grouping, and diagnose.v.01 covers every source."
+    },
+    {
+      "leadingAction": "Plan",
+      "verdict": "approve",
+      "confidence": "medium",
+      "reason": "[GROUP TITLE] describes working out the menu itself, making plan.v.03 more exact than intention or masterminding senses."
+    },
+    {
+      "leadingAction": "Use",
+      "verdict": "approve",
+      "confidence": "high",
+      "reason": "[GROUP TITLE] employs a staple as a tool, which is use.v.01 rather than applying a substance to a surface."
+    },
+    {
+      "leadingAction": "Melt",
+      "verdict": "approve",
+      "confidence": "high",
+      "reason": "[GROUP TITLE] exactly matches the solid-to-liquid sense."
+    },
+    {
+      "leadingAction": "Create",
+      "verdict": "approve",
+      "confidence": "medium",
+      "reason": "[GROUP TITLE] produces a physical photographic output, and produce.v.02 covers both grouped records without adding unrelated creation senses."
+    },
+    {
+      "leadingAction": "Insert",
+      "verdict": "approve",
+      "confidence": "high",
+      "reason": "[GROUP TITLE] consistently means putting a wedge into a frame, position, or hole; insert.v.01 is exact."
+    },
+    {
+      "leadingAction": "Cut",
+      "verdict": "approve",
+      "confidence": "high",
+      "reason": "[GROUP TITLE] contains varied cutting actions, so the broad cut.v.01 sense is safer than a narrower felling-only candidate."
+    },
+    {
+      "leadingAction": "Lubricate",
+      "verdict": "approve",
+      "confidence": "high",
+      "reason": "[GROUP TITLE] applies lubricant in every source and matches lubricate.v.02."
+    },
+    {
+      "leadingAction": "Assist",
+      "verdict": "approve",
+      "confidence": "high",
+      "reason": "[GROUP TITLE] is subordinate help in carrying out work; moral and material-support senses were correctly removed."
+    },
+    {
+      "leadingAction": "Operate",
+      "verdict": "approve",
+      "confidence": "high",
+      "reason": "[GROUP TITLE] handles a lens and causes it to function, exactly matching operate.v.03."
+    },
+    {
+      "leadingAction": "Coordinate",
+      "verdict": "approve",
+      "confidence": "high",
+      "reason": "[GROUP TITLE] brings care activities and participants into common action, matching coordinate.v.02."
+    },
+    {
+      "leadingAction": "Devise",
+      "verdict": "approve",
+      "confidence": "medium",
+      "reason": "[GROUP TITLE] uses devise in the invent-or-contrive sense; invent.v.01 is the only supplied candidate that covers that conception work."
+    },
+    {
+      "leadingAction": "Direct",
+      "verdict": "approve",
+      "confidence": "medium",
+      "reason": "[GROUP TITLE] repeatedly concerns authoritative instruction of personnel, supporting direct.v.01 over the less specific assigned sense."
+    },
+    {
+      "leadingAction": "Oversee",
+      "verdict": "approve",
+      "confidence": "high",
+      "reason": "[GROUP TITLE] is covered by the only supplied Oversee verb synset, oversee.v.01, across all grouped evidence."
+    }
+  ]
+}

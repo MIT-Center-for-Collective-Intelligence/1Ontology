@@ -1,0 +1,184 @@
+{
+  "schemaVersion": "som-review-v1",
+  "datasetVersion": "ontology-title-homogeneous-testbed-2026-08-28-v1",
+  "branch": "Ontology-wide title test bed",
+  "generatedAt": "2026-08-29T01:53:17.802Z",
+  "sourceOntology": "artifact://0401_FINALHIERARCHY.json",
+  "sourceOntologySha256": "c6f48aaf3dbb9dec62cd92938b4ac377bba378a43a2c753260c16079baa90e47",
+  "upstreamSource": {
+    "file": "0401_FINALHIERARCHY.json",
+    "sha256": "f19ce789bce298b0564045fb87427eebd1193b89c133d17519c097dc3e0eb319",
+    "atomicActivityOccurrences": 20491,
+    "uniqueExactTitles": 15994,
+    "singleOccurrenceTitles": 11992,
+    "sampledAtomicActivities": 18,
+    "resultingHomogeneousGroups": 42
+  },
+  "safety": {
+    "reviewOnly": true,
+    "mutatesOntology": false,
+    "approvalAuthorizesAutomaticWrite": false,
+    "modelConfidenceVisibleToReviewer": false
+  },
+  "uiContract": {
+    "issueHomogeneousSessions": true,
+    "defaultSessionSize": 10,
+    "maximumSessionSize": 15,
+    "oneAtomicItemAtATime": true,
+    "agreeAutoAdvancesWithoutPageReload": true,
+    "disagreeRequiresReason": true,
+    "optionalContextCollapsedByDefault": true,
+    "allowSaveAndExit": true
+  },
+  "issueTypes": [
+    {
+      "id": "title-clarity",
+      "label": "Clarify titles through homogeneous evidence groups",
+      "stage": "content",
+      "robTaskIds": [
+        1
+      ],
+      "rolloutStatus": "experimental",
+      "view": "title-split",
+      "proposals": 9,
+      "controls": 9
+    },
+    {
+      "id": "synset-alignment",
+      "label": "Align homogeneous activities with WordNet",
+      "stage": "content",
+      "robTaskIds": [],
+      "rolloutStatus": "experimental",
+      "view": "synset-alignment",
+      "proposals": 16,
+      "controls": 26
+    }
+  ],
+  "files": {
+    "allProposals": "all_proposals.jsonl",
+    "allControls": "all_controls.jsonl",
+    "manualChecks": "manual_checks.jsonl",
+    "proposalsByIssue": "proposals/<issue-type>.jsonl",
+    "controlsByIssue": "controls/<issue-type>.jsonl",
+    "rejectedAgentCandidates": "diagnostics/rejected_agent_candidates.jsonl",
+    "fullRunEstimate": "diagnostics/full-run-estimate.json",
+    "proposalSchema": "schema/review-proposal.schema.json",
+    "responseSchema": "schema/review-response.schema.json",
+    "schemaSource": "scripts/som-review/build-homogeneous-title-review-dataset.mjs",
+    "ontologySnapshot": "ontology-snapshot.json"
+  },
+  "counts": {
+    "proposals": 25,
+    "controls": 35,
+    "manualChecks": 0,
+    "rejectedAgentCandidates": 0
+  },
+  "limitations": [
+    "This deterministic 18-title sample is a test bed, not ground truth or a claim that the full ontology has been corrected.",
+    "New specific titles remain provisional children until a later placement review.",
+    "Title grouping preserves the leading action; wrong-main-verb and ontology-wide placement checks are deliberately deferred.",
+    "The separate generic-action diagnostic found 147 Act/Perform occurrences (135 unique titles); none is silently rewritten here.",
+    "WordNet decisions are limited to locally retrieved senses for the exact leading action and explicitly allow no-suitable-synset or uncertain outcomes.",
+    "No generated proposal, expert agreement, or test-bed action writes to the ontology automatically."
+  ],
+  "sourceSnapshot": {
+    "file": "ontology-snapshot.json",
+    "sha256": "c6f48aaf3dbb9dec62cd92938b4ac377bba378a43a2c753260c16079baa90e47",
+    "ontologyAppId": "final-hierarchy-with-onet-homogeneous-title-testbed-2026-08-28",
+    "ontologyName": "Final Hierarchy with O*NET - Ontology-wide title test bed 2026-08-28",
+    "environment": "production",
+    "capturedAt": "2026-08-29T01:53:17.802Z",
+    "branchRootNodeId": "node-0368e65a11318373d75faee7",
+    "branchRootTitle": "Act",
+    "nodeCount": 80,
+    "branchNodeCount": 80,
+    "referenceNodeCount": 0,
+    "edgeCount": 79
+  },
+  "coverage": {
+    "snapshotBound": true,
+    "exhaustiveWithinPackagedDetectorOutputs": true,
+    "semanticCompletenessGuaranteed": false,
+    "detectorAgents": [
+      "access-homogeneous-title-grouping-v1",
+      "access-wordnet-alignment-v1"
+    ],
+    "criticAgents": [
+      "access-homogeneous-title-grouping-auditor-v1",
+      "access-wordnet-alignment-auditor-v1"
+    ],
+    "note": "Every packaged title and WordNet card passed an independent semantic audit plus deterministic source, evidence, title, action, and candidate-set safeguards."
+  },
+  "fullRunEstimate": {
+    "modelPlan": [
+      {
+        "stages": [
+          "title grouping",
+          "WordNet alignment"
+        ],
+        "model": "gpt-5.6-terra",
+        "reasoningEffort": "high",
+        "role": "primary structured proposer"
+      },
+      {
+        "stages": [
+          "title grouping audit",
+          "WordNet alignment audit"
+        ],
+        "model": "gpt-5.6-sol",
+        "reasoningEffort": "high",
+        "role": "independent semantic auditor"
+      },
+      {
+        "stages": [
+          "source binding",
+          "coverage",
+          "title status",
+          "synset binding"
+        ],
+        "model": null,
+        "reasoningEffort": null,
+        "role": "deterministic local validation"
+      }
+    ],
+    "atomicActivityOccurrences": 20491,
+    "homogeneousGroupPlanningRange": {
+      "low": 20491,
+      "central": 35980,
+      "high": 47973,
+      "interpretation": "Planning range, not a statistical confidence interval. The low case is the one-group-per-occurrence floor; the central case applies observed sample rates by evidence bucket and the medium-record rate to unsampled large cases; the high case adds one third for sample and large-case uncertainty."
+    },
+    "centralModelCalls": 112942,
+    "centralVisiblePacketTokens": {
+      "low": 97979172,
+      "central": 110226569,
+      "high": 125973222
+    },
+    "centralTotalAccessTokensPlanningRange": {
+      "low": 154450172,
+      "central": 223168569,
+      "high": 351857222
+    },
+    "elapsedWallTimeHours": {
+      "low": 16.4,
+      "central": 33.8,
+      "high": 61.5,
+      "assumptions": "32 concurrent calls, 20/30/45 seconds per call in the low/central/high scenarios, and 15% retry or repair overhead. Provider throughput and ACCESS concurrency limits can dominate this estimate."
+    },
+    "directApiCharge": {
+      "amountUsd": 0,
+      "interpretation": "The requested execution path uses the approved ACCESS allocation rather than a separately billed external API. This does not mean the allocation consumption is zero."
+    },
+    "note": "This is a planning estimate from exact serialized sample packets, not metered model usage. The packaged diagnostic contains assumptions and caveats."
+  },
+  "reviewRelease": {
+    "strategy": "dependency-gated-title-then-wordnet-testbed",
+    "currentWave": "homogeneous-title-grouping",
+    "releasedIssueTypes": [
+      "title-clarity",
+      "synset-alignment"
+    ],
+    "awaitingRegenerationIssueTypes": [],
+    "message": "Review each homogeneous title decision first. Its WordNet cards remain waiting until that exact title decision is accepted and become not applicable if it is rejected."
+  }
+}

@@ -39,6 +39,7 @@ describe("Society of Mind review dataset", () => {
       "cross-branch-recall",
       "evidence-specialization",
       "title-clarity",
+      "synset-alignment",
       "synonym-enrichment",
       "description-enrichment",
       "misc-facet-duplicate",

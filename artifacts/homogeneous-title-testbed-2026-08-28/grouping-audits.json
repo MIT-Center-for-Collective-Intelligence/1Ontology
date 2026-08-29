@@ -1,0 +1,128 @@
+{
+  "schemaVersion": "homogeneous-title-grouping-audits-v1",
+  "sourceSha256": "f19ce789bce298b0564045fb87427eebd1193b89c133d17519c097dc3e0eb319",
+  "promptVersion": "access-homogeneous-title-grouping-audit-2026-08-28-v1",
+  "iterationSummary": [
+    "The first audit added each source record's other exact atomic-title links; this prevented duplicate proposals for clauses already represented elsewhere.",
+    "The first audit found and fixed canonical matching that incorrectly treated a displayed synonym suffix as part of an existing title.",
+    "The final audit retained broad titles only when differences were incidental context or separately linked clauses, and split records only on explicit direct-object distinctions."
+  ],
+  "defaultChecks": {
+    "evidenceComplete": true,
+    "actionPreserved": true,
+    "groupingHomogeneous": true,
+    "modifierGrounded": true,
+    "existingLinksRespected": true,
+    "titlesConsolidated": true
+  },
+  "audits": [
+    {
+      "occurrenceId": "atomic-ed7f926d6f8a2afe185c",
+      "verdict": "approve",
+      "confidence": "high",
+      "reason": "Outline Pattern is an exact residual clause; Draw Pattern and Lay Pattern links prevent duplicate extraction."
+    },
+    {
+      "occurrenceId": "atomic-9161b89ea9fa3b0fb108",
+      "verdict": "approve",
+      "confidence": "high",
+      "reason": "Environmental is explicitly attached to impact, while the performance clause is already represented by Compare Performance."
+    },
+    {
+      "occurrenceId": "atomic-4443f0439ebf52a58824",
+      "verdict": "approve",
+      "confidence": "high",
+      "reason": "Both duplicate evidence entries are accounted for and the other actions have exact links."
+    },
+    {
+      "occurrenceId": "atomic-5ea2fd867a90d0098f88",
+      "verdict": "approve",
+      "confidence": "high",
+      "reason": "All four records support the same activity, and Store Data corrects the unnatural datum wording without changing meaning."
+    },
+    {
+      "occurrenceId": "atomic-003bf5b0b1e789d2c9cd",
+      "verdict": "approve",
+      "confidence": "medium",
+      "reason": "The proposed domains are explicit and medically meaningful; one generic disease record remains under the current title for expert comparison."
+    },
+    {
+      "occurrenceId": "atomic-3d45a7c27254ef2c9666",
+      "verdict": "approve",
+      "confidence": "medium",
+      "reason": "Special and bar are explicit object restrictions; purposes, guidelines, and diet restrictions were not promoted into titles."
+    },
+    {
+      "occurrenceId": "atomic-2ab12fbc2f7fd9dfa849",
+      "verdict": "approve",
+      "confidence": "high",
+      "reason": "The staple clause is explicit, and the alternative fastening objects already have their own links."
+    },
+    {
+      "occurrenceId": "atomic-24ab2b4c7b61722902f4",
+      "verdict": "approve",
+      "confidence": "high",
+      "reason": "The source expressly generalizes its examples as other materials, so no material-specific split is warranted."
+    },
+    {
+      "occurrenceId": "atomic-1aa7265cee80ea6c10a6",
+      "verdict": "approve",
+      "confidence": "medium",
+      "reason": "Timed print is an explicit product restriction, while the other record remains generic."
+    },
+    {
+      "occurrenceId": "atomic-27c77557905a65623673",
+      "verdict": "approve",
+      "confidence": "high",
+      "reason": "All records share the same inserted object; tools and purposes do not create new wedge activities."
+    },
+    {
+      "occurrenceId": "atomic-562c8c4a5a9e35c27ec4",
+      "verdict": "approve",
+      "confidence": "high",
+      "reason": "Each source genuinely contains Cut Tree, while Cut Log, Cut Sapling, Cut Vegetation, and other clauses are already linked."
+    },
+    {
+      "occurrenceId": "atomic-2df83a138d7509dae376",
+      "verdict": "approve",
+      "confidence": "high",
+      "reason": "Machinery occurs in every source and all additional objects or actions have separate links."
+    },
+    {
+      "occurrenceId": "atomic-6e0324051de0289bdcb7",
+      "verdict": "approve",
+      "confidence": "high",
+      "reason": "Preparation and maintenance are separately governed by assist, and both clearer titles cite the same source without combining them."
+    },
+    {
+      "occurrenceId": "atomic-d45a0bee58d5bb67dd39",
+      "verdict": "approve",
+      "confidence": "high",
+      "reason": "Zoom is an explicit, stable lens type and is the smallest modifier that restores the omitted meaning."
+    },
+    {
+      "occurrenceId": "atomic-3ff5239b88576c658e83",
+      "verdict": "approve",
+      "confidence": "high",
+      "reason": "The second source explicitly coordinates both care and rehabilitation, so overlapping evidence is justified."
+    },
+    {
+      "occurrenceId": "atomic-1edc77ce0d8914824b75",
+      "verdict": "approve",
+      "confidence": "high",
+      "reason": "Fixture is explicit in both records; the current title issue is separate from the suspect WordNet parent and is correctly retained here."
+    },
+    {
+      "occurrenceId": "atomic-958d35daa6723089727c",
+      "verdict": "approve",
+      "confidence": "medium",
+      "reason": "Personnel types vary by work context, but all evidence expresses the same clear Direct Personnel activity and already separates designers and technicians where necessary."
+    },
+    {
+      "occurrenceId": "atomic-d671e93fb7a19bc7d1b2",
+      "verdict": "approve",
+      "confidence": "medium",
+      "reason": "All 16 source indexes are covered; repeated operation types are consolidated, explicit dual objects share evidence, and non-operation clauses already linked elsewhere are not duplicated."
+    }
+  ]
+}

@@ -65,6 +65,7 @@ describe("Society of Mind context renderers", () => {
         context={{
           type: "title-split",
           currentTitle: "Sell Product",
+          decision: "split",
           linkedTasks: ["Sell agricultural products.", "Sell products."],
           proposedNodes: [
             {
@@ -90,12 +91,78 @@ describe("Society of Mind context renderers", () => {
 
     expect(screen.getByText("Before")).toBeInTheDocument();
     expect(screen.getByText("After")).toBeInTheDocument();
-    expect(screen.getByText("New node")).toBeInTheDocument();
+    expect(screen.getByText("New provisional child")).toBeInTheDocument();
     expect(screen.getByText("Already in ontology")).toBeInTheDocument();
-    expect(screen.getByText("Uses source item 1")).toBeInTheDocument();
-    expect(screen.getByText("Uses source item 2")).toBeInTheDocument();
-    expect(screen.getAllByText("Sell agricultural products.")).toHaveLength(1);
-    expect(screen.getAllByRole("listitem")).toHaveLength(2);
+    expect(
+      screen.getByText(
+        "New titles remain provisional children of Sell Product until the later placement review.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getAllByText("1. Sell agricultural products.")).toHaveLength(
+      2,
+    );
+    expect(screen.getAllByText("2. Sell products.")).toHaveLength(2);
+    expect(screen.getAllByRole("listitem")).toHaveLength(4);
+  });
+
+  it("compares inherited and selected WordNet senses with all candidates available", () => {
+    render(
+      <ContextRenderer
+        context={{
+          type: "synset-alignment",
+          currentAtomicTitle: "Store Datum",
+          groupTitle: "Store Data",
+          groupStatus: "new",
+          ownerTitle: "Store (Store.v.01, Store.v.02)",
+          decision: "replace",
+          sourceTasks: ["Store data for later retrieval."],
+          assignedSynsets: [
+            {
+              id: "store.v.02",
+              definition: "find a place for and put away for storage",
+              lemmas: ["store"],
+              examples: [],
+            },
+          ],
+          selectedSynsets: [
+            {
+              id: "store.v.01",
+              definition: "keep or lay aside for future use",
+              lemmas: ["store"],
+              examples: ["store grain for the winter"],
+            },
+          ],
+          candidateSynsets: [
+            {
+              id: "store.v.01",
+              definition: "keep or lay aside for future use",
+              lemmas: ["store"],
+              examples: ["store grain for the winter"],
+            },
+            {
+              id: "store.v.02",
+              definition: "find a place for and put away for storage",
+              lemmas: ["store"],
+              examples: [],
+            },
+          ],
+        }}
+      />,
+    );
+
+    expect(screen.getByText("Inherited assignment")).toBeInTheDocument();
+    expect(screen.getByText("Proposed assignment")).toBeInTheDocument();
+    expect(screen.getByText("store.v.01")).toBeInTheDocument();
+    expect(screen.getByText("store.v.02")).toBeInTheDocument();
+    const candidates = screen.getByRole("button", {
+      name: "Show all local WordNet candidates (2)",
+    });
+    expect(candidates).toHaveAttribute("aria-expanded", "false");
+    fireEvent.click(candidates);
+    expect(
+      screen.getAllByText("keep or lay aside for future use"),
+    ).toHaveLength(2);
+    expect(screen.getByText("Store data for later retrieval.")).toBeVisible();
   });
 
   it("keeps the current children alphabetized and labels only the after split", () => {

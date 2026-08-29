@@ -81,6 +81,7 @@ const INSPECTION_ISSUE_LABELS: Record<SomIssueType, string> = {
   "cross-branch-recall": "Potentially missing nodes for this sub-branch",
   "evidence-specialization": "Specific activities supported by O*NET",
   "title-clarity": "Unclear activity titles",
+  "synset-alignment": "WordNet sense alignment",
   "synonym-enrichment": "Missing recorded synonyms",
   "description-enrichment": "Missing descriptions",
   "misc-facet-duplicate": "Possible repeated concepts",

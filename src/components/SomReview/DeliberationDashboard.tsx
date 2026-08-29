@@ -36,6 +36,7 @@ const ISSUE_LABELS: Record<SomIssueType, string> = {
   "cross-branch-recall": "Recall related activities",
   "evidence-specialization": "O*NET-derived specific activities",
   "title-clarity": "1. Unclear activity titles",
+  "synset-alignment": "WordNet sense alignment",
   "synonym-enrichment": "2. Missing synonyms",
   "description-enrichment": "3. Missing descriptions",
   "misc-facet-duplicate": "4. Repeated facets",

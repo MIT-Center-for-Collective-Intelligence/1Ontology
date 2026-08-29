@@ -1,0 +1,1276 @@
+{
+  "schemaVersion": "homogeneous-title-testbed-sample-v1",
+  "generatedAt": "2026-08-29T01:53:10.759Z",
+  "sourceFile": "0401_FINALHIERARCHY.json",
+  "sourceSha256": "f19ce789bce298b0564045fb87427eebd1193b89c133d17519c097dc3e0eb319",
+  "seed": "rob-homogeneous-title-testbed-2026-08-28-v1",
+  "selectionRule": "Deterministic hash order; two unique-title atomic activities from each of the single, 2-5 record, and 6-20 record strata in each of the three top-level branches.",
+  "inventoryCounts": {
+    "atomicActivityOccurrences": 20491,
+    "uniqueTitleCount": 15994,
+    "singleOccurrenceTitleCount": 11992
+  },
+  "genericActionDiagnostic": {
+    "rule": "Flag exact leading actions Act and Perform for a separate review after title grouping and WordNet alignment.",
+    "occurrenceCount": 147,
+    "uniqueTitleCount": 135,
+    "examples": [
+      "Act Inquiry",
+      "Act Instruction",
+      "Act Witness",
+      "Perform Action (Synonyms: Execute Action, Take Action)",
+      "Perform Activity (Synonyms: Engage Activity, Execute Activity)",
+      "Perform Adjustment (Synonyms: Make Adjustment)",
+      "Perform Aid",
+      "Perform Analysis",
+      "Perform Angiography",
+      "Perform Application",
+      "Perform Assembly",
+      "Perform Assessment",
+      "Perform Assignment",
+      "Perform Audit",
+      "Perform Autopsy",
+      "Perform Backup",
+      "Perform Biopsy",
+      "Perform Brachytherapy",
+      "Perform Calculation",
+      "Perform Care"
+    ]
+  },
+  "sample": [
+    {
+      "occurrenceId": "atomic-ed7f926d6f8a2afe185c",
+      "exactTitle": "Outline Pattern",
+      "normalizedTitle": "outline pattern",
+      "leadingAction": "Outline",
+      "ownerTitle": "Delineate (Delineate.v.03)",
+      "assignedSynsetIds": [
+        "delineate.v.03"
+      ],
+      "path": [
+        "Act",
+        "Act on information (“Think”)",
+        "Create information (Develop.v.01, Generate.v.01, Make.v.03)",
+        "Express information",
+        "Record (Record.v.01)",
+        "Create static image",
+        "Draw (drawing) (Draw.v.04, Draw.v.06)",
+        "Delineate (Delineate.v.03)",
+        "Delineate (Information)",
+        "Outline Pattern"
+      ],
+      "parentTitle": "Delineate (Information)",
+      "topLevelBranch": "Act on information (“Think”)",
+      "evidenceBucket": "single",
+      "evidenceCount": 1,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "14083",
+          "exactRecord": "(O*Net) 14083 - Draw patterns, using measurements, designs, plaster casts, or customer specifications, and position or outline patterns on work pieces.",
+          "task": "Draw patterns, using measurements, designs, plaster casts, or customer specifications, and position or outline patterns on work pieces.",
+          "otherLinkedAtomicTitles": [
+            "Draw Pattern (Synonyms: Trace Pattern)",
+            "Lay Pattern (Synonyms: Position Pattern)"
+          ]
+        }
+      ],
+      "exactTitleOccurrenceCount": 1,
+      "sampleIndex": 1
+    },
+    {
+      "occurrenceId": "atomic-9161b89ea9fa3b0fb108",
+      "exactTitle": "Compare Impact",
+      "normalizedTitle": "compare impact",
+      "leadingAction": "Compare",
+      "ownerTitle": "Compare (Compare.v.01)",
+      "assignedSynsetIds": [
+        "compare.v.01"
+      ],
+      "path": [
+        "Act",
+        "Act on information (“Think”)",
+        "Create information (Develop.v.01, Generate.v.01, Make.v.03)",
+        "Decide (Decide.v.01)",
+        "Select (Choose.v.01)",
+        "Compare (Compare.v.01)",
+        "Compare (Information)",
+        "Compare Impact"
+      ],
+      "parentTitle": "Compare (Information)",
+      "topLevelBranch": "Act on information (“Think”)",
+      "evidenceBucket": "single",
+      "evidenceCount": 1,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "22057",
+          "exactRecord": "(O*Net) 22057 - Compare the performance or environmental impact of nanomaterials by nanoparticle size, shape, or organization.",
+          "task": "Compare the performance or environmental impact of nanomaterials by nanoparticle size, shape, or organization.",
+          "otherLinkedAtomicTitles": [
+            "Compare Performance"
+          ]
+        }
+      ],
+      "exactTitleOccurrenceCount": 1,
+      "sampleIndex": 2
+    },
+    {
+      "occurrenceId": "atomic-4443f0439ebf52a58824",
+      "exactTitle": "Document Alternative",
+      "normalizedTitle": "document alternative",
+      "leadingAction": "Document",
+      "ownerTitle": "Document (Document.v.01, Inventory.v.01, Keep.v.08, Log.v.01, Register.v.01)",
+      "assignedSynsetIds": [
+        "document.v.01",
+        "inventory.v.01",
+        "keep.v.08",
+        "log.v.01",
+        "register.v.01"
+      ],
+      "path": [
+        "Act",
+        "Act on information (“Think”)",
+        "Create information (Develop.v.01, Generate.v.01, Make.v.03)",
+        "Express information",
+        "Record (Record.v.01)",
+        "Document (Document.v.01, Inventory.v.01, Keep.v.08, Log.v.01, Register.v.01)",
+        "Document (Information)",
+        "Document Alternative"
+      ],
+      "parentTitle": "Document (Information)",
+      "topLevelBranch": "Act on information (“Think”)",
+      "evidenceBucket": "small-multi",
+      "evidenceCount": 2,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "14727",
+          "exactRecord": "(O*Net) 14727 - Research, document, rate, or select alternatives for Web architecture or technologies.",
+          "task": "Research, document, rate, or select alternatives for Web architecture or technologies.",
+          "otherLinkedAtomicTitles": [
+            "Rate Alternative",
+            "Research Alternative",
+            "Select Alternative"
+          ]
+        },
+        {
+          "index": 2,
+          "oNetId": "21710",
+          "exactRecord": "(O*Net) 21710 - Research, document, rate, or select alternatives for Web architecture or technologies.",
+          "task": "Research, document, rate, or select alternatives for Web architecture or technologies.",
+          "otherLinkedAtomicTitles": [
+            "Rate Alternative",
+            "Research Alternative",
+            "Select Alternative"
+          ]
+        }
+      ],
+      "exactTitleOccurrenceCount": 1,
+      "sampleIndex": 3
+    },
+    {
+      "occurrenceId": "atomic-5ea2fd867a90d0098f88",
+      "exactTitle": "Store Datum",
+      "normalizedTitle": "store datum",
+      "leadingAction": "Store",
+      "ownerTitle": "Store information (Conserve.v.02, Store.v.01, Store.v.02)",
+      "assignedSynsetIds": [
+        "conserve.v.02",
+        "store.v.01",
+        "store.v.02"
+      ],
+      "path": [
+        "Act",
+        "Act on information (“Think”)",
+        "Store information (Conserve.v.02, Store.v.01, Store.v.02)",
+        "Store (Information)",
+        "Store Datum"
+      ],
+      "parentTitle": "Store (Information)",
+      "topLevelBranch": "Act on information (“Think”)",
+      "evidenceBucket": "small-multi",
+      "evidenceCount": 4,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "3990",
+          "exactRecord": "(O*Net) 3990 - Compress, digitize, duplicate, and store audio and video data.",
+          "task": "Compress, digitize, duplicate, and store audio and video data.",
+          "otherLinkedAtomicTitles": [
+            "Compress Datum",
+            "Digitize Datum",
+            "Duplicate Datum"
+          ]
+        },
+        {
+          "index": 2,
+          "oNetId": "7401",
+          "exactRecord": "(O*Net) 7401 - Store, retrieve, and manipulate data for analysis of system capabilities and requirements.",
+          "task": "Store, retrieve, and manipulate data for analysis of system capabilities and requirements.",
+          "otherLinkedAtomicTitles": [
+            "Manipulate Datum",
+            "Recover Datum (Synonyms: Retrieve Datum)"
+          ]
+        },
+        {
+          "index": 3,
+          "oNetId": "21682",
+          "exactRecord": "(O*Net) 21682 - Store, retrieve, and manipulate data for analysis of system capabilities and requirements.",
+          "task": "Store, retrieve, and manipulate data for analysis of system capabilities and requirements.",
+          "otherLinkedAtomicTitles": [
+            "Manipulate Datum",
+            "Recover Datum (Synonyms: Retrieve Datum)"
+          ]
+        },
+        {
+          "index": 4,
+          "oNetId": "21676",
+          "exactRecord": "(O*Net) 21676 - Store, retrieve, and manipulate data for analysis of system capabilities and requirements.",
+          "task": "Store, retrieve, and manipulate data for analysis of system capabilities and requirements.",
+          "otherLinkedAtomicTitles": [
+            "Manipulate Datum",
+            "Recover Datum (Synonyms: Retrieve Datum)"
+          ]
+        }
+      ],
+      "exactTitleOccurrenceCount": 1,
+      "sampleIndex": 4
+    },
+    {
+      "occurrenceId": "atomic-003bf5b0b1e789d2c9cd",
+      "exactTitle": "Diagnose Disease",
+      "normalizedTitle": "diagnose disease",
+      "leadingAction": "Diagnose",
+      "ownerTitle": "Diagnose (Diagnose.v.01)",
+      "assignedSynsetIds": [
+        "diagnose.v.01"
+      ],
+      "path": [
+        "Act",
+        "Act on information (“Think”)",
+        "Create information (Develop.v.01, Generate.v.01, Make.v.03)",
+        "Decide (Decide.v.01)",
+        "Select (Choose.v.01)",
+        "Diagnose (Diagnose.v.01)",
+        "Diagnose (Information)",
+        "Diagnose Disease"
+      ],
+      "parentTitle": "Diagnose (Information)",
+      "topLevelBranch": "Act on information (“Think”)",
+      "evidenceBucket": "medium-multi",
+      "evidenceCount": 6,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "16823",
+          "exactRecord": "(O*Net) 16823 - Evaluate, diagnose, or treat genetic diseases.",
+          "task": "Evaluate, diagnose, or treat genetic diseases.",
+          "otherLinkedAtomicTitles": [
+            "Evaluate Disease",
+            "Treat Disease"
+          ]
+        },
+        {
+          "index": 2,
+          "oNetId": "17176",
+          "exactRecord": "(O*Net) 17176 - Diagnose or treat injuries, disorders, or diseases of the eye and eye structures including the cornea, sclera, conjunctiva, or eyelids.",
+          "task": "Diagnose or treat injuries, disorders, or diseases of the eye and eye structures including the cornea, sclera, conjunctiva, or eyelids.",
+          "otherLinkedAtomicTitles": [
+            "Diagnose Disorder",
+            "Diagnose Injury",
+            "Treat Disease",
+            "Treat Disorder",
+            "Treat Injury (Synonyms: Care_For Injury)"
+          ]
+        },
+        {
+          "index": 3,
+          "oNetId": "17195",
+          "exactRecord": "(O*Net) 17195 - Diagnose diseases or study medical conditions, using techniques such as gross pathology, histology, cytology, cytopathology, clinical chemistry, immunology, flow cytometry, or molecular biology.",
+          "task": "Diagnose diseases or study medical conditions, using techniques such as gross pathology, histology, cytology, cytopathology, clinical chemistry, immunology, flow cytometry, or molecular biology.",
+          "otherLinkedAtomicTitles": [
+            "Analyze Condition (Synonyms: Examine Condition, Study Condition)"
+          ]
+        },
+        {
+          "index": 4,
+          "oNetId": "17295",
+          "exactRecord": "(O*Net) 17295 - Diagnose or treat diseases or disorders of genitourinary organs and tracts including erectile dysfunction (ED), infertility, incontinence, bladder cancer, prostate cancer, urethral stones, or premature ejaculation.",
+          "task": "Diagnose or treat diseases or disorders of genitourinary organs and tracts including erectile dysfunction (ED), infertility, incontinence, bladder cancer, prostate cancer, urethral stones, or premature ejaculation.",
+          "otherLinkedAtomicTitles": [
+            "Diagnose Disorder",
+            "Treat Disease",
+            "Treat Disorder"
+          ]
+        },
+        {
+          "index": 5,
+          "oNetId": "6931",
+          "exactRecord": "(O*Net) 6931 - Diagnose and treat diseases, injuries, or malformations of teeth, gums, or related oral structures and provide preventive or corrective services.",
+          "task": "Diagnose and treat diseases, injuries, or malformations of teeth, gums, or related oral structures and provide preventive or corrective services.",
+          "otherLinkedAtomicTitles": [
+            "Provide Service (1)",
+            "Treat Injury (Synonyms: Care_For Injury)",
+            "Treat Malformation"
+          ]
+        },
+        {
+          "index": 6,
+          "oNetId": "7849",
+          "exactRecord": "(O*Net) 7849 - Diagnose diseases and deformities of the foot using medical histories, physical examinations, x-rays, and laboratory test results.",
+          "task": "Diagnose diseases and deformities of the foot using medical histories, physical examinations, x-rays, and laboratory test results.",
+          "otherLinkedAtomicTitles": [
+            "Diagnose Deformity"
+          ]
+        }
+      ],
+      "exactTitleOccurrenceCount": 1,
+      "sampleIndex": 5
+    },
+    {
+      "occurrenceId": "atomic-3d45a7c27254ef2c9666",
+      "exactTitle": "Plan Menu",
+      "normalizedTitle": "plan menu",
+      "leadingAction": "Plan",
+      "ownerTitle": "Plan (Mastermind.v.01, Plan.v.02, Plan.v.03)",
+      "assignedSynsetIds": [
+        "mastermind.v.01",
+        "plan.v.02",
+        "plan.v.03"
+      ],
+      "path": [
+        "Act",
+        "Act on information (“Think”)",
+        "Create information (Develop.v.01, Generate.v.01, Make.v.03)",
+        "Plan (Mastermind.v.01, Plan.v.02, Plan.v.03)",
+        "Plan (Information)",
+        "Plan Menu"
+      ],
+      "parentTitle": "Plan (Information)",
+      "topLevelBranch": "Act on information (“Think”)",
+      "evidenceBucket": "medium-multi",
+      "evidenceCount": 6,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "1100",
+          "exactRecord": "(O*Net) 1100 - Plan menus and food utilization, based on anticipated number of guests, nutritional value, palatability, popularity, and costs.",
+          "task": "Plan menus and food utilization, based on anticipated number of guests, nutritional value, palatability, popularity, and costs.",
+          "otherLinkedAtomicTitles": [
+            "Plan Utilization"
+          ]
+        },
+        {
+          "index": 2,
+          "oNetId": "18721",
+          "exactRecord": "(O*Net) 18721 - Assess nutritional needs of patients, plan special menus, supervise the assembly of regular and special diet trays, and oversee the delivery of food trolleys to hospital patients.",
+          "task": "Assess nutritional needs of patients, plan special menus, supervise the assembly of regular and special diet trays, and oversee the delivery of food trolleys to hospital patients.",
+          "otherLinkedAtomicTitles": [
+            "Assess Need (Synonyms: Evaluate Need)",
+            "Oversee Delivery",
+            "Supervise Assembly"
+          ]
+        },
+        {
+          "index": 3,
+          "oNetId": "2239",
+          "exactRecord": "(O*Net) 2239 - Plan bar menus.",
+          "task": "Plan bar menus.",
+          "otherLinkedAtomicTitles": []
+        },
+        {
+          "index": 4,
+          "oNetId": "4169",
+          "exactRecord": "(O*Net) 4169 - Plan menus or diets or guide individuals or families in food selection, preparation, or menu planning, based upon nutritional needs and established guidelines.",
+          "task": "Plan menus or diets or guide individuals or families in food selection, preparation, or menu planning, based upon nutritional needs and established guidelines.",
+          "otherLinkedAtomicTitles": [
+            "Guide Family",
+            "Lead Individual (Synonyms: Guide Individual)",
+            "Plan Diet"
+          ]
+        },
+        {
+          "index": 5,
+          "oNetId": "9498",
+          "exactRecord": "(O*Net) 9498 - Plan menus that are varied, nutritionally balanced, and appetizing, taking advantage of foods in season and local availability.",
+          "task": "Plan menus that are varied, nutritionally balanced, and appetizing, taking advantage of foods in season and local availability.",
+          "otherLinkedAtomicTitles": []
+        },
+        {
+          "index": 6,
+          "oNetId": "9501",
+          "exactRecord": "(O*Net) 9501 - Plan menus according to employers' needs and diet restrictions.",
+          "task": "Plan menus according to employers' needs and diet restrictions.",
+          "otherLinkedAtomicTitles": []
+        }
+      ],
+      "exactTitleOccurrenceCount": 1,
+      "sampleIndex": 6
+    },
+    {
+      "occurrenceId": "atomic-2ab12fbc2f7fd9dfa849",
+      "exactTitle": "Use Staple",
+      "normalizedTitle": "use staple",
+      "leadingAction": "Use",
+      "ownerTitle": "Apply (physical) (Put_on.v.07)",
+      "assignedSynsetIds": [
+        "put_on.v.07"
+      ],
+      "path": [
+        "Act",
+        "Act on physical objects (“Do”)",
+        "Modify physical objects",
+        "Combine physical objects (Create_from_raw_material.v.01)",
+        "Cover (Cover.v.01)",
+        "Apply (physical) (Put_on.v.07)",
+        "Apply (physical) (Physical Object)",
+        "Use Staple"
+      ],
+      "parentTitle": "Apply (physical) (Physical Object)",
+      "topLevelBranch": "Act on physical objects (“Do”)",
+      "evidenceBucket": "single",
+      "evidenceCount": 1,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "2838",
+          "exactRecord": "(O*Net) 2838 - Stretch carpet to align with walls and ensure a smooth surface, and press carpet in place over tack strips or use staples, tape, tacks or glue to hold carpet in place.",
+          "task": "Stretch carpet to align with walls and ensure a smooth surface, and press carpet in place over tack strips or use staples, tape, tacks or glue to hold carpet in place.",
+          "otherLinkedAtomicTitles": [
+            "Apply Glue (Synonyms: Use Glue)",
+            "Press Carpet",
+            "Stretch Carpet",
+            "Use Tack",
+            "Use Tape"
+          ]
+        }
+      ],
+      "exactTitleOccurrenceCount": 1,
+      "sampleIndex": 7
+    },
+    {
+      "occurrenceId": "atomic-24ab2b4c7b61722902f4",
+      "exactTitle": "Melt Material",
+      "normalizedTitle": "melt material",
+      "leadingAction": "Melt",
+      "ownerTitle": "Melt (Melt.v.01)",
+      "assignedSynsetIds": [
+        "melt.v.01"
+      ],
+      "path": [
+        "Act",
+        "Act on physical objects (“Do”)",
+        "Modify physical objects",
+        "Transform physical objects (Change.v.01, Rework.v.01, Transform.v.02, Work.v.05)",
+        "Heat (Heat.v.01)",
+        "Melt (Melt.v.01)",
+        "Melt (Physical Object)",
+        "Melt Material"
+      ],
+      "parentTitle": "Melt (Physical Object)",
+      "topLevelBranch": "Act on physical objects (“Do”)",
+      "evidenceBucket": "single",
+      "evidenceCount": 1,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "4.A.3.a.2.I13.D06",
+          "exactRecord": "(O*Net) 4.A.3.a.2.I13.D06 - Melt metal, plastic, or other materials to prepare for production.",
+          "task": "Melt metal, plastic, or other materials to prepare for production.",
+          "otherLinkedAtomicTitles": []
+        }
+      ],
+      "exactTitleOccurrenceCount": 1,
+      "sampleIndex": 8
+    },
+    {
+      "occurrenceId": "atomic-1aa7265cee80ea6c10a6",
+      "exactTitle": "Create Print (Synonyms: Produce Print)",
+      "normalizedTitle": "create print",
+      "leadingAction": "Create",
+      "ownerTitle": "Create physical objects (Develop.v.01, Form.v.01, Make.v.03)",
+      "assignedSynsetIds": [
+        "develop.v.01",
+        "form.v.01",
+        "make.v.03"
+      ],
+      "path": [
+        "Act",
+        "Act on physical objects (“Do”)",
+        "Create physical objects (Develop.v.01, Form.v.01, Make.v.03)",
+        "Create (Physical Object)",
+        "Create Print (Synonyms: Produce Print)"
+      ],
+      "parentTitle": "Create (Physical Object)",
+      "topLevelBranch": "Act on physical objects (“Do”)",
+      "evidenceBucket": "small-multi",
+      "evidenceCount": 2,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "19465",
+          "exactRecord": "(O*Net) 19465 - Create prints according to customer specifications and laboratory protocols.",
+          "task": "Create prints according to customer specifications and laboratory protocols.",
+          "otherLinkedAtomicTitles": []
+        },
+        {
+          "index": 2,
+          "oNetId": "19496",
+          "exactRecord": "(O*Net) 19496 - Produce timed prints with separate densities or color settings for each scene of a production.",
+          "task": "Produce timed prints with separate densities or color settings for each scene of a production.",
+          "otherLinkedAtomicTitles": []
+        }
+      ],
+      "exactTitleOccurrenceCount": 1,
+      "sampleIndex": 9
+    },
+    {
+      "occurrenceId": "atomic-27c77557905a65623673",
+      "exactTitle": "Insert Wedge",
+      "normalizedTitle": "insert wedge",
+      "leadingAction": "Insert",
+      "ownerTitle": "Insert (physical) (Feed.v.04, Insert.v.01)",
+      "assignedSynsetIds": [
+        "feed.v.04",
+        "insert.v.01"
+      ],
+      "path": [
+        "Act",
+        "Act on physical objects (“Do”)",
+        "Modify physical objects",
+        "Move physical objects (Act.v.01, Move.v.02, Send.v.02, Transfer.v.04, Transmit.v.04)",
+        "Put physical objects (Put.v.01)",
+        "Insert (physical) (Feed.v.04, Insert.v.01)",
+        "Insert (physical) (Physical Object)",
+        "Insert Wedge"
+      ],
+      "parentTitle": "Insert (physical) (Physical Object)",
+      "topLevelBranch": "Act on physical objects (“Do”)",
+      "evidenceBucket": "small-multi",
+      "evidenceCount": 3,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "12438",
+          "exactRecord": "(O*Net) 12438 - Position width gauge blocks between blades, and level blades and insert wedges into frames to secure blades to frames.",
+          "task": "Position width gauge blocks between blades, and level blades and insert wedges into frames to secure blades to frames.",
+          "otherLinkedAtomicTitles": [
+            "Lay Block (Synonyms: Position Block)",
+            "Level Blade"
+          ]
+        },
+        {
+          "index": 2,
+          "oNetId": "13495",
+          "exactRecord": "(O*Net) 13495 - Insert jacks or drive wedges behind saws to prevent binding of saws and to start trees falling.",
+          "task": "Insert jacks or drive wedges behind saws to prevent binding of saws and to start trees falling.",
+          "otherLinkedAtomicTitles": [
+            "Insert Jack"
+          ]
+        },
+        {
+          "index": 3,
+          "oNetId": "14968",
+          "exactRecord": "(O*Net) 14968 - Insert wedges and feathers into holes, and drive wedges with sledgehammers to split stone sections from masses.",
+          "task": "Insert wedges and feathers into holes, and drive wedges with sledgehammers to split stone sections from masses.",
+          "otherLinkedAtomicTitles": [
+            "Drive Wedge",
+            "Insert Feather"
+          ]
+        }
+      ],
+      "exactTitleOccurrenceCount": 1,
+      "sampleIndex": 10
+    },
+    {
+      "occurrenceId": "atomic-562c8c4a5a9e35c27ec4",
+      "exactTitle": "Cut Tree",
+      "normalizedTitle": "cut tree",
+      "leadingAction": "Cut",
+      "ownerTitle": "Cut (physical) (Cut.v.01)",
+      "assignedSynsetIds": [
+        "cut.v.01"
+      ],
+      "path": [
+        "Act",
+        "Act on physical objects (“Do”)",
+        "Modify physical objects",
+        "Separate physical objects (Divide.v.01, Separate.v.02)",
+        "Cut (physical) (Cut.v.01)",
+        "Cut (physical) (Physical Object)",
+        "Cut Tree"
+      ],
+      "parentTitle": "Cut (physical) (Physical Object)",
+      "topLevelBranch": "Act on physical objects (“Do”)",
+      "evidenceBucket": "medium-multi",
+      "evidenceCount": 9,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "13118",
+          "exactRecord": "(O*Net) 13118 - Prune, cut down, fertilize, and spray trees as directed by tree surgeons.",
+          "task": "Prune, cut down, fertilize, and spray trees as directed by tree surgeons.",
+          "otherLinkedAtomicTitles": [
+            "Fertilize Tree",
+            "Prune Tree (Synonyms: Trim Tree)",
+            "Spray Tree"
+          ]
+        },
+        {
+          "index": 2,
+          "oNetId": "13487",
+          "exactRecord": "(O*Net) 13487 - Clear brush from work areas and escape routes, and cut saplings and other trees from direction of falls, using axes, chainsaws, or bulldozers.",
+          "task": "Clear brush from work areas and escape routes, and cut saplings and other trees from direction of falls, using axes, chainsaws, or bulldozers.",
+          "otherLinkedAtomicTitles": [
+            "Clear Brush",
+            "Cut Sapling"
+          ]
+        },
+        {
+          "index": 3,
+          "oNetId": "13488",
+          "exactRecord": "(O*Net) 13488 - Measure felled trees and cut them into specified log lengths, using chain saws and axes.",
+          "task": "Measure felled trees and cut them into specified log lengths, using chain saws and axes.",
+          "otherLinkedAtomicTitles": [
+            "Measure Tree (Synonyms: Appraise Tree)"
+          ]
+        },
+        {
+          "index": 4,
+          "oNetId": "23386",
+          "exactRecord": "(O*Net) 23386 - Dig, cut, and transplant seedlings, cuttings, trees, and shrubs.",
+          "task": "Dig, cut, and transplant seedlings, cuttings, trees, and shrubs.",
+          "otherLinkedAtomicTitles": [
+            "Cut Cutting",
+            "Cut Seedling",
+            "Cut Shrub",
+            "Dig Cutting",
+            "Dig Seedling",
+            "Dig Shrub",
+            "Dig Tree",
+            "Transplant Cutting",
+            "Transplant Seedling",
+            "Transplant Shrub",
+            "Transplant Tree"
+          ]
+        },
+        {
+          "index": 5,
+          "oNetId": "4.A.3.a.2.I14",
+          "exactRecord": "(O*Net) 4.A.3.a.2.I14 - Cut trees or other vegetation.",
+          "task": "Cut trees or other vegetation.",
+          "otherLinkedAtomicTitles": [
+            "Cut Vegetation"
+          ]
+        },
+        {
+          "index": 6,
+          "oNetId": "4.A.3.a.2.I14.D01",
+          "exactRecord": "(O*Net) 4.A.3.a.2.I14.D01 - Cut trees or logs.",
+          "task": "Cut trees or logs.",
+          "otherLinkedAtomicTitles": [
+            "Cut Log"
+          ]
+        },
+        {
+          "index": 7,
+          "oNetId": "7030",
+          "exactRecord": "(O*Net) 7030 - Select or cut trees according to markings or sizes, types, or grades.",
+          "task": "Select or cut trees according to markings or sizes, types, or grades.",
+          "otherLinkedAtomicTitles": [
+            "Select Tree"
+          ]
+        },
+        {
+          "index": 8,
+          "oNetId": "7122",
+          "exactRecord": "(O*Net) 7122 - Cut down and remove trees and brush to clear drill sites, to reduce fire hazards, and to make way for roads to sites.",
+          "task": "Cut down and remove trees and brush to clear drill sites, to reduce fire hazards, and to make way for roads to sites.",
+          "otherLinkedAtomicTitles": [
+            "Remove Brush"
+          ]
+        },
+        {
+          "index": 9,
+          "oNetId": "9808",
+          "exactRecord": "(O*Net) 9808 - Drive and maneuver tractors and tree harvesters to shear the tops off of trees, cut and limb the trees, and cut the logs into desired lengths.",
+          "task": "Drive and maneuver tractors and tree harvesters to shear the tops off of trees, cut and limb the trees, and cut the logs into desired lengths.",
+          "otherLinkedAtomicTitles": [
+            "Cut Log",
+            "Drive Harvester",
+            "Drive Tractor",
+            "Limb Tree",
+            "Maneuver Harvester",
+            "Maneuver Tractor",
+            "Shear Tree"
+          ]
+        }
+      ],
+      "exactTitleOccurrenceCount": 1,
+      "sampleIndex": 11
+    },
+    {
+      "occurrenceId": "atomic-2df83a138d7509dae376",
+      "exactTitle": "Lubricate Machinery",
+      "normalizedTitle": "lubricate machinery",
+      "leadingAction": "Lubricate",
+      "ownerTitle": "Lubricate (Lubricate.v.02)",
+      "assignedSynsetIds": [
+        "lubricate.v.02"
+      ],
+      "path": [
+        "Act",
+        "Act on physical objects (“Do”)",
+        "Modify physical objects",
+        "Transform physical objects (Change.v.01, Rework.v.01, Transform.v.02, Work.v.05)",
+        "Service (physical) (Service.v.02)",
+        "Lubricate (Lubricate.v.02)",
+        "Lubricate (Physical Object)",
+        "Lubricate Machinery"
+      ],
+      "parentTitle": "Lubricate (Physical Object)",
+      "topLevelBranch": "Act on physical objects (“Do”)",
+      "evidenceBucket": "medium-multi",
+      "evidenceCount": 6,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "11465",
+          "exactRecord": "(O*Net) 11465 - Lubricate, clean, or repair machinery, equipment, or tools.",
+          "task": "Lubricate, clean, or repair machinery, equipment, or tools.",
+          "otherLinkedAtomicTitles": [
+            "Clean Equipment",
+            "Clean Machinery",
+            "Clean Tool",
+            "Lubricate Equipment",
+            "Lubricate Tool",
+            "Repair Equipment",
+            "Repair Machinery",
+            "Repair Tool"
+          ]
+        },
+        {
+          "index": 2,
+          "oNetId": "11820",
+          "exactRecord": "(O*Net) 11820 - Clean, lubricate, or adjust parts, equipment, or machinery.",
+          "task": "Clean, lubricate, or adjust parts, equipment, or machinery.",
+          "otherLinkedAtomicTitles": [
+            "Adjust Equipment",
+            "Adjust Machinery",
+            "Adjust Part",
+            "Clean Equipment",
+            "Clean Machinery",
+            "Clean Part",
+            "Lubricate Equipment",
+            "Lubricate Part"
+          ]
+        },
+        {
+          "index": 3,
+          "oNetId": "12783",
+          "exactRecord": "(O*Net) 12783 - Lubricate, adjust, or repair machinery and replace parts, such as gears, bearings, or bucket teeth.",
+          "task": "Lubricate, adjust, or repair machinery and replace parts, such as gears, bearings, or bucket teeth.",
+          "otherLinkedAtomicTitles": [
+            "Adjust Machinery",
+            "Repair Machinery",
+            "Replace Part"
+          ]
+        },
+        {
+          "index": 4,
+          "oNetId": "14467",
+          "exactRecord": "(O*Net) 14467 - Lubricate machinery, equipment, or engine parts, such as gears, shafts, or bearings.",
+          "task": "Lubricate machinery, equipment, or engine parts, such as gears, shafts, or bearings.",
+          "otherLinkedAtomicTitles": [
+            "Lubricate Equipment",
+            "Lubricate Part"
+          ]
+        },
+        {
+          "index": 5,
+          "oNetId": "3084",
+          "exactRecord": "(O*Net) 3084 - Clean or lubricate vehicles, machinery, equipment, instruments, tools, work areas, and other objects, using hand tools, power tools, and cleaning equipment.",
+          "task": "Clean or lubricate vehicles, machinery, equipment, instruments, tools, work areas, and other objects, using hand tools, power tools, and cleaning equipment.",
+          "otherLinkedAtomicTitles": [
+            "Clean Area",
+            "Clean Equipment",
+            "Clean Instrument",
+            "Clean Machinery",
+            "Clean Object",
+            "Clean Tool",
+            "Clean Vehicle",
+            "Lubricate Area",
+            "Lubricate Equipment",
+            "Lubricate Instrument",
+            "Lubricate Object",
+            "Lubricate Tool",
+            "Lubricate Vehicle"
+          ]
+        },
+        {
+          "index": 6,
+          "oNetId": "5001",
+          "exactRecord": "(O*Net) 5001 - Lubricate machinery, vehicles, or equipment or perform minor repairs or adjustments, using hand tools.",
+          "task": "Lubricate machinery, vehicles, or equipment or perform minor repairs or adjustments, using hand tools.",
+          "otherLinkedAtomicTitles": [
+            "Lubricate Equipment",
+            "Lubricate Vehicle",
+            "Perform Adjustment (Synonyms: Make Adjustment)",
+            "Perform Repair (Synonyms: Make Repair)"
+          ]
+        }
+      ],
+      "exactTitleOccurrenceCount": 1,
+      "sampleIndex": 12
+    },
+    {
+      "occurrenceId": "atomic-6e0324051de0289bdcb7",
+      "exactTitle": "Assist Handbook",
+      "normalizedTitle": "assist handbook",
+      "leadingAction": "Assist",
+      "ownerTitle": "Assist (Help.v.01, Support.v.01, Support.v.02)",
+      "assignedSynsetIds": [
+        "help.v.01",
+        "support.v.01",
+        "support.v.02"
+      ],
+      "path": [
+        "Act",
+        "Act with other activities and actors (“Interact”)",
+        "Transfer between actors",
+        "Transfer service",
+        "Provide service",
+        "Assist (Help.v.01, Support.v.01, Support.v.02)",
+        "Assist (Information)",
+        "Assist Handbook"
+      ],
+      "parentTitle": "Assist (Information)",
+      "topLevelBranch": "Act with other activities and actors (“Interact”)",
+      "evidenceBucket": "single",
+      "evidenceCount": 1,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "3357",
+          "exactRecord": "(O*Net) 3357 - Assist in preparing and maintaining personnel records and handbooks.",
+          "task": "Assist in preparing and maintaining personnel records and handbooks.",
+          "otherLinkedAtomicTitles": [
+            "Assist Record"
+          ]
+        }
+      ],
+      "exactTitleOccurrenceCount": 1,
+      "sampleIndex": 13
+    },
+    {
+      "occurrenceId": "atomic-d45a0bee58d5bb67dd39",
+      "exactTitle": "Operate Lens",
+      "normalizedTitle": "operate lens",
+      "leadingAction": "Operate",
+      "ownerTitle": "Operate (Operate.v.03, Run.v.19)",
+      "assignedSynsetIds": [
+        "operate.v.03",
+        "run.v.19"
+      ],
+      "path": [
+        "Act",
+        "Act with other activities and actors (“Interact”)",
+        "Transfer between actors",
+        "Transfer service",
+        "Get service",
+        "Lead (Head.v.02, Induce.v.02, Lead.v.01, Lead.v.05)",
+        "Control (Control.v.01)",
+        "Operate (Operate.v.03, Run.v.19)",
+        "Operate (Physical Object) (1)",
+        "Operate Lens"
+      ],
+      "parentTitle": "Operate (Physical Object) (1)",
+      "topLevelBranch": "Act with other activities and actors (“Interact”)",
+      "evidenceBucket": "single",
+      "evidenceCount": 1,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "4032",
+          "exactRecord": "(O*Net) 4032 - Operate zoom lenses, changing images according to specifications and rehearsal instructions.",
+          "task": "Operate zoom lenses, changing images according to specifications and rehearsal instructions.",
+          "otherLinkedAtomicTitles": [
+            "Change Image"
+          ]
+        }
+      ],
+      "exactTitleOccurrenceCount": 1,
+      "sampleIndex": 14
+    },
+    {
+      "occurrenceId": "atomic-3ff5239b88576c658e83",
+      "exactTitle": "Coordinate Care",
+      "normalizedTitle": "coordinate care",
+      "leadingAction": "Coordinate",
+      "ownerTitle": "Organize (people or events) (Hold.v.03, Organize.v.05)",
+      "assignedSynsetIds": [
+        "hold.v.03",
+        "organize.v.05"
+      ],
+      "path": [
+        "Act",
+        "Act with other activities and actors (“Interact”)",
+        "Transfer between actors",
+        "Transfer service",
+        "Get service",
+        "Lead (Head.v.02, Induce.v.02, Lead.v.01, Lead.v.05)",
+        "Control (Control.v.01)",
+        "Organize (people or events) (Hold.v.03, Organize.v.05)",
+        "Organize (people or events) (Activity)",
+        "Coordinate Care"
+      ],
+      "parentTitle": "Organize (people or events) (Activity)",
+      "topLevelBranch": "Act with other activities and actors (“Interact”)",
+      "evidenceBucket": "small-multi",
+      "evidenceCount": 2,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "17072",
+          "exactRecord": "(O*Net) 17072 - Coordinate the care of patients with other health care professionals or support staff.",
+          "task": "Coordinate the care of patients with other health care professionals or support staff.",
+          "otherLinkedAtomicTitles": []
+        },
+        {
+          "index": 2,
+          "oNetId": "265",
+          "exactRecord": "(O*Net) 265 - Utilize consultation data and social work experience to plan and coordinate client or patient care and rehabilitation, following through to ensure service efficacy.",
+          "task": "Utilize consultation data and social work experience to plan and coordinate client or patient care and rehabilitation, following through to ensure service efficacy.",
+          "otherLinkedAtomicTitles": [
+            "Ensure Efficacy",
+            "Plan Care",
+            "Use Datum (Synonyms: Apply Datum, Utilize Datum)",
+            "Utilize Experience"
+          ]
+        }
+      ],
+      "exactTitleOccurrenceCount": 1,
+      "sampleIndex": 15
+    },
+    {
+      "occurrenceId": "atomic-1edc77ce0d8914824b75",
+      "exactTitle": "Devise Fixture",
+      "normalizedTitle": "devise fixture",
+      "leadingAction": "Devise",
+      "ownerTitle": "Organize (people or events) (Hold.v.03, Organize.v.05)",
+      "assignedSynsetIds": [
+        "hold.v.03",
+        "organize.v.05"
+      ],
+      "path": [
+        "Act",
+        "Act with other activities and actors (“Interact”)",
+        "Transfer between actors",
+        "Transfer service",
+        "Get service",
+        "Lead (Head.v.02, Induce.v.02, Lead.v.01, Lead.v.05)",
+        "Control (Control.v.01)",
+        "Organize (people or events) (Hold.v.03, Organize.v.05)",
+        "Organize (people or events) (Physical Object)",
+        "Devise Fixture"
+      ],
+      "parentTitle": "Organize (people or events) (Physical Object)",
+      "topLevelBranch": "Act with other activities and actors (“Interact”)",
+      "evidenceBucket": "small-multi",
+      "evidenceCount": 2,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "10288",
+          "exactRecord": "(O*Net) 10288 - Devise or build fixtures or jigs used to hold parts in place during welding, brazing, or soldering.",
+          "task": "Devise or build fixtures or jigs used to hold parts in place during welding, brazing, or soldering.",
+          "otherLinkedAtomicTitles": [
+            "Construct Fixture (Synonyms: Build Fixture)",
+            "Construct Jig (Synonyms: Build Jig)",
+            "Devise Jig"
+          ]
+        },
+        {
+          "index": 2,
+          "oNetId": "21054",
+          "exactRecord": "(O*Net) 21054 - Devise automated lab validation test stations or other test fixtures or equipment.",
+          "task": "Devise automated lab validation test stations or other test fixtures or equipment.",
+          "otherLinkedAtomicTitles": [
+            "Devise Equipment",
+            "Devise Station"
+          ]
+        }
+      ],
+      "exactTitleOccurrenceCount": 1,
+      "sampleIndex": 16
+    },
+    {
+      "occurrenceId": "atomic-958d35daa6723089727c",
+      "exactTitle": "Direct Personnel",
+      "normalizedTitle": "direct personnel",
+      "leadingAction": "Direct",
+      "ownerTitle": "Direct (Direct.v.04)",
+      "assignedSynsetIds": [
+        "direct.v.04"
+      ],
+      "path": [
+        "Act",
+        "Act with other activities and actors (“Interact”)",
+        "Transfer between actors",
+        "Transfer service",
+        "Get service",
+        "Lead (Head.v.02, Induce.v.02, Lead.v.01, Lead.v.05)",
+        "Control (Control.v.01)",
+        "Manage (Manage.v.02, Treat.v.01)",
+        "Direct (Direct.v.04)",
+        "Direct (Actor)",
+        "Direct Personnel"
+      ],
+      "parentTitle": "Direct (Actor)",
+      "topLevelBranch": "Act with other activities and actors (“Interact”)",
+      "evidenceBucket": "medium-multi",
+      "evidenceCount": 6,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "12303",
+          "exactRecord": "(O*Net) 12303 - Direct personnel engaged in controlling or operating distribution equipment or machinery, such as instructing control room operators to start boilers or generators.",
+          "task": "Direct personnel engaged in controlling or operating distribution equipment or machinery, such as instructing control room operators to start boilers or generators.",
+          "otherLinkedAtomicTitles": []
+        },
+        {
+          "index": 2,
+          "oNetId": "1509",
+          "exactRecord": "(O*Net) 1509 - Direct, coordinate, or advise personnel in test procedures for analyzing components or physical properties of materials.",
+          "task": "Direct, coordinate, or advise personnel in test procedures for analyzing components or physical properties of materials.",
+          "otherLinkedAtomicTitles": [
+            "Advise Personnel",
+            "Coordinate Personnel"
+          ]
+        },
+        {
+          "index": 3,
+          "oNetId": "1846",
+          "exactRecord": "(O*Net) 1846 - Direct or supervise less-skilled nursing or healthcare personnel or supervise a particular unit.",
+          "task": "Direct or supervise less-skilled nursing or healthcare personnel or supervise a particular unit.",
+          "otherLinkedAtomicTitles": [
+            "Supervise Personnel",
+            "Supervise Unit"
+          ]
+        },
+        {
+          "index": 4,
+          "oNetId": "377",
+          "exactRecord": "(O*Net) 377 - Direct, supervise, assess, and communicate with supportive personnel.",
+          "task": "Direct, supervise, assess, and communicate with supportive personnel.",
+          "otherLinkedAtomicTitles": [
+            "Assess Personnel (Synonyms: Evaluate Personnel)",
+            "Communicate Personnel",
+            "Supervise Personnel"
+          ]
+        },
+        {
+          "index": 5,
+          "oNetId": "4.A.4.b.4.I10.D02",
+          "exactRecord": "(O*Net) 4.A.4.b.4.I10.D02 - Direct construction or extraction personnel.",
+          "task": "Direct construction or extraction personnel.",
+          "otherLinkedAtomicTitles": []
+        },
+        {
+          "index": 6,
+          "oNetId": "7398",
+          "exactRecord": "(O*Net) 7398 - Direct technicians, engineering designers or other technical support personnel as needed.",
+          "task": "Direct technicians, engineering designers or other technical support personnel as needed.",
+          "otherLinkedAtomicTitles": [
+            "Direct Designer",
+            "Direct Technician"
+          ]
+        }
+      ],
+      "exactTitleOccurrenceCount": 1,
+      "sampleIndex": 17
+    },
+    {
+      "occurrenceId": "atomic-d671e93fb7a19bc7d1b2",
+      "exactTitle": "Oversee Operation (Synonyms: Supervise Operation)",
+      "normalizedTitle": "oversee operation",
+      "leadingAction": "Oversee",
+      "ownerTitle": "Oversee (Oversee.v.01)",
+      "assignedSynsetIds": [
+        "oversee.v.01"
+      ],
+      "path": [
+        "Act",
+        "Act with other activities and actors (“Interact”)",
+        "Transfer between actors",
+        "Transfer service",
+        "Get service",
+        "Lead (Head.v.02, Induce.v.02, Lead.v.01, Lead.v.05)",
+        "Control (Control.v.01)",
+        "Manage (Manage.v.02, Treat.v.01)",
+        "Oversee (Oversee.v.01)",
+        "Oversee (Activity)",
+        "Oversee Operation (Synonyms: Supervise Operation)"
+      ],
+      "parentTitle": "Oversee (Activity)",
+      "topLevelBranch": "Act with other activities and actors (“Interact”)",
+      "evidenceBucket": "medium-multi",
+      "evidenceCount": 16,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "1419",
+          "exactRecord": "(O*Net) 1419 - Oversee installation, operation, maintenance, or repair to ensure that machines or equipment are installed and functioning according to specifications.",
+          "task": "Oversee installation, operation, maintenance, or repair to ensure that machines or equipment are installed and functioning according to specifications.",
+          "otherLinkedAtomicTitles": [
+            "Oversee Installation (Synonyms: Supervise Installation)",
+            "Oversee Maintenance (Synonyms: Supervise Maintenance)",
+            "Oversee Repair (Synonyms: Supervise Repair)"
+          ]
+        },
+        {
+          "index": 2,
+          "oNetId": "14548",
+          "exactRecord": "(O*Net) 14548 - Oversee operation of vessels used for carrying passengers, motor vehicles, or goods across rivers, harbors, lakes, and coastal waters.",
+          "task": "Oversee operation of vessels used for carrying passengers, motor vehicles, or goods across rivers, harbors, lakes, and coastal waters.",
+          "otherLinkedAtomicTitles": []
+        },
+        {
+          "index": 3,
+          "oNetId": "15447",
+          "exactRecord": "(O*Net) 15447 - Oversee geothermal plant operations, maintenance, and repairs to ensure compliance with applicable standards or regulations.",
+          "task": "Oversee geothermal plant operations, maintenance, and repairs to ensure compliance with applicable standards or regulations.",
+          "otherLinkedAtomicTitles": [
+            "Oversee Maintenance (Synonyms: Supervise Maintenance)",
+            "Oversee Repair (Synonyms: Supervise Repair)"
+          ]
+        },
+        {
+          "index": 4,
+          "oNetId": "15964",
+          "exactRecord": "(O*Net) 15964 - Conduct or oversee contingency plan integration and operation.",
+          "task": "Conduct or oversee contingency plan integration and operation.",
+          "otherLinkedAtomicTitles": [
+            "Conduct Integration"
+          ]
+        },
+        {
+          "index": 5,
+          "oNetId": "16496",
+          "exactRecord": "(O*Net) 16496 - Oversee operation of microelectromechanical systems (MEMS) fabrication or assembly equipment, such as handling, singulation, assembly, wire-bonding, soldering, or package sealing.",
+          "task": "Oversee operation of microelectromechanical systems (MEMS) fabrication or assembly equipment, such as handling, singulation, assembly, wire-bonding, soldering, or package sealing.",
+          "otherLinkedAtomicTitles": []
+        },
+        {
+          "index": 6,
+          "oNetId": "22803",
+          "exactRecord": "(O*Net) 22803 - Operate or oversee operation of radiologic or magnetic imaging equipment to produce images of the body for diagnostic purposes.",
+          "task": "Operate or oversee operation of radiologic or magnetic imaging equipment to produce images of the body for diagnostic purposes.",
+          "otherLinkedAtomicTitles": [
+            "Operate Equipment (Synonyms: Control Equipment)"
+          ]
+        },
+        {
+          "index": 7,
+          "oNetId": "5383",
+          "exactRecord": "(O*Net) 5383 - Design or oversee construction or operation of nuclear reactors, power plants, or nuclear fuels reprocessing and reclamation systems.",
+          "task": "Design or oversee construction or operation of nuclear reactors, power plants, or nuclear fuels reprocessing and reclamation systems.",
+          "otherLinkedAtomicTitles": [
+            "Design Reactor",
+            "Oversee Construction (Synonyms: Supervise Construction)",
+            "Oversee System"
+          ]
+        },
+        {
+          "index": 8,
+          "oNetId": "7224",
+          "exactRecord": "(O*Net) 7224 - Manage and oversee operations, maintenance, administration, and improvement of commercial, industrial, or residential properties.",
+          "task": "Manage and oversee operations, maintenance, administration, and improvement of commercial, industrial, or residential properties.",
+          "otherLinkedAtomicTitles": [
+            "Manage Administration",
+            "Manage Improvement",
+            "Manage Maintenance (Synonyms: Handle Maintenance)",
+            "Manage Operation",
+            "Oversee Administration",
+            "Oversee Improvement",
+            "Oversee Maintenance (Synonyms: Supervise Maintenance)"
+          ]
+        },
+        {
+          "index": 9,
+          "oNetId": "15478",
+          "exactRecord": "(O*Net) 15478 - Supervise biomass plant or substation operations, maintenance, repair, or testing activities.",
+          "task": "Supervise biomass plant or substation operations, maintenance, repair, or testing activities.",
+          "otherLinkedAtomicTitles": [
+            "Oversee Maintenance (Synonyms: Supervise Maintenance)",
+            "Oversee Repair (Synonyms: Supervise Repair)",
+            "Oversee Testing (Synonyms: Supervise Testing)"
+          ]
+        },
+        {
+          "index": 10,
+          "oNetId": "15519",
+          "exactRecord": "(O*Net) 15519 - Supervise or monitor hydroelectric facility operations to ensure that generation or mechanical equipment conform to applicable regulations or standards.",
+          "task": "Supervise or monitor hydroelectric facility operations to ensure that generation or mechanical equipment conform to applicable regulations or standards.",
+          "otherLinkedAtomicTitles": [
+            "Monitor Operation"
+          ]
+        },
+        {
+          "index": 11,
+          "oNetId": "20531",
+          "exactRecord": "(O*Net) 20531 - Supervise pest or weed control operations, including locating and identifying pests or weeds, selecting chemicals and application methods, or scheduling application.",
+          "task": "Supervise pest or weed control operations, including locating and identifying pests or weeds, selecting chemicals and application methods, or scheduling application.",
+          "otherLinkedAtomicTitles": []
+        },
+        {
+          "index": 12,
+          "oNetId": "21988",
+          "exactRecord": "(O*Net) 21988 - Supervise the installation or operation of electronic equipment or systems.",
+          "task": "Supervise the installation or operation of electronic equipment or systems.",
+          "otherLinkedAtomicTitles": [
+            "Oversee Installation (Synonyms: Supervise Installation)"
+          ]
+        },
+        {
+          "index": 13,
+          "oNetId": "22413",
+          "exactRecord": "(O*Net) 22413 - Supervise daily library operations, budgeting, planning, and personnel activities, such as hiring, training, scheduling, and performance evaluations.",
+          "task": "Supervise daily library operations, budgeting, planning, and personnel activities, such as hiring, training, scheduling, and performance evaluations.",
+          "otherLinkedAtomicTitles": []
+        },
+        {
+          "index": 14,
+          "oNetId": "3575",
+          "exactRecord": "(O*Net) 3575 - Lay out, direct, and supervise mine construction operations, such as the construction of shafts and tunnels.",
+          "task": "Lay out, direct, and supervise mine construction operations, such as the construction of shafts and tunnels.",
+          "otherLinkedAtomicTitles": [
+            "Direct Operation",
+            "Lay_Out Operation"
+          ]
+        },
+        {
+          "index": 15,
+          "oNetId": "5332",
+          "exactRecord": "(O*Net) 5332 - Supervise food processing or manufacturing plant operations.",
+          "task": "Supervise food processing or manufacturing plant operations.",
+          "otherLinkedAtomicTitles": []
+        },
+        {
+          "index": 16,
+          "oNetId": "5572",
+          "exactRecord": "(O*Net) 5572 - Supervise forest nursery operations, timber harvesting, land use activities such as livestock grazing, and disease or insect control programs.",
+          "task": "Supervise forest nursery operations, timber harvesting, land use activities such as livestock grazing, and disease or insect control programs.",
+          "otherLinkedAtomicTitles": [
+            "Oversee Activity (Synonyms: Supervise Activity)",
+            "Oversee Program (Synonyms: Supervise Program)",
+            "Supervise Harvesting"
+          ]
+        }
+      ],
+      "exactTitleOccurrenceCount": 1,
+      "sampleIndex": 18
+    }
+  ]
+}

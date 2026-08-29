@@ -38,8 +38,12 @@ describe("review queue dependencies", () => {
   });
 
   it("requires title review before meaning review", () => {
+    expect(issuePrerequisiteTypes("synset-alignment")).toEqual([
+      "title-clarity",
+    ]);
     expect(issuePrerequisiteTypes("duplicate-synonym")).toEqual([
       "title-clarity",
+      "synset-alignment",
     ]);
   });
 
@@ -56,6 +60,7 @@ describe("review queue dependencies", () => {
   it("requires meaning and identity review before structural review", () => {
     expect(issuePrerequisiteTypes("flat-list-grouping")).toEqual([
       "title-clarity",
+      "synset-alignment",
       "synonym-enrichment",
       "mistaken-synonym",
       "duplicate-synonym",
