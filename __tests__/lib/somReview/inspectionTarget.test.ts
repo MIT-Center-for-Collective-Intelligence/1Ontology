@@ -10,7 +10,7 @@ describe("prior-review inspection target", () => {
 
     expect(target.workspace.activeDatasetId).toBe("sell-semantic-coverage");
     expect(target.datasetVersion).toBe(
-      "sell-rob-semantic-followup-2026-08-04-v1",
+      "sell-rob-legal-rights-followup-2026-08-05-v1",
     );
     expect(target.sourceSnapshotSha256).toMatch(/^[a-f0-9]{64}$/);
     expect(target.sourceSnapshotSha256).toBe(

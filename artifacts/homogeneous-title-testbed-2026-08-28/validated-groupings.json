@@ -1,0 +1,994 @@
+{
+  "schemaVersion": "homogeneous-title-testbed-validated-v1",
+  "generatedAt": "2026-08-29T01:53:11.210Z",
+  "sourceFile": "0401_FINALHIERARCHY.json",
+  "sourceSha256": "f19ce789bce298b0564045fb87427eebd1193b89c133d17519c097dc3e0eb319",
+  "sampleFile": "sample-packet.json",
+  "sampleSha256": "b1ba2ba8820ad18a56aad1d584921d3b5e1bfbb2755edd98c3266abfde232e39",
+  "assessmentsFile": "grouping-assessments.json",
+  "assessmentsSha256": "f1013423b4bd9a5ce64cb154f722f7ebaef36833ae714c66baf60490c3c4021f",
+  "auditsFile": "grouping-audits.json",
+  "auditsSha256": "9c31b91505e70bf881128b0b6909b09d9679cdca8570ce6f050b3dc24a70407e",
+  "promptVersions": {
+    "grouping": "access-homogeneous-title-grouping-2026-08-28-v1",
+    "audit": "access-homogeneous-title-grouping-audit-2026-08-28-v1",
+    "validator": "homogeneous-title-grouping-validator-2026-08-28-v1"
+  },
+  "promptSha256": {
+    "grouping": "145abc53f41dec84d5c32dfb63facc8d04e2554387455dc6fb7a04d1fd1036aa",
+    "audit": "45974fe422db8549fbde162e928f1661c57ff536e5c75dd451bb727501735271",
+    "validator": "bee4582a228bd2c3f6cdafcc0d04daca1953df81dd3a42a7623eaa0df852d6a9"
+  },
+  "counts": {
+    "cases": 18,
+    "keep": 9,
+    "rename": 3,
+    "split": 6,
+    "defer": 0,
+    "resultingGroups": 42
+  },
+  "assessments": [
+    {
+      "occurrenceId": "atomic-ed7f926d6f8a2afe185c",
+      "decision": "keep",
+      "groups": [
+        {
+          "title": "Outline Pattern",
+          "status": "current",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "reason": "The source explicitly says to outline patterns; its separate draw and position clauses are already linked to other activities.",
+          "sourceTasks": [
+            "Draw patterns, using measurements, designs, plaster casts, or customer specifications, and position or outline patterns on work pieces."
+          ]
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "The current title clearly and completely names the residual Outline activity.",
+      "confidence": "high",
+      "audit": {
+        "occurrenceId": "atomic-ed7f926d6f8a2afe185c",
+        "verdict": "approve",
+        "confidence": "high",
+        "reason": "Outline Pattern is an exact residual clause; Draw Pattern and Lay Pattern links prevent duplicate extraction.",
+        "checks": {
+          "evidenceComplete": true,
+          "actionPreserved": true,
+          "groupingHomogeneous": true,
+          "modifierGrounded": true,
+          "existingLinksRespected": true,
+          "titlesConsolidated": true
+        }
+      },
+      "deferredTasks": []
+    },
+    {
+      "occurrenceId": "atomic-9161b89ea9fa3b0fb108",
+      "decision": "rename",
+      "groups": [
+        {
+          "title": "Compare Environmental Impact",
+          "status": "new",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "reason": "The current title omits the evidence-supported environmental modifier; the separate performance comparison already has an exact linked activity.",
+          "sourceTasks": [
+            "Compare the performance or environmental impact of nanomaterials by nanoparticle size, shape, or organization."
+          ]
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "After respecting the existing Compare Performance link, the residual comparison is specifically environmental impact.",
+      "confidence": "high",
+      "audit": {
+        "occurrenceId": "atomic-9161b89ea9fa3b0fb108",
+        "verdict": "approve",
+        "confidence": "high",
+        "reason": "Environmental is explicitly attached to impact, while the performance clause is already represented by Compare Performance.",
+        "checks": {
+          "evidenceComplete": true,
+          "actionPreserved": true,
+          "groupingHomogeneous": true,
+          "modifierGrounded": true,
+          "existingLinksRespected": true,
+          "titlesConsolidated": true
+        }
+      },
+      "deferredTasks": []
+    },
+    {
+      "occurrenceId": "atomic-4443f0439ebf52a58824",
+      "decision": "keep",
+      "groups": [
+        {
+          "title": "Document Alternative",
+          "status": "current",
+          "sourceTaskIndexes": [
+            1,
+            2
+          ],
+          "reason": "Both duplicate source records explicitly describe documenting alternatives, while research, rating, and selection are already linked separately.",
+          "sourceTasks": [
+            "Research, document, rate, or select alternatives for Web architecture or technologies.",
+            "Research, document, rate, or select alternatives for Web architecture or technologies."
+          ]
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "The current title accurately captures one homogeneous residual activity.",
+      "confidence": "high",
+      "audit": {
+        "occurrenceId": "atomic-4443f0439ebf52a58824",
+        "verdict": "approve",
+        "confidence": "high",
+        "reason": "Both duplicate evidence entries are accounted for and the other actions have exact links.",
+        "checks": {
+          "evidenceComplete": true,
+          "actionPreserved": true,
+          "groupingHomogeneous": true,
+          "modifierGrounded": true,
+          "existingLinksRespected": true,
+          "titlesConsolidated": true
+        }
+      },
+      "deferredTasks": []
+    },
+    {
+      "occurrenceId": "atomic-5ea2fd867a90d0098f88",
+      "decision": "rename",
+      "groups": [
+        {
+          "title": "Store Data",
+          "status": "new",
+          "sourceTaskIndexes": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "reason": "Every source uses data as a mass noun, and Store Data is the natural stand-alone title for the same homogeneous activity.",
+          "sourceTasks": [
+            "Compress, digitize, duplicate, and store audio and video data.",
+            "Store, retrieve, and manipulate data for analysis of system capabilities and requirements.",
+            "Store, retrieve, and manipulate data for analysis of system capabilities and requirements.",
+            "Store, retrieve, and manipulate data for analysis of system capabilities and requirements."
+          ]
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "The evidence supports one activity; only the malformed object wording needs correction.",
+      "confidence": "high",
+      "audit": {
+        "occurrenceId": "atomic-5ea2fd867a90d0098f88",
+        "verdict": "approve",
+        "confidence": "high",
+        "reason": "All four records support the same activity, and Store Data corrects the unnatural datum wording without changing meaning.",
+        "checks": {
+          "evidenceComplete": true,
+          "actionPreserved": true,
+          "groupingHomogeneous": true,
+          "modifierGrounded": true,
+          "existingLinksRespected": true,
+          "titlesConsolidated": true
+        }
+      },
+      "deferredTasks": []
+    },
+    {
+      "occurrenceId": "atomic-003bf5b0b1e789d2c9cd",
+      "decision": "split",
+      "groups": [
+        {
+          "title": "Diagnose Disease",
+          "status": "current",
+          "sourceTaskIndexes": [
+            3
+          ],
+          "reason": "This source uses diseases generically and therefore fits the current title.",
+          "sourceTasks": [
+            "Diagnose diseases or study medical conditions, using techniques such as gross pathology, histology, cytology, cytopathology, clinical chemistry, immunology, flow cytometry, or molecular biology."
+          ]
+        },
+        {
+          "title": "Diagnose Genetic Disease",
+          "status": "new",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "reason": "The source explicitly restricts the object to genetic diseases.",
+          "sourceTasks": [
+            "Evaluate, diagnose, or treat genetic diseases."
+          ]
+        },
+        {
+          "title": "Diagnose Eye Disease",
+          "status": "new",
+          "sourceTaskIndexes": [
+            2
+          ],
+          "reason": "The source restricts the diagnosed diseases to the eye and eye structures.",
+          "sourceTasks": [
+            "Diagnose or treat injuries, disorders, or diseases of the eye and eye structures including the cornea, sclera, conjunctiva, or eyelids."
+          ]
+        },
+        {
+          "title": "Diagnose Genitourinary Disease",
+          "status": "new",
+          "sourceTaskIndexes": [
+            4
+          ],
+          "reason": "The source explicitly restricts the object to diseases of genitourinary organs and tracts.",
+          "sourceTasks": [
+            "Diagnose or treat diseases or disorders of genitourinary organs and tracts including erectile dysfunction (ED), infertility, incontinence, bladder cancer, prostate cancer, urethral stones, or premature ejaculation."
+          ]
+        },
+        {
+          "title": "Diagnose Oral Disease",
+          "status": "new",
+          "sourceTaskIndexes": [
+            5
+          ],
+          "reason": "The source restricts the diagnosed diseases to teeth, gums, and related oral structures.",
+          "sourceTasks": [
+            "Diagnose and treat diseases, injuries, or malformations of teeth, gums, or related oral structures and provide preventive or corrective services."
+          ]
+        },
+        {
+          "title": "Diagnose Foot Disease",
+          "status": "new",
+          "sourceTaskIndexes": [
+            6
+          ],
+          "reason": "The source explicitly restricts the object to diseases of the foot.",
+          "sourceTasks": [
+            "Diagnose diseases and deformities of the foot using medical histories, physical examinations, x-rays, and laboratory test results."
+          ]
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "One record is generic, while five records state medically meaningful disease domains omitted by the compressed title.",
+      "confidence": "medium",
+      "audit": {
+        "occurrenceId": "atomic-003bf5b0b1e789d2c9cd",
+        "verdict": "approve",
+        "confidence": "medium",
+        "reason": "The proposed domains are explicit and medically meaningful; one generic disease record remains under the current title for expert comparison.",
+        "checks": {
+          "evidenceComplete": true,
+          "actionPreserved": true,
+          "groupingHomogeneous": true,
+          "modifierGrounded": true,
+          "existingLinksRespected": true,
+          "titlesConsolidated": true
+        }
+      },
+      "deferredTasks": []
+    },
+    {
+      "occurrenceId": "atomic-3d45a7c27254ef2c9666",
+      "decision": "split",
+      "groups": [
+        {
+          "title": "Plan Menu",
+          "status": "current",
+          "sourceTaskIndexes": [
+            1,
+            4,
+            5,
+            6
+          ],
+          "reason": "These sources describe menu planning generically; diets and food utilization are already represented by separate linked activities where applicable.",
+          "sourceTasks": [
+            "Plan menus and food utilization, based on anticipated number of guests, nutritional value, palatability, popularity, and costs.",
+            "Plan menus or diets or guide individuals or families in food selection, preparation, or menu planning, based upon nutritional needs and established guidelines.",
+            "Plan menus that are varied, nutritionally balanced, and appetizing, taking advantage of foods in season and local availability.",
+            "Plan menus according to employers' needs and diet restrictions."
+          ]
+        },
+        {
+          "title": "Plan Special Menu",
+          "status": "new",
+          "sourceTaskIndexes": [
+            2
+          ],
+          "reason": "The source explicitly distinguishes special menus from regular menus.",
+          "sourceTasks": [
+            "Assess nutritional needs of patients, plan special menus, supervise the assembly of regular and special diet trays, and oversee the delivery of food trolleys to hospital patients."
+          ]
+        },
+        {
+          "title": "Plan Bar Menu",
+          "status": "new",
+          "sourceTaskIndexes": [
+            3
+          ],
+          "reason": "The source explicitly restricts the object to bar menus.",
+          "sourceTasks": [
+            "Plan bar menus."
+          ]
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "Most evidence remains generic, while two records contain object restrictions useful enough to preserve in stand-alone titles.",
+      "confidence": "medium",
+      "audit": {
+        "occurrenceId": "atomic-3d45a7c27254ef2c9666",
+        "verdict": "approve",
+        "confidence": "medium",
+        "reason": "Special and bar are explicit object restrictions; purposes, guidelines, and diet restrictions were not promoted into titles.",
+        "checks": {
+          "evidenceComplete": true,
+          "actionPreserved": true,
+          "groupingHomogeneous": true,
+          "modifierGrounded": true,
+          "existingLinksRespected": true,
+          "titlesConsolidated": true
+        }
+      },
+      "deferredTasks": []
+    },
+    {
+      "occurrenceId": "atomic-2ab12fbc2f7fd9dfa849",
+      "decision": "keep",
+      "groups": [
+        {
+          "title": "Use Staple",
+          "status": "current",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "reason": "The source explicitly says to use staples; tape, tacks, and glue are already linked as separate activities.",
+          "sourceTasks": [
+            "Stretch carpet to align with walls and ensure a smooth surface, and press carpet in place over tack strips or use staples, tape, tacks or glue to hold carpet in place."
+          ]
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "The current title accurately names the residual staple-use clause.",
+      "confidence": "high",
+      "audit": {
+        "occurrenceId": "atomic-2ab12fbc2f7fd9dfa849",
+        "verdict": "approve",
+        "confidence": "high",
+        "reason": "The staple clause is explicit, and the alternative fastening objects already have their own links.",
+        "checks": {
+          "evidenceComplete": true,
+          "actionPreserved": true,
+          "groupingHomogeneous": true,
+          "modifierGrounded": true,
+          "existingLinksRespected": true,
+          "titlesConsolidated": true
+        }
+      },
+      "deferredTasks": []
+    },
+    {
+      "occurrenceId": "atomic-24ab2b4c7b61722902f4",
+      "decision": "keep",
+      "groups": [
+        {
+          "title": "Melt Material",
+          "status": "current",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "reason": "The source itself generalizes metal, plastic, and other materials under one material category.",
+          "sourceTasks": [
+            "Melt metal, plastic, or other materials to prepare for production."
+          ]
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "The current generic object is explicit in the evidence and covers one homogeneous activity.",
+      "confidence": "high",
+      "audit": {
+        "occurrenceId": "atomic-24ab2b4c7b61722902f4",
+        "verdict": "approve",
+        "confidence": "high",
+        "reason": "The source expressly generalizes its examples as other materials, so no material-specific split is warranted.",
+        "checks": {
+          "evidenceComplete": true,
+          "actionPreserved": true,
+          "groupingHomogeneous": true,
+          "modifierGrounded": true,
+          "existingLinksRespected": true,
+          "titlesConsolidated": true
+        }
+      },
+      "deferredTasks": []
+    },
+    {
+      "occurrenceId": "atomic-1aa7265cee80ea6c10a6",
+      "decision": "split",
+      "groups": [
+        {
+          "title": "Create Print (Synonyms: Produce Print)",
+          "status": "current",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "reason": "This source describes prints generically and fits the current title.",
+          "sourceTasks": [
+            "Create prints according to customer specifications and laboratory protocols."
+          ]
+        },
+        {
+          "title": "Create Timed Print",
+          "status": "new",
+          "sourceTaskIndexes": [
+            2
+          ],
+          "reason": "The second source explicitly describes timed prints as the resulting object.",
+          "sourceTasks": [
+            "Produce timed prints with separate densities or color settings for each scene of a production."
+          ]
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "One record remains generic and one carries a stable, evidence-supported object restriction.",
+      "confidence": "medium",
+      "audit": {
+        "occurrenceId": "atomic-1aa7265cee80ea6c10a6",
+        "verdict": "approve",
+        "confidence": "medium",
+        "reason": "Timed print is an explicit product restriction, while the other record remains generic.",
+        "checks": {
+          "evidenceComplete": true,
+          "actionPreserved": true,
+          "groupingHomogeneous": true,
+          "modifierGrounded": true,
+          "existingLinksRespected": true,
+          "titlesConsolidated": true
+        }
+      },
+      "deferredTasks": []
+    },
+    {
+      "occurrenceId": "atomic-27c77557905a65623673",
+      "decision": "keep",
+      "groups": [
+        {
+          "title": "Insert Wedge",
+          "status": "current",
+          "sourceTaskIndexes": [
+            1,
+            2,
+            3
+          ],
+          "reason": "All three sources explicitly describe inserting wedges; the varying materials, tools, and purposes do not change the direct-object activity.",
+          "sourceTasks": [
+            "Position width gauge blocks between blades, and level blades and insert wedges into frames to secure blades to frames.",
+            "Insert jacks or drive wedges behind saws to prevent binding of saws and to start trees falling.",
+            "Insert wedges and feathers into holes, and drive wedges with sledgehammers to split stone sections from masses."
+          ]
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "The current title is clear and all evidence is homogeneous at the activity level.",
+      "confidence": "high",
+      "audit": {
+        "occurrenceId": "atomic-27c77557905a65623673",
+        "verdict": "approve",
+        "confidence": "high",
+        "reason": "All records share the same inserted object; tools and purposes do not create new wedge activities.",
+        "checks": {
+          "evidenceComplete": true,
+          "actionPreserved": true,
+          "groupingHomogeneous": true,
+          "modifierGrounded": true,
+          "existingLinksRespected": true,
+          "titlesConsolidated": true
+        }
+      },
+      "deferredTasks": []
+    },
+    {
+      "occurrenceId": "atomic-562c8c4a5a9e35c27ec4",
+      "decision": "keep",
+      "groups": [
+        {
+          "title": "Cut Tree",
+          "status": "current",
+          "sourceTaskIndexes": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "reason": "Every source contains an explicit tree-cutting clause; saplings, logs, vegetation, and the other actions are already represented by their own linked activities.",
+          "sourceTasks": [
+            "Prune, cut down, fertilize, and spray trees as directed by tree surgeons.",
+            "Clear brush from work areas and escape routes, and cut saplings and other trees from direction of falls, using axes, chainsaws, or bulldozers.",
+            "Measure felled trees and cut them into specified log lengths, using chain saws and axes.",
+            "Dig, cut, and transplant seedlings, cuttings, trees, and shrubs.",
+            "Cut trees or other vegetation.",
+            "Cut trees or logs.",
+            "Select or cut trees according to markings or sizes, types, or grades.",
+            "Cut down and remove trees and brush to clear drill sites, to reduce fire hazards, and to make way for roads to sites.",
+            "Drive and maneuver tractors and tree harvesters to shear the tops off of trees, cut and limb the trees, and cut the logs into desired lengths."
+          ]
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "Cross-link inspection shows that the apparent heterogeneity comes from other clauses, not from the residual Cut Tree activity.",
+      "confidence": "high",
+      "audit": {
+        "occurrenceId": "atomic-562c8c4a5a9e35c27ec4",
+        "verdict": "approve",
+        "confidence": "high",
+        "reason": "Each source genuinely contains Cut Tree, while Cut Log, Cut Sapling, Cut Vegetation, and other clauses are already linked.",
+        "checks": {
+          "evidenceComplete": true,
+          "actionPreserved": true,
+          "groupingHomogeneous": true,
+          "modifierGrounded": true,
+          "existingLinksRespected": true,
+          "titlesConsolidated": true
+        }
+      },
+      "deferredTasks": []
+    },
+    {
+      "occurrenceId": "atomic-2df83a138d7509dae376",
+      "decision": "keep",
+      "groups": [
+        {
+          "title": "Lubricate Machinery",
+          "status": "current",
+          "sourceTaskIndexes": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ],
+          "reason": "All records explicitly include lubricating machinery; equipment, tools, vehicles, parts, and other actions have separate linked activities.",
+          "sourceTasks": [
+            "Lubricate, clean, or repair machinery, equipment, or tools.",
+            "Clean, lubricate, or adjust parts, equipment, or machinery.",
+            "Lubricate, adjust, or repair machinery and replace parts, such as gears, bearings, or bucket teeth.",
+            "Lubricate machinery, equipment, or engine parts, such as gears, shafts, or bearings.",
+            "Clean or lubricate vehicles, machinery, equipment, instruments, tools, work areas, and other objects, using hand tools, power tools, and cleaning equipment.",
+            "Lubricate machinery, vehicles, or equipment or perform minor repairs or adjustments, using hand tools."
+          ]
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "The current title captures the common residual activity without absorbing the separately represented clauses.",
+      "confidence": "high",
+      "audit": {
+        "occurrenceId": "atomic-2df83a138d7509dae376",
+        "verdict": "approve",
+        "confidence": "high",
+        "reason": "Machinery occurs in every source and all additional objects or actions have separate links.",
+        "checks": {
+          "evidenceComplete": true,
+          "actionPreserved": true,
+          "groupingHomogeneous": true,
+          "modifierGrounded": true,
+          "existingLinksRespected": true,
+          "titlesConsolidated": true
+        }
+      },
+      "deferredTasks": []
+    },
+    {
+      "occurrenceId": "atomic-6e0324051de0289bdcb7",
+      "decision": "split",
+      "groups": [
+        {
+          "title": "Assist Handbook Preparation",
+          "status": "new",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "reason": "The source says to assist in preparing handbooks; the added complement prevents the unclear reading that a handbook itself receives assistance.",
+          "sourceTasks": [
+            "Assist in preparing and maintaining personnel records and handbooks."
+          ]
+        },
+        {
+          "title": "Assist Handbook Maintenance",
+          "status": "new",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "reason": "The same source separately says to assist in maintaining handbooks.",
+          "sourceTasks": [
+            "Assist in preparing and maintaining personnel records and handbooks."
+          ]
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "The compressed title omitted two governed activities, so one source supports two distinct, clearer titles.",
+      "confidence": "high",
+      "audit": {
+        "occurrenceId": "atomic-6e0324051de0289bdcb7",
+        "verdict": "approve",
+        "confidence": "high",
+        "reason": "Preparation and maintenance are separately governed by assist, and both clearer titles cite the same source without combining them.",
+        "checks": {
+          "evidenceComplete": true,
+          "actionPreserved": true,
+          "groupingHomogeneous": true,
+          "modifierGrounded": true,
+          "existingLinksRespected": true,
+          "titlesConsolidated": true
+        }
+      },
+      "deferredTasks": []
+    },
+    {
+      "occurrenceId": "atomic-d45a0bee58d5bb67dd39",
+      "decision": "rename",
+      "groups": [
+        {
+          "title": "Operate Zoom Lens",
+          "status": "new",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "reason": "The source explicitly restricts the operated object to zoom lenses.",
+          "sourceTasks": [
+            "Operate zoom lenses, changing images according to specifications and rehearsal instructions."
+          ]
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "Adding the omitted object modifier produces the smallest accurate stand-alone title.",
+      "confidence": "high",
+      "audit": {
+        "occurrenceId": "atomic-d45a0bee58d5bb67dd39",
+        "verdict": "approve",
+        "confidence": "high",
+        "reason": "Zoom is an explicit, stable lens type and is the smallest modifier that restores the omitted meaning.",
+        "checks": {
+          "evidenceComplete": true,
+          "actionPreserved": true,
+          "groupingHomogeneous": true,
+          "modifierGrounded": true,
+          "existingLinksRespected": true,
+          "titlesConsolidated": true
+        }
+      },
+      "deferredTasks": []
+    },
+    {
+      "occurrenceId": "atomic-3ff5239b88576c658e83",
+      "decision": "split",
+      "groups": [
+        {
+          "title": "Coordinate Care",
+          "status": "current",
+          "sourceTaskIndexes": [
+            1,
+            2
+          ],
+          "reason": "Both sources explicitly describe coordinating patient or client care.",
+          "sourceTasks": [
+            "Coordinate the care of patients with other health care professionals or support staff.",
+            "Utilize consultation data and social work experience to plan and coordinate client or patient care and rehabilitation, following through to ensure service efficacy."
+          ]
+        },
+        {
+          "title": "Coordinate Rehabilitation",
+          "status": "new",
+          "sourceTaskIndexes": [
+            2
+          ],
+          "reason": "The second source separately states that rehabilitation is coordinated.",
+          "sourceTasks": [
+            "Utilize consultation data and social work experience to plan and coordinate client or patient care and rehabilitation, following through to ensure service efficacy."
+          ]
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "Care remains one homogeneous group, while one sentence also supports a second direct-object activity.",
+      "confidence": "high",
+      "audit": {
+        "occurrenceId": "atomic-3ff5239b88576c658e83",
+        "verdict": "approve",
+        "confidence": "high",
+        "reason": "The second source explicitly coordinates both care and rehabilitation, so overlapping evidence is justified.",
+        "checks": {
+          "evidenceComplete": true,
+          "actionPreserved": true,
+          "groupingHomogeneous": true,
+          "modifierGrounded": true,
+          "existingLinksRespected": true,
+          "titlesConsolidated": true
+        }
+      },
+      "deferredTasks": []
+    },
+    {
+      "occurrenceId": "atomic-1edc77ce0d8914824b75",
+      "decision": "keep",
+      "groups": [
+        {
+          "title": "Devise Fixture",
+          "status": "current",
+          "sourceTaskIndexes": [
+            1,
+            2
+          ],
+          "reason": "Both sources explicitly describe devising fixtures; jigs, stations, and equipment are already linked separately.",
+          "sourceTasks": [
+            "Devise or build fixtures or jigs used to hold parts in place during welding, brazing, or soldering.",
+            "Devise automated lab validation test stations or other test fixtures or equipment."
+          ]
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "The current title accurately captures the common residual activity even though its present WordNet parent may be questionable.",
+      "confidence": "high",
+      "audit": {
+        "occurrenceId": "atomic-1edc77ce0d8914824b75",
+        "verdict": "approve",
+        "confidence": "high",
+        "reason": "Fixture is explicit in both records; the current title issue is separate from the suspect WordNet parent and is correctly retained here.",
+        "checks": {
+          "evidenceComplete": true,
+          "actionPreserved": true,
+          "groupingHomogeneous": true,
+          "modifierGrounded": true,
+          "existingLinksRespected": true,
+          "titlesConsolidated": true
+        }
+      },
+      "deferredTasks": []
+    },
+    {
+      "occurrenceId": "atomic-958d35daa6723089727c",
+      "decision": "keep",
+      "groups": [
+        {
+          "title": "Direct Personnel",
+          "status": "current",
+          "sourceTaskIndexes": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ],
+          "reason": "Every source expresses the same activity of directing personnel; occupational domains describe where the work occurs without changing the activity's direct-object meaning.",
+          "sourceTasks": [
+            "Direct personnel engaged in controlling or operating distribution equipment or machinery, such as instructing control room operators to start boilers or generators.",
+            "Direct, coordinate, or advise personnel in test procedures for analyzing components or physical properties of materials.",
+            "Direct or supervise less-skilled nursing or healthcare personnel or supervise a particular unit.",
+            "Direct, supervise, assess, and communicate with supportive personnel.",
+            "Direct construction or extraction personnel.",
+            "Direct technicians, engineering designers or other technical support personnel as needed."
+          ]
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "The title is clear and the personnel subtypes do not justify separate activities in this title pass.",
+      "confidence": "medium",
+      "audit": {
+        "occurrenceId": "atomic-958d35daa6723089727c",
+        "verdict": "approve",
+        "confidence": "medium",
+        "reason": "Personnel types vary by work context, but all evidence expresses the same clear Direct Personnel activity and already separates designers and technicians where necessary.",
+        "checks": {
+          "evidenceComplete": true,
+          "actionPreserved": true,
+          "groupingHomogeneous": true,
+          "modifierGrounded": true,
+          "existingLinksRespected": true,
+          "titlesConsolidated": true
+        }
+      },
+      "deferredTasks": []
+    },
+    {
+      "occurrenceId": "atomic-d671e93fb7a19bc7d1b2",
+      "decision": "split",
+      "groups": [
+        {
+          "title": "Oversee Equipment Operation",
+          "status": "new",
+          "sourceTaskIndexes": [
+            1,
+            5,
+            6,
+            12
+          ],
+          "reason": "These sources all concern overseeing operation of machines or equipment; their other clauses are represented separately.",
+          "sourceTasks": [
+            "Oversee installation, operation, maintenance, or repair to ensure that machines or equipment are installed and functioning according to specifications.",
+            "Oversee operation of microelectromechanical systems (MEMS) fabrication or assembly equipment, such as handling, singulation, assembly, wire-bonding, soldering, or package sealing.",
+            "Operate or oversee operation of radiologic or magnetic imaging equipment to produce images of the body for diagnostic purposes.",
+            "Supervise the installation or operation of electronic equipment or systems."
+          ]
+        },
+        {
+          "title": "Oversee Vessel Operation",
+          "status": "new",
+          "sourceTaskIndexes": [
+            2
+          ],
+          "reason": "The source explicitly restricts the object to vessel operations.",
+          "sourceTasks": [
+            "Oversee operation of vessels used for carrying passengers, motor vehicles, or goods across rivers, harbors, lakes, and coastal waters."
+          ]
+        },
+        {
+          "title": "Oversee Plant Operation",
+          "status": "new",
+          "sourceTaskIndexes": [
+            3,
+            9,
+            15
+          ],
+          "reason": "These sources explicitly concern geothermal, biomass, food-processing, or manufacturing plant operations.",
+          "sourceTasks": [
+            "Oversee geothermal plant operations, maintenance, and repairs to ensure compliance with applicable standards or regulations.",
+            "Supervise biomass plant or substation operations, maintenance, repair, or testing activities.",
+            "Supervise food processing or manufacturing plant operations."
+          ]
+        },
+        {
+          "title": "Oversee Contingency Plan Integration",
+          "status": "new",
+          "sourceTaskIndexes": [
+            4
+          ],
+          "reason": "The source separately places contingency-plan integration under the Oversee action.",
+          "sourceTasks": [
+            "Conduct or oversee contingency plan integration and operation."
+          ]
+        },
+        {
+          "title": "Oversee Contingency Plan Operation",
+          "status": "new",
+          "sourceTaskIndexes": [
+            4
+          ],
+          "reason": "The source explicitly places contingency-plan operation under the Oversee action.",
+          "sourceTasks": [
+            "Conduct or oversee contingency plan integration and operation."
+          ]
+        },
+        {
+          "title": "Oversee Nuclear Operation",
+          "status": "new",
+          "sourceTaskIndexes": [
+            7
+          ],
+          "reason": "The source restricts operation to nuclear reactors, power plants, and fuel-processing systems.",
+          "sourceTasks": [
+            "Design or oversee construction or operation of nuclear reactors, power plants, or nuclear fuels reprocessing and reclamation systems."
+          ]
+        },
+        {
+          "title": "Oversee Property Operation",
+          "status": "new",
+          "sourceTaskIndexes": [
+            8
+          ],
+          "reason": "The source explicitly identifies commercial, industrial, or residential property operations.",
+          "sourceTasks": [
+            "Manage and oversee operations, maintenance, administration, and improvement of commercial, industrial, or residential properties."
+          ]
+        },
+        {
+          "title": "Oversee Substation Operation",
+          "status": "new",
+          "sourceTaskIndexes": [
+            9
+          ],
+          "reason": "The same source separately includes substation operations alongside biomass plant operations.",
+          "sourceTasks": [
+            "Supervise biomass plant or substation operations, maintenance, repair, or testing activities."
+          ]
+        },
+        {
+          "title": "Oversee Hydroelectric Facility Operation",
+          "status": "new",
+          "sourceTaskIndexes": [
+            10
+          ],
+          "reason": "The source explicitly restricts the object to hydroelectric facility operations.",
+          "sourceTasks": [
+            "Supervise or monitor hydroelectric facility operations to ensure that generation or mechanical equipment conform to applicable regulations or standards."
+          ]
+        },
+        {
+          "title": "Oversee Pest Control Operation",
+          "status": "new",
+          "sourceTaskIndexes": [
+            11
+          ],
+          "reason": "The source explicitly includes pest-control operations.",
+          "sourceTasks": [
+            "Supervise pest or weed control operations, including locating and identifying pests or weeds, selecting chemicals and application methods, or scheduling application."
+          ]
+        },
+        {
+          "title": "Oversee Weed Control Operation",
+          "status": "new",
+          "sourceTaskIndexes": [
+            11
+          ],
+          "reason": "The same source separately includes weed-control operations.",
+          "sourceTasks": [
+            "Supervise pest or weed control operations, including locating and identifying pests or weeds, selecting chemicals and application methods, or scheduling application."
+          ]
+        },
+        {
+          "title": "Oversee System Operation",
+          "status": "new",
+          "sourceTaskIndexes": [
+            12
+          ],
+          "reason": "The source separately includes operation of electronic systems as well as equipment.",
+          "sourceTasks": [
+            "Supervise the installation or operation of electronic equipment or systems."
+          ]
+        },
+        {
+          "title": "Oversee Library Operation",
+          "status": "new",
+          "sourceTaskIndexes": [
+            13
+          ],
+          "reason": "The source explicitly restricts the object to daily library operations.",
+          "sourceTasks": [
+            "Supervise daily library operations, budgeting, planning, and personnel activities, such as hiring, training, scheduling, and performance evaluations."
+          ]
+        },
+        {
+          "title": "Oversee Mine Construction Operation",
+          "status": "new",
+          "sourceTaskIndexes": [
+            14
+          ],
+          "reason": "The source explicitly restricts the supervised operation to mine construction.",
+          "sourceTasks": [
+            "Lay out, direct, and supervise mine construction operations, such as the construction of shafts and tunnels."
+          ]
+        },
+        {
+          "title": "Oversee Forest Nursery Operation",
+          "status": "new",
+          "sourceTaskIndexes": [
+            16
+          ],
+          "reason": "The source explicitly identifies forest nursery operations; harvesting, activities, and programs are already represented separately.",
+          "sourceTasks": [
+            "Supervise forest nursery operations, timber harvesting, land use activities such as livestock grazing, and disease or insect control programs."
+          ]
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "No record uses operation generically; the evidence resolves into consolidated operation types, with multi-object sentences supporting more than one group only where explicit.",
+      "confidence": "medium",
+      "audit": {
+        "occurrenceId": "atomic-d671e93fb7a19bc7d1b2",
+        "verdict": "approve",
+        "confidence": "medium",
+        "reason": "All 16 source indexes are covered; repeated operation types are consolidated, explicit dual objects share evidence, and non-operation clauses already linked elsewhere are not duplicated.",
+        "checks": {
+          "evidenceComplete": true,
+          "actionPreserved": true,
+          "groupingHomogeneous": true,
+          "modifierGrounded": true,
+          "existingLinksRespected": true,
+          "titlesConsolidated": true
+        }
+      },
+      "deferredTasks": []
+    }
+  ]
+}

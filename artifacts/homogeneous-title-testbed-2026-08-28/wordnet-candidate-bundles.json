@@ -1,0 +1,4333 @@
+{
+  "schemaVersion": "wordnet-alignment-candidate-bundles-v1",
+  "generatedAt": "2026-08-29T01:53:17.511603+00:00",
+  "sourceSha256": "f19ce789bce298b0564045fb87427eebd1193b89c133d17519c097dc3e0eb319",
+  "sampleSha256": "b1ba2ba8820ad18a56aad1d584921d3b5e1bfbb2755edd98c3266abfde232e39",
+  "groupingsSha256": "78606f64bbe949f291be0313e1cf8f9a05f7b07144af78f000a7a33a0b27fde3",
+  "retrievalRule": "For each validated homogeneous title group, retrieve every local NLTK WordNet verb synset for the exact leading action and resolve every inherited owner synset. No web search or model call is used for retrieval.",
+  "genericActionRule": "Flag exact leading actions Act and Perform for a later generic-verb review.",
+  "counts": {
+    "groups": 42,
+    "groupsWithCandidates": 42,
+    "groupsWithoutCandidates": 0,
+    "genericActionFlags": 0
+  },
+  "bundles": [
+    {
+      "groupId": "wordnet-d39b67ef6bbbed14ad6e",
+      "occurrenceId": "atomic-ed7f926d6f8a2afe185c",
+      "currentAtomicTitle": "Outline Pattern",
+      "groupTitle": "Outline Pattern",
+      "groupStatus": "current",
+      "leadingAction": "Outline",
+      "sourceTaskIndexes": [
+        1
+      ],
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "14083",
+          "exactRecord": "(O*Net) 14083 - Draw patterns, using measurements, designs, plaster casts, or customer specifications, and position or outline patterns on work pieces.",
+          "task": "Draw patterns, using measurements, designs, plaster casts, or customer specifications, and position or outline patterns on work pieces.",
+          "otherLinkedAtomicTitles": [
+            "Draw Pattern (Synonyms: Trace Pattern)",
+            "Lay Pattern (Synonyms: Position Pattern)"
+          ]
+        }
+      ],
+      "ownerTitle": "Delineate (Delineate.v.03)",
+      "assignedSynsets": [
+        {
+          "id": "delineate.v.03",
+          "definition": "trace the shape of",
+          "lemmas": [
+            "delineate",
+            "limn",
+            "outline"
+          ],
+          "examples": []
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "sketch.v.02",
+          "definition": "describe roughly or briefly or give the main points or summary of",
+          "lemmas": [
+            "adumbrate",
+            "outline",
+            "sketch"
+          ],
+          "examples": [
+            "sketch the outline of the book",
+            "outline his ideas"
+          ]
+        },
+        {
+          "id": "draft.v.01",
+          "definition": "draw up an outline or sketch for something",
+          "lemmas": [
+            "draft",
+            "outline"
+          ],
+          "examples": [
+            "draft a speech"
+          ]
+        },
+        {
+          "id": "delineate.v.03",
+          "definition": "trace the shape of",
+          "lemmas": [
+            "delineate",
+            "limn",
+            "outline"
+          ],
+          "examples": []
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-f3655a5cff51908ca86b",
+      "occurrenceId": "atomic-9161b89ea9fa3b0fb108",
+      "currentAtomicTitle": "Compare Impact",
+      "groupTitle": "Compare Environmental Impact",
+      "groupStatus": "new",
+      "leadingAction": "Compare",
+      "sourceTaskIndexes": [
+        1
+      ],
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "22057",
+          "exactRecord": "(O*Net) 22057 - Compare the performance or environmental impact of nanomaterials by nanoparticle size, shape, or organization.",
+          "task": "Compare the performance or environmental impact of nanomaterials by nanoparticle size, shape, or organization.",
+          "otherLinkedAtomicTitles": [
+            "Compare Performance"
+          ]
+        }
+      ],
+      "ownerTitle": "Compare (Compare.v.01)",
+      "assignedSynsets": [
+        {
+          "id": "compare.v.01",
+          "definition": "examine and note the similarities or differences of",
+          "lemmas": [
+            "compare"
+          ],
+          "examples": [
+            "John compared his haircut to his friend's",
+            "We compared notes after we had both seen the movie"
+          ]
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "compare.v.01",
+          "definition": "examine and note the similarities or differences of",
+          "lemmas": [
+            "compare"
+          ],
+          "examples": [
+            "John compared his haircut to his friend's",
+            "We compared notes after we had both seen the movie"
+          ]
+        },
+        {
+          "id": "compare.v.02",
+          "definition": "be comparable",
+          "lemmas": [
+            "compare"
+          ],
+          "examples": [
+            "This car does not compare with our line of Mercedes"
+          ]
+        },
+        {
+          "id": "compare.v.03",
+          "definition": "consider or describe as similar, equal, or analogous",
+          "lemmas": [
+            "compare",
+            "equate",
+            "liken"
+          ],
+          "examples": [
+            "We can compare the Han dynasty to the Romans",
+            "You cannot equate success in financial matters with greed"
+          ]
+        },
+        {
+          "id": "compare.v.04",
+          "definition": "to form the comparative or superlative form on an adjective or adverb",
+          "lemmas": [
+            "compare"
+          ],
+          "examples": []
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-054ffa4de47ea2958a86",
+      "occurrenceId": "atomic-4443f0439ebf52a58824",
+      "currentAtomicTitle": "Document Alternative",
+      "groupTitle": "Document Alternative",
+      "groupStatus": "current",
+      "leadingAction": "Document",
+      "sourceTaskIndexes": [
+        1,
+        2
+      ],
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "14727",
+          "exactRecord": "(O*Net) 14727 - Research, document, rate, or select alternatives for Web architecture or technologies.",
+          "task": "Research, document, rate, or select alternatives for Web architecture or technologies.",
+          "otherLinkedAtomicTitles": [
+            "Rate Alternative",
+            "Research Alternative",
+            "Select Alternative"
+          ]
+        },
+        {
+          "index": 2,
+          "oNetId": "21710",
+          "exactRecord": "(O*Net) 21710 - Research, document, rate, or select alternatives for Web architecture or technologies.",
+          "task": "Research, document, rate, or select alternatives for Web architecture or technologies.",
+          "otherLinkedAtomicTitles": [
+            "Rate Alternative",
+            "Research Alternative",
+            "Select Alternative"
+          ]
+        }
+      ],
+      "ownerTitle": "Document (Document.v.01, Inventory.v.01, Keep.v.08, Log.v.01, Register.v.01)",
+      "assignedSynsets": [
+        {
+          "id": "document.v.01",
+          "definition": "record in detail",
+          "lemmas": [
+            "document"
+          ],
+          "examples": [
+            "The parents documented every step of their child's development"
+          ]
+        },
+        {
+          "id": "inventory.v.01",
+          "definition": "make or include in an itemized record or report",
+          "lemmas": [
+            "inventory",
+            "stock-take",
+            "take stock"
+          ],
+          "examples": [
+            "Inventory all books before the end of the year"
+          ]
+        },
+        {
+          "id": "keep.v.08",
+          "definition": "maintain by writing regular records",
+          "lemmas": [
+            "keep",
+            "maintain"
+          ],
+          "examples": [
+            "keep a diary",
+            "maintain a record",
+            "keep notes"
+          ]
+        },
+        {
+          "id": "log.v.01",
+          "definition": "enter into a log, as on ships and planes",
+          "lemmas": [
+            "log"
+          ],
+          "examples": []
+        },
+        {
+          "id": "register.v.01",
+          "definition": "record in writing; enter into a book of names or events or transactions",
+          "lemmas": [
+            "register"
+          ],
+          "examples": []
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "document.v.01",
+          "definition": "record in detail",
+          "lemmas": [
+            "document"
+          ],
+          "examples": [
+            "The parents documented every step of their child's development"
+          ]
+        },
+        {
+          "id": "document.v.02",
+          "definition": "support or supply with references",
+          "lemmas": [
+            "document"
+          ],
+          "examples": [
+            "Can you document your claims?"
+          ]
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-1e3a9c43c5739cb025ba",
+      "occurrenceId": "atomic-5ea2fd867a90d0098f88",
+      "currentAtomicTitle": "Store Datum",
+      "groupTitle": "Store Data",
+      "groupStatus": "new",
+      "leadingAction": "Store",
+      "sourceTaskIndexes": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "3990",
+          "exactRecord": "(O*Net) 3990 - Compress, digitize, duplicate, and store audio and video data.",
+          "task": "Compress, digitize, duplicate, and store audio and video data.",
+          "otherLinkedAtomicTitles": [
+            "Compress Datum",
+            "Digitize Datum",
+            "Duplicate Datum"
+          ]
+        },
+        {
+          "index": 2,
+          "oNetId": "7401",
+          "exactRecord": "(O*Net) 7401 - Store, retrieve, and manipulate data for analysis of system capabilities and requirements.",
+          "task": "Store, retrieve, and manipulate data for analysis of system capabilities and requirements.",
+          "otherLinkedAtomicTitles": [
+            "Manipulate Datum",
+            "Recover Datum (Synonyms: Retrieve Datum)"
+          ]
+        },
+        {
+          "index": 3,
+          "oNetId": "21682",
+          "exactRecord": "(O*Net) 21682 - Store, retrieve, and manipulate data for analysis of system capabilities and requirements.",
+          "task": "Store, retrieve, and manipulate data for analysis of system capabilities and requirements.",
+          "otherLinkedAtomicTitles": [
+            "Manipulate Datum",
+            "Recover Datum (Synonyms: Retrieve Datum)"
+          ]
+        },
+        {
+          "index": 4,
+          "oNetId": "21676",
+          "exactRecord": "(O*Net) 21676 - Store, retrieve, and manipulate data for analysis of system capabilities and requirements.",
+          "task": "Store, retrieve, and manipulate data for analysis of system capabilities and requirements.",
+          "otherLinkedAtomicTitles": [
+            "Manipulate Datum",
+            "Recover Datum (Synonyms: Retrieve Datum)"
+          ]
+        }
+      ],
+      "ownerTitle": "Store information (Conserve.v.02, Store.v.01, Store.v.02)",
+      "assignedSynsets": [
+        {
+          "id": "conserve.v.02",
+          "definition": "keep in safety and protect from harm, decay, loss, or destruction",
+          "lemmas": [
+            "conserve",
+            "keep up",
+            "maintain",
+            "preserve"
+          ],
+          "examples": [
+            "We preserve these archeological findings",
+            "The old lady could not keep up the building",
+            "children must be taught to conserve our national heritage",
+            "The museum curator conserved the ancient manuscripts"
+          ]
+        },
+        {
+          "id": "store.v.01",
+          "definition": "keep or lay aside for future use",
+          "lemmas": [
+            "hive away",
+            "lay in",
+            "put in",
+            "salt away",
+            "stack away",
+            "stash away",
+            "store"
+          ],
+          "examples": [
+            "store grain for the winter",
+            "The bear stores fat for the period of hibernation when he doesn't eat"
+          ]
+        },
+        {
+          "id": "store.v.02",
+          "definition": "find a place for and put away for storage",
+          "lemmas": [
+            "store"
+          ],
+          "examples": [
+            "where should we stow the vegetables?",
+            "I couldn't store all the books in the attic so I sold some"
+          ]
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "store.v.01",
+          "definition": "keep or lay aside for future use",
+          "lemmas": [
+            "hive away",
+            "lay in",
+            "put in",
+            "salt away",
+            "stack away",
+            "stash away",
+            "store"
+          ],
+          "examples": [
+            "store grain for the winter",
+            "The bear stores fat for the period of hibernation when he doesn't eat"
+          ]
+        },
+        {
+          "id": "store.v.02",
+          "definition": "find a place for and put away for storage",
+          "lemmas": [
+            "store"
+          ],
+          "examples": [
+            "where should we stow the vegetables?",
+            "I couldn't store all the books in the attic so I sold some"
+          ]
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-90ec441c064018b5522f",
+      "occurrenceId": "atomic-003bf5b0b1e789d2c9cd",
+      "currentAtomicTitle": "Diagnose Disease",
+      "groupTitle": "Diagnose Disease",
+      "groupStatus": "current",
+      "leadingAction": "Diagnose",
+      "sourceTaskIndexes": [
+        3
+      ],
+      "sourceRecords": [
+        {
+          "index": 3,
+          "oNetId": "17195",
+          "exactRecord": "(O*Net) 17195 - Diagnose diseases or study medical conditions, using techniques such as gross pathology, histology, cytology, cytopathology, clinical chemistry, immunology, flow cytometry, or molecular biology.",
+          "task": "Diagnose diseases or study medical conditions, using techniques such as gross pathology, histology, cytology, cytopathology, clinical chemistry, immunology, flow cytometry, or molecular biology.",
+          "otherLinkedAtomicTitles": [
+            "Analyze Condition (Synonyms: Examine Condition, Study Condition)"
+          ]
+        }
+      ],
+      "ownerTitle": "Diagnose (Diagnose.v.01)",
+      "assignedSynsets": [
+        {
+          "id": "diagnose.v.01",
+          "definition": "determine or distinguish the nature of a problem or an illness through a diagnostic analysis",
+          "lemmas": [
+            "diagnose",
+            "name"
+          ],
+          "examples": []
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "diagnose.v.01",
+          "definition": "determine or distinguish the nature of a problem or an illness through a diagnostic analysis",
+          "lemmas": [
+            "diagnose",
+            "name"
+          ],
+          "examples": []
+        },
+        {
+          "id": "diagnose.v.02",
+          "definition": "subject to a medical analysis",
+          "lemmas": [
+            "diagnose"
+          ],
+          "examples": []
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-ad370af57f80666142f2",
+      "occurrenceId": "atomic-003bf5b0b1e789d2c9cd",
+      "currentAtomicTitle": "Diagnose Disease",
+      "groupTitle": "Diagnose Genetic Disease",
+      "groupStatus": "new",
+      "leadingAction": "Diagnose",
+      "sourceTaskIndexes": [
+        1
+      ],
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "16823",
+          "exactRecord": "(O*Net) 16823 - Evaluate, diagnose, or treat genetic diseases.",
+          "task": "Evaluate, diagnose, or treat genetic diseases.",
+          "otherLinkedAtomicTitles": [
+            "Evaluate Disease",
+            "Treat Disease"
+          ]
+        }
+      ],
+      "ownerTitle": "Diagnose (Diagnose.v.01)",
+      "assignedSynsets": [
+        {
+          "id": "diagnose.v.01",
+          "definition": "determine or distinguish the nature of a problem or an illness through a diagnostic analysis",
+          "lemmas": [
+            "diagnose",
+            "name"
+          ],
+          "examples": []
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "diagnose.v.01",
+          "definition": "determine or distinguish the nature of a problem or an illness through a diagnostic analysis",
+          "lemmas": [
+            "diagnose",
+            "name"
+          ],
+          "examples": []
+        },
+        {
+          "id": "diagnose.v.02",
+          "definition": "subject to a medical analysis",
+          "lemmas": [
+            "diagnose"
+          ],
+          "examples": []
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-7a5ed94e14f28227cda0",
+      "occurrenceId": "atomic-003bf5b0b1e789d2c9cd",
+      "currentAtomicTitle": "Diagnose Disease",
+      "groupTitle": "Diagnose Eye Disease",
+      "groupStatus": "new",
+      "leadingAction": "Diagnose",
+      "sourceTaskIndexes": [
+        2
+      ],
+      "sourceRecords": [
+        {
+          "index": 2,
+          "oNetId": "17176",
+          "exactRecord": "(O*Net) 17176 - Diagnose or treat injuries, disorders, or diseases of the eye and eye structures including the cornea, sclera, conjunctiva, or eyelids.",
+          "task": "Diagnose or treat injuries, disorders, or diseases of the eye and eye structures including the cornea, sclera, conjunctiva, or eyelids.",
+          "otherLinkedAtomicTitles": [
+            "Diagnose Disorder",
+            "Diagnose Injury",
+            "Treat Disease",
+            "Treat Disorder",
+            "Treat Injury (Synonyms: Care_For Injury)"
+          ]
+        }
+      ],
+      "ownerTitle": "Diagnose (Diagnose.v.01)",
+      "assignedSynsets": [
+        {
+          "id": "diagnose.v.01",
+          "definition": "determine or distinguish the nature of a problem or an illness through a diagnostic analysis",
+          "lemmas": [
+            "diagnose",
+            "name"
+          ],
+          "examples": []
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "diagnose.v.01",
+          "definition": "determine or distinguish the nature of a problem or an illness through a diagnostic analysis",
+          "lemmas": [
+            "diagnose",
+            "name"
+          ],
+          "examples": []
+        },
+        {
+          "id": "diagnose.v.02",
+          "definition": "subject to a medical analysis",
+          "lemmas": [
+            "diagnose"
+          ],
+          "examples": []
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-2cb896df1c97ffe530a1",
+      "occurrenceId": "atomic-003bf5b0b1e789d2c9cd",
+      "currentAtomicTitle": "Diagnose Disease",
+      "groupTitle": "Diagnose Genitourinary Disease",
+      "groupStatus": "new",
+      "leadingAction": "Diagnose",
+      "sourceTaskIndexes": [
+        4
+      ],
+      "sourceRecords": [
+        {
+          "index": 4,
+          "oNetId": "17295",
+          "exactRecord": "(O*Net) 17295 - Diagnose or treat diseases or disorders of genitourinary organs and tracts including erectile dysfunction (ED), infertility, incontinence, bladder cancer, prostate cancer, urethral stones, or premature ejaculation.",
+          "task": "Diagnose or treat diseases or disorders of genitourinary organs and tracts including erectile dysfunction (ED), infertility, incontinence, bladder cancer, prostate cancer, urethral stones, or premature ejaculation.",
+          "otherLinkedAtomicTitles": [
+            "Diagnose Disorder",
+            "Treat Disease",
+            "Treat Disorder"
+          ]
+        }
+      ],
+      "ownerTitle": "Diagnose (Diagnose.v.01)",
+      "assignedSynsets": [
+        {
+          "id": "diagnose.v.01",
+          "definition": "determine or distinguish the nature of a problem or an illness through a diagnostic analysis",
+          "lemmas": [
+            "diagnose",
+            "name"
+          ],
+          "examples": []
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "diagnose.v.01",
+          "definition": "determine or distinguish the nature of a problem or an illness through a diagnostic analysis",
+          "lemmas": [
+            "diagnose",
+            "name"
+          ],
+          "examples": []
+        },
+        {
+          "id": "diagnose.v.02",
+          "definition": "subject to a medical analysis",
+          "lemmas": [
+            "diagnose"
+          ],
+          "examples": []
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-dba37457d5095f6cbfed",
+      "occurrenceId": "atomic-003bf5b0b1e789d2c9cd",
+      "currentAtomicTitle": "Diagnose Disease",
+      "groupTitle": "Diagnose Oral Disease",
+      "groupStatus": "new",
+      "leadingAction": "Diagnose",
+      "sourceTaskIndexes": [
+        5
+      ],
+      "sourceRecords": [
+        {
+          "index": 5,
+          "oNetId": "6931",
+          "exactRecord": "(O*Net) 6931 - Diagnose and treat diseases, injuries, or malformations of teeth, gums, or related oral structures and provide preventive or corrective services.",
+          "task": "Diagnose and treat diseases, injuries, or malformations of teeth, gums, or related oral structures and provide preventive or corrective services.",
+          "otherLinkedAtomicTitles": [
+            "Provide Service (1)",
+            "Treat Injury (Synonyms: Care_For Injury)",
+            "Treat Malformation"
+          ]
+        }
+      ],
+      "ownerTitle": "Diagnose (Diagnose.v.01)",
+      "assignedSynsets": [
+        {
+          "id": "diagnose.v.01",
+          "definition": "determine or distinguish the nature of a problem or an illness through a diagnostic analysis",
+          "lemmas": [
+            "diagnose",
+            "name"
+          ],
+          "examples": []
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "diagnose.v.01",
+          "definition": "determine or distinguish the nature of a problem or an illness through a diagnostic analysis",
+          "lemmas": [
+            "diagnose",
+            "name"
+          ],
+          "examples": []
+        },
+        {
+          "id": "diagnose.v.02",
+          "definition": "subject to a medical analysis",
+          "lemmas": [
+            "diagnose"
+          ],
+          "examples": []
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-1ee189a4dd052a977407",
+      "occurrenceId": "atomic-003bf5b0b1e789d2c9cd",
+      "currentAtomicTitle": "Diagnose Disease",
+      "groupTitle": "Diagnose Foot Disease",
+      "groupStatus": "new",
+      "leadingAction": "Diagnose",
+      "sourceTaskIndexes": [
+        6
+      ],
+      "sourceRecords": [
+        {
+          "index": 6,
+          "oNetId": "7849",
+          "exactRecord": "(O*Net) 7849 - Diagnose diseases and deformities of the foot using medical histories, physical examinations, x-rays, and laboratory test results.",
+          "task": "Diagnose diseases and deformities of the foot using medical histories, physical examinations, x-rays, and laboratory test results.",
+          "otherLinkedAtomicTitles": [
+            "Diagnose Deformity"
+          ]
+        }
+      ],
+      "ownerTitle": "Diagnose (Diagnose.v.01)",
+      "assignedSynsets": [
+        {
+          "id": "diagnose.v.01",
+          "definition": "determine or distinguish the nature of a problem or an illness through a diagnostic analysis",
+          "lemmas": [
+            "diagnose",
+            "name"
+          ],
+          "examples": []
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "diagnose.v.01",
+          "definition": "determine or distinguish the nature of a problem or an illness through a diagnostic analysis",
+          "lemmas": [
+            "diagnose",
+            "name"
+          ],
+          "examples": []
+        },
+        {
+          "id": "diagnose.v.02",
+          "definition": "subject to a medical analysis",
+          "lemmas": [
+            "diagnose"
+          ],
+          "examples": []
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-4fa54495fa0fd5c6076a",
+      "occurrenceId": "atomic-3d45a7c27254ef2c9666",
+      "currentAtomicTitle": "Plan Menu",
+      "groupTitle": "Plan Menu",
+      "groupStatus": "current",
+      "leadingAction": "Plan",
+      "sourceTaskIndexes": [
+        1,
+        4,
+        5,
+        6
+      ],
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "1100",
+          "exactRecord": "(O*Net) 1100 - Plan menus and food utilization, based on anticipated number of guests, nutritional value, palatability, popularity, and costs.",
+          "task": "Plan menus and food utilization, based on anticipated number of guests, nutritional value, palatability, popularity, and costs.",
+          "otherLinkedAtomicTitles": [
+            "Plan Utilization"
+          ]
+        },
+        {
+          "index": 4,
+          "oNetId": "4169",
+          "exactRecord": "(O*Net) 4169 - Plan menus or diets or guide individuals or families in food selection, preparation, or menu planning, based upon nutritional needs and established guidelines.",
+          "task": "Plan menus or diets or guide individuals or families in food selection, preparation, or menu planning, based upon nutritional needs and established guidelines.",
+          "otherLinkedAtomicTitles": [
+            "Guide Family",
+            "Lead Individual (Synonyms: Guide Individual)",
+            "Plan Diet"
+          ]
+        },
+        {
+          "index": 5,
+          "oNetId": "9498",
+          "exactRecord": "(O*Net) 9498 - Plan menus that are varied, nutritionally balanced, and appetizing, taking advantage of foods in season and local availability.",
+          "task": "Plan menus that are varied, nutritionally balanced, and appetizing, taking advantage of foods in season and local availability.",
+          "otherLinkedAtomicTitles": []
+        },
+        {
+          "index": 6,
+          "oNetId": "9501",
+          "exactRecord": "(O*Net) 9501 - Plan menus according to employers' needs and diet restrictions.",
+          "task": "Plan menus according to employers' needs and diet restrictions.",
+          "otherLinkedAtomicTitles": []
+        }
+      ],
+      "ownerTitle": "Plan (Mastermind.v.01, Plan.v.02, Plan.v.03)",
+      "assignedSynsets": [
+        {
+          "id": "mastermind.v.01",
+          "definition": "plan and direct (a complex undertaking)",
+          "lemmas": [
+            "direct",
+            "engineer",
+            "mastermind",
+            "orchestrate",
+            "organise",
+            "organize"
+          ],
+          "examples": [
+            "he masterminded the robbery"
+          ]
+        },
+        {
+          "id": "plan.v.02",
+          "definition": "make plans for something",
+          "lemmas": [
+            "plan"
+          ],
+          "examples": [
+            "He is planning a trip with his family"
+          ]
+        },
+        {
+          "id": "plan.v.03",
+          "definition": "make or work out a plan for; devise",
+          "lemmas": [
+            "contrive",
+            "design",
+            "plan",
+            "project"
+          ],
+          "examples": [
+            "They contrived to murder their boss",
+            "design a new sales strategy",
+            "plan an attack"
+          ]
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "plan.v.01",
+          "definition": "have the will and intention to carry out some action",
+          "lemmas": [
+            "be after",
+            "plan"
+          ],
+          "examples": [
+            "He plans to be in graduate school next year",
+            "The rebels had planned turmoil and confusion"
+          ]
+        },
+        {
+          "id": "plan.v.02",
+          "definition": "make plans for something",
+          "lemmas": [
+            "plan"
+          ],
+          "examples": [
+            "He is planning a trip with his family"
+          ]
+        },
+        {
+          "id": "plan.v.03",
+          "definition": "make or work out a plan for; devise",
+          "lemmas": [
+            "contrive",
+            "design",
+            "plan",
+            "project"
+          ],
+          "examples": [
+            "They contrived to murder their boss",
+            "design a new sales strategy",
+            "plan an attack"
+          ]
+        },
+        {
+          "id": "design.v.04",
+          "definition": "make a design of; plan out in systematic, often graphic form",
+          "lemmas": [
+            "design",
+            "plan"
+          ],
+          "examples": [
+            "design a better mousetrap",
+            "plan the new wing of the museum"
+          ]
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-430b0160e12db9b715b4",
+      "occurrenceId": "atomic-3d45a7c27254ef2c9666",
+      "currentAtomicTitle": "Plan Menu",
+      "groupTitle": "Plan Special Menu",
+      "groupStatus": "new",
+      "leadingAction": "Plan",
+      "sourceTaskIndexes": [
+        2
+      ],
+      "sourceRecords": [
+        {
+          "index": 2,
+          "oNetId": "18721",
+          "exactRecord": "(O*Net) 18721 - Assess nutritional needs of patients, plan special menus, supervise the assembly of regular and special diet trays, and oversee the delivery of food trolleys to hospital patients.",
+          "task": "Assess nutritional needs of patients, plan special menus, supervise the assembly of regular and special diet trays, and oversee the delivery of food trolleys to hospital patients.",
+          "otherLinkedAtomicTitles": [
+            "Assess Need (Synonyms: Evaluate Need)",
+            "Oversee Delivery",
+            "Supervise Assembly"
+          ]
+        }
+      ],
+      "ownerTitle": "Plan (Mastermind.v.01, Plan.v.02, Plan.v.03)",
+      "assignedSynsets": [
+        {
+          "id": "mastermind.v.01",
+          "definition": "plan and direct (a complex undertaking)",
+          "lemmas": [
+            "direct",
+            "engineer",
+            "mastermind",
+            "orchestrate",
+            "organise",
+            "organize"
+          ],
+          "examples": [
+            "he masterminded the robbery"
+          ]
+        },
+        {
+          "id": "plan.v.02",
+          "definition": "make plans for something",
+          "lemmas": [
+            "plan"
+          ],
+          "examples": [
+            "He is planning a trip with his family"
+          ]
+        },
+        {
+          "id": "plan.v.03",
+          "definition": "make or work out a plan for; devise",
+          "lemmas": [
+            "contrive",
+            "design",
+            "plan",
+            "project"
+          ],
+          "examples": [
+            "They contrived to murder their boss",
+            "design a new sales strategy",
+            "plan an attack"
+          ]
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "plan.v.01",
+          "definition": "have the will and intention to carry out some action",
+          "lemmas": [
+            "be after",
+            "plan"
+          ],
+          "examples": [
+            "He plans to be in graduate school next year",
+            "The rebels had planned turmoil and confusion"
+          ]
+        },
+        {
+          "id": "plan.v.02",
+          "definition": "make plans for something",
+          "lemmas": [
+            "plan"
+          ],
+          "examples": [
+            "He is planning a trip with his family"
+          ]
+        },
+        {
+          "id": "plan.v.03",
+          "definition": "make or work out a plan for; devise",
+          "lemmas": [
+            "contrive",
+            "design",
+            "plan",
+            "project"
+          ],
+          "examples": [
+            "They contrived to murder their boss",
+            "design a new sales strategy",
+            "plan an attack"
+          ]
+        },
+        {
+          "id": "design.v.04",
+          "definition": "make a design of; plan out in systematic, often graphic form",
+          "lemmas": [
+            "design",
+            "plan"
+          ],
+          "examples": [
+            "design a better mousetrap",
+            "plan the new wing of the museum"
+          ]
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-16b7f7f342e0baf04749",
+      "occurrenceId": "atomic-3d45a7c27254ef2c9666",
+      "currentAtomicTitle": "Plan Menu",
+      "groupTitle": "Plan Bar Menu",
+      "groupStatus": "new",
+      "leadingAction": "Plan",
+      "sourceTaskIndexes": [
+        3
+      ],
+      "sourceRecords": [
+        {
+          "index": 3,
+          "oNetId": "2239",
+          "exactRecord": "(O*Net) 2239 - Plan bar menus.",
+          "task": "Plan bar menus.",
+          "otherLinkedAtomicTitles": []
+        }
+      ],
+      "ownerTitle": "Plan (Mastermind.v.01, Plan.v.02, Plan.v.03)",
+      "assignedSynsets": [
+        {
+          "id": "mastermind.v.01",
+          "definition": "plan and direct (a complex undertaking)",
+          "lemmas": [
+            "direct",
+            "engineer",
+            "mastermind",
+            "orchestrate",
+            "organise",
+            "organize"
+          ],
+          "examples": [
+            "he masterminded the robbery"
+          ]
+        },
+        {
+          "id": "plan.v.02",
+          "definition": "make plans for something",
+          "lemmas": [
+            "plan"
+          ],
+          "examples": [
+            "He is planning a trip with his family"
+          ]
+        },
+        {
+          "id": "plan.v.03",
+          "definition": "make or work out a plan for; devise",
+          "lemmas": [
+            "contrive",
+            "design",
+            "plan",
+            "project"
+          ],
+          "examples": [
+            "They contrived to murder their boss",
+            "design a new sales strategy",
+            "plan an attack"
+          ]
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "plan.v.01",
+          "definition": "have the will and intention to carry out some action",
+          "lemmas": [
+            "be after",
+            "plan"
+          ],
+          "examples": [
+            "He plans to be in graduate school next year",
+            "The rebels had planned turmoil and confusion"
+          ]
+        },
+        {
+          "id": "plan.v.02",
+          "definition": "make plans for something",
+          "lemmas": [
+            "plan"
+          ],
+          "examples": [
+            "He is planning a trip with his family"
+          ]
+        },
+        {
+          "id": "plan.v.03",
+          "definition": "make or work out a plan for; devise",
+          "lemmas": [
+            "contrive",
+            "design",
+            "plan",
+            "project"
+          ],
+          "examples": [
+            "They contrived to murder their boss",
+            "design a new sales strategy",
+            "plan an attack"
+          ]
+        },
+        {
+          "id": "design.v.04",
+          "definition": "make a design of; plan out in systematic, often graphic form",
+          "lemmas": [
+            "design",
+            "plan"
+          ],
+          "examples": [
+            "design a better mousetrap",
+            "plan the new wing of the museum"
+          ]
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-9baa2b72a43a52ee1c53",
+      "occurrenceId": "atomic-2ab12fbc2f7fd9dfa849",
+      "currentAtomicTitle": "Use Staple",
+      "groupTitle": "Use Staple",
+      "groupStatus": "current",
+      "leadingAction": "Use",
+      "sourceTaskIndexes": [
+        1
+      ],
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "2838",
+          "exactRecord": "(O*Net) 2838 - Stretch carpet to align with walls and ensure a smooth surface, and press carpet in place over tack strips or use staples, tape, tacks or glue to hold carpet in place.",
+          "task": "Stretch carpet to align with walls and ensure a smooth surface, and press carpet in place over tack strips or use staples, tape, tacks or glue to hold carpet in place.",
+          "otherLinkedAtomicTitles": [
+            "Apply Glue (Synonyms: Use Glue)",
+            "Press Carpet",
+            "Stretch Carpet",
+            "Use Tack",
+            "Use Tape"
+          ]
+        }
+      ],
+      "ownerTitle": "Apply (physical) (Put_on.v.07)",
+      "assignedSynsets": [
+        {
+          "id": "put_on.v.07",
+          "definition": "apply to a surface",
+          "lemmas": [
+            "apply",
+            "put on"
+          ],
+          "examples": [
+            "She applied paint to the back of the house",
+            "Put on make-up!"
+          ]
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "use.v.01",
+          "definition": "put into service; make work or employ for a particular purpose or for its inherent or natural purpose",
+          "lemmas": [
+            "apply",
+            "employ",
+            "use",
+            "utilise",
+            "utilize"
+          ],
+          "examples": [
+            "use your head!",
+            "we only use Spanish at home",
+            "I can't use this tool",
+            "Apply a magnetic field here",
+            "This thinking was applied to many projects",
+            "How do you utilize this tool?",
+            "I apply this rule to get good results",
+            "use the plastic bags to store the food",
+            "He doesn't know how to use a computer"
+          ]
+        },
+        {
+          "id": "use.v.02",
+          "definition": "take or consume (regularly or habitually)",
+          "lemmas": [
+            "habituate",
+            "use"
+          ],
+          "examples": [
+            "She uses drugs rarely"
+          ]
+        },
+        {
+          "id": "use.v.03",
+          "definition": "use up, consume fully",
+          "lemmas": [
+            "expend",
+            "use"
+          ],
+          "examples": [
+            "The legislature expended its time on school questions"
+          ]
+        },
+        {
+          "id": "use.v.04",
+          "definition": "seek or achieve an end by using to one's advantage",
+          "lemmas": [
+            "use"
+          ],
+          "examples": [
+            "She uses her influential friends to get jobs",
+            "The president's wife used her good connections"
+          ]
+        },
+        {
+          "id": "practice.v.04",
+          "definition": "avail oneself to",
+          "lemmas": [
+            "apply",
+            "practice",
+            "use"
+          ],
+          "examples": [
+            "apply a principle",
+            "practice a religion",
+            "use care when going down the stairs",
+            "use your common sense",
+            "practice non-violent resistance"
+          ]
+        },
+        {
+          "id": "use.v.06",
+          "definition": "habitually do something (use only in the past tense)",
+          "lemmas": [
+            "use"
+          ],
+          "examples": [
+            "She used to call her mother every week but now she calls only occasionally",
+            "I used to get sick when I ate in that dining hall",
+            "They used to vacation in the Bahamas"
+          ]
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-32e7d20de829e3b6c358",
+      "occurrenceId": "atomic-24ab2b4c7b61722902f4",
+      "currentAtomicTitle": "Melt Material",
+      "groupTitle": "Melt Material",
+      "groupStatus": "current",
+      "leadingAction": "Melt",
+      "sourceTaskIndexes": [
+        1
+      ],
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "4.A.3.a.2.I13.D06",
+          "exactRecord": "(O*Net) 4.A.3.a.2.I13.D06 - Melt metal, plastic, or other materials to prepare for production.",
+          "task": "Melt metal, plastic, or other materials to prepare for production.",
+          "otherLinkedAtomicTitles": []
+        }
+      ],
+      "ownerTitle": "Melt (Melt.v.01)",
+      "assignedSynsets": [
+        {
+          "id": "melt.v.01",
+          "definition": "reduce or cause to be reduced from a solid to a liquid state, usually by heating",
+          "lemmas": [
+            "melt",
+            "melt down",
+            "run"
+          ],
+          "examples": [
+            "melt butter",
+            "melt down gold",
+            "The wax melted in the sun"
+          ]
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "melt.v.01",
+          "definition": "reduce or cause to be reduced from a solid to a liquid state, usually by heating",
+          "lemmas": [
+            "melt",
+            "melt down",
+            "run"
+          ],
+          "examples": [
+            "melt butter",
+            "melt down gold",
+            "The wax melted in the sun"
+          ]
+        },
+        {
+          "id": "dissolve.v.09",
+          "definition": "become or cause to become soft or liquid",
+          "lemmas": [
+            "dethaw",
+            "dissolve",
+            "melt",
+            "thaw",
+            "unfreeze",
+            "unthaw"
+          ],
+          "examples": [
+            "The sun melted the ice",
+            "the ice thawed",
+            "the ice cream melted",
+            "The heat melted the wax",
+            "The giant iceberg dissolved over the years during the global warming phase",
+            "dethaw the meat"
+          ]
+        },
+        {
+          "id": "mellow.v.02",
+          "definition": "become more relaxed, easygoing, or genial",
+          "lemmas": [
+            "mellow",
+            "mellow out",
+            "melt"
+          ],
+          "examples": [
+            "With age, he mellowed"
+          ]
+        },
+        {
+          "id": "melt.v.04",
+          "definition": "lose its distinct outline or shape; blend gradually",
+          "lemmas": [
+            "meld",
+            "melt"
+          ],
+          "examples": [
+            "Hundreds of actors were melting into the scene"
+          ]
+        },
+        {
+          "id": "fade.v.01",
+          "definition": "become less clearly visible or distinguishable; disappear gradually or seemingly",
+          "lemmas": [
+            "fade",
+            "melt"
+          ],
+          "examples": [
+            "The scene begins to fade",
+            "The tree trunks are melting into the forest at dusk"
+          ]
+        },
+        {
+          "id": "melt.v.06",
+          "definition": "become less intense and fade away gradually",
+          "lemmas": [
+            "disappear",
+            "evaporate",
+            "melt"
+          ],
+          "examples": [
+            "her resistance melted under his charm",
+            "her hopes evaporated after years of waiting for her fiance"
+          ]
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-60326fdde8d60050ca71",
+      "occurrenceId": "atomic-1aa7265cee80ea6c10a6",
+      "currentAtomicTitle": "Create Print (Synonyms: Produce Print)",
+      "groupTitle": "Create Print (Synonyms: Produce Print)",
+      "groupStatus": "current",
+      "leadingAction": "Create",
+      "sourceTaskIndexes": [
+        1
+      ],
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "19465",
+          "exactRecord": "(O*Net) 19465 - Create prints according to customer specifications and laboratory protocols.",
+          "task": "Create prints according to customer specifications and laboratory protocols.",
+          "otherLinkedAtomicTitles": []
+        }
+      ],
+      "ownerTitle": "Create physical objects (Develop.v.01, Form.v.01, Make.v.03)",
+      "assignedSynsets": [
+        {
+          "id": "develop.v.01",
+          "definition": "make something new, such as a product or a mental or artistic creation",
+          "lemmas": [
+            "develop"
+          ],
+          "examples": [
+            "Her company developed a new kind of building material that withstands all kinds of weather",
+            "They developed a new technique"
+          ]
+        },
+        {
+          "id": "form.v.01",
+          "definition": "create (as an entity)",
+          "lemmas": [
+            "form",
+            "organise",
+            "organize"
+          ],
+          "examples": [
+            "social groups form everywhere",
+            "They formed a company"
+          ]
+        },
+        {
+          "id": "make.v.03",
+          "definition": "make or cause to be or to become",
+          "lemmas": [
+            "create",
+            "make"
+          ],
+          "examples": [
+            "make a mess in one's office",
+            "create a furor"
+          ]
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "make.v.03",
+          "definition": "make or cause to be or to become",
+          "lemmas": [
+            "create",
+            "make"
+          ],
+          "examples": [
+            "make a mess in one's office",
+            "create a furor"
+          ]
+        },
+        {
+          "id": "create.v.02",
+          "definition": "bring into existence",
+          "lemmas": [
+            "create"
+          ],
+          "examples": [
+            "The company was created 25 years ago",
+            "He created a new movement in painting"
+          ]
+        },
+        {
+          "id": "create.v.03",
+          "definition": "pursue a creative activity; be engaged in a creative activity",
+          "lemmas": [
+            "create"
+          ],
+          "examples": [
+            "Don't disturb him--he is creating"
+          ]
+        },
+        {
+          "id": "create.v.04",
+          "definition": "invest with a new title, office, or rank",
+          "lemmas": [
+            "create"
+          ],
+          "examples": [
+            "Create one a peer"
+          ]
+        },
+        {
+          "id": "create.v.05",
+          "definition": "create by artistic means",
+          "lemmas": [
+            "create",
+            "make"
+          ],
+          "examples": [
+            "create a poem",
+            "Schoenberg created twelve-tone music",
+            "Picasso created Cubism",
+            "Auden made verses"
+          ]
+        },
+        {
+          "id": "produce.v.02",
+          "definition": "create or manufacture a man-made product",
+          "lemmas": [
+            "create",
+            "make",
+            "produce"
+          ],
+          "examples": [
+            "We produce more cars than we can sell",
+            "The company has been making toys for two centuries"
+          ]
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-5e7ce932882ca57eb1a6",
+      "occurrenceId": "atomic-1aa7265cee80ea6c10a6",
+      "currentAtomicTitle": "Create Print (Synonyms: Produce Print)",
+      "groupTitle": "Create Timed Print",
+      "groupStatus": "new",
+      "leadingAction": "Create",
+      "sourceTaskIndexes": [
+        2
+      ],
+      "sourceRecords": [
+        {
+          "index": 2,
+          "oNetId": "19496",
+          "exactRecord": "(O*Net) 19496 - Produce timed prints with separate densities or color settings for each scene of a production.",
+          "task": "Produce timed prints with separate densities or color settings for each scene of a production.",
+          "otherLinkedAtomicTitles": []
+        }
+      ],
+      "ownerTitle": "Create physical objects (Develop.v.01, Form.v.01, Make.v.03)",
+      "assignedSynsets": [
+        {
+          "id": "develop.v.01",
+          "definition": "make something new, such as a product or a mental or artistic creation",
+          "lemmas": [
+            "develop"
+          ],
+          "examples": [
+            "Her company developed a new kind of building material that withstands all kinds of weather",
+            "They developed a new technique"
+          ]
+        },
+        {
+          "id": "form.v.01",
+          "definition": "create (as an entity)",
+          "lemmas": [
+            "form",
+            "organise",
+            "organize"
+          ],
+          "examples": [
+            "social groups form everywhere",
+            "They formed a company"
+          ]
+        },
+        {
+          "id": "make.v.03",
+          "definition": "make or cause to be or to become",
+          "lemmas": [
+            "create",
+            "make"
+          ],
+          "examples": [
+            "make a mess in one's office",
+            "create a furor"
+          ]
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "make.v.03",
+          "definition": "make or cause to be or to become",
+          "lemmas": [
+            "create",
+            "make"
+          ],
+          "examples": [
+            "make a mess in one's office",
+            "create a furor"
+          ]
+        },
+        {
+          "id": "create.v.02",
+          "definition": "bring into existence",
+          "lemmas": [
+            "create"
+          ],
+          "examples": [
+            "The company was created 25 years ago",
+            "He created a new movement in painting"
+          ]
+        },
+        {
+          "id": "create.v.03",
+          "definition": "pursue a creative activity; be engaged in a creative activity",
+          "lemmas": [
+            "create"
+          ],
+          "examples": [
+            "Don't disturb him--he is creating"
+          ]
+        },
+        {
+          "id": "create.v.04",
+          "definition": "invest with a new title, office, or rank",
+          "lemmas": [
+            "create"
+          ],
+          "examples": [
+            "Create one a peer"
+          ]
+        },
+        {
+          "id": "create.v.05",
+          "definition": "create by artistic means",
+          "lemmas": [
+            "create",
+            "make"
+          ],
+          "examples": [
+            "create a poem",
+            "Schoenberg created twelve-tone music",
+            "Picasso created Cubism",
+            "Auden made verses"
+          ]
+        },
+        {
+          "id": "produce.v.02",
+          "definition": "create or manufacture a man-made product",
+          "lemmas": [
+            "create",
+            "make",
+            "produce"
+          ],
+          "examples": [
+            "We produce more cars than we can sell",
+            "The company has been making toys for two centuries"
+          ]
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-cb949d7d46a564f2e102",
+      "occurrenceId": "atomic-27c77557905a65623673",
+      "currentAtomicTitle": "Insert Wedge",
+      "groupTitle": "Insert Wedge",
+      "groupStatus": "current",
+      "leadingAction": "Insert",
+      "sourceTaskIndexes": [
+        1,
+        2,
+        3
+      ],
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "12438",
+          "exactRecord": "(O*Net) 12438 - Position width gauge blocks between blades, and level blades and insert wedges into frames to secure blades to frames.",
+          "task": "Position width gauge blocks between blades, and level blades and insert wedges into frames to secure blades to frames.",
+          "otherLinkedAtomicTitles": [
+            "Lay Block (Synonyms: Position Block)",
+            "Level Blade"
+          ]
+        },
+        {
+          "index": 2,
+          "oNetId": "13495",
+          "exactRecord": "(O*Net) 13495 - Insert jacks or drive wedges behind saws to prevent binding of saws and to start trees falling.",
+          "task": "Insert jacks or drive wedges behind saws to prevent binding of saws and to start trees falling.",
+          "otherLinkedAtomicTitles": [
+            "Insert Jack"
+          ]
+        },
+        {
+          "index": 3,
+          "oNetId": "14968",
+          "exactRecord": "(O*Net) 14968 - Insert wedges and feathers into holes, and drive wedges with sledgehammers to split stone sections from masses.",
+          "task": "Insert wedges and feathers into holes, and drive wedges with sledgehammers to split stone sections from masses.",
+          "otherLinkedAtomicTitles": [
+            "Drive Wedge",
+            "Insert Feather"
+          ]
+        }
+      ],
+      "ownerTitle": "Insert (physical) (Feed.v.04, Insert.v.01)",
+      "assignedSynsets": [
+        {
+          "id": "feed.v.04",
+          "definition": "introduce continuously",
+          "lemmas": [
+            "feed",
+            "feed in"
+          ],
+          "examples": [
+            "feed carrots into a food processor"
+          ]
+        },
+        {
+          "id": "insert.v.01",
+          "definition": "put or introduce into something",
+          "lemmas": [
+            "enter",
+            "infix",
+            "insert",
+            "introduce"
+          ],
+          "examples": [
+            "insert a picture into the text"
+          ]
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "insert.v.01",
+          "definition": "put or introduce into something",
+          "lemmas": [
+            "enter",
+            "infix",
+            "insert",
+            "introduce"
+          ],
+          "examples": [
+            "insert a picture into the text"
+          ]
+        },
+        {
+          "id": "insert.v.02",
+          "definition": "introduce",
+          "lemmas": [
+            "enclose",
+            "inclose",
+            "insert",
+            "introduce",
+            "put in",
+            "stick in"
+          ],
+          "examples": [
+            "Insert your ticket here"
+          ]
+        },
+        {
+          "id": "tuck.v.01",
+          "definition": "fit snugly into",
+          "lemmas": [
+            "insert",
+            "tuck"
+          ],
+          "examples": [
+            "insert your ticket into the slot",
+            "tuck your shirttail in"
+          ]
+        },
+        {
+          "id": "slip_in.v.01",
+          "definition": "insert casually",
+          "lemmas": [
+            "insert",
+            "slip in",
+            "sneak in",
+            "stick in"
+          ],
+          "examples": [
+            "She slipped in a reference to her own work"
+          ]
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-326fedbe723ae2374007",
+      "occurrenceId": "atomic-562c8c4a5a9e35c27ec4",
+      "currentAtomicTitle": "Cut Tree",
+      "groupTitle": "Cut Tree",
+      "groupStatus": "current",
+      "leadingAction": "Cut",
+      "sourceTaskIndexes": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "13118",
+          "exactRecord": "(O*Net) 13118 - Prune, cut down, fertilize, and spray trees as directed by tree surgeons.",
+          "task": "Prune, cut down, fertilize, and spray trees as directed by tree surgeons.",
+          "otherLinkedAtomicTitles": [
+            "Fertilize Tree",
+            "Prune Tree (Synonyms: Trim Tree)",
+            "Spray Tree"
+          ]
+        },
+        {
+          "index": 2,
+          "oNetId": "13487",
+          "exactRecord": "(O*Net) 13487 - Clear brush from work areas and escape routes, and cut saplings and other trees from direction of falls, using axes, chainsaws, or bulldozers.",
+          "task": "Clear brush from work areas and escape routes, and cut saplings and other trees from direction of falls, using axes, chainsaws, or bulldozers.",
+          "otherLinkedAtomicTitles": [
+            "Clear Brush",
+            "Cut Sapling"
+          ]
+        },
+        {
+          "index": 3,
+          "oNetId": "13488",
+          "exactRecord": "(O*Net) 13488 - Measure felled trees and cut them into specified log lengths, using chain saws and axes.",
+          "task": "Measure felled trees and cut them into specified log lengths, using chain saws and axes.",
+          "otherLinkedAtomicTitles": [
+            "Measure Tree (Synonyms: Appraise Tree)"
+          ]
+        },
+        {
+          "index": 4,
+          "oNetId": "23386",
+          "exactRecord": "(O*Net) 23386 - Dig, cut, and transplant seedlings, cuttings, trees, and shrubs.",
+          "task": "Dig, cut, and transplant seedlings, cuttings, trees, and shrubs.",
+          "otherLinkedAtomicTitles": [
+            "Cut Cutting",
+            "Cut Seedling",
+            "Cut Shrub",
+            "Dig Cutting",
+            "Dig Seedling",
+            "Dig Shrub",
+            "Dig Tree",
+            "Transplant Cutting",
+            "Transplant Seedling",
+            "Transplant Shrub",
+            "Transplant Tree"
+          ]
+        },
+        {
+          "index": 5,
+          "oNetId": "4.A.3.a.2.I14",
+          "exactRecord": "(O*Net) 4.A.3.a.2.I14 - Cut trees or other vegetation.",
+          "task": "Cut trees or other vegetation.",
+          "otherLinkedAtomicTitles": [
+            "Cut Vegetation"
+          ]
+        },
+        {
+          "index": 6,
+          "oNetId": "4.A.3.a.2.I14.D01",
+          "exactRecord": "(O*Net) 4.A.3.a.2.I14.D01 - Cut trees or logs.",
+          "task": "Cut trees or logs.",
+          "otherLinkedAtomicTitles": [
+            "Cut Log"
+          ]
+        },
+        {
+          "index": 7,
+          "oNetId": "7030",
+          "exactRecord": "(O*Net) 7030 - Select or cut trees according to markings or sizes, types, or grades.",
+          "task": "Select or cut trees according to markings or sizes, types, or grades.",
+          "otherLinkedAtomicTitles": [
+            "Select Tree"
+          ]
+        },
+        {
+          "index": 8,
+          "oNetId": "7122",
+          "exactRecord": "(O*Net) 7122 - Cut down and remove trees and brush to clear drill sites, to reduce fire hazards, and to make way for roads to sites.",
+          "task": "Cut down and remove trees and brush to clear drill sites, to reduce fire hazards, and to make way for roads to sites.",
+          "otherLinkedAtomicTitles": [
+            "Remove Brush"
+          ]
+        },
+        {
+          "index": 9,
+          "oNetId": "9808",
+          "exactRecord": "(O*Net) 9808 - Drive and maneuver tractors and tree harvesters to shear the tops off of trees, cut and limb the trees, and cut the logs into desired lengths.",
+          "task": "Drive and maneuver tractors and tree harvesters to shear the tops off of trees, cut and limb the trees, and cut the logs into desired lengths.",
+          "otherLinkedAtomicTitles": [
+            "Cut Log",
+            "Drive Harvester",
+            "Drive Tractor",
+            "Limb Tree",
+            "Maneuver Harvester",
+            "Maneuver Tractor",
+            "Shear Tree"
+          ]
+        }
+      ],
+      "ownerTitle": "Cut (physical) (Cut.v.01)",
+      "assignedSynsets": [
+        {
+          "id": "cut.v.01",
+          "definition": "separate with or as if with an instrument",
+          "lemmas": [
+            "cut"
+          ],
+          "examples": [
+            "Cut the rope"
+          ]
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "cut.v.01",
+          "definition": "separate with or as if with an instrument",
+          "lemmas": [
+            "cut"
+          ],
+          "examples": [
+            "Cut the rope"
+          ]
+        },
+        {
+          "id": "reduce.v.01",
+          "definition": "cut down on; make a reduction in",
+          "lemmas": [
+            "bring down",
+            "cut",
+            "cut back",
+            "cut down",
+            "reduce",
+            "trim",
+            "trim back",
+            "trim down"
+          ],
+          "examples": [
+            "reduce your daily fat intake",
+            "The employer wants to cut back health benefits"
+          ]
+        },
+        {
+          "id": "swerve.v.01",
+          "definition": "turn sharply; change direction abruptly",
+          "lemmas": [
+            "curve",
+            "cut",
+            "sheer",
+            "slew",
+            "slue",
+            "swerve",
+            "trend",
+            "veer"
+          ],
+          "examples": [
+            "The car cut to the left at the intersection",
+            "The motorbike veered to the right"
+          ]
+        },
+        {
+          "id": "cut.v.04",
+          "definition": "make an incision or separation",
+          "lemmas": [
+            "cut"
+          ],
+          "examples": [
+            "cut along the dotted line"
+          ]
+        },
+        {
+          "id": "cut.v.05",
+          "definition": "discharge from a group",
+          "lemmas": [
+            "cut"
+          ],
+          "examples": [
+            "The coach cut two players from the team"
+          ]
+        },
+        {
+          "id": "cut.v.06",
+          "definition": "form by probing, penetrating, or digging",
+          "lemmas": [
+            "cut"
+          ],
+          "examples": [
+            "cut a hole",
+            "cut trenches",
+            "The sweat cut little rivulets into her face"
+          ]
+        },
+        {
+          "id": "cut.v.07",
+          "definition": "style and tailor in a certain fashion",
+          "lemmas": [
+            "cut",
+            "tailor"
+          ],
+          "examples": [
+            "cut a dress"
+          ]
+        },
+        {
+          "id": "cut.v.08",
+          "definition": "hit (a ball) with a spin so that it turns in the opposite direction",
+          "lemmas": [
+            "cut"
+          ],
+          "examples": [
+            "cut a Ping-Pong ball"
+          ]
+        },
+        {
+          "id": "write_out.v.02",
+          "definition": "make out and issue",
+          "lemmas": [
+            "cut",
+            "issue",
+            "make out",
+            "write out"
+          ],
+          "examples": [
+            "write out a check",
+            "cut a ticket",
+            "Please make the check out to me"
+          ]
+        },
+        {
+          "id": "edit.v.03",
+          "definition": "cut and assemble the components of",
+          "lemmas": [
+            "cut",
+            "edit",
+            "edit out"
+          ],
+          "examples": [
+            "edit film",
+            "cut recording tape"
+          ]
+        },
+        {
+          "id": "cut.v.11",
+          "definition": "intentionally fail to attend",
+          "lemmas": [
+            "cut",
+            "skip"
+          ],
+          "examples": [
+            "cut class"
+          ]
+        },
+        {
+          "id": "hack.v.02",
+          "definition": "be able to manage or manage successfully",
+          "lemmas": [
+            "cut",
+            "hack"
+          ],
+          "examples": [
+            "I can't hack it anymore",
+            "she could not cut the long days in the office"
+          ]
+        },
+        {
+          "id": "cut.v.13",
+          "definition": "give the appearance or impression of",
+          "lemmas": [
+            "cut"
+          ],
+          "examples": [
+            "cut a nice figure"
+          ]
+        },
+        {
+          "id": "cut.v.14",
+          "definition": "move (one's fist)",
+          "lemmas": [
+            "cut"
+          ],
+          "examples": [
+            "his opponent cut upward toward his chin"
+          ]
+        },
+        {
+          "id": "cut.v.15",
+          "definition": "pass directly and often in haste",
+          "lemmas": [
+            "cut"
+          ],
+          "examples": [
+            "We cut through the neighbor's yard to get home sooner"
+          ]
+        },
+        {
+          "id": "cut.v.16",
+          "definition": "pass through or across",
+          "lemmas": [
+            "cut"
+          ],
+          "examples": [
+            "The boat cut the water"
+          ]
+        },
+        {
+          "id": "cut.v.17",
+          "definition": "make an abrupt change of image or sound",
+          "lemmas": [
+            "cut"
+          ],
+          "examples": [
+            "cut from one scene to another"
+          ]
+        },
+        {
+          "id": "cut.v.18",
+          "definition": "stop filming",
+          "lemmas": [
+            "cut"
+          ],
+          "examples": [
+            "cut a movie scene"
+          ]
+        },
+        {
+          "id": "cut.v.19",
+          "definition": "make a recording of",
+          "lemmas": [
+            "cut"
+          ],
+          "examples": [
+            "cut the songs",
+            "She cut all of her major titles again"
+          ]
+        },
+        {
+          "id": "cut.v.20",
+          "definition": "record a performance on (a medium)",
+          "lemmas": [
+            "cut"
+          ],
+          "examples": [
+            "cut a record"
+          ]
+        },
+        {
+          "id": "cut.v.21",
+          "definition": "create by duplicating data",
+          "lemmas": [
+            "burn",
+            "cut"
+          ],
+          "examples": [
+            "cut a disk",
+            "burn a CD"
+          ]
+        },
+        {
+          "id": "cut.v.22",
+          "definition": "form or shape by cutting or incising",
+          "lemmas": [
+            "cut"
+          ],
+          "examples": [
+            "cut paper dolls"
+          ]
+        },
+        {
+          "id": "cut.v.23",
+          "definition": "perform or carry out",
+          "lemmas": [
+            "cut"
+          ],
+          "examples": [
+            "cut a caper"
+          ]
+        },
+        {
+          "id": "cut.v.24",
+          "definition": "function as a cutting instrument",
+          "lemmas": [
+            "cut"
+          ],
+          "examples": [
+            "This knife cuts well"
+          ]
+        },
+        {
+          "id": "cut.v.25",
+          "definition": "allow incision or separation",
+          "lemmas": [
+            "cut"
+          ],
+          "examples": [
+            "This bread cuts easily"
+          ]
+        },
+        {
+          "id": "cut.v.26",
+          "definition": "divide a deck of cards at random into two parts to make selection difficult",
+          "lemmas": [
+            "cut"
+          ],
+          "examples": [
+            "Wayne cut",
+            "She cut the deck for a long time"
+          ]
+        },
+        {
+          "id": "switch_off.v.01",
+          "definition": "cause to stop operating by disengaging a switch",
+          "lemmas": [
+            "cut",
+            "switch off",
+            "turn off",
+            "turn out"
+          ],
+          "examples": [
+            "Turn off the stereo, please",
+            "cut the engine",
+            "turn out the lights"
+          ]
+        },
+        {
+          "id": "cut.v.28",
+          "definition": "reap or harvest",
+          "lemmas": [
+            "cut"
+          ],
+          "examples": [
+            "cut grain"
+          ]
+        },
+        {
+          "id": "cut.v.29",
+          "definition": "fell by sawing; hew",
+          "lemmas": [
+            "cut"
+          ],
+          "examples": [
+            "The Vietnamese cut a lot of timber while they occupied Cambodia"
+          ]
+        },
+        {
+          "id": "cut.v.30",
+          "definition": "penetrate injuriously",
+          "lemmas": [
+            "cut"
+          ],
+          "examples": [
+            "The glass from the shattered windshield cut into her forehead"
+          ]
+        },
+        {
+          "id": "ignore.v.01",
+          "definition": "refuse to acknowledge",
+          "lemmas": [
+            "cut",
+            "disregard",
+            "ignore",
+            "snub"
+          ],
+          "examples": [
+            "She cut him dead at the meeting"
+          ]
+        },
+        {
+          "id": "cut.v.32",
+          "definition": "shorten as if by severing the edges or ends of",
+          "lemmas": [
+            "cut"
+          ],
+          "examples": [
+            "cut my hair"
+          ]
+        },
+        {
+          "id": "cut.v.33",
+          "definition": "weed out unwanted or unnecessary things",
+          "lemmas": [
+            "cut",
+            "prune",
+            "rationalise",
+            "rationalize"
+          ],
+          "examples": [
+            "We had to lose weight, so we cut the sugar from our diet"
+          ]
+        },
+        {
+          "id": "cut.v.34",
+          "definition": "dissolve by breaking down the fat of",
+          "lemmas": [
+            "cut"
+          ],
+          "examples": [
+            "soap cuts grease"
+          ]
+        },
+        {
+          "id": "cut.v.35",
+          "definition": "have a reducing effect",
+          "lemmas": [
+            "cut"
+          ],
+          "examples": [
+            "This cuts into my earnings"
+          ]
+        },
+        {
+          "id": "cut.v.36",
+          "definition": "cease, stop",
+          "lemmas": [
+            "cut",
+            "cut off"
+          ],
+          "examples": [
+            "cut the noise",
+            "We had to cut short the conversation"
+          ]
+        },
+        {
+          "id": "abridge.v.01",
+          "definition": "reduce in scope while retaining essential elements",
+          "lemmas": [
+            "abbreviate",
+            "abridge",
+            "contract",
+            "cut",
+            "foreshorten",
+            "reduce",
+            "shorten"
+          ],
+          "examples": [
+            "The manuscript must be shortened"
+          ]
+        },
+        {
+          "id": "dilute.v.01",
+          "definition": "lessen the strength or flavor of a solution or mixture",
+          "lemmas": [
+            "cut",
+            "dilute",
+            "reduce",
+            "thin",
+            "thin out"
+          ],
+          "examples": [
+            "cut bourbon"
+          ]
+        },
+        {
+          "id": "cut.v.39",
+          "definition": "have grow through the gums",
+          "lemmas": [
+            "cut"
+          ],
+          "examples": [
+            "The baby cut a tooth"
+          ]
+        },
+        {
+          "id": "cut.v.40",
+          "definition": "grow through the gums",
+          "lemmas": [
+            "cut"
+          ],
+          "examples": [
+            "The new tooth is cutting"
+          ]
+        },
+        {
+          "id": "geld.v.01",
+          "definition": "cut off the testicles (of male animals such as horses)",
+          "lemmas": [
+            "cut",
+            "geld"
+          ],
+          "examples": [
+            "the vet gelded the young horse"
+          ]
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-230393b5537ea60e403d",
+      "occurrenceId": "atomic-2df83a138d7509dae376",
+      "currentAtomicTitle": "Lubricate Machinery",
+      "groupTitle": "Lubricate Machinery",
+      "groupStatus": "current",
+      "leadingAction": "Lubricate",
+      "sourceTaskIndexes": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "11465",
+          "exactRecord": "(O*Net) 11465 - Lubricate, clean, or repair machinery, equipment, or tools.",
+          "task": "Lubricate, clean, or repair machinery, equipment, or tools.",
+          "otherLinkedAtomicTitles": [
+            "Clean Equipment",
+            "Clean Machinery",
+            "Clean Tool",
+            "Lubricate Equipment",
+            "Lubricate Tool",
+            "Repair Equipment",
+            "Repair Machinery",
+            "Repair Tool"
+          ]
+        },
+        {
+          "index": 2,
+          "oNetId": "11820",
+          "exactRecord": "(O*Net) 11820 - Clean, lubricate, or adjust parts, equipment, or machinery.",
+          "task": "Clean, lubricate, or adjust parts, equipment, or machinery.",
+          "otherLinkedAtomicTitles": [
+            "Adjust Equipment",
+            "Adjust Machinery",
+            "Adjust Part",
+            "Clean Equipment",
+            "Clean Machinery",
+            "Clean Part",
+            "Lubricate Equipment",
+            "Lubricate Part"
+          ]
+        },
+        {
+          "index": 3,
+          "oNetId": "12783",
+          "exactRecord": "(O*Net) 12783 - Lubricate, adjust, or repair machinery and replace parts, such as gears, bearings, or bucket teeth.",
+          "task": "Lubricate, adjust, or repair machinery and replace parts, such as gears, bearings, or bucket teeth.",
+          "otherLinkedAtomicTitles": [
+            "Adjust Machinery",
+            "Repair Machinery",
+            "Replace Part"
+          ]
+        },
+        {
+          "index": 4,
+          "oNetId": "14467",
+          "exactRecord": "(O*Net) 14467 - Lubricate machinery, equipment, or engine parts, such as gears, shafts, or bearings.",
+          "task": "Lubricate machinery, equipment, or engine parts, such as gears, shafts, or bearings.",
+          "otherLinkedAtomicTitles": [
+            "Lubricate Equipment",
+            "Lubricate Part"
+          ]
+        },
+        {
+          "index": 5,
+          "oNetId": "3084",
+          "exactRecord": "(O*Net) 3084 - Clean or lubricate vehicles, machinery, equipment, instruments, tools, work areas, and other objects, using hand tools, power tools, and cleaning equipment.",
+          "task": "Clean or lubricate vehicles, machinery, equipment, instruments, tools, work areas, and other objects, using hand tools, power tools, and cleaning equipment.",
+          "otherLinkedAtomicTitles": [
+            "Clean Area",
+            "Clean Equipment",
+            "Clean Instrument",
+            "Clean Machinery",
+            "Clean Object",
+            "Clean Tool",
+            "Clean Vehicle",
+            "Lubricate Area",
+            "Lubricate Equipment",
+            "Lubricate Instrument",
+            "Lubricate Object",
+            "Lubricate Tool",
+            "Lubricate Vehicle"
+          ]
+        },
+        {
+          "index": 6,
+          "oNetId": "5001",
+          "exactRecord": "(O*Net) 5001 - Lubricate machinery, vehicles, or equipment or perform minor repairs or adjustments, using hand tools.",
+          "task": "Lubricate machinery, vehicles, or equipment or perform minor repairs or adjustments, using hand tools.",
+          "otherLinkedAtomicTitles": [
+            "Lubricate Equipment",
+            "Lubricate Vehicle",
+            "Perform Adjustment (Synonyms: Make Adjustment)",
+            "Perform Repair (Synonyms: Make Repair)"
+          ]
+        }
+      ],
+      "ownerTitle": "Lubricate (Lubricate.v.02)",
+      "assignedSynsets": [
+        {
+          "id": "lubricate.v.02",
+          "definition": "apply a lubricant to",
+          "lemmas": [
+            "lube",
+            "lubricate"
+          ],
+          "examples": [
+            "lubricate my car"
+          ]
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "lubricate.v.01",
+          "definition": "have lubricating properties",
+          "lemmas": [
+            "lubricate"
+          ],
+          "examples": [
+            "the liquid in this can lubricates well"
+          ]
+        },
+        {
+          "id": "lubricate.v.02",
+          "definition": "apply a lubricant to",
+          "lemmas": [
+            "lube",
+            "lubricate"
+          ],
+          "examples": [
+            "lubricate my car"
+          ]
+        },
+        {
+          "id": "lubricate.v.03",
+          "definition": "make slippery or smooth through the application of a lubricant",
+          "lemmas": [
+            "lubricate"
+          ],
+          "examples": [
+            "lubricate the key"
+          ]
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-ff2bdc0970a58dc7db80",
+      "occurrenceId": "atomic-6e0324051de0289bdcb7",
+      "currentAtomicTitle": "Assist Handbook",
+      "groupTitle": "Assist Handbook Preparation",
+      "groupStatus": "new",
+      "leadingAction": "Assist",
+      "sourceTaskIndexes": [
+        1
+      ],
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "3357",
+          "exactRecord": "(O*Net) 3357 - Assist in preparing and maintaining personnel records and handbooks.",
+          "task": "Assist in preparing and maintaining personnel records and handbooks.",
+          "otherLinkedAtomicTitles": [
+            "Assist Record"
+          ]
+        }
+      ],
+      "ownerTitle": "Assist (Help.v.01, Support.v.01, Support.v.02)",
+      "assignedSynsets": [
+        {
+          "id": "help.v.01",
+          "definition": "give help or assistance; be of service",
+          "lemmas": [
+            "aid",
+            "assist",
+            "help"
+          ],
+          "examples": [
+            "Everyone helped out during the earthquake",
+            "Can you help me carry this table?",
+            "She never helps around the house"
+          ]
+        },
+        {
+          "id": "support.v.01",
+          "definition": "give moral or psychological support, aid, or courage to",
+          "lemmas": [
+            "back up",
+            "support"
+          ],
+          "examples": [
+            "She supported him during the illness",
+            "Her children always backed her up"
+          ]
+        },
+        {
+          "id": "support.v.02",
+          "definition": "support materially or financially",
+          "lemmas": [
+            "support"
+          ],
+          "examples": [
+            "he does not support his natural children",
+            "The scholarship supported me when I was in college"
+          ]
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "help.v.01",
+          "definition": "give help or assistance; be of service",
+          "lemmas": [
+            "aid",
+            "assist",
+            "help"
+          ],
+          "examples": [
+            "Everyone helped out during the earthquake",
+            "Can you help me carry this table?",
+            "She never helps around the house"
+          ]
+        },
+        {
+          "id": "assist.v.02",
+          "definition": "act as an assistant in a subordinate or supportive function",
+          "lemmas": [
+            "assist"
+          ],
+          "examples": []
+        },
+        {
+          "id": "serve.v.10",
+          "definition": "work for or be a servant to",
+          "lemmas": [
+            "assist",
+            "attend",
+            "attend to",
+            "serve",
+            "wait on"
+          ],
+          "examples": [
+            "May I serve you?",
+            "She attends the old lady in the wheelchair",
+            "Can you wait on our table, please?",
+            "Is a salesperson assisting you?",
+            "The minister served the King for many years"
+          ]
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-e5e284e0071ff07186f6",
+      "occurrenceId": "atomic-6e0324051de0289bdcb7",
+      "currentAtomicTitle": "Assist Handbook",
+      "groupTitle": "Assist Handbook Maintenance",
+      "groupStatus": "new",
+      "leadingAction": "Assist",
+      "sourceTaskIndexes": [
+        1
+      ],
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "3357",
+          "exactRecord": "(O*Net) 3357 - Assist in preparing and maintaining personnel records and handbooks.",
+          "task": "Assist in preparing and maintaining personnel records and handbooks.",
+          "otherLinkedAtomicTitles": [
+            "Assist Record"
+          ]
+        }
+      ],
+      "ownerTitle": "Assist (Help.v.01, Support.v.01, Support.v.02)",
+      "assignedSynsets": [
+        {
+          "id": "help.v.01",
+          "definition": "give help or assistance; be of service",
+          "lemmas": [
+            "aid",
+            "assist",
+            "help"
+          ],
+          "examples": [
+            "Everyone helped out during the earthquake",
+            "Can you help me carry this table?",
+            "She never helps around the house"
+          ]
+        },
+        {
+          "id": "support.v.01",
+          "definition": "give moral or psychological support, aid, or courage to",
+          "lemmas": [
+            "back up",
+            "support"
+          ],
+          "examples": [
+            "She supported him during the illness",
+            "Her children always backed her up"
+          ]
+        },
+        {
+          "id": "support.v.02",
+          "definition": "support materially or financially",
+          "lemmas": [
+            "support"
+          ],
+          "examples": [
+            "he does not support his natural children",
+            "The scholarship supported me when I was in college"
+          ]
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "help.v.01",
+          "definition": "give help or assistance; be of service",
+          "lemmas": [
+            "aid",
+            "assist",
+            "help"
+          ],
+          "examples": [
+            "Everyone helped out during the earthquake",
+            "Can you help me carry this table?",
+            "She never helps around the house"
+          ]
+        },
+        {
+          "id": "assist.v.02",
+          "definition": "act as an assistant in a subordinate or supportive function",
+          "lemmas": [
+            "assist"
+          ],
+          "examples": []
+        },
+        {
+          "id": "serve.v.10",
+          "definition": "work for or be a servant to",
+          "lemmas": [
+            "assist",
+            "attend",
+            "attend to",
+            "serve",
+            "wait on"
+          ],
+          "examples": [
+            "May I serve you?",
+            "She attends the old lady in the wheelchair",
+            "Can you wait on our table, please?",
+            "Is a salesperson assisting you?",
+            "The minister served the King for many years"
+          ]
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-a7f557b095685fcc8bcf",
+      "occurrenceId": "atomic-d45a0bee58d5bb67dd39",
+      "currentAtomicTitle": "Operate Lens",
+      "groupTitle": "Operate Zoom Lens",
+      "groupStatus": "new",
+      "leadingAction": "Operate",
+      "sourceTaskIndexes": [
+        1
+      ],
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "4032",
+          "exactRecord": "(O*Net) 4032 - Operate zoom lenses, changing images according to specifications and rehearsal instructions.",
+          "task": "Operate zoom lenses, changing images according to specifications and rehearsal instructions.",
+          "otherLinkedAtomicTitles": [
+            "Change Image"
+          ]
+        }
+      ],
+      "ownerTitle": "Operate (Operate.v.03, Run.v.19)",
+      "assignedSynsets": [
+        {
+          "id": "operate.v.03",
+          "definition": "handle and cause to function",
+          "lemmas": [
+            "control",
+            "operate"
+          ],
+          "examples": [
+            "do not operate machinery after imbibing alcohol",
+            "control the lever"
+          ]
+        },
+        {
+          "id": "run.v.19",
+          "definition": "carry out a process or program, as on a computer or a machine",
+          "lemmas": [
+            "execute",
+            "run"
+          ],
+          "examples": [
+            "Run the dishwasher",
+            "run a new program on the Mac",
+            "the computer executed the instruction"
+          ]
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "operate.v.01",
+          "definition": "direct or control; projects, businesses, etc.",
+          "lemmas": [
+            "operate",
+            "run"
+          ],
+          "examples": [
+            "She is running a relief operation in the Sudan"
+          ]
+        },
+        {
+          "id": "function.v.01",
+          "definition": "perform as expected when applied",
+          "lemmas": [
+            "function",
+            "go",
+            "operate",
+            "run",
+            "work"
+          ],
+          "examples": [
+            "The washing machine won't go unless it's plugged in",
+            "Does this old car still run well?",
+            "This old radio doesn't work anymore"
+          ]
+        },
+        {
+          "id": "operate.v.03",
+          "definition": "handle and cause to function",
+          "lemmas": [
+            "control",
+            "operate"
+          ],
+          "examples": [
+            "do not operate machinery after imbibing alcohol",
+            "control the lever"
+          ]
+        },
+        {
+          "id": "manoeuver.v.03",
+          "definition": "perform a movement in military or naval tactics in order to secure an advantage in attack or defense",
+          "lemmas": [
+            "maneuver",
+            "manoeuver",
+            "manoeuvre",
+            "operate"
+          ],
+          "examples": []
+        },
+        {
+          "id": "operate.v.05",
+          "definition": "happen",
+          "lemmas": [
+            "operate"
+          ],
+          "examples": [
+            "What is going on in the minds of the people?"
+          ]
+        },
+        {
+          "id": "engage.v.10",
+          "definition": "keep engaged",
+          "lemmas": [
+            "engage",
+            "lock",
+            "mesh",
+            "operate"
+          ],
+          "examples": [
+            "engaged the gears"
+          ]
+        },
+        {
+          "id": "operate_on.v.01",
+          "definition": "perform surgery on",
+          "lemmas": [
+            "operate",
+            "operate on"
+          ],
+          "examples": [
+            "The doctors operated on the patient but failed to save his life"
+          ]
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-772c03fc31a547323833",
+      "occurrenceId": "atomic-3ff5239b88576c658e83",
+      "currentAtomicTitle": "Coordinate Care",
+      "groupTitle": "Coordinate Care",
+      "groupStatus": "current",
+      "leadingAction": "Coordinate",
+      "sourceTaskIndexes": [
+        1,
+        2
+      ],
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "17072",
+          "exactRecord": "(O*Net) 17072 - Coordinate the care of patients with other health care professionals or support staff.",
+          "task": "Coordinate the care of patients with other health care professionals or support staff.",
+          "otherLinkedAtomicTitles": []
+        },
+        {
+          "index": 2,
+          "oNetId": "265",
+          "exactRecord": "(O*Net) 265 - Utilize consultation data and social work experience to plan and coordinate client or patient care and rehabilitation, following through to ensure service efficacy.",
+          "task": "Utilize consultation data and social work experience to plan and coordinate client or patient care and rehabilitation, following through to ensure service efficacy.",
+          "otherLinkedAtomicTitles": [
+            "Ensure Efficacy",
+            "Plan Care",
+            "Use Datum (Synonyms: Apply Datum, Utilize Datum)",
+            "Utilize Experience"
+          ]
+        }
+      ],
+      "ownerTitle": "Organize (people or events) (Hold.v.03, Organize.v.05)",
+      "assignedSynsets": [
+        {
+          "id": "hold.v.03",
+          "definition": "organize or be responsible for",
+          "lemmas": [
+            "give",
+            "have",
+            "hold",
+            "make",
+            "throw"
+          ],
+          "examples": [
+            "hold a reception",
+            "have, throw, or make a party",
+            "give a course"
+          ]
+        },
+        {
+          "id": "organize.v.05",
+          "definition": "arrange by systematic planning and united effort",
+          "lemmas": [
+            "devise",
+            "get up",
+            "machinate",
+            "organise",
+            "organize",
+            "prepare"
+          ],
+          "examples": [
+            "machinate a plot",
+            "organize a strike",
+            "devise a plan to take over the director's office"
+          ]
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "organize.v.04",
+          "definition": "bring order and organization to",
+          "lemmas": [
+            "coordinate",
+            "organise",
+            "organize"
+          ],
+          "examples": [
+            "Can you help me organize my files?"
+          ]
+        },
+        {
+          "id": "coordinate.v.02",
+          "definition": "bring into common action, movement, or condition",
+          "lemmas": [
+            "coordinate"
+          ],
+          "examples": [
+            "coordinate the painters, masons, and plumbers",
+            "coordinate his actions with that of his colleagues",
+            "coordinate our efforts"
+          ]
+        },
+        {
+          "id": "coordinate.v.03",
+          "definition": "be co-ordinated",
+          "lemmas": [
+            "coordinate"
+          ],
+          "examples": [
+            "These activities coordinate well"
+          ]
+        },
+        {
+          "id": "align.v.04",
+          "definition": "bring (components or parts) into proper or desirable coordination correlation",
+          "lemmas": [
+            "align",
+            "coordinate",
+            "ordinate"
+          ],
+          "examples": [
+            "align the wheels of my car",
+            "ordinate similar parts"
+          ]
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-4685fc69dbf7f6008abd",
+      "occurrenceId": "atomic-3ff5239b88576c658e83",
+      "currentAtomicTitle": "Coordinate Care",
+      "groupTitle": "Coordinate Rehabilitation",
+      "groupStatus": "new",
+      "leadingAction": "Coordinate",
+      "sourceTaskIndexes": [
+        2
+      ],
+      "sourceRecords": [
+        {
+          "index": 2,
+          "oNetId": "265",
+          "exactRecord": "(O*Net) 265 - Utilize consultation data and social work experience to plan and coordinate client or patient care and rehabilitation, following through to ensure service efficacy.",
+          "task": "Utilize consultation data and social work experience to plan and coordinate client or patient care and rehabilitation, following through to ensure service efficacy.",
+          "otherLinkedAtomicTitles": [
+            "Ensure Efficacy",
+            "Plan Care",
+            "Use Datum (Synonyms: Apply Datum, Utilize Datum)",
+            "Utilize Experience"
+          ]
+        }
+      ],
+      "ownerTitle": "Organize (people or events) (Hold.v.03, Organize.v.05)",
+      "assignedSynsets": [
+        {
+          "id": "hold.v.03",
+          "definition": "organize or be responsible for",
+          "lemmas": [
+            "give",
+            "have",
+            "hold",
+            "make",
+            "throw"
+          ],
+          "examples": [
+            "hold a reception",
+            "have, throw, or make a party",
+            "give a course"
+          ]
+        },
+        {
+          "id": "organize.v.05",
+          "definition": "arrange by systematic planning and united effort",
+          "lemmas": [
+            "devise",
+            "get up",
+            "machinate",
+            "organise",
+            "organize",
+            "prepare"
+          ],
+          "examples": [
+            "machinate a plot",
+            "organize a strike",
+            "devise a plan to take over the director's office"
+          ]
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "organize.v.04",
+          "definition": "bring order and organization to",
+          "lemmas": [
+            "coordinate",
+            "organise",
+            "organize"
+          ],
+          "examples": [
+            "Can you help me organize my files?"
+          ]
+        },
+        {
+          "id": "coordinate.v.02",
+          "definition": "bring into common action, movement, or condition",
+          "lemmas": [
+            "coordinate"
+          ],
+          "examples": [
+            "coordinate the painters, masons, and plumbers",
+            "coordinate his actions with that of his colleagues",
+            "coordinate our efforts"
+          ]
+        },
+        {
+          "id": "coordinate.v.03",
+          "definition": "be co-ordinated",
+          "lemmas": [
+            "coordinate"
+          ],
+          "examples": [
+            "These activities coordinate well"
+          ]
+        },
+        {
+          "id": "align.v.04",
+          "definition": "bring (components or parts) into proper or desirable coordination correlation",
+          "lemmas": [
+            "align",
+            "coordinate",
+            "ordinate"
+          ],
+          "examples": [
+            "align the wheels of my car",
+            "ordinate similar parts"
+          ]
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-828eb19e389b86a20f94",
+      "occurrenceId": "atomic-1edc77ce0d8914824b75",
+      "currentAtomicTitle": "Devise Fixture",
+      "groupTitle": "Devise Fixture",
+      "groupStatus": "current",
+      "leadingAction": "Devise",
+      "sourceTaskIndexes": [
+        1,
+        2
+      ],
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "10288",
+          "exactRecord": "(O*Net) 10288 - Devise or build fixtures or jigs used to hold parts in place during welding, brazing, or soldering.",
+          "task": "Devise or build fixtures or jigs used to hold parts in place during welding, brazing, or soldering.",
+          "otherLinkedAtomicTitles": [
+            "Construct Fixture (Synonyms: Build Fixture)",
+            "Construct Jig (Synonyms: Build Jig)",
+            "Devise Jig"
+          ]
+        },
+        {
+          "index": 2,
+          "oNetId": "21054",
+          "exactRecord": "(O*Net) 21054 - Devise automated lab validation test stations or other test fixtures or equipment.",
+          "task": "Devise automated lab validation test stations or other test fixtures or equipment.",
+          "otherLinkedAtomicTitles": [
+            "Devise Equipment",
+            "Devise Station"
+          ]
+        }
+      ],
+      "ownerTitle": "Organize (people or events) (Hold.v.03, Organize.v.05)",
+      "assignedSynsets": [
+        {
+          "id": "hold.v.03",
+          "definition": "organize or be responsible for",
+          "lemmas": [
+            "give",
+            "have",
+            "hold",
+            "make",
+            "throw"
+          ],
+          "examples": [
+            "hold a reception",
+            "have, throw, or make a party",
+            "give a course"
+          ]
+        },
+        {
+          "id": "organize.v.05",
+          "definition": "arrange by systematic planning and united effort",
+          "lemmas": [
+            "devise",
+            "get up",
+            "machinate",
+            "organise",
+            "organize",
+            "prepare"
+          ],
+          "examples": [
+            "machinate a plot",
+            "organize a strike",
+            "devise a plan to take over the director's office"
+          ]
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "invent.v.01",
+          "definition": "come up with (an idea, plan, explanation, theory, or principle) after a mental effort",
+          "lemmas": [
+            "contrive",
+            "devise",
+            "excogitate",
+            "forge",
+            "formulate",
+            "invent"
+          ],
+          "examples": [
+            "excogitate a way to measure the speed of light"
+          ]
+        },
+        {
+          "id": "organize.v.05",
+          "definition": "arrange by systematic planning and united effort",
+          "lemmas": [
+            "devise",
+            "get up",
+            "machinate",
+            "organise",
+            "organize",
+            "prepare"
+          ],
+          "examples": [
+            "machinate a plot",
+            "organize a strike",
+            "devise a plan to take over the director's office"
+          ]
+        },
+        {
+          "id": "devise.v.03",
+          "definition": "give by will, especially real property",
+          "lemmas": [
+            "devise"
+          ],
+          "examples": []
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-8ba4ea65f461942e7b4a",
+      "occurrenceId": "atomic-958d35daa6723089727c",
+      "currentAtomicTitle": "Direct Personnel",
+      "groupTitle": "Direct Personnel",
+      "groupStatus": "current",
+      "leadingAction": "Direct",
+      "sourceTaskIndexes": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "12303",
+          "exactRecord": "(O*Net) 12303 - Direct personnel engaged in controlling or operating distribution equipment or machinery, such as instructing control room operators to start boilers or generators.",
+          "task": "Direct personnel engaged in controlling or operating distribution equipment or machinery, such as instructing control room operators to start boilers or generators.",
+          "otherLinkedAtomicTitles": []
+        },
+        {
+          "index": 2,
+          "oNetId": "1509",
+          "exactRecord": "(O*Net) 1509 - Direct, coordinate, or advise personnel in test procedures for analyzing components or physical properties of materials.",
+          "task": "Direct, coordinate, or advise personnel in test procedures for analyzing components or physical properties of materials.",
+          "otherLinkedAtomicTitles": [
+            "Advise Personnel",
+            "Coordinate Personnel"
+          ]
+        },
+        {
+          "index": 3,
+          "oNetId": "1846",
+          "exactRecord": "(O*Net) 1846 - Direct or supervise less-skilled nursing or healthcare personnel or supervise a particular unit.",
+          "task": "Direct or supervise less-skilled nursing or healthcare personnel or supervise a particular unit.",
+          "otherLinkedAtomicTitles": [
+            "Supervise Personnel",
+            "Supervise Unit"
+          ]
+        },
+        {
+          "index": 4,
+          "oNetId": "377",
+          "exactRecord": "(O*Net) 377 - Direct, supervise, assess, and communicate with supportive personnel.",
+          "task": "Direct, supervise, assess, and communicate with supportive personnel.",
+          "otherLinkedAtomicTitles": [
+            "Assess Personnel (Synonyms: Evaluate Personnel)",
+            "Communicate Personnel",
+            "Supervise Personnel"
+          ]
+        },
+        {
+          "index": 5,
+          "oNetId": "4.A.4.b.4.I10.D02",
+          "exactRecord": "(O*Net) 4.A.4.b.4.I10.D02 - Direct construction or extraction personnel.",
+          "task": "Direct construction or extraction personnel.",
+          "otherLinkedAtomicTitles": []
+        },
+        {
+          "index": 6,
+          "oNetId": "7398",
+          "exactRecord": "(O*Net) 7398 - Direct technicians, engineering designers or other technical support personnel as needed.",
+          "task": "Direct technicians, engineering designers or other technical support personnel as needed.",
+          "otherLinkedAtomicTitles": [
+            "Direct Designer",
+            "Direct Technician"
+          ]
+        }
+      ],
+      "ownerTitle": "Direct (Direct.v.04)",
+      "assignedSynsets": [
+        {
+          "id": "direct.v.04",
+          "definition": "be in charge of",
+          "lemmas": [
+            "direct"
+          ],
+          "examples": []
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "direct.v.01",
+          "definition": "command with authority",
+          "lemmas": [
+            "direct"
+          ],
+          "examples": [
+            "He directed the children to do their homework"
+          ]
+        },
+        {
+          "id": "target.v.01",
+          "definition": "intend (something) to move towards a certain goal",
+          "lemmas": [
+            "aim",
+            "direct",
+            "place",
+            "point",
+            "target"
+          ],
+          "examples": [
+            "He aimed his fists towards his opponent's face",
+            "criticism directed at her superior",
+            "direct your anger towards others, not towards yourself"
+          ]
+        },
+        {
+          "id": "direct.v.03",
+          "definition": "guide the actors in (plays and films)",
+          "lemmas": [
+            "direct"
+          ],
+          "examples": []
+        },
+        {
+          "id": "direct.v.04",
+          "definition": "be in charge of",
+          "lemmas": [
+            "direct"
+          ],
+          "examples": []
+        },
+        {
+          "id": "lead.v.01",
+          "definition": "take somebody somewhere",
+          "lemmas": [
+            "conduct",
+            "direct",
+            "guide",
+            "lead",
+            "take"
+          ],
+          "examples": [
+            "We lead him to our chief",
+            "can you take me to the main entrance?",
+            "He conducted us to the palace"
+          ]
+        },
+        {
+          "id": "send.v.01",
+          "definition": "cause to go somewhere",
+          "lemmas": [
+            "direct",
+            "send"
+          ],
+          "examples": [
+            "The explosion sent the car flying in the air",
+            "She sent her children to camp",
+            "He directed all his energies into his dissertation"
+          ]
+        },
+        {
+          "id": "aim.v.01",
+          "definition": "point or cause to go (blows, weapons, or objects such as photographic equipment) towards",
+          "lemmas": [
+            "aim",
+            "direct",
+            "take",
+            "take aim",
+            "train"
+          ],
+          "examples": [
+            "Please don't aim at your little brother!",
+            "He trained his gun on the burglar",
+            "Don't train your camera on the women",
+            "Take a swipe at one's opponent"
+          ]
+        },
+        {
+          "id": "conduct.v.02",
+          "definition": "lead, as in the performance of a composition",
+          "lemmas": [
+            "conduct",
+            "direct",
+            "lead"
+          ],
+          "examples": [
+            "conduct an orchestra; Barenboim conducted the Chicago symphony for years"
+          ]
+        },
+        {
+          "id": "direct.v.09",
+          "definition": "give directions to; point somebody into a certain direction",
+          "lemmas": [
+            "direct"
+          ],
+          "examples": [
+            "I directed them towards the town hall"
+          ]
+        },
+        {
+          "id": "calculate.v.05",
+          "definition": "specifically design a product, event, or activity for a certain public",
+          "lemmas": [
+            "aim",
+            "calculate",
+            "direct"
+          ],
+          "examples": []
+        },
+        {
+          "id": "steer.v.01",
+          "definition": "direct the course; determine the direction of travelling",
+          "lemmas": [
+            "channelise",
+            "channelize",
+            "direct",
+            "guide",
+            "head",
+            "maneuver",
+            "manoeuver",
+            "manoeuvre",
+            "point",
+            "steer"
+          ],
+          "examples": []
+        },
+        {
+          "id": "address.v.03",
+          "definition": "put an address on (an envelope)",
+          "lemmas": [
+            "address",
+            "direct"
+          ],
+          "examples": []
+        },
+        {
+          "id": "mastermind.v.01",
+          "definition": "plan and direct (a complex undertaking)",
+          "lemmas": [
+            "direct",
+            "engineer",
+            "mastermind",
+            "orchestrate",
+            "organise",
+            "organize"
+          ],
+          "examples": [
+            "he masterminded the robbery"
+          ]
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-d4b096e30f40f4c5c529",
+      "occurrenceId": "atomic-d671e93fb7a19bc7d1b2",
+      "currentAtomicTitle": "Oversee Operation (Synonyms: Supervise Operation)",
+      "groupTitle": "Oversee Equipment Operation",
+      "groupStatus": "new",
+      "leadingAction": "Oversee",
+      "sourceTaskIndexes": [
+        1,
+        5,
+        6,
+        12
+      ],
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "1419",
+          "exactRecord": "(O*Net) 1419 - Oversee installation, operation, maintenance, or repair to ensure that machines or equipment are installed and functioning according to specifications.",
+          "task": "Oversee installation, operation, maintenance, or repair to ensure that machines or equipment are installed and functioning according to specifications.",
+          "otherLinkedAtomicTitles": [
+            "Oversee Installation (Synonyms: Supervise Installation)",
+            "Oversee Maintenance (Synonyms: Supervise Maintenance)",
+            "Oversee Repair (Synonyms: Supervise Repair)"
+          ]
+        },
+        {
+          "index": 5,
+          "oNetId": "16496",
+          "exactRecord": "(O*Net) 16496 - Oversee operation of microelectromechanical systems (MEMS) fabrication or assembly equipment, such as handling, singulation, assembly, wire-bonding, soldering, or package sealing.",
+          "task": "Oversee operation of microelectromechanical systems (MEMS) fabrication or assembly equipment, such as handling, singulation, assembly, wire-bonding, soldering, or package sealing.",
+          "otherLinkedAtomicTitles": []
+        },
+        {
+          "index": 6,
+          "oNetId": "22803",
+          "exactRecord": "(O*Net) 22803 - Operate or oversee operation of radiologic or magnetic imaging equipment to produce images of the body for diagnostic purposes.",
+          "task": "Operate or oversee operation of radiologic or magnetic imaging equipment to produce images of the body for diagnostic purposes.",
+          "otherLinkedAtomicTitles": [
+            "Operate Equipment (Synonyms: Control Equipment)"
+          ]
+        },
+        {
+          "index": 12,
+          "oNetId": "21988",
+          "exactRecord": "(O*Net) 21988 - Supervise the installation or operation of electronic equipment or systems.",
+          "task": "Supervise the installation or operation of electronic equipment or systems.",
+          "otherLinkedAtomicTitles": [
+            "Oversee Installation (Synonyms: Supervise Installation)"
+          ]
+        }
+      ],
+      "ownerTitle": "Oversee (Oversee.v.01)",
+      "assignedSynsets": [
+        {
+          "id": "oversee.v.01",
+          "definition": "watch and direct",
+          "lemmas": [
+            "manage",
+            "oversee",
+            "superintend",
+            "supervise"
+          ],
+          "examples": [
+            "Who is overseeing this project?"
+          ]
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "oversee.v.01",
+          "definition": "watch and direct",
+          "lemmas": [
+            "manage",
+            "oversee",
+            "superintend",
+            "supervise"
+          ],
+          "examples": [
+            "Who is overseeing this project?"
+          ]
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-979a36dc1b827c873957",
+      "occurrenceId": "atomic-d671e93fb7a19bc7d1b2",
+      "currentAtomicTitle": "Oversee Operation (Synonyms: Supervise Operation)",
+      "groupTitle": "Oversee Vessel Operation",
+      "groupStatus": "new",
+      "leadingAction": "Oversee",
+      "sourceTaskIndexes": [
+        2
+      ],
+      "sourceRecords": [
+        {
+          "index": 2,
+          "oNetId": "14548",
+          "exactRecord": "(O*Net) 14548 - Oversee operation of vessels used for carrying passengers, motor vehicles, or goods across rivers, harbors, lakes, and coastal waters.",
+          "task": "Oversee operation of vessels used for carrying passengers, motor vehicles, or goods across rivers, harbors, lakes, and coastal waters.",
+          "otherLinkedAtomicTitles": []
+        }
+      ],
+      "ownerTitle": "Oversee (Oversee.v.01)",
+      "assignedSynsets": [
+        {
+          "id": "oversee.v.01",
+          "definition": "watch and direct",
+          "lemmas": [
+            "manage",
+            "oversee",
+            "superintend",
+            "supervise"
+          ],
+          "examples": [
+            "Who is overseeing this project?"
+          ]
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "oversee.v.01",
+          "definition": "watch and direct",
+          "lemmas": [
+            "manage",
+            "oversee",
+            "superintend",
+            "supervise"
+          ],
+          "examples": [
+            "Who is overseeing this project?"
+          ]
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-3b5b2720bae43e365c2b",
+      "occurrenceId": "atomic-d671e93fb7a19bc7d1b2",
+      "currentAtomicTitle": "Oversee Operation (Synonyms: Supervise Operation)",
+      "groupTitle": "Oversee Plant Operation",
+      "groupStatus": "new",
+      "leadingAction": "Oversee",
+      "sourceTaskIndexes": [
+        3,
+        9,
+        15
+      ],
+      "sourceRecords": [
+        {
+          "index": 3,
+          "oNetId": "15447",
+          "exactRecord": "(O*Net) 15447 - Oversee geothermal plant operations, maintenance, and repairs to ensure compliance with applicable standards or regulations.",
+          "task": "Oversee geothermal plant operations, maintenance, and repairs to ensure compliance with applicable standards or regulations.",
+          "otherLinkedAtomicTitles": [
+            "Oversee Maintenance (Synonyms: Supervise Maintenance)",
+            "Oversee Repair (Synonyms: Supervise Repair)"
+          ]
+        },
+        {
+          "index": 9,
+          "oNetId": "15478",
+          "exactRecord": "(O*Net) 15478 - Supervise biomass plant or substation operations, maintenance, repair, or testing activities.",
+          "task": "Supervise biomass plant or substation operations, maintenance, repair, or testing activities.",
+          "otherLinkedAtomicTitles": [
+            "Oversee Maintenance (Synonyms: Supervise Maintenance)",
+            "Oversee Repair (Synonyms: Supervise Repair)",
+            "Oversee Testing (Synonyms: Supervise Testing)"
+          ]
+        },
+        {
+          "index": 15,
+          "oNetId": "5332",
+          "exactRecord": "(O*Net) 5332 - Supervise food processing or manufacturing plant operations.",
+          "task": "Supervise food processing or manufacturing plant operations.",
+          "otherLinkedAtomicTitles": []
+        }
+      ],
+      "ownerTitle": "Oversee (Oversee.v.01)",
+      "assignedSynsets": [
+        {
+          "id": "oversee.v.01",
+          "definition": "watch and direct",
+          "lemmas": [
+            "manage",
+            "oversee",
+            "superintend",
+            "supervise"
+          ],
+          "examples": [
+            "Who is overseeing this project?"
+          ]
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "oversee.v.01",
+          "definition": "watch and direct",
+          "lemmas": [
+            "manage",
+            "oversee",
+            "superintend",
+            "supervise"
+          ],
+          "examples": [
+            "Who is overseeing this project?"
+          ]
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-fa291c891a3d73cedd35",
+      "occurrenceId": "atomic-d671e93fb7a19bc7d1b2",
+      "currentAtomicTitle": "Oversee Operation (Synonyms: Supervise Operation)",
+      "groupTitle": "Oversee Contingency Plan Integration",
+      "groupStatus": "new",
+      "leadingAction": "Oversee",
+      "sourceTaskIndexes": [
+        4
+      ],
+      "sourceRecords": [
+        {
+          "index": 4,
+          "oNetId": "15964",
+          "exactRecord": "(O*Net) 15964 - Conduct or oversee contingency plan integration and operation.",
+          "task": "Conduct or oversee contingency plan integration and operation.",
+          "otherLinkedAtomicTitles": [
+            "Conduct Integration"
+          ]
+        }
+      ],
+      "ownerTitle": "Oversee (Oversee.v.01)",
+      "assignedSynsets": [
+        {
+          "id": "oversee.v.01",
+          "definition": "watch and direct",
+          "lemmas": [
+            "manage",
+            "oversee",
+            "superintend",
+            "supervise"
+          ],
+          "examples": [
+            "Who is overseeing this project?"
+          ]
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "oversee.v.01",
+          "definition": "watch and direct",
+          "lemmas": [
+            "manage",
+            "oversee",
+            "superintend",
+            "supervise"
+          ],
+          "examples": [
+            "Who is overseeing this project?"
+          ]
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-f49487b4092855ba9fa5",
+      "occurrenceId": "atomic-d671e93fb7a19bc7d1b2",
+      "currentAtomicTitle": "Oversee Operation (Synonyms: Supervise Operation)",
+      "groupTitle": "Oversee Contingency Plan Operation",
+      "groupStatus": "new",
+      "leadingAction": "Oversee",
+      "sourceTaskIndexes": [
+        4
+      ],
+      "sourceRecords": [
+        {
+          "index": 4,
+          "oNetId": "15964",
+          "exactRecord": "(O*Net) 15964 - Conduct or oversee contingency plan integration and operation.",
+          "task": "Conduct or oversee contingency plan integration and operation.",
+          "otherLinkedAtomicTitles": [
+            "Conduct Integration"
+          ]
+        }
+      ],
+      "ownerTitle": "Oversee (Oversee.v.01)",
+      "assignedSynsets": [
+        {
+          "id": "oversee.v.01",
+          "definition": "watch and direct",
+          "lemmas": [
+            "manage",
+            "oversee",
+            "superintend",
+            "supervise"
+          ],
+          "examples": [
+            "Who is overseeing this project?"
+          ]
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "oversee.v.01",
+          "definition": "watch and direct",
+          "lemmas": [
+            "manage",
+            "oversee",
+            "superintend",
+            "supervise"
+          ],
+          "examples": [
+            "Who is overseeing this project?"
+          ]
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-426b068f8d51183f8b7c",
+      "occurrenceId": "atomic-d671e93fb7a19bc7d1b2",
+      "currentAtomicTitle": "Oversee Operation (Synonyms: Supervise Operation)",
+      "groupTitle": "Oversee Nuclear Operation",
+      "groupStatus": "new",
+      "leadingAction": "Oversee",
+      "sourceTaskIndexes": [
+        7
+      ],
+      "sourceRecords": [
+        {
+          "index": 7,
+          "oNetId": "5383",
+          "exactRecord": "(O*Net) 5383 - Design or oversee construction or operation of nuclear reactors, power plants, or nuclear fuels reprocessing and reclamation systems.",
+          "task": "Design or oversee construction or operation of nuclear reactors, power plants, or nuclear fuels reprocessing and reclamation systems.",
+          "otherLinkedAtomicTitles": [
+            "Design Reactor",
+            "Oversee Construction (Synonyms: Supervise Construction)",
+            "Oversee System"
+          ]
+        }
+      ],
+      "ownerTitle": "Oversee (Oversee.v.01)",
+      "assignedSynsets": [
+        {
+          "id": "oversee.v.01",
+          "definition": "watch and direct",
+          "lemmas": [
+            "manage",
+            "oversee",
+            "superintend",
+            "supervise"
+          ],
+          "examples": [
+            "Who is overseeing this project?"
+          ]
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "oversee.v.01",
+          "definition": "watch and direct",
+          "lemmas": [
+            "manage",
+            "oversee",
+            "superintend",
+            "supervise"
+          ],
+          "examples": [
+            "Who is overseeing this project?"
+          ]
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-70ffdde37d1e1c17df44",
+      "occurrenceId": "atomic-d671e93fb7a19bc7d1b2",
+      "currentAtomicTitle": "Oversee Operation (Synonyms: Supervise Operation)",
+      "groupTitle": "Oversee Property Operation",
+      "groupStatus": "new",
+      "leadingAction": "Oversee",
+      "sourceTaskIndexes": [
+        8
+      ],
+      "sourceRecords": [
+        {
+          "index": 8,
+          "oNetId": "7224",
+          "exactRecord": "(O*Net) 7224 - Manage and oversee operations, maintenance, administration, and improvement of commercial, industrial, or residential properties.",
+          "task": "Manage and oversee operations, maintenance, administration, and improvement of commercial, industrial, or residential properties.",
+          "otherLinkedAtomicTitles": [
+            "Manage Administration",
+            "Manage Improvement",
+            "Manage Maintenance (Synonyms: Handle Maintenance)",
+            "Manage Operation",
+            "Oversee Administration",
+            "Oversee Improvement",
+            "Oversee Maintenance (Synonyms: Supervise Maintenance)"
+          ]
+        }
+      ],
+      "ownerTitle": "Oversee (Oversee.v.01)",
+      "assignedSynsets": [
+        {
+          "id": "oversee.v.01",
+          "definition": "watch and direct",
+          "lemmas": [
+            "manage",
+            "oversee",
+            "superintend",
+            "supervise"
+          ],
+          "examples": [
+            "Who is overseeing this project?"
+          ]
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "oversee.v.01",
+          "definition": "watch and direct",
+          "lemmas": [
+            "manage",
+            "oversee",
+            "superintend",
+            "supervise"
+          ],
+          "examples": [
+            "Who is overseeing this project?"
+          ]
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-42a5f8b302431df8cd20",
+      "occurrenceId": "atomic-d671e93fb7a19bc7d1b2",
+      "currentAtomicTitle": "Oversee Operation (Synonyms: Supervise Operation)",
+      "groupTitle": "Oversee Substation Operation",
+      "groupStatus": "new",
+      "leadingAction": "Oversee",
+      "sourceTaskIndexes": [
+        9
+      ],
+      "sourceRecords": [
+        {
+          "index": 9,
+          "oNetId": "15478",
+          "exactRecord": "(O*Net) 15478 - Supervise biomass plant or substation operations, maintenance, repair, or testing activities.",
+          "task": "Supervise biomass plant or substation operations, maintenance, repair, or testing activities.",
+          "otherLinkedAtomicTitles": [
+            "Oversee Maintenance (Synonyms: Supervise Maintenance)",
+            "Oversee Repair (Synonyms: Supervise Repair)",
+            "Oversee Testing (Synonyms: Supervise Testing)"
+          ]
+        }
+      ],
+      "ownerTitle": "Oversee (Oversee.v.01)",
+      "assignedSynsets": [
+        {
+          "id": "oversee.v.01",
+          "definition": "watch and direct",
+          "lemmas": [
+            "manage",
+            "oversee",
+            "superintend",
+            "supervise"
+          ],
+          "examples": [
+            "Who is overseeing this project?"
+          ]
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "oversee.v.01",
+          "definition": "watch and direct",
+          "lemmas": [
+            "manage",
+            "oversee",
+            "superintend",
+            "supervise"
+          ],
+          "examples": [
+            "Who is overseeing this project?"
+          ]
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-87b0956a91b7901b8452",
+      "occurrenceId": "atomic-d671e93fb7a19bc7d1b2",
+      "currentAtomicTitle": "Oversee Operation (Synonyms: Supervise Operation)",
+      "groupTitle": "Oversee Hydroelectric Facility Operation",
+      "groupStatus": "new",
+      "leadingAction": "Oversee",
+      "sourceTaskIndexes": [
+        10
+      ],
+      "sourceRecords": [
+        {
+          "index": 10,
+          "oNetId": "15519",
+          "exactRecord": "(O*Net) 15519 - Supervise or monitor hydroelectric facility operations to ensure that generation or mechanical equipment conform to applicable regulations or standards.",
+          "task": "Supervise or monitor hydroelectric facility operations to ensure that generation or mechanical equipment conform to applicable regulations or standards.",
+          "otherLinkedAtomicTitles": [
+            "Monitor Operation"
+          ]
+        }
+      ],
+      "ownerTitle": "Oversee (Oversee.v.01)",
+      "assignedSynsets": [
+        {
+          "id": "oversee.v.01",
+          "definition": "watch and direct",
+          "lemmas": [
+            "manage",
+            "oversee",
+            "superintend",
+            "supervise"
+          ],
+          "examples": [
+            "Who is overseeing this project?"
+          ]
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "oversee.v.01",
+          "definition": "watch and direct",
+          "lemmas": [
+            "manage",
+            "oversee",
+            "superintend",
+            "supervise"
+          ],
+          "examples": [
+            "Who is overseeing this project?"
+          ]
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-5afa0cdbe55361d41c30",
+      "occurrenceId": "atomic-d671e93fb7a19bc7d1b2",
+      "currentAtomicTitle": "Oversee Operation (Synonyms: Supervise Operation)",
+      "groupTitle": "Oversee Pest Control Operation",
+      "groupStatus": "new",
+      "leadingAction": "Oversee",
+      "sourceTaskIndexes": [
+        11
+      ],
+      "sourceRecords": [
+        {
+          "index": 11,
+          "oNetId": "20531",
+          "exactRecord": "(O*Net) 20531 - Supervise pest or weed control operations, including locating and identifying pests or weeds, selecting chemicals and application methods, or scheduling application.",
+          "task": "Supervise pest or weed control operations, including locating and identifying pests or weeds, selecting chemicals and application methods, or scheduling application.",
+          "otherLinkedAtomicTitles": []
+        }
+      ],
+      "ownerTitle": "Oversee (Oversee.v.01)",
+      "assignedSynsets": [
+        {
+          "id": "oversee.v.01",
+          "definition": "watch and direct",
+          "lemmas": [
+            "manage",
+            "oversee",
+            "superintend",
+            "supervise"
+          ],
+          "examples": [
+            "Who is overseeing this project?"
+          ]
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "oversee.v.01",
+          "definition": "watch and direct",
+          "lemmas": [
+            "manage",
+            "oversee",
+            "superintend",
+            "supervise"
+          ],
+          "examples": [
+            "Who is overseeing this project?"
+          ]
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-ab4c3e455faeb68ac950",
+      "occurrenceId": "atomic-d671e93fb7a19bc7d1b2",
+      "currentAtomicTitle": "Oversee Operation (Synonyms: Supervise Operation)",
+      "groupTitle": "Oversee Weed Control Operation",
+      "groupStatus": "new",
+      "leadingAction": "Oversee",
+      "sourceTaskIndexes": [
+        11
+      ],
+      "sourceRecords": [
+        {
+          "index": 11,
+          "oNetId": "20531",
+          "exactRecord": "(O*Net) 20531 - Supervise pest or weed control operations, including locating and identifying pests or weeds, selecting chemicals and application methods, or scheduling application.",
+          "task": "Supervise pest or weed control operations, including locating and identifying pests or weeds, selecting chemicals and application methods, or scheduling application.",
+          "otherLinkedAtomicTitles": []
+        }
+      ],
+      "ownerTitle": "Oversee (Oversee.v.01)",
+      "assignedSynsets": [
+        {
+          "id": "oversee.v.01",
+          "definition": "watch and direct",
+          "lemmas": [
+            "manage",
+            "oversee",
+            "superintend",
+            "supervise"
+          ],
+          "examples": [
+            "Who is overseeing this project?"
+          ]
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "oversee.v.01",
+          "definition": "watch and direct",
+          "lemmas": [
+            "manage",
+            "oversee",
+            "superintend",
+            "supervise"
+          ],
+          "examples": [
+            "Who is overseeing this project?"
+          ]
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-aa82b2ecb7fe3361a56e",
+      "occurrenceId": "atomic-d671e93fb7a19bc7d1b2",
+      "currentAtomicTitle": "Oversee Operation (Synonyms: Supervise Operation)",
+      "groupTitle": "Oversee System Operation",
+      "groupStatus": "new",
+      "leadingAction": "Oversee",
+      "sourceTaskIndexes": [
+        12
+      ],
+      "sourceRecords": [
+        {
+          "index": 12,
+          "oNetId": "21988",
+          "exactRecord": "(O*Net) 21988 - Supervise the installation or operation of electronic equipment or systems.",
+          "task": "Supervise the installation or operation of electronic equipment or systems.",
+          "otherLinkedAtomicTitles": [
+            "Oversee Installation (Synonyms: Supervise Installation)"
+          ]
+        }
+      ],
+      "ownerTitle": "Oversee (Oversee.v.01)",
+      "assignedSynsets": [
+        {
+          "id": "oversee.v.01",
+          "definition": "watch and direct",
+          "lemmas": [
+            "manage",
+            "oversee",
+            "superintend",
+            "supervise"
+          ],
+          "examples": [
+            "Who is overseeing this project?"
+          ]
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "oversee.v.01",
+          "definition": "watch and direct",
+          "lemmas": [
+            "manage",
+            "oversee",
+            "superintend",
+            "supervise"
+          ],
+          "examples": [
+            "Who is overseeing this project?"
+          ]
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-d72826b9734f54793e98",
+      "occurrenceId": "atomic-d671e93fb7a19bc7d1b2",
+      "currentAtomicTitle": "Oversee Operation (Synonyms: Supervise Operation)",
+      "groupTitle": "Oversee Library Operation",
+      "groupStatus": "new",
+      "leadingAction": "Oversee",
+      "sourceTaskIndexes": [
+        13
+      ],
+      "sourceRecords": [
+        {
+          "index": 13,
+          "oNetId": "22413",
+          "exactRecord": "(O*Net) 22413 - Supervise daily library operations, budgeting, planning, and personnel activities, such as hiring, training, scheduling, and performance evaluations.",
+          "task": "Supervise daily library operations, budgeting, planning, and personnel activities, such as hiring, training, scheduling, and performance evaluations.",
+          "otherLinkedAtomicTitles": []
+        }
+      ],
+      "ownerTitle": "Oversee (Oversee.v.01)",
+      "assignedSynsets": [
+        {
+          "id": "oversee.v.01",
+          "definition": "watch and direct",
+          "lemmas": [
+            "manage",
+            "oversee",
+            "superintend",
+            "supervise"
+          ],
+          "examples": [
+            "Who is overseeing this project?"
+          ]
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "oversee.v.01",
+          "definition": "watch and direct",
+          "lemmas": [
+            "manage",
+            "oversee",
+            "superintend",
+            "supervise"
+          ],
+          "examples": [
+            "Who is overseeing this project?"
+          ]
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-60ea730e44667600c37f",
+      "occurrenceId": "atomic-d671e93fb7a19bc7d1b2",
+      "currentAtomicTitle": "Oversee Operation (Synonyms: Supervise Operation)",
+      "groupTitle": "Oversee Mine Construction Operation",
+      "groupStatus": "new",
+      "leadingAction": "Oversee",
+      "sourceTaskIndexes": [
+        14
+      ],
+      "sourceRecords": [
+        {
+          "index": 14,
+          "oNetId": "3575",
+          "exactRecord": "(O*Net) 3575 - Lay out, direct, and supervise mine construction operations, such as the construction of shafts and tunnels.",
+          "task": "Lay out, direct, and supervise mine construction operations, such as the construction of shafts and tunnels.",
+          "otherLinkedAtomicTitles": [
+            "Direct Operation",
+            "Lay_Out Operation"
+          ]
+        }
+      ],
+      "ownerTitle": "Oversee (Oversee.v.01)",
+      "assignedSynsets": [
+        {
+          "id": "oversee.v.01",
+          "definition": "watch and direct",
+          "lemmas": [
+            "manage",
+            "oversee",
+            "superintend",
+            "supervise"
+          ],
+          "examples": [
+            "Who is overseeing this project?"
+          ]
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "oversee.v.01",
+          "definition": "watch and direct",
+          "lemmas": [
+            "manage",
+            "oversee",
+            "superintend",
+            "supervise"
+          ],
+          "examples": [
+            "Who is overseeing this project?"
+          ]
+        }
+      ],
+      "genericActionFlag": false
+    },
+    {
+      "groupId": "wordnet-0a2a74b386bfb9da828f",
+      "occurrenceId": "atomic-d671e93fb7a19bc7d1b2",
+      "currentAtomicTitle": "Oversee Operation (Synonyms: Supervise Operation)",
+      "groupTitle": "Oversee Forest Nursery Operation",
+      "groupStatus": "new",
+      "leadingAction": "Oversee",
+      "sourceTaskIndexes": [
+        16
+      ],
+      "sourceRecords": [
+        {
+          "index": 16,
+          "oNetId": "5572",
+          "exactRecord": "(O*Net) 5572 - Supervise forest nursery operations, timber harvesting, land use activities such as livestock grazing, and disease or insect control programs.",
+          "task": "Supervise forest nursery operations, timber harvesting, land use activities such as livestock grazing, and disease or insect control programs.",
+          "otherLinkedAtomicTitles": [
+            "Oversee Activity (Synonyms: Supervise Activity)",
+            "Oversee Program (Synonyms: Supervise Program)",
+            "Supervise Harvesting"
+          ]
+        }
+      ],
+      "ownerTitle": "Oversee (Oversee.v.01)",
+      "assignedSynsets": [
+        {
+          "id": "oversee.v.01",
+          "definition": "watch and direct",
+          "lemmas": [
+            "manage",
+            "oversee",
+            "superintend",
+            "supervise"
+          ],
+          "examples": [
+            "Who is overseeing this project?"
+          ]
+        }
+      ],
+      "candidateSynsets": [
+        {
+          "id": "oversee.v.01",
+          "definition": "watch and direct",
+          "lemmas": [
+            "manage",
+            "oversee",
+            "superintend",
+            "supervise"
+          ],
+          "examples": [
+            "Who is overseeing this project?"
+          ]
+        }
+      ],
+      "genericActionFlag": false
+    }
+  ]
+}

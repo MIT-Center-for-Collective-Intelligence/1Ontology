@@ -1,0 +1,912 @@
+{
+  "schemaVersion": "wordnet-alignment-assessments-validated-v1",
+  "generatedAt": "2026-08-29T01:53:17.802Z",
+  "sourceSha256": "f19ce789bce298b0564045fb87427eebd1193b89c133d17519c097dc3e0eb319",
+  "bundlesFile": "wordnet-candidate-bundles.json",
+  "bundlesSha256": "914718f53e2b12935fb48cf01ace13f850f77f35f1556e63391fd35a47ae0245",
+  "decisionsFile": "wordnet-decision-rules.json",
+  "decisionsSha256": "4afa7c3b5ebe171b8b6890880c13fe153e2db5e4dd2c4e137b754638cf9ba082",
+  "auditsFile": "wordnet-audit-rules.json",
+  "auditsSha256": "60010ed7edddc0d42ffcb2d22c14de72798f46d8690b3ff4f9688ffdcf4a57dd",
+  "promptVersions": {
+    "alignment": "access-wordnet-alignment-2026-08-28-v1",
+    "audit": "access-wordnet-alignment-audit-2026-08-28-v1",
+    "validator": "wordnet-alignment-validator-2026-08-28-v1"
+  },
+  "promptSha256": {
+    "alignment": "9e0da7bbfb1a85c068ec8790d66852f36953e4204cf4ea21652cf32ffbc08407",
+    "audit": "547204e8fb793756c114e2345c0b2ce4dca4af0f4047b3d570734ef2f3d84908",
+    "validator": "9347c3a74b8d7c55aa71833ce332891574c7849c37142e98b4ea59b5a090e18c"
+  },
+  "counts": {
+    "groups": 42,
+    "keepAssigned": 26,
+    "replace": 16,
+    "noSuitableSynset": 0,
+    "uncertain": 0
+  },
+  "assessments": [
+    {
+      "groupId": "wordnet-d39b67ef6bbbed14ad6e",
+      "decision": "keep-assigned",
+      "selectedSynsetIds": [
+        "delineate.v.03"
+      ],
+      "reason": "For Outline Pattern, delineate.v.03 means tracing a shape, which matches outlining the pattern on a work piece.",
+      "confidence": "high",
+      "audit": {
+        "verdict": "approve",
+        "confidence": "high",
+        "reason": "Outline Pattern uses the exact trace-the-shape sense and no source evidence conflicts.",
+        "checks": {
+          "evidenceComplete": true,
+          "assignedCompared": true,
+          "candidateBound": true,
+          "definitionFit": true,
+          "noForcedChoice": true
+        }
+      }
+    },
+    {
+      "groupId": "wordnet-f3655a5cff51908ca86b",
+      "decision": "keep-assigned",
+      "selectedSynsetIds": [
+        "compare.v.01"
+      ],
+      "reason": "For Compare Environmental Impact, compare.v.01 means examining similarities or differences, exactly the comparison expressed by the source.",
+      "confidence": "high",
+      "audit": {
+        "verdict": "approve",
+        "confidence": "high",
+        "reason": "Compare Environmental Impact compares measured properties and matches compare.v.01 directly.",
+        "checks": {
+          "evidenceComplete": true,
+          "assignedCompared": true,
+          "candidateBound": true,
+          "definitionFit": true,
+          "noForcedChoice": true
+        }
+      }
+    },
+    {
+      "groupId": "wordnet-054ffa4de47ea2958a86",
+      "decision": "replace",
+      "selectedSynsetIds": [
+        "document.v.01"
+      ],
+      "reason": "For Document Alternative, document.v.01 ('record in detail') fits all evidence; the inherited inventory, keep, log, and register senses are not jointly supported.",
+      "confidence": "high",
+      "audit": {
+        "verdict": "approve",
+        "confidence": "high",
+        "reason": "Document Alternative is fully covered by document.v.01, and each removed inherited sense would add an unsupported record-keeping subtype.",
+        "checks": {
+          "evidenceComplete": true,
+          "assignedCompared": true,
+          "candidateBound": true,
+          "definitionFit": true,
+          "noForcedChoice": true
+        }
+      }
+    },
+    {
+      "groupId": "wordnet-1e3a9c43c5739cb025ba",
+      "decision": "replace",
+      "selectedSynsetIds": [
+        "store.v.01"
+      ],
+      "reason": "For Store Data, store.v.01 captures keeping data for future use; conserve.v.02 and the physical put-away sense store.v.02 add unsupported meanings.",
+      "confidence": "medium",
+      "audit": {
+        "verdict": "approve",
+        "confidence": "medium",
+        "reason": "Store Data consistently concerns retaining data; store.v.01 is the smallest supplied sense that covers all records.",
+        "checks": {
+          "evidenceComplete": true,
+          "assignedCompared": true,
+          "candidateBound": true,
+          "definitionFit": true,
+          "noForcedChoice": true
+        }
+      }
+    },
+    {
+      "groupId": "wordnet-90ec441c064018b5522f",
+      "decision": "keep-assigned",
+      "selectedSynsetIds": [
+        "diagnose.v.01"
+      ],
+      "reason": "For Diagnose Disease, diagnose.v.01 means determining the nature of an illness through diagnostic analysis and fits every assigned disease record.",
+      "confidence": "high",
+      "audit": {
+        "verdict": "approve",
+        "confidence": "high",
+        "reason": "Diagnose Disease remains disease diagnosis after grouping, and diagnose.v.01 covers every source.",
+        "checks": {
+          "evidenceComplete": true,
+          "assignedCompared": true,
+          "candidateBound": true,
+          "definitionFit": true,
+          "noForcedChoice": true
+        }
+      }
+    },
+    {
+      "groupId": "wordnet-ad370af57f80666142f2",
+      "decision": "keep-assigned",
+      "selectedSynsetIds": [
+        "diagnose.v.01"
+      ],
+      "reason": "For Diagnose Genetic Disease, diagnose.v.01 means determining the nature of an illness through diagnostic analysis and fits every assigned disease record.",
+      "confidence": "high",
+      "audit": {
+        "verdict": "approve",
+        "confidence": "high",
+        "reason": "Diagnose Genetic Disease remains disease diagnosis after grouping, and diagnose.v.01 covers every source.",
+        "checks": {
+          "evidenceComplete": true,
+          "assignedCompared": true,
+          "candidateBound": true,
+          "definitionFit": true,
+          "noForcedChoice": true
+        }
+      }
+    },
+    {
+      "groupId": "wordnet-7a5ed94e14f28227cda0",
+      "decision": "keep-assigned",
+      "selectedSynsetIds": [
+        "diagnose.v.01"
+      ],
+      "reason": "For Diagnose Eye Disease, diagnose.v.01 means determining the nature of an illness through diagnostic analysis and fits every assigned disease record.",
+      "confidence": "high",
+      "audit": {
+        "verdict": "approve",
+        "confidence": "high",
+        "reason": "Diagnose Eye Disease remains disease diagnosis after grouping, and diagnose.v.01 covers every source.",
+        "checks": {
+          "evidenceComplete": true,
+          "assignedCompared": true,
+          "candidateBound": true,
+          "definitionFit": true,
+          "noForcedChoice": true
+        }
+      }
+    },
+    {
+      "groupId": "wordnet-2cb896df1c97ffe530a1",
+      "decision": "keep-assigned",
+      "selectedSynsetIds": [
+        "diagnose.v.01"
+      ],
+      "reason": "For Diagnose Genitourinary Disease, diagnose.v.01 means determining the nature of an illness through diagnostic analysis and fits every assigned disease record.",
+      "confidence": "high",
+      "audit": {
+        "verdict": "approve",
+        "confidence": "high",
+        "reason": "Diagnose Genitourinary Disease remains disease diagnosis after grouping, and diagnose.v.01 covers every source.",
+        "checks": {
+          "evidenceComplete": true,
+          "assignedCompared": true,
+          "candidateBound": true,
+          "definitionFit": true,
+          "noForcedChoice": true
+        }
+      }
+    },
+    {
+      "groupId": "wordnet-dba37457d5095f6cbfed",
+      "decision": "keep-assigned",
+      "selectedSynsetIds": [
+        "diagnose.v.01"
+      ],
+      "reason": "For Diagnose Oral Disease, diagnose.v.01 means determining the nature of an illness through diagnostic analysis and fits every assigned disease record.",
+      "confidence": "high",
+      "audit": {
+        "verdict": "approve",
+        "confidence": "high",
+        "reason": "Diagnose Oral Disease remains disease diagnosis after grouping, and diagnose.v.01 covers every source.",
+        "checks": {
+          "evidenceComplete": true,
+          "assignedCompared": true,
+          "candidateBound": true,
+          "definitionFit": true,
+          "noForcedChoice": true
+        }
+      }
+    },
+    {
+      "groupId": "wordnet-1ee189a4dd052a977407",
+      "decision": "keep-assigned",
+      "selectedSynsetIds": [
+        "diagnose.v.01"
+      ],
+      "reason": "For Diagnose Foot Disease, diagnose.v.01 means determining the nature of an illness through diagnostic analysis and fits every assigned disease record.",
+      "confidence": "high",
+      "audit": {
+        "verdict": "approve",
+        "confidence": "high",
+        "reason": "Diagnose Foot Disease remains disease diagnosis after grouping, and diagnose.v.01 covers every source.",
+        "checks": {
+          "evidenceComplete": true,
+          "assignedCompared": true,
+          "candidateBound": true,
+          "definitionFit": true,
+          "noForcedChoice": true
+        }
+      }
+    },
+    {
+      "groupId": "wordnet-4fa54495fa0fd5c6076a",
+      "decision": "replace",
+      "selectedSynsetIds": [
+        "plan.v.03"
+      ],
+      "reason": "For Plan Menu, plan.v.03 means making or working out a plan and best fits devising a menu; intention, generic planning, and masterminding senses are not all warranted.",
+      "confidence": "medium",
+      "audit": {
+        "verdict": "approve",
+        "confidence": "medium",
+        "reason": "Plan Menu describes working out the menu itself, making plan.v.03 more exact than intention or masterminding senses.",
+        "checks": {
+          "evidenceComplete": true,
+          "assignedCompared": true,
+          "candidateBound": true,
+          "definitionFit": true,
+          "noForcedChoice": true
+        }
+      }
+    },
+    {
+      "groupId": "wordnet-430b0160e12db9b715b4",
+      "decision": "replace",
+      "selectedSynsetIds": [
+        "plan.v.03"
+      ],
+      "reason": "For Plan Special Menu, plan.v.03 means making or working out a plan and best fits devising a menu; intention, generic planning, and masterminding senses are not all warranted.",
+      "confidence": "medium",
+      "audit": {
+        "verdict": "approve",
+        "confidence": "medium",
+        "reason": "Plan Special Menu describes working out the menu itself, making plan.v.03 more exact than intention or masterminding senses.",
+        "checks": {
+          "evidenceComplete": true,
+          "assignedCompared": true,
+          "candidateBound": true,
+          "definitionFit": true,
+          "noForcedChoice": true
+        }
+      }
+    },
+    {
+      "groupId": "wordnet-16b7f7f342e0baf04749",
+      "decision": "replace",
+      "selectedSynsetIds": [
+        "plan.v.03"
+      ],
+      "reason": "For Plan Bar Menu, plan.v.03 means making or working out a plan and best fits devising a menu; intention, generic planning, and masterminding senses are not all warranted.",
+      "confidence": "medium",
+      "audit": {
+        "verdict": "approve",
+        "confidence": "medium",
+        "reason": "Plan Bar Menu describes working out the menu itself, making plan.v.03 more exact than intention or masterminding senses.",
+        "checks": {
+          "evidenceComplete": true,
+          "assignedCompared": true,
+          "candidateBound": true,
+          "definitionFit": true,
+          "noForcedChoice": true
+        }
+      }
+    },
+    {
+      "groupId": "wordnet-9baa2b72a43a52ee1c53",
+      "decision": "replace",
+      "selectedSynsetIds": [
+        "use.v.01"
+      ],
+      "reason": "For Use Staple, use.v.01 means putting an object into service for its normal purpose; the inherited surface-application sense does not represent using a staple as a fastener.",
+      "confidence": "high",
+      "audit": {
+        "verdict": "approve",
+        "confidence": "high",
+        "reason": "Use Staple employs a staple as a tool, which is use.v.01 rather than applying a substance to a surface.",
+        "checks": {
+          "evidenceComplete": true,
+          "assignedCompared": true,
+          "candidateBound": true,
+          "definitionFit": true,
+          "noForcedChoice": true
+        }
+      }
+    },
+    {
+      "groupId": "wordnet-32e7d20de829e3b6c358",
+      "decision": "keep-assigned",
+      "selectedSynsetIds": [
+        "melt.v.01"
+      ],
+      "reason": "For Melt Material, melt.v.01 explicitly covers causing a solid material to become liquid, exactly matching the source.",
+      "confidence": "high",
+      "audit": {
+        "verdict": "approve",
+        "confidence": "high",
+        "reason": "Melt Material exactly matches the solid-to-liquid sense.",
+        "checks": {
+          "evidenceComplete": true,
+          "assignedCompared": true,
+          "candidateBound": true,
+          "definitionFit": true,
+          "noForcedChoice": true
+        }
+      }
+    },
+    {
+      "groupId": "wordnet-60326fdde8d60050ca71",
+      "decision": "replace",
+      "selectedSynsetIds": [
+        "produce.v.02"
+      ],
+      "reason": "For Create Print (Synonyms: Produce Print), produce.v.02 covers creating or manufacturing a man-made product and fits both laboratory and timed photographic prints better than the inherited broad set.",
+      "confidence": "medium",
+      "audit": {
+        "verdict": "approve",
+        "confidence": "medium",
+        "reason": "Create Print (Synonyms: Produce Print) produces a physical photographic output, and produce.v.02 covers both grouped records without adding unrelated creation senses.",
+        "checks": {
+          "evidenceComplete": true,
+          "assignedCompared": true,
+          "candidateBound": true,
+          "definitionFit": true,
+          "noForcedChoice": true
+        }
+      }
+    },
+    {
+      "groupId": "wordnet-5e7ce932882ca57eb1a6",
+      "decision": "replace",
+      "selectedSynsetIds": [
+        "produce.v.02"
+      ],
+      "reason": "For Create Timed Print, produce.v.02 covers creating or manufacturing a man-made product and fits both laboratory and timed photographic prints better than the inherited broad set.",
+      "confidence": "medium",
+      "audit": {
+        "verdict": "approve",
+        "confidence": "medium",
+        "reason": "Create Timed Print produces a physical photographic output, and produce.v.02 covers both grouped records without adding unrelated creation senses.",
+        "checks": {
+          "evidenceComplete": true,
+          "assignedCompared": true,
+          "candidateBound": true,
+          "definitionFit": true,
+          "noForcedChoice": true
+        }
+      }
+    },
+    {
+      "groupId": "wordnet-cb949d7d46a564f2e102",
+      "decision": "replace",
+      "selectedSynsetIds": [
+        "insert.v.01"
+      ],
+      "reason": "For Insert Wedge, insert.v.01 directly means putting an object into something; feed.v.04's continuous-introduction meaning is unsupported.",
+      "confidence": "high",
+      "audit": {
+        "verdict": "approve",
+        "confidence": "high",
+        "reason": "Insert Wedge consistently means putting a wedge into a frame, position, or hole; insert.v.01 is exact.",
+        "checks": {
+          "evidenceComplete": true,
+          "assignedCompared": true,
+          "candidateBound": true,
+          "definitionFit": true,
+          "noForcedChoice": true
+        }
+      }
+    },
+    {
+      "groupId": "wordnet-326fedbe723ae2374007",
+      "decision": "keep-assigned",
+      "selectedSynsetIds": [
+        "cut.v.01"
+      ],
+      "reason": "For Cut Tree, the broad instrument-separation sense cut.v.01 covers all assigned records, while the narrower felling sense would exclude several of them.",
+      "confidence": "high",
+      "audit": {
+        "verdict": "approve",
+        "confidence": "high",
+        "reason": "Cut Tree contains varied cutting actions, so the broad cut.v.01 sense is safer than a narrower felling-only candidate.",
+        "checks": {
+          "evidenceComplete": true,
+          "assignedCompared": true,
+          "candidateBound": true,
+          "definitionFit": true,
+          "noForcedChoice": true
+        }
+      }
+    },
+    {
+      "groupId": "wordnet-230393b5537ea60e403d",
+      "decision": "keep-assigned",
+      "selectedSynsetIds": [
+        "lubricate.v.02"
+      ],
+      "reason": "For Lubricate Machinery, lubricate.v.02 means applying a lubricant and fits every assigned source record.",
+      "confidence": "high",
+      "audit": {
+        "verdict": "approve",
+        "confidence": "high",
+        "reason": "Lubricate Machinery applies lubricant in every source and matches lubricate.v.02.",
+        "checks": {
+          "evidenceComplete": true,
+          "assignedCompared": true,
+          "candidateBound": true,
+          "definitionFit": true,
+          "noForcedChoice": true
+        }
+      }
+    },
+    {
+      "groupId": "wordnet-ff2bdc0970a58dc7db80",
+      "decision": "replace",
+      "selectedSynsetIds": [
+        "assist.v.02"
+      ],
+      "reason": "For Assist Handbook Preparation, assist.v.02 captures acting in a subordinate or supportive function during the named work; the inherited moral and financial support senses are unrelated.",
+      "confidence": "high",
+      "audit": {
+        "verdict": "approve",
+        "confidence": "high",
+        "reason": "Assist Handbook Preparation is subordinate help in carrying out work; moral and material-support senses were correctly removed.",
+        "checks": {
+          "evidenceComplete": true,
+          "assignedCompared": true,
+          "candidateBound": true,
+          "definitionFit": true,
+          "noForcedChoice": true
+        }
+      }
+    },
+    {
+      "groupId": "wordnet-e5e284e0071ff07186f6",
+      "decision": "replace",
+      "selectedSynsetIds": [
+        "assist.v.02"
+      ],
+      "reason": "For Assist Handbook Maintenance, assist.v.02 captures acting in a subordinate or supportive function during the named work; the inherited moral and financial support senses are unrelated.",
+      "confidence": "high",
+      "audit": {
+        "verdict": "approve",
+        "confidence": "high",
+        "reason": "Assist Handbook Maintenance is subordinate help in carrying out work; moral and material-support senses were correctly removed.",
+        "checks": {
+          "evidenceComplete": true,
+          "assignedCompared": true,
+          "candidateBound": true,
+          "definitionFit": true,
+          "noForcedChoice": true
+        }
+      }
+    },
+    {
+      "groupId": "wordnet-a7f557b095685fcc8bcf",
+      "decision": "replace",
+      "selectedSynsetIds": [
+        "operate.v.03"
+      ],
+      "reason": "For Operate Zoom Lens, operate.v.03 means handling and causing equipment to function; run.v.19 concerns carrying out a process or program and is unnecessary.",
+      "confidence": "high",
+      "audit": {
+        "verdict": "approve",
+        "confidence": "high",
+        "reason": "Operate Zoom Lens handles a lens and causes it to function, exactly matching operate.v.03.",
+        "checks": {
+          "evidenceComplete": true,
+          "assignedCompared": true,
+          "candidateBound": true,
+          "definitionFit": true,
+          "noForcedChoice": true
+        }
+      }
+    },
+    {
+      "groupId": "wordnet-772c03fc31a547323833",
+      "decision": "replace",
+      "selectedSynsetIds": [
+        "coordinate.v.02"
+      ],
+      "reason": "For Coordinate Care, coordinate.v.02 means bringing activities or parties into common action, which fits coordinated care or rehabilitation; the inherited hold and organize senses are less exact.",
+      "confidence": "high",
+      "audit": {
+        "verdict": "approve",
+        "confidence": "high",
+        "reason": "Coordinate Care brings care activities and participants into common action, matching coordinate.v.02.",
+        "checks": {
+          "evidenceComplete": true,
+          "assignedCompared": true,
+          "candidateBound": true,
+          "definitionFit": true,
+          "noForcedChoice": true
+        }
+      }
+    },
+    {
+      "groupId": "wordnet-4685fc69dbf7f6008abd",
+      "decision": "replace",
+      "selectedSynsetIds": [
+        "coordinate.v.02"
+      ],
+      "reason": "For Coordinate Rehabilitation, coordinate.v.02 means bringing activities or parties into common action, which fits coordinated care or rehabilitation; the inherited hold and organize senses are less exact.",
+      "confidence": "high",
+      "audit": {
+        "verdict": "approve",
+        "confidence": "high",
+        "reason": "Coordinate Rehabilitation brings care activities and participants into common action, matching coordinate.v.02.",
+        "checks": {
+          "evidenceComplete": true,
+          "assignedCompared": true,
+          "candidateBound": true,
+          "definitionFit": true,
+          "noForcedChoice": true
+        }
+      }
+    },
+    {
+      "groupId": "wordnet-828eb19e389b86a20f94",
+      "decision": "replace",
+      "selectedSynsetIds": [
+        "invent.v.01"
+      ],
+      "reason": "For Devise Fixture, invent.v.01 captures coming up with a fixture design after mental effort; the inherited event-organizing senses and the bequeath sense do not fit.",
+      "confidence": "medium",
+      "audit": {
+        "verdict": "approve",
+        "confidence": "medium",
+        "reason": "Devise Fixture uses devise in the invent-or-contrive sense; invent.v.01 is the only supplied candidate that covers that conception work.",
+        "checks": {
+          "evidenceComplete": true,
+          "assignedCompared": true,
+          "candidateBound": true,
+          "definitionFit": true,
+          "noForcedChoice": true
+        }
+      }
+    },
+    {
+      "groupId": "wordnet-8ba4ea65f461942e7b4a",
+      "decision": "replace",
+      "selectedSynsetIds": [
+        "direct.v.01"
+      ],
+      "reason": "For Direct Personnel, direct.v.01 ('command with authority') fits directing personnel more precisely than the inherited broader sense of merely being in charge.",
+      "confidence": "medium",
+      "audit": {
+        "verdict": "approve",
+        "confidence": "medium",
+        "reason": "Direct Personnel repeatedly concerns authoritative instruction of personnel, supporting direct.v.01 over the less specific assigned sense.",
+        "checks": {
+          "evidenceComplete": true,
+          "assignedCompared": true,
+          "candidateBound": true,
+          "definitionFit": true,
+          "noForcedChoice": true
+        }
+      }
+    },
+    {
+      "groupId": "wordnet-d4b096e30f40f4c5c529",
+      "decision": "keep-assigned",
+      "selectedSynsetIds": [
+        "oversee.v.01"
+      ],
+      "reason": "For Oversee Equipment Operation, oversee.v.01 means watching and directing and is the only locally retrieved Oversee verb sense; it fits every assigned operation record.",
+      "confidence": "high",
+      "audit": {
+        "verdict": "approve",
+        "confidence": "high",
+        "reason": "Oversee Equipment Operation is covered by the only supplied Oversee verb synset, oversee.v.01, across all grouped evidence.",
+        "checks": {
+          "evidenceComplete": true,
+          "assignedCompared": true,
+          "candidateBound": true,
+          "definitionFit": true,
+          "noForcedChoice": true
+        }
+      }
+    },
+    {
+      "groupId": "wordnet-979a36dc1b827c873957",
+      "decision": "keep-assigned",
+      "selectedSynsetIds": [
+        "oversee.v.01"
+      ],
+      "reason": "For Oversee Vessel Operation, oversee.v.01 means watching and directing and is the only locally retrieved Oversee verb sense; it fits every assigned operation record.",
+      "confidence": "high",
+      "audit": {
+        "verdict": "approve",
+        "confidence": "high",
+        "reason": "Oversee Vessel Operation is covered by the only supplied Oversee verb synset, oversee.v.01, across all grouped evidence.",
+        "checks": {
+          "evidenceComplete": true,
+          "assignedCompared": true,
+          "candidateBound": true,
+          "definitionFit": true,
+          "noForcedChoice": true
+        }
+      }
+    },
+    {
+      "groupId": "wordnet-3b5b2720bae43e365c2b",
+      "decision": "keep-assigned",
+      "selectedSynsetIds": [
+        "oversee.v.01"
+      ],
+      "reason": "For Oversee Plant Operation, oversee.v.01 means watching and directing and is the only locally retrieved Oversee verb sense; it fits every assigned operation record.",
+      "confidence": "high",
+      "audit": {
+        "verdict": "approve",
+        "confidence": "high",
+        "reason": "Oversee Plant Operation is covered by the only supplied Oversee verb synset, oversee.v.01, across all grouped evidence.",
+        "checks": {
+          "evidenceComplete": true,
+          "assignedCompared": true,
+          "candidateBound": true,
+          "definitionFit": true,
+          "noForcedChoice": true
+        }
+      }
+    },
+    {
+      "groupId": "wordnet-fa291c891a3d73cedd35",
+      "decision": "keep-assigned",
+      "selectedSynsetIds": [
+        "oversee.v.01"
+      ],
+      "reason": "For Oversee Contingency Plan Integration, oversee.v.01 means watching and directing and is the only locally retrieved Oversee verb sense; it fits every assigned operation record.",
+      "confidence": "high",
+      "audit": {
+        "verdict": "approve",
+        "confidence": "high",
+        "reason": "Oversee Contingency Plan Integration is covered by the only supplied Oversee verb synset, oversee.v.01, across all grouped evidence.",
+        "checks": {
+          "evidenceComplete": true,
+          "assignedCompared": true,
+          "candidateBound": true,
+          "definitionFit": true,
+          "noForcedChoice": true
+        }
+      }
+    },
+    {
+      "groupId": "wordnet-f49487b4092855ba9fa5",
+      "decision": "keep-assigned",
+      "selectedSynsetIds": [
+        "oversee.v.01"
+      ],
+      "reason": "For Oversee Contingency Plan Operation, oversee.v.01 means watching and directing and is the only locally retrieved Oversee verb sense; it fits every assigned operation record.",
+      "confidence": "high",
+      "audit": {
+        "verdict": "approve",
+        "confidence": "high",
+        "reason": "Oversee Contingency Plan Operation is covered by the only supplied Oversee verb synset, oversee.v.01, across all grouped evidence.",
+        "checks": {
+          "evidenceComplete": true,
+          "assignedCompared": true,
+          "candidateBound": true,
+          "definitionFit": true,
+          "noForcedChoice": true
+        }
+      }
+    },
+    {
+      "groupId": "wordnet-426b068f8d51183f8b7c",
+      "decision": "keep-assigned",
+      "selectedSynsetIds": [
+        "oversee.v.01"
+      ],
+      "reason": "For Oversee Nuclear Operation, oversee.v.01 means watching and directing and is the only locally retrieved Oversee verb sense; it fits every assigned operation record.",
+      "confidence": "high",
+      "audit": {
+        "verdict": "approve",
+        "confidence": "high",
+        "reason": "Oversee Nuclear Operation is covered by the only supplied Oversee verb synset, oversee.v.01, across all grouped evidence.",
+        "checks": {
+          "evidenceComplete": true,
+          "assignedCompared": true,
+          "candidateBound": true,
+          "definitionFit": true,
+          "noForcedChoice": true
+        }
+      }
+    },
+    {
+      "groupId": "wordnet-70ffdde37d1e1c17df44",
+      "decision": "keep-assigned",
+      "selectedSynsetIds": [
+        "oversee.v.01"
+      ],
+      "reason": "For Oversee Property Operation, oversee.v.01 means watching and directing and is the only locally retrieved Oversee verb sense; it fits every assigned operation record.",
+      "confidence": "high",
+      "audit": {
+        "verdict": "approve",
+        "confidence": "high",
+        "reason": "Oversee Property Operation is covered by the only supplied Oversee verb synset, oversee.v.01, across all grouped evidence.",
+        "checks": {
+          "evidenceComplete": true,
+          "assignedCompared": true,
+          "candidateBound": true,
+          "definitionFit": true,
+          "noForcedChoice": true
+        }
+      }
+    },
+    {
+      "groupId": "wordnet-42a5f8b302431df8cd20",
+      "decision": "keep-assigned",
+      "selectedSynsetIds": [
+        "oversee.v.01"
+      ],
+      "reason": "For Oversee Substation Operation, oversee.v.01 means watching and directing and is the only locally retrieved Oversee verb sense; it fits every assigned operation record.",
+      "confidence": "high",
+      "audit": {
+        "verdict": "approve",
+        "confidence": "high",
+        "reason": "Oversee Substation Operation is covered by the only supplied Oversee verb synset, oversee.v.01, across all grouped evidence.",
+        "checks": {
+          "evidenceComplete": true,
+          "assignedCompared": true,
+          "candidateBound": true,
+          "definitionFit": true,
+          "noForcedChoice": true
+        }
+      }
+    },
+    {
+      "groupId": "wordnet-87b0956a91b7901b8452",
+      "decision": "keep-assigned",
+      "selectedSynsetIds": [
+        "oversee.v.01"
+      ],
+      "reason": "For Oversee Hydroelectric Facility Operation, oversee.v.01 means watching and directing and is the only locally retrieved Oversee verb sense; it fits every assigned operation record.",
+      "confidence": "high",
+      "audit": {
+        "verdict": "approve",
+        "confidence": "high",
+        "reason": "Oversee Hydroelectric Facility Operation is covered by the only supplied Oversee verb synset, oversee.v.01, across all grouped evidence.",
+        "checks": {
+          "evidenceComplete": true,
+          "assignedCompared": true,
+          "candidateBound": true,
+          "definitionFit": true,
+          "noForcedChoice": true
+        }
+      }
+    },
+    {
+      "groupId": "wordnet-5afa0cdbe55361d41c30",
+      "decision": "keep-assigned",
+      "selectedSynsetIds": [
+        "oversee.v.01"
+      ],
+      "reason": "For Oversee Pest Control Operation, oversee.v.01 means watching and directing and is the only locally retrieved Oversee verb sense; it fits every assigned operation record.",
+      "confidence": "high",
+      "audit": {
+        "verdict": "approve",
+        "confidence": "high",
+        "reason": "Oversee Pest Control Operation is covered by the only supplied Oversee verb synset, oversee.v.01, across all grouped evidence.",
+        "checks": {
+          "evidenceComplete": true,
+          "assignedCompared": true,
+          "candidateBound": true,
+          "definitionFit": true,
+          "noForcedChoice": true
+        }
+      }
+    },
+    {
+      "groupId": "wordnet-ab4c3e455faeb68ac950",
+      "decision": "keep-assigned",
+      "selectedSynsetIds": [
+        "oversee.v.01"
+      ],
+      "reason": "For Oversee Weed Control Operation, oversee.v.01 means watching and directing and is the only locally retrieved Oversee verb sense; it fits every assigned operation record.",
+      "confidence": "high",
+      "audit": {
+        "verdict": "approve",
+        "confidence": "high",
+        "reason": "Oversee Weed Control Operation is covered by the only supplied Oversee verb synset, oversee.v.01, across all grouped evidence.",
+        "checks": {
+          "evidenceComplete": true,
+          "assignedCompared": true,
+          "candidateBound": true,
+          "definitionFit": true,
+          "noForcedChoice": true
+        }
+      }
+    },
+    {
+      "groupId": "wordnet-aa82b2ecb7fe3361a56e",
+      "decision": "keep-assigned",
+      "selectedSynsetIds": [
+        "oversee.v.01"
+      ],
+      "reason": "For Oversee System Operation, oversee.v.01 means watching and directing and is the only locally retrieved Oversee verb sense; it fits every assigned operation record.",
+      "confidence": "high",
+      "audit": {
+        "verdict": "approve",
+        "confidence": "high",
+        "reason": "Oversee System Operation is covered by the only supplied Oversee verb synset, oversee.v.01, across all grouped evidence.",
+        "checks": {
+          "evidenceComplete": true,
+          "assignedCompared": true,
+          "candidateBound": true,
+          "definitionFit": true,
+          "noForcedChoice": true
+        }
+      }
+    },
+    {
+      "groupId": "wordnet-d72826b9734f54793e98",
+      "decision": "keep-assigned",
+      "selectedSynsetIds": [
+        "oversee.v.01"
+      ],
+      "reason": "For Oversee Library Operation, oversee.v.01 means watching and directing and is the only locally retrieved Oversee verb sense; it fits every assigned operation record.",
+      "confidence": "high",
+      "audit": {
+        "verdict": "approve",
+        "confidence": "high",
+        "reason": "Oversee Library Operation is covered by the only supplied Oversee verb synset, oversee.v.01, across all grouped evidence.",
+        "checks": {
+          "evidenceComplete": true,
+          "assignedCompared": true,
+          "candidateBound": true,
+          "definitionFit": true,
+          "noForcedChoice": true
+        }
+      }
+    },
+    {
+      "groupId": "wordnet-60ea730e44667600c37f",
+      "decision": "keep-assigned",
+      "selectedSynsetIds": [
+        "oversee.v.01"
+      ],
+      "reason": "For Oversee Mine Construction Operation, oversee.v.01 means watching and directing and is the only locally retrieved Oversee verb sense; it fits every assigned operation record.",
+      "confidence": "high",
+      "audit": {
+        "verdict": "approve",
+        "confidence": "high",
+        "reason": "Oversee Mine Construction Operation is covered by the only supplied Oversee verb synset, oversee.v.01, across all grouped evidence.",
+        "checks": {
+          "evidenceComplete": true,
+          "assignedCompared": true,
+          "candidateBound": true,
+          "definitionFit": true,
+          "noForcedChoice": true
+        }
+      }
+    },
+    {
+      "groupId": "wordnet-0a2a74b386bfb9da828f",
+      "decision": "keep-assigned",
+      "selectedSynsetIds": [
+        "oversee.v.01"
+      ],
+      "reason": "For Oversee Forest Nursery Operation, oversee.v.01 means watching and directing and is the only locally retrieved Oversee verb sense; it fits every assigned operation record.",
+      "confidence": "high",
+      "audit": {
+        "verdict": "approve",
+        "confidence": "high",
+        "reason": "Oversee Forest Nursery Operation is covered by the only supplied Oversee verb synset, oversee.v.01, across all grouped evidence.",
+        "checks": {
+          "evidenceComplete": true,
+          "assignedCompared": true,
+          "candidateBound": true,
+          "definitionFit": true,
+          "noForcedChoice": true
+        }
+      }
+    }
+  ]
+}

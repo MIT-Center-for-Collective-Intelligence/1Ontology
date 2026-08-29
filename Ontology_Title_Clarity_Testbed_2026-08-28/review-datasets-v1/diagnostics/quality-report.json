@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "homogeneous-title-testbed-quality-report-v1",
+  "generatedAt": "2026-08-29T01:53:17.802Z",
+  "sourceHierarchySha256": "f19ce789bce298b0564045fb87427eebd1193b89c133d17519c097dc3e0eb319",
+  "packagedSnapshotSha256": "c6f48aaf3dbb9dec62cd92938b4ac377bba378a43a2c753260c16079baa90e47",
+  "counts": {
+    "sampledAtomicActivities": 18,
+    "titleKeep": 9,
+    "titleRename": 3,
+    "titleSplit": 6,
+    "homogeneousGroups": 42,
+    "wordNetKeepAssigned": 26,
+    "wordNetReplace": 16,
+    "wordNetNoSuitable": 0,
+    "wordNetUncertain": 0,
+    "reviewCards": 60,
+    "projectedFullRunHomogeneousGroups": {
+      "low": 20491,
+      "central": 35980,
+      "high": 47973,
+      "interpretation": "Planning range, not a statistical confidence interval. The low case is the one-group-per-occurrence floor; the central case applies observed sample rates by evidence bucket and the medium-record rate to unsampled large cases; the high case adds one third for sample and large-case uncertainty."
+    },
+    "projectedFullRunCentralModelCalls": 112942,
+    "projectedFullRunCentralAccessTokens": {
+      "low": 154450172,
+      "central": 223168569,
+      "high": 351857222
+    }
+  },
+  "safeguards": {
+    "everySourceRecordAccountedFor": true,
+    "duplicateSourceRecordsPreserved": true,
+    "leadingActionPreserved": true,
+    "existingExactLinksAudited": true,
+    "duplicateResultingTitlesRejected": true,
+    "newNodesMarkedProvisional": true,
+    "selectedSynsetsBoundToLocalCandidates": true,
+    "noSuitableAndUncertainPathsSupported": true,
+    "titleDependenciesEnforced": true,
+    "ontologyMutationDisabled": true
+  }
+}

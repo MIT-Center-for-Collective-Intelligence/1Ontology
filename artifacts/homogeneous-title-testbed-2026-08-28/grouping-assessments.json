@@ -1,0 +1,421 @@
+{
+  "schemaVersion": "homogeneous-title-grouping-assessments-v1",
+  "sourceSha256": "f19ce789bce298b0564045fb87427eebd1193b89c133d17519c097dc3e0eb319",
+  "promptVersion": "access-homogeneous-title-grouping-2026-08-28-v1",
+  "assessments": [
+    {
+      "occurrenceId": "atomic-ed7f926d6f8a2afe185c",
+      "decision": "keep",
+      "groups": [
+        {
+          "title": "Outline Pattern",
+          "status": "current",
+          "sourceTaskIndexes": [1],
+          "reason": "The source explicitly says to outline patterns; its separate draw and position clauses are already linked to other activities."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "The current title clearly and completely names the residual Outline activity.",
+      "confidence": "high"
+    },
+    {
+      "occurrenceId": "atomic-9161b89ea9fa3b0fb108",
+      "decision": "rename",
+      "groups": [
+        {
+          "title": "Compare Environmental Impact",
+          "status": "new",
+          "sourceTaskIndexes": [1],
+          "reason": "The current title omits the evidence-supported environmental modifier; the separate performance comparison already has an exact linked activity."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "After respecting the existing Compare Performance link, the residual comparison is specifically environmental impact.",
+      "confidence": "high"
+    },
+    {
+      "occurrenceId": "atomic-4443f0439ebf52a58824",
+      "decision": "keep",
+      "groups": [
+        {
+          "title": "Document Alternative",
+          "status": "current",
+          "sourceTaskIndexes": [1, 2],
+          "reason": "Both duplicate source records explicitly describe documenting alternatives, while research, rating, and selection are already linked separately."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "The current title accurately captures one homogeneous residual activity.",
+      "confidence": "high"
+    },
+    {
+      "occurrenceId": "atomic-5ea2fd867a90d0098f88",
+      "decision": "rename",
+      "groups": [
+        {
+          "title": "Store Data",
+          "status": "new",
+          "sourceTaskIndexes": [1, 2, 3, 4],
+          "reason": "Every source uses data as a mass noun, and Store Data is the natural stand-alone title for the same homogeneous activity."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "The evidence supports one activity; only the malformed object wording needs correction.",
+      "confidence": "high"
+    },
+    {
+      "occurrenceId": "atomic-003bf5b0b1e789d2c9cd",
+      "decision": "split",
+      "groups": [
+        {
+          "title": "Diagnose Disease",
+          "status": "current",
+          "sourceTaskIndexes": [3],
+          "reason": "This source uses diseases generically and therefore fits the current title."
+        },
+        {
+          "title": "Diagnose Genetic Disease",
+          "status": "new",
+          "sourceTaskIndexes": [1],
+          "reason": "The source explicitly restricts the object to genetic diseases."
+        },
+        {
+          "title": "Diagnose Eye Disease",
+          "status": "new",
+          "sourceTaskIndexes": [2],
+          "reason": "The source restricts the diagnosed diseases to the eye and eye structures."
+        },
+        {
+          "title": "Diagnose Genitourinary Disease",
+          "status": "new",
+          "sourceTaskIndexes": [4],
+          "reason": "The source explicitly restricts the object to diseases of genitourinary organs and tracts."
+        },
+        {
+          "title": "Diagnose Oral Disease",
+          "status": "new",
+          "sourceTaskIndexes": [5],
+          "reason": "The source restricts the diagnosed diseases to teeth, gums, and related oral structures."
+        },
+        {
+          "title": "Diagnose Foot Disease",
+          "status": "new",
+          "sourceTaskIndexes": [6],
+          "reason": "The source explicitly restricts the object to diseases of the foot."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "One record is generic, while five records state medically meaningful disease domains omitted by the compressed title.",
+      "confidence": "medium"
+    },
+    {
+      "occurrenceId": "atomic-3d45a7c27254ef2c9666",
+      "decision": "split",
+      "groups": [
+        {
+          "title": "Plan Menu",
+          "status": "current",
+          "sourceTaskIndexes": [1, 4, 5, 6],
+          "reason": "These sources describe menu planning generically; diets and food utilization are already represented by separate linked activities where applicable."
+        },
+        {
+          "title": "Plan Special Menu",
+          "status": "new",
+          "sourceTaskIndexes": [2],
+          "reason": "The source explicitly distinguishes special menus from regular menus."
+        },
+        {
+          "title": "Plan Bar Menu",
+          "status": "new",
+          "sourceTaskIndexes": [3],
+          "reason": "The source explicitly restricts the object to bar menus."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "Most evidence remains generic, while two records contain object restrictions useful enough to preserve in stand-alone titles.",
+      "confidence": "medium"
+    },
+    {
+      "occurrenceId": "atomic-2ab12fbc2f7fd9dfa849",
+      "decision": "keep",
+      "groups": [
+        {
+          "title": "Use Staple",
+          "status": "current",
+          "sourceTaskIndexes": [1],
+          "reason": "The source explicitly says to use staples; tape, tacks, and glue are already linked as separate activities."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "The current title accurately names the residual staple-use clause.",
+      "confidence": "high"
+    },
+    {
+      "occurrenceId": "atomic-24ab2b4c7b61722902f4",
+      "decision": "keep",
+      "groups": [
+        {
+          "title": "Melt Material",
+          "status": "current",
+          "sourceTaskIndexes": [1],
+          "reason": "The source itself generalizes metal, plastic, and other materials under one material category."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "The current generic object is explicit in the evidence and covers one homogeneous activity.",
+      "confidence": "high"
+    },
+    {
+      "occurrenceId": "atomic-1aa7265cee80ea6c10a6",
+      "decision": "split",
+      "groups": [
+        {
+          "title": "Create Print (Synonyms: Produce Print)",
+          "status": "current",
+          "sourceTaskIndexes": [1],
+          "reason": "This source describes prints generically and fits the current title."
+        },
+        {
+          "title": "Create Timed Print",
+          "status": "new",
+          "sourceTaskIndexes": [2],
+          "reason": "The second source explicitly describes timed prints as the resulting object."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "One record remains generic and one carries a stable, evidence-supported object restriction.",
+      "confidence": "medium"
+    },
+    {
+      "occurrenceId": "atomic-27c77557905a65623673",
+      "decision": "keep",
+      "groups": [
+        {
+          "title": "Insert Wedge",
+          "status": "current",
+          "sourceTaskIndexes": [1, 2, 3],
+          "reason": "All three sources explicitly describe inserting wedges; the varying materials, tools, and purposes do not change the direct-object activity."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "The current title is clear and all evidence is homogeneous at the activity level.",
+      "confidence": "high"
+    },
+    {
+      "occurrenceId": "atomic-562c8c4a5a9e35c27ec4",
+      "decision": "keep",
+      "groups": [
+        {
+          "title": "Cut Tree",
+          "status": "current",
+          "sourceTaskIndexes": [1, 2, 3, 4, 5, 6, 7, 8, 9],
+          "reason": "Every source contains an explicit tree-cutting clause; saplings, logs, vegetation, and the other actions are already represented by their own linked activities."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "Cross-link inspection shows that the apparent heterogeneity comes from other clauses, not from the residual Cut Tree activity.",
+      "confidence": "high"
+    },
+    {
+      "occurrenceId": "atomic-2df83a138d7509dae376",
+      "decision": "keep",
+      "groups": [
+        {
+          "title": "Lubricate Machinery",
+          "status": "current",
+          "sourceTaskIndexes": [1, 2, 3, 4, 5, 6],
+          "reason": "All records explicitly include lubricating machinery; equipment, tools, vehicles, parts, and other actions have separate linked activities."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "The current title captures the common residual activity without absorbing the separately represented clauses.",
+      "confidence": "high"
+    },
+    {
+      "occurrenceId": "atomic-6e0324051de0289bdcb7",
+      "decision": "split",
+      "groups": [
+        {
+          "title": "Assist Handbook Preparation",
+          "status": "new",
+          "sourceTaskIndexes": [1],
+          "reason": "The source says to assist in preparing handbooks; the added complement prevents the unclear reading that a handbook itself receives assistance."
+        },
+        {
+          "title": "Assist Handbook Maintenance",
+          "status": "new",
+          "sourceTaskIndexes": [1],
+          "reason": "The same source separately says to assist in maintaining handbooks."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "The compressed title omitted two governed activities, so one source supports two distinct, clearer titles.",
+      "confidence": "high"
+    },
+    {
+      "occurrenceId": "atomic-d45a0bee58d5bb67dd39",
+      "decision": "rename",
+      "groups": [
+        {
+          "title": "Operate Zoom Lens",
+          "status": "new",
+          "sourceTaskIndexes": [1],
+          "reason": "The source explicitly restricts the operated object to zoom lenses."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "Adding the omitted object modifier produces the smallest accurate stand-alone title.",
+      "confidence": "high"
+    },
+    {
+      "occurrenceId": "atomic-3ff5239b88576c658e83",
+      "decision": "split",
+      "groups": [
+        {
+          "title": "Coordinate Care",
+          "status": "current",
+          "sourceTaskIndexes": [1, 2],
+          "reason": "Both sources explicitly describe coordinating patient or client care."
+        },
+        {
+          "title": "Coordinate Rehabilitation",
+          "status": "new",
+          "sourceTaskIndexes": [2],
+          "reason": "The second source separately states that rehabilitation is coordinated."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "Care remains one homogeneous group, while one sentence also supports a second direct-object activity.",
+      "confidence": "high"
+    },
+    {
+      "occurrenceId": "atomic-1edc77ce0d8914824b75",
+      "decision": "keep",
+      "groups": [
+        {
+          "title": "Devise Fixture",
+          "status": "current",
+          "sourceTaskIndexes": [1, 2],
+          "reason": "Both sources explicitly describe devising fixtures; jigs, stations, and equipment are already linked separately."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "The current title accurately captures the common residual activity even though its present WordNet parent may be questionable.",
+      "confidence": "high"
+    },
+    {
+      "occurrenceId": "atomic-958d35daa6723089727c",
+      "decision": "keep",
+      "groups": [
+        {
+          "title": "Direct Personnel",
+          "status": "current",
+          "sourceTaskIndexes": [1, 2, 3, 4, 5, 6],
+          "reason": "Every source expresses the same activity of directing personnel; occupational domains describe where the work occurs without changing the activity's direct-object meaning."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "The title is clear and the personnel subtypes do not justify separate activities in this title pass.",
+      "confidence": "medium"
+    },
+    {
+      "occurrenceId": "atomic-d671e93fb7a19bc7d1b2",
+      "decision": "split",
+      "groups": [
+        {
+          "title": "Oversee Equipment Operation",
+          "status": "new",
+          "sourceTaskIndexes": [1, 5, 6, 12],
+          "reason": "These sources all concern overseeing operation of machines or equipment; their other clauses are represented separately."
+        },
+        {
+          "title": "Oversee Vessel Operation",
+          "status": "new",
+          "sourceTaskIndexes": [2],
+          "reason": "The source explicitly restricts the object to vessel operations."
+        },
+        {
+          "title": "Oversee Plant Operation",
+          "status": "new",
+          "sourceTaskIndexes": [3, 9, 15],
+          "reason": "These sources explicitly concern geothermal, biomass, food-processing, or manufacturing plant operations."
+        },
+        {
+          "title": "Oversee Contingency Plan Integration",
+          "status": "new",
+          "sourceTaskIndexes": [4],
+          "reason": "The source separately places contingency-plan integration under the Oversee action."
+        },
+        {
+          "title": "Oversee Contingency Plan Operation",
+          "status": "new",
+          "sourceTaskIndexes": [4],
+          "reason": "The source explicitly places contingency-plan operation under the Oversee action."
+        },
+        {
+          "title": "Oversee Nuclear Operation",
+          "status": "new",
+          "sourceTaskIndexes": [7],
+          "reason": "The source restricts operation to nuclear reactors, power plants, and fuel-processing systems."
+        },
+        {
+          "title": "Oversee Property Operation",
+          "status": "new",
+          "sourceTaskIndexes": [8],
+          "reason": "The source explicitly identifies commercial, industrial, or residential property operations."
+        },
+        {
+          "title": "Oversee Substation Operation",
+          "status": "new",
+          "sourceTaskIndexes": [9],
+          "reason": "The same source separately includes substation operations alongside biomass plant operations."
+        },
+        {
+          "title": "Oversee Hydroelectric Facility Operation",
+          "status": "new",
+          "sourceTaskIndexes": [10],
+          "reason": "The source explicitly restricts the object to hydroelectric facility operations."
+        },
+        {
+          "title": "Oversee Pest Control Operation",
+          "status": "new",
+          "sourceTaskIndexes": [11],
+          "reason": "The source explicitly includes pest-control operations."
+        },
+        {
+          "title": "Oversee Weed Control Operation",
+          "status": "new",
+          "sourceTaskIndexes": [11],
+          "reason": "The same source separately includes weed-control operations."
+        },
+        {
+          "title": "Oversee System Operation",
+          "status": "new",
+          "sourceTaskIndexes": [12],
+          "reason": "The source separately includes operation of electronic systems as well as equipment."
+        },
+        {
+          "title": "Oversee Library Operation",
+          "status": "new",
+          "sourceTaskIndexes": [13],
+          "reason": "The source explicitly restricts the object to daily library operations."
+        },
+        {
+          "title": "Oversee Mine Construction Operation",
+          "status": "new",
+          "sourceTaskIndexes": [14],
+          "reason": "The source explicitly restricts the supervised operation to mine construction."
+        },
+        {
+          "title": "Oversee Forest Nursery Operation",
+          "status": "new",
+          "sourceTaskIndexes": [16],
+          "reason": "The source explicitly identifies forest nursery operations; harvesting, activities, and programs are already represented separately."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "No record uses operation generically; the evidence resolves into consolidated operation types, with multi-object sentences supporting more than one group only where explicit.",
+      "confidence": "medium"
+    }
+  ]
+}

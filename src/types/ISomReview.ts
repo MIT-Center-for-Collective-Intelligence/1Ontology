@@ -2,6 +2,7 @@ export type SomIssueType =
   | "cross-branch-recall"
   | "evidence-specialization"
   | "title-clarity"
+  | "synset-alignment"
   | "synonym-enrichment"
   | "description-enrichment"
   | "misc-facet-duplicate"
@@ -108,6 +109,7 @@ export type SomReviewContext =
   | {
       type: "title-split";
       currentTitle: string;
+      decision?: "keep" | "rename" | "split" | "defer";
       linkedTasks: string[];
       proposedNodes: Array<{
         title: string;
@@ -118,6 +120,37 @@ export type SomReviewContext =
       }>;
       deferredTaskIndexes: number[];
       deferredTasks: string[];
+    }
+  | {
+      type: "synset-alignment";
+      currentAtomicTitle: string;
+      groupTitle: string;
+      groupStatus: "current" | "existing" | "new";
+      ownerTitle: string;
+      decision:
+        | "keep-assigned"
+        | "replace"
+        | "no-suitable-synset"
+        | "uncertain";
+      sourceTasks: string[];
+      assignedSynsets: Array<{
+        id: string;
+        definition: string;
+        lemmas: string[];
+        examples: string[];
+      }>;
+      selectedSynsets: Array<{
+        id: string;
+        definition: string;
+        lemmas: string[];
+        examples: string[];
+      }>;
+      candidateSynsets: Array<{
+        id: string;
+        definition: string;
+        lemmas: string[];
+        examples: string[];
+      }>;
     }
   | {
       type: "grouping-outline";

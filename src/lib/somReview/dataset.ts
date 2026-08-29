@@ -24,6 +24,7 @@ export const SUPPORTED_ISSUE_TYPES: SomIssueType[] = [
   "cross-branch-recall",
   "evidence-specialization",
   "title-clarity",
+  "synset-alignment",
   "synonym-enrichment",
   "description-enrichment",
   "misc-facet-duplicate",

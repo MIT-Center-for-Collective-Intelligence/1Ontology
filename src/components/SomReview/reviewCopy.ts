@@ -6,6 +6,8 @@ export const ISSUE_DESCRIPTIONS: Record<SomIssueType, string> = {
   "evidence-specialization":
     "Create specific activity nodes when O*NET evidence modifies a generic object.",
   "title-clarity": "Judge whether an activity title is clear and precise.",
+  "synset-alignment":
+    "Check the inherited WordNet verb sense against one homogeneous activity group and all of its source evidence.",
   "synonym-enrichment": "Review synonyms missing from structured metadata.",
   "description-enrichment":
     "Optionally review evidence-grounded descriptions for empty nodes.",
@@ -48,7 +50,9 @@ export const ISSUE_INTRODUCTIONS: Record<SomIssueType, string> = {
   "evidence-specialization":
     "Review a specific activity node derived from modifiers in linked O*NET evidence. Agree only when the specific title preserves the task meaning and the listed evidence should move from its generic parent to that node.",
   "title-clarity":
-    "Compare the current activity title with a proposed title using its source O*NET tasks. Agree only if the proposed title is clearer and still names the same activity.",
+    "Review all O*NET records currently attached to one atomic title. Agree only when the displayed groups preserve the leading action, account for every source record, reuse existing activities where appropriate, and add only evidence-supported modifiers. New nodes shown here are provisional children for title review; final placement is a later operation.",
+  "synset-alignment":
+    "After the title groups are reviewed, compare each group's complete O*NET evidence with the inherited WordNet sense and the locally retrieved alternatives. Agree only when the selected definition fits the leading action across every displayed source record. This decision does not change the title or placement.",
   "synonym-enrichment":
     "Review a proposed addition to an activity's structured synonym field. Agree only if every proposed term names the same activity, rather than a related activity.",
   "description-enrichment":

@@ -1,0 +1,133 @@
+{
+  "schemaVersion": "wordnet-alignment-decision-rules-v1",
+  "sourceSha256": "f19ce789bce298b0564045fb87427eebd1193b89c133d17519c097dc3e0eb319",
+  "promptVersion": "access-wordnet-alignment-2026-08-28-v1",
+  "rules": [
+    {
+      "leadingAction": "Outline",
+      "decision": "keep-assigned",
+      "selectedSynsetIds": ["delineate.v.03"],
+      "reason": "For [GROUP TITLE], delineate.v.03 means tracing a shape, which matches outlining the pattern on a work piece.",
+      "confidence": "high"
+    },
+    {
+      "leadingAction": "Compare",
+      "decision": "keep-assigned",
+      "selectedSynsetIds": ["compare.v.01"],
+      "reason": "For [GROUP TITLE], compare.v.01 means examining similarities or differences, exactly the comparison expressed by the source.",
+      "confidence": "high"
+    },
+    {
+      "leadingAction": "Document",
+      "decision": "replace",
+      "selectedSynsetIds": ["document.v.01"],
+      "reason": "For [GROUP TITLE], document.v.01 ('record in detail') fits all evidence; the inherited inventory, keep, log, and register senses are not jointly supported.",
+      "confidence": "high"
+    },
+    {
+      "leadingAction": "Store",
+      "decision": "replace",
+      "selectedSynsetIds": ["store.v.01"],
+      "reason": "For [GROUP TITLE], store.v.01 captures keeping data for future use; conserve.v.02 and the physical put-away sense store.v.02 add unsupported meanings.",
+      "confidence": "medium"
+    },
+    {
+      "leadingAction": "Diagnose",
+      "decision": "keep-assigned",
+      "selectedSynsetIds": ["diagnose.v.01"],
+      "reason": "For [GROUP TITLE], diagnose.v.01 means determining the nature of an illness through diagnostic analysis and fits every assigned disease record.",
+      "confidence": "high"
+    },
+    {
+      "leadingAction": "Plan",
+      "decision": "replace",
+      "selectedSynsetIds": ["plan.v.03"],
+      "reason": "For [GROUP TITLE], plan.v.03 means making or working out a plan and best fits devising a menu; intention, generic planning, and masterminding senses are not all warranted.",
+      "confidence": "medium"
+    },
+    {
+      "leadingAction": "Use",
+      "decision": "replace",
+      "selectedSynsetIds": ["use.v.01"],
+      "reason": "For [GROUP TITLE], use.v.01 means putting an object into service for its normal purpose; the inherited surface-application sense does not represent using a staple as a fastener.",
+      "confidence": "high"
+    },
+    {
+      "leadingAction": "Melt",
+      "decision": "keep-assigned",
+      "selectedSynsetIds": ["melt.v.01"],
+      "reason": "For [GROUP TITLE], melt.v.01 explicitly covers causing a solid material to become liquid, exactly matching the source.",
+      "confidence": "high"
+    },
+    {
+      "leadingAction": "Create",
+      "decision": "replace",
+      "selectedSynsetIds": ["produce.v.02"],
+      "reason": "For [GROUP TITLE], produce.v.02 covers creating or manufacturing a man-made product and fits both laboratory and timed photographic prints better than the inherited broad set.",
+      "confidence": "medium"
+    },
+    {
+      "leadingAction": "Insert",
+      "decision": "replace",
+      "selectedSynsetIds": ["insert.v.01"],
+      "reason": "For [GROUP TITLE], insert.v.01 directly means putting an object into something; feed.v.04's continuous-introduction meaning is unsupported.",
+      "confidence": "high"
+    },
+    {
+      "leadingAction": "Cut",
+      "decision": "keep-assigned",
+      "selectedSynsetIds": ["cut.v.01"],
+      "reason": "For [GROUP TITLE], the broad instrument-separation sense cut.v.01 covers all assigned records, while the narrower felling sense would exclude several of them.",
+      "confidence": "high"
+    },
+    {
+      "leadingAction": "Lubricate",
+      "decision": "keep-assigned",
+      "selectedSynsetIds": ["lubricate.v.02"],
+      "reason": "For [GROUP TITLE], lubricate.v.02 means applying a lubricant and fits every assigned source record.",
+      "confidence": "high"
+    },
+    {
+      "leadingAction": "Assist",
+      "decision": "replace",
+      "selectedSynsetIds": ["assist.v.02"],
+      "reason": "For [GROUP TITLE], assist.v.02 captures acting in a subordinate or supportive function during the named work; the inherited moral and financial support senses are unrelated.",
+      "confidence": "high"
+    },
+    {
+      "leadingAction": "Operate",
+      "decision": "replace",
+      "selectedSynsetIds": ["operate.v.03"],
+      "reason": "For [GROUP TITLE], operate.v.03 means handling and causing equipment to function; run.v.19 concerns carrying out a process or program and is unnecessary.",
+      "confidence": "high"
+    },
+    {
+      "leadingAction": "Coordinate",
+      "decision": "replace",
+      "selectedSynsetIds": ["coordinate.v.02"],
+      "reason": "For [GROUP TITLE], coordinate.v.02 means bringing activities or parties into common action, which fits coordinated care or rehabilitation; the inherited hold and organize senses are less exact.",
+      "confidence": "high"
+    },
+    {
+      "leadingAction": "Devise",
+      "decision": "replace",
+      "selectedSynsetIds": ["invent.v.01"],
+      "reason": "For [GROUP TITLE], invent.v.01 captures coming up with a fixture design after mental effort; the inherited event-organizing senses and the bequeath sense do not fit.",
+      "confidence": "medium"
+    },
+    {
+      "leadingAction": "Direct",
+      "decision": "replace",
+      "selectedSynsetIds": ["direct.v.01"],
+      "reason": "For [GROUP TITLE], direct.v.01 ('command with authority') fits directing personnel more precisely than the inherited broader sense of merely being in charge.",
+      "confidence": "medium"
+    },
+    {
+      "leadingAction": "Oversee",
+      "decision": "keep-assigned",
+      "selectedSynsetIds": ["oversee.v.01"],
+      "reason": "For [GROUP TITLE], oversee.v.01 means watching and directing and is the only locally retrieved Oversee verb sense; it fits every assigned operation record.",
+      "confidence": "high"
+    }
+  ]
+}

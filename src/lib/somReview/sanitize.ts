@@ -38,7 +38,24 @@ export const reviewerQuestion = (
         ? `Is "${context.proposedTitle}" clearer than "${context.currentTitle}"?`
         : `Is "${context.currentTitle}" clear enough as the title of this activity?`;
     case "title-split":
+      if (context.decision === "keep") {
+        return `Should all displayed evidence remain together under "${context.currentTitle}"?`;
+      }
+      if (context.decision === "rename") {
+        return `Should "${context.currentTitle}" be replaced by the clearer title shown below?`;
+      }
       return `Should the evidence currently grouped under "${context.currentTitle}" be represented by the activity nodes shown below?`;
+    case "synset-alignment":
+      if (context.decision === "keep-assigned") {
+        return `Does the inherited WordNet assignment accurately represent "${context.groupTitle}" across all of its source evidence?`;
+      }
+      if (context.decision === "replace") {
+        return `Should "${context.groupTitle}" use the proposed WordNet assignment instead of its inherited assignment?`;
+      }
+      if (context.decision === "no-suitable-synset") {
+        return `Is it correct that none of the retrieved WordNet senses adequately represents "${context.groupTitle}"?`;
+      }
+      return `Should the WordNet assignment for "${context.groupTitle}" remain unresolved for expert follow-up?`;
     case "grouping-outline":
       return `Should the new grouping "${context.proposedGroupTitle}" be created under "${context.parentTitle}" with the highlighted children under it?`;
     case "flat-list":
@@ -249,6 +266,7 @@ const sanitizeContext = (context: any): SomReviewContext => {
       return {
         type: "title-split",
         currentTitle: context.currentTitle,
+        decision: context.decision,
         linkedTasks: context.linkedTasks || [],
         proposedNodes: (context.proposedNodes || []).map((node: any) => ({
           title: node.title,
@@ -260,6 +278,27 @@ const sanitizeContext = (context: any): SomReviewContext => {
         deferredTaskIndexes: context.deferredTaskIndexes || [],
         deferredTasks: context.deferredTasks || [],
       };
+    case "synset-alignment": {
+      const sanitizeSynsets = (values: any[]) =>
+        (values || []).map((synset: any) => ({
+          id: cleanText(synset.id),
+          definition: cleanText(synset.definition),
+          lemmas: (synset.lemmas || []).map(cleanText).filter(Boolean),
+          examples: (synset.examples || []).map(cleanText).filter(Boolean),
+        }));
+      return {
+        type: "synset-alignment",
+        currentAtomicTitle: cleanText(context.currentAtomicTitle),
+        groupTitle: cleanText(context.groupTitle),
+        groupStatus: context.groupStatus,
+        ownerTitle: cleanText(context.ownerTitle),
+        decision: context.decision,
+        sourceTasks: (context.sourceTasks || []).map(cleanText).filter(Boolean),
+        assignedSynsets: sanitizeSynsets(context.assignedSynsets),
+        selectedSynsets: sanitizeSynsets(context.selectedSynsets),
+        candidateSynsets: sanitizeSynsets(context.candidateSynsets),
+      };
+    }
     case "grouping-outline":
       return {
         type: "grouping-outline",

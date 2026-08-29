@@ -1,0 +1,370 @@
+{
+  "schemaVersion": "homogeneous-title-full-run-estimate-v1",
+  "generatedAt": "2026-08-29T01:53:18.285Z",
+  "sourceFile": "0401_FINALHIERARCHY.json",
+  "sourceSha256": "f19ce789bce298b0564045fb87427eebd1193b89c133d17519c097dc3e0eb319",
+  "inputHashes": {
+    "sample": "b1ba2ba8820ad18a56aad1d584921d3b5e1bfbb2755edd98c3266abfde232e39",
+    "groupings": "78606f64bbe949f291be0313e1cf8f9a05f7b07144af78f000a7a33a0b27fde3",
+    "bundles": "914718f53e2b12935fb48cf01ace13f850f77f35f1556e63391fd35a47ae0245",
+    "alignments": "1d6471b26861bc60782304347889d699633781320f452d1f55b5dbcff0762761"
+  },
+  "inventory": {
+    "atomicActivityOccurrences": 20491,
+    "uniqueExactTitles": 15994,
+    "oNetRecords": 53608,
+    "byEvidenceBucket": {
+      "single": {
+        "atomicActivityOccurrences": 13720,
+        "oNetRecords": 13720
+      },
+      "small-multi": {
+        "atomicActivityOccurrences": 5159,
+        "oNetRecords": 13913
+      },
+      "medium-multi": {
+        "atomicActivityOccurrences": 1285,
+        "oNetRecords": 12704
+      },
+      "large": {
+        "atomicActivityOccurrences": 327,
+        "oNetRecords": 13271
+      }
+    }
+  },
+  "sampleBasis": {
+    "atomicActivityOccurrences": 18,
+    "homogeneousGroups": 42,
+    "titleDecisions": {
+      "cases": 18,
+      "keep": 9,
+      "rename": 3,
+      "split": 6,
+      "defer": 0,
+      "resultingGroups": 42
+    },
+    "wordNetDecisions": {
+      "groups": 42,
+      "keepAssigned": 26,
+      "replace": 16,
+      "noSuitableSynset": 0,
+      "uncertain": 0
+    },
+    "observedByEvidenceBucket": {
+      "single": {
+        "cases": 6,
+        "sourceRecords": 6,
+        "homogeneousGroups": 7
+      },
+      "small-multi": {
+        "cases": 6,
+        "sourceRecords": 15,
+        "homogeneousGroups": 8
+      },
+      "medium-multi": {
+        "cases": 6,
+        "sourceRecords": 49,
+        "homogeneousGroups": 27
+      }
+    },
+    "exactSerializedPacketTokens": {
+      "title": {
+        "proposerInput": {
+          "low": 20660,
+          "central": 23242,
+          "high": 26562
+        },
+        "proposerOutput": {
+          "low": 4753,
+          "central": 5347,
+          "high": 6110
+        },
+        "auditorInput": {
+          "low": 15712,
+          "central": 17676,
+          "high": 20201
+        },
+        "auditorOutput": {
+          "low": 1531,
+          "central": 1722,
+          "high": 1968
+        }
+      },
+      "wordNet": {
+        "proposerInput": {
+          "low": 35319,
+          "central": 39734,
+          "high": 45410
+        },
+        "proposerOutput": {
+          "low": 2797,
+          "central": 3146,
+          "high": 3596
+        },
+        "auditorInput": {
+          "low": 26626,
+          "central": 29954,
+          "high": 34234
+        },
+        "auditorOutput": {
+          "low": 2742,
+          "central": 3085,
+          "high": 3526
+        }
+      }
+    }
+  },
+  "recommendedModelPlan": [
+    {
+      "stages": [
+        "title grouping",
+        "WordNet alignment"
+      ],
+      "model": "gpt-5.6-terra",
+      "reasoningEffort": "high",
+      "role": "primary structured proposer"
+    },
+    {
+      "stages": [
+        "title grouping audit",
+        "WordNet alignment audit"
+      ],
+      "model": "gpt-5.6-sol",
+      "reasoningEffort": "high",
+      "role": "independent semantic auditor"
+    },
+    {
+      "stages": [
+        "source binding",
+        "coverage",
+        "title status",
+        "synset binding"
+      ],
+      "model": null,
+      "reasoningEffort": null,
+      "role": "deterministic local validation"
+    }
+  ],
+  "projection": {
+    "homogeneousGroups": {
+      "low": 20491,
+      "central": 35980,
+      "high": 47973,
+      "interpretation": "Planning range, not a statistical confidence interval. The low case is the one-group-per-occurrence floor; the central case applies observed sample rates by evidence bucket and the medium-record rate to unsampled large cases; the high case adds one third for sample and large-case uncertainty."
+    },
+    "fullIndependentAudit": {
+      "lowScenario": {
+        "estimatedHomogeneousGroups": 20491,
+        "modelCalls": 81964,
+        "visiblePacketTokens": {
+          "low": 69587343,
+          "central": 78285761,
+          "high": 89469442
+        },
+        "reasoningTokensPlanningAllowance": {
+          "low": 40982000,
+          "central": 81964000,
+          "high": 163928000
+        },
+        "totalAccessTokensPlanningRange": {
+          "low": 110569343,
+          "central": 160249761,
+          "high": 253397442
+        },
+        "stageTokens": {
+          "title": {
+            "proposerInput": {
+              "low": 20663283,
+              "central": 23246193,
+              "high": 26567078
+            },
+            "proposerOutput": {
+              "low": 2318519,
+              "central": 2608334,
+              "high": 2980953
+            },
+            "auditorInput": {
+              "low": 11939430,
+              "central": 13431858,
+              "high": 15350695
+            },
+            "auditorOutput": {
+              "low": 1742494,
+              "central": 1960306,
+              "high": 2240350
+            }
+          },
+          "wordNet": {
+            "proposerInput": {
+              "low": 17231305,
+              "central": 19385218,
+              "high": 22154535
+            },
+            "proposerOutput": {
+              "low": 1364332,
+              "central": 1534874,
+              "high": 1754142
+            },
+            "auditorInput": {
+              "low": 12990210,
+              "central": 14613987,
+              "high": 16701699
+            },
+            "auditorOutput": {
+              "low": 1337770,
+              "central": 1504991,
+              "high": 1719990
+            }
+          }
+        }
+      },
+      "centralScenario": {
+        "estimatedHomogeneousGroups": 35980,
+        "modelCalls": 112942,
+        "visiblePacketTokens": {
+          "low": 97979172,
+          "central": 110226569,
+          "high": 125973222
+        },
+        "reasoningTokensPlanningAllowance": {
+          "low": 56471000,
+          "central": 112942000,
+          "high": 225884000
+        },
+        "totalAccessTokensPlanningRange": {
+          "low": 154450172,
+          "central": 223168569,
+          "high": 351857222
+        },
+        "stageTokens": {
+          "title": {
+            "proposerInput": {
+              "low": 20663283,
+              "central": 23246193,
+              "high": 26567078
+            },
+            "proposerOutput": {
+              "low": 4071071,
+              "central": 4579955,
+              "high": 5234234
+            },
+            "auditorInput": {
+              "low": 13691981,
+              "central": 15403479,
+              "high": 17603976
+            },
+            "auditorOutput": {
+              "low": 1742494,
+              "central": 1960306,
+              "high": 2240350
+            }
+          },
+          "wordNet": {
+            "proposerInput": {
+              "low": 30256325,
+              "central": 34038365,
+              "high": 38900989
+            },
+            "proposerOutput": {
+              "low": 2395621,
+              "central": 2695074,
+              "high": 3080084
+            },
+            "auditorInput": {
+              "low": 22809417,
+              "central": 25660594,
+              "high": 29326393
+            },
+            "auditorOutput": {
+              "low": 2348980,
+              "central": 2642603,
+              "high": 3020118
+            }
+          }
+        }
+      },
+      "highScenario": {
+        "estimatedHomogeneousGroups": 47973,
+        "modelCalls": 136928,
+        "visiblePacketTokens": {
+          "low": 119962722,
+          "central": 134958063,
+          "high": 154237785
+        },
+        "reasoningTokensPlanningAllowance": {
+          "low": 68464000,
+          "central": 136928000,
+          "high": 273856000
+        },
+        "totalAccessTokensPlanningRange": {
+          "low": 188426722,
+          "central": 271886063,
+          "high": 428093785
+        },
+        "stageTokens": {
+          "title": {
+            "proposerInput": {
+              "low": 20663283,
+              "central": 23246193,
+              "high": 26567078
+            },
+            "proposerOutput": {
+              "low": 5428057,
+              "central": 6106564,
+              "high": 6978930
+            },
+            "auditorInput": {
+              "low": 15048967,
+              "central": 16930088,
+              "high": 19348672
+            },
+            "auditorOutput": {
+              "low": 1742494,
+              "central": 1960306,
+              "high": 2240350
+            }
+          },
+          "wordNet": {
+            "proposerInput": {
+              "low": 40341486,
+              "central": 45384172,
+              "high": 51867625
+            },
+            "proposerOutput": {
+              "low": 3194139,
+              "central": 3593407,
+              "high": 4106750
+            },
+            "auditorInput": {
+              "low": 30412344,
+              "central": 34213887,
+              "high": 39101585
+            },
+            "auditorOutput": {
+              "low": 3131952,
+              "central": 3523446,
+              "high": 4026795
+            }
+          }
+        }
+      },
+      "elapsedWallTimeHours": {
+        "low": 16.4,
+        "central": 33.8,
+        "high": 61.5,
+        "assumptions": "32 concurrent calls, 20/30/45 seconds per call in the low/central/high scenarios, and 15% retry or repair overhead. Provider throughput and ACCESS concurrency limits can dominate this estimate."
+      },
+      "directApiCharge": {
+        "amountUsd": 0,
+        "interpretation": "The requested execution path uses the approved ACCESS allocation rather than a separately billed external API. This does not mean the allocation consumption is zero."
+      }
+    }
+  },
+  "cautions": [
+    "Token counts are planning estimates from exact serialized sample packets at 3.5-4.5 characters per token; only the model service meter can report exact tokens.",
+    "Hidden reasoning is not present in saved outputs, so the ACCESS total adds a clearly separated allowance of 500-2,000 reasoning tokens per high-reasoning call.",
+    "The sample deliberately balances evidence strata and contains only six cases per observed stratum; the projected number of homogeneous groups is therefore the largest source of uncertainty.",
+    "The sample contains no title with more than 20 O*NET records. Large-case group growth is extrapolated and must be checked with a dedicated large-case pilot before authorizing a full run.",
+    "Human review time is excluded. No model proposal or reviewer response automatically mutates the ontology."
+  ]
+}

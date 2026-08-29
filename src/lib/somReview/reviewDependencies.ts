@@ -12,12 +12,14 @@ import {
 const ISSUE_PREREQUISITES: Partial<Record<SomIssueType, SomIssueType[]>> = {
   "evidence-specialization": ["cross-branch-recall"],
   "title-clarity": ["cross-branch-recall", "evidence-specialization"],
-  "synonym-enrichment": ["title-clarity"],
-  "mistaken-synonym": ["title-clarity"],
-  "duplicate-synonym": ["title-clarity"],
-  polysemy: ["title-clarity"],
+  "synset-alignment": ["title-clarity"],
+  "synonym-enrichment": ["title-clarity", "synset-alignment"],
+  "mistaken-synonym": ["title-clarity", "synset-alignment"],
+  "duplicate-synonym": ["title-clarity", "synset-alignment"],
+  polysemy: ["title-clarity", "synset-alignment"],
   "misc-facet-duplicate": [
     "title-clarity",
+    "synset-alignment",
     "synonym-enrichment",
     "mistaken-synonym",
     "duplicate-synonym",
@@ -25,6 +27,7 @@ const ISSUE_PREREQUISITES: Partial<Record<SomIssueType, SomIssueType[]>> = {
   ],
   "flat-list-grouping": [
     "title-clarity",
+    "synset-alignment",
     "synonym-enrichment",
     "mistaken-synonym",
     "duplicate-synonym",
@@ -34,6 +37,7 @@ const ISSUE_PREREQUISITES: Partial<Record<SomIssueType, SomIssueType[]>> = {
   ],
   "compound-object-grouping": [
     "title-clarity",
+    "synset-alignment",
     "synonym-enrichment",
     "mistaken-synonym",
     "duplicate-synonym",
@@ -43,6 +47,7 @@ const ISSUE_PREREQUISITES: Partial<Record<SomIssueType, SomIssueType[]>> = {
   ],
   "collection-design": [
     "title-clarity",
+    "synset-alignment",
     "synonym-enrichment",
     "mistaken-synonym",
     "duplicate-synonym",
@@ -52,6 +57,7 @@ const ISSUE_PREREQUISITES: Partial<Record<SomIssueType, SomIssueType[]>> = {
   ],
   placement: [
     "title-clarity",
+    "synset-alignment",
     "synonym-enrichment",
     "mistaken-synonym",
     "duplicate-synonym",
@@ -61,6 +67,7 @@ const ISSUE_PREREQUISITES: Partial<Record<SomIssueType, SomIssueType[]>> = {
   ],
   "wrong-verb": [
     "title-clarity",
+    "synset-alignment",
     "synonym-enrichment",
     "mistaken-synonym",
     "duplicate-synonym",
@@ -68,9 +75,10 @@ const ISSUE_PREREQUISITES: Partial<Record<SomIssueType, SomIssueType[]>> = {
     "misc-facet-duplicate",
     "node-merge",
   ],
-  "description-enrichment": ["title-clarity"],
+  "description-enrichment": ["title-clarity", "synset-alignment"],
   "missing-activity": [
     "title-clarity",
+    "synset-alignment",
     "synonym-enrichment",
     "mistaken-synonym",
     "duplicate-synonym",
@@ -79,6 +87,7 @@ const ISSUE_PREREQUISITES: Partial<Record<SomIssueType, SomIssueType[]>> = {
   ],
   "redundant-node": [
     "title-clarity",
+    "synset-alignment",
     "synonym-enrichment",
     "mistaken-synonym",
     "duplicate-synonym",
@@ -89,6 +98,7 @@ const ISSUE_PREREQUISITES: Partial<Record<SomIssueType, SomIssueType[]>> = {
     "cross-branch-recall",
     "evidence-specialization",
     "title-clarity",
+    "synset-alignment",
     "synonym-enrichment",
     "mistaken-synonym",
     "duplicate-synonym",
@@ -107,6 +117,7 @@ const ISSUE_PREREQUISITES: Partial<Record<SomIssueType, SomIssueType[]>> = {
     "cross-branch-recall",
     "evidence-specialization",
     "title-clarity",
+    "synset-alignment",
     "synonym-enrichment",
     "mistaken-synonym",
     "duplicate-synonym",
@@ -181,8 +192,9 @@ export const SOM_REVIEW_PATH: SomReviewPathStep[] = [
     number: 3,
     title: "Resolve meaning and identity",
     description:
-      "Review meaning diagnoses and confirm their exact node merges before structure.",
+      "Verify WordNet senses, review meaning diagnoses, and confirm exact node merges before structure.",
     issueTypes: [
+      "synset-alignment",
       "synonym-enrichment",
       "mistaken-synonym",
       "duplicate-synonym",
