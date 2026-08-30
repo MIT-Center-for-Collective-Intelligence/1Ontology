@@ -18,12 +18,16 @@ const artifactDir = path.join(
 );
 const outputDir = path.join(
   repoRoot,
-  "Ontology_Title_Clarity_Testbed_2026-08-28/review-datasets-v4",
+  "Ontology_Title_Clarity_Testbed_2026-08-28/review-datasets-v5",
 );
 const inputPaths = {
-  sample: path.join(artifactDir, "sample-packet-v4.json"),
-  groupings: path.join(artifactDir, "validated-groupings-v4.json"),
-  estimate: path.join(artifactDir, "full-run-estimate-v4.json"),
+  sample: path.join(artifactDir, "sample-packet-v5.json"),
+  groupings: path.join(artifactDir, "validated-groupings-v5.json"),
+  estimate: path.join(artifactDir, "full-run-estimate-v5.json"),
+  largeCaseInventory: path.join(
+    artifactDir,
+    "large-onet-activity-inventory-v5.json",
+  ),
 };
 
 const readJson = (filePath) => JSON.parse(fs.readFileSync(filePath, "utf8"));
@@ -46,11 +50,13 @@ const writeJsonl = (filePath, records) =>
 const samplePacket = readJson(inputPaths.sample);
 const validatedGroupings = readJson(inputPaths.groupings);
 const fullRunEstimate = readJson(inputPaths.estimate);
+const largeCaseInventory = readJson(inputPaths.largeCaseInventory);
 if (
   new Set([
     samplePacket.sourceSha256,
     validatedGroupings.sourceSha256,
     fullRunEstimate.sourceSha256,
+    largeCaseInventory.sourceSha256,
   ]).size !== 1
 ) {
   throw new Error("The title artifacts do not share one source hash");
@@ -72,12 +78,12 @@ if (
   throw new Error("Expected 18 sampled activities and 18 validated results");
 }
 
-const datasetVersion = "ontology-title-homogeneous-testbed-2026-08-29-v4";
+const datasetVersion = "ontology-title-homogeneous-testbed-2026-08-30-v5";
 const generatedAt = validatedGroupings.generatedAt;
 const ontologyAppId =
-  "final-hierarchy-with-onet-homogeneous-title-testbed-2026-08-29";
+  "final-hierarchy-with-onet-homogeneous-title-testbed-2026-08-30";
 const ontologyName =
-  "Final Hierarchy with O*NET - Claim-aware title test bed 2026-08-29";
+  "Final Hierarchy with O*NET - Reader-ready title test bed 2026-08-30";
 
 const nodeIdByPath = new Map();
 const snapshotNodes = [];
@@ -165,12 +171,20 @@ fs.copyFileSync(
   inputPaths.estimate,
   path.join(outputDir, "diagnostics/full-run-estimate.json"),
 );
+fs.copyFileSync(
+  inputPaths.largeCaseInventory,
+  path.join(outputDir, "diagnostics/large-onet-activity-inventory.json"),
+);
+fs.copyFileSync(
+  path.join(artifactDir, "large-onet-activity-inventory-v5.csv"),
+  path.join(outputDir, "diagnostics/large-onet-activity-inventory.csv"),
+);
 const snapshotPath = path.join(outputDir, "ontology-snapshot.json");
 writeJson(snapshotPath, snapshot);
 const snapshotSha256 = sha256File(snapshotPath);
 const sourceUri = `artifact://${samplePacket.sourceFile}`;
 const sourceArtifact =
-  "access://homogeneous-title-testbed-2026-08-29/claim-aware-results";
+  "access://homogeneous-title-testbed-2026-08-30/reader-ready-results";
 
 const pipelineStage = (role, actorId, actorKind, promptVersion) => ({
   role,
@@ -186,21 +200,21 @@ const pipelineStage = (role, actorId, actorKind, promptVersion) => ({
 const titlePipeline = [
   pipelineStage(
     "detector",
-    "access-homogeneous-title-grouping-v4",
+    "access-homogeneous-title-grouping-v5",
     "model",
     validatedGroupings.promptVersions.grouping,
   ),
   pipelineStage(
     "verifier",
-    "homogeneous-title-grouping-validator-v4",
+    "homogeneous-title-grouping-validator-v5",
     "deterministic",
     validatedGroupings.promptVersions.validator,
   ),
   pipelineStage(
     "assembler",
-    "homogeneous-title-testbed-card-assembler-v4",
+    "homogeneous-title-testbed-card-assembler-v5",
     "deterministic",
-    "homogeneous-title-testbed-card-assembler-2026-08-29-v4",
+    "homogeneous-title-testbed-card-assembler-2026-08-30-v5",
   ),
 ];
 
@@ -268,7 +282,7 @@ const titleCards = samplePacket.sample.map((record) => {
       path: record.path,
       relatedTitles: sortedUnique(
         record.sourceRecords.flatMap(
-          (sourceRecord) => sourceRecord.otherLinkedAtomicTitles,
+          (sourceRecord) => sourceRecord.sameActionLinkedAtomicTitles,
         ),
       ),
     },
@@ -295,8 +309,8 @@ const titleCards = samplePacket.sample.map((record) => {
       hideModelConfidence: true,
     },
     internalModelEvidence: {
-      detectorId: "access-homogeneous-title-grouping-v4",
-      detectorName: "Claim-aware homogeneous title-grouping agent",
+      detectorId: "access-homogeneous-title-grouping-v5",
+      detectorName: "Reader-ready homogeneous title-grouping agent",
       detectorPromptVersion: validatedGroupings.promptVersions.grouping,
       detectorConfidence: assessment.confidence,
       reviewerVisible: false,
@@ -383,6 +397,8 @@ const manifest = {
     controlsByIssue: "controls/<issue-type>.jsonl",
     rejectedAgentCandidates: "diagnostics/rejected_agent_candidates.jsonl",
     fullRunEstimate: "diagnostics/full-run-estimate.json",
+    largeCaseInventory: "diagnostics/large-onet-activity-inventory.json",
+    largeCaseInventoryCsv: "diagnostics/large-onet-activity-inventory.csv",
     proposalSchema: "schema/review-proposal.schema.json",
     responseSchema: "schema/review-response.schema.json",
     schemaSource:
@@ -404,6 +420,21 @@ const manifest = {
     `The separate generic-action diagnostic found ${samplePacket.genericActionDiagnostic.occurrenceCount} Act/Perform occurrences (${samplePacket.genericActionDiagnostic.uniqueTitleCount} unique titles); none is silently rewritten here.`,
     "No generated proposal or expert agreement writes to the ontology automatically.",
   ],
+  largeCaseInventory: {
+    cutoff: largeCaseInventory.cutoff,
+    cutoffRule: largeCaseInventory.cutoffRule,
+    uniqueTitleCount: largeCaseInventory.uniqueTitleCount,
+    ontologyOccurrenceCount: largeCaseInventory.ontologyOccurrenceCount,
+    repeatedOccurrenceCount: largeCaseInventory.repeatedOccurrenceCount,
+    maximumLinkedDescriptionCount:
+      largeCaseInventory.maximumLinkedDescriptionCount,
+    rows: largeCaseInventory.rows.map(
+      ({ title, linkedONetDescriptionCount }) => ({
+        title,
+        linkedONetDescriptionCount,
+      }),
+    ),
+  },
   sourceSnapshot: {
     file: "ontology-snapshot.json",
     sha256: snapshotSha256,
@@ -422,12 +453,12 @@ const manifest = {
     snapshotBound: true,
     exhaustiveWithinPackagedDetectorOutputs: true,
     semanticCompletenessGuaranteed: false,
-    detectorAgents: ["access-homogeneous-title-grouping-v4"],
+    detectorAgents: ["access-homogeneous-title-grouping-v5"],
     criticAgents: [],
     note: "Each packaged card passed exact source and claim binding, 2-5-word title, leading-action, title-status, and cardinality validation. These checks do not establish semantic correctness; the expert reviewer remains the evaluator.",
   },
   fullRunEstimate: {
-    modelPlan: fullRunEstimate.recommendedModelPlan,
+    modelPlan: fullRunEstimate.conservativePlanningModelPlan,
     atomicActivityOccurrences:
       fullRunEstimate.inventory.atomicActivityOccurrences,
     homogeneousGroupScenarios:
@@ -438,7 +469,7 @@ const manifest = {
       stratifiedScenario.totalAccessTokensPlanningRange,
     elapsedWallTimeHours: projectedPipeline.elapsedWallTimeHours,
     directApiCharge: projectedPipeline.directApiCharge,
-    note: "These are sensitivity scenarios, not a validated forecast. They use one claim-aware title call per activity and, only after title acceptance, one all-candidate WordNet call per accepted group.",
+    note: "These are sensitivity scenarios, not a validated forecast. They use one reader-ready title call per activity and, only after title acceptance, one all-candidate WordNet call per accepted group. GPT-5.6 Terra at high reasoning is a conservative sizing baseline, not a production recommendation; lower-cost benchmarking begins after prompt convergence.",
   },
   reviewRelease: {
     strategy: "title-review-before-all-candidate-wordnet",
@@ -708,7 +739,7 @@ fs.copyFileSync(
 );
 
 writeJson(path.join(outputDir, "diagnostics/quality-report.json"), {
-  schemaVersion: "homogeneous-title-testbed-quality-report-v4",
+  schemaVersion: "homogeneous-title-testbed-quality-report-v5",
   generatedAt,
   sourceHierarchySha256: samplePacket.sourceSha256,
   packagedSnapshotSha256: snapshotSha256,

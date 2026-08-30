@@ -41,20 +41,20 @@ const sourceBuffer = fs.readFileSync(sourceFile);
 const sourceSha256 = stableHash(sourceBuffer);
 const samplePacket = readJson(sampleFile);
 const assessmentPacket = readJson(assessmentsFile);
-const groupingPromptVersion = "access-homogeneous-title-grouping-2026-08-29-v4";
+const groupingPromptVersion = "access-homogeneous-title-grouping-2026-08-30-v5";
 const groupingPromptSha256 = stableHash(claimGroupingPromptTemplate);
 
-if (samplePacket.schemaVersion !== "homogeneous-title-testbed-sample-v4") {
-  throw new Error("The validator requires a v4 sample packet");
+if (samplePacket.schemaVersion !== "homogeneous-title-testbed-sample-v5") {
+  throw new Error("The validator requires a v5 sample packet");
 }
 if (
   assessmentPacket.schemaVersion !==
-    "homogeneous-title-grouping-assessments-v4" ||
+    "homogeneous-title-grouping-assessments-v5" ||
   assessmentPacket.promptVersion !== groupingPromptVersion ||
   assessmentPacket.promptSha256 !== groupingPromptSha256
 ) {
   throw new Error(
-    "The grouping assessments were not produced for the exact v4 prompt",
+    "The grouping assessments were not produced for the exact v5 prompt",
   );
 }
 
@@ -102,7 +102,7 @@ const validated = validateClaimGroupingAssessments({
 });
 
 const output = {
-  schemaVersion: "homogeneous-title-testbed-validated-v4",
+  schemaVersion: "homogeneous-title-testbed-validated-v5",
   generatedAt: new Date().toISOString(),
   sourceFile: path.basename(sourceFile),
   sourceSha256,
@@ -112,7 +112,7 @@ const output = {
   assessmentsSha256: stableHash(fs.readFileSync(assessmentsFile)),
   promptVersions: {
     grouping: groupingPromptVersion,
-    validator: "homogeneous-title-grouping-validator-2026-08-29-v4",
+    validator: "homogeneous-title-grouping-validator-2026-08-30-v5",
   },
   promptSha256: {
     grouping: groupingPromptSha256,

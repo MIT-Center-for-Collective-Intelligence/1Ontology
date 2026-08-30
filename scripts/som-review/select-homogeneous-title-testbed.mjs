@@ -40,7 +40,7 @@ const sample = selectStratifiedSample({
   priorityExactTitles: ["Document Alternative", "Store Datum"],
 });
 const packet = {
-  schemaVersion: "homogeneous-title-testbed-sample-v4",
+  schemaVersion: "homogeneous-title-testbed-sample-v5",
   generatedAt: new Date().toISOString(),
   sourceFile: path.basename(sourceFile),
   sourceSha256,

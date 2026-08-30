@@ -112,6 +112,9 @@ const handler = async (request: NextApiRequest, res: NextApiResponse) => {
       issueTypes,
       readyFollowUps: toLinkedFollowUps(dataset, readyFollowUpRecords),
       trustedPropagation,
+      ...(dataset.manifest.largeCaseInventory
+        ? { largeCaseInventory: dataset.manifest.largeCaseInventory }
+        : {}),
       ...capabilities,
     };
     return res.status(200).json(body);

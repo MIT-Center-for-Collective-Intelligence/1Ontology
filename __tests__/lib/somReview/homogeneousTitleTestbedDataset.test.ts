@@ -7,7 +7,7 @@ import { toReviewerCard } from "../../../src/lib/somReview/sanitize";
 const DATASET_DIR = path.join(
   process.cwd(),
   "Ontology_Title_Clarity_Testbed_2026-08-28",
-  "review-datasets-v4",
+  "review-datasets-v5",
 );
 
 describe("ontology-wide homogeneous title test bed", () => {
@@ -41,7 +41,26 @@ describe("ontology-wide homogeneous title test bed", () => {
       /COPY --chown=nextjs:nodejs Ontology_Title_Clarity_Testbed_2026-08-28 \.\/Ontology_Title_Clarity_Testbed_2026-08-28/,
     );
     expect(dockerfile).toContain(
-      "RUN test -f ./Ontology_Title_Clarity_Testbed_2026-08-28/review-datasets-v4/manifest.json",
+      "RUN test -f ./Ontology_Title_Clarity_Testbed_2026-08-28/review-datasets-v5/manifest.json",
+    );
+  });
+
+  it("packages the complete large-case inventory requested for cost sampling", () => {
+    const inventory = dataset.manifest.largeCaseInventory;
+    expect(inventory).toMatchObject({
+      cutoff: 10,
+      uniqueTitleCount: 564,
+      ontologyOccurrenceCount: 786,
+      maximumLinkedDescriptionCount: 216,
+    });
+    expect(inventory.rows).toHaveLength(564);
+    expect(
+      inventory.rows.every(
+        (row: any) => row.linkedONetDescriptionCount > inventory.cutoff,
+      ),
+    ).toBe(true);
+    expect(dataset.manifest.files.largeCaseInventoryCsv).toBe(
+      "diagnostics/large-onet-activity-inventory.csv",
     );
   });
 
@@ -179,9 +198,9 @@ describe("ontology-wide homogeneous title test bed", () => {
       const trace = toReviewerCard(record).agentTrace;
       expect(trace?.stages).toHaveLength(3);
       expect(trace?.stages.map((stage) => stage.actorId)).toEqual([
-        "access-homogeneous-title-grouping-v4",
-        "homogeneous-title-grouping-validator-v4",
-        "homogeneous-title-testbed-card-assembler-v4",
+        "access-homogeneous-title-grouping-v5",
+        "homogeneous-title-grouping-validator-v5",
+        "homogeneous-title-testbed-card-assembler-v5",
       ]);
       for (const stage of trace?.stages || []) {
         expect(stage.actorId).not.toMatch(/^no-/);

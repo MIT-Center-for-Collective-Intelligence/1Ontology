@@ -84,7 +84,7 @@ COPY --chown=nextjs:nodejs Buy_Society_of_Mind_Title_Followup_2026-07-25/review-
 COPY --chown=nextjs:nodejs Buy_Society_of_Mind_Content_Identity_2026-07-26/review-datasets-content-identity-v1 ./Buy_Society_of_Mind_Content_Identity_2026-07-26/review-datasets-content-identity-v1
 COPY --chown=nextjs:nodejs Sell_Society_of_Mind_Review_UI_Handoff_2026-07-15 ./Sell_Society_of_Mind_Review_UI_Handoff_2026-07-15
 COPY --chown=nextjs:nodejs Ontology_Title_Clarity_Testbed_2026-08-28 ./Ontology_Title_Clarity_Testbed_2026-08-28
-RUN test -f ./Ontology_Title_Clarity_Testbed_2026-08-28/review-datasets-v4/manifest.json
+RUN test -f ./Ontology_Title_Clarity_Testbed_2026-08-28/review-datasets-v5/manifest.json
 
 EXPOSE 3000
 CMD ["node", "server.js"]

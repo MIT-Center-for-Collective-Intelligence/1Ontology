@@ -1,0 +1,2834 @@
+{
+  "schemaVersion": "large-onet-activity-inventory-v1",
+  "generatedAt": "2026-08-30T16:23:18.617Z",
+  "sourceFile": "0401_FINALHIERARCHY.json",
+  "sourceSha256": "f19ce789bce298b0564045fb87427eebd1193b89c133d17519c097dc3e0eb319",
+  "cutoffRule": "Include exact activity titles linked to more than 10 O*NET descriptions. Repeated ontology occurrences with the same title are shown once because their linked-description counts are identical.",
+  "cutoff": 10,
+  "uniqueTitleCount": 564,
+  "ontologyOccurrenceCount": 786,
+  "repeatedOccurrenceCount": 222,
+  "maximumLinkedDescriptionCount": 216,
+  "rows": [
+    {
+      "title": "Maintain Record",
+      "linkedONetDescriptionCount": 216,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Prepare Report",
+      "linkedONetDescriptionCount": 211,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Operate Equipment (Synonyms: Control Equipment)",
+      "linkedONetDescriptionCount": 209,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Maintain Equipment",
+      "linkedONetDescriptionCount": 159,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Analyze Datum (Synonyms: Examine Datum, Study Datum)",
+      "linkedONetDescriptionCount": 141,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Create Plan (Synonyms: Develop Plan, Make Plan)",
+      "linkedONetDescriptionCount": 138,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Conduct Research",
+      "linkedONetDescriptionCount": 133,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Direct Activity",
+      "linkedONetDescriptionCount": 125,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Perform Duty",
+      "linkedONetDescriptionCount": 125,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Provide Assistance",
+      "linkedONetDescriptionCount": 115,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Coordinate Activity (Synonyms: Devise Activity)",
+      "linkedONetDescriptionCount": 114,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Supply Information (Synonyms: Furnish Information, Provide Information)",
+      "linkedONetDescriptionCount": 108,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Inspect Equipment",
+      "linkedONetDescriptionCount": 99,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Create Procedure (Synonyms: Develop Procedure)",
+      "linkedONetDescriptionCount": 94,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Collect Datum (Synonyms: Compile Datum)",
+      "linkedONetDescriptionCount": 92,
+      "ontologyOccurrenceCount": 3
+    },
+    {
+      "title": "Clean Equipment",
+      "linkedONetDescriptionCount": 90,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Record Datum",
+      "linkedONetDescriptionCount": 82,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Prepare Material (Synonyms: Set_Up Material)",
+      "linkedONetDescriptionCount": 80,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Repair Equipment",
+      "linkedONetDescriptionCount": 77,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Operate Machine (Synonyms: Control Machine)",
+      "linkedONetDescriptionCount": 76,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Oversee Work (Synonyms: Supervise Work)",
+      "linkedONetDescriptionCount": 75,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Select Material",
+      "linkedONetDescriptionCount": 75,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Create Program (Synonyms: Develop Program, Produce Program)",
+      "linkedONetDescriptionCount": 74,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Write Report (Synonyms: Compile Report, Compose Report)",
+      "linkedONetDescriptionCount": 73,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Plan Activity (Synonyms: Organize Activity)",
+      "linkedONetDescriptionCount": 70,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Participate Activity",
+      "linkedONetDescriptionCount": 67,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Provide Service (1)",
+      "linkedONetDescriptionCount": 66,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Clean Area",
+      "linkedONetDescriptionCount": 64,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Prepare Equipment (Synonyms: Set_Up Equipment)",
+      "linkedONetDescriptionCount": 64,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Attend Meeting",
+      "linkedONetDescriptionCount": 62,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Install Equipment",
+      "linkedONetDescriptionCount": 62,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Record Information",
+      "linkedONetDescriptionCount": 62,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Design System",
+      "linkedONetDescriptionCount": 61,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Document Record (Synonyms: Keep Record)",
+      "linkedONetDescriptionCount": 59,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Advise Student (Synonyms: Counsel Student)",
+      "linkedONetDescriptionCount": 58,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Order Supply",
+      "linkedONetDescriptionCount": 58,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Perform Repair (Synonyms: Make Repair)",
+      "linkedONetDescriptionCount": 58,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Plan Program",
+      "linkedONetDescriptionCount": 58,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Monitor Operation",
+      "linkedONetDescriptionCount": 56,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Serve Committee",
+      "linkedONetDescriptionCount": 56,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Teach Student (Synonyms: Instruct Student, Prepare Student)",
+      "linkedONetDescriptionCount": 56,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Answer Question (Synonyms: Respond Question)",
+      "linkedONetDescriptionCount": 55,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Conduct Test",
+      "linkedONetDescriptionCount": 55,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Provide Support",
+      "linkedONetDescriptionCount": 55,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Oversee Activity (Synonyms: Supervise Activity)",
+      "linkedONetDescriptionCount": 53,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Assign Work",
+      "linkedONetDescriptionCount": 52,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Replace Part",
+      "linkedONetDescriptionCount": 52,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Test Equipment",
+      "linkedONetDescriptionCount": 52,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Adjust Control",
+      "linkedONetDescriptionCount": 51,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Measure Performance (Synonyms: Assess Performance, Evaluate Performance)",
+      "linkedONetDescriptionCount": 51,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Oversee Staff (Synonyms: Supervise Staff)",
+      "linkedONetDescriptionCount": 51,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Write Proposal",
+      "linkedONetDescriptionCount": 51,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Create Strategy (Synonyms: Develop Strategy)",
+      "linkedONetDescriptionCount": 50,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Develop Method",
+      "linkedONetDescriptionCount": 50,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Create Model (Synonyms: Develop Model, Produce Model)",
+      "linkedONetDescriptionCount": 49,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Adjust Equipment",
+      "linkedONetDescriptionCount": 48,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Analyze Information (Synonyms: Examine Information, Study Information)",
+      "linkedONetDescriptionCount": 48,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Perform Maintenance",
+      "linkedONetDescriptionCount": 48,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Select Supply",
+      "linkedONetDescriptionCount": 48,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Implement Program",
+      "linkedONetDescriptionCount": 46,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Review Report",
+      "linkedONetDescriptionCount": 46,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Estimate Cost",
+      "linkedONetDescriptionCount": 45,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Collect Sample",
+      "linkedONetDescriptionCount": 44,
+      "ontologyOccurrenceCount": 3
+    },
+    {
+      "title": "Perform Task",
+      "linkedONetDescriptionCount": 44,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Repair Part",
+      "linkedONetDescriptionCount": 44,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Acquire Material (Synonyms: Obtain Material, Procure Material)",
+      "linkedONetDescriptionCount": 43,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Evaluate Work",
+      "linkedONetDescriptionCount": 43,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Train Staff",
+      "linkedONetDescriptionCount": 43,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Perform Activity (Synonyms: Engage Activity, Execute Activity)",
+      "linkedONetDescriptionCount": 42,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Administer Test",
+      "linkedONetDescriptionCount": 41,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Confer Personnel (Synonyms: Consult Personnel)",
+      "linkedONetDescriptionCount": 41,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Enforce Rule",
+      "linkedONetDescriptionCount": 41,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Keep Abreast",
+      "linkedONetDescriptionCount": 41,
+      "ontologyOccurrenceCount": 3
+    },
+    {
+      "title": "Advise Client (Synonyms: Counsel Client)",
+      "linkedONetDescriptionCount": 40,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Collect Information (Synonyms: Compile Information)",
+      "linkedONetDescriptionCount": 40,
+      "ontologyOccurrenceCount": 3
+    },
+    {
+      "title": "Create Material (Synonyms: Develop Material, Produce Material)",
+      "linkedONetDescriptionCount": 40,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Grade Work",
+      "linkedONetDescriptionCount": 40,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Maintain Inventory",
+      "linkedONetDescriptionCount": 40,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Prepare Document",
+      "linkedONetDescriptionCount": 40,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Conduct Study",
+      "linkedONetDescriptionCount": 39,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Create Policy (Synonyms: Develop Policy)",
+      "linkedONetDescriptionCount": 39,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Get Information (1) (Synonyms: Obtain Information, Procure Information)",
+      "linkedONetDescriptionCount": 39,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Acquire Supply (Synonyms: Obtain Supply)",
+      "linkedONetDescriptionCount": 38,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Explain Procedure (Synonyms: Interpret Procedure)",
+      "linkedONetDescriptionCount": 38,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Participate Event",
+      "linkedONetDescriptionCount": 38,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Select Equipment",
+      "linkedONetDescriptionCount": 38,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Perform Test (Synonyms: Execute Test)",
+      "linkedONetDescriptionCount": 37,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Revise Material",
+      "linkedONetDescriptionCount": 37,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Advise Other (Synonyms: Counsel Other)",
+      "linkedONetDescriptionCount": 36,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Compile Bibliography",
+      "linkedONetDescriptionCount": 36,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Grade Assignment",
+      "linkedONetDescriptionCount": 36,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Implement Procedure",
+      "linkedONetDescriptionCount": 36,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Read Order",
+      "linkedONetDescriptionCount": 36,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Administer Examination",
+      "linkedONetDescriptionCount": 35,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Attend Conference",
+      "linkedONetDescriptionCount": 35,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Collaborate Issue",
+      "linkedONetDescriptionCount": 35,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Evaluate Curricula",
+      "linkedONetDescriptionCount": 35,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Explain Result (Synonyms: Interpret Result)",
+      "linkedONetDescriptionCount": 35,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Grade Examination",
+      "linkedONetDescriptionCount": 35,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Maintain Hour",
+      "linkedONetDescriptionCount": 35,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Plan Curricula",
+      "linkedONetDescriptionCount": 35,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Publish Finding",
+      "linkedONetDescriptionCount": 35,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Turn Valve",
+      "linkedONetDescriptionCount": 35,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Act_As Adviser",
+      "linkedONetDescriptionCount": 34,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Compile Examination",
+      "linkedONetDescriptionCount": 34,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Facilitate Discussion",
+      "linkedONetDescriptionCount": 34,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Initiate Discussion",
+      "linkedONetDescriptionCount": 34,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Maintain Knowledge",
+      "linkedONetDescriptionCount": 34,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Moderate Discussion",
+      "linkedONetDescriptionCount": 34,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Perform Adjustment (Synonyms: Make Adjustment)",
+      "linkedONetDescriptionCount": 34,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Revise Content",
+      "linkedONetDescriptionCount": 34,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Revise Curricula",
+      "linkedONetDescriptionCount": 34,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Revise Method",
+      "linkedONetDescriptionCount": 34,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Bore Hole (Synonyms: Drill Hole)",
+      "linkedONetDescriptionCount": 33,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Confer Customer (Synonyms: Consult Customer)",
+      "linkedONetDescriptionCount": 33,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Deliver Lecture",
+      "linkedONetDescriptionCount": 33,
+      "ontologyOccurrenceCount": 5
+    },
+    {
+      "title": "Direct Worker",
+      "linkedONetDescriptionCount": 33,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Furnish Advice (Synonyms: Provide Advice)",
+      "linkedONetDescriptionCount": 33,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Inspect Facility",
+      "linkedONetDescriptionCount": 33,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Perform Analysis",
+      "linkedONetDescriptionCount": 33,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Prepare Lecture",
+      "linkedONetDescriptionCount": 33,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Resolve Problem",
+      "linkedONetDescriptionCount": 33,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Observe Operation (Synonyms: Detect Operation)",
+      "linkedONetDescriptionCount": 32,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Perform Procedure",
+      "linkedONetDescriptionCount": 32,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Refer Patient",
+      "linkedONetDescriptionCount": 32,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Advise Patient (Synonyms: Counsel Patient)",
+      "linkedONetDescriptionCount": 31,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Analyze Record (Synonyms: Examine Record, Study Record)",
+      "linkedONetDescriptionCount": 31,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Assess Need (Synonyms: Evaluate Need)",
+      "linkedONetDescriptionCount": 31,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Install System",
+      "linkedONetDescriptionCount": 31,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Monitor Activity",
+      "linkedONetDescriptionCount": 31,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Operate System",
+      "linkedONetDescriptionCount": 31,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Order Equipment (Synonyms: Prescribe Equipment)",
+      "linkedONetDescriptionCount": 31,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Organize Program (Synonyms: Coordinate Program)",
+      "linkedONetDescriptionCount": 31,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Gather Information",
+      "linkedONetDescriptionCount": 30,
+      "ontologyOccurrenceCount": 3
+    },
+    {
+      "title": "Inspect Product",
+      "linkedONetDescriptionCount": 30,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Prepare Documentation",
+      "linkedONetDescriptionCount": 30,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Prepare Machine (Synonyms: Set_Up Machine)",
+      "linkedONetDescriptionCount": 30,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Start Machine (Synonyms: Activate Machine)",
+      "linkedONetDescriptionCount": 30,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Train Personnel",
+      "linkedONetDescriptionCount": 30,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Train Worker",
+      "linkedONetDescriptionCount": 30,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Evaluate Assignment",
+      "linkedONetDescriptionCount": 29,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Implement Plan",
+      "linkedONetDescriptionCount": 29,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Maintain System",
+      "linkedONetDescriptionCount": 29,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Provide Training",
+      "linkedONetDescriptionCount": 29,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Recommend Change",
+      "linkedONetDescriptionCount": 29,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Test System (Synonyms: Pretest System)",
+      "linkedONetDescriptionCount": 29,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Administer Medication (Synonyms: Dispense Medication)",
+      "linkedONetDescriptionCount": 28,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Answer Inquiry (Synonyms: Respond Inquiry)",
+      "linkedONetDescriptionCount": 28,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Create Standard (Synonyms: Develop Standard)",
+      "linkedONetDescriptionCount": 28,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Disassemble Equipment (Synonyms: Dismantle Equipment)",
+      "linkedONetDescriptionCount": 28,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Inspect System",
+      "linkedONetDescriptionCount": 28,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Monitor Performance",
+      "linkedONetDescriptionCount": 28,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Prepare Budget",
+      "linkedONetDescriptionCount": 28,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Read Literature",
+      "linkedONetDescriptionCount": 28,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Clean Part",
+      "linkedONetDescriptionCount": 27,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Conduct Analysis",
+      "linkedONetDescriptionCount": 27,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Direct Operation",
+      "linkedONetDescriptionCount": 27,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Install Component",
+      "linkedONetDescriptionCount": 27,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Order Material (Synonyms: Ordering Material)",
+      "linkedONetDescriptionCount": 27,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Oversee Worker (Synonyms: Supervise Worker)",
+      "linkedONetDescriptionCount": 27,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Repair Component",
+      "linkedONetDescriptionCount": 27,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Review Plan",
+      "linkedONetDescriptionCount": 27,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Review Record",
+      "linkedONetDescriptionCount": 27,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Conduct Program",
+      "linkedONetDescriptionCount": 26,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Create System (Synonyms: Develop System)",
+      "linkedONetDescriptionCount": 26,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Design Equipment",
+      "linkedONetDescriptionCount": 26,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Establish Procedure",
+      "linkedONetDescriptionCount": 26,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Issue Instruction (Synonyms: Provide Instruction)",
+      "linkedONetDescriptionCount": 26,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Load Material",
+      "linkedONetDescriptionCount": 26,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Maintain File",
+      "linkedONetDescriptionCount": 26,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Maintain Log",
+      "linkedONetDescriptionCount": 26,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Read Blueprint",
+      "linkedONetDescriptionCount": 26,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Requisition Supply",
+      "linkedONetDescriptionCount": 26,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Assemble Equipment",
+      "linkedONetDescriptionCount": 25,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Determine Method",
+      "linkedONetDescriptionCount": 25,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Direct Program",
+      "linkedONetDescriptionCount": 25,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Explain Policy (Synonyms: Interpret Policy)",
+      "linkedONetDescriptionCount": 25,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Grade Paper",
+      "linkedONetDescriptionCount": 25,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Maintain Area (Synonyms: Keep Area)",
+      "linkedONetDescriptionCount": 25,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Maintain Database",
+      "linkedONetDescriptionCount": 25,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Prepare Record",
+      "linkedONetDescriptionCount": 25,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Prepare Schedule (Synonyms: Set_Up Schedule)",
+      "linkedONetDescriptionCount": 25,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Provide Care",
+      "linkedONetDescriptionCount": 25,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Remove Material",
+      "linkedONetDescriptionCount": 25,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Use Equipment",
+      "linkedONetDescriptionCount": 25,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Conduct Survey",
+      "linkedONetDescriptionCount": 24,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Confer Staff (Synonyms: Consult Staff)",
+      "linkedONetDescriptionCount": 24,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Drive Vehicle",
+      "linkedONetDescriptionCount": 24,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Evaluate Paper",
+      "linkedONetDescriptionCount": 24,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Interpret Datum",
+      "linkedONetDescriptionCount": 24,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Monitor Condition",
+      "linkedONetDescriptionCount": 24,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Monitor Equipment",
+      "linkedONetDescriptionCount": 24,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Receive Payment (Synonyms: Accept Payment)",
+      "linkedONetDescriptionCount": 24,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Recommend Action",
+      "linkedONetDescriptionCount": 24,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Analyze Blueprint (Synonyms: Examine Blueprint, Study Blueprint)",
+      "linkedONetDescriptionCount": 23,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Attend Workshop",
+      "linkedONetDescriptionCount": 23,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Collect Payment",
+      "linkedONetDescriptionCount": 23,
+      "ontologyOccurrenceCount": 3
+    },
+    {
+      "title": "Cut Material",
+      "linkedONetDescriptionCount": 23,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Drive Truck",
+      "linkedONetDescriptionCount": 23,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Evaluate Program",
+      "linkedONetDescriptionCount": 23,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Make Recommendation",
+      "linkedONetDescriptionCount": 23,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Plan Project",
+      "linkedONetDescriptionCount": 23,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Schedule Appointment",
+      "linkedONetDescriptionCount": 23,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Teach Skill",
+      "linkedONetDescriptionCount": 23,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Communicate Information",
+      "linkedONetDescriptionCount": 22,
+      "ontologyOccurrenceCount": 3
+    },
+    {
+      "title": "Explain Information (Synonyms: Interpret Information)",
+      "linkedONetDescriptionCount": 22,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Lubricate Equipment",
+      "linkedONetDescriptionCount": 22,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Measure Product (Synonyms: Evaluate Product)",
+      "linkedONetDescriptionCount": 22,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Negotiate Contract",
+      "linkedONetDescriptionCount": 22,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Observe Gauge",
+      "linkedONetDescriptionCount": 22,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Plan Material (Synonyms: Organize Material)",
+      "linkedONetDescriptionCount": 22,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Remove Part",
+      "linkedONetDescriptionCount": 22,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Repair System",
+      "linkedONetDescriptionCount": 22,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Smooth Surface",
+      "linkedONetDescriptionCount": 22,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Talk Colleague",
+      "linkedONetDescriptionCount": 22,
+      "ontologyOccurrenceCount": 5
+    },
+    {
+      "title": "Blend Ingredient (Synonyms: Combine Ingredient, Mix Ingredient)",
+      "linkedONetDescriptionCount": 21,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Calibrate Equipment",
+      "linkedONetDescriptionCount": 21,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Conduct Activity",
+      "linkedONetDescriptionCount": 21,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Confer Client (Synonyms: Consult Client)",
+      "linkedONetDescriptionCount": 21,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Guide Student",
+      "linkedONetDescriptionCount": 21,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Identify Opportunity",
+      "linkedONetDescriptionCount": 21,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Inspect Site",
+      "linkedONetDescriptionCount": 21,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Maintain Report",
+      "linkedONetDescriptionCount": 21,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Measure Material (Synonyms: Assess Material)",
+      "linkedONetDescriptionCount": 21,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Perform Action (Synonyms: Execute Action, Take Action)",
+      "linkedONetDescriptionCount": 21,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Prepare Plan",
+      "linkedONetDescriptionCount": 21,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Provide Consultation",
+      "linkedONetDescriptionCount": 21,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Replace Component",
+      "linkedONetDescriptionCount": 21,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Review Specification",
+      "linkedONetDescriptionCount": 21,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Supply Equipment (Synonyms: Issue Equipment, Provide Equipment)",
+      "linkedONetDescriptionCount": 21,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Tend Machine",
+      "linkedONetDescriptionCount": 21,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Analyze Sample (Synonyms: Examine Sample)",
+      "linkedONetDescriptionCount": 20,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Assemble Component",
+      "linkedONetDescriptionCount": 20,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Clean Machine",
+      "linkedONetDescriptionCount": 20,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Conduct Assessment",
+      "linkedONetDescriptionCount": 20,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Create Budget (Synonyms: Develop Budget, Generate Budget)",
+      "linkedONetDescriptionCount": 20,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Create Specification (Synonyms: Develop Specification)",
+      "linkedONetDescriptionCount": 20,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Disinfect Equipment (Synonyms: Sterilize Equipment)",
+      "linkedONetDescriptionCount": 20,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Hire Staff (Synonyms: Employ Staff)",
+      "linkedONetDescriptionCount": 20,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Inform Supervisor (Synonyms: Notify Supervisor)",
+      "linkedONetDescriptionCount": 20,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Maintain Documentation",
+      "linkedONetDescriptionCount": 20,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Maintain Tool (Synonyms: Hold Tool)",
+      "linkedONetDescriptionCount": 20,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Move Control",
+      "linkedONetDescriptionCount": 20,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Move Material",
+      "linkedONetDescriptionCount": 20,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Oversee Project (Synonyms: Supervise Project)",
+      "linkedONetDescriptionCount": 20,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Participate Conference",
+      "linkedONetDescriptionCount": 20,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Perform Work",
+      "linkedONetDescriptionCount": 20,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Read Specification",
+      "linkedONetDescriptionCount": 20,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Receive Supply (Synonyms: Stock Supply)",
+      "linkedONetDescriptionCount": 20,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Submit Report",
+      "linkedONetDescriptionCount": 20,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Supervise Personnel",
+      "linkedONetDescriptionCount": 20,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Supervise Technician",
+      "linkedONetDescriptionCount": 20,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Teach Course",
+      "linkedONetDescriptionCount": 20,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Teach Patient (Synonyms: Instruct Patient)",
+      "linkedONetDescriptionCount": 20,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Use Technique (Synonyms: Apply Technique, Employ Technique)",
+      "linkedONetDescriptionCount": 20,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Administer Treatment",
+      "linkedONetDescriptionCount": 19,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Analyze Report (Synonyms: Examine Report, Study Report)",
+      "linkedONetDescriptionCount": 19,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Collaborate Program",
+      "linkedONetDescriptionCount": 19,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Conduct Audit",
+      "linkedONetDescriptionCount": 19,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Conduct Session",
+      "linkedONetDescriptionCount": 19,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Confer Professional (Synonyms: Consult Professional)",
+      "linkedONetDescriptionCount": 19,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Create Database (Synonyms: Develop Database)",
+      "linkedONetDescriptionCount": 19,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Document Procedure",
+      "linkedONetDescriptionCount": 19,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Enter Datum",
+      "linkedONetDescriptionCount": 19,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Enter Information",
+      "linkedONetDescriptionCount": 19,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Establish Objective",
+      "linkedONetDescriptionCount": 19,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Fabricate Part",
+      "linkedONetDescriptionCount": 19,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Inspect Area",
+      "linkedONetDescriptionCount": 19,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Install Fixture",
+      "linkedONetDescriptionCount": 19,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Inventory Supply (Synonyms: Keep Supply)",
+      "linkedONetDescriptionCount": 19,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Measure Datum (Synonyms: Assess Datum, Evaluate Datum)",
+      "linkedONetDescriptionCount": 19,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Monitor System",
+      "linkedONetDescriptionCount": 19,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Participate Organization",
+      "linkedONetDescriptionCount": 19,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Prescribe Medication",
+      "linkedONetDescriptionCount": 19,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Present Information",
+      "linkedONetDescriptionCount": 19,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Review Order",
+      "linkedONetDescriptionCount": 19,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Store Equipment",
+      "linkedONetDescriptionCount": 19,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Supply Direction (Synonyms: Issue Direction, Provide Direction)",
+      "linkedONetDescriptionCount": 19,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Transport Material (Synonyms: Transfer Material)",
+      "linkedONetDescriptionCount": 19,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Analyze Result",
+      "linkedONetDescriptionCount": 18,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Assist Patient (Synonyms: Aid Patient, Help Patient)",
+      "linkedONetDescriptionCount": 18,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Confer Member",
+      "linkedONetDescriptionCount": 18,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Cook Food (Synonyms: Prepare Food)",
+      "linkedONetDescriptionCount": 18,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Coordinate Work",
+      "linkedONetDescriptionCount": 18,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Diagnose Condition",
+      "linkedONetDescriptionCount": 18,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Estimate Requirement",
+      "linkedONetDescriptionCount": 18,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Measure Characteristic (Synonyms: Assess Characteristic, Evaluate Characteristic)",
+      "linkedONetDescriptionCount": 18,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Measure Condition (Synonyms: Assess Condition, Evaluate Condition)",
+      "linkedONetDescriptionCount": 18,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Observe Performance",
+      "linkedONetDescriptionCount": 18,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Prepare Drawing",
+      "linkedONetDescriptionCount": 18,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Prepare Estimate",
+      "linkedONetDescriptionCount": 18,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Prepare Presentation",
+      "linkedONetDescriptionCount": 18,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Purchase Supply (Synonyms: Shop Supply)",
+      "linkedONetDescriptionCount": 18,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Resolve Complaint",
+      "linkedONetDescriptionCount": 18,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Store Supply",
+      "linkedONetDescriptionCount": 18,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Supervise Student",
+      "linkedONetDescriptionCount": 18,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Test Component",
+      "linkedONetDescriptionCount": 18,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Test Product",
+      "linkedONetDescriptionCount": 18,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Weigh Material",
+      "linkedONetDescriptionCount": 18,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Clean Facility",
+      "linkedONetDescriptionCount": 17,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Comply Procedure (Synonyms: Adhere Procedure, Follow Procedure)",
+      "linkedONetDescriptionCount": 17,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Connect Hose (Synonyms: Attach Hose)",
+      "linkedONetDescriptionCount": 17,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Create Process (Synonyms: Develop Process)",
+      "linkedONetDescriptionCount": 17,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Design Program",
+      "linkedONetDescriptionCount": 17,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Direct Work",
+      "linkedONetDescriptionCount": 17,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Distribute Material",
+      "linkedONetDescriptionCount": 17,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Examine Product",
+      "linkedONetDescriptionCount": 17,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Explain Regulation (Synonyms: Interpret Regulation)",
+      "linkedONetDescriptionCount": 17,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Issue Device (Synonyms: Provide Device)",
+      "linkedONetDescriptionCount": 17,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Oversee Program (Synonyms: Supervise Program)",
+      "linkedONetDescriptionCount": 17,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Provide Technology",
+      "linkedONetDescriptionCount": 17,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Store Material",
+      "linkedONetDescriptionCount": 17,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Supply Material (Synonyms: Issue Material)",
+      "linkedONetDescriptionCount": 17,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Adjust Component (Synonyms: Set Component)",
+      "linkedONetDescriptionCount": 16,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Administer Program",
+      "linkedONetDescriptionCount": 16,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Advise Group (Synonyms: Counsel Group)",
+      "linkedONetDescriptionCount": 16,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Assemble Part",
+      "linkedONetDescriptionCount": 16,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Attend Seminar",
+      "linkedONetDescriptionCount": 16,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Coach Other (Synonyms: Develop Other, Train Other)",
+      "linkedONetDescriptionCount": 16,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Complete Form",
+      "linkedONetDescriptionCount": 16,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Conduct Investigation",
+      "linkedONetDescriptionCount": 16,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Create Design (Synonyms: Develop Design, Produce Design)",
+      "linkedONetDescriptionCount": 16,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Create Image (Synonyms: Develop Image, Generate Image, Make Image, Produce Image)",
+      "linkedONetDescriptionCount": 16,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Create Tool (Synonyms: Develop Tool)",
+      "linkedONetDescriptionCount": 16,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Diagnose Problem",
+      "linkedONetDescriptionCount": 16,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Establish Rule",
+      "linkedONetDescriptionCount": 16,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Evaluate Technology",
+      "linkedONetDescriptionCount": 16,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Inspect Work",
+      "linkedONetDescriptionCount": 16,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Inventory Equipment",
+      "linkedONetDescriptionCount": 16,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Investigate Complaint",
+      "linkedONetDescriptionCount": 16,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Issue Supply",
+      "linkedONetDescriptionCount": 16,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Move Lever",
+      "linkedONetDescriptionCount": 16,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Oversee Employee (Synonyms: Supervise Employee)",
+      "linkedONetDescriptionCount": 16,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Oversee Operation (Synonyms: Supervise Operation)",
+      "linkedONetDescriptionCount": 16,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Plan Work (Synonyms: Organize Work)",
+      "linkedONetDescriptionCount": 16,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Prepare Classroom (Synonyms: Set_Up Classroom)",
+      "linkedONetDescriptionCount": 16,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Prepare Contract",
+      "linkedONetDescriptionCount": 16,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Prepare Outline",
+      "linkedONetDescriptionCount": 16,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Record Result",
+      "linkedONetDescriptionCount": 16,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Review Datum",
+      "linkedONetDescriptionCount": 16,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Take Order",
+      "linkedONetDescriptionCount": 16,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Train Employee",
+      "linkedONetDescriptionCount": 16,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Use Computer",
+      "linkedONetDescriptionCount": 16,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Write Material (Synonyms: Compile Material)",
+      "linkedONetDescriptionCount": 16,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Advise Customer",
+      "linkedONetDescriptionCount": 15,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Answer Complaint (Synonyms: Respond Complaint)",
+      "linkedONetDescriptionCount": 15,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Calculate Cost (Synonyms: Compute Cost, Forecast Cost)",
+      "linkedONetDescriptionCount": 15,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Conduct Inspection",
+      "linkedONetDescriptionCount": 15,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Develop Relationship",
+      "linkedONetDescriptionCount": 15,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Evaluate Method",
+      "linkedONetDescriptionCount": 15,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Examine Material",
+      "linkedONetDescriptionCount": 15,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Examine Patient",
+      "linkedONetDescriptionCount": 15,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Implement Strategy",
+      "linkedONetDescriptionCount": 15,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Inspect Part",
+      "linkedONetDescriptionCount": 15,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Maintain Information",
+      "linkedONetDescriptionCount": 15,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Manage Activity",
+      "linkedONetDescriptionCount": 15,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Mark Material (Synonyms: Label Material, Tag Material)",
+      "linkedONetDescriptionCount": 15,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Monitor Progress",
+      "linkedONetDescriptionCount": 15,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Position Equipment",
+      "linkedONetDescriptionCount": 15,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Prepare Specification",
+      "linkedONetDescriptionCount": 15,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Provide Guidance",
+      "linkedONetDescriptionCount": 15,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Recommend Procedure",
+      "linkedONetDescriptionCount": 15,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Review Document",
+      "linkedONetDescriptionCount": 15,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Select Tool",
+      "linkedONetDescriptionCount": 15,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Teach Class",
+      "linkedONetDescriptionCount": 15,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Write Letter (Synonyms: Compose Letter)",
+      "linkedONetDescriptionCount": 15,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Adjust Part",
+      "linkedONetDescriptionCount": 14,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Assist Customer (Synonyms: Help Customer, Serve Customer)",
+      "linkedONetDescriptionCount": 14,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Clean Tool",
+      "linkedONetDescriptionCount": 14,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Compile Record",
+      "linkedONetDescriptionCount": 14,
+      "ontologyOccurrenceCount": 3
+    },
+    {
+      "title": "Confer Official (Synonyms: Consult Official)",
+      "linkedONetDescriptionCount": 14,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Create Report (Synonyms: Develop Report, Generate Report, Produce Report)",
+      "linkedONetDescriptionCount": 14,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Demonstrate Equipment",
+      "linkedONetDescriptionCount": 14,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Determine Equipment (Synonyms: Check Equipment)",
+      "linkedONetDescriptionCount": 14,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Determine Location (Synonyms: Check Location)",
+      "linkedONetDescriptionCount": 14,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Determine Requirement",
+      "linkedONetDescriptionCount": 14,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Educate Patient",
+      "linkedONetDescriptionCount": 14,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Establish Policy (Synonyms: Set_Up Policy)",
+      "linkedONetDescriptionCount": 14,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Explain Rule (Synonyms: Interpret Rule)",
+      "linkedONetDescriptionCount": 14,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Implement Policy",
+      "linkedONetDescriptionCount": 14,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Inspect Vehicle",
+      "linkedONetDescriptionCount": 14,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Maintain Relationship",
+      "linkedONetDescriptionCount": 14,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Measure Dimension",
+      "linkedONetDescriptionCount": 14,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Measure Ingredient",
+      "linkedONetDescriptionCount": 14,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Meet Parent",
+      "linkedONetDescriptionCount": 14,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Monitor Student",
+      "linkedONetDescriptionCount": 14,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Order Test",
+      "linkedONetDescriptionCount": 14,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Order Treatment (Synonyms: Prescribe Treatment)",
+      "linkedONetDescriptionCount": 14,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Perform Function",
+      "linkedONetDescriptionCount": 14,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Plan Event (Synonyms: Organize Event)",
+      "linkedONetDescriptionCount": 14,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Prepare Application",
+      "linkedONetDescriptionCount": 14,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Prepare Assignment",
+      "linkedONetDescriptionCount": 14,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Prepare Proposal",
+      "linkedONetDescriptionCount": 14,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Prepare Sketch",
+      "linkedONetDescriptionCount": 14,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Purchase Equipment (Synonyms: Shop Equipment)",
+      "linkedONetDescriptionCount": 14,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Recommend Method",
+      "linkedONetDescriptionCount": 14,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Repair Device",
+      "linkedONetDescriptionCount": 14,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Requisition Equipment",
+      "linkedONetDescriptionCount": 14,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Review Information",
+      "linkedONetDescriptionCount": 14,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Review Material",
+      "linkedONetDescriptionCount": 14,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Set Control",
+      "linkedONetDescriptionCount": 14,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Start Pump (Synonyms: Activate Pump)",
+      "linkedONetDescriptionCount": 14,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Stock Supply",
+      "linkedONetDescriptionCount": 14,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Supervise Technologist",
+      "linkedONetDescriptionCount": 14,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Teach Staff (Synonyms: Instruct Staff)",
+      "linkedONetDescriptionCount": 14,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Trim Material",
+      "linkedONetDescriptionCount": 14,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Use Aid",
+      "linkedONetDescriptionCount": 14,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Validate Information (Synonyms: Confirm Information, Ensure Information, Verify Information)",
+      "linkedONetDescriptionCount": 14,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Weigh Product",
+      "linkedONetDescriptionCount": 14,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Write Article",
+      "linkedONetDescriptionCount": 14,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Write Documentation (Synonyms: Compile Documentation)",
+      "linkedONetDescriptionCount": 14,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Align Part",
+      "linkedONetDescriptionCount": 13,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Analyze Specification (Synonyms: Examine Specification, Study Specification)",
+      "linkedONetDescriptionCount": 13,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Appraise Impact (Synonyms: Assess Impact, Evaluate Impact)",
+      "linkedONetDescriptionCount": 13,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Assign Duty",
+      "linkedONetDescriptionCount": 13,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Calculate Requirement (Synonyms: Compute Requirement, Forecast Requirement)",
+      "linkedONetDescriptionCount": 13,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Communicate Objective",
+      "linkedONetDescriptionCount": 13,
+      "ontologyOccurrenceCount": 3
+    },
+    {
+      "title": "Conduct Interview",
+      "linkedONetDescriptionCount": 13,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Confer Engineer (Synonyms: Consult Engineer)",
+      "linkedONetDescriptionCount": 13,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Confer Supervisor (Synonyms: Consult Supervisor)",
+      "linkedONetDescriptionCount": 13,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Create Presentation (Synonyms: Develop Presentation, Produce Presentation)",
+      "linkedONetDescriptionCount": 13,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Design Plan",
+      "linkedONetDescriptionCount": 13,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Evaluate Behavior",
+      "linkedONetDescriptionCount": 13,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Evaluate Development",
+      "linkedONetDescriptionCount": 13,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Evaluate Health",
+      "linkedONetDescriptionCount": 13,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Examine Equipment",
+      "linkedONetDescriptionCount": 13,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Inform Customer (Synonyms: Notify Customer)",
+      "linkedONetDescriptionCount": 13,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Inspect Material",
+      "linkedONetDescriptionCount": 13,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Interview Client",
+      "linkedONetDescriptionCount": 13,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Interview Patient",
+      "linkedONetDescriptionCount": 13,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Investigate Accident",
+      "linkedONetDescriptionCount": 13,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Lubricate Part",
+      "linkedONetDescriptionCount": 13,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Maintain Machinery",
+      "linkedONetDescriptionCount": 13,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Maintain Procedure",
+      "linkedONetDescriptionCount": 13,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Manage Budget",
+      "linkedONetDescriptionCount": 13,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Monitor Gauge",
+      "linkedONetDescriptionCount": 13,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Patrol Area",
+      "linkedONetDescriptionCount": 13,
+      "ontologyOccurrenceCount": 4
+    },
+    {
+      "title": "Plan Research",
+      "linkedONetDescriptionCount": 13,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Position Workpiece",
+      "linkedONetDescriptionCount": 13,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Prepare Form",
+      "linkedONetDescriptionCount": 13,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Prepare Objective",
+      "linkedONetDescriptionCount": 13,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Prepare Statement",
+      "linkedONetDescriptionCount": 13,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Prepare System (Synonyms: Set_Up System)",
+      "linkedONetDescriptionCount": 13,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Provide Recommendation",
+      "linkedONetDescriptionCount": 13,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Remove Product",
+      "linkedONetDescriptionCount": 13,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Replace Equipment",
+      "linkedONetDescriptionCount": 13,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Review Blueprint",
+      "linkedONetDescriptionCount": 13,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Sell Product",
+      "linkedONetDescriptionCount": 13,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Signal Worker",
+      "linkedONetDescriptionCount": 13,
+      "ontologyOccurrenceCount": 5
+    },
+    {
+      "title": "Sort Material",
+      "linkedONetDescriptionCount": 13,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Tend Equipment",
+      "linkedONetDescriptionCount": 13,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Troubleshoot Problem",
+      "linkedONetDescriptionCount": 13,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Use Material",
+      "linkedONetDescriptionCount": 13,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Administer Aid",
+      "linkedONetDescriptionCount": 12,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Apply Solution",
+      "linkedONetDescriptionCount": 12,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Arrange Service",
+      "linkedONetDescriptionCount": 12,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Assist Food (Synonyms: Serve Food)",
+      "linkedONetDescriptionCount": 12,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Calculate Dimension (Synonyms: Compute Dimension)",
+      "linkedONetDescriptionCount": 12,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Complete Report",
+      "linkedONetDescriptionCount": 12,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Coordinate Service",
+      "linkedONetDescriptionCount": 12,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Create Documentation (Synonyms: Develop Documentation, Produce Documentation)",
+      "linkedONetDescriptionCount": 12,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Create Goal (Synonyms: Develop Goal)",
+      "linkedONetDescriptionCount": 12,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Determine Procedure (Synonyms: Set Procedure)",
+      "linkedONetDescriptionCount": 12,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Determine Type",
+      "linkedONetDescriptionCount": 12,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Develop Product (Synonyms: Produce Product)",
+      "linkedONetDescriptionCount": 12,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Develop Technique",
+      "linkedONetDescriptionCount": 12,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Disinfect Instrument (Synonyms: Sterilize Instrument)",
+      "linkedONetDescriptionCount": 12,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Display Work",
+      "linkedONetDescriptionCount": 12,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Document Result",
+      "linkedONetDescriptionCount": 12,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Enforce Policy",
+      "linkedONetDescriptionCount": 12,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Establish Standard",
+      "linkedONetDescriptionCount": 12,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Evaluate Information",
+      "linkedONetDescriptionCount": 12,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Evaluate System",
+      "linkedONetDescriptionCount": 12,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Fit Part",
+      "linkedONetDescriptionCount": 12,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Gather Datum",
+      "linkedONetDescriptionCount": 12,
+      "ontologyOccurrenceCount": 3
+    },
+    {
+      "title": "Inspect Component",
+      "linkedONetDescriptionCount": 12,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Install Hardware",
+      "linkedONetDescriptionCount": 12,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Install Part",
+      "linkedONetDescriptionCount": 12,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Inventory Material",
+      "linkedONetDescriptionCount": 12,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Keep Informed",
+      "linkedONetDescriptionCount": 12,
+      "ontologyOccurrenceCount": 3
+    },
+    {
+      "title": "Make Change",
+      "linkedONetDescriptionCount": 12,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Measure Effectiveness (Synonyms: Assess Effectiveness, Evaluate Effectiveness)",
+      "linkedONetDescriptionCount": 12,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Measure Level (Synonyms: Assess Level)",
+      "linkedONetDescriptionCount": 12,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Monitor Process",
+      "linkedONetDescriptionCount": 12,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Negotiate Agreement",
+      "linkedONetDescriptionCount": 12,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Order Part",
+      "linkedONetDescriptionCount": 12,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Plan Operation (Synonyms: Organize Operation)",
+      "linkedONetDescriptionCount": 12,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Prepare Chart",
+      "linkedONetDescriptionCount": 12,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Prepare Solution",
+      "linkedONetDescriptionCount": 12,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Prepare Test",
+      "linkedONetDescriptionCount": 12,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Present Finding",
+      "linkedONetDescriptionCount": 12,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Recommend Improvement",
+      "linkedONetDescriptionCount": 12,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Record Number",
+      "linkedONetDescriptionCount": 12,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Refer Client",
+      "linkedONetDescriptionCount": 12,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Remove Workpiece",
+      "linkedONetDescriptionCount": 12,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Report Problem",
+      "linkedONetDescriptionCount": 12,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Shape Material (Synonyms: Form Material)",
+      "linkedONetDescriptionCount": 12,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Signal Operator",
+      "linkedONetDescriptionCount": 12,
+      "ontologyOccurrenceCount": 5
+    },
+    {
+      "title": "Transport Equipment (Synonyms: Transfer Equipment)",
+      "linkedONetDescriptionCount": 12,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Understand Blueprint (Synonyms: Interpret Blueprint)",
+      "linkedONetDescriptionCount": 12,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Use Technology (Synonyms: Apply Technology)",
+      "linkedONetDescriptionCount": 12,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Verify Dimension",
+      "linkedONetDescriptionCount": 12,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Adjust Machine",
+      "linkedONetDescriptionCount": 11,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Align Component",
+      "linkedONetDescriptionCount": 11,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Analyze Order (Synonyms: Examine Order, Study Order)",
+      "linkedONetDescriptionCount": 11,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Analyze Requirement (Synonyms: Study Requirement)",
+      "linkedONetDescriptionCount": 11,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Assess Quality (Synonyms: Evaluate Quality)",
+      "linkedONetDescriptionCount": 11,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Classify Datum (Synonyms: Code Datum, Sort Datum)",
+      "linkedONetDescriptionCount": 11,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Clean Instrument",
+      "linkedONetDescriptionCount": 11,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Clean Surface",
+      "linkedONetDescriptionCount": 11,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Collaborate Professional",
+      "linkedONetDescriptionCount": 11,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Collect Specimen",
+      "linkedONetDescriptionCount": 11,
+      "ontologyOccurrenceCount": 3
+    },
+    {
+      "title": "Conduct Evaluation",
+      "linkedONetDescriptionCount": 11,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Connect Part (Synonyms: Attach Part, Join Part, Reattach Part)",
+      "linkedONetDescriptionCount": 11,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Correct Error",
+      "linkedONetDescriptionCount": 11,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Create Schedule (Synonyms: Develop Schedule)",
+      "linkedONetDescriptionCount": 11,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Design Structure",
+      "linkedONetDescriptionCount": 11,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Develop Application",
+      "linkedONetDescriptionCount": 11,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Diagnose Disorder",
+      "linkedONetDescriptionCount": 11,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Document Activity",
+      "linkedONetDescriptionCount": 11,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Enforce Procedure",
+      "linkedONetDescriptionCount": 11,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Erect Scaffolding (Synonyms: Set_Up Scaffolding)",
+      "linkedONetDescriptionCount": 11,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Establish Goal",
+      "linkedONetDescriptionCount": 11,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Evaluate Design",
+      "linkedONetDescriptionCount": 11,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Evaluate Procedure",
+      "linkedONetDescriptionCount": 11,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Examine Part",
+      "linkedONetDescriptionCount": 11,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Explain Law (Synonyms: Interpret Law)",
+      "linkedONetDescriptionCount": 11,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Grade Test",
+      "linkedONetDescriptionCount": 11,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Implement Measure",
+      "linkedONetDescriptionCount": 11,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Inform Personnel (Synonyms: Notify Personnel)",
+      "linkedONetDescriptionCount": 11,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Maintain Instrument",
+      "linkedONetDescriptionCount": 11,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Measure Part",
+      "linkedONetDescriptionCount": 11,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Meet Guardian",
+      "linkedONetDescriptionCount": 11,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Modify System (Synonyms: Rework System)",
+      "linkedONetDescriptionCount": 11,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Monitor Procedure",
+      "linkedONetDescriptionCount": 11,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Monitor Work",
+      "linkedONetDescriptionCount": 11,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Move Equipment",
+      "linkedONetDescriptionCount": 11,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Operate Control",
+      "linkedONetDescriptionCount": 11,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Perform Check",
+      "linkedONetDescriptionCount": 11,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Position Material",
+      "linkedONetDescriptionCount": 11,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Prepare Information",
+      "linkedONetDescriptionCount": 11,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Prepare Map",
+      "linkedONetDescriptionCount": 11,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Prepare Order",
+      "linkedONetDescriptionCount": 11,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Prepare Sample",
+      "linkedONetDescriptionCount": 11,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Provide Feedback",
+      "linkedONetDescriptionCount": 11,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Read Schedule",
+      "linkedONetDescriptionCount": 11,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Receive Instruction",
+      "linkedONetDescriptionCount": 11,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Recommend Modification",
+      "linkedONetDescriptionCount": 11,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Repair Machinery",
+      "linkedONetDescriptionCount": 11,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Repair Tool",
+      "linkedONetDescriptionCount": 11,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Requisition Material",
+      "linkedONetDescriptionCount": 11,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Review Proposal",
+      "linkedONetDescriptionCount": 11,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Stop Machine",
+      "linkedONetDescriptionCount": 11,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Test Operation",
+      "linkedONetDescriptionCount": 11,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Test Performance",
+      "linkedONetDescriptionCount": 11,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Test Sample",
+      "linkedONetDescriptionCount": 11,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Train Technician",
+      "linkedONetDescriptionCount": 11,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Train User",
+      "linkedONetDescriptionCount": 11,
+      "ontologyOccurrenceCount": 2
+    },
+    {
+      "title": "Transport Patient",
+      "linkedONetDescriptionCount": 11,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Transport Product (Synonyms: Transfer Product)",
+      "linkedONetDescriptionCount": 11,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Treat Condition",
+      "linkedONetDescriptionCount": 11,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Treat Patient (Synonyms: Care_For Patient)",
+      "linkedONetDescriptionCount": 11,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Verify Datum",
+      "linkedONetDescriptionCount": 11,
+      "ontologyOccurrenceCount": 1
+    },
+    {
+      "title": "Weigh Ingredient",
+      "linkedONetDescriptionCount": 11,
+      "ontologyOccurrenceCount": 2
+    }
+  ]
+}

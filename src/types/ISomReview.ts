@@ -453,6 +453,22 @@ export interface SomOverviewResponse {
   canDeliberate: boolean;
   canInspectPriorReview: boolean;
   trustedPropagation?: SomTrustedPropagationAccess;
+  largeCaseInventory?: SomLargeCaseInventory;
+}
+
+export interface SomLargeCaseInventoryRow {
+  title: string;
+  linkedONetDescriptionCount: number;
+}
+
+export interface SomLargeCaseInventory {
+  cutoff: number;
+  cutoffRule: string;
+  uniqueTitleCount: number;
+  ontologyOccurrenceCount: number;
+  repeatedOccurrenceCount: number;
+  maximumLinkedDescriptionCount: number;
+  rows: SomLargeCaseInventoryRow[];
 }
 
 export interface SomReviewRoundOption {

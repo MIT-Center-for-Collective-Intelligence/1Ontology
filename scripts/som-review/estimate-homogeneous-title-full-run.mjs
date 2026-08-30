@@ -55,7 +55,7 @@ const titlePayload = (record) =>
     numberedONetRecords: record.sourceRecords.map((sourceRecord) => ({
       index: sourceRecord.index,
       exactRecord: sourceRecord.exactRecord,
-      otherLinkedAtomicTitles: sourceRecord.otherLinkedAtomicTitles,
+      sameActionLinkedAtomicTitles: sourceRecord.sameActionLinkedAtomicTitles,
     })),
   });
 const wordNetPayload = (bundle) =>
@@ -180,6 +180,47 @@ const totalONetRecords = fullInventory.reduce(
   (total, record) => total + record.evidenceCount,
   0,
 );
+const linkedTitleInputCharacters = fullInventory.reduce(
+  (totals, record) => {
+    for (const sourceRecord of record.sourceRecords) {
+      const allTitles = sourceRecord.otherLinkedAtomicTitles || [];
+      const sameActionTitles = sourceRecord.sameActionLinkedAtomicTitles || [];
+      totals.allText += allTitles.reduce(
+        (total, title) => total + title.length,
+        0,
+      );
+      totals.sameActionText += sameActionTitles.reduce(
+        (total, title) => total + title.length,
+        0,
+      );
+      totals.allSerialized += JSON.stringify(allTitles).length;
+      totals.sameActionSerialized += JSON.stringify(sameActionTitles).length;
+    }
+    return totals;
+  },
+  {
+    allText: 0,
+    sameActionText: 0,
+    allSerialized: 0,
+    sameActionSerialized: 0,
+  },
+);
+const linkedTitleTextReductionPercent = Number(
+  (
+    (1 -
+      linkedTitleInputCharacters.sameActionText /
+        linkedTitleInputCharacters.allText) *
+    100
+  ).toFixed(1),
+);
+const linkedTitleSerializedReductionPercent = Number(
+  (
+    (1 -
+      linkedTitleInputCharacters.sameActionSerialized /
+        linkedTitleInputCharacters.allSerialized) *
+    100
+  ).toFixed(1),
+);
 const homogeneousGroupScenarios = {
   noSplit: fullInventory.length,
   stratifiedPilot: centralHomogeneousGroups,
@@ -282,7 +323,7 @@ const elapsedWallTimeHours = {
 };
 
 const output = {
-  schemaVersion: "homogeneous-title-full-run-estimate-v4",
+  schemaVersion: "homogeneous-title-full-run-estimate-v5",
   generatedAt: new Date().toISOString(),
   sourceFile: path.basename(sourceFile),
   sourceSha256,
@@ -300,6 +341,19 @@ const output = {
       (record) => record.exactTitleOccurrenceCount > 1,
     ).length,
     oNetRecords: totalONetRecords,
+    linkedTitleInputPolicy: {
+      allLinkedTitleTextCharacters: linkedTitleInputCharacters.allText,
+      sameActionLinkedTitleTextCharacters:
+        linkedTitleInputCharacters.sameActionText,
+      titleTextCharacterReductionPercent: linkedTitleTextReductionPercent,
+      allSerializedArrayCharacters: linkedTitleInputCharacters.allSerialized,
+      sameActionSerializedArrayCharacters:
+        linkedTitleInputCharacters.sameActionSerialized,
+      serializedArrayCharacterReductionPercent:
+        linkedTitleSerializedReductionPercent,
+      interpretation:
+        "The model sees only previously represented activities using the current verb or a recorded synonym. All linked titles remain in source provenance.",
+    },
     byStratum: Object.fromEntries(inventoryByStratum),
   },
   sampleBasis: {
@@ -318,18 +372,18 @@ const output = {
       use: "Only serialized candidate-set size is reused. Prior semantic decisions and fallback rates are not extrapolated.",
     },
   },
-  recommendedModelPlan: [
+  conservativePlanningModelPlan: [
     {
-      stages: ["claim-aware homogeneous title grouping"],
+      stages: ["reader-ready homogeneous title grouping"],
       model: "gpt-5.6-terra",
       reasoningEffort: "high",
-      role: "one structured semantic call per atomic-title occurrence",
+      role: "conservative sizing baseline for one structured semantic call per atomic-title occurrence; final model awaits the post-prompt-convergence benchmark",
     },
     {
       stages: ["all-candidate WordNet alignment after title acceptance"],
       model: "gpt-5.6-terra",
       reasoningEffort: "high",
-      role: "one comparison call per accepted homogeneous group after deterministic local candidate retrieval",
+      role: "conservative sizing baseline for one comparison call per accepted homogeneous group after deterministic local candidate retrieval; final model awaits benchmarking",
     },
     {
       stages: [
@@ -364,6 +418,7 @@ const output = {
     "The pilot has no independent human gold labels, blind holdout, repeated model runs, or measured latency. It cannot establish semantic accuracy, reliability, or production duration.",
     "WordNet work begins only after expert acceptance. All candidates are shown in one call to avoid anchoring on the inherited sense demonstrated in Rob's shared Claude dialogue.",
     "Human review time is excluded. No proposal or reviewer response automatically mutates the ontology.",
+    "The named model is a conservative planning baseline, not a production recommendation. In keeping with the reviewer request, lower-cost model benchmarking begins only after the prompt has converged.",
   ],
 };
 
