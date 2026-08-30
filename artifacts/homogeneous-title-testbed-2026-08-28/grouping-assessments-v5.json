@@ -1,0 +1,949 @@
+{
+  "schemaVersion": "homogeneous-title-grouping-assessments-v5",
+  "generatedAt": "2026-08-30T16:24:37.796Z",
+  "sourceFile": "0401_FINALHIERARCHY.json",
+  "sourceSha256": "f19ce789bce298b0564045fb87427eebd1193b89c133d17519c097dc3e0eb319",
+  "sampleFile": "sample-packet-v5.json",
+  "sampleSha256": "d1f149049e367ccbc32999f1fb64f4256db64e7bed26ba057b1c8f7aa9e8a6be",
+  "promptVersion": "access-homogeneous-title-grouping-2026-08-30-v5",
+  "promptSha256": "b0919d42bebcb0775c609371d7b70f15ddc269a5394c4060d1c1e983b3fc7cda",
+  "model": "OpenAI Codex model using the approved ACCESS allocation",
+  "generationMethod": "ACCESS-backed semantic re-review of the same frozen 18 cases under the reader-ready v5 prompt and same-action linked-title inputs; all decisions were re-evaluated rather than automatically relabeled.",
+  "inputPolicy": "Each O*NET description includes only other represented activities whose recorded main verb or accepted synonym matches the current title. Unrelated-action titles remain in source provenance but are not model input.",
+  "assessments": [
+    {
+      "occurrenceId": "atomic-a61bf28bc554d802743f",
+      "groups": [
+        {
+          "title": "Review Programming",
+          "canonicalDirectObject": "Programming",
+          "sourceClaims": [
+            {
+              "sourceTaskIndex": 1,
+              "directObject": "programming",
+              "evidenceQuote": "review programming"
+            }
+          ],
+          "reason": "The title directly describes reviewing programming; monitoring uses a different verb and is outside this review."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "The current title is clear to a non-expert and accurately captures the review claim.",
+      "confidence": "high"
+    },
+    {
+      "occurrenceId": "atomic-ed7f926d6f8a2afe185c",
+      "groups": [
+        {
+          "title": "Outline Pattern",
+          "canonicalDirectObject": "Pattern",
+          "sourceClaims": [
+            {
+              "sourceTaskIndex": 1,
+              "directObject": "patterns",
+              "evidenceQuote": "outline patterns on work pieces"
+            }
+          ],
+          "reason": "The title directly describes outlining patterns; drawing and positioning use different verbs and are outside this review."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "The current title clearly captures the outline claim.",
+      "confidence": "high"
+    },
+    {
+      "occurrenceId": "atomic-4443f0439ebf52a58824",
+      "groups": [
+        {
+          "title": "Document Web Alternative",
+          "canonicalDirectObject": "Web Alternative",
+          "sourceClaims": [
+            {
+              "sourceTaskIndex": 1,
+              "directObject": "alternatives",
+              "evidenceQuote": "document, rate, or select alternatives for Web architecture or technologies"
+            },
+            {
+              "sourceTaskIndex": 2,
+              "directObject": "alternatives",
+              "evidenceQuote": "document, rate, or select alternatives for Web architecture or technologies"
+            }
+          ],
+          "reason": "The trailing phrase limits the alternatives to Web architecture or technology; research, rating, and selection use different verbs."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "The current generic title omits the essential Web restriction stated later in the clause.",
+      "confidence": "high"
+    },
+    {
+      "occurrenceId": "atomic-5ea2fd867a90d0098f88",
+      "groups": [
+        {
+          "title": "Store Audio Data",
+          "canonicalDirectObject": "Audio Data",
+          "sourceClaims": [
+            {
+              "sourceTaskIndex": 1,
+              "directObject": "audio",
+              "evidenceQuote": "store audio and video data"
+            }
+          ],
+          "reason": "Audio data is one explicitly coordinated data subtype and should not be collapsed into the generic data title."
+        },
+        {
+          "title": "Store Video Data",
+          "canonicalDirectObject": "Video Data",
+          "sourceClaims": [
+            {
+              "sourceTaskIndex": 1,
+              "directObject": "video data",
+              "evidenceQuote": "store audio and video data"
+            }
+          ],
+          "reason": "Video data is a distinct explicitly coordinated data subtype."
+        },
+        {
+          "title": "Store Data",
+          "canonicalDirectObject": "Data",
+          "sourceClaims": [
+            {
+              "sourceTaskIndex": 2,
+              "directObject": "data",
+              "evidenceQuote": "Store, retrieve, and manipulate data"
+            },
+            {
+              "sourceTaskIndex": 3,
+              "directObject": "data",
+              "evidenceQuote": "Store, retrieve, and manipulate data"
+            },
+            {
+              "sourceTaskIndex": 4,
+              "directObject": "data",
+              "evidenceQuote": "Store, retrieve, and manipulate data"
+            }
+          ],
+          "reason": "The other records identify only generic data; retrieve and manipulate use different verbs and are outside this review."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "The evidence distinguishes audio data and video data from generic data, so the current singular title is both too broad and grammatically awkward.",
+      "confidence": "high"
+    },
+    {
+      "occurrenceId": "atomic-2859d08d7545509478a7",
+      "groups": [
+        {
+          "title": "Measure Equipment",
+          "canonicalDirectObject": "Equipment",
+          "sourceClaims": [
+            {
+              "sourceTaskIndex": 1,
+              "directObject": "equipment",
+              "evidenceQuote": "measure materials, equipment, or products"
+            },
+            {
+              "sourceTaskIndex": 2,
+              "directObject": "equipment",
+              "evidenceQuote": "Measure and mark equipment, objects, or parts"
+            },
+            {
+              "sourceTaskIndex": 3,
+              "directObject": "equipment",
+              "evidenceQuote": "evaluate workplace environments, equipment, or practices"
+            },
+            {
+              "sourceTaskIndex": 4,
+              "directObject": "equipment",
+              "evidenceQuote": "Evaluate new supplies and equipment"
+            },
+            {
+              "sourceTaskIndex": 5,
+              "directObject": "chemical equipment",
+              "evidenceQuote": "Evaluate chemical equipment and processes"
+            },
+            {
+              "sourceTaskIndex": 6,
+              "directObject": "medical equipment",
+              "evidenceQuote": "Test, evaluate, and classify excess or in-use medical equipment"
+            }
+          ],
+          "reason": "Records 1-6 directly concern equipment; linked titles already represent their other actions or coordinated objects."
+        },
+        {
+          "title": "Measure Equipment Safety",
+          "canonicalDirectObject": "Equipment Safety",
+          "sourceClaims": [
+            {
+              "sourceTaskIndex": 7,
+              "directObject": "safety",
+              "evidenceQuote": "Evaluate the safety, efficiency, and effectiveness of biomedical equipment"
+            }
+          ],
+          "reason": "Safety is a distinct unrepresented evaluation object, with equipment supplying the necessary context."
+        },
+        {
+          "title": "Measure Equipment Efficiency",
+          "canonicalDirectObject": "Equipment Efficiency",
+          "sourceClaims": [
+            {
+              "sourceTaskIndex": 7,
+              "directObject": "efficiency",
+              "evidenceQuote": "Evaluate the safety, efficiency, and effectiveness of biomedical equipment"
+            }
+          ],
+          "reason": "Efficiency is a distinct unrepresented evaluation object, with equipment supplying the necessary context."
+        },
+        {
+          "title": "Measure Equipment Effectiveness",
+          "canonicalDirectObject": "Equipment Effectiveness",
+          "sourceClaims": [
+            {
+              "sourceTaskIndex": 7,
+              "directObject": "effectiveness",
+              "evidenceQuote": "Evaluate the safety, efficiency, and effectiveness of biomedical equipment"
+            }
+          ],
+          "reason": "Effectiveness is a distinct unrepresented evaluation object, with equipment supplying the necessary context."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "Six records support the equipment claim; the seventh explicitly supplies three distinct, previously unrepresented equipment-quality claims.",
+      "confidence": "high"
+    },
+    {
+      "occurrenceId": "atomic-a54b49bd2d355cd32613",
+      "groups": [
+        {
+          "title": "Negotiate Contract",
+          "canonicalDirectObject": "Contract",
+          "sourceClaims": [
+            {
+              "sourceTaskIndex": 1,
+              "directObject": "contracts",
+              "evidenceQuote": "Negotiate contracts with clients"
+            },
+            {
+              "sourceTaskIndex": 2,
+              "directObject": "contracts",
+              "evidenceQuote": "Negotiate, renegotiate, and administer contracts"
+            },
+            {
+              "sourceTaskIndex": 3,
+              "directObject": "contracts",
+              "evidenceQuote": "Negotiate contracts with such service providers and suppliers"
+            },
+            {
+              "sourceTaskIndex": 4,
+              "directObject": "contracts",
+              "evidenceQuote": "Negotiate contracts with farmers"
+            },
+            {
+              "sourceTaskIndex": 5,
+              "directObject": "wind farm contracts",
+              "evidenceQuote": "negotiate, or approve wind farm contracts"
+            },
+            {
+              "sourceTaskIndex": 6,
+              "directObject": "contracts",
+              "evidenceQuote": "Negotiate contracts for services or materials"
+            },
+            {
+              "sourceTaskIndex": 7,
+              "directObject": "contracts",
+              "evidenceQuote": "Negotiate contracts with waste management or other firms"
+            },
+            {
+              "sourceTaskIndex": 8,
+              "directObject": "contracts",
+              "evidenceQuote": "negotiate contracts, royalties, and payments"
+            },
+            {
+              "sourceTaskIndex": 9,
+              "directObject": "contracts",
+              "evidenceQuote": "Negotiate contracts for prearranged funeral services"
+            },
+            {
+              "sourceTaskIndex": 10,
+              "directObject": "details of contracts",
+              "evidenceQuote": "Negotiate details of contracts and payments"
+            },
+            {
+              "sourceTaskIndex": 12,
+              "directObject": "contracts",
+              "evidenceQuote": "negotiate contracts, and place orders"
+            },
+            {
+              "sourceTaskIndex": 13,
+              "directObject": "contracts",
+              "evidenceQuote": "negotiate contracts with actors"
+            },
+            {
+              "sourceTaskIndex": 14,
+              "directObject": "contracts",
+              "evidenceQuote": "Negotiate prices or contracts"
+            },
+            {
+              "sourceTaskIndex": 15,
+              "directObject": "advertising and sales contracts",
+              "evidenceQuote": "negotiate advertising and sales contracts"
+            },
+            {
+              "sourceTaskIndex": 16,
+              "directObject": "contracts",
+              "evidenceQuote": "Negotiate contracts or agreements"
+            },
+            {
+              "sourceTaskIndex": 17,
+              "directObject": "contracts",
+              "evidenceQuote": "Negotiate contracts for transportation, distribution, or logistics services"
+            },
+            {
+              "sourceTaskIndex": 18,
+              "directObject": "contracts",
+              "evidenceQuote": "Negotiate purchases or contracts"
+            },
+            {
+              "sourceTaskIndex": 19,
+              "directObject": "contracts",
+              "evidenceQuote": "Negotiate contracts for environmental remediation, green energy, or renewable resources"
+            },
+            {
+              "sourceTaskIndex": 20,
+              "directObject": "contracts",
+              "evidenceQuote": "Negotiate contracts with clients or service providers"
+            },
+            {
+              "sourceTaskIndex": 21,
+              "directObject": "contracts",
+              "evidenceQuote": "Negotiate or approve contracts or agreements"
+            },
+            {
+              "sourceTaskIndex": 22,
+              "directObject": "contracts",
+              "evidenceQuote": "Negotiate contracts with vendors or distributors"
+            }
+          ],
+          "reason": "These claims all concern negotiating contracts or their details; listed same-verb activities already cover other coordinated negotiated objects."
+        },
+        {
+          "title": "Negotiate Price",
+          "canonicalDirectObject": "Price",
+          "sourceClaims": [
+            {
+              "sourceTaskIndex": 11,
+              "directObject": "prices",
+              "evidenceQuote": "Negotiate with contractors on prices for new contracts or modifications to existing contracts"
+            }
+          ],
+          "reason": "The record explicitly negotiates on prices; new contracts and modifications describe what those prices are for rather than separate negotiated objects."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "Twenty-one records support the contract title; one record supports the existing price title without adding a separate contract-modification claim.",
+      "confidence": "high"
+    },
+    {
+      "occurrenceId": "atomic-1aa2c1f7abf6cf574efd",
+      "groups": [
+        {
+          "title": "Batch Packaging Ticket",
+          "canonicalDirectObject": "Packaging Ticket",
+          "sourceClaims": [
+            {
+              "sourceTaskIndex": 1,
+              "directObject": "packaging tickets",
+              "evidenceQuote": "batch packaging tickets"
+            }
+          ],
+          "reason": "The packaging modifier identifies the specific tickets governed by batch."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "The record supports one uncovered batching claim for packaging tickets.",
+      "confidence": "high"
+    },
+    {
+      "occurrenceId": "atomic-2ab12fbc2f7fd9dfa849",
+      "groups": [
+        {
+          "title": "Use Staple",
+          "canonicalDirectObject": "Staple",
+          "sourceClaims": [
+            {
+              "sourceTaskIndex": 1,
+              "directObject": "staples",
+              "evidenceQuote": "use staples"
+            }
+          ],
+          "reason": "Staples are the only direct object governed by use that is not already represented by another linked title."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "The current title accurately captures the one uncovered use claim.",
+      "confidence": "high"
+    },
+    {
+      "occurrenceId": "atomic-2cac1531f241bb9112cf",
+      "groups": [],
+      "deferredTaskIndexes": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "reason": "The records use material for physically conveyed matter, filing material, bid material, and material to be typed. Treating them as one sense is unsafe, while turning each purpose phrase into a canonical object title would require a policy judgment not supported by this pass.",
+      "confidence": "medium"
+    },
+    {
+      "occurrenceId": "atomic-1aa7265cee80ea6c10a6",
+      "groups": [
+        {
+          "title": "Create Print",
+          "canonicalDirectObject": "Print",
+          "sourceClaims": [
+            {
+              "sourceTaskIndex": 1,
+              "directObject": "prints",
+              "evidenceQuote": "Create prints"
+            }
+          ],
+          "reason": "The first record refers to prints generically."
+        },
+        {
+          "title": "Create Timed Print",
+          "canonicalDirectObject": "Timed Print",
+          "sourceClaims": [
+            {
+              "sourceTaskIndex": 2,
+              "directObject": "timed prints",
+              "evidenceQuote": "Produce timed prints"
+            }
+          ],
+          "reason": "Timed is an explicit modifier of the print and distinguishes the second claim."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "The evidence separates a generic print claim from a specifically timed-print claim.",
+      "confidence": "high"
+    },
+    {
+      "occurrenceId": "atomic-4d2739c0803c967e2c1d",
+      "groups": [
+        {
+          "title": "Collect Animal Specimen",
+          "canonicalDirectObject": "Animal Specimen",
+          "sourceClaims": [
+            {
+              "sourceTaskIndex": 1,
+              "directObject": "animal specimens",
+              "evidenceQuote": "Collect and dissect animal specimens"
+            }
+          ],
+          "reason": "The record explicitly limits the collected specimens to animal specimens."
+        },
+        {
+          "title": "Collect Specimen",
+          "canonicalDirectObject": "Specimen",
+          "sourceClaims": [
+            {
+              "sourceTaskIndex": 2,
+              "directObject": "specimens",
+              "evidenceQuote": "Collect samples or specimens"
+            },
+            {
+              "sourceTaskIndex": 3,
+              "directObject": "specimens",
+              "evidenceQuote": "Collect specimens"
+            },
+            {
+              "sourceTaskIndex": 4,
+              "directObject": "specimens",
+              "evidenceQuote": "Collect specimens from patients"
+            },
+            {
+              "sourceTaskIndex": 5,
+              "directObject": "specimens",
+              "evidenceQuote": "Collect specimens for laboratory tests"
+            },
+            {
+              "sourceTaskIndex": 6,
+              "directObject": "specimens",
+              "evidenceQuote": "Collect specimens, such as urine, feces, or sputum"
+            },
+            {
+              "sourceTaskIndex": 7,
+              "directObject": "specimens",
+              "evidenceQuote": "Collect specimens at specific time intervals"
+            }
+          ],
+          "reason": "These records state specimens generically; purposes, sources, timing, and examples do not create different direct objects."
+        },
+        {
+          "title": "Collect Laboratory Specimen",
+          "canonicalDirectObject": "Laboratory Specimen",
+          "sourceClaims": [
+            {
+              "sourceTaskIndex": 8,
+              "directObject": "laboratory specimens",
+              "evidenceQuote": "Collect blood, tissue, or other laboratory specimens"
+            },
+            {
+              "sourceTaskIndex": 11,
+              "directObject": "laboratory specimens",
+              "evidenceQuote": "Collect laboratory specimens"
+            }
+          ],
+          "reason": "Both records explicitly identify the collected objects as laboratory specimens."
+        },
+        {
+          "title": "Collect Biological Specimen",
+          "canonicalDirectObject": "Biological Specimen",
+          "sourceClaims": [
+            {
+              "sourceTaskIndex": 9,
+              "directObject": "biological specimens",
+              "evidenceQuote": "Collect biological specimens from patients"
+            },
+            {
+              "sourceTaskIndex": 10,
+              "directObject": "biological specimens",
+              "evidenceQuote": "Collect biological specimens"
+            }
+          ],
+          "reason": "Both records explicitly identify the collected objects as biological specimens."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "Explicit object modifiers produce animal, laboratory, and biological specimen groups; the remaining records support the generic specimen title.",
+      "confidence": "high"
+    },
+    {
+      "occurrenceId": "atomic-a0fd3579dc4aa2b564c3",
+      "groups": [
+        {
+          "title": "Acquire Library Supply",
+          "canonicalDirectObject": "Library Supply",
+          "sourceClaims": [
+            {
+              "sourceTaskIndex": 1,
+              "directObject": "library supplies",
+              "evidenceQuote": "Acquire books, pamphlets, periodicals, audio-visual materials, and other library supplies"
+            }
+          ],
+          "reason": "The record explicitly identifies the acquired objects as library supplies."
+        },
+        {
+          "title": "Acquire Supply",
+          "canonicalDirectObject": "Supply",
+          "sourceClaims": [
+            {
+              "sourceTaskIndex": 2,
+              "directObject": "supplies",
+              "evidenceQuote": "Acquire, distribute and store supplies"
+            },
+            {
+              "sourceTaskIndex": 3,
+              "directObject": "supplies",
+              "evidenceQuote": "Acquire, distribute and store supplies"
+            },
+            {
+              "sourceTaskIndex": 4,
+              "directObject": "supplies",
+              "evidenceQuote": "Acquire supplies"
+            },
+            {
+              "sourceTaskIndex": 6,
+              "directObject": "supplies",
+              "evidenceQuote": "obtain materials and supplies"
+            },
+            {
+              "sourceTaskIndex": 7,
+              "directObject": "supplies",
+              "evidenceQuote": "obtain materials and supplies"
+            },
+            {
+              "sourceTaskIndex": 8,
+              "directObject": "supplies",
+              "evidenceQuote": "obtain materials and supplies"
+            },
+            {
+              "sourceTaskIndex": 9,
+              "directObject": "supplies",
+              "evidenceQuote": "obtain materials and supplies"
+            },
+            {
+              "sourceTaskIndex": 10,
+              "directObject": "supplies",
+              "evidenceQuote": "obtain materials and supplies"
+            },
+            {
+              "sourceTaskIndex": 11,
+              "directObject": "supplies",
+              "evidenceQuote": "obtain materials and supplies"
+            },
+            {
+              "sourceTaskIndex": 12,
+              "directObject": "supplies",
+              "evidenceQuote": "obtain materials and supplies"
+            },
+            {
+              "sourceTaskIndex": 13,
+              "directObject": "supplies",
+              "evidenceQuote": "obtain materials and supplies"
+            },
+            {
+              "sourceTaskIndex": 14,
+              "directObject": "supplies",
+              "evidenceQuote": "obtain materials and supplies"
+            },
+            {
+              "sourceTaskIndex": 15,
+              "directObject": "supplies",
+              "evidenceQuote": "obtain materials and supplies"
+            },
+            {
+              "sourceTaskIndex": 16,
+              "directObject": "supplies",
+              "evidenceQuote": "obtain materials and supplies"
+            },
+            {
+              "sourceTaskIndex": 17,
+              "directObject": "supplies",
+              "evidenceQuote": "obtain materials and supplies"
+            },
+            {
+              "sourceTaskIndex": 18,
+              "directObject": "supplies",
+              "evidenceQuote": "obtain materials and supplies"
+            },
+            {
+              "sourceTaskIndex": 19,
+              "directObject": "supplies",
+              "evidenceQuote": "obtain materials and supplies"
+            },
+            {
+              "sourceTaskIndex": 20,
+              "directObject": "supplies",
+              "evidenceQuote": "obtain materials and supplies"
+            },
+            {
+              "sourceTaskIndex": 21,
+              "directObject": "supplies",
+              "evidenceQuote": "obtain materials and supplies"
+            },
+            {
+              "sourceTaskIndex": 22,
+              "directObject": "supplies",
+              "evidenceQuote": "obtain materials and supplies"
+            },
+            {
+              "sourceTaskIndex": 23,
+              "directObject": "supplies",
+              "evidenceQuote": "obtain materials and supplies"
+            },
+            {
+              "sourceTaskIndex": 24,
+              "directObject": "supplies",
+              "evidenceQuote": "obtain materials and supplies"
+            },
+            {
+              "sourceTaskIndex": 25,
+              "directObject": "supplies",
+              "evidenceQuote": "obtain materials and supplies"
+            },
+            {
+              "sourceTaskIndex": 26,
+              "directObject": "supplies",
+              "evidenceQuote": "obtain materials and supplies"
+            },
+            {
+              "sourceTaskIndex": 27,
+              "directObject": "supplies",
+              "evidenceQuote": "obtain materials and supplies"
+            },
+            {
+              "sourceTaskIndex": 28,
+              "directObject": "supplies",
+              "evidenceQuote": "obtain materials and supplies"
+            },
+            {
+              "sourceTaskIndex": 29,
+              "directObject": "supplies",
+              "evidenceQuote": "obtain materials and supplies"
+            },
+            {
+              "sourceTaskIndex": 30,
+              "directObject": "supplies",
+              "evidenceQuote": "obtain materials and supplies"
+            },
+            {
+              "sourceTaskIndex": 31,
+              "directObject": "supplies",
+              "evidenceQuote": "obtain materials and supplies"
+            },
+            {
+              "sourceTaskIndex": 32,
+              "directObject": "supplies",
+              "evidenceQuote": "obtain materials and supplies"
+            },
+            {
+              "sourceTaskIndex": 33,
+              "directObject": "supplies",
+              "evidenceQuote": "obtain materials and supplies"
+            },
+            {
+              "sourceTaskIndex": 34,
+              "directObject": "supplies",
+              "evidenceQuote": "obtain materials and supplies"
+            },
+            {
+              "sourceTaskIndex": 35,
+              "directObject": "supplies",
+              "evidenceQuote": "obtain materials and supplies"
+            },
+            {
+              "sourceTaskIndex": 36,
+              "directObject": "supplies",
+              "evidenceQuote": "obtain materials and supplies"
+            },
+            {
+              "sourceTaskIndex": 37,
+              "directObject": "supplies",
+              "evidenceQuote": "obtain materials and supplies"
+            },
+            {
+              "sourceTaskIndex": 38,
+              "directObject": "supplies",
+              "evidenceQuote": "obtain materials and supplies"
+            }
+          ],
+          "reason": "These records support the generic supply object; separately linked titles already represent equipment and materials where those objects also occur."
+        },
+        {
+          "title": "Acquire Household Supply",
+          "canonicalDirectObject": "Household Supply",
+          "sourceClaims": [
+            {
+              "sourceTaskIndex": 5,
+              "directObject": "household supplies",
+              "evidenceQuote": "obtaining household supplies"
+            }
+          ],
+          "reason": "The household modifier explicitly identifies the acquired supplies."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "The records support one generic supply group and two minimally modified groups for library and household supplies; linked titles already cover other current-action objects.",
+      "confidence": "high"
+    },
+    {
+      "occurrenceId": "atomic-7e2902dd1801393141f9",
+      "groups": [
+        {
+          "title": "Patrol Railroad Car",
+          "canonicalDirectObject": "Railroad Car",
+          "sourceClaims": [
+            {
+              "sourceTaskIndex": 1,
+              "directObject": "cars",
+              "evidenceQuote": "Patrol railroad yards, cars, stations, or other facilities"
+            }
+          ],
+          "reason": "The shared railroad modifier identifies the cars as railroad cars; the other coordinated railroad objects already have linked patrol titles."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "The current generic car title omits the meaning-defining railroad modifier supplied by the only record.",
+      "confidence": "high"
+    },
+    {
+      "occurrenceId": "atomic-c98fde62701a8ea52c02",
+      "groups": [
+        {
+          "title": "Teach Astrophysics",
+          "canonicalDirectObject": "Astrophysics",
+          "sourceClaims": [
+            {
+              "sourceTaskIndex": 1,
+              "directObject": "astrophysics",
+              "evidenceQuote": "Teach astronomy or astrophysics"
+            }
+          ],
+          "reason": "Astrophysics is the unrepresented direct object; astronomy already has another linked title."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "The current title accurately represents the remaining teaching claim.",
+      "confidence": "high"
+    },
+    {
+      "occurrenceId": "atomic-1099bfaffac32dca10e4",
+      "groups": [
+        {
+          "title": "Stock Serving Area",
+          "canonicalDirectObject": "Serving Area",
+          "sourceClaims": [
+            {
+              "sourceTaskIndex": 1,
+              "directObject": "serving areas",
+              "evidenceQuote": "Stock cabinets or serving areas with condiments"
+            }
+          ],
+          "reason": "Serving is the smallest source-supported modifier distinguishing this area; cabinets already have another linked title."
+        },
+        {
+          "title": "Stock Dining Area",
+          "canonicalDirectObject": "Dining Area",
+          "sourceClaims": [
+            {
+              "sourceTaskIndex": 2,
+              "directObject": "dining areas",
+              "evidenceQuote": "Stock serving stations or dining areas with food or supplies"
+            }
+          ],
+          "reason": "Dining is the smallest source-supported modifier distinguishing this area; serving stations already have another linked title."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "The two records supply distinct unrepresented area objects that require separate minimally modified titles.",
+      "confidence": "high"
+    },
+    {
+      "occurrenceId": "atomic-3ff5239b88576c658e83",
+      "groups": [
+        {
+          "title": "Coordinate Care",
+          "canonicalDirectObject": "Care",
+          "sourceClaims": [
+            {
+              "sourceTaskIndex": 1,
+              "directObject": "care of patients",
+              "evidenceQuote": "Coordinate the care of patients"
+            },
+            {
+              "sourceTaskIndex": 2,
+              "directObject": "client or patient care",
+              "evidenceQuote": "coordinate client or patient care and rehabilitation"
+            }
+          ],
+          "reason": "Both records contain care as the direct-object category, so the current title remains sufficiently informative."
+        },
+        {
+          "title": "Coordinate Rehabilitation",
+          "canonicalDirectObject": "Rehabilitation",
+          "sourceClaims": [
+            {
+              "sourceTaskIndex": 2,
+              "directObject": "rehabilitation",
+              "evidenceQuote": "coordinate client or patient care and rehabilitation"
+            }
+          ],
+          "reason": "The second record explicitly coordinates rehabilitation as a distinct direct object, and no other linked title represents that claim."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "The care claims consolidate under the current title, while rehabilitation requires one additional atomic title.",
+      "confidence": "high"
+    },
+    {
+      "occurrenceId": "atomic-87939a970da50054a476",
+      "groups": [
+        {
+          "title": "Open Valve",
+          "canonicalDirectObject": "Valve",
+          "sourceClaims": [
+            {
+              "sourceTaskIndex": 1,
+              "directObject": "valves",
+              "evidenceQuote": "Open valves, gates, or chutes"
+            },
+            {
+              "sourceTaskIndex": 2,
+              "directObject": "valves",
+              "evidenceQuote": "Open and close valves and switches"
+            },
+            {
+              "sourceTaskIndex": 3,
+              "directObject": "valves",
+              "evidenceQuote": "Open valves or start pumps"
+            },
+            {
+              "sourceTaskIndex": 4,
+              "directObject": "valves",
+              "evidenceQuote": "open valves and start pumps"
+            },
+            {
+              "sourceTaskIndex": 5,
+              "directObject": "valves",
+              "evidenceQuote": "open valves to drain slurry"
+            },
+            {
+              "sourceTaskIndex": 6,
+              "directObject": "valves",
+              "evidenceQuote": "open valves or use automated equipment"
+            },
+            {
+              "sourceTaskIndex": 7,
+              "directObject": "valves",
+              "evidenceQuote": "Open valves to return compressed gas"
+            }
+          ],
+          "reason": "Every record explicitly contains the same valve-opening claim; other actions and direct objects are either separately linked or outside this title."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "reason": "All seven records consolidate under the current accurate title.",
+      "confidence": "high"
+    },
+    {
+      "occurrenceId": "atomic-4f52482235e5285a25a1",
+      "groups": [],
+      "deferredTaskIndexes": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39,
+        40,
+        41
+      ],
+      "reason": "Keep abreast is an idiomatic predicate in these records: abreast is not a direct object governed by Keep, and the procedure cannot create a valid action-direct-object title while preserving the required leading action without guessing.",
+      "confidence": "high"
+    }
+  ]
+}

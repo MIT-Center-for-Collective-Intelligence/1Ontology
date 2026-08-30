@@ -1,0 +1,2217 @@
+{
+  "schemaVersion": "homogeneous-title-testbed-sample-v5",
+  "generatedAt": "2026-08-30T16:23:44.107Z",
+  "sourceFile": "0401_FINALHIERARCHY.json",
+  "sourceSha256": "f19ce789bce298b0564045fb87427eebd1193b89c133d17519c097dc3e0eb319",
+  "seed": "rob-homogeneous-title-testbed-2026-08-28-v1",
+  "selectionRule": "Two expert-disagreement regressions, Document Alternative and Store Datum, are included first in their shared information/small-multi stratum. Remaining positions use deterministic hash order within every top-level branch and evidence-count bucket: two single-record, two 2-5-record, one 6-20-record, and one 21+-record occurrence per branch. At most one repeated-title occurrence is otherwise prioritized in each stratum.",
+  "inventoryCounts": {
+    "atomicActivityOccurrences": 20491,
+    "uniqueTitleCount": 15994,
+    "singleOccurrenceTitleCount": 11992,
+    "repeatedTitleOccurrenceCount": 8499
+  },
+  "genericActionDiagnostic": {
+    "rule": "Flag exact leading actions Act and Perform for a separate review after title grouping and WordNet alignment.",
+    "occurrenceCount": 147,
+    "uniqueTitleCount": 135,
+    "examples": [
+      "Act Inquiry",
+      "Act Instruction",
+      "Act Witness",
+      "Perform Action (Synonyms: Execute Action, Take Action)",
+      "Perform Activity (Synonyms: Engage Activity, Execute Activity)",
+      "Perform Adjustment (Synonyms: Make Adjustment)",
+      "Perform Aid",
+      "Perform Analysis",
+      "Perform Angiography",
+      "Perform Application",
+      "Perform Assembly",
+      "Perform Assessment",
+      "Perform Assignment",
+      "Perform Audit",
+      "Perform Autopsy",
+      "Perform Backup",
+      "Perform Biopsy",
+      "Perform Brachytherapy",
+      "Perform Calculation",
+      "Perform Care"
+    ]
+  },
+  "sample": [
+    {
+      "occurrenceId": "atomic-a61bf28bc554d802743f",
+      "exactTitle": "Review Programming",
+      "normalizedTitle": "review programming",
+      "leadingAction": "Review",
+      "recordedActionAliases": [
+        "review"
+      ],
+      "ownerTitle": "Review (Review.v.01, Review.v.02)",
+      "assignedSynsetIds": [
+        "review.v.01",
+        "review.v.02"
+      ],
+      "path": [
+        "Act",
+        "Act on information (“Think”)",
+        "Transfer information",
+        "Get information (Get.v.01, Obtain.v.01, Procure.v.01)",
+        "Evaluate (Evaluate.v.02)",
+        "Review (Review.v.01, Review.v.02)",
+        "Review (Information)",
+        "Review Programming"
+      ],
+      "parentTitle": "Review (Information)",
+      "topLevelBranch": "Act on information (“Think”)",
+      "evidenceBucket": "single",
+      "evidenceCount": 1,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "7663",
+          "exactRecord": "(O*Net) 7663 - Monitor and review programming to ensure that schedules are met, guidelines are adhered to, and performances are of adequate quality.",
+          "task": "Monitor and review programming to ensure that schedules are met, guidelines are adhered to, and performances are of adequate quality.",
+          "otherLinkedAtomicTitles": [
+            "Monitor Programming"
+          ],
+          "sameActionLinkedAtomicTitles": []
+        }
+      ],
+      "exactTitleOccurrenceCount": 2,
+      "sampleIndex": 1
+    },
+    {
+      "occurrenceId": "atomic-ed7f926d6f8a2afe185c",
+      "exactTitle": "Outline Pattern",
+      "normalizedTitle": "outline pattern",
+      "leadingAction": "Outline",
+      "recordedActionAliases": [
+        "outline"
+      ],
+      "ownerTitle": "Delineate (Delineate.v.03)",
+      "assignedSynsetIds": [
+        "delineate.v.03"
+      ],
+      "path": [
+        "Act",
+        "Act on information (“Think”)",
+        "Create information (Develop.v.01, Generate.v.01, Make.v.03)",
+        "Express information",
+        "Record (Record.v.01)",
+        "Create static image",
+        "Draw (drawing) (Draw.v.04, Draw.v.06)",
+        "Delineate (Delineate.v.03)",
+        "Delineate (Information)",
+        "Outline Pattern"
+      ],
+      "parentTitle": "Delineate (Information)",
+      "topLevelBranch": "Act on information (“Think”)",
+      "evidenceBucket": "single",
+      "evidenceCount": 1,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "14083",
+          "exactRecord": "(O*Net) 14083 - Draw patterns, using measurements, designs, plaster casts, or customer specifications, and position or outline patterns on work pieces.",
+          "task": "Draw patterns, using measurements, designs, plaster casts, or customer specifications, and position or outline patterns on work pieces.",
+          "otherLinkedAtomicTitles": [
+            "Draw Pattern (Synonyms: Trace Pattern)",
+            "Lay Pattern (Synonyms: Position Pattern)"
+          ],
+          "sameActionLinkedAtomicTitles": []
+        }
+      ],
+      "exactTitleOccurrenceCount": 1,
+      "sampleIndex": 2
+    },
+    {
+      "occurrenceId": "atomic-4443f0439ebf52a58824",
+      "exactTitle": "Document Alternative",
+      "normalizedTitle": "document alternative",
+      "leadingAction": "Document",
+      "recordedActionAliases": [
+        "document"
+      ],
+      "ownerTitle": "Document (Document.v.01, Inventory.v.01, Keep.v.08, Log.v.01, Register.v.01)",
+      "assignedSynsetIds": [
+        "document.v.01",
+        "inventory.v.01",
+        "keep.v.08",
+        "log.v.01",
+        "register.v.01"
+      ],
+      "path": [
+        "Act",
+        "Act on information (“Think”)",
+        "Create information (Develop.v.01, Generate.v.01, Make.v.03)",
+        "Express information",
+        "Record (Record.v.01)",
+        "Document (Document.v.01, Inventory.v.01, Keep.v.08, Log.v.01, Register.v.01)",
+        "Document (Information)",
+        "Document Alternative"
+      ],
+      "parentTitle": "Document (Information)",
+      "topLevelBranch": "Act on information (“Think”)",
+      "evidenceBucket": "small-multi",
+      "evidenceCount": 2,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "14727",
+          "exactRecord": "(O*Net) 14727 - Research, document, rate, or select alternatives for Web architecture or technologies.",
+          "task": "Research, document, rate, or select alternatives for Web architecture or technologies.",
+          "otherLinkedAtomicTitles": [
+            "Rate Alternative",
+            "Research Alternative",
+            "Select Alternative"
+          ],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 2,
+          "oNetId": "21710",
+          "exactRecord": "(O*Net) 21710 - Research, document, rate, or select alternatives for Web architecture or technologies.",
+          "task": "Research, document, rate, or select alternatives for Web architecture or technologies.",
+          "otherLinkedAtomicTitles": [
+            "Rate Alternative",
+            "Research Alternative",
+            "Select Alternative"
+          ],
+          "sameActionLinkedAtomicTitles": []
+        }
+      ],
+      "exactTitleOccurrenceCount": 1,
+      "sampleIndex": 3
+    },
+    {
+      "occurrenceId": "atomic-5ea2fd867a90d0098f88",
+      "exactTitle": "Store Datum",
+      "normalizedTitle": "store datum",
+      "leadingAction": "Store",
+      "recordedActionAliases": [
+        "store"
+      ],
+      "ownerTitle": "Store information (Conserve.v.02, Store.v.01, Store.v.02)",
+      "assignedSynsetIds": [
+        "conserve.v.02",
+        "store.v.01",
+        "store.v.02"
+      ],
+      "path": [
+        "Act",
+        "Act on information (“Think”)",
+        "Store information (Conserve.v.02, Store.v.01, Store.v.02)",
+        "Store (Information)",
+        "Store Datum"
+      ],
+      "parentTitle": "Store (Information)",
+      "topLevelBranch": "Act on information (“Think”)",
+      "evidenceBucket": "small-multi",
+      "evidenceCount": 4,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "3990",
+          "exactRecord": "(O*Net) 3990 - Compress, digitize, duplicate, and store audio and video data.",
+          "task": "Compress, digitize, duplicate, and store audio and video data.",
+          "otherLinkedAtomicTitles": [
+            "Compress Datum",
+            "Digitize Datum",
+            "Duplicate Datum"
+          ],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 2,
+          "oNetId": "7401",
+          "exactRecord": "(O*Net) 7401 - Store, retrieve, and manipulate data for analysis of system capabilities and requirements.",
+          "task": "Store, retrieve, and manipulate data for analysis of system capabilities and requirements.",
+          "otherLinkedAtomicTitles": [
+            "Manipulate Datum",
+            "Recover Datum (Synonyms: Retrieve Datum)"
+          ],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 3,
+          "oNetId": "21682",
+          "exactRecord": "(O*Net) 21682 - Store, retrieve, and manipulate data for analysis of system capabilities and requirements.",
+          "task": "Store, retrieve, and manipulate data for analysis of system capabilities and requirements.",
+          "otherLinkedAtomicTitles": [
+            "Manipulate Datum",
+            "Recover Datum (Synonyms: Retrieve Datum)"
+          ],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 4,
+          "oNetId": "21676",
+          "exactRecord": "(O*Net) 21676 - Store, retrieve, and manipulate data for analysis of system capabilities and requirements.",
+          "task": "Store, retrieve, and manipulate data for analysis of system capabilities and requirements.",
+          "otherLinkedAtomicTitles": [
+            "Manipulate Datum",
+            "Recover Datum (Synonyms: Retrieve Datum)"
+          ],
+          "sameActionLinkedAtomicTitles": []
+        }
+      ],
+      "exactTitleOccurrenceCount": 1,
+      "sampleIndex": 4
+    },
+    {
+      "occurrenceId": "atomic-2859d08d7545509478a7",
+      "exactTitle": "Measure Equipment (Synonyms: Evaluate Equipment)",
+      "normalizedTitle": "measure equipment",
+      "leadingAction": "Measure",
+      "recordedActionAliases": [
+        "measure",
+        "evaluate"
+      ],
+      "ownerTitle": "Measure (Measure.v.04, Quantify.v.02)",
+      "assignedSynsetIds": [
+        "measure.v.04",
+        "quantify.v.02"
+      ],
+      "path": [
+        "Act",
+        "Act on information (“Think”)",
+        "Transfer information",
+        "Get information (Get.v.01, Obtain.v.01, Procure.v.01)",
+        "Evaluate (Evaluate.v.02)",
+        "Measure (Measure.v.04, Quantify.v.02)",
+        "Measure (Physical Object)",
+        "Measure Equipment (Synonyms: Evaluate Equipment)"
+      ],
+      "parentTitle": "Measure (Physical Object)",
+      "topLevelBranch": "Act on information (“Think”)",
+      "evidenceBucket": "medium-multi",
+      "evidenceCount": 7,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "11383",
+          "exactRecord": "(O*Net) 11383 - Weigh or measure materials, equipment, or products to maintain relevant records, using volume meters, scales, rules, or calipers.",
+          "task": "Weigh or measure materials, equipment, or products to maintain relevant records, using volume meters, scales, rules, or calipers.",
+          "otherLinkedAtomicTitles": [
+            "Measure Material (Synonyms: Assess Material)",
+            "Measure Product (Synonyms: Evaluate Product)",
+            "Weigh Equipment",
+            "Weigh Material",
+            "Weigh Product"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Measure Material (Synonyms: Assess Material)",
+            "Measure Product (Synonyms: Evaluate Product)"
+          ]
+        },
+        {
+          "index": 2,
+          "oNetId": "14333",
+          "exactRecord": "(O*Net) 14333 - Measure and mark equipment, objects, or parts to ensure grinding and polishing standards are met.",
+          "task": "Measure and mark equipment, objects, or parts to ensure grinding and polishing standards are met.",
+          "otherLinkedAtomicTitles": [
+            "Mark Equipment",
+            "Mark Object",
+            "Mark Part",
+            "Measure Object",
+            "Measure Part"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Measure Object",
+            "Measure Part"
+          ]
+        },
+        {
+          "index": 3,
+          "oNetId": "11067",
+          "exactRecord": "(O*Net) 11067 - Inspect or evaluate workplace environments, equipment, or practices to ensure compliance with safety standards and government regulations.",
+          "task": "Inspect or evaluate workplace environments, equipment, or practices to ensure compliance with safety standards and government regulations.",
+          "otherLinkedAtomicTitles": [
+            "Evaluate Environment",
+            "Evaluate Practice",
+            "Inspect Environment",
+            "Inspect Equipment",
+            "Inspect Practice"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Evaluate Environment",
+            "Evaluate Practice"
+          ]
+        },
+        {
+          "index": 4,
+          "oNetId": "16798",
+          "exactRecord": "(O*Net) 16798 - Evaluate new supplies and equipment to ensure operability in specific laboratory settings.",
+          "task": "Evaluate new supplies and equipment to ensure operability in specific laboratory settings.",
+          "otherLinkedAtomicTitles": [
+            "Evaluate Supply"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Evaluate Supply"
+          ]
+        },
+        {
+          "index": 5,
+          "oNetId": "18472",
+          "exactRecord": "(O*Net) 18472 - Evaluate chemical equipment and processes to identify ways to optimize performance or to ensure compliance with safety and environmental regulations.",
+          "task": "Evaluate chemical equipment and processes to identify ways to optimize performance or to ensure compliance with safety and environmental regulations.",
+          "otherLinkedAtomicTitles": [
+            "Assess Process (Synonyms: Evaluate Process)"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Assess Process (Synonyms: Evaluate Process)"
+          ]
+        },
+        {
+          "index": 6,
+          "oNetId": "3071",
+          "exactRecord": "(O*Net) 3071 - Test, evaluate, and classify excess or in-use medical equipment and determine serviceability, condition, and disposition, in accordance with regulations.",
+          "task": "Test, evaluate, and classify excess or in-use medical equipment and determine serviceability, condition, and disposition, in accordance with regulations.",
+          "otherLinkedAtomicTitles": [
+            "Classify Equipment",
+            "Determine Condition (Synonyms: Check Condition)",
+            "Determine Disposition",
+            "Determine Serviceability",
+            "Test Equipment"
+          ],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 7,
+          "oNetId": "8968",
+          "exactRecord": "(O*Net) 8968 - Evaluate the safety, efficiency, and effectiveness of biomedical equipment.",
+          "task": "Evaluate the safety, efficiency, and effectiveness of biomedical equipment.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        }
+      ],
+      "exactTitleOccurrenceCount": 2,
+      "sampleIndex": 5
+    },
+    {
+      "occurrenceId": "atomic-a54b49bd2d355cd32613",
+      "exactTitle": "Negotiate Contract",
+      "normalizedTitle": "negotiate contract",
+      "leadingAction": "Negotiate",
+      "recordedActionAliases": [
+        "negotiate"
+      ],
+      "ownerTitle": "Negotiate (Negociate.v.06)",
+      "assignedSynsetIds": [
+        "negociate.v.06"
+      ],
+      "path": [
+        "Act",
+        "Act on information (“Think”)",
+        "Transfer information",
+        "Exchange information (Change.v.06)",
+        "Negotiate (Negociate.v.06)",
+        "Negotiate (Information)",
+        "Negotiate Contract"
+      ],
+      "parentTitle": "Negotiate (Information)",
+      "topLevelBranch": "Act on information (“Think”)",
+      "evidenceBucket": "large",
+      "evidenceCount": 22,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "108",
+          "exactRecord": "(O*Net) 108 - Negotiate contracts with clients for desired training outcomes, fees, or expenses.",
+          "task": "Negotiate contracts with clients for desired training outcomes, fees, or expenses.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 2,
+          "oNetId": "1147",
+          "exactRecord": "(O*Net) 1147 - Negotiate, renegotiate, and administer contracts with suppliers, vendors, and other representatives.",
+          "task": "Negotiate, renegotiate, and administer contracts with suppliers, vendors, and other representatives.",
+          "otherLinkedAtomicTitles": [
+            "Administer Contract",
+            "Renegotiate Contract"
+          ],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 3,
+          "oNetId": "1219",
+          "exactRecord": "(O*Net) 1219 - Negotiate contracts with such service providers and suppliers as hotels, convention centers, and speakers.",
+          "task": "Negotiate contracts with such service providers and suppliers as hotels, convention centers, and speakers.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 4,
+          "oNetId": "12879",
+          "exactRecord": "(O*Net) 12879 - Negotiate contracts with farmers for the production or purchase of farm products.",
+          "task": "Negotiate contracts with farmers for the production or purchase of farm products.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 5,
+          "oNetId": "15814",
+          "exactRecord": "(O*Net) 15814 - Review, negotiate, or approve wind farm contracts.",
+          "task": "Review, negotiate, or approve wind farm contracts.",
+          "otherLinkedAtomicTitles": [
+            "Approve Contract",
+            "Review Contract"
+          ],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 6,
+          "oNetId": "15844",
+          "exactRecord": "(O*Net) 15844 - Negotiate contracts for services or materials needed for environmental remediation.",
+          "task": "Negotiate contracts for services or materials needed for environmental remediation.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 7,
+          "oNetId": "17899",
+          "exactRecord": "(O*Net) 17899 - Negotiate contracts with waste management or other firms.",
+          "task": "Negotiate contracts with waste management or other firms.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 8,
+          "oNetId": "1792",
+          "exactRecord": "(O*Net) 1792 - Interview and hire writers and reporters or negotiate contracts, royalties, and payments for authors or freelancers.",
+          "task": "Interview and hire writers and reporters or negotiate contracts, royalties, and payments for authors or freelancers.",
+          "otherLinkedAtomicTitles": [
+            "Hire Reporter",
+            "Hire Writer",
+            "Interview Reporter",
+            "Interview Writer",
+            "Negotiate Payment",
+            "Negotiate Royalty"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Negotiate Payment",
+            "Negotiate Royalty"
+          ]
+        },
+        {
+          "index": 9,
+          "oNetId": "18836",
+          "exactRecord": "(O*Net) 18836 - Negotiate contracts for prearranged funeral services.",
+          "task": "Negotiate contracts for prearranged funeral services.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 10,
+          "oNetId": "20268",
+          "exactRecord": "(O*Net) 20268 - Negotiate details of contracts and payments.",
+          "task": "Negotiate details of contracts and payments.",
+          "otherLinkedAtomicTitles": [
+            "Negotiate Payment"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Negotiate Payment"
+          ]
+        },
+        {
+          "index": 11,
+          "oNetId": "20966",
+          "exactRecord": "(O*Net) 20966 - Negotiate with contractors on prices for new contracts or modifications to existing contracts.",
+          "task": "Negotiate with contractors on prices for new contracts or modifications to existing contracts.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 12,
+          "oNetId": "22429",
+          "exactRecord": "(O*Net) 22429 - Evaluate vendor products and performance, negotiate contracts, and place orders.",
+          "task": "Evaluate vendor products and performance, negotiate contracts, and place orders.",
+          "otherLinkedAtomicTitles": [
+            "Measure Performance (Synonyms: Assess Performance, Evaluate Performance)",
+            "Measure Product (Synonyms: Evaluate Product)",
+            "Place Order"
+          ],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 13,
+          "oNetId": "22542",
+          "exactRecord": "(O*Net) 22542 - Hold auditions for parts or negotiate contracts with actors determined suitable for specific roles.",
+          "task": "Hold auditions for parts or negotiate contracts with actors determined suitable for specific roles.",
+          "otherLinkedAtomicTitles": [
+            "Hold Audition"
+          ],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 14,
+          "oNetId": "23218",
+          "exactRecord": "(O*Net) 23218 - Negotiate prices or contracts for securities or commodities sales or purchases.",
+          "task": "Negotiate prices or contracts for securities or commodities sales or purchases.",
+          "otherLinkedAtomicTitles": [
+            "Negotiate Price"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Negotiate Price"
+          ]
+        },
+        {
+          "index": 15,
+          "oNetId": "3228",
+          "exactRecord": "(O*Net) 3228 - Prepare and negotiate advertising and sales contracts.",
+          "task": "Prepare and negotiate advertising and sales contracts.",
+          "otherLinkedAtomicTitles": [
+            "Prepare Contract"
+          ],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 16,
+          "oNetId": "4.A.4.a.7.I02",
+          "exactRecord": "(O*Net) 4.A.4.a.7.I02 - Negotiate contracts or agreements.",
+          "task": "Negotiate contracts or agreements.",
+          "otherLinkedAtomicTitles": [
+            "Negotiate Agreement"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Negotiate Agreement"
+          ]
+        },
+        {
+          "index": 17,
+          "oNetId": "4.A.4.a.7.I02.D04",
+          "exactRecord": "(O*Net) 4.A.4.a.7.I02.D04 - Negotiate contracts for transportation, distribution, or logistics services.",
+          "task": "Negotiate contracts for transportation, distribution, or logistics services.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 18,
+          "oNetId": "4.A.4.a.7.I02.D05",
+          "exactRecord": "(O*Net) 4.A.4.a.7.I02.D05 - Negotiate purchases or contracts.",
+          "task": "Negotiate purchases or contracts.",
+          "otherLinkedAtomicTitles": [
+            "Negotiate Purchase"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Negotiate Purchase"
+          ]
+        },
+        {
+          "index": 19,
+          "oNetId": "4.A.4.a.7.I02.D08",
+          "exactRecord": "(O*Net) 4.A.4.a.7.I02.D08 - Negotiate contracts for environmental remediation, green energy, or renewable resources.",
+          "task": "Negotiate contracts for environmental remediation, green energy, or renewable resources.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 20,
+          "oNetId": "4.A.4.a.7.I02.D10",
+          "exactRecord": "(O*Net) 4.A.4.a.7.I02.D10 - Negotiate contracts with clients or service providers.",
+          "task": "Negotiate contracts with clients or service providers.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 21,
+          "oNetId": "8829",
+          "exactRecord": "(O*Net) 8829 - Negotiate or approve contracts or agreements with suppliers, distributors, federal or state agencies, or other organizational entities.",
+          "task": "Negotiate or approve contracts or agreements with suppliers, distributors, federal or state agencies, or other organizational entities.",
+          "otherLinkedAtomicTitles": [
+            "Approve Agreement",
+            "Approve Contract",
+            "Negotiate Agreement"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Negotiate Agreement"
+          ]
+        },
+        {
+          "index": 22,
+          "oNetId": "955",
+          "exactRecord": "(O*Net) 955 - Negotiate contracts with vendors or distributors to manage product distribution, establishing distribution networks or developing distribution strategies.",
+          "task": "Negotiate contracts with vendors or distributors to manage product distribution, establishing distribution networks or developing distribution strategies.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        }
+      ],
+      "exactTitleOccurrenceCount": 2,
+      "sampleIndex": 6
+    },
+    {
+      "occurrenceId": "atomic-1aa2c1f7abf6cf574efd",
+      "exactTitle": "Batch Ticket",
+      "normalizedTitle": "batch ticket",
+      "leadingAction": "Batch",
+      "recordedActionAliases": [
+        "batch"
+      ],
+      "ownerTitle": "Bundle (Batch.v.01, Bunch.v.02)",
+      "assignedSynsetIds": [
+        "batch.v.01",
+        "bunch.v.02"
+      ],
+      "path": [
+        "Act",
+        "Act on physical objects (“Do”)",
+        "Transfer physical objects",
+        "Get physical objects (Get.v.01, Obtain.v.01, Procure.v.01)",
+        "Gather (physical) (Gather.v.01)",
+        "Bundle (Batch.v.01, Bunch.v.02)",
+        "Bundle (Physical Object)",
+        "Batch Ticket"
+      ],
+      "parentTitle": "Bundle (Physical Object)",
+      "topLevelBranch": "Act on physical objects (“Do”)",
+      "evidenceBucket": "single",
+      "evidenceCount": 1,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "10777",
+          "exactRecord": "(O*Net) 10777 - Inspect bundle packaging for conformance to regulations or customer requirements, and remove and batch packaging tickets.",
+          "task": "Inspect bundle packaging for conformance to regulations or customer requirements, and remove and batch packaging tickets.",
+          "otherLinkedAtomicTitles": [
+            "Inspect Packaging",
+            "Remove Ticket"
+          ],
+          "sameActionLinkedAtomicTitles": []
+        }
+      ],
+      "exactTitleOccurrenceCount": 3,
+      "sampleIndex": 7
+    },
+    {
+      "occurrenceId": "atomic-2ab12fbc2f7fd9dfa849",
+      "exactTitle": "Use Staple",
+      "normalizedTitle": "use staple",
+      "leadingAction": "Use",
+      "recordedActionAliases": [
+        "use"
+      ],
+      "ownerTitle": "Apply (physical) (Put_on.v.07)",
+      "assignedSynsetIds": [
+        "put_on.v.07"
+      ],
+      "path": [
+        "Act",
+        "Act on physical objects (“Do”)",
+        "Modify physical objects",
+        "Combine physical objects (Create_from_raw_material.v.01)",
+        "Cover (Cover.v.01)",
+        "Apply (physical) (Put_on.v.07)",
+        "Apply (physical) (Physical Object)",
+        "Use Staple"
+      ],
+      "parentTitle": "Apply (physical) (Physical Object)",
+      "topLevelBranch": "Act on physical objects (“Do”)",
+      "evidenceBucket": "single",
+      "evidenceCount": 1,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "2838",
+          "exactRecord": "(O*Net) 2838 - Stretch carpet to align with walls and ensure a smooth surface, and press carpet in place over tack strips or use staples, tape, tacks or glue to hold carpet in place.",
+          "task": "Stretch carpet to align with walls and ensure a smooth surface, and press carpet in place over tack strips or use staples, tape, tacks or glue to hold carpet in place.",
+          "otherLinkedAtomicTitles": [
+            "Apply Glue (Synonyms: Use Glue)",
+            "Press Carpet",
+            "Stretch Carpet",
+            "Use Tack",
+            "Use Tape"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Apply Glue (Synonyms: Use Glue)",
+            "Use Tack",
+            "Use Tape"
+          ]
+        }
+      ],
+      "exactTitleOccurrenceCount": 1,
+      "sampleIndex": 8
+    },
+    {
+      "occurrenceId": "atomic-2cac1531f241bb9112cf",
+      "exactTitle": "Gather Material",
+      "normalizedTitle": "gather material",
+      "leadingAction": "Gather",
+      "recordedActionAliases": [
+        "gather"
+      ],
+      "ownerTitle": "Gather (physical) (Gather.v.01)",
+      "assignedSynsetIds": [
+        "gather.v.01"
+      ],
+      "path": [
+        "Act",
+        "Act on physical objects (“Do”)",
+        "Transfer physical objects",
+        "Get physical objects (Get.v.01, Obtain.v.01, Procure.v.01)",
+        "Gather (physical) (Gather.v.01)",
+        "Gather (physical) (Physical Object)",
+        "Gather Material"
+      ],
+      "parentTitle": "Gather (physical) (Physical Object)",
+      "topLevelBranch": "Act on physical objects (“Do”)",
+      "evidenceBucket": "small-multi",
+      "evidenceCount": 4,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "15191",
+          "exactRecord": "(O*Net) 15191 - Advance machines to gather material and convey it into cars.",
+          "task": "Advance machines to gather material and convey it into cars.",
+          "otherLinkedAtomicTitles": [
+            "Advance Machine",
+            "Convey Car"
+          ],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 2,
+          "oNetId": "2596",
+          "exactRecord": "(O*Net) 2596 - Gather materials to be filed from departments or employees.",
+          "task": "Gather materials to be filed from departments or employees.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 3,
+          "oNetId": "4596",
+          "exactRecord": "(O*Net) 4596 - Gather all relevant material for bid processes, and coordinate bidding and contract approval.",
+          "task": "Gather all relevant material for bid processes, and coordinate bidding and contract approval.",
+          "otherLinkedAtomicTitles": [
+            "Coordinate Approval",
+            "Coordinate Bidding"
+          ],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 4,
+          "oNetId": "792",
+          "exactRecord": "(O*Net) 792 - Gather, register, and arrange the material to be typed, following instructions.",
+          "task": "Gather, register, and arrange the material to be typed, following instructions.",
+          "otherLinkedAtomicTitles": [
+            "Arrange Material",
+            "Register Material"
+          ],
+          "sameActionLinkedAtomicTitles": []
+        }
+      ],
+      "exactTitleOccurrenceCount": 3,
+      "sampleIndex": 9
+    },
+    {
+      "occurrenceId": "atomic-1aa7265cee80ea6c10a6",
+      "exactTitle": "Create Print (Synonyms: Produce Print)",
+      "normalizedTitle": "create print",
+      "leadingAction": "Create",
+      "recordedActionAliases": [
+        "create",
+        "produce"
+      ],
+      "ownerTitle": "Create physical objects (Develop.v.01, Form.v.01, Make.v.03)",
+      "assignedSynsetIds": [
+        "develop.v.01",
+        "form.v.01",
+        "make.v.03"
+      ],
+      "path": [
+        "Act",
+        "Act on physical objects (“Do”)",
+        "Create physical objects (Develop.v.01, Form.v.01, Make.v.03)",
+        "Create (Physical Object)",
+        "Create Print (Synonyms: Produce Print)"
+      ],
+      "parentTitle": "Create (Physical Object)",
+      "topLevelBranch": "Act on physical objects (“Do”)",
+      "evidenceBucket": "small-multi",
+      "evidenceCount": 2,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "19465",
+          "exactRecord": "(O*Net) 19465 - Create prints according to customer specifications and laboratory protocols.",
+          "task": "Create prints according to customer specifications and laboratory protocols.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 2,
+          "oNetId": "19496",
+          "exactRecord": "(O*Net) 19496 - Produce timed prints with separate densities or color settings for each scene of a production.",
+          "task": "Produce timed prints with separate densities or color settings for each scene of a production.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        }
+      ],
+      "exactTitleOccurrenceCount": 1,
+      "sampleIndex": 10
+    },
+    {
+      "occurrenceId": "atomic-4d2739c0803c967e2c1d",
+      "exactTitle": "Collect Specimen",
+      "normalizedTitle": "collect specimen",
+      "leadingAction": "Collect",
+      "recordedActionAliases": [
+        "collect"
+      ],
+      "ownerTitle": "Collect (physical) (Roll_up.v.02)",
+      "assignedSynsetIds": [
+        "roll_up.v.02"
+      ],
+      "path": [
+        "Act",
+        "Act on physical objects (“Do”)",
+        "Modify physical objects",
+        "Combine physical objects (Create_from_raw_material.v.01)",
+        "Gather (physical) (Gather.v.01)",
+        "Collect (physical) (Roll_up.v.02)",
+        "Collect (physical) (Physical Object)",
+        "Collect Specimen"
+      ],
+      "parentTitle": "Collect (physical) (Physical Object)",
+      "topLevelBranch": "Act on physical objects (“Do”)",
+      "evidenceBucket": "medium-multi",
+      "evidenceCount": 11,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "1504",
+          "exactRecord": "(O*Net) 1504 - Collect and dissect animal specimens and examine specimens under microscope.",
+          "task": "Collect and dissect animal specimens and examine specimens under microscope.",
+          "otherLinkedAtomicTitles": [
+            "Analyze Specimen (Synonyms: Examine Specimen)",
+            "Dissect Specimen"
+          ],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 2,
+          "oNetId": "17298",
+          "exactRecord": "(O*Net) 17298 - Collect samples or specimens for diagnostic testing.",
+          "task": "Collect samples or specimens for diagnostic testing.",
+          "otherLinkedAtomicTitles": [
+            "Collect Sample"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Collect Sample"
+          ]
+        },
+        {
+          "index": 3,
+          "oNetId": "17471",
+          "exactRecord": "(O*Net) 17471 - Collect specimens for use in laboratory tests.",
+          "task": "Collect specimens for use in laboratory tests.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 4,
+          "oNetId": "17527",
+          "exactRecord": "(O*Net) 17527 - Collect specimens from patients, using standard medical procedures.",
+          "task": "Collect specimens from patients, using standard medical procedures.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 5,
+          "oNetId": "18338",
+          "exactRecord": "(O*Net) 18338 - Collect specimens for laboratory tests.",
+          "task": "Collect specimens for laboratory tests.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 6,
+          "oNetId": "19322",
+          "exactRecord": "(O*Net) 19322 - Collect specimens, such as urine, feces, or sputum.",
+          "task": "Collect specimens, such as urine, feces, or sputum.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 7,
+          "oNetId": "19385",
+          "exactRecord": "(O*Net) 19385 - Collect specimens at specific time intervals for tests, such as those assessing therapeutic drug levels.",
+          "task": "Collect specimens at specific time intervals for tests, such as those assessing therapeutic drug levels.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 8,
+          "oNetId": "2028",
+          "exactRecord": "(O*Net) 2028 - Collect blood, tissue, or other laboratory specimens, log the specimens, and prepare them for testing.",
+          "task": "Collect blood, tissue, or other laboratory specimens, log the specimens, and prepare them for testing.",
+          "otherLinkedAtomicTitles": [
+            "Document Specimen (Synonyms: Log Specimen)",
+            "Prepare Specimen"
+          ],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 9,
+          "oNetId": "4.A.3.a.2.I38.D01",
+          "exactRecord": "(O*Net) 4.A.3.a.2.I38.D01 - Collect biological specimens from patients.",
+          "task": "Collect biological specimens from patients.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 10,
+          "oNetId": "4.A.3.a.2.I38.D02",
+          "exactRecord": "(O*Net) 4.A.3.a.2.I38.D02 - Collect biological specimens.",
+          "task": "Collect biological specimens.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 11,
+          "oNetId": "4315",
+          "exactRecord": "(O*Net) 4315 - Collect laboratory specimens, such as blood, urine, or feces, for testing.",
+          "task": "Collect laboratory specimens, such as blood, urine, or feces, for testing.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        }
+      ],
+      "exactTitleOccurrenceCount": 3,
+      "sampleIndex": 11
+    },
+    {
+      "occurrenceId": "atomic-a0fd3579dc4aa2b564c3",
+      "exactTitle": "Acquire Supply (Synonyms: Obtain Supply)",
+      "normalizedTitle": "acquire supply",
+      "leadingAction": "Acquire",
+      "recordedActionAliases": [
+        "acquire",
+        "obtain"
+      ],
+      "ownerTitle": "Get physical objects (Get.v.01, Obtain.v.01, Procure.v.01)",
+      "assignedSynsetIds": [
+        "get.v.01",
+        "obtain.v.01",
+        "procure.v.01"
+      ],
+      "path": [
+        "Act",
+        "Act on physical objects (“Do”)",
+        "Transfer physical objects",
+        "Get physical objects (Get.v.01, Obtain.v.01, Procure.v.01)",
+        "Get (Physical Object)",
+        "Acquire Supply (Synonyms: Obtain Supply)"
+      ],
+      "parentTitle": "Get (Physical Object)",
+      "topLevelBranch": "Act on physical objects (“Do”)",
+      "evidenceBucket": "large",
+      "evidenceCount": 38,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "18777",
+          "exactRecord": "(O*Net) 18777 - Acquire books, pamphlets, periodicals, audio-visual materials, and other library supplies by checking prices, figuring costs, and preparing appropriate order forms and facilitating the ordering process by providing such information to others.",
+          "task": "Acquire books, pamphlets, periodicals, audio-visual materials, and other library supplies by checking prices, figuring costs, and preparing appropriate order forms and facilitating the ordering process by providing such information to others.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 2,
+          "oNetId": "23",
+          "exactRecord": "(O*Net) 23 - Acquire, distribute and store supplies.",
+          "task": "Acquire, distribute and store supplies.",
+          "otherLinkedAtomicTitles": [
+            "Dispense Supply (Synonyms: Distribute Supply)",
+            "Store Supply"
+          ],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 3,
+          "oNetId": "21272",
+          "exactRecord": "(O*Net) 21272 - Acquire, distribute and store supplies.",
+          "task": "Acquire, distribute and store supplies.",
+          "otherLinkedAtomicTitles": [
+            "Dispense Supply (Synonyms: Distribute Supply)",
+            "Store Supply"
+          ],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 4,
+          "oNetId": "4.A.4.c.3.I05.D08",
+          "exactRecord": "(O*Net) 4.A.4.c.3.I05.D08 - Acquire supplies or equipment.",
+          "task": "Acquire supplies or equipment.",
+          "otherLinkedAtomicTitles": [
+            "Acquire Equipment (Synonyms: Obtain Equipment, Procure Equipment, Secure Equipment)"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Acquire Equipment (Synonyms: Obtain Equipment, Procure Equipment, Secure Equipment)"
+          ]
+        },
+        {
+          "index": 5,
+          "oNetId": "4249",
+          "exactRecord": "(O*Net) 4249 - Perform a variety of duties as requested by client, such as obtaining household supplies or running errands.",
+          "task": "Perform a variety of duties as requested by client, such as obtaining household supplies or running errands.",
+          "otherLinkedAtomicTitles": [
+            "Perform Duty",
+            "Run Errand"
+          ],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 6,
+          "oNetId": "5672",
+          "exactRecord": "(O*Net) 5672 - Select and obtain materials and supplies, such as textbooks.",
+          "task": "Select and obtain materials and supplies, such as textbooks.",
+          "otherLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)",
+            "Select Material",
+            "Select Supply"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)"
+          ]
+        },
+        {
+          "index": 7,
+          "oNetId": "5992",
+          "exactRecord": "(O*Net) 5992 - Select and obtain materials and supplies, such as textbooks.",
+          "task": "Select and obtain materials and supplies, such as textbooks.",
+          "otherLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)",
+            "Select Material",
+            "Select Supply"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)"
+          ]
+        },
+        {
+          "index": 8,
+          "oNetId": "6319",
+          "exactRecord": "(O*Net) 6319 - Select and obtain materials and supplies, such as textbooks.",
+          "task": "Select and obtain materials and supplies, such as textbooks.",
+          "otherLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)",
+            "Select Material",
+            "Select Supply"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)"
+          ]
+        },
+        {
+          "index": 9,
+          "oNetId": "6065",
+          "exactRecord": "(O*Net) 6065 - Select and obtain materials and supplies, such as textbooks.",
+          "task": "Select and obtain materials and supplies, such as textbooks.",
+          "otherLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)",
+            "Select Material",
+            "Select Supply"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)"
+          ]
+        },
+        {
+          "index": 10,
+          "oNetId": "6342",
+          "exactRecord": "(O*Net) 6342 - Select and obtain materials and supplies, such as textbooks.",
+          "task": "Select and obtain materials and supplies, such as textbooks.",
+          "otherLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)",
+            "Select Material",
+            "Select Supply"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)"
+          ]
+        },
+        {
+          "index": 11,
+          "oNetId": "6203",
+          "exactRecord": "(O*Net) 6203 - Select and obtain materials and supplies, such as textbooks.",
+          "task": "Select and obtain materials and supplies, such as textbooks.",
+          "otherLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)",
+            "Select Material",
+            "Select Supply"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)"
+          ]
+        },
+        {
+          "index": 12,
+          "oNetId": "6411",
+          "exactRecord": "(O*Net) 6411 - Select and obtain materials and supplies, such as textbooks.",
+          "task": "Select and obtain materials and supplies, such as textbooks.",
+          "otherLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)",
+            "Select Material",
+            "Select Supply"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)"
+          ]
+        },
+        {
+          "index": 13,
+          "oNetId": "6161",
+          "exactRecord": "(O*Net) 6161 - Select and obtain materials and supplies, such as textbooks.",
+          "task": "Select and obtain materials and supplies, such as textbooks.",
+          "otherLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)",
+            "Select Material",
+            "Select Supply"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)"
+          ]
+        },
+        {
+          "index": 14,
+          "oNetId": "6366",
+          "exactRecord": "(O*Net) 6366 - Select and obtain materials and supplies, such as textbooks.",
+          "task": "Select and obtain materials and supplies, such as textbooks.",
+          "otherLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)",
+            "Select Material",
+            "Select Supply"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)"
+          ]
+        },
+        {
+          "index": 15,
+          "oNetId": "6019",
+          "exactRecord": "(O*Net) 6019 - Select and obtain materials and supplies, such as textbooks.",
+          "task": "Select and obtain materials and supplies, such as textbooks.",
+          "otherLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)",
+            "Select Material",
+            "Select Supply"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)"
+          ]
+        },
+        {
+          "index": 16,
+          "oNetId": "6299",
+          "exactRecord": "(O*Net) 6299 - Select and obtain materials and supplies, such as textbooks.",
+          "task": "Select and obtain materials and supplies, such as textbooks.",
+          "otherLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)",
+            "Select Material",
+            "Select Supply"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)"
+          ]
+        },
+        {
+          "index": 17,
+          "oNetId": "6185",
+          "exactRecord": "(O*Net) 6185 - Select and obtain materials and supplies, such as textbooks.",
+          "task": "Select and obtain materials and supplies, such as textbooks.",
+          "otherLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)",
+            "Select Material",
+            "Select Supply"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)"
+          ]
+        },
+        {
+          "index": 18,
+          "oNetId": "6387",
+          "exactRecord": "(O*Net) 6387 - Select and obtain materials and supplies, such as textbooks.",
+          "task": "Select and obtain materials and supplies, such as textbooks.",
+          "otherLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)",
+            "Select Material",
+            "Select Supply"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)"
+          ]
+        },
+        {
+          "index": 19,
+          "oNetId": "6434",
+          "exactRecord": "(O*Net) 6434 - Select and obtain materials and supplies, such as textbooks.",
+          "task": "Select and obtain materials and supplies, such as textbooks.",
+          "otherLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)",
+            "Select Material",
+            "Select Supply"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)"
+          ]
+        },
+        {
+          "index": 20,
+          "oNetId": "5974",
+          "exactRecord": "(O*Net) 5974 - Select and obtain materials and supplies, such as textbooks.",
+          "task": "Select and obtain materials and supplies, such as textbooks.",
+          "otherLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)",
+            "Select Material",
+            "Select Supply"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)"
+          ]
+        },
+        {
+          "index": 21,
+          "oNetId": "6226",
+          "exactRecord": "(O*Net) 6226 - Select and obtain materials and supplies, such as textbooks.",
+          "task": "Select and obtain materials and supplies, such as textbooks.",
+          "otherLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)",
+            "Select Material",
+            "Select Supply"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)"
+          ]
+        },
+        {
+          "index": 22,
+          "oNetId": "5717",
+          "exactRecord": "(O*Net) 5717 - Select and obtain materials and supplies, such as textbooks.",
+          "task": "Select and obtain materials and supplies, such as textbooks.",
+          "otherLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)",
+            "Select Material",
+            "Select Supply"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)"
+          ]
+        },
+        {
+          "index": 23,
+          "oNetId": "6041",
+          "exactRecord": "(O*Net) 6041 - Select and obtain materials and supplies, such as textbooks.",
+          "task": "Select and obtain materials and supplies, such as textbooks.",
+          "otherLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)",
+            "Select Material",
+            "Select Supply"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)"
+          ]
+        },
+        {
+          "index": 24,
+          "oNetId": "5695",
+          "exactRecord": "(O*Net) 5695 - Select and obtain materials and supplies, such as textbooks and laboratory equipment.",
+          "task": "Select and obtain materials and supplies, such as textbooks and laboratory equipment.",
+          "otherLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)",
+            "Select Material",
+            "Select Supply"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)"
+          ]
+        },
+        {
+          "index": 25,
+          "oNetId": "6088",
+          "exactRecord": "(O*Net) 6088 - Select and obtain materials and supplies, such as textbooks and laboratory equipment.",
+          "task": "Select and obtain materials and supplies, such as textbooks and laboratory equipment.",
+          "otherLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)",
+            "Select Material",
+            "Select Supply"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)"
+          ]
+        },
+        {
+          "index": 26,
+          "oNetId": "5905",
+          "exactRecord": "(O*Net) 5905 - Select and obtain materials and supplies, such as textbooks and laboratory equipment.",
+          "task": "Select and obtain materials and supplies, such as textbooks and laboratory equipment.",
+          "otherLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)",
+            "Select Material",
+            "Select Supply"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)"
+          ]
+        },
+        {
+          "index": 27,
+          "oNetId": "5837",
+          "exactRecord": "(O*Net) 5837 - Select and obtain materials and supplies, such as textbooks and laboratory equipment.",
+          "task": "Select and obtain materials and supplies, such as textbooks and laboratory equipment.",
+          "otherLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)",
+            "Select Material",
+            "Select Supply"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)"
+          ]
+        },
+        {
+          "index": 28,
+          "oNetId": "5955",
+          "exactRecord": "(O*Net) 5955 - Select and obtain materials and supplies, such as textbooks and laboratory equipment.",
+          "task": "Select and obtain materials and supplies, such as textbooks and laboratory equipment.",
+          "otherLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)",
+            "Select Material",
+            "Select Supply"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)"
+          ]
+        },
+        {
+          "index": 29,
+          "oNetId": "5811",
+          "exactRecord": "(O*Net) 5811 - Select and obtain materials and supplies, such as textbooks and laboratory equipment.",
+          "task": "Select and obtain materials and supplies, such as textbooks and laboratory equipment.",
+          "otherLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)",
+            "Select Material",
+            "Select Supply"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)"
+          ]
+        },
+        {
+          "index": 30,
+          "oNetId": "6116",
+          "exactRecord": "(O*Net) 6116 - Select and obtain materials and supplies, such as textbooks and laboratory equipment.",
+          "task": "Select and obtain materials and supplies, such as textbooks and laboratory equipment.",
+          "otherLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)",
+            "Select Material",
+            "Select Supply"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)"
+          ]
+        },
+        {
+          "index": 31,
+          "oNetId": "5768",
+          "exactRecord": "(O*Net) 5768 - Select and obtain materials and supplies, such as textbooks and laboratory equipment.",
+          "task": "Select and obtain materials and supplies, such as textbooks and laboratory equipment.",
+          "otherLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)",
+            "Select Material",
+            "Select Supply"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)"
+          ]
+        },
+        {
+          "index": 32,
+          "oNetId": "5792",
+          "exactRecord": "(O*Net) 5792 - Select and obtain materials and supplies, such as textbooks and laboratory equipment.",
+          "task": "Select and obtain materials and supplies, such as textbooks and laboratory equipment.",
+          "otherLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)",
+            "Select Material",
+            "Select Supply"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)"
+          ]
+        },
+        {
+          "index": 33,
+          "oNetId": "5862",
+          "exactRecord": "(O*Net) 5862 - Select and obtain materials and supplies, such as textbooks and laboratory equipment.",
+          "task": "Select and obtain materials and supplies, such as textbooks and laboratory equipment.",
+          "otherLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)",
+            "Select Material",
+            "Select Supply"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)"
+          ]
+        },
+        {
+          "index": 34,
+          "oNetId": "6141",
+          "exactRecord": "(O*Net) 6141 - Select and obtain materials and supplies, such as textbooks and laboratory equipment.",
+          "task": "Select and obtain materials and supplies, such as textbooks and laboratory equipment.",
+          "otherLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)",
+            "Select Material",
+            "Select Supply"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)"
+          ]
+        },
+        {
+          "index": 35,
+          "oNetId": "5928",
+          "exactRecord": "(O*Net) 5928 - Select and obtain materials and supplies, such as textbooks and laboratory equipment.",
+          "task": "Select and obtain materials and supplies, such as textbooks and laboratory equipment.",
+          "otherLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)",
+            "Select Material",
+            "Select Supply"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)"
+          ]
+        },
+        {
+          "index": 36,
+          "oNetId": "5747",
+          "exactRecord": "(O*Net) 5747 - Select and obtain materials and supplies, such as textbooks and laboratory equipment.",
+          "task": "Select and obtain materials and supplies, such as textbooks and laboratory equipment.",
+          "otherLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)",
+            "Select Material",
+            "Select Supply"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)"
+          ]
+        },
+        {
+          "index": 37,
+          "oNetId": "6256",
+          "exactRecord": "(O*Net) 6256 - Select and obtain materials and supplies, such as textbooks or laboratory equipment.",
+          "task": "Select and obtain materials and supplies, such as textbooks or laboratory equipment.",
+          "otherLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)",
+            "Select Material",
+            "Select Supply"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)"
+          ]
+        },
+        {
+          "index": 38,
+          "oNetId": "6277",
+          "exactRecord": "(O*Net) 6277 - Select and obtain materials and supplies, such as textbooks and performance pieces.",
+          "task": "Select and obtain materials and supplies, such as textbooks and performance pieces.",
+          "otherLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)",
+            "Select Material",
+            "Select Supply"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Acquire Material (Synonyms: Obtain Material, Procure Material)"
+          ]
+        }
+      ],
+      "exactTitleOccurrenceCount": 2,
+      "sampleIndex": 12
+    },
+    {
+      "occurrenceId": "atomic-7e2902dd1801393141f9",
+      "exactTitle": "Patrol Car",
+      "normalizedTitle": "patrol car",
+      "leadingAction": "Patrol",
+      "recordedActionAliases": [
+        "patrol"
+      ],
+      "ownerTitle": "Check (Check.v.01, guard.v.01, patrol.v.01, Stand.v.01, Stand_Guard.v.01, watch.v.02)",
+      "assignedSynsetIds": [
+        "check.v.01",
+        "guard.v.01",
+        "patrol.v.01",
+        "stand.v.01",
+        "stand_guard.v.01",
+        "watch.v.02"
+      ],
+      "path": [
+        "Act",
+        "Act with other activities and actors (“Interact”)",
+        "Transfer between actors",
+        "Transfer information",
+        "Get information (Get.v.01, Obtain.v.01, Procure.v.01)",
+        "Perceive (Perceive.v.01)",
+        "Check (Check.v.01, guard.v.01, patrol.v.01, Stand.v.01, Stand_Guard.v.01, watch.v.02)",
+        "Check (Physical Object)",
+        "Patrol Car"
+      ],
+      "parentTitle": "Check (Physical Object)",
+      "topLevelBranch": "Act with other activities and actors (“Interact”)",
+      "evidenceBucket": "single",
+      "evidenceCount": 1,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "9475",
+          "exactRecord": "(O*Net) 9475 - Patrol railroad yards, cars, stations, or other facilities to protect company property or shipments and to maintain order.",
+          "task": "Patrol railroad yards, cars, stations, or other facilities to protect company property or shipments and to maintain order.",
+          "otherLinkedAtomicTitles": [
+            "Patrol Facility",
+            "Patrol Station",
+            "Patrol Yard"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Patrol Facility",
+            "Patrol Station",
+            "Patrol Yard"
+          ]
+        }
+      ],
+      "exactTitleOccurrenceCount": 4,
+      "sampleIndex": 13
+    },
+    {
+      "occurrenceId": "atomic-c98fde62701a8ea52c02",
+      "exactTitle": "Teach Astrophysics",
+      "normalizedTitle": "teach astrophysics",
+      "leadingAction": "Teach",
+      "recordedActionAliases": [
+        "teach"
+      ],
+      "ownerTitle": "Teach (Educate.v.01, Prepare.v.05, Teach.v.01)",
+      "assignedSynsetIds": [
+        "educate.v.01",
+        "prepare.v.05",
+        "teach.v.01"
+      ],
+      "path": [
+        "Act",
+        "Act with other activities and actors (“Interact”)",
+        "Transfer between actors",
+        "Transfer information",
+        "Exchange information (Change.v.06)",
+        "Teach (Educate.v.01, Prepare.v.05, Teach.v.01)",
+        "Teach (Information)",
+        "Teach Astrophysics"
+      ],
+      "parentTitle": "Teach (Information)",
+      "topLevelBranch": "Act with other activities and actors (“Interact”)",
+      "evidenceBucket": "single",
+      "evidenceCount": 1,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "7532",
+          "exactRecord": "(O*Net) 7532 - Teach astronomy or astrophysics.",
+          "task": "Teach astronomy or astrophysics.",
+          "otherLinkedAtomicTitles": [
+            "Teach Astronomy"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Teach Astronomy"
+          ]
+        }
+      ],
+      "exactTitleOccurrenceCount": 2,
+      "sampleIndex": 14
+    },
+    {
+      "occurrenceId": "atomic-1099bfaffac32dca10e4",
+      "exactTitle": "Stock Area",
+      "normalizedTitle": "stock area",
+      "leadingAction": "Stock",
+      "recordedActionAliases": [
+        "stock"
+      ],
+      "ownerTitle": "Stock (Stock.v.05, Stock.v.06)",
+      "assignedSynsetIds": [
+        "stock.v.05",
+        "stock.v.06"
+      ],
+      "path": [
+        "Act",
+        "Act with other activities and actors (“Interact”)",
+        "Transfer between actors",
+        "Supply (Supply.v.01)",
+        "Stock (Stock.v.05, Stock.v.06)",
+        "Stock (Physical Object)",
+        "Stock Area"
+      ],
+      "parentTitle": "Stock (Physical Object)",
+      "topLevelBranch": "Act with other activities and actors (“Interact”)",
+      "evidenceBucket": "small-multi",
+      "evidenceCount": 2,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "11171",
+          "exactRecord": "(O*Net) 11171 - Stock cabinets or serving areas with condiments and refill condiment containers.",
+          "task": "Stock cabinets or serving areas with condiments and refill condiment containers.",
+          "otherLinkedAtomicTitles": [
+            "Replenish Container (Synonyms: Refill Container)",
+            "Stock Cabinet"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Stock Cabinet"
+          ]
+        },
+        {
+          "index": 2,
+          "oNetId": "4.A.3.a.2.I37.D05",
+          "exactRecord": "(O*Net) 4.A.3.a.2.I37.D05 - Stock serving stations or dining areas with food or supplies.",
+          "task": "Stock serving stations or dining areas with food or supplies.",
+          "otherLinkedAtomicTitles": [
+            "Stock Station"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Stock Station"
+          ]
+        }
+      ],
+      "exactTitleOccurrenceCount": 2,
+      "sampleIndex": 15
+    },
+    {
+      "occurrenceId": "atomic-3ff5239b88576c658e83",
+      "exactTitle": "Coordinate Care",
+      "normalizedTitle": "coordinate care",
+      "leadingAction": "Coordinate",
+      "recordedActionAliases": [
+        "coordinate"
+      ],
+      "ownerTitle": "Organize (people or events) (Hold.v.03, Organize.v.05)",
+      "assignedSynsetIds": [
+        "hold.v.03",
+        "organize.v.05"
+      ],
+      "path": [
+        "Act",
+        "Act with other activities and actors (“Interact”)",
+        "Transfer between actors",
+        "Transfer service",
+        "Get service",
+        "Lead (Head.v.02, Induce.v.02, Lead.v.01, Lead.v.05)",
+        "Control (Control.v.01)",
+        "Organize (people or events) (Hold.v.03, Organize.v.05)",
+        "Organize (people or events) (Activity)",
+        "Coordinate Care"
+      ],
+      "parentTitle": "Organize (people or events) (Activity)",
+      "topLevelBranch": "Act with other activities and actors (“Interact”)",
+      "evidenceBucket": "small-multi",
+      "evidenceCount": 2,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "17072",
+          "exactRecord": "(O*Net) 17072 - Coordinate the care of patients with other health care professionals or support staff.",
+          "task": "Coordinate the care of patients with other health care professionals or support staff.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 2,
+          "oNetId": "265",
+          "exactRecord": "(O*Net) 265 - Utilize consultation data and social work experience to plan and coordinate client or patient care and rehabilitation, following through to ensure service efficacy.",
+          "task": "Utilize consultation data and social work experience to plan and coordinate client or patient care and rehabilitation, following through to ensure service efficacy.",
+          "otherLinkedAtomicTitles": [
+            "Ensure Efficacy",
+            "Plan Care",
+            "Use Datum (Synonyms: Apply Datum, Utilize Datum)",
+            "Utilize Experience"
+          ],
+          "sameActionLinkedAtomicTitles": []
+        }
+      ],
+      "exactTitleOccurrenceCount": 1,
+      "sampleIndex": 16
+    },
+    {
+      "occurrenceId": "atomic-87939a970da50054a476",
+      "exactTitle": "Open Valve",
+      "normalizedTitle": "open valve",
+      "leadingAction": "Open",
+      "recordedActionAliases": [
+        "open"
+      ],
+      "ownerTitle": "Make available (Distribute.v.03, Issue.v.02, open.v.06, Yield.v.01)",
+      "assignedSynsetIds": [
+        "distribute.v.03",
+        "issue.v.02",
+        "open.v.06",
+        "yield.v.01"
+      ],
+      "path": [
+        "Act",
+        "Act with other activities and actors (“Interact”)",
+        "Transfer between actors",
+        "Supply (Supply.v.01)",
+        "Make available (Distribute.v.03, Issue.v.02, open.v.06, Yield.v.01)",
+        "Make (Physical Object)",
+        "Open Valve"
+      ],
+      "parentTitle": "Make (Physical Object)",
+      "topLevelBranch": "Act with other activities and actors (“Interact”)",
+      "evidenceBucket": "medium-multi",
+      "evidenceCount": 7,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "10068",
+          "exactRecord": "(O*Net) 10068 - Open valves, gates, or chutes or use shovels to load or remove products from ovens or other equipment.",
+          "task": "Open valves, gates, or chutes or use shovels to load or remove products from ovens or other equipment.",
+          "otherLinkedAtomicTitles": [
+            "Open Chute",
+            "Open Gate",
+            "Use Shovel"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Open Chute",
+            "Open Gate"
+          ]
+        },
+        {
+          "index": 2,
+          "oNetId": "12325",
+          "exactRecord": "(O*Net) 12325 - Open and close valves and switches in sequence to start or shut down auxiliary units.",
+          "task": "Open and close valves and switches in sequence to start or shut down auxiliary units.",
+          "otherLinkedAtomicTitles": [
+            "Close Switch",
+            "Close Valve",
+            "Open Switch"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Open Switch"
+          ]
+        },
+        {
+          "index": 3,
+          "oNetId": "12345",
+          "exactRecord": "(O*Net) 12345 - Open valves or start pumps, agitators, reactors, blowers, or automatic feed of materials.",
+          "task": "Open valves or start pumps, agitators, reactors, blowers, or automatic feed of materials.",
+          "otherLinkedAtomicTitles": [
+            "Start Agitator (Synonyms: Activate Agitator)",
+            "Start Blower",
+            "Start Feed",
+            "Start Pump (Synonyms: Activate Pump)",
+            "Start Reactor"
+          ],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 4,
+          "oNetId": "12403",
+          "exactRecord": "(O*Net) 12403 - Stop mixing or blending machines when specified product qualities are obtained and open valves and start pumps to transfer mixtures.",
+          "task": "Stop mixing or blending machines when specified product qualities are obtained and open valves and start pumps to transfer mixtures.",
+          "otherLinkedAtomicTitles": [
+            "Start Pump (Synonyms: Activate Pump)",
+            "Stop Machine"
+          ],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 5,
+          "oNetId": "12415",
+          "exactRecord": "(O*Net) 12415 - Open valves to drain slurry from mixers into storage tanks.",
+          "task": "Open valves to drain slurry from mixers into storage tanks.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 6,
+          "oNetId": "14306",
+          "exactRecord": "(O*Net) 14306 - Start pumps and open valves or use automated equipment to regulate the flow of oil in pipelines and into and out of tanks.",
+          "task": "Start pumps and open valves or use automated equipment to regulate the flow of oil in pipelines and into and out of tanks.",
+          "otherLinkedAtomicTitles": [
+            "Start Pump (Synonyms: Activate Pump)",
+            "Use Equipment"
+          ],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 7,
+          "oNetId": "5020",
+          "exactRecord": "(O*Net) 5020 - Open valves to return compressed gas to bottoms of specified wells to repressurize them and force oil to surface.",
+          "task": "Open valves to return compressed gas to bottoms of specified wells to repressurize them and force oil to surface.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        }
+      ],
+      "exactTitleOccurrenceCount": 2,
+      "sampleIndex": 17
+    },
+    {
+      "occurrenceId": "atomic-4f52482235e5285a25a1",
+      "exactTitle": "Keep Abreast",
+      "normalizedTitle": "keep abreast",
+      "leadingAction": "Keep",
+      "recordedActionAliases": [
+        "keep"
+      ],
+      "ownerTitle": "Learn (Continue.v.01, Learn.v.01, Learn.v.04)",
+      "assignedSynsetIds": [
+        "continue.v.01",
+        "learn.v.01",
+        "learn.v.04"
+      ],
+      "path": [
+        "Act",
+        "Act with other activities and actors (“Interact”)",
+        "Transfer between actors",
+        "Transfer information",
+        "Get information (Get.v.01, Obtain.v.01, Procure.v.01)",
+        "Learn (Continue.v.01, Learn.v.01, Learn.v.04)",
+        "Learn (Information)",
+        "Keep Abreast"
+      ],
+      "parentTitle": "Learn (Information)",
+      "topLevelBranch": "Act with other activities and actors (“Interact”)",
+      "evidenceBucket": "large",
+      "evidenceCount": 41,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "16058",
+          "exactRecord": "(O*Net) 16058 - Keep abreast of changes in industry practices and emerging telecommunications technology by reviewing current literature, talking with colleagues, participating in educational programs, attending meetings or workshops, or participating in professional organizations or conferences.",
+          "task": "Keep abreast of changes in industry practices and emerging telecommunications technology by reviewing current literature, talking with colleagues, participating in educational programs, attending meetings or workshops, or participating in professional organizations or conferences.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 2,
+          "oNetId": "16196",
+          "exactRecord": "(O*Net) 16196 - Keep abreast of game design technology and techniques, industry trends, or audience interests, reactions, and needs by reviewing current literature, talking with colleagues, participating in educational programs, attending meetings or workshops, or participating in professional organizations or conferences.",
+          "task": "Keep abreast of game design technology and techniques, industry trends, or audience interests, reactions, and needs by reviewing current literature, talking with colleagues, participating in educational programs, attending meetings or workshops, or participating in professional organizations or conferences.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 3,
+          "oNetId": "16777",
+          "exactRecord": "(O*Net) 16777 - Keep abreast of new biochemistries, instrumentation, or software by reading scientific literature and attending professional conferences.",
+          "task": "Keep abreast of new biochemistries, instrumentation, or software by reading scientific literature and attending professional conferences.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 4,
+          "oNetId": "1753",
+          "exactRecord": "(O*Net) 1753 - Keep abreast of changing rules, techniques, technologies, and philosophies relevant to their sport.",
+          "task": "Keep abreast of changing rules, techniques, technologies, and philosophies relevant to their sport.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 5,
+          "oNetId": "18401",
+          "exactRecord": "(O*Net) 18401 - Keep abreast of regulatory processes and payer systems, such as Medicare, Medicaid, managed care, and private sources.",
+          "task": "Keep abreast of regulatory processes and payer systems, such as Medicare, Medicaid, managed care, and private sources.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 6,
+          "oNetId": "19048",
+          "exactRecord": "(O*Net) 19048 - Keep abreast of changes in the law and inform judges when cases are affected by such changes.",
+          "task": "Keep abreast of changes in the law and inform judges when cases are affected by such changes.",
+          "otherLinkedAtomicTitles": [
+            "Inform Judge"
+          ],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 7,
+          "oNetId": "20060",
+          "exactRecord": "(O*Net) 20060 - Keep abreast of developments and technological advances in the mathematical field by reading current literature, talking with colleagues, and participating in professional conferences.",
+          "task": "Keep abreast of developments and technological advances in the mathematical field by reading current literature, talking with colleagues, and participating in professional conferences.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 8,
+          "oNetId": "20088",
+          "exactRecord": "(O*Net) 20088 - Keep abreast of developments in the field by reading current literature, talking with colleagues, giving presentations at conferences, and serving on committees in professional associations.",
+          "task": "Keep abreast of developments in the field by reading current literature, talking with colleagues, giving presentations at conferences, and serving on committees in professional associations.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 9,
+          "oNetId": "20091",
+          "exactRecord": "(O*Net) 20091 - Keep abreast of developments and technological advances in the communication field by reading current literature, talking with colleagues, and participating in professional conferences.",
+          "task": "Keep abreast of developments and technological advances in the communication field by reading current literature, talking with colleagues, and participating in professional conferences.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 10,
+          "oNetId": "5381",
+          "exactRecord": "(O*Net) 5381 - Keep abreast of developments and changes in the nuclear field by reading technical journals or by independent study and research.",
+          "task": "Keep abreast of developments and changes in the nuclear field by reading technical journals or by independent study and research.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 11,
+          "oNetId": "5670",
+          "exactRecord": "(O*Net) 5670 - Keep abreast of developments in the field by reading current literature, talking with colleagues, and participating in professional organizations and conferences.",
+          "task": "Keep abreast of developments in the field by reading current literature, talking with colleagues, and participating in professional organizations and conferences.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 12,
+          "oNetId": "5690",
+          "exactRecord": "(O*Net) 5690 - Keep abreast of developments in the field by reading current literature, talking with colleagues, and participating in professional conferences.",
+          "task": "Keep abreast of developments in the field by reading current literature, talking with colleagues, and participating in professional conferences.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 13,
+          "oNetId": "5988",
+          "exactRecord": "(O*Net) 5988 - Keep abreast of developments in the field by reading current literature, talking with colleagues, and participating in professional conferences.",
+          "task": "Keep abreast of developments in the field by reading current literature, talking with colleagues, and participating in professional conferences.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 14,
+          "oNetId": "5778",
+          "exactRecord": "(O*Net) 5778 - Keep abreast of developments in the field by reading current literature, talking with colleagues, and participating in professional conferences.",
+          "task": "Keep abreast of developments in the field by reading current literature, talking with colleagues, and participating in professional conferences.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 15,
+          "oNetId": "5894",
+          "exactRecord": "(O*Net) 5894 - Keep abreast of developments in the field by reading current literature, talking with colleagues, and participating in professional conferences.",
+          "task": "Keep abreast of developments in the field by reading current literature, talking with colleagues, and participating in professional conferences.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 16,
+          "oNetId": "5923",
+          "exactRecord": "(O*Net) 5923 - Keep abreast of developments in the field by reading current literature, talking with colleagues, and participating in professional conferences.",
+          "task": "Keep abreast of developments in the field by reading current literature, talking with colleagues, and participating in professional conferences.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 17,
+          "oNetId": "6220",
+          "exactRecord": "(O*Net) 6220 - Keep abreast of developments in the field by reading current literature, talking with colleagues, and participating in professional conferences.",
+          "task": "Keep abreast of developments in the field by reading current literature, talking with colleagues, and participating in professional conferences.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 18,
+          "oNetId": "6430",
+          "exactRecord": "(O*Net) 6430 - Keep abreast of developments in the field by reading current literature, talking with colleagues, and participating in professional conferences.",
+          "task": "Keep abreast of developments in the field by reading current literature, talking with colleagues, and participating in professional conferences.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 19,
+          "oNetId": "6318",
+          "exactRecord": "(O*Net) 6318 - Keep abreast of developments in the field by reading current literature, talking with colleagues, and participating in professional conferences.",
+          "task": "Keep abreast of developments in the field by reading current literature, talking with colleagues, and participating in professional conferences.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 20,
+          "oNetId": "6036",
+          "exactRecord": "(O*Net) 6036 - Keep abreast of developments in the field by reading current literature, talking with colleagues, and participating in professional conferences.",
+          "task": "Keep abreast of developments in the field by reading current literature, talking with colleagues, and participating in professional conferences.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 21,
+          "oNetId": "5736",
+          "exactRecord": "(O*Net) 5736 - Keep abreast of developments in the field by reading current literature, talking with colleagues, and participating in professional conferences.",
+          "task": "Keep abreast of developments in the field by reading current literature, talking with colleagues, and participating in professional conferences.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 22,
+          "oNetId": "6383",
+          "exactRecord": "(O*Net) 6383 - Keep abreast of developments in the field by reading current literature, talking with colleagues, and participating in professional conferences.",
+          "task": "Keep abreast of developments in the field by reading current literature, talking with colleagues, and participating in professional conferences.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 23,
+          "oNetId": "6081",
+          "exactRecord": "(O*Net) 6081 - Keep abreast of developments in the field by reading current literature, talking with colleagues, and participating in professional conferences.",
+          "task": "Keep abreast of developments in the field by reading current literature, talking with colleagues, and participating in professional conferences.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 24,
+          "oNetId": "6124",
+          "exactRecord": "(O*Net) 6124 - Keep abreast of developments in the field by reading current literature, talking with colleagues, and participating in professional conferences.",
+          "task": "Keep abreast of developments in the field by reading current literature, talking with colleagues, and participating in professional conferences.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 25,
+          "oNetId": "5804",
+          "exactRecord": "(O*Net) 5804 - Keep abreast of developments in the field by reading current literature, talking with colleagues, and participating in professional conferences.",
+          "task": "Keep abreast of developments in the field by reading current literature, talking with colleagues, and participating in professional conferences.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 26,
+          "oNetId": "6154",
+          "exactRecord": "(O*Net) 6154 - Keep abreast of developments in the field by reading current literature, talking with colleagues, and participating in professional conferences.",
+          "task": "Keep abreast of developments in the field by reading current literature, talking with colleagues, and participating in professional conferences.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 27,
+          "oNetId": "6241",
+          "exactRecord": "(O*Net) 6241 - Keep abreast of developments in the field by reading current literature, talking with colleagues, and participating in professional conferences.",
+          "task": "Keep abreast of developments in the field by reading current literature, talking with colleagues, and participating in professional conferences.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 28,
+          "oNetId": "5961",
+          "exactRecord": "(O*Net) 5961 - Keep abreast of developments in the field by reading current literature, talking with colleagues, and participating in professional conferences.",
+          "task": "Keep abreast of developments in the field by reading current literature, talking with colleagues, and participating in professional conferences.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 29,
+          "oNetId": "6012",
+          "exactRecord": "(O*Net) 6012 - Keep abreast of developments in the field by reading current literature, talking with colleagues, and participating in professional conferences.",
+          "task": "Keep abreast of developments in the field by reading current literature, talking with colleagues, and participating in professional conferences.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 30,
+          "oNetId": "6057",
+          "exactRecord": "(O*Net) 6057 - Keep abreast of developments in the field by reading current literature, talking with colleagues, and participating in professional conferences.",
+          "task": "Keep abreast of developments in the field by reading current literature, talking with colleagues, and participating in professional conferences.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 31,
+          "oNetId": "5939",
+          "exactRecord": "(O*Net) 5939 - Keep abreast of developments in the field by reading current literature, talking with colleagues, and participating in professional conferences.",
+          "task": "Keep abreast of developments in the field by reading current literature, talking with colleagues, and participating in professional conferences.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 32,
+          "oNetId": "6361",
+          "exactRecord": "(O*Net) 6361 - Keep abreast of developments in the field by reading current literature, talking with colleagues, and participating in professional conferences.",
+          "task": "Keep abreast of developments in the field by reading current literature, talking with colleagues, and participating in professional conferences.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 33,
+          "oNetId": "6100",
+          "exactRecord": "(O*Net) 6100 - Keep abreast of developments in the field by reading current literature, talking with colleagues, and participating in professional conferences.",
+          "task": "Keep abreast of developments in the field by reading current literature, talking with colleagues, and participating in professional conferences.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 34,
+          "oNetId": "6268",
+          "exactRecord": "(O*Net) 6268 - Keep abreast of developments in the field by reading current literature, talking with colleagues, and participating in professional conferences.",
+          "task": "Keep abreast of developments in the field by reading current literature, talking with colleagues, and participating in professional conferences.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 35,
+          "oNetId": "6194",
+          "exactRecord": "(O*Net) 6194 - Keep abreast of developments in the field by reading current literature, talking with colleagues, and participating in professional conferences.",
+          "task": "Keep abreast of developments in the field by reading current literature, talking with colleagues, and participating in professional conferences.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 36,
+          "oNetId": "6404",
+          "exactRecord": "(O*Net) 6404 - Keep abreast of developments in the field by reading current literature, talking with colleagues, and participating in professional conferences.",
+          "task": "Keep abreast of developments in the field by reading current literature, talking with colleagues, and participating in professional conferences.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 37,
+          "oNetId": "5823",
+          "exactRecord": "(O*Net) 5823 - Keep abreast of developments in the field by reading current literature, talking with colleagues, and participating in professional conferences.",
+          "task": "Keep abreast of developments in the field by reading current literature, talking with colleagues, and participating in professional conferences.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 38,
+          "oNetId": "5754",
+          "exactRecord": "(O*Net) 5754 - Keep abreast of developments in the field by reading current literature, talking with colleagues, and participating in professional conferences.",
+          "task": "Keep abreast of developments in the field by reading current literature, talking with colleagues, and participating in professional conferences.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 39,
+          "oNetId": "5877",
+          "exactRecord": "(O*Net) 5877 - Keep abreast of developments in the field by reading current literature, talking with colleagues, and participating in professional conferences.",
+          "task": "Keep abreast of developments in the field by reading current literature, talking with colleagues, and participating in professional conferences.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 40,
+          "oNetId": "5847",
+          "exactRecord": "(O*Net) 5847 - Keep abreast of developments in the field by reading current literature, talking with colleagues, and participating in professional conferences.",
+          "task": "Keep abreast of developments in the field by reading current literature, talking with colleagues, and participating in professional conferences.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 41,
+          "oNetId": "6343",
+          "exactRecord": "(O*Net) 6343 - Keep abreast of developments in their field by reading current literature, talking with colleagues, and participating in professional organizations and activities.",
+          "task": "Keep abreast of developments in their field by reading current literature, talking with colleagues, and participating in professional organizations and activities.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        }
+      ],
+      "exactTitleOccurrenceCount": 3,
+      "sampleIndex": 18
+    }
+  ]
+}

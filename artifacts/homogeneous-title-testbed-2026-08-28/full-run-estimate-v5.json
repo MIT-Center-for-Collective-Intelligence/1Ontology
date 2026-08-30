@@ -1,0 +1,423 @@
+{
+  "schemaVersion": "homogeneous-title-full-run-estimate-v5",
+  "generatedAt": "2026-08-30T16:29:18.335Z",
+  "sourceFile": "0401_FINALHIERARCHY.json",
+  "sourceSha256": "f19ce789bce298b0564045fb87427eebd1193b89c133d17519c097dc3e0eb319",
+  "inputHashes": {
+    "sample": "d1f149049e367ccbc32999f1fb64f4256db64e7bed26ba057b1c8f7aa9e8a6be",
+    "groupings": "9f1f619a2d65b60420f9d1b3640e59082c01825756e79db68a3e9831ba0f9b91",
+    "priorWordNetPilotBundles": "e60b1b27764cf294e0ba2c57e1ccf26787ae1bd782038db09775d5bd9bd949c6"
+  },
+  "inventory": {
+    "atomicActivityOccurrences": 20491,
+    "uniqueExactTitles": 15994,
+    "repeatedTitleOccurrences": 8499,
+    "oNetRecords": 53608,
+    "linkedTitleInputPolicy": {
+      "allLinkedTitleTextCharacters": 2056530,
+      "sameActionLinkedTitleTextCharacters": 781307,
+      "titleTextCharacterReductionPercent": 62,
+      "allSerializedArrayCharacters": 2442877,
+      "sameActionSerializedArrayCharacters": 985969,
+      "serializedArrayCharacterReductionPercent": 59.6,
+      "interpretation": "The model sees only previously represented activities using the current verb or a recorded synonym. All linked titles remain in source provenance."
+    },
+    "byStratum": {
+      "Act on information (“Think”)\u001fsingle": {
+        "branch": "Act on information (“Think”)",
+        "evidenceBucket": "single",
+        "atomicActivityOccurrences": 4954,
+        "oNetRecords": 4954
+      },
+      "Act on information (“Think”)\u001fsmall-multi": {
+        "branch": "Act on information (“Think”)",
+        "evidenceBucket": "small-multi",
+        "atomicActivityOccurrences": 2052,
+        "oNetRecords": 5580
+      },
+      "Act on information (“Think”)\u001fmedium-multi": {
+        "branch": "Act on information (“Think”)",
+        "evidenceBucket": "medium-multi",
+        "atomicActivityOccurrences": 562,
+        "oNetRecords": 5580
+      },
+      "Act on information (“Think”)\u001flarge": {
+        "branch": "Act on information (“Think”)",
+        "evidenceBucket": "large",
+        "atomicActivityOccurrences": 134,
+        "oNetRecords": 5484
+      },
+      "Act on physical objects (“Do”)\u001fsingle": {
+        "branch": "Act on physical objects (“Do”)",
+        "evidenceBucket": "single",
+        "atomicActivityOccurrences": 4049,
+        "oNetRecords": 4049
+      },
+      "Act on physical objects (“Do”)\u001fmedium-multi": {
+        "branch": "Act on physical objects (“Do”)",
+        "evidenceBucket": "medium-multi",
+        "atomicActivityOccurrences": 204,
+        "oNetRecords": 1885
+      },
+      "Act on physical objects (“Do”)\u001fsmall-multi": {
+        "branch": "Act on physical objects (“Do”)",
+        "evidenceBucket": "small-multi",
+        "atomicActivityOccurrences": 1235,
+        "oNetRecords": 3264
+      },
+      "Act on physical objects (“Do”)\u001flarge": {
+        "branch": "Act on physical objects (“Do”)",
+        "evidenceBucket": "large",
+        "atomicActivityOccurrences": 37,
+        "oNetRecords": 1527
+      },
+      "Act with other activities and actors (“Interact”)\u001fsingle": {
+        "branch": "Act with other activities and actors (“Interact”)",
+        "evidenceBucket": "single",
+        "atomicActivityOccurrences": 4717,
+        "oNetRecords": 4717
+      },
+      "Act with other activities and actors (“Interact”)\u001fsmall-multi": {
+        "branch": "Act with other activities and actors (“Interact”)",
+        "evidenceBucket": "small-multi",
+        "atomicActivityOccurrences": 1872,
+        "oNetRecords": 5069
+      },
+      "Act with other activities and actors (“Interact”)\u001fmedium-multi": {
+        "branch": "Act with other activities and actors (“Interact”)",
+        "evidenceBucket": "medium-multi",
+        "atomicActivityOccurrences": 519,
+        "oNetRecords": 5239
+      },
+      "Act with other activities and actors (“Interact”)\u001flarge": {
+        "branch": "Act with other activities and actors (“Interact”)",
+        "evidenceBucket": "large",
+        "atomicActivityOccurrences": 156,
+        "oNetRecords": 6260
+      }
+    }
+  },
+  "sampleBasis": {
+    "interpretation": "A review-interface pilot, not an accuracy or reliability evaluation. Keep cards are model-generated status-quo proposals, not independent controls or gold labels.",
+    "atomicActivityOccurrences": 18,
+    "homogeneousGroups": 30,
+    "titleDecisions": {
+      "cases": 18,
+      "keep": 5,
+      "rename": 3,
+      "split": 8,
+      "defer": 2,
+      "resultingGroups": 30
+    },
+    "observedByStratum": {
+      "Act on information (“Think”)\u001fsingle": {
+        "branch": "Act on information (“Think”)",
+        "evidenceBucket": "single",
+        "cases": 2,
+        "sourceRecords": 2,
+        "predicateObjectClaims": 2,
+        "homogeneousGroups": 2
+      },
+      "Act on information (“Think”)\u001fsmall-multi": {
+        "branch": "Act on information (“Think”)",
+        "evidenceBucket": "small-multi",
+        "cases": 2,
+        "sourceRecords": 6,
+        "predicateObjectClaims": 7,
+        "homogeneousGroups": 4
+      },
+      "Act on information (“Think”)\u001fmedium-multi": {
+        "branch": "Act on information (“Think”)",
+        "evidenceBucket": "medium-multi",
+        "cases": 1,
+        "sourceRecords": 7,
+        "predicateObjectClaims": 9,
+        "homogeneousGroups": 4
+      },
+      "Act on information (“Think”)\u001flarge": {
+        "branch": "Act on information (“Think”)",
+        "evidenceBucket": "large",
+        "cases": 1,
+        "sourceRecords": 22,
+        "predicateObjectClaims": 22,
+        "homogeneousGroups": 2
+      },
+      "Act on physical objects (“Do”)\u001fsingle": {
+        "branch": "Act on physical objects (“Do”)",
+        "evidenceBucket": "single",
+        "cases": 2,
+        "sourceRecords": 2,
+        "predicateObjectClaims": 2,
+        "homogeneousGroups": 2
+      },
+      "Act on physical objects (“Do”)\u001fsmall-multi": {
+        "branch": "Act on physical objects (“Do”)",
+        "evidenceBucket": "small-multi",
+        "cases": 2,
+        "sourceRecords": 6,
+        "predicateObjectClaims": 2,
+        "homogeneousGroups": 2
+      },
+      "Act on physical objects (“Do”)\u001fmedium-multi": {
+        "branch": "Act on physical objects (“Do”)",
+        "evidenceBucket": "medium-multi",
+        "cases": 1,
+        "sourceRecords": 11,
+        "predicateObjectClaims": 11,
+        "homogeneousGroups": 4
+      },
+      "Act on physical objects (“Do”)\u001flarge": {
+        "branch": "Act on physical objects (“Do”)",
+        "evidenceBucket": "large",
+        "cases": 1,
+        "sourceRecords": 38,
+        "predicateObjectClaims": 38,
+        "homogeneousGroups": 3
+      },
+      "Act with other activities and actors (“Interact”)\u001fsingle": {
+        "branch": "Act with other activities and actors (“Interact”)",
+        "evidenceBucket": "single",
+        "cases": 2,
+        "sourceRecords": 2,
+        "predicateObjectClaims": 2,
+        "homogeneousGroups": 2
+      },
+      "Act with other activities and actors (“Interact”)\u001fsmall-multi": {
+        "branch": "Act with other activities and actors (“Interact”)",
+        "evidenceBucket": "small-multi",
+        "cases": 2,
+        "sourceRecords": 4,
+        "predicateObjectClaims": 5,
+        "homogeneousGroups": 4
+      },
+      "Act with other activities and actors (“Interact”)\u001fmedium-multi": {
+        "branch": "Act with other activities and actors (“Interact”)",
+        "evidenceBucket": "medium-multi",
+        "cases": 1,
+        "sourceRecords": 7,
+        "predicateObjectClaims": 7,
+        "homogeneousGroups": 1
+      },
+      "Act with other activities and actors (“Interact”)\u001flarge": {
+        "branch": "Act with other activities and actors (“Interact”)",
+        "evidenceBucket": "large",
+        "cases": 1,
+        "sourceRecords": 41,
+        "predicateObjectClaims": 0,
+        "homogeneousGroups": 0
+      }
+    },
+    "exactSerializedTitlePacketTokens": {
+      "input": {
+        "low": 18838,
+        "central": 21193,
+        "high": 24220
+      },
+      "output": {
+        "low": 4730,
+        "central": 5321,
+        "high": 6082
+      }
+    },
+    "wordNetPacketSizingBasis": {
+      "priorPilotGroups": 30,
+      "use": "Only serialized candidate-set size is reused. Prior semantic decisions and fallback rates are not extrapolated."
+    }
+  },
+  "conservativePlanningModelPlan": [
+    {
+      "stages": [
+        "reader-ready homogeneous title grouping"
+      ],
+      "model": "gpt-5.6-terra",
+      "reasoningEffort": "high",
+      "role": "conservative sizing baseline for one structured semantic call per atomic-title occurrence; final model awaits the post-prompt-convergence benchmark"
+    },
+    {
+      "stages": [
+        "all-candidate WordNet alignment after title acceptance"
+      ],
+      "model": "gpt-5.6-terra",
+      "reasoningEffort": "high",
+      "role": "conservative sizing baseline for one comparison call per accepted homogeneous group after deterministic local candidate retrieval; final model awaits benchmarking"
+    },
+    {
+      "stages": [
+        "source and claim binding",
+        "2-5-word title validation",
+        "title status",
+        "local WordNet retrieval"
+      ],
+      "model": null,
+      "reasoningEffort": null,
+      "role": "deterministic local validation"
+    }
+  ],
+  "projection": {
+    "homogeneousGroupScenarios": {
+      "noSplit": 20491,
+      "stratifiedPilot": 26765,
+      "oneGroupPerSourceRecord": 53608,
+      "interpretation": "Sensitivity scenarios, not a confidence interval. The middle scenario preserves branch-by-evidence-bucket weights; the upper scenario assumes one resulting group per O*NET record and is not an absolute bound because a multi-object record can yield multiple claims."
+    },
+    "claimAwareAllCandidatePipeline": {
+      "noSplitScenario": {
+        "estimatedHomogeneousGroups": 20491,
+        "calls": {
+          "titleGrouping": 20491,
+          "allCandidateWordNet": 20491,
+          "total": 40982
+        },
+        "modelCalls": 40982,
+        "visiblePacketTokens": {
+          "low": 35637386,
+          "central": 40092059,
+          "high": 45819496
+        },
+        "reasoningTokensPlanningAllowance": {
+          "low": 11270050,
+          "central": 26638300,
+          "high": 53276600
+        },
+        "totalAccessTokensPlanningRange": {
+          "low": 46907436,
+          "central": 66730359,
+          "high": 99096096
+        },
+        "stageTokens": {
+          "titleGroupingInput": {
+            "low": 16260184,
+            "central": 18292707,
+            "high": 20905951
+          },
+          "titleGroupingOutput": {
+            "low": 3230596,
+            "central": 3634421,
+            "high": 4153624
+          },
+          "allCandidateWordNetInput": {
+            "low": 15554643,
+            "central": 17498973,
+            "high": 19998826
+          },
+          "allCandidateWordNetOutput": {
+            "low": 591963,
+            "central": 665958,
+            "high": 761095
+          }
+        }
+      },
+      "stratifiedPilotScenario": {
+        "estimatedHomogeneousGroups": 26765,
+        "calls": {
+          "titleGrouping": 20491,
+          "allCandidateWordNet": 26765,
+          "total": 47256
+        },
+        "modelCalls": 47256,
+        "visiblePacketTokens": {
+          "low": 41570360,
+          "central": 46766653,
+          "high": 53447604
+        },
+        "reasoningTokensPlanningAllowance": {
+          "low": 12838550,
+          "central": 30402700,
+          "high": 60805400
+        },
+        "totalAccessTokensPlanningRange": {
+          "low": 54408910,
+          "central": 77169353,
+          "high": 114253004
+        },
+        "stageTokens": {
+          "titleGroupingInput": {
+            "low": 16260184,
+            "central": 18292707,
+            "high": 20905951
+          },
+          "titleGroupingOutput": {
+            "low": 4219751,
+            "central": 4747219,
+            "high": 5425393
+          },
+          "allCandidateWordNetInput": {
+            "low": 20317213,
+            "central": 22856864,
+            "high": 26122131
+          },
+          "allCandidateWordNetOutput": {
+            "low": 773212,
+            "central": 869863,
+            "high": 994129
+          }
+        }
+      },
+      "oneGroupPerSourceRecordScenario": {
+        "estimatedHomogeneousGroups": 53608,
+        "calls": {
+          "titleGrouping": 20491,
+          "allCandidateWordNet": 53608,
+          "total": 74099
+        },
+        "modelCalls": 74099,
+        "visiblePacketTokens": {
+          "low": 66954293,
+          "central": 75323579,
+          "high": 86084090
+        },
+        "reasoningTokensPlanningAllowance": {
+          "low": 19549300,
+          "central": 46508500,
+          "high": 93017000
+        },
+        "totalAccessTokensPlanningRange": {
+          "low": 86503593,
+          "central": 121832079,
+          "high": 179101090
+        },
+        "stageTokens": {
+          "titleGroupingInput": {
+            "low": 16260184,
+            "central": 18292707,
+            "high": 20905951
+          },
+          "titleGroupingOutput": {
+            "low": 8451798,
+            "central": 9508273,
+            "high": 10866597
+          },
+          "allCandidateWordNetInput": {
+            "low": 40693635,
+            "central": 45780339,
+            "high": 52320387
+          },
+          "allCandidateWordNetOutput": {
+            "low": 1548676,
+            "central": 1742260,
+            "high": 1991155
+          }
+        }
+      },
+      "elapsedWallTimeHours": {
+        "noSplit": 4.9,
+        "stratifiedPilot": 8.5,
+        "oneGroupPerSourceRecord": 22.2,
+        "assumptions": "32 concurrent calls, stage-specific latency scenarios, and 15% retry or repair overhead. Provider throughput and ACCESS concurrency limits can dominate elapsed time."
+      },
+      "directApiCharge": {
+        "amountUsd": 0,
+        "interpretation": "The requested execution path uses the approved ACCESS allocation rather than a separately billed external API. Allocation consumption is not zero."
+      }
+    }
+  },
+  "cautions": [
+    "Token counts are planning scenarios from serialized packets at 3.5-4.5 characters per token; only the model service meter can report exact usage.",
+    "Reasoning tokens are unavailable in saved outputs, so stage-specific allowances are shown separately.",
+    "The 18-case pilot includes repeated and 21+-record occurrences in every top-level branch, but only one medium and one large case per branch; its extrapolation remains fragile.",
+    "The pilot has no independent human gold labels, blind holdout, repeated model runs, or measured latency. It cannot establish semantic accuracy, reliability, or production duration.",
+    "WordNet work begins only after expert acceptance. All candidates are shown in one call to avoid anchoring on the inherited sense demonstrated in Rob's shared Claude dialogue.",
+    "Human review time is excluded. No proposal or reviewer response automatically mutates the ontology.",
+    "The named model is a conservative planning baseline, not a production recommendation. In keeping with the reviewer request, lower-cost model benchmarking begins only after the prompt has converged."
+  ]
+}

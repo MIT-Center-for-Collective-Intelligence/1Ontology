@@ -48,6 +48,13 @@ export const recordedActionAliases = (title) => {
   ];
 };
 
+const sharesRecordedAction = (leftTitle, rightTitle) => {
+  const leftAliases = new Set(recordedActionAliases(leftTitle));
+  return recordedActionAliases(rightTitle).some((alias) =>
+    leftAliases.has(alias),
+  );
+};
+
 export const onetTaskText = (value) =>
   clean(value).replace(/^\(O\*Net\)\s+.+?\s+-\s+/i, "");
 
@@ -177,6 +184,18 @@ export const extractAtomicActivities = (hierarchy) => {
       ]
         .filter(
           ([normalizedTitle]) => normalizedTitle !== occurrence.normalizedTitle,
+        )
+        .map(([, exactTitle]) => exactTitle)
+        .sort((left, right) => left.localeCompare(right)),
+      sameActionLinkedAtomicTitles: [
+        ...(linkedTitlesByExactRecord
+          .get(sourceRecord.exactRecord)
+          ?.entries() || []),
+      ]
+        .filter(
+          ([normalizedTitle, exactTitle]) =>
+            normalizedTitle !== occurrence.normalizedTitle &&
+            sharesRecordedAction(occurrence.exactTitle, exactTitle),
         )
         .map(([, exactTitle]) => exactTitle)
         .sort((left, right) => left.localeCompare(right)),
@@ -913,26 +932,32 @@ export const validateClaimGroupingAssessments = ({
   return validated;
 };
 
-export const claimGroupingPromptTemplate = `You are checking one atomic activity title against every exact O*NET record linked to it. The title was originally reduced to a leading verb and one direct object, so a meaning-defining modifier or an additional direct object may have been omitted.
+export const claimGroupingPromptTemplate = `We are building an ontology of work activities from O*NET task descriptions. In an earlier step, each activity was given a short verb-object title and linked to the O*NET descriptions that support it. We later found two possible problems: some titles may be too vague for a non-expert reader, and some titles may combine descriptions that differ enough to need separate titles.
+
+Review one current title and all of its linked O*NET descriptions. Decide whether the descriptions can stay together under one clear title or should be divided into groups with different titles.
 
 Inputs:
-- Current atomic title: [CURRENT TITLE]
-- Canonical action and any action synonyms recorded in that title: [RECORDED ACTION ALIASES]
-- Numbered exact O*NET records. Each record also lists every other atomic title already linked to that same sentence: [NUMBERED O*NET RECORDS]
+- Current title: [CURRENT TITLE]
+- Main verb and any accepted synonyms recorded in the title: [RECORDED ACTION ALIASES]
+- Numbered exact O*NET descriptions: [NUMBERED O*NET RECORDS]
 
-For each record, identify every distinct direct-object claim governed by the current title's action that is not already represented by another linked atomic title. Read the complete clause: a meaning-defining restriction can appear before the object head or after it in a complement or trailing phrase, such as "alternatives for Web architecture or technologies." Carry that restriction into the proposed title when omitting it would make the activity materially broader than the evidence.
+When relevant, a description also lists activities using the same verb or an accepted synonym that are already represented elsewhere. Do not propose work already covered by one of those listed activities.
 
-A sentence may supply more than one claim when the same action explicitly governs different objects, such as selling funeral services and selling funeral merchandise. Coordinated named subtypes that share a head noun can also require separate claims when the distinction is material, such as storing audio data and storing video data. Do not collapse them merely because they share the word "data." Do not split ordinary examples of one category, incidental audience, method, purpose, or different actions into extra claims.
-
-Group claims that can share one accurate activity title. Use the current title when it is already informative enough; otherwise add only the smallest source-supported modifier needed to identify the activity. Every proposed title must:
+Instructions:
+1. Read each complete description. Focus on the work expressed by the current title's verb (or an accepted synonym) and the thing that verb acts on.
+2. Ask whether the current title would be intuitively understandable to a non-expert and accurately describe the essential work in the linked descriptions.
+3. Keep descriptions together when one short, accurate title fits them all. Separate them only when they describe materially different things acted on by the same verb.
+4. One description may support more than one group only when it explicitly names more than one materially different object for the current verb and those objects are not already represented by the listed same-verb activities.
+5. If a title needs clarification, add only the shortest wording supported by the source that identifies the essential kind of object. Read the full clause because that wording may appear before or after the object. Do not add an audience, method, purpose, location, or an ordinary example that does not change the activity's meaning.
+6. Put claims requiring the same title in one group. Every proposed title must:
 - contain 2-5 words;
-- preserve the current leading action;
-- name exactly one canonical direct object; and
-- avoid audience, method, purpose, venue, or other incidental context.
+- preserve the current main verb;
+- name exactly one thing acted on by that verb; and
+- be no broader than the source evidence.
 
-Consolidate claims requiring the same title. A new title is provisional until a later placement review. Do not evaluate WordNet, change the action, or decide final ontology placement. If the evidence cannot be classified without guessing, defer the whole case.
+Do not use WordNet, change the main verb, or decide where a new title belongs in the ontology. A new title is provisional until a later placement review. If the evidence cannot be classified without guessing, defer the whole case.
 
-Return structured data only: groups with title, canonicalDirectObject, sourceClaims, and a short reason. Each sourceClaim must contain sourceTaskIndex, a concise directObject phrase copied from the record, and an exact evidenceQuote copied from the record that includes the canonical action or one recorded action synonym. Also return deferredTaskIndexes, one overall reason, and confidence. Do not return title status or a keep/rename/split label; deterministic code derives them.`;
+Return structured data only: groups with title, canonicalDirectObject, sourceClaims, and a short reason. Each sourceClaim must contain sourceTaskIndex, a concise directObject phrase copied from the description, and an exact evidenceQuote copied from the description that includes the main verb or one accepted synonym. Also return deferredTaskIndexes, one overall reason, and confidence. Do not return title status or a keep/rename/split label; deterministic code derives them.`;
 
 export const claimGroupingValidationRules = `Bind the result to the exact sampled occurrence and source hierarchy hash. Require every O*NET record to contribute at least one validated predicate-object claim or, if unresolved, require the complete case to be deferred. Permit one record in multiple groups only through distinct direct-object claims for the preserved action. Require each direct-object phrase to occur in an exact evidence quote, each quote to occur in its exact source record, and each quote to include the canonical action or an action synonym recorded in the current title. Reject duplicate claims, duplicate group titles, unsupported source indexes, changed leading actions, titles outside 2-5 words, titles that do not end in their one declared canonical direct object, and partial deferrals. Derive source indexes, exact source tasks, title status, existing-title occurrence count, and keep/rename/split/defer deterministically. An existing title string does not choose a merge or placement target; placement remains a later review. This stage performs no semantic correction or independent model audit.`;
 

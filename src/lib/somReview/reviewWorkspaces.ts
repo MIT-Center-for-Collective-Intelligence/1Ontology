@@ -169,6 +169,17 @@ const sellDatasets: SomReviewDatasetConfig[] = [
 const ontologyTitleTestbedDatasets: SomReviewDatasetConfig[] = [
   {
     id: "ontology-title-testbed",
+    datasetVersion: "ontology-title-homogeneous-testbed-2026-08-30-v5",
+    workspaceId: "ontology-title-testbed",
+    label: "Reader-ready homogeneous title review",
+    relativeDir: [
+      "Ontology_Title_Clarity_Testbed_2026-08-28",
+      "review-datasets-v5",
+    ],
+    current: true,
+  },
+  {
+    id: "ontology-title-testbed-v4",
     datasetVersion: "ontology-title-homogeneous-testbed-2026-08-29-v4",
     workspaceId: "ontology-title-testbed",
     label: "Expert-calibrated homogeneous title review",
@@ -176,7 +187,7 @@ const ontologyTitleTestbedDatasets: SomReviewDatasetConfig[] = [
       "Ontology_Title_Clarity_Testbed_2026-08-28",
       "review-datasets-v4",
     ],
-    current: true,
+    current: false,
   },
 ];
 

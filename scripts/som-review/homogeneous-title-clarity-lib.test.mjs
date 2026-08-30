@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  claimGroupingPromptTemplate,
   extractAtomicActivities,
   genericActionDiagnostic,
   matchingInheritedSynsets,
@@ -78,7 +79,63 @@ test("extracts only list leaves below Atomic Tasks and preserves exact evidence"
   assert.deepEqual(report.sourceRecords[0].otherLinkedAtomicTitles, [
     "Write Summary",
   ]);
+  assert.deepEqual(report.sourceRecords[0].sameActionLinkedAtomicTitles, [
+    "Write Summary",
+  ]);
   assert(!report.path.includes("(Atomic Tasks)"));
+});
+
+test("retains only same-action linked titles, including recorded synonyms", () => {
+  const hierarchy = {
+    Act: {
+      "[Act on what?]": {
+        [branchNames[1]]: {
+          "Apply (Apply.v.01)": {
+            "(Atomic Tasks)": {
+              Tools: {
+                "Use Staple": [
+                  "(O*Net) 1 - Use staples, tape, tacks, or glue to hold carpet in place.",
+                ],
+                "Use Tack": [
+                  "(O*Net) 1 - Use staples, tape, tacks, or glue to hold carpet in place.",
+                ],
+                "Apply Glue (Synonyms: Use Glue)": [
+                  "(O*Net) 1 - Use staples, tape, tacks, or glue to hold carpet in place.",
+                ],
+                "Hold Carpet": [
+                  "(O*Net) 1 - Use staples, tape, tacks, or glue to hold carpet in place.",
+                ],
+              },
+            },
+          },
+        },
+      },
+    },
+  };
+  const staple = extractAtomicActivities(hierarchy).find(
+    (record) => record.exactTitle === "Use Staple",
+  );
+  assert(staple);
+  assert.deepEqual(staple.sourceRecords[0].sameActionLinkedAtomicTitles, [
+    "Apply Glue (Synonyms: Use Glue)",
+    "Use Tack",
+  ]);
+  assert(
+    staple.sourceRecords[0].otherLinkedAtomicTitles.includes("Hold Carpet"),
+  );
+});
+
+test("reader-ready prompt explains the task without seeding regression answers", () => {
+  assert.match(claimGroupingPromptTemplate, /ontology of work activities/i);
+  assert.match(claimGroupingPromptTemplate, /non-expert/i);
+  assert.match(
+    claimGroupingPromptTemplate,
+    /same verb or an accepted synonym/i,
+  );
+  assert.doesNotMatch(
+    claimGroupingPromptTemplate,
+    /alternatives for Web architecture|audio and video data/i,
+  );
 });
 
 test("selects a deterministic sample across all twelve strata", () => {

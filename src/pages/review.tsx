@@ -29,6 +29,7 @@ import ReviewTaskIntro from "@components/components/SomReview/ReviewTaskIntro";
 import ThemeModeToggle from "@components/components/SomReview/ThemeModeToggle";
 import TrustedPropagationControl from "@components/components/SomReview/TrustedPropagationControl";
 import OntologyComparisonPanel from "@components/components/SomReview/OntologyComparisonPanel";
+import LargeCaseInventoryPanel from "@components/components/SomReview/LargeCaseInventoryPanel";
 import ReviewWorkspaceSwitcher from "@components/components/SomReview/ReviewWorkspaceSwitcher";
 import { reviewInteractiveSurfaceSx } from "@components/components/SomReview/reviewStyles";
 import { clearReviewDraft } from "@components/lib/somReview/reviewDraft";
@@ -37,6 +38,7 @@ import {
   SomIssueTypeOption,
   SomFollowUpSource,
   SomLinkedFollowUp,
+  SomLargeCaseInventory,
   SomOverviewResponse,
   SomRespondResult,
   SomReviewCard,
@@ -88,6 +90,8 @@ export const ReviewPage = () => {
   const [ontologyName, setOntologyName] = useState("Ontology");
   const [issueTypes, setIssueTypes] = useState<SomIssueTypeOption[]>([]);
   const [readyFollowUps, setReadyFollowUps] = useState<SomLinkedFollowUp[]>([]);
+  const [largeCaseInventory, setLargeCaseInventory] =
+    useState<SomLargeCaseInventory | null>(null);
   const [issueType, setIssueType] = useState<SomIssueType | null>(null);
   const [sessionId, setSessionId] = useState("");
   const [cards, setCards] = useState<SomReviewCard[]>([]);
@@ -125,6 +129,7 @@ export const ReviewPage = () => {
     setOntologyName(overview.ontologyName);
     setIssueTypes(overview.issueTypes);
     setReadyFollowUps(overview.readyFollowUps || []);
+    setLargeCaseInventory(overview.largeCaseInventory || null);
     setCanDeliberate(overview.canDeliberate);
     setCanInspectPriorReview(overview.canInspectPriorReview);
     setTrustedPropagationAllowed(Boolean(overview.trustedPropagation?.allowed));
@@ -837,6 +842,9 @@ export const ReviewPage = () => {
                     datasetId={datasetId}
                     onChange={switchDataset}
                   />
+                  {largeCaseInventory && (
+                    <LargeCaseInventoryPanel inventory={largeCaseInventory} />
+                  )}
                   {!currentRound && (
                     <Alert severity="warning" sx={{ mb: 3 }}>
                       You are reviewing a past round. Revisions are saved with
