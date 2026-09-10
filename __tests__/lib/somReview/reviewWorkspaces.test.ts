@@ -19,7 +19,7 @@ describe("Society of Mind review workspaces", () => {
     ]);
     expect(
       options.find((workspace) => workspace.id === "ontology-title-testbed"),
-    ).toMatchObject({ activeDatasetId: "ontology-title-testbed" });
+    ).toMatchObject({ activeDatasetId: "ontology-title-testbed-v7" });
     expect(options.find((workspace) => workspace.id === "buy")).toMatchObject({
       activeDatasetId: "buy-content-identity",
     });

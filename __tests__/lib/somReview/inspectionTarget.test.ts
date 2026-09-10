@@ -35,4 +35,12 @@ describe("prior-review inspection target", () => {
       "buy-content-identity-after-title-followup-2026-07-26-v1",
     );
   });
+
+  it("binds title inspection to the random v7 round while retaining earlier rounds", () => {
+    const target = inspectionTargetForWorkspace("ontology-title-testbed");
+    expect(target.workspace.activeDatasetId).toBe("ontology-title-testbed-v7");
+    expect(target.datasetVersion).toBe("ontology-title-random-round-2026-09-09-v7");
+    expect(target.sourceSnapshotSha256).toBe(target.dataset.manifest.sourceSnapshot.sha256);
+    expect(target.workspace.datasets.filter((round) => !round.current)).toHaveLength(3);
+  });
 });

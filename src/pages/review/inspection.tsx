@@ -28,6 +28,7 @@ import { useAuth } from "@components/components/context/AuthContext";
 import withAuthUser from "@components/components/hoc/withAuthUser";
 import { Post } from "@components/lib/utils/Post";
 import { reviewPathForIssueTypes } from "@components/lib/somReview/reviewDependencies";
+import { SOM_REVIEW_WORKSPACES, reviewWorkspaceConfig } from "@components/lib/somReview/reviewWorkspaces";
 import {
   SomInspectionItem,
   SomInspectionMutationResult,
@@ -50,7 +51,10 @@ export const inspectionLoadErrorMessage = (error: any): string => {
 export const ReviewInspectionPage = () => {
   const [{ user }] = useAuth();
   const router = useRouter();
-  const workspaceId = router.query.workspace === "buy" ? "buy" : "sell";
+  const workspace =
+    SOM_REVIEW_WORKSPACES.find((candidate) => candidate.id === router.query.workspace) ||
+    reviewWorkspaceConfig("sell");
+  const workspaceId = workspace.id;
   const requestedReviewerId =
     typeof router.query.reviewer === "string" ? router.query.reviewer : "";
   const requestedTaskKey =
@@ -282,9 +286,7 @@ export const ReviewInspectionPage = () => {
                     query: {
                       dataset:
                         overview?.activeDatasetId ||
-                        (workspaceId === "sell"
-                          ? "sell-semantic-coverage"
-                          : "buy-content-identity"),
+                        workspace.activeDatasetId,
                     },
                   })
                 }
@@ -339,10 +341,14 @@ export const ReviewInspectionPage = () => {
                   query: { workspace: value },
                 });
               }}
-              aria-label="Ontology sub-branch"
+              aria-label="Review workspace"
+              sx={{ flexWrap: "wrap" }}
             >
-              <ToggleButton value="sell">Sell</ToggleButton>
-              <ToggleButton value="buy">Buy</ToggleButton>
+              {SOM_REVIEW_WORKSPACES.map((option) => (
+                <ToggleButton key={option.id} value={option.id}>
+                  {option.label}
+                </ToggleButton>
+              ))}
             </ToggleButtonGroup>
           </Stack>
 

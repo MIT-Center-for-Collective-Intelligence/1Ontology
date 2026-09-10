@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "homogeneous-title-testbed-quality-report-v6",
+  "generatedAt": "2026-09-02T17:41:37.434Z",
+  "sourceHierarchySha256": "f19ce789bce298b0564045fb87427eebd1193b89c133d17519c097dc3e0eb319",
+  "packagedSnapshotSha256": "1128d3737b2fcc3bf002923c0270fd8c24e8d0a702eff2a7538038c73556dcbe",
+  "counts": {
+    "sampledTitleEvidenceCases": 18,
+    "titleKeep": 1,
+    "titleRename": 6,
+    "titleSplit": 11,
+    "titleDefer": 0,
+    "homogeneousGroups": 61,
+    "reviewCards": 18,
+    "projectedFullRunHomogeneousGroupScenarios": {
+      "noSplit": 15994,
+      "stratifiedPilot": 24647,
+      "oneGroupPerSourceRecord": 40949,
+      "interpretation": "Sensitivity scenarios, not a confidence interval. The middle scenario preserves branch-by-evidence-bucket weights. Under the v6 exactly-once rule, the upper scenario assigns each distinct-case O*NET description to its own group."
+    },
+    "projectedFullRunStratifiedModelCalls": 40641,
+    "projectedFullRunStratifiedAccessTokens": {
+      "low": 39418781,
+      "central": 56600710,
+      "high": 87415496
+    }
+  },
+  "safeguards": {
+    "everySourceRecordRepresented": true,
+    "everySourceRecordAssignedExactlyOnce": true,
+    "exactDuplicateDescriptionsConsolidated": true,
+    "singleDescriptionUsesSingleGroupOrDeferral": true,
+    "titleWordCountBetweenTwoAndFive": true,
+    "leadingActionPreserved": true,
+    "duplicateResultingTitlesRejected": true,
+    "titleStatusDerivedFromFullOntologyInventory": true,
+    "identicalOccurrenceResultsReused": true,
+    "newNodesMarkedProvisional": true,
+    "allCandidateWordNetDeferredUntilTitleAcceptance": true,
+    "ontologyMutationDisabled": true
+  },
+  "evaluationStatus": {
+    "semanticAccuracyMeasured": false,
+    "independentGoldLabels": false,
+    "blindHoldout": false,
+    "repeatedRuns": false,
+    "note": "This is a source-bound review pilot. Keep cards are not independent controls, and deterministic safeguards do not validate semantic judgments."
+  },
+  "releaseAudit": {
+    "inputHashesMatchPackagedInputs": true,
+    "materialIssueCount": 0,
+    "summary": "No material semantic defects were identified across the 18 title-grouping cases.",
+    "independentGoldLabels": false
+  }
+}

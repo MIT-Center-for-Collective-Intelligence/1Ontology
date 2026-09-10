@@ -151,6 +151,12 @@ const readyFollowUp: SomLinkedFollowUp = {
 };
 
 describe("Society of Mind review queue selector", () => {
+  it("explains the title test bed without instructing reviewers to apply changes", () => {
+    render(<ReviewQueueSelector issueTypes={issues.slice(0, 1)} onStart={jest.fn()} reviewOnly />);
+    expect(screen.getByText(/reviewing does not change the ontology/)).toBeVisible();
+    expect(screen.queryByText(/approved changes must then be applied/)).toBeNull();
+  });
+
   it("shows every task and action queue in its workflow stage", () => {
     render(
       <ReviewQueueSelector

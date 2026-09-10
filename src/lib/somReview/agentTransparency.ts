@@ -65,6 +65,10 @@ const MODEL_ACTORS = new Set([
   "access-homogeneous-title-grouping-v3",
   "access-homogeneous-title-grouping-v4",
   "access-homogeneous-title-grouping-v5",
+  "access-single-description-title-check-v6",
+  "access-multiple-description-title-grouping-v6",
+  "access-single-description-title-check-v7",
+  "access-multiple-description-title-grouping-v7",
   "access-wordnet-alignment-v1",
   "access-wordnet-alignment-auditor-v1",
   "access-wordnet-assigned-synset-check-v2",
@@ -122,6 +126,10 @@ const DETERMINISTIC_ACTORS = new Set([
   "homogeneous-title-testbed-card-assembler-v4",
   "homogeneous-title-grouping-validator-v5",
   "homogeneous-title-testbed-card-assembler-v5",
+  "two-route-title-grouping-validator-v6",
+  "two-route-title-testbed-card-assembler-v6",
+  "evidence-bound-title-grouping-validator-v7",
+  "evidence-bound-title-testbed-card-assembler-v7",
   "local-wordnet-candidate-retrieval-v1",
   "local-wordnet-conditional-retrieval-v2",
   "wordnet-alignment-validator-v1",
@@ -211,6 +219,18 @@ const TRUSTED_ACTOR_VERSIONS: Record<string, ReadonlySet<string>> = {
   "access-homogeneous-title-grouping-v5": new Set([
     "access-homogeneous-title-grouping-2026-08-30-v5",
   ]),
+  "access-single-description-title-check-v6": new Set([
+    "access-single-description-title-check-2026-09-02-v6",
+  ]),
+  "access-multiple-description-title-grouping-v6": new Set([
+    "access-multiple-description-title-grouping-2026-09-02-v6",
+  ]),
+  "access-single-description-title-check-v7": new Set([
+    "access-single-description-title-check-2026-09-09-v7.4",
+  ]),
+  "access-multiple-description-title-grouping-v7": new Set([
+    "access-multiple-description-title-grouping-2026-09-09-v7.4",
+  ]),
   "access-wordnet-alignment-v1": new Set([
     "access-wordnet-alignment-2026-08-28-v1",
   ]),
@@ -255,6 +275,18 @@ const TRUSTED_ACTOR_VERSIONS: Record<string, ReadonlySet<string>> = {
   ]),
   "homogeneous-title-testbed-card-assembler-v5": new Set([
     "homogeneous-title-testbed-card-assembler-2026-08-30-v5",
+  ]),
+  "two-route-title-grouping-validator-v6": new Set([
+    "two-route-title-grouping-validator-2026-09-02-v6",
+  ]),
+  "two-route-title-testbed-card-assembler-v6": new Set([
+    "two-route-title-testbed-card-assembler-2026-09-02-v6",
+  ]),
+  "evidence-bound-title-grouping-validator-v7": new Set([
+    "evidence-bound-title-grouping-validator-2026-09-09-v7.1",
+  ]),
+  "evidence-bound-title-testbed-card-assembler-v7": new Set([
+    "evidence-bound-title-testbed-card-assembler-2026-09-09-v7",
   ]),
   "local-wordnet-candidate-retrieval-v1": new Set([
     "local-wordnet-candidate-retrieval-2026-08-28-v1",
@@ -470,6 +502,13 @@ const ACTOR_NAMES: Record<string, string> = {
   "homogeneous-title-grouping-validator-v5": "Reader-ready claim validator",
   "homogeneous-title-testbed-card-assembler-v5":
     "Reader-ready title-review card assembler",
+  "two-route-title-grouping-validator-v6": "Two-route title validator",
+  "two-route-title-testbed-card-assembler-v6":
+    "Two-route title-review card assembler",
+  "evidence-bound-title-grouping-validator-v7":
+    "Evidence-bound title validator",
+  "evidence-bound-title-testbed-card-assembler-v7":
+    "Random-round title-review card assembler",
   "local-wordnet-candidate-retrieval-v1": "Local WordNet candidate retrieval",
   "local-wordnet-conditional-retrieval-v2":
     "Conditional local WordNet retrieval",
@@ -500,6 +539,14 @@ const ACTOR_NAMES: Record<string, string> = {
     "Expert-calibrated claim-aware title-grouping agent",
   "access-homogeneous-title-grouping-v5":
     "Reader-ready homogeneous title-grouping agent",
+  "access-single-description-title-check-v6":
+    "Single-description title-check agent",
+  "access-multiple-description-title-grouping-v6":
+    "Multiple-description grouping agent",
+  "access-single-description-title-check-v7":
+    "Calibrated single-description title-check agent",
+  "access-multiple-description-title-grouping-v7":
+    "Calibrated multiple-description grouping agent",
   "access-wordnet-alignment-v1": "WordNet alignment agent",
   "access-wordnet-alignment-auditor-v1":
     "Independent WordNet alignment auditor",
@@ -812,6 +859,102 @@ Instructions:
 Do not use WordNet, change the main verb, or decide where a new title belongs in the ontology. A new title is provisional until a later placement review. If the evidence cannot be classified without guessing, defer the whole case.
 
 Return structured data only: groups with title, canonicalDirectObject, sourceClaims, and a short reason. Each sourceClaim must contain sourceTaskIndex, a concise directObject phrase copied from the description, and an exact evidenceQuote copied from the description that includes the main verb or one accepted synonym. Also return deferredTaskIndexes, one overall reason, and confidence. Do not return title status or a keep/rename/split label; deterministic code derives them.`,
+  "access-single-description-title-check-v6@access-single-description-title-check-2026-09-02-v6": `We are building an ontology of work activities from O*NET descriptions. Each activity has a short title that begins with a verb. This case has one linked O*NET description.
+
+Inputs:
+- Current title: [CURRENT TITLE]
+- Current verb and any accepted synonyms: [RECORDED ACTION ALIASES]
+- Exact O*NET description: [O*NET DESCRIPTION]
+- Other activities from the same description that use this verb or an accepted synonym: [OTHER SAME-VERB ACTIVITIES]
+
+Decide whether the current title clearly and accurately describes the work it represents in this description for a reader who does not know the occupation.
+
+Read the whole description, but judge only the activity represented by the current title. An O*NET description can mention several activities. The listed other activities are already represented elsewhere, so do not duplicate their work.
+
+Keep the current title if it is already clear and accurate. Otherwise, propose the shortest clearer title supported by the description. A meaning-defining detail can appear before or after the words reflected in the current title. Do not add details that merely say who performs the work, why, where, or how unless they are needed to distinguish the activity itself.
+
+The proposed title must contain 2-5 words and preserve the current verb. Do not use WordNet, replace the verb, or decide final ontology placement. A more specific title is shown provisionally under the current title until a later placement review. If the description is not enough to decide without guessing, defer this case.
+
+Return structured data only: either one group with title, sourceTaskIndexes [1], and a short reason, or no groups and deferredTaskIndexes [1]. Also return one overall reason and confidence. Do not return a keep/rename label or title status; deterministic code derives them.`,
+  "access-multiple-description-title-grouping-v6@access-multiple-description-title-grouping-2026-09-02-v6": `We are building an ontology of work activities from O*NET descriptions. Each activity has a short title that begins with a verb. This case has multiple linked O*NET descriptions.
+
+Inputs:
+- Current title: [CURRENT TITLE]
+- Current verb and any accepted synonyms: [RECORDED ACTION ALIASES]
+- Numbered exact O*NET descriptions: [NUMBERED O*NET DESCRIPTIONS]
+
+Some descriptions also list other activities from the same description that use this verb or an accepted synonym. Those activities are already represented elsewhere. Use those lists only to avoid duplicating their work.
+
+Understand the activity represented by the current title in each numbered description, then put like descriptions together. The purpose is to replace an unhelpful flat list with a smaller number of meaningful, homogeneous categories when the evidence supports them. A broad umbrella title that is technically true of every description is not enough when the descriptions clearly concern different kinds or subject areas of the activity. Identical descriptions and descriptions about the same kind of work belong together.
+
+Use the smallest number of groups that preserves those meaningful differences. Do not aim for a predetermined number of groups, split minor wording differences, or create a separate group for an isolated example when a supported broader category fits it.
+
+Assign every numbered description to exactly one group. Keep the current title only for descriptions that are genuinely general or do not support a more informative shared category. Otherwise, propose the shortest clearer title supported by the descriptions. A meaning-defining detail can appear before or after the words reflected in the current title. Do not add details that merely say who performs the work, why, where, or how unless they are needed to distinguish the activity itself.
+
+Every proposed title must contain 2-5 words and preserve the current verb. Do not use WordNet, replace the verb, or decide final ontology placement. More specific titles are shown provisionally under the current title until a later placement review. If the descriptions cannot all be classified without guessing, defer the whole case.
+
+Return structured data only: groups with title, sourceTaskIndexes, and a short reason; deferredTaskIndexes; one overall reason; and confidence. Do not return a keep/rename/split label or title status; deterministic code derives them.`,
+  "access-single-description-title-check-v7@access-single-description-title-check-2026-09-09-v7.4": `We are clarifying one short title in an ontology of work activities. This case has one linked O*NET description.
+
+Inputs:
+- Current title: [CURRENT TITLE]
+- Current action and recorded synonyms: [RECORDED ACTION ALIASES]
+- Exact O*NET description: [O*NET DESCRIPTION]
+- Other activities already represented from this description that use the same action: [OTHER SAME-ACTION ACTIVITIES]
+
+Read each complete O*NET description, but classify only the work expressed by the current title's action. A listed same-action activity is a possible existing destination, not permission to erase an explicit target from this case. Do not invent a duplicate new title when an existing title represents exactly the same activity.
+
+Use the shortest clear title supported by the evidence. Each title must begin with the current action and contain 2-5 words. Keep the current title when it is already clear.
+
+Three distinctions matter:
+1. A purpose or result is normally incidental. Include it when it defines a recognizable kind of work that a reader would otherwise confuse with other work under the same title. In particular, treat an "including," "such as," or "for [purpose]" clause as meaning-defining evidence when that clause is what distinguishes a coherent subset.
+2. A coherent set of concrete subjects or examples may support a familiar category even when the category word is not written verbatim. Use the narrowest ordinary category that fits all assigned evidence; do not infer a technical category from one weak clue. A combination of examples can be stronger evidence than any one example alone.
+3. Usually assign each numbered description once. When a source directly coordinates distinct targets of the current action with "and" or "or," begin with a separate group for each target that supports a clear action-plus-target title. Collapse them only when the targets are near-synonyms or ordinary examples of one familiar category, and explain that decision. Do not use a broad umbrella merely because the targets share a setting. For every repeated description, declare the repeated assignments and copy an exact quote that contains the current action and every target phrase.
+
+For multi-description cases, compare recurring distinctions in domain, target, source, and purpose before grouping. When evidence supports both a broad material/source category and a narrower recurring purpose, prefer the narrower purpose category. For a functional-location title such as an area, space, or zone, a named fixture may also evidence the location function it serves when that reading is ordinary; do not discard it solely because a fixture title also exists.
+
+For research records, a mixed set of organisms, bodily materials, and environmental samples can jointly support a biological domain even when some sample names are not living and the sentence also mentions collecting general information. Infer that domain from the combination, not from any isolated sample word.
+
+Use the smallest number of groups that preserves meaningful differences. Do not split minor wording differences. Keep every group reason under 20 words and the overall reason under 35 words. Do not use WordNet, change the action, decide final ontology placement, or rewrite the source. If any description cannot be classified without guessing, defer the complete case.
+
+Return structured data only. Return groups with title, sourceTaskIndexes, and a short reason. Normally source index 1 appears in one group. If the one sentence explicitly supports distinct coordinated targets, it may appear in more than one group and must have one matching sharedSourceAssignments entry. Each shared entry contains sourceTaskIndex, an exact evidenceQuote, a short reason, and assignments pairing each groupTitle with the exact targetPhrase from the quote. Also return deferredTaskIndexes, one overall reason, and confidence. Return an empty sharedSourceAssignments array when no source is repeated.`,
+  "access-multiple-description-title-grouping-v7@access-multiple-description-title-grouping-2026-09-09-v7.4": `We are clarifying one short title in an ontology of work activities. This case has multiple linked O*NET descriptions.
+
+Inputs:
+- Current title: [CURRENT TITLE]
+- Current action and recorded synonyms: [RECORDED ACTION ALIASES]
+- Numbered exact O*NET descriptions: [NUMBERED O*NET DESCRIPTIONS]
+
+Each description may list other activities already represented from that sentence that use the same action. Use those lists to recognize existing destinations, but still account for every explicit target of the current action.
+
+Read each complete O*NET description, but classify only the work expressed by the current title's action. A listed same-action activity is a possible existing destination, not permission to erase an explicit target from this case. Do not invent a duplicate new title when an existing title represents exactly the same activity.
+
+Use the shortest clear title supported by the evidence. Each title must begin with the current action and contain 2-5 words. Keep the current title when it is already clear.
+
+Three distinctions matter:
+1. A purpose or result is normally incidental. Include it when it defines a recognizable kind of work that a reader would otherwise confuse with other work under the same title. In particular, treat an "including," "such as," or "for [purpose]" clause as meaning-defining evidence when that clause is what distinguishes a coherent subset.
+2. A coherent set of concrete subjects or examples may support a familiar category even when the category word is not written verbatim. Use the narrowest ordinary category that fits all assigned evidence; do not infer a technical category from one weak clue. A combination of examples can be stronger evidence than any one example alone.
+3. Usually assign each numbered description once. When a source directly coordinates distinct targets of the current action with "and" or "or," begin with a separate group for each target that supports a clear action-plus-target title. Collapse them only when the targets are near-synonyms or ordinary examples of one familiar category, and explain that decision. Do not use a broad umbrella merely because the targets share a setting. For every repeated description, declare the repeated assignments and copy an exact quote that contains the current action and every target phrase.
+
+For multi-description cases, compare recurring distinctions in domain, target, source, and purpose before grouping. When evidence supports both a broad material/source category and a narrower recurring purpose, prefer the narrower purpose category. For a functional-location title such as an area, space, or zone, a named fixture may also evidence the location function it serves when that reading is ordinary; do not discard it solely because a fixture title also exists.
+
+For research records, a mixed set of organisms, bodily materials, and environmental samples can jointly support a biological domain even when some sample names are not living and the sentence also mentions collecting general information. Infer that domain from the combination, not from any isolated sample word.
+
+Use the smallest number of groups that preserves meaningful differences. Do not split minor wording differences. Keep every group reason under 20 words and the overall reason under 35 words. Do not use WordNet, change the action, decide final ontology placement, or rewrite the source. If any description cannot be classified without guessing, defer the complete case.
+
+Abstract examples, not answers to this case:
+- If several records say "Inspect equipment for safety" while another only says "Inspect equipment," the repeated purpose supports a narrower "Inspect Equipment for Safety" group.
+- If separate records collectively name cells, genes, and microbes, their combination can support a familiar biological category even if "biological" is not written.
+- If one record says "Prepare waiting rooms or examination rooms," the two distinct functional locations require two groups and a declared shared-source assignment.
+
+Reviewed calibration decisions from the prior development round:
+- Under "Conduct Research," a record that includes collecting information and samples such as blood, water, soil, plants, and animals belongs in "Conduct Biological Research." The combined sample list supplies the domain.
+- Under "Collect Specimen," records that collect blood, tissue, or laboratory specimens for testing belong in "Collect Specimen for Testing," even though the specimens are also biological or clinical.
+- Under "Stock Area," "Stock serving stations or dining areas with food or supplies" supports both "Stock Serving Areas" and "Stock Dining Areas." Declare that source as shared and use the exact target phrases as evidence.
+
+These are calibration examples, not exceptions to memorize. Apply their general evidence rules to new cases and do not force unrelated records into these categories.
+
+Return structured data only. Return groups with title, sourceTaskIndexes, and a short reason. Every source index must appear in at least one group. A repeated source index is allowed only for an explicitly coordinated compound description and must have one matching sharedSourceAssignments entry. Each shared entry contains sourceTaskIndex, an exact evidenceQuote, a short reason, and assignments pairing each groupTitle with the exact targetPhrase from the quote. Also return deferredTaskIndexes, one overall reason, and confidence. Return an empty sharedSourceAssignments array when no source is repeated.`,
   "access-wordnet-assigned-synset-check-v2@access-wordnet-assigned-synset-check-2026-08-29-v2": `You are checking the WordNet verb sense currently assigned to one accepted homogeneous activity group.
 
 Inputs:
@@ -968,6 +1111,10 @@ const EXACT_SOURCE_MODEL_PROMPT_KEYS = new Set([
   "access-homogeneous-title-grouping-v3@access-homogeneous-title-grouping-2026-08-29-v3",
   "access-homogeneous-title-grouping-v4@access-homogeneous-title-grouping-2026-08-29-v4",
   "access-homogeneous-title-grouping-v5@access-homogeneous-title-grouping-2026-08-30-v5",
+  "access-single-description-title-check-v6@access-single-description-title-check-2026-09-02-v6",
+  "access-multiple-description-title-grouping-v6@access-multiple-description-title-grouping-2026-09-02-v6",
+  "access-single-description-title-check-v7@access-single-description-title-check-2026-09-09-v7.4",
+  "access-multiple-description-title-grouping-v7@access-multiple-description-title-grouping-2026-09-09-v7.4",
   "access-wordnet-alignment-v1@access-wordnet-alignment-2026-08-28-v1",
   "access-wordnet-alignment-auditor-v1@access-wordnet-alignment-audit-2026-08-28-v1",
   "access-wordnet-assigned-synset-check-v2@access-wordnet-assigned-synset-check-2026-08-29-v2",
@@ -1017,6 +1164,21 @@ const DETERMINISTIC_RULES: Record<string, string> = {
 5. Report repeated existing-title occurrences without choosing a merge target; mark every new title as provisional and defer final placement and WordNet alignment.
 6. Preserve the single semantic call, deterministic validation, ACCESS provenance note, source hashes, and sampling rationale.
 7. Describe keep cards as status-quo proposals, not controls or accuracy results, and never mutate the ontology from a generated or reviewed card.`,
+  "two-route-title-grouping-validator-v6@two-route-title-grouping-validator-2026-09-02-v6": `This is a deterministic computer check, not another language-model judgment. It verifies that the result belongs to the exact source hierarchy and title case; every description number appears exactly once, or every description is deferred; no description number is missing, repeated, unknown, both grouped and deferred, or partially deferred; exact duplicate descriptions remain in one group; every group title is unique, contains 2-5 words, and begins with the current verb; and every group and complete result has a reason and confidence. For one-description cases it also requires exactly one proposed group when the case is not deferred. Code then labels titles as current, already elsewhere in the ontology, or new, and derives keep, rename, split, or defer. It does not decide whether the grouping is semantically correct. A matching existing title does not determine a merge or placement; an expert reviews that later.`,
+  "two-route-title-testbed-card-assembler-v6@two-route-title-testbed-card-assembler-2026-09-02-v6": `1. Build one read-only card for every validated sampled title-evidence case.
+2. Use the single-description agent for one linked description and the multiple-description grouping agent for two or more.
+3. Show every numbered O*NET description exactly once under its proposed title.
+4. Retain every duplicate ontology occurrence in provenance while reusing one semantic result for identical title-evidence cases.
+5. Mark new titles as provisional and defer final placement, main-verb changes, and WordNet alignment.
+6. Preserve the exact model route, prompt version, deterministic checks, ACCESS funding provenance, and source hashes.
+7. Describe keep cards as status-quo proposals, not accuracy results, and never mutate the ontology from a generated or reviewed card.`,
+  "evidence-bound-title-grouping-validator-v7@evidence-bound-title-grouping-validator-2026-09-09-v7.1": `This deterministic check binds a result to the exact source case. It requires every description to be grouped at least once or requires the entire case to be deferred; rejects unknown indexes, partial deferrals, duplicate titles, unrecorded leading actions, and titles outside 2-5 words; accepts either the primary action or a recorded action synonym; and requires identical descriptions to receive identical sets of groups. A source may occur in more than one group only when the result explicitly declares it as a shared compound source. For each such source, the declared group titles must exactly match the actual groups, each target phrase must be distinct and occur in an exact source quote, and that quote must also contain the current action or a recorded synonym. The exception records evidence for expert review; it does not decide whether overlapping ontology membership is the final representation. Code derives title status and keep, rename, split, or defer. No ontology write follows automatically.`,
+  "evidence-bound-title-testbed-card-assembler-v7@evidence-bound-title-testbed-card-assembler-2026-09-09-v7": `1. Build one read-only card for every validated random title-evidence case, including keep controls.
+2. Bind the title, parent, path, and every exact O*NET description to the frozen source snapshot.
+3. Show every description under each proposed title it supports; repeat a description only when the model supplied an exact, validator-approved compound-source declaration.
+4. Preserve the exact ACCESS model route, model build, prompt version, deterministic validation, source hashes, random seed, and exclusion of the prior 18 development cases.
+5. Mark all titles and overlapping source assignments as proposals for expert review; defer final placement, WordNet alignment, and ontology representation policy.
+6. Count no unreviewed card as an agreement and never mutate the ontology from a generated or expert-reviewed card.`,
   "local-wordnet-conditional-retrieval-v2@local-wordnet-conditional-retrieval-2026-08-29-v2": `1. Run only after an accepted title group fails its assigned-synset check.
 2. Take the exact leading action from that accepted group.
 3. Retrieve every verb synset for that exact lemma from the pinned local WordNet corpus.
@@ -1258,6 +1420,10 @@ const SINGLE_PASS_CANDIDATE_ACTORS = new Set([
   "access-homogeneous-title-grouping-v3",
   "access-homogeneous-title-grouping-v4",
   "access-homogeneous-title-grouping-v5",
+  "access-single-description-title-check-v6",
+  "access-multiple-description-title-grouping-v6",
+  "access-single-description-title-check-v7",
+  "access-multiple-description-title-grouping-v7",
 ]);
 
 const recordedVersion = (
@@ -1336,6 +1502,16 @@ const EVALUATOR_STAGE_COPY: Record<
     roleLabel: "Validate reader-ready claim invariants",
     summary:
       "Mechanically binds each claimed object to an exact source quote, preserves the main verb, enforces concise titles, and derives title status and decision type without making a semantic judgment.",
+  },
+  "two-route-title-grouping-validator-v6": {
+    roleLabel: "Check source coverage and title form",
+    summary:
+      "Mechanically checks that every description appears exactly once, titles preserve the verb and contain 2-5 words, and status and decision labels are derived rather than supplied by the model.",
+  },
+  "evidence-bound-title-grouping-validator-v7": {
+    roleLabel: "Check source coverage and shared evidence",
+    summary:
+      "Mechanically checks every source assignment, recorded action, title form, and exact evidence declaration for a source proposed under more than one title.",
   },
   "local-wordnet-candidate-retrieval-v1": {
     roleLabel: "Retrieve local WordNet candidates",
@@ -1449,6 +1625,11 @@ export const agentTraceForRecord = (record: any): SomAgentTrace => {
       actorKind: detector.kind,
       summary: singlePassCandidateCall
         ? [
+            "access-single-description-title-check-v7",
+            "access-multiple-description-title-grouping-v7",
+          ].includes(detector.id)
+          ? "Uses one structured ACCESS-funded call to propose the smallest evidence-supported title groups, with exact declarations when one compound source supports more than one group."
+          : [
             "access-homogeneous-title-grouping-v3",
             "access-homogeneous-title-grouping-v4",
             "access-homogeneous-title-grouping-v5",
@@ -1639,6 +1820,14 @@ export const agentTraceForRecord = (record: any): SomAgentTrace => {
     }),
   );
 
+  const provenance = record.provenance || {};
+  const isTitleV6 = record.datasetVersion === "ontology-title-two-route-testbed-2026-09-02-v6";
+  const isTitleV7 = record.datasetVersion === "ontology-title-random-round-2026-09-09-v7";
+  const recordedModels = Array.from(new Set(lineage
+    .filter((item) => clean(item.actorKind) === "model")
+    .map((item) => clean((item as any).model))
+    .filter(Boolean)));
+
   return {
     title: "Agents and prompts used for this proposal",
     summary:
@@ -1646,5 +1835,16 @@ export const agentTraceForRecord = (record: any): SomAgentTrace => {
     runtimeInputNote:
       "This panel shows recorded prompt templates or deterministic rules when the source preserves them. Bracketed placeholders replace runtime ontology data and policy inserts. Confidence scores and raw model outputs are outside this panel; historical gaps are labeled explicitly.",
     stages,
+    provenance: [
+      { label: "Model / deployment", value: recordedModels.join("; ") || "Not captured in this historical proposal" },
+      { label: "Model build version", value: clean(evidence.modelVersion) || "Not captured in this historical proposal; prompt versions are shown below" },
+      { label: "Funding route", value: isTitleV6 ? "ACCESS project CIS261400 through CloudBank Azure (archived v6 manifest)" : isTitleV7 ? "ACCESS project CIS261400 through CloudBank Azure" : clean(evidence.fundingRoute) || "Not captured in this historical proposal" },
+      { label: "Dataset version", value: clean(record.datasetVersion) },
+      { label: "Source ontology", value: clean(provenance.sourceOntology) },
+      { label: "Source record", value: clean(provenance.sourceRecord) },
+      { label: "Source artifact", value: clean(provenance.sourceArtifact) },
+      { label: "Ontology snapshot SHA-256", value: clean(provenance.sourceSnapshotSha256 || provenance.sourceOntologySha256) },
+      { label: "Upstream source SHA-256", value: clean(provenance.upstreamSourceSha256) },
+    ].filter((item) => item.value),
   };
 };

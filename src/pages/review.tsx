@@ -814,6 +814,7 @@ export const ReviewPage = () => {
           {phase === "select" && (
             <ReviewQueueSelector
               issueTypes={issueTypes}
+              reviewOnly={workspaceId === "ontology-title-testbed"}
               branch={branch}
               ontologyName={ontologyName}
               onStart={chooseIssueType}

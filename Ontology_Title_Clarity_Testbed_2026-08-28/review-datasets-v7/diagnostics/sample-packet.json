@@ -1,0 +1,4029 @@
+{
+  "schemaVersion": "title-clarification-random-sample-v7",
+  "generatedAt": "2026-09-09T18:52:06.130Z",
+  "sourceFile": "0401_FINALHIERARCHY.json",
+  "sourceSha256": "f19ce789bce298b0564045fb87427eebd1193b89c133d17519c097dc3e0eb319",
+  "population": {
+    "atomicActivityOccurrences": 20491,
+    "distinctTitleEvidenceCases": 15994,
+    "eligibleAfterExcludingPriorRound": 15976
+  },
+  "sampleDesign": {
+    "method": "Reproducible pseudo-random sample without replacement from every distinct atomic-activity title/evidence case with a recorded leading action and at least one linked O*NET description: sort cases by SHA-256(seed + '|' + semanticCaseId), then take the first 50.",
+    "seed": "title-clarification-round-2-random-50-2026-09-09",
+    "unit": "distinct title-evidence case",
+    "sampleSize": 50,
+    "excludesReviewedRound": "ontology-title-two-route-testbed-2026-09-02-v6",
+    "excludedSemanticCaseIds": [
+      "title-case-494c788deca29b6e1d57",
+      "title-case-d081268e82e00d3c3572",
+      "title-case-c70142f1053afe164197",
+      "title-case-154ca2e4f2b603b710dd",
+      "title-case-2039e7b844ba7958cfb3",
+      "title-case-5cb0a916da9f065a9954",
+      "title-case-a05387b4dfa33d9f5058",
+      "title-case-31be9445c543950c4bf3",
+      "title-case-82efde4d76b97eed3b8f",
+      "title-case-0c2d49dc23308c3cdbc1",
+      "title-case-d565b3ff02f546db26df",
+      "title-case-68c2e3e26198778ef74f",
+      "title-case-3fbdcc7ce91fe12c3654",
+      "title-case-71acd49a1054a905e3fc",
+      "title-case-5a6c7e05279e96194080",
+      "title-case-7e67974387d65efa97e3",
+      "title-case-07f75364947f831cb18d",
+      "title-case-e33c7742f8d7f6d77e28"
+    ],
+    "stratified": false
+  },
+  "realizedDistribution": {
+    "topLevelBranch": {
+      "Act on information (“Think”)": 25,
+      "Act on physical objects (“Do”)": 18,
+      "Act with other activities and actors (“Interact”)": 7
+    },
+    "evidenceBucket": {
+      "medium-multi": 3,
+      "single": 37,
+      "small-multi": 10
+    },
+    "evidenceCount": {
+      "minimum": 1,
+      "maximum": 16,
+      "median": 1
+    }
+  },
+  "genericActionDiagnostic": {
+    "rule": "Flag exact leading actions Act and Perform for a separate review after title grouping and WordNet alignment.",
+    "occurrenceCount": 147,
+    "uniqueTitleCount": 135,
+    "examples": [
+      "Act Inquiry",
+      "Act Instruction",
+      "Act Witness",
+      "Perform Action (Synonyms: Execute Action, Take Action)",
+      "Perform Activity (Synonyms: Engage Activity, Execute Activity)",
+      "Perform Adjustment (Synonyms: Make Adjustment)",
+      "Perform Aid",
+      "Perform Analysis",
+      "Perform Angiography",
+      "Perform Application",
+      "Perform Assembly",
+      "Perform Assessment",
+      "Perform Assignment",
+      "Perform Audit",
+      "Perform Autopsy",
+      "Perform Backup",
+      "Perform Biopsy",
+      "Perform Brachytherapy",
+      "Perform Calculation",
+      "Perform Care"
+    ]
+  },
+  "sample": [
+    {
+      "occurrenceId": "atomic-0ade9a7b5ea582830d24",
+      "exactTitle": "Encode Check",
+      "normalizedTitle": "encode check",
+      "leadingAction": "Encode",
+      "recordedActionAliases": [
+        "encode"
+      ],
+      "ownerTitle": "Encode (code.v.02, Encode.v.01)",
+      "assignedSynsetIds": [
+        "code.v.02",
+        "encode.v.01"
+      ],
+      "path": [
+        "Act",
+        "Act on information (“Think”)",
+        "Modify information",
+        "Transform information (Change.v.01, Rework.v.01, Transform.v.02, Work.v.05)",
+        "Encode (code.v.02, Encode.v.01)",
+        "Encode (Information)",
+        "Encode Check"
+      ],
+      "parentTitle": "Encode (Information)",
+      "topLevelBranch": "Act on information (“Think”)",
+      "evidenceBucket": "single",
+      "evidenceCount": 1,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "23254",
+          "exactRecord": "(O*Net) 23254 - Encode and cancel checks, using bank machines.",
+          "task": "Encode and cancel checks, using bank machines.",
+          "otherLinkedAtomicTitles": [
+            "Cancel Check"
+          ],
+          "sameActionLinkedAtomicTitles": []
+        }
+      ],
+      "exactTitleOccurrenceCount": 1,
+      "semanticCaseId": "title-case-d1e2939de573647e9a0d",
+      "occurrenceIds": [
+        "atomic-0ade9a7b5ea582830d24"
+      ],
+      "occurrencePaths": [
+        [
+          "Act",
+          "Act on information (“Think”)",
+          "Modify information",
+          "Transform information (Change.v.01, Rework.v.01, Transform.v.02, Work.v.05)",
+          "Encode (code.v.02, Encode.v.01)",
+          "Encode (Information)",
+          "Encode Check"
+        ]
+      ],
+      "occurrenceCount": 1,
+      "sampleIndex": 1
+    },
+    {
+      "occurrenceId": "atomic-3b04fc11c9d87e16fa34",
+      "exactTitle": "Operate Jack",
+      "normalizedTitle": "operate jack",
+      "leadingAction": "Operate",
+      "recordedActionAliases": [
+        "operate"
+      ],
+      "ownerTitle": "Operate (Operate.v.03, Run.v.19)",
+      "assignedSynsetIds": [
+        "operate.v.03",
+        "run.v.19"
+      ],
+      "path": [
+        "Act",
+        "Act with other activities and actors (“Interact”)",
+        "Transfer between actors",
+        "Transfer service",
+        "Get service",
+        "Lead (Head.v.02, Induce.v.02, Lead.v.01, Lead.v.05)",
+        "Control (Control.v.01)",
+        "Operate (Operate.v.03, Run.v.19)",
+        "Operate (Physical Object) (1)",
+        "Operate Jack"
+      ],
+      "parentTitle": "Operate (Physical Object) (1)",
+      "topLevelBranch": "Act with other activities and actors (“Interact”)",
+      "evidenceBucket": "single",
+      "evidenceCount": 1,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "17878",
+          "exactRecord": "(O*Net) 17878 - Operate forklifts, pallet jacks, power lifts, or front-end loaders to load bales, bundles, or other heavy items onto trucks for shipping to smelters or other recycled materials processing facilities.",
+          "task": "Operate forklifts, pallet jacks, power lifts, or front-end loaders to load bales, bundles, or other heavy items onto trucks for shipping to smelters or other recycled materials processing facilities.",
+          "otherLinkedAtomicTitles": [
+            "Load Bale",
+            "Load Bundle",
+            "Load Item",
+            "Operate Forklift",
+            "Operate Lift",
+            "Operate Loader"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Operate Forklift",
+            "Operate Lift",
+            "Operate Loader"
+          ]
+        }
+      ],
+      "exactTitleOccurrenceCount": 1,
+      "semanticCaseId": "title-case-26854db36e1f9ea72d18",
+      "occurrenceIds": [
+        "atomic-3b04fc11c9d87e16fa34"
+      ],
+      "occurrencePaths": [
+        [
+          "Act",
+          "Act with other activities and actors (“Interact”)",
+          "Transfer between actors",
+          "Transfer service",
+          "Get service",
+          "Lead (Head.v.02, Induce.v.02, Lead.v.01, Lead.v.05)",
+          "Control (Control.v.01)",
+          "Operate (Operate.v.03, Run.v.19)",
+          "Operate (Physical Object) (1)",
+          "Operate Jack"
+        ]
+      ],
+      "occurrenceCount": 1,
+      "sampleIndex": 2
+    },
+    {
+      "occurrenceId": "atomic-dbab890cb1cef31f69db",
+      "exactTitle": "Remove Steel",
+      "normalizedTitle": "remove steel",
+      "leadingAction": "Remove",
+      "recordedActionAliases": [
+        "remove"
+      ],
+      "ownerTitle": "Remove (physical) (Remove.v.01)",
+      "assignedSynsetIds": [
+        "remove.v.01"
+      ],
+      "path": [
+        "Act",
+        "Act on physical objects (“Do”)",
+        "Modify physical objects",
+        "Separate physical objects (Divide.v.01, Separate.v.02)",
+        "Remove (physical) (Remove.v.01)",
+        "Remove (physical) (Physical Object)",
+        "Remove Steel"
+      ],
+      "parentTitle": "Remove (physical) (Physical Object)",
+      "topLevelBranch": "Act on physical objects (“Do”)",
+      "evidenceBucket": "single",
+      "evidenceCount": 1,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "12016",
+          "exactRecord": "(O*Net) 12016 - Remove solidified steel or slag from pouring nozzles, using long bars or oxygen burners.",
+          "task": "Remove solidified steel or slag from pouring nozzles, using long bars or oxygen burners.",
+          "otherLinkedAtomicTitles": [
+            "Remove Slag"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Remove Slag"
+          ]
+        }
+      ],
+      "exactTitleOccurrenceCount": 1,
+      "semanticCaseId": "title-case-041e61b0f9bceccb22df",
+      "occurrenceIds": [
+        "atomic-dbab890cb1cef31f69db"
+      ],
+      "occurrencePaths": [
+        [
+          "Act",
+          "Act on physical objects (“Do”)",
+          "Modify physical objects",
+          "Separate physical objects (Divide.v.01, Separate.v.02)",
+          "Remove (physical) (Remove.v.01)",
+          "Remove (physical) (Physical Object)",
+          "Remove Steel"
+        ]
+      ],
+      "occurrenceCount": 1,
+      "sampleIndex": 3
+    },
+    {
+      "occurrenceId": "atomic-0963e0ba89c80b43251a",
+      "exactTitle": "Inspect Module",
+      "normalizedTitle": "inspect module",
+      "leadingAction": "Inspect",
+      "recordedActionAliases": [
+        "inspect"
+      ],
+      "ownerTitle": "Inspect (Inspect.v.01)",
+      "assignedSynsetIds": [
+        "inspect.v.01"
+      ],
+      "path": [
+        "Act",
+        "Act on information (“Think”)",
+        "Transfer information",
+        "Get information (Get.v.01, Obtain.v.01, Procure.v.01)",
+        "Perceive (Perceive.v.01)",
+        "Examine (Examine.v.02)",
+        "Inspect (Inspect.v.01)",
+        "Inspect (Physical Object)",
+        "Inspect Module"
+      ],
+      "parentTitle": "Inspect (Physical Object)",
+      "topLevelBranch": "Act on information (“Think”)",
+      "evidenceBucket": "single",
+      "evidenceCount": 1,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "17762",
+          "exactRecord": "(O*Net) 17762 - Visually inspect and test photovoltaic (PV) modules or systems.",
+          "task": "Visually inspect and test photovoltaic (PV) modules or systems.",
+          "otherLinkedAtomicTitles": [
+            "Inspect System",
+            "Test Module",
+            "Test System (Synonyms: Pretest System)"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Inspect System"
+          ]
+        }
+      ],
+      "exactTitleOccurrenceCount": 2,
+      "semanticCaseId": "title-case-3c48d6e1b05358841a9d",
+      "occurrenceIds": [
+        "atomic-0963e0ba89c80b43251a",
+        "atomic-563881e547db726460d1"
+      ],
+      "occurrencePaths": [
+        [
+          "Act",
+          "Act on information (“Think”)",
+          "Transfer information",
+          "Get information (Get.v.01, Obtain.v.01, Procure.v.01)",
+          "Perceive (Perceive.v.01)",
+          "Examine (Examine.v.02)",
+          "Inspect (Inspect.v.01)",
+          "Inspect (Physical Object)",
+          "Inspect Module"
+        ],
+        [
+          "Act",
+          "Act with other activities and actors (“Interact”)",
+          "Transfer between actors",
+          "Transfer information",
+          "Get information (Get.v.01, Obtain.v.01, Procure.v.01)",
+          "Perceive (Perceive.v.01)",
+          "Examine (Examine.v.02)",
+          "Inspect (Inspect.v.01)",
+          "Inspect (Physical Object)",
+          "Inspect Module"
+        ]
+      ],
+      "occurrenceCount": 2,
+      "sampleIndex": 4
+    },
+    {
+      "occurrenceId": "atomic-a6926444c51a48ccf564",
+      "exactTitle": "Meet Head",
+      "normalizedTitle": "meet head",
+      "leadingAction": "Meet",
+      "recordedActionAliases": [
+        "meet"
+      ],
+      "ownerTitle": "Meet (Meet.v.01)",
+      "assignedSynsetIds": [
+        "meet.v.01"
+      ],
+      "path": [
+        "Act",
+        "Act on information (“Think”)",
+        "Transfer information",
+        "Exchange information (Change.v.06)",
+        "Meet (Meet.v.01)",
+        "Meet (Actor)",
+        "Meet Head"
+      ],
+      "parentTitle": "Meet (Actor)",
+      "topLevelBranch": "Act on information (“Think”)",
+      "evidenceBucket": "single",
+      "evidenceCount": 1,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "975",
+          "exactRecord": "(O*Net) 975 - Meet with department heads, managers, supervisors, vendors, and others, to solicit cooperation and resolve problems.",
+          "task": "Meet with department heads, managers, supervisors, vendors, and others, to solicit cooperation and resolve problems.",
+          "otherLinkedAtomicTitles": [
+            "Meet Manager",
+            "Meet Other",
+            "Meet Supervisor",
+            "Meet Vendor"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Meet Manager",
+            "Meet Other",
+            "Meet Supervisor",
+            "Meet Vendor"
+          ]
+        }
+      ],
+      "exactTitleOccurrenceCount": 2,
+      "semanticCaseId": "title-case-0dc2f82e2ef93eb980ba",
+      "occurrenceIds": [
+        "atomic-a6926444c51a48ccf564",
+        "atomic-8255709a05919ec70748"
+      ],
+      "occurrencePaths": [
+        [
+          "Act",
+          "Act on information (“Think”)",
+          "Transfer information",
+          "Exchange information (Change.v.06)",
+          "Meet (Meet.v.01)",
+          "Meet (Actor)",
+          "Meet Head"
+        ],
+        [
+          "Act",
+          "Act with other activities and actors (“Interact”)",
+          "Transfer between actors",
+          "Transfer information",
+          "Exchange information (Change.v.06)",
+          "Meet (Meet.v.01)",
+          "Meet (Actor)",
+          "Meet Head"
+        ]
+      ],
+      "occurrenceCount": 2,
+      "sampleIndex": 5
+    },
+    {
+      "occurrenceId": "atomic-9b8c9a70deffe6276924",
+      "exactTitle": "Display Merchandise",
+      "normalizedTitle": "display merchandise",
+      "leadingAction": "Display",
+      "recordedActionAliases": [
+        "display"
+      ],
+      "ownerTitle": "Show (Expose.v.03, Show.v.04)",
+      "assignedSynsetIds": [
+        "expose.v.03",
+        "show.v.04"
+      ],
+      "path": [
+        "Act",
+        "Act on information (“Think”)",
+        "Transfer information",
+        "Provide information",
+        "Send information (Send.v.02, Transmit.v.04)",
+        "Show (Expose.v.03, Show.v.04)",
+        "Show (Physical Object)",
+        "Display Merchandise"
+      ],
+      "parentTitle": "Show (Physical Object)",
+      "topLevelBranch": "Act on information (“Think”)",
+      "evidenceBucket": "small-multi",
+      "evidenceCount": 2,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "13241",
+          "exactRecord": "(O*Net) 13241 - Set up and display sample merchandise at parties or stands.",
+          "task": "Set up and display sample merchandise at parties or stands.",
+          "otherLinkedAtomicTitles": [
+            "Set_Up Merchandise"
+          ],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 2,
+          "oNetId": "703",
+          "exactRecord": "(O*Net) 703 - Ticket, arrange, and display merchandise to promote sales.",
+          "task": "Ticket, arrange, and display merchandise to promote sales.",
+          "otherLinkedAtomicTitles": [
+            "Arrange Merchandise",
+            "Ticket Merchandise"
+          ],
+          "sameActionLinkedAtomicTitles": []
+        }
+      ],
+      "exactTitleOccurrenceCount": 2,
+      "semanticCaseId": "title-case-5cbad99c125acd27b774",
+      "occurrenceIds": [
+        "atomic-9b8c9a70deffe6276924",
+        "atomic-efaa348c4b36458c6a0e"
+      ],
+      "occurrencePaths": [
+        [
+          "Act",
+          "Act on information (“Think”)",
+          "Transfer information",
+          "Provide information",
+          "Send information (Send.v.02, Transmit.v.04)",
+          "Show (Expose.v.03, Show.v.04)",
+          "Show (Physical Object)",
+          "Display Merchandise"
+        ],
+        [
+          "Act",
+          "Act with other activities and actors (“Interact”)",
+          "Transfer between actors",
+          "Transfer information",
+          "Provide information",
+          "Send information (Send.v.02, Transmit.v.04)",
+          "Show (Expose.v.03, Show.v.04)",
+          "Show (Physical Object)",
+          "Display Merchandise"
+        ]
+      ],
+      "occurrenceCount": 2,
+      "sampleIndex": 6
+    },
+    {
+      "occurrenceId": "atomic-ea1ce6f23a91b3f6c31a",
+      "exactTitle": "Tear_Down Equipment",
+      "normalizedTitle": "tear down equipment",
+      "leadingAction": "Tear_Down",
+      "recordedActionAliases": [
+        "tear_down"
+      ],
+      "ownerTitle": "Raze (Level.v.02)",
+      "assignedSynsetIds": [
+        "level.v.02"
+      ],
+      "path": [
+        "Act",
+        "Act on physical objects (“Do”)",
+        "Modify physical objects",
+        "Transform physical objects (Change.v.01, Rework.v.01, Transform.v.02, Work.v.05)",
+        "Raze (Level.v.02)",
+        "Raze (Physical Object)",
+        "Tear_Down Equipment"
+      ],
+      "parentTitle": "Raze (Physical Object)",
+      "topLevelBranch": "Act on physical objects (“Do”)",
+      "evidenceBucket": "single",
+      "evidenceCount": 1,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "4801",
+          "exactRecord": "(O*Net) 4801 - Set up and tear down equipment.",
+          "task": "Set up and tear down equipment.",
+          "otherLinkedAtomicTitles": [
+            "Prepare Equipment (Synonyms: Set_Up Equipment)"
+          ],
+          "sameActionLinkedAtomicTitles": []
+        }
+      ],
+      "exactTitleOccurrenceCount": 1,
+      "semanticCaseId": "title-case-7e8c64c3cc5d394965e4",
+      "occurrenceIds": [
+        "atomic-ea1ce6f23a91b3f6c31a"
+      ],
+      "occurrencePaths": [
+        [
+          "Act",
+          "Act on physical objects (“Do”)",
+          "Modify physical objects",
+          "Transform physical objects (Change.v.01, Rework.v.01, Transform.v.02, Work.v.05)",
+          "Raze (Level.v.02)",
+          "Raze (Physical Object)",
+          "Tear_Down Equipment"
+        ]
+      ],
+      "occurrenceCount": 1,
+      "sampleIndex": 7
+    },
+    {
+      "occurrenceId": "atomic-a31d07a727097a5255a0",
+      "exactTitle": "Interview Associate",
+      "normalizedTitle": "interview associate",
+      "leadingAction": "Interview",
+      "recordedActionAliases": [
+        "interview"
+      ],
+      "ownerTitle": "Interview (Interview.v.01, Interview.v.02)",
+      "assignedSynsetIds": [
+        "interview.v.01",
+        "interview.v.02"
+      ],
+      "path": [
+        "Act",
+        "Act on information (“Think”)",
+        "Transfer information",
+        "Exchange information (Change.v.06)",
+        "Interview (Interview.v.01, Interview.v.02)",
+        "Interview (Actor)",
+        "Interview Associate"
+      ],
+      "parentTitle": "Interview (Actor)",
+      "topLevelBranch": "Act on information (“Think”)",
+      "evidenceBucket": "small-multi",
+      "evidenceCount": 2,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "21406",
+          "exactRecord": "(O*Net) 21406 - Interview and hire associates to fill staff vacancies.",
+          "task": "Interview and hire associates to fill staff vacancies.",
+          "otherLinkedAtomicTitles": [
+            "Hire Associate"
+          ],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 2,
+          "oNetId": "9482",
+          "exactRecord": "(O*Net) 9482 - Interview neighbors, associates, or former employers of job applicants to verify personal references or to obtain work history data.",
+          "task": "Interview neighbors, associates, or former employers of job applicants to verify personal references or to obtain work history data.",
+          "otherLinkedAtomicTitles": [
+            "Interview Employer",
+            "Interview Neighbor"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Interview Employer",
+            "Interview Neighbor"
+          ]
+        }
+      ],
+      "exactTitleOccurrenceCount": 2,
+      "semanticCaseId": "title-case-1ba7a3c7871827cfdf10",
+      "occurrenceIds": [
+        "atomic-a31d07a727097a5255a0",
+        "atomic-29113d01fd458d14f0d1"
+      ],
+      "occurrencePaths": [
+        [
+          "Act",
+          "Act on information (“Think”)",
+          "Transfer information",
+          "Exchange information (Change.v.06)",
+          "Interview (Interview.v.01, Interview.v.02)",
+          "Interview (Actor)",
+          "Interview Associate"
+        ],
+        [
+          "Act",
+          "Act with other activities and actors (“Interact”)",
+          "Transfer between actors",
+          "Transfer information",
+          "Exchange information (Change.v.06)",
+          "Interview (Interview.v.01, Interview.v.02)",
+          "Interview (Actor)",
+          "Interview Associate"
+        ]
+      ],
+      "occurrenceCount": 2,
+      "sampleIndex": 8
+    },
+    {
+      "occurrenceId": "atomic-b0107465f227daf30633",
+      "exactTitle": "Remind Patient",
+      "normalizedTitle": "remind patient",
+      "leadingAction": "Remind",
+      "recordedActionAliases": [
+        "remind"
+      ],
+      "ownerTitle": "Remind (Remind.v.01)",
+      "assignedSynsetIds": [
+        "remind.v.01"
+      ],
+      "path": [
+        "Act",
+        "Act on information (“Think”)",
+        "Transfer information",
+        "Provide information",
+        "Send information (Send.v.02, Transmit.v.04)",
+        "Inform (Advise.v.02, Inform.v.01)",
+        "Remind (Remind.v.01)",
+        "Remind (Actor)",
+        "Remind Patient"
+      ],
+      "parentTitle": "Remind (Actor)",
+      "topLevelBranch": "Act on information (“Think”)",
+      "evidenceBucket": "single",
+      "evidenceCount": 1,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "19334",
+          "exactRecord": "(O*Net) 19334 - Remind patients to take medications or nutritional supplements.",
+          "task": "Remind patients to take medications or nutritional supplements.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        }
+      ],
+      "exactTitleOccurrenceCount": 2,
+      "semanticCaseId": "title-case-85b7757b579082d07ac5",
+      "occurrenceIds": [
+        "atomic-b0107465f227daf30633",
+        "atomic-8e64ea819ecef17866b1"
+      ],
+      "occurrencePaths": [
+        [
+          "Act",
+          "Act on information (“Think”)",
+          "Transfer information",
+          "Provide information",
+          "Send information (Send.v.02, Transmit.v.04)",
+          "Inform (Advise.v.02, Inform.v.01)",
+          "Remind (Remind.v.01)",
+          "Remind (Actor)",
+          "Remind Patient"
+        ],
+        [
+          "Act",
+          "Act with other activities and actors (“Interact”)",
+          "Transfer between actors",
+          "Transfer information",
+          "Provide information",
+          "Send information (Send.v.02, Transmit.v.04)",
+          "Inform (Advise.v.02, Inform.v.01)",
+          "Remind (Remind.v.01)",
+          "Remind (Actor)",
+          "Remind Patient"
+        ]
+      ],
+      "occurrenceCount": 2,
+      "sampleIndex": 9
+    },
+    {
+      "occurrenceId": "atomic-f15dcf435b3932f9ea91",
+      "exactTitle": "Make Decision",
+      "normalizedTitle": "make decision",
+      "leadingAction": "Make",
+      "recordedActionAliases": [
+        "make"
+      ],
+      "ownerTitle": "Perform (action) (Do.v.03, Perform.v.01, Prosecute.v.03, Take.v.01)",
+      "assignedSynsetIds": [
+        "do.v.03",
+        "perform.v.01",
+        "prosecute.v.03",
+        "take.v.01"
+      ],
+      "path": [
+        "Act",
+        "Act with other activities and actors (“Interact”)",
+        "Act on activities",
+        "Perform (action) (Do.v.03, Perform.v.01, Prosecute.v.03, Take.v.01)",
+        "Perform (action) (Information)",
+        "Make Decision"
+      ],
+      "parentTitle": "Perform (action) (Information)",
+      "topLevelBranch": "Act with other activities and actors (“Interact”)",
+      "evidenceBucket": "medium-multi",
+      "evidenceCount": 6,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "21267",
+          "exactRecord": "(O*Net) 21267 - Meet with other departmental leaders to establish organizational goals, strategic plans, and objectives, as well as make decisions about personnel, resources, and space or equipment needs.",
+          "task": "Meet with other departmental leaders to establish organizational goals, strategic plans, and objectives, as well as make decisions about personnel, resources, and space or equipment needs.",
+          "otherLinkedAtomicTitles": [
+            "Establish Goal",
+            "Meet Leader"
+          ],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 2,
+          "oNetId": "22415",
+          "exactRecord": "(O*Net) 22415 - Confer with colleagues, faculty, and community members and organizations to conduct informational programs, make collection decisions, and determine library services to offer.",
+          "task": "Confer with colleagues, faculty, and community members and organizations to conduct informational programs, make collection decisions, and determine library services to offer.",
+          "otherLinkedAtomicTitles": [
+            "Conduct Program",
+            "Confer Program (Synonyms: Consult Program)",
+            "Determine Service"
+          ],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 3,
+          "oNetId": "4.A.2.b.1",
+          "exactRecord": "(O*Net) 4.A.2.b.1 - Making Decisions and Solving Problems",
+          "task": "Making Decisions and Solving Problems",
+          "otherLinkedAtomicTitles": [
+            "Solve Problem"
+          ],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 4,
+          "oNetId": "4.A.2.b.1.I05",
+          "exactRecord": "(O*Net) 4.A.2.b.1.I05 - Make legal decisions.",
+          "task": "Make legal decisions.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 5,
+          "oNetId": "4.A.2.b.1.I05.D01",
+          "exactRecord": "(O*Net) 4.A.2.b.1.I05.D01 - Make decisions in legal cases.",
+          "task": "Make decisions in legal cases.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 6,
+          "oNetId": "4075",
+          "exactRecord": "(O*Net) 4075 - Make tentative diagnoses and decisions about management and treatment of patients.",
+          "task": "Make tentative diagnoses and decisions about management and treatment of patients.",
+          "otherLinkedAtomicTitles": [
+            "Make Diagnosis"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Make Diagnosis"
+          ]
+        }
+      ],
+      "exactTitleOccurrenceCount": 1,
+      "semanticCaseId": "title-case-d226cf96ded6cd23f6ee",
+      "occurrenceIds": [
+        "atomic-f15dcf435b3932f9ea91"
+      ],
+      "occurrencePaths": [
+        [
+          "Act",
+          "Act with other activities and actors (“Interact”)",
+          "Act on activities",
+          "Perform (action) (Do.v.03, Perform.v.01, Prosecute.v.03, Take.v.01)",
+          "Perform (action) (Information)",
+          "Make Decision"
+        ]
+      ],
+      "occurrenceCount": 1,
+      "sampleIndex": 10
+    },
+    {
+      "occurrenceId": "atomic-e5cd578030b59d9b3493",
+      "exactTitle": "Scrape Joint",
+      "normalizedTitle": "scrape joint",
+      "leadingAction": "Scrape",
+      "recordedActionAliases": [
+        "scrape"
+      ],
+      "ownerTitle": "Scratch (Scratch.v.02, Scratch.v.07)",
+      "assignedSynsetIds": [
+        "scratch.v.02",
+        "scratch.v.07"
+      ],
+      "path": [
+        "Act",
+        "Act on physical objects (“Do”)",
+        "Modify physical objects",
+        "Separate physical objects (Divide.v.01, Separate.v.02)",
+        "Cut (physical) (Cut.v.01)",
+        "Carve (Carve.v.01, Carve.v.02, Carve.v.03)",
+        "Scratch (Scratch.v.02, Scratch.v.07)",
+        "Scratch (Physical Object)",
+        "Scrape Joint"
+      ],
+      "parentTitle": "Scratch (Physical Object)",
+      "topLevelBranch": "Act on physical objects (“Do”)",
+      "evidenceBucket": "single",
+      "evidenceCount": 1,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "12219",
+          "exactRecord": "(O*Net) 12219 - Trim, sand, or scrape surfaces or joints to prepare articles for finishing.",
+          "task": "Trim, sand, or scrape surfaces or joints to prepare articles for finishing.",
+          "otherLinkedAtomicTitles": [
+            "Dress Joint (Synonyms: Trim Joint)",
+            "Dress Surface (Synonyms: Trim Surface)",
+            "Sand Joint",
+            "Sand Surface",
+            "Scrape Surface"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Scrape Surface"
+          ]
+        }
+      ],
+      "exactTitleOccurrenceCount": 1,
+      "semanticCaseId": "title-case-e58a3bcd1a776e1493c8",
+      "occurrenceIds": [
+        "atomic-e5cd578030b59d9b3493"
+      ],
+      "occurrencePaths": [
+        [
+          "Act",
+          "Act on physical objects (“Do”)",
+          "Modify physical objects",
+          "Separate physical objects (Divide.v.01, Separate.v.02)",
+          "Cut (physical) (Cut.v.01)",
+          "Carve (Carve.v.01, Carve.v.02, Carve.v.03)",
+          "Scratch (Scratch.v.02, Scratch.v.07)",
+          "Scratch (Physical Object)",
+          "Scrape Joint"
+        ]
+      ],
+      "occurrenceCount": 1,
+      "sampleIndex": 11
+    },
+    {
+      "occurrenceId": "atomic-c792403e9d83b049ccb1",
+      "exactTitle": "Insert Bullet",
+      "normalizedTitle": "insert bullet",
+      "leadingAction": "Insert",
+      "recordedActionAliases": [
+        "insert"
+      ],
+      "ownerTitle": "Insert (physical) (Feed.v.04, Insert.v.01)",
+      "assignedSynsetIds": [
+        "feed.v.04",
+        "insert.v.01"
+      ],
+      "path": [
+        "Act",
+        "Act on physical objects (“Do”)",
+        "Modify physical objects",
+        "Move physical objects (Act.v.01, Move.v.02, Send.v.02, Transfer.v.04, Transmit.v.04)",
+        "Put physical objects (Put.v.01)",
+        "Insert (physical) (Feed.v.04, Insert.v.01)",
+        "Insert (physical) (Physical Object)",
+        "Insert Bullet"
+      ],
+      "parentTitle": "Insert (physical) (Physical Object)",
+      "topLevelBranch": "Act on physical objects (“Do”)",
+      "evidenceBucket": "single",
+      "evidenceCount": 1,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "9924",
+          "exactRecord": "(O*Net) 9924 - Insert waterproof sealers, bullets, and/or powder charges into guns, and screw gun ports back into place.",
+          "task": "Insert waterproof sealers, bullets, and/or powder charges into guns, and screw gun ports back into place.",
+          "otherLinkedAtomicTitles": [
+            "Insert Charge",
+            "Insert Sealer",
+            "Screw Port"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Insert Charge",
+            "Insert Sealer"
+          ]
+        }
+      ],
+      "exactTitleOccurrenceCount": 1,
+      "semanticCaseId": "title-case-07cec9e3679665961fea",
+      "occurrenceIds": [
+        "atomic-c792403e9d83b049ccb1"
+      ],
+      "occurrencePaths": [
+        [
+          "Act",
+          "Act on physical objects (“Do”)",
+          "Modify physical objects",
+          "Move physical objects (Act.v.01, Move.v.02, Send.v.02, Transfer.v.04, Transmit.v.04)",
+          "Put physical objects (Put.v.01)",
+          "Insert (physical) (Feed.v.04, Insert.v.01)",
+          "Insert (physical) (Physical Object)",
+          "Insert Bullet"
+        ]
+      ],
+      "occurrenceCount": 1,
+      "sampleIndex": 12
+    },
+    {
+      "occurrenceId": "atomic-6e4ac02589f573bfc7a7",
+      "exactTitle": "Stay Event",
+      "normalizedTitle": "stay event",
+      "leadingAction": "Stay",
+      "recordedActionAliases": [
+        "stay"
+      ],
+      "ownerTitle": "Keep Up (Keep_up.v.04)",
+      "assignedSynsetIds": [
+        "keep_up.v.04"
+      ],
+      "path": [
+        "Act",
+        "Act on information (“Think”)",
+        "Transfer information",
+        "Get information (Get.v.01, Obtain.v.01, Procure.v.01)",
+        "Learn (Continue.v.01, Learn.v.01, Learn.v.04)",
+        "Keep Up (Keep_up.v.04)",
+        "Keep (Information) (2)",
+        "Stay Event"
+      ],
+      "parentTitle": "Keep (Information) (2)",
+      "topLevelBranch": "Act on information (“Think”)",
+      "evidenceBucket": "single",
+      "evidenceCount": 1,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "18612",
+          "exactRecord": "(O*Net) 18612 - Stay up to date on new regulations and current events regarding food science by reviewing scientific literature.",
+          "task": "Stay up to date on new regulations and current events regarding food science by reviewing scientific literature.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        }
+      ],
+      "exactTitleOccurrenceCount": 2,
+      "semanticCaseId": "title-case-61fb0c56a4a6efb22c52",
+      "occurrenceIds": [
+        "atomic-6e4ac02589f573bfc7a7",
+        "atomic-57b82831dc16a1563bb4"
+      ],
+      "occurrencePaths": [
+        [
+          "Act",
+          "Act on information (“Think”)",
+          "Transfer information",
+          "Get information (Get.v.01, Obtain.v.01, Procure.v.01)",
+          "Learn (Continue.v.01, Learn.v.01, Learn.v.04)",
+          "Keep Up (Keep_up.v.04)",
+          "Keep (Information) (2)",
+          "Stay Event"
+        ],
+        [
+          "Act",
+          "Act with other activities and actors (“Interact”)",
+          "Transfer between actors",
+          "Transfer information",
+          "Get information (Get.v.01, Obtain.v.01, Procure.v.01)",
+          "Learn (Continue.v.01, Learn.v.01, Learn.v.04)",
+          "Keep Up (Keep_up.v.04)",
+          "Keep (Information) (2)",
+          "Stay Event"
+        ]
+      ],
+      "occurrenceCount": 2,
+      "sampleIndex": 13
+    },
+    {
+      "occurrenceId": "atomic-45aa4e27579246b4b850",
+      "exactTitle": "Attach Gasket",
+      "normalizedTitle": "attach gasket",
+      "leadingAction": "Attach",
+      "recordedActionAliases": [
+        "attach"
+      ],
+      "ownerTitle": "Connect (physical) (Affix.v.01, Attach.v.01, Connect.v.01, Join.v.02)",
+      "assignedSynsetIds": [
+        "affix.v.01",
+        "attach.v.01",
+        "connect.v.01",
+        "join.v.02"
+      ],
+      "path": [
+        "Act",
+        "Act on physical objects (“Do”)",
+        "Modify physical objects",
+        "Combine physical objects (Create_from_raw_material.v.01)",
+        "Connect (physical) (Affix.v.01, Attach.v.01, Connect.v.01, Join.v.02)",
+        "Connect (physical) (Physical Object)",
+        "Attach Gasket"
+      ],
+      "parentTitle": "Connect (physical) (Physical Object)",
+      "topLevelBranch": "Act on physical objects (“Do”)",
+      "evidenceBucket": "single",
+      "evidenceCount": 1,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "11497",
+          "exactRecord": "(O*Net) 11497 - Cut and attach mounting strips, metal or wood moldings, rubber gaskets, or metal clips to surfaces in preparation for mirror installation.",
+          "task": "Cut and attach mounting strips, metal or wood moldings, rubber gaskets, or metal clips to surfaces in preparation for mirror installation.",
+          "otherLinkedAtomicTitles": [
+            "Attach Clip",
+            "Attach Molding",
+            "Attach Strip",
+            "Cut Strip"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Attach Clip",
+            "Attach Molding",
+            "Attach Strip"
+          ]
+        }
+      ],
+      "exactTitleOccurrenceCount": 1,
+      "semanticCaseId": "title-case-08693d890c9b6f94d618",
+      "occurrenceIds": [
+        "atomic-45aa4e27579246b4b850"
+      ],
+      "occurrencePaths": [
+        [
+          "Act",
+          "Act on physical objects (“Do”)",
+          "Modify physical objects",
+          "Combine physical objects (Create_from_raw_material.v.01)",
+          "Connect (physical) (Affix.v.01, Attach.v.01, Connect.v.01, Join.v.02)",
+          "Connect (physical) (Physical Object)",
+          "Attach Gasket"
+        ]
+      ],
+      "occurrenceCount": 1,
+      "sampleIndex": 14
+    },
+    {
+      "occurrenceId": "atomic-badcb0b58fd60ddd6c20",
+      "exactTitle": "Implement Upgrade",
+      "normalizedTitle": "implement upgrade",
+      "leadingAction": "Implement",
+      "recordedActionAliases": [
+        "implement"
+      ],
+      "ownerTitle": "Implement (Carry_through.v.01, Follow_through.v.02)",
+      "assignedSynsetIds": [
+        "carry_through.v.01",
+        "follow_through.v.02"
+      ],
+      "path": [
+        "Act",
+        "Act with other activities and actors (“Interact”)",
+        "Act on activities",
+        "Implement (Carry_through.v.01, Follow_through.v.02)",
+        "Implement (Activity)",
+        "Implement Upgrade"
+      ],
+      "parentTitle": "Implement (Activity)",
+      "topLevelBranch": "Act with other activities and actors (“Interact”)",
+      "evidenceBucket": "single",
+      "evidenceCount": 1,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "14740",
+          "exactRecord": "(O*Net) 14740 - Implement updates, upgrades, and patches in a timely manner to limit loss of service.",
+          "task": "Implement updates, upgrades, and patches in a timely manner to limit loss of service.",
+          "otherLinkedAtomicTitles": [
+            "Implement Patch",
+            "Implement Update"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Implement Patch",
+            "Implement Update"
+          ]
+        }
+      ],
+      "exactTitleOccurrenceCount": 2,
+      "semanticCaseId": "title-case-b447fadae5021a7077d1",
+      "occurrenceIds": [
+        "atomic-badcb0b58fd60ddd6c20",
+        "atomic-51e88c0673172bb0c84a"
+      ],
+      "occurrencePaths": [
+        [
+          "Act",
+          "Act with other activities and actors (“Interact”)",
+          "Act on activities",
+          "Implement (Carry_through.v.01, Follow_through.v.02)",
+          "Implement (Activity)",
+          "Implement Upgrade"
+        ],
+        [
+          "Act",
+          "Act with other activities and actors (“Interact”)",
+          "Transfer between actors",
+          "Transfer service",
+          "Get service",
+          "Lead (Head.v.02, Induce.v.02, Lead.v.01, Lead.v.05)",
+          "Control (Control.v.01)",
+          "Manage (Manage.v.02, Treat.v.01)",
+          "Implement (Carry_through.v.01, Follow_through.v.02)",
+          "Implement (Activity)",
+          "Implement Upgrade"
+        ]
+      ],
+      "occurrenceCount": 2,
+      "sampleIndex": 15
+    },
+    {
+      "occurrenceId": "atomic-e8d6bfbc5d704d9b70b4",
+      "exactTitle": "Sew Material (Synonyms: Stitch Material)",
+      "normalizedTitle": "sew material",
+      "leadingAction": "Sew",
+      "recordedActionAliases": [
+        "sew",
+        "stitch"
+      ],
+      "ownerTitle": "Sew (Sew.v.01, Sew.v.02)",
+      "assignedSynsetIds": [
+        "sew.v.01",
+        "sew.v.02"
+      ],
+      "path": [
+        "Act",
+        "Act on physical objects (“Do”)",
+        "Modify physical objects",
+        "Combine physical objects (Create_from_raw_material.v.01)",
+        "Connect (physical) (Affix.v.01, Attach.v.01, Connect.v.01, Join.v.02)",
+        "Sew (Sew.v.01, Sew.v.02)",
+        "Sew (Physical Object)",
+        "Sew Material (Synonyms: Stitch Material)"
+      ],
+      "parentTitle": "Sew (Physical Object)",
+      "topLevelBranch": "Act on physical objects (“Do”)",
+      "evidenceBucket": "small-multi",
+      "evidenceCount": 4,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "4.A.3.a.2.I05",
+          "exactRecord": "(O*Net) 4.A.3.a.2.I05 - Sew garments or materials.",
+          "task": "Sew garments or materials.",
+          "otherLinkedAtomicTitles": [
+            "Sew Garment"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Sew Garment"
+          ]
+        },
+        {
+          "index": 2,
+          "oNetId": "4.A.3.a.2.I05.D02",
+          "exactRecord": "(O*Net) 4.A.3.a.2.I05.D02 - Sew materials.",
+          "task": "Sew materials.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 3,
+          "oNetId": "14064",
+          "exactRecord": "(O*Net) 14064 - Align and stitch or glue materials such as fabric, fleece, leather, or wood, to join parts.",
+          "task": "Align and stitch or glue materials such as fabric, fleece, leather, or wood, to join parts.",
+          "otherLinkedAtomicTitles": [
+            "Align Material",
+            "Glue Material"
+          ],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 4,
+          "oNetId": "14065",
+          "exactRecord": "(O*Net) 14065 - Dye, soak, polish, paint, stamp, stitch, stain, buff, or engrave leather or other materials to obtain desired effects, decorations, or shapes.",
+          "task": "Dye, soak, polish, paint, stamp, stitch, stain, buff, or engrave leather or other materials to obtain desired effects, decorations, or shapes.",
+          "otherLinkedAtomicTitles": [
+            "Buff Material",
+            "Dye Material",
+            "Engrave Material",
+            "Paint Material",
+            "Polish Material",
+            "Soak Material",
+            "Stain Material",
+            "Stamp Material"
+          ],
+          "sameActionLinkedAtomicTitles": []
+        }
+      ],
+      "exactTitleOccurrenceCount": 1,
+      "semanticCaseId": "title-case-d48b8cf33b30fbd677f5",
+      "occurrenceIds": [
+        "atomic-e8d6bfbc5d704d9b70b4"
+      ],
+      "occurrencePaths": [
+        [
+          "Act",
+          "Act on physical objects (“Do”)",
+          "Modify physical objects",
+          "Combine physical objects (Create_from_raw_material.v.01)",
+          "Connect (physical) (Affix.v.01, Attach.v.01, Connect.v.01, Join.v.02)",
+          "Sew (Sew.v.01, Sew.v.02)",
+          "Sew (Physical Object)",
+          "Sew Material (Synonyms: Stitch Material)"
+        ]
+      ],
+      "occurrenceCount": 1,
+      "sampleIndex": 16
+    },
+    {
+      "occurrenceId": "atomic-3f888f709e4efe2b7225",
+      "exactTitle": "Measure Customer",
+      "normalizedTitle": "measure customer",
+      "leadingAction": "Measure",
+      "recordedActionAliases": [
+        "measure"
+      ],
+      "ownerTitle": "Measure (Measure.v.04, Quantify.v.02)",
+      "assignedSynsetIds": [
+        "measure.v.04",
+        "quantify.v.02"
+      ],
+      "path": [
+        "Act",
+        "Act on information (“Think”)",
+        "Transfer information",
+        "Get information (Get.v.01, Obtain.v.01, Procure.v.01)",
+        "Evaluate (Evaluate.v.02)",
+        "Measure (Measure.v.04, Quantify.v.02)",
+        "Measure (Actor)",
+        "Measure Customer"
+      ],
+      "parentTitle": "Measure (Actor)",
+      "topLevelBranch": "Act on information (“Think”)",
+      "evidenceBucket": "single",
+      "evidenceCount": 1,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "12190",
+          "exactRecord": "(O*Net) 12190 - Measure customers, using tape measures, and record measurements.",
+          "task": "Measure customers, using tape measures, and record measurements.",
+          "otherLinkedAtomicTitles": [
+            "Record Measurement"
+          ],
+          "sameActionLinkedAtomicTitles": []
+        }
+      ],
+      "exactTitleOccurrenceCount": 2,
+      "semanticCaseId": "title-case-92b498b3e7c1c76f5f3a",
+      "occurrenceIds": [
+        "atomic-3f888f709e4efe2b7225",
+        "atomic-c397d2d49fb2312a521b"
+      ],
+      "occurrencePaths": [
+        [
+          "Act",
+          "Act on information (“Think”)",
+          "Transfer information",
+          "Get information (Get.v.01, Obtain.v.01, Procure.v.01)",
+          "Evaluate (Evaluate.v.02)",
+          "Measure (Measure.v.04, Quantify.v.02)",
+          "Measure (Actor)",
+          "Measure Customer"
+        ],
+        [
+          "Act",
+          "Act with other activities and actors (“Interact”)",
+          "Transfer between actors",
+          "Transfer information",
+          "Get information (Get.v.01, Obtain.v.01, Procure.v.01)",
+          "Evaluate (Evaluate.v.02)",
+          "Measure (Measure.v.04, Quantify.v.02)",
+          "Measure (Actor)",
+          "Measure Customer"
+        ]
+      ],
+      "occurrenceCount": 2,
+      "sampleIndex": 17
+    },
+    {
+      "occurrenceId": "atomic-b5ee224274756732a5e1",
+      "exactTitle": "Recruit Staff",
+      "normalizedTitle": "recruit staff",
+      "leadingAction": "Recruit",
+      "recordedActionAliases": [
+        "recruit"
+      ],
+      "ownerTitle": "Recruit (Recruit.v.02)",
+      "assignedSynsetIds": [
+        "recruit.v.02"
+      ],
+      "path": [
+        "Act",
+        "Act with other activities and actors (“Interact”)",
+        "Transfer between actors",
+        "Buy (Buy.v.01, Cash.v.01, Shop.v.01, Shop.v.03)",
+        "Rent (pay for time-limited use)",
+        "Hire (Engage.v.08, Hire.v.01)",
+        "Recruit (Recruit.v.02)",
+        "Recruit (Actor)",
+        "Recruit Staff"
+      ],
+      "parentTitle": "Recruit (Actor)",
+      "topLevelBranch": "Act with other activities and actors (“Interact”)",
+      "evidenceBucket": "medium-multi",
+      "evidenceCount": 9,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "1095",
+          "exactRecord": "(O*Net) 1095 - Assess staffing needs and recruit staff, using methods such as newspaper advertisements or attendance at job fairs.",
+          "task": "Assess staffing needs and recruit staff, using methods such as newspaper advertisements or attendance at job fairs.",
+          "otherLinkedAtomicTitles": [
+            "Assess Need (Synonyms: Evaluate Need)"
+          ],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 2,
+          "oNetId": "11141",
+          "exactRecord": "(O*Net) 11141 - Recruit and hire staff, such as cooks and other kitchen workers.",
+          "task": "Recruit and hire staff, such as cooks and other kitchen workers.",
+          "otherLinkedAtomicTitles": [
+            "Hire Staff (Synonyms: Employ Staff)"
+          ],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 3,
+          "oNetId": "1135",
+          "exactRecord": "(O*Net) 1135 - Recruit, interview, and hire or sign up volunteers and staff.",
+          "task": "Recruit, interview, and hire or sign up volunteers and staff.",
+          "otherLinkedAtomicTitles": [
+            "Hire Staff (Synonyms: Employ Staff)",
+            "Hire Volunteer",
+            "Interview Staff",
+            "Interview Volunteer",
+            "Recruit Volunteer",
+            "Sign_Up Staff",
+            "Sign_Up Volunteer"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Recruit Volunteer"
+          ]
+        },
+        {
+          "index": 4,
+          "oNetId": "23170",
+          "exactRecord": "(O*Net) 23170 - Recruit and hire staff members.",
+          "task": "Recruit and hire staff members.",
+          "otherLinkedAtomicTitles": [
+            "Hire Staff (Synonyms: Employ Staff)"
+          ],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 5,
+          "oNetId": "23710",
+          "exactRecord": "(O*Net) 23710 - Recruit and hire staff members.",
+          "task": "Recruit and hire staff members.",
+          "otherLinkedAtomicTitles": [
+            "Hire Staff (Synonyms: Employ Staff)"
+          ],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 6,
+          "oNetId": "13151",
+          "exactRecord": "(O*Net) 13151 - Recruit and hire staff members.",
+          "task": "Recruit and hire staff members.",
+          "otherLinkedAtomicTitles": [
+            "Hire Staff (Synonyms: Employ Staff)"
+          ],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 7,
+          "oNetId": "5198",
+          "exactRecord": "(O*Net) 5198 - Recruit, hire, train, and evaluate primary and supplemental staff and recommend personnel actions for programs and services.",
+          "task": "Recruit, hire, train, and evaluate primary and supplemental staff and recommend personnel actions for programs and services.",
+          "otherLinkedAtomicTitles": [
+            "Evaluate Staff",
+            "Hire Staff (Synonyms: Employ Staff)",
+            "Train Staff"
+          ],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 8,
+          "oNetId": "5224",
+          "exactRecord": "(O*Net) 5224 - Recruit, hire, train, and evaluate primary and supplemental staff.",
+          "task": "Recruit, hire, train, and evaluate primary and supplemental staff.",
+          "otherLinkedAtomicTitles": [
+            "Evaluate Staff",
+            "Hire Staff (Synonyms: Employ Staff)",
+            "Train Staff"
+          ],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 9,
+          "oNetId": "977",
+          "exactRecord": "(O*Net) 977 - Recruit, hire, train and supervise staff, or participate in staffing decisions.",
+          "task": "Recruit, hire, train and supervise staff, or participate in staffing decisions.",
+          "otherLinkedAtomicTitles": [
+            "Hire Staff (Synonyms: Employ Staff)",
+            "Oversee Staff (Synonyms: Supervise Staff)",
+            "Participate Decision",
+            "Train Staff"
+          ],
+          "sameActionLinkedAtomicTitles": []
+        }
+      ],
+      "exactTitleOccurrenceCount": 1,
+      "semanticCaseId": "title-case-5174e1ddc59ca7904fbd",
+      "occurrenceIds": [
+        "atomic-b5ee224274756732a5e1"
+      ],
+      "occurrencePaths": [
+        [
+          "Act",
+          "Act with other activities and actors (“Interact”)",
+          "Transfer between actors",
+          "Buy (Buy.v.01, Cash.v.01, Shop.v.01, Shop.v.03)",
+          "Rent (pay for time-limited use)",
+          "Hire (Engage.v.08, Hire.v.01)",
+          "Recruit (Recruit.v.02)",
+          "Recruit (Actor)",
+          "Recruit Staff"
+        ]
+      ],
+      "occurrenceCount": 1,
+      "sampleIndex": 18
+    },
+    {
+      "occurrenceId": "atomic-1d7b9524377936a3d5af",
+      "exactTitle": "Remove Paper",
+      "normalizedTitle": "remove paper",
+      "leadingAction": "Remove",
+      "recordedActionAliases": [
+        "remove"
+      ],
+      "ownerTitle": "Remove (physical) (Remove.v.01)",
+      "assignedSynsetIds": [
+        "remove.v.01"
+      ],
+      "path": [
+        "Act",
+        "Act on physical objects (“Do”)",
+        "Modify physical objects",
+        "Separate physical objects (Divide.v.01, Separate.v.02)",
+        "Remove (physical) (Remove.v.01)",
+        "Remove (physical) (Physical Object)",
+        "Remove Paper"
+      ],
+      "parentTitle": "Remove (physical) (Physical Object)",
+      "topLevelBranch": "Act on physical objects (“Do”)",
+      "evidenceBucket": "small-multi",
+      "evidenceCount": 2,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "14920",
+          "exactRecord": "(O*Net) 14920 - Remove old paper, using water, steam machines, or solvents and scrapers.",
+          "task": "Remove old paper, using water, steam machines, or solvents and scrapers.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 2,
+          "oNetId": "8781",
+          "exactRecord": "(O*Net) 8781 - Position mold along guidelines of wall, press mold in place, and remove mold and paper from wall.",
+          "task": "Position mold along guidelines of wall, press mold in place, and remove mold and paper from wall.",
+          "otherLinkedAtomicTitles": [
+            "Position Mold",
+            "Press Mold",
+            "Remove Mold"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Remove Mold"
+          ]
+        }
+      ],
+      "exactTitleOccurrenceCount": 1,
+      "semanticCaseId": "title-case-a104d806b26263be73bf",
+      "occurrenceIds": [
+        "atomic-1d7b9524377936a3d5af"
+      ],
+      "occurrencePaths": [
+        [
+          "Act",
+          "Act on physical objects (“Do”)",
+          "Modify physical objects",
+          "Separate physical objects (Divide.v.01, Separate.v.02)",
+          "Remove (physical) (Remove.v.01)",
+          "Remove (physical) (Physical Object)",
+          "Remove Paper"
+        ]
+      ],
+      "occurrenceCount": 1,
+      "sampleIndex": 19
+    },
+    {
+      "occurrenceId": "atomic-c9284738d9b170ce5bd6",
+      "exactTitle": "Fit Clothing",
+      "normalizedTitle": "fit clothing",
+      "leadingAction": "Fit",
+      "recordedActionAliases": [
+        "fit"
+      ],
+      "ownerTitle": "Fit (Fit.v.04)",
+      "assignedSynsetIds": [
+        "fit.v.04"
+      ],
+      "path": [
+        "Act",
+        "Act on physical objects (“Do”)",
+        "Modify physical objects",
+        "Transform physical objects (Change.v.01, Rework.v.01, Transform.v.02, Work.v.05)",
+        "Shape (Change_shape.v.01, Shape.v.02, Shape.v.03)",
+        "Fit (Fit.v.04)",
+        "Fit (Physical Object)",
+        "Fit Clothing"
+      ],
+      "parentTitle": "Fit (Physical Object)",
+      "topLevelBranch": "Act on physical objects (“Do”)",
+      "evidenceBucket": "single",
+      "evidenceCount": 1,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "12184",
+          "exactRecord": "(O*Net) 12184 - Fit, alter, repair, and make made-to-measure clothing, according to customers' and clothing manufacturers' specifications and fit, and applying principles of garment design, construction, and styling.",
+          "task": "Fit, alter, repair, and make made-to-measure clothing, according to customers' and clothing manufacturers' specifications and fit, and applying principles of garment design, construction, and styling.",
+          "otherLinkedAtomicTitles": [
+            "Alter Clothing",
+            "Make Clothing",
+            "Repair Clothing"
+          ],
+          "sameActionLinkedAtomicTitles": []
+        }
+      ],
+      "exactTitleOccurrenceCount": 1,
+      "semanticCaseId": "title-case-8dd0bb9c3a07c5e79b8d",
+      "occurrenceIds": [
+        "atomic-c9284738d9b170ce5bd6"
+      ],
+      "occurrencePaths": [
+        [
+          "Act",
+          "Act on physical objects (“Do”)",
+          "Modify physical objects",
+          "Transform physical objects (Change.v.01, Rework.v.01, Transform.v.02, Work.v.05)",
+          "Shape (Change_shape.v.01, Shape.v.02, Shape.v.03)",
+          "Fit (Fit.v.04)",
+          "Fit (Physical Object)",
+          "Fit Clothing"
+        ]
+      ],
+      "occurrenceCount": 1,
+      "sampleIndex": 20
+    },
+    {
+      "occurrenceId": "atomic-c8ccbb272e65509fdb48",
+      "exactTitle": "Develop Activity",
+      "normalizedTitle": "develop activity",
+      "leadingAction": "Develop",
+      "recordedActionAliases": [
+        "develop"
+      ],
+      "ownerTitle": "Create information (Develop.v.01, Generate.v.01, Make.v.03)",
+      "assignedSynsetIds": [
+        "develop.v.01",
+        "generate.v.01",
+        "make.v.03"
+      ],
+      "path": [
+        "Act",
+        "Act on information (“Think”)",
+        "Create information (Develop.v.01, Generate.v.01, Make.v.03)",
+        "Create (Activity)",
+        "Develop Activity"
+      ],
+      "parentTitle": "Create (Activity)",
+      "topLevelBranch": "Act on information (“Think”)",
+      "evidenceBucket": "small-multi",
+      "evidenceCount": 4,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "18525",
+          "exactRecord": "(O*Net) 18525 - Develop individual or group activities or programs in schools to deal with behavior, speech, language, or swallowing problems.",
+          "task": "Develop individual or group activities or programs in schools to deal with behavior, speech, language, or swallowing problems.",
+          "otherLinkedAtomicTitles": [
+            "Create Program (Synonyms: Develop Program, Produce Program)"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Create Program (Synonyms: Develop Program, Produce Program)"
+          ]
+        },
+        {
+          "index": 2,
+          "oNetId": "18911",
+          "exactRecord": "(O*Net) 18911 - Develop or implement fundraising activities, such as annual giving campaigns or direct mail programs.",
+          "task": "Develop or implement fundraising activities, such as annual giving campaigns or direct mail programs.",
+          "otherLinkedAtomicTitles": [
+            "Implement Activity"
+          ],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 3,
+          "oNetId": "21293",
+          "exactRecord": "(O*Net) 21293 - Develop, arrange for, perform, or assess executive protection activities to reduce security risks.",
+          "task": "Develop, arrange for, perform, or assess executive protection activities to reduce security risks.",
+          "otherLinkedAtomicTitles": [
+            "Arrange Activity",
+            "Assess Activity (Synonyms: Evaluate Activity)",
+            "Perform Activity (Synonyms: Engage Activity, Execute Activity)"
+          ],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 4,
+          "oNetId": "21341",
+          "exactRecord": "(O*Net) 21341 - Plan, develop, or implement warehouse safety and security programs and activities.",
+          "task": "Plan, develop, or implement warehouse safety and security programs and activities.",
+          "otherLinkedAtomicTitles": [
+            "Create Program (Synonyms: Develop Program, Produce Program)",
+            "Implement Activity",
+            "Implement Program",
+            "Plan Activity (Synonyms: Organize Activity)",
+            "Plan Program"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Create Program (Synonyms: Develop Program, Produce Program)"
+          ]
+        }
+      ],
+      "exactTitleOccurrenceCount": 1,
+      "semanticCaseId": "title-case-f05be485559169b82f4a",
+      "occurrenceIds": [
+        "atomic-c8ccbb272e65509fdb48"
+      ],
+      "occurrencePaths": [
+        [
+          "Act",
+          "Act on information (“Think”)",
+          "Create information (Develop.v.01, Generate.v.01, Make.v.03)",
+          "Create (Activity)",
+          "Develop Activity"
+        ]
+      ],
+      "occurrenceCount": 1,
+      "sampleIndex": 21
+    },
+    {
+      "occurrenceId": "atomic-e6e70dbc480c0431297d",
+      "exactTitle": "Read Marking",
+      "normalizedTitle": "read marking",
+      "leadingAction": "Read",
+      "recordedActionAliases": [
+        "read"
+      ],
+      "ownerTitle": "Read (something written or printed) (Read.v.01)",
+      "assignedSynsetIds": [
+        "read.v.01"
+      ],
+      "path": [
+        "Act",
+        "Act on information (“Think”)",
+        "Transfer information",
+        "Get information (Get.v.01, Obtain.v.01, Procure.v.01)",
+        "Understand (Interpret.v.01, Understand.v.01)",
+        "Read (something written or printed) (Read.v.01)",
+        "Read (something written or printed) (Information)",
+        "Read Marking"
+      ],
+      "parentTitle": "Read (something written or printed) (Information)",
+      "topLevelBranch": "Act on information (“Think”)",
+      "evidenceBucket": "single",
+      "evidenceCount": 1,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "23861",
+          "exactRecord": "(O*Net) 23861 - Read draft markings to determine depths of vessels in water.",
+          "task": "Read draft markings to determine depths of vessels in water.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        }
+      ],
+      "exactTitleOccurrenceCount": 2,
+      "semanticCaseId": "title-case-c93ca62b19a90ff243ec",
+      "occurrenceIds": [
+        "atomic-e6e70dbc480c0431297d",
+        "atomic-90618e8c1655465efc12"
+      ],
+      "occurrencePaths": [
+        [
+          "Act",
+          "Act on information (“Think”)",
+          "Transfer information",
+          "Get information (Get.v.01, Obtain.v.01, Procure.v.01)",
+          "Understand (Interpret.v.01, Understand.v.01)",
+          "Read (something written or printed) (Read.v.01)",
+          "Read (something written or printed) (Information)",
+          "Read Marking"
+        ],
+        [
+          "Act",
+          "Act with other activities and actors (“Interact”)",
+          "Transfer between actors",
+          "Transfer information",
+          "Get information (Get.v.01, Obtain.v.01, Procure.v.01)",
+          "Understand (Interpret.v.01, Understand.v.01)",
+          "Read (something written or printed) (Read.v.01)",
+          "Read (something written or printed) (Information)",
+          "Read Marking"
+        ]
+      ],
+      "occurrenceCount": 2,
+      "sampleIndex": 22
+    },
+    {
+      "occurrenceId": "atomic-c430b724e7a997797ba1",
+      "exactTitle": "Record Measure",
+      "normalizedTitle": "record measure",
+      "leadingAction": "Record",
+      "recordedActionAliases": [
+        "record"
+      ],
+      "ownerTitle": "Record (Record.v.01)",
+      "assignedSynsetIds": [
+        "record.v.01"
+      ],
+      "path": [
+        "Act",
+        "Act on information (“Think”)",
+        "Create information (Develop.v.01, Generate.v.01, Make.v.03)",
+        "Express information",
+        "Record (Record.v.01)",
+        "Record (Information)",
+        "Record Measure"
+      ],
+      "parentTitle": "Record (Information)",
+      "topLevelBranch": "Act on information (“Think”)",
+      "evidenceBucket": "single",
+      "evidenceCount": 1,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "6947",
+          "exactRecord": "(O*Net) 6947 - Take and record measures of patients' physical condition, using devices such as thermometers or blood pressure gauges.",
+          "task": "Take and record measures of patients' physical condition, using devices such as thermometers or blood pressure gauges.",
+          "otherLinkedAtomicTitles": [
+            "Take Measure"
+          ],
+          "sameActionLinkedAtomicTitles": []
+        }
+      ],
+      "exactTitleOccurrenceCount": 1,
+      "semanticCaseId": "title-case-37113965478887820ec3",
+      "occurrenceIds": [
+        "atomic-c430b724e7a997797ba1"
+      ],
+      "occurrencePaths": [
+        [
+          "Act",
+          "Act on information (“Think”)",
+          "Create information (Develop.v.01, Generate.v.01, Make.v.03)",
+          "Express information",
+          "Record (Record.v.01)",
+          "Record (Information)",
+          "Record Measure"
+        ]
+      ],
+      "occurrenceCount": 1,
+      "sampleIndex": 23
+    },
+    {
+      "occurrenceId": "atomic-b9e053b055fb3caf418c",
+      "exactTitle": "Inventory Equipment",
+      "normalizedTitle": "inventory equipment",
+      "leadingAction": "Inventory",
+      "recordedActionAliases": [
+        "inventory"
+      ],
+      "ownerTitle": "Document (Document.v.01, Inventory.v.01, Keep.v.08, Log.v.01, Register.v.01)",
+      "assignedSynsetIds": [
+        "document.v.01",
+        "inventory.v.01",
+        "keep.v.08",
+        "log.v.01",
+        "register.v.01"
+      ],
+      "path": [
+        "Act",
+        "Act on information (“Think”)",
+        "Create information (Develop.v.01, Generate.v.01, Make.v.03)",
+        "Express information",
+        "Record (Record.v.01)",
+        "Document (Document.v.01, Inventory.v.01, Keep.v.08, Log.v.01, Register.v.01)",
+        "Document (Physical Object)",
+        "Inventory Equipment"
+      ],
+      "parentTitle": "Document (Physical Object)",
+      "topLevelBranch": "Act on information (“Think”)",
+      "evidenceBucket": "medium-multi",
+      "evidenceCount": 16,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "11109",
+          "exactRecord": "(O*Net) 11109 - Examine and inventory firefighting equipment, such as axes, fire hoses, shovels, pumps, buckets, and fire extinguishers, to determine amount and condition.",
+          "task": "Examine and inventory firefighting equipment, such as axes, fire hoses, shovels, pumps, buckets, and fire extinguishers, to determine amount and condition.",
+          "otherLinkedAtomicTitles": [
+            "Examine Equipment"
+          ],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 2,
+          "oNetId": "11838",
+          "exactRecord": "(O*Net) 11838 - Inventory and requisition machine parts, equipment, and other supplies so that stock can be maintained and replenished.",
+          "task": "Inventory and requisition machine parts, equipment, and other supplies so that stock can be maintained and replenished.",
+          "otherLinkedAtomicTitles": [
+            "Inventory Part (Synonyms: Keep Part)",
+            "Inventory Supply (Synonyms: Keep Supply)",
+            "Requisition Equipment",
+            "Requisition Part",
+            "Requisition Supply"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Inventory Part (Synonyms: Keep Part)",
+            "Inventory Supply (Synonyms: Keep Supply)"
+          ]
+        },
+        {
+          "index": 3,
+          "oNetId": "12245",
+          "exactRecord": "(O*Net) 12245 - Inventory equipment and supplies, ordering parts and tools as necessary.",
+          "task": "Inventory equipment and supplies, ordering parts and tools as necessary.",
+          "otherLinkedAtomicTitles": [
+            "Inventory Supply (Synonyms: Keep Supply)",
+            "Order Part",
+            "Order Tool"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Inventory Supply (Synonyms: Keep Supply)"
+          ]
+        },
+        {
+          "index": 4,
+          "oNetId": "20241",
+          "exactRecord": "(O*Net) 20241 - Select, store, order, issue, inventory, and maintain classroom equipment, materials, and supplies.",
+          "task": "Select, store, order, issue, inventory, and maintain classroom equipment, materials, and supplies.",
+          "otherLinkedAtomicTitles": [
+            "Maintain Equipment",
+            "Order Equipment (Synonyms: Prescribe Equipment)",
+            "Select Equipment",
+            "Store Equipment",
+            "Supply Equipment (Synonyms: Issue Equipment, Provide Equipment)"
+          ],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 5,
+          "oNetId": "2039",
+          "exactRecord": "(O*Net) 2039 - Inventory and order medical, lab, or office supplies or equipment.",
+          "task": "Inventory and order medical, lab, or office supplies or equipment.",
+          "otherLinkedAtomicTitles": [
+            "Inventory Supply (Synonyms: Keep Supply)",
+            "Order Equipment (Synonyms: Prescribe Equipment)",
+            "Order Supply"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Inventory Supply (Synonyms: Keep Supply)"
+          ]
+        },
+        {
+          "index": 6,
+          "oNetId": "4.A.4.c.3.I07.D02",
+          "exactRecord": "(O*Net) 4.A.4.c.3.I07.D02 - Inventory materials or equipment.",
+          "task": "Inventory materials or equipment.",
+          "otherLinkedAtomicTitles": [
+            "Inventory Material"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Inventory Material"
+          ]
+        },
+        {
+          "index": 7,
+          "oNetId": "4.A.4.c.3.I07.D03",
+          "exactRecord": "(O*Net) 4.A.4.c.3.I07.D03 - Inventory medical supplies or equipment.",
+          "task": "Inventory medical supplies or equipment.",
+          "otherLinkedAtomicTitles": [
+            "Inventory Supply (Synonyms: Keep Supply)"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Inventory Supply (Synonyms: Keep Supply)"
+          ]
+        },
+        {
+          "index": 8,
+          "oNetId": "6493",
+          "exactRecord": "(O*Net) 6493 - Select, store, order, issue, and inventory classroom equipment, materials, and supplies.",
+          "task": "Select, store, order, issue, and inventory classroom equipment, materials, and supplies.",
+          "otherLinkedAtomicTitles": [
+            "Inventory Material",
+            "Inventory Supply (Synonyms: Keep Supply)",
+            "Issue Supply",
+            "Order Equipment (Synonyms: Prescribe Equipment)",
+            "Order Material (Synonyms: Ordering Material)",
+            "Order Supply",
+            "Select Equipment",
+            "Select Material",
+            "Select Supply",
+            "Store Equipment",
+            "Store Material",
+            "Store Supply",
+            "Supply Equipment (Synonyms: Issue Equipment, Provide Equipment)",
+            "Supply Material (Synonyms: Issue Material)"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Inventory Material",
+            "Inventory Supply (Synonyms: Keep Supply)"
+          ]
+        },
+        {
+          "index": 9,
+          "oNetId": "6664",
+          "exactRecord": "(O*Net) 6664 - Select, store, order, issue, and inventory classroom equipment, materials, and supplies.",
+          "task": "Select, store, order, issue, and inventory classroom equipment, materials, and supplies.",
+          "otherLinkedAtomicTitles": [
+            "Inventory Material",
+            "Inventory Supply (Synonyms: Keep Supply)",
+            "Issue Supply",
+            "Order Equipment (Synonyms: Prescribe Equipment)",
+            "Order Material (Synonyms: Ordering Material)",
+            "Order Supply",
+            "Select Equipment",
+            "Select Material",
+            "Select Supply",
+            "Store Equipment",
+            "Store Material",
+            "Store Supply",
+            "Supply Equipment (Synonyms: Issue Equipment, Provide Equipment)",
+            "Supply Material (Synonyms: Issue Material)"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Inventory Material",
+            "Inventory Supply (Synonyms: Keep Supply)"
+          ]
+        },
+        {
+          "index": 10,
+          "oNetId": "6777",
+          "exactRecord": "(O*Net) 6777 - Select, store, order, issue, and inventory classroom equipment, materials, and supplies.",
+          "task": "Select, store, order, issue, and inventory classroom equipment, materials, and supplies.",
+          "otherLinkedAtomicTitles": [
+            "Inventory Material",
+            "Inventory Supply (Synonyms: Keep Supply)",
+            "Issue Supply",
+            "Order Equipment (Synonyms: Prescribe Equipment)",
+            "Order Material (Synonyms: Ordering Material)",
+            "Order Supply",
+            "Select Equipment",
+            "Select Material",
+            "Select Supply",
+            "Store Equipment",
+            "Store Material",
+            "Store Supply",
+            "Supply Equipment (Synonyms: Issue Equipment, Provide Equipment)",
+            "Supply Material (Synonyms: Issue Material)"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Inventory Material",
+            "Inventory Supply (Synonyms: Keep Supply)"
+          ]
+        },
+        {
+          "index": 11,
+          "oNetId": "6570",
+          "exactRecord": "(O*Net) 6570 - Select, store, order, issue, and inventory classroom equipment, materials, and supplies.",
+          "task": "Select, store, order, issue, and inventory classroom equipment, materials, and supplies.",
+          "otherLinkedAtomicTitles": [
+            "Inventory Material",
+            "Inventory Supply (Synonyms: Keep Supply)",
+            "Issue Supply",
+            "Order Equipment (Synonyms: Prescribe Equipment)",
+            "Order Material (Synonyms: Ordering Material)",
+            "Order Supply",
+            "Select Equipment",
+            "Select Material",
+            "Select Supply",
+            "Store Equipment",
+            "Store Material",
+            "Store Supply",
+            "Supply Equipment (Synonyms: Issue Equipment, Provide Equipment)",
+            "Supply Material (Synonyms: Issue Material)"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Inventory Material",
+            "Inventory Supply (Synonyms: Keep Supply)"
+          ]
+        },
+        {
+          "index": 12,
+          "oNetId": "6818",
+          "exactRecord": "(O*Net) 6818 - Select, store, order, issue, and inventory classroom equipment, materials, and supplies.",
+          "task": "Select, store, order, issue, and inventory classroom equipment, materials, and supplies.",
+          "otherLinkedAtomicTitles": [
+            "Inventory Material",
+            "Inventory Supply (Synonyms: Keep Supply)",
+            "Issue Supply",
+            "Order Equipment (Synonyms: Prescribe Equipment)",
+            "Order Material (Synonyms: Ordering Material)",
+            "Order Supply",
+            "Select Equipment",
+            "Select Material",
+            "Select Supply",
+            "Store Equipment",
+            "Store Material",
+            "Store Supply",
+            "Supply Equipment (Synonyms: Issue Equipment, Provide Equipment)",
+            "Supply Material (Synonyms: Issue Material)"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Inventory Material",
+            "Inventory Supply (Synonyms: Keep Supply)"
+          ]
+        },
+        {
+          "index": 13,
+          "oNetId": "6604",
+          "exactRecord": "(O*Net) 6604 - Select, store, order, issue, and inventory classroom equipment, materials, and supplies.",
+          "task": "Select, store, order, issue, and inventory classroom equipment, materials, and supplies.",
+          "otherLinkedAtomicTitles": [
+            "Inventory Material",
+            "Inventory Supply (Synonyms: Keep Supply)",
+            "Issue Supply",
+            "Order Equipment (Synonyms: Prescribe Equipment)",
+            "Order Material (Synonyms: Ordering Material)",
+            "Order Supply",
+            "Select Equipment",
+            "Select Material",
+            "Select Supply",
+            "Store Equipment",
+            "Store Material",
+            "Store Supply",
+            "Supply Equipment (Synonyms: Issue Equipment, Provide Equipment)",
+            "Supply Material (Synonyms: Issue Material)"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Inventory Material",
+            "Inventory Supply (Synonyms: Keep Supply)"
+          ]
+        },
+        {
+          "index": 14,
+          "oNetId": "6533",
+          "exactRecord": "(O*Net) 6533 - Select, store, order, issue, and inventory classroom equipment, materials, and supplies.",
+          "task": "Select, store, order, issue, and inventory classroom equipment, materials, and supplies.",
+          "otherLinkedAtomicTitles": [
+            "Inventory Material",
+            "Inventory Supply (Synonyms: Keep Supply)",
+            "Issue Supply",
+            "Order Equipment (Synonyms: Prescribe Equipment)",
+            "Order Material (Synonyms: Ordering Material)",
+            "Order Supply",
+            "Select Equipment",
+            "Select Material",
+            "Select Supply",
+            "Store Equipment",
+            "Store Material",
+            "Store Supply",
+            "Supply Equipment (Synonyms: Issue Equipment, Provide Equipment)",
+            "Supply Material (Synonyms: Issue Material)"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Inventory Material",
+            "Inventory Supply (Synonyms: Keep Supply)"
+          ]
+        },
+        {
+          "index": 15,
+          "oNetId": "6689",
+          "exactRecord": "(O*Net) 6689 - Select, order, store, issue, and inventory classroom equipment, materials, and supplies.",
+          "task": "Select, order, store, issue, and inventory classroom equipment, materials, and supplies.",
+          "otherLinkedAtomicTitles": [
+            "Inventory Material",
+            "Inventory Supply (Synonyms: Keep Supply)",
+            "Issue Supply",
+            "Order Equipment (Synonyms: Prescribe Equipment)",
+            "Order Material (Synonyms: Ordering Material)",
+            "Order Supply",
+            "Select Equipment",
+            "Select Material",
+            "Select Supply",
+            "Store Equipment",
+            "Store Material",
+            "Store Supply",
+            "Supply Equipment (Synonyms: Issue Equipment, Provide Equipment)",
+            "Supply Material (Synonyms: Issue Material)"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Inventory Material",
+            "Inventory Supply (Synonyms: Keep Supply)"
+          ]
+        },
+        {
+          "index": 16,
+          "oNetId": "7274",
+          "exactRecord": "(O*Net) 7274 - Inventory and distribute nuclear, biological, and chemical detection and contamination equipment, providing instruction in its maintenance and use.",
+          "task": "Inventory and distribute nuclear, biological, and chemical detection and contamination equipment, providing instruction in its maintenance and use.",
+          "otherLinkedAtomicTitles": [
+            "Distribute Equipment"
+          ],
+          "sameActionLinkedAtomicTitles": []
+        }
+      ],
+      "exactTitleOccurrenceCount": 1,
+      "semanticCaseId": "title-case-98c44a4d86ae1b9e8d08",
+      "occurrenceIds": [
+        "atomic-b9e053b055fb3caf418c"
+      ],
+      "occurrencePaths": [
+        [
+          "Act",
+          "Act on information (“Think”)",
+          "Create information (Develop.v.01, Generate.v.01, Make.v.03)",
+          "Express information",
+          "Record (Record.v.01)",
+          "Document (Document.v.01, Inventory.v.01, Keep.v.08, Log.v.01, Register.v.01)",
+          "Document (Physical Object)",
+          "Inventory Equipment"
+        ]
+      ],
+      "occurrenceCount": 1,
+      "sampleIndex": 24
+    },
+    {
+      "occurrenceId": "atomic-d4e23da78cba5c99ff53",
+      "exactTitle": "Load Part",
+      "normalizedTitle": "load part",
+      "leadingAction": "Load",
+      "recordedActionAliases": [
+        "load"
+      ],
+      "ownerTitle": "Load (physical) (Load.v.01)",
+      "assignedSynsetIds": [
+        "load.v.01"
+      ],
+      "path": [
+        "Act",
+        "Act on physical objects (“Do”)",
+        "Modify physical objects",
+        "Move physical objects (Act.v.01, Move.v.02, Send.v.02, Transfer.v.04, Transmit.v.04)",
+        "Put physical objects (Put.v.01)",
+        "Load (physical) (Load.v.01)",
+        "Load (physical) (Physical Object)",
+        "Load Part"
+      ],
+      "parentTitle": "Load (physical) (Physical Object)",
+      "topLevelBranch": "Act on physical objects (“Do”)",
+      "evidenceBucket": "single",
+      "evidenceCount": 1,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "12096",
+          "exactRecord": "(O*Net) 12096 - Load parts into containers and place containers on conveyors to be inserted into furnaces, or insert parts into furnaces.",
+          "task": "Load parts into containers and place containers on conveyors to be inserted into furnaces, or insert parts into furnaces.",
+          "otherLinkedAtomicTitles": [
+            "Insert Part",
+            "Place Container (Synonyms: Position Container)"
+          ],
+          "sameActionLinkedAtomicTitles": []
+        }
+      ],
+      "exactTitleOccurrenceCount": 1,
+      "semanticCaseId": "title-case-d388c82aa841b931ad23",
+      "occurrenceIds": [
+        "atomic-d4e23da78cba5c99ff53"
+      ],
+      "occurrencePaths": [
+        [
+          "Act",
+          "Act on physical objects (“Do”)",
+          "Modify physical objects",
+          "Move physical objects (Act.v.01, Move.v.02, Send.v.02, Transfer.v.04, Transmit.v.04)",
+          "Put physical objects (Put.v.01)",
+          "Load (physical) (Load.v.01)",
+          "Load (physical) (Physical Object)",
+          "Load Part"
+        ]
+      ],
+      "occurrenceCount": 1,
+      "sampleIndex": 25
+    },
+    {
+      "occurrenceId": "atomic-8619013aef5070dd078f",
+      "exactTitle": "Record Cost",
+      "normalizedTitle": "record cost",
+      "leadingAction": "Record",
+      "recordedActionAliases": [
+        "record"
+      ],
+      "ownerTitle": "Record (Record.v.01)",
+      "assignedSynsetIds": [
+        "record.v.01"
+      ],
+      "path": [
+        "Act",
+        "Act on information (“Think”)",
+        "Create information (Develop.v.01, Generate.v.01, Make.v.03)",
+        "Express information",
+        "Record (Record.v.01)",
+        "Record (Information)",
+        "Record Cost"
+      ],
+      "parentTitle": "Record (Information)",
+      "topLevelBranch": "Act on information (“Think”)",
+      "evidenceBucket": "small-multi",
+      "evidenceCount": 2,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "3025",
+          "exactRecord": "(O*Net) 3025 - Record type and cost of maintenance or repair work.",
+          "task": "Record type and cost of maintenance or repair work.",
+          "otherLinkedAtomicTitles": [
+            "Record Type"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Record Type"
+          ]
+        },
+        {
+          "index": 2,
+          "oNetId": "8194",
+          "exactRecord": "(O*Net) 8194 - Estimate freight or postal rates and record shipment costs and weights.",
+          "task": "Estimate freight or postal rates and record shipment costs and weights.",
+          "otherLinkedAtomicTitles": [
+            "Estimate Rate",
+            "Record Weight"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Record Weight"
+          ]
+        }
+      ],
+      "exactTitleOccurrenceCount": 1,
+      "semanticCaseId": "title-case-db4985554b4f76eda3c9",
+      "occurrenceIds": [
+        "atomic-8619013aef5070dd078f"
+      ],
+      "occurrencePaths": [
+        [
+          "Act",
+          "Act on information (“Think”)",
+          "Create information (Develop.v.01, Generate.v.01, Make.v.03)",
+          "Express information",
+          "Record (Record.v.01)",
+          "Record (Information)",
+          "Record Cost"
+        ]
+      ],
+      "occurrenceCount": 1,
+      "sampleIndex": 26
+    },
+    {
+      "occurrenceId": "atomic-75e1cb997f6d9bd37ece",
+      "exactTitle": "Investigate Network",
+      "normalizedTitle": "investigate network",
+      "leadingAction": "Investigate",
+      "recordedActionAliases": [
+        "investigate"
+      ],
+      "ownerTitle": "Ask (Ask.v.01, Ask.v.02)",
+      "assignedSynsetIds": [
+        "ask.v.01",
+        "ask.v.02"
+      ],
+      "path": [
+        "Act",
+        "Act on information (“Think”)",
+        "Transfer information",
+        "Provide information",
+        "Send information (Send.v.02, Transmit.v.04)",
+        "Ask (Ask.v.01, Ask.v.02)",
+        "Ask (Physical Object)",
+        "Investigate Network"
+      ],
+      "parentTitle": "Ask (Physical Object)",
+      "topLevelBranch": "Act on information (“Think”)",
+      "evidenceBucket": "single",
+      "evidenceCount": 1,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "1275",
+          "exactRecord": "(O*Net) 1275 - Investigate whether networks, workstations, the central processing unit of the system, or peripheral equipment are responding to a program's instructions.",
+          "task": "Investigate whether networks, workstations, the central processing unit of the system, or peripheral equipment are responding to a program's instructions.",
+          "otherLinkedAtomicTitles": [
+            "Investigate Equipment",
+            "Investigate Unit",
+            "Investigate Workstation"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Investigate Equipment",
+            "Investigate Unit",
+            "Investigate Workstation"
+          ]
+        }
+      ],
+      "exactTitleOccurrenceCount": 2,
+      "semanticCaseId": "title-case-657edc49f6144909bf26",
+      "occurrenceIds": [
+        "atomic-75e1cb997f6d9bd37ece",
+        "atomic-d62242312e3ea33e7a8c"
+      ],
+      "occurrencePaths": [
+        [
+          "Act",
+          "Act on information (“Think”)",
+          "Transfer information",
+          "Provide information",
+          "Send information (Send.v.02, Transmit.v.04)",
+          "Ask (Ask.v.01, Ask.v.02)",
+          "Ask (Physical Object)",
+          "Investigate Network"
+        ],
+        [
+          "Act",
+          "Act with other activities and actors (“Interact”)",
+          "Transfer between actors",
+          "Transfer information",
+          "Provide information",
+          "Send information (Send.v.02, Transmit.v.04)",
+          "Ask (Ask.v.01, Ask.v.02)",
+          "Ask (Physical Object)",
+          "Investigate Network"
+        ]
+      ],
+      "occurrenceCount": 2,
+      "sampleIndex": 27
+    },
+    {
+      "occurrenceId": "atomic-08bed2506f56a96ac670",
+      "exactTitle": "Align Blade",
+      "normalizedTitle": "align blade",
+      "leadingAction": "Align",
+      "recordedActionAliases": [
+        "align"
+      ],
+      "ownerTitle": "Align (physical) (Align.v.01)",
+      "assignedSynsetIds": [
+        "align.v.01"
+      ],
+      "path": [
+        "Act",
+        "Act on physical objects (“Do”)",
+        "Modify physical objects",
+        "Transform physical objects (Change.v.01, Rework.v.01, Transform.v.02, Work.v.05)",
+        "Adjust (physical) (Adjust.v.01)",
+        "Align (physical) (Align.v.01)",
+        "Align (physical) (Physical Object)",
+        "Align Blade"
+      ],
+      "parentTitle": "Align (physical) (Physical Object)",
+      "topLevelBranch": "Act on physical objects (“Do”)",
+      "evidenceBucket": "single",
+      "evidenceCount": 1,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "10117",
+          "exactRecord": "(O*Net) 10117 - Install, align, and lock specified punches, dies, cutting blades, or other fixtures in rams or beds of machines, using gauges, templates, feelers, shims, and hand tools.",
+          "task": "Install, align, and lock specified punches, dies, cutting blades, or other fixtures in rams or beds of machines, using gauges, templates, feelers, shims, and hand tools.",
+          "otherLinkedAtomicTitles": [
+            "Align Dye",
+            "Align Punch",
+            "Install Blade",
+            "Install Dye",
+            "Install Punch",
+            "Lock Blade",
+            "Lock Die",
+            "Lock Punch"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Align Dye",
+            "Align Punch"
+          ]
+        }
+      ],
+      "exactTitleOccurrenceCount": 1,
+      "semanticCaseId": "title-case-0982f58f38f86a8bc948",
+      "occurrenceIds": [
+        "atomic-08bed2506f56a96ac670"
+      ],
+      "occurrencePaths": [
+        [
+          "Act",
+          "Act on physical objects (“Do”)",
+          "Modify physical objects",
+          "Transform physical objects (Change.v.01, Rework.v.01, Transform.v.02, Work.v.05)",
+          "Adjust (physical) (Adjust.v.01)",
+          "Align (physical) (Align.v.01)",
+          "Align (physical) (Physical Object)",
+          "Align Blade"
+        ]
+      ],
+      "occurrenceCount": 1,
+      "sampleIndex": 28
+    },
+    {
+      "occurrenceId": "atomic-224399c4a110f01d0ca3",
+      "exactTitle": "Varnish Lifeboat",
+      "normalizedTitle": "varnish lifeboat",
+      "leadingAction": "Varnish",
+      "recordedActionAliases": [
+        "varnish"
+      ],
+      "ownerTitle": "Seal (Seal.v.01)",
+      "assignedSynsetIds": [
+        "seal.v.01"
+      ],
+      "path": [
+        "Act",
+        "Act on physical objects (“Do”)",
+        "Modify physical objects",
+        "Move physical objects (Act.v.01, Move.v.02, Send.v.02, Transfer.v.04, Transmit.v.04)",
+        "Reorient physical objects",
+        "Seal (Seal.v.01)",
+        "Seal (Physical Object)",
+        "Varnish Lifeboat"
+      ],
+      "parentTitle": "Seal (Physical Object)",
+      "topLevelBranch": "Act on physical objects (“Do”)",
+      "evidenceBucket": "single",
+      "evidenceCount": 1,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "14471",
+          "exactRecord": "(O*Net) 14471 - Paint or varnish decks, superstructures, lifeboats, or sides of ships.",
+          "task": "Paint or varnish decks, superstructures, lifeboats, or sides of ships.",
+          "otherLinkedAtomicTitles": [
+            "Paint Deck",
+            "Paint Lifeboat",
+            "Paint Side",
+            "Paint Superstructure",
+            "Seal Side (Synonyms: Varnish Side)",
+            "Varnish Deck",
+            "Varnish Superstructure"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Seal Side (Synonyms: Varnish Side)",
+            "Varnish Deck",
+            "Varnish Superstructure"
+          ]
+        }
+      ],
+      "exactTitleOccurrenceCount": 1,
+      "semanticCaseId": "title-case-d94baab3ca6ef2466934",
+      "occurrenceIds": [
+        "atomic-224399c4a110f01d0ca3"
+      ],
+      "occurrencePaths": [
+        [
+          "Act",
+          "Act on physical objects (“Do”)",
+          "Modify physical objects",
+          "Move physical objects (Act.v.01, Move.v.02, Send.v.02, Transfer.v.04, Transmit.v.04)",
+          "Reorient physical objects",
+          "Seal (Seal.v.01)",
+          "Seal (Physical Object)",
+          "Varnish Lifeboat"
+        ]
+      ],
+      "occurrenceCount": 1,
+      "sampleIndex": 29
+    },
+    {
+      "occurrenceId": "atomic-22825d08129e6d562ffa",
+      "exactTitle": "Establish Payment",
+      "normalizedTitle": "establish payment",
+      "leadingAction": "Establish",
+      "recordedActionAliases": [
+        "establish"
+      ],
+      "ownerTitle": "Establish (Lay_down.v.01)",
+      "assignedSynsetIds": [
+        "lay_down.v.01"
+      ],
+      "path": [
+        "Act",
+        "Act with other activities and actors (“Interact”)",
+        "Transfer between actors",
+        "Transfer service",
+        "Get service",
+        "Lead (Head.v.02, Induce.v.02, Lead.v.01, Lead.v.05)",
+        "Control (Control.v.01)",
+        "Order (authoritative) (Order.v.01)",
+        "Establish (Lay_down.v.01)",
+        "Establish (Information)",
+        "Establish Payment"
+      ],
+      "parentTitle": "Establish (Information)",
+      "topLevelBranch": "Act with other activities and actors (“Interact”)",
+      "evidenceBucket": "single",
+      "evidenceCount": 1,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "2611",
+          "exactRecord": "(O*Net) 2611 - Verify customers' credit, and establish how the customer will pay for the accommodation.",
+          "task": "Verify customers' credit, and establish how the customer will pay for the accommodation.",
+          "otherLinkedAtomicTitles": [
+            "Verify Credit"
+          ],
+          "sameActionLinkedAtomicTitles": []
+        }
+      ],
+      "exactTitleOccurrenceCount": 1,
+      "semanticCaseId": "title-case-131f2d2eda99c004b56c",
+      "occurrenceIds": [
+        "atomic-22825d08129e6d562ffa"
+      ],
+      "occurrencePaths": [
+        [
+          "Act",
+          "Act with other activities and actors (“Interact”)",
+          "Transfer between actors",
+          "Transfer service",
+          "Get service",
+          "Lead (Head.v.02, Induce.v.02, Lead.v.01, Lead.v.05)",
+          "Control (Control.v.01)",
+          "Order (authoritative) (Order.v.01)",
+          "Establish (Lay_down.v.01)",
+          "Establish (Information)",
+          "Establish Payment"
+        ]
+      ],
+      "occurrenceCount": 1,
+      "sampleIndex": 30
+    },
+    {
+      "occurrenceId": "atomic-af25677fe5c82151f00e",
+      "exactTitle": "Move Food",
+      "normalizedTitle": "move food",
+      "leadingAction": "Move",
+      "recordedActionAliases": [
+        "move"
+      ],
+      "ownerTitle": "Move physical objects (Act.v.01, Move.v.02, Send.v.02, Transfer.v.04, Transmit.v.04)",
+      "assignedSynsetIds": [
+        "act.v.01",
+        "move.v.02",
+        "send.v.02",
+        "transfer.v.04",
+        "transmit.v.04"
+      ],
+      "path": [
+        "Act",
+        "Act on physical objects (“Do”)",
+        "Modify physical objects",
+        "Move physical objects (Act.v.01, Move.v.02, Send.v.02, Transfer.v.04, Transmit.v.04)",
+        "Move (Physical Object)",
+        "Move Food"
+      ],
+      "parentTitle": "Move (Physical Object)",
+      "topLevelBranch": "Act on physical objects (“Do”)",
+      "evidenceBucket": "single",
+      "evidenceCount": 1,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "4.A.3.a.1.I10.D02",
+          "exactRecord": "(O*Net) 4.A.3.a.1.I10.D02 - Move equipment, supplies or food to required locations.",
+          "task": "Move equipment, supplies or food to required locations.",
+          "otherLinkedAtomicTitles": [
+            "Move Equipment",
+            "Move Supply"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Move Equipment",
+            "Move Supply"
+          ]
+        }
+      ],
+      "exactTitleOccurrenceCount": 1,
+      "semanticCaseId": "title-case-ec863d19e101394b83d7",
+      "occurrenceIds": [
+        "atomic-af25677fe5c82151f00e"
+      ],
+      "occurrencePaths": [
+        [
+          "Act",
+          "Act on physical objects (“Do”)",
+          "Modify physical objects",
+          "Move physical objects (Act.v.01, Move.v.02, Send.v.02, Transfer.v.04, Transmit.v.04)",
+          "Move (Physical Object)",
+          "Move Food"
+        ]
+      ],
+      "occurrenceCount": 1,
+      "sampleIndex": 31
+    },
+    {
+      "occurrenceId": "atomic-b9dbf8e75c4e3b8ee0ae",
+      "exactTitle": "Test Programming",
+      "normalizedTitle": "test programming",
+      "leadingAction": "Test",
+      "recordedActionAliases": [
+        "test"
+      ],
+      "ownerTitle": "Test (Test.v.01)",
+      "assignedSynsetIds": [
+        "test.v.01"
+      ],
+      "path": [
+        "Act",
+        "Act on information (“Think”)",
+        "Transfer information",
+        "Get information (Get.v.01, Obtain.v.01, Procure.v.01)",
+        "Evaluate (Evaluate.v.02)",
+        "Test (Test.v.01)",
+        "Test (Information)",
+        "Test Programming"
+      ],
+      "parentTitle": "Test (Information)",
+      "topLevelBranch": "Act on information (“Think”)",
+      "evidenceBucket": "single",
+      "evidenceCount": 1,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "20800",
+          "exactRecord": "(O*Net) 20800 - Test backup batteries, keypad programming, sirens, or other security features to ensure proper functioning or to diagnose malfunctions.",
+          "task": "Test backup batteries, keypad programming, sirens, or other security features to ensure proper functioning or to diagnose malfunctions.",
+          "otherLinkedAtomicTitles": [
+            "Test Battery",
+            "Test Feature",
+            "Test Siren"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Test Battery",
+            "Test Feature",
+            "Test Siren"
+          ]
+        }
+      ],
+      "exactTitleOccurrenceCount": 2,
+      "semanticCaseId": "title-case-5870d0328bb3acc0973c",
+      "occurrenceIds": [
+        "atomic-b9dbf8e75c4e3b8ee0ae",
+        "atomic-34d6f0ec06c65558c81e"
+      ],
+      "occurrencePaths": [
+        [
+          "Act",
+          "Act on information (“Think”)",
+          "Transfer information",
+          "Get information (Get.v.01, Obtain.v.01, Procure.v.01)",
+          "Evaluate (Evaluate.v.02)",
+          "Test (Test.v.01)",
+          "Test (Information)",
+          "Test Programming"
+        ],
+        [
+          "Act",
+          "Act with other activities and actors (“Interact”)",
+          "Transfer between actors",
+          "Transfer information",
+          "Get information (Get.v.01, Obtain.v.01, Procure.v.01)",
+          "Evaluate (Evaluate.v.02)",
+          "Test (Test.v.01)",
+          "Test (Information)",
+          "Test Programming"
+        ]
+      ],
+      "occurrenceCount": 2,
+      "sampleIndex": 32
+    },
+    {
+      "occurrenceId": "atomic-2592e93c155e2aa52a62",
+      "exactTitle": "Place Corpse",
+      "normalizedTitle": "place corpse",
+      "leadingAction": "Place",
+      "recordedActionAliases": [
+        "place"
+      ],
+      "ownerTitle": "Lay (physical) (Lay.v.03, Lay_out.v.05, Range.v.05)",
+      "assignedSynsetIds": [
+        "lay.v.03",
+        "lay_out.v.05",
+        "range.v.05"
+      ],
+      "path": [
+        "Act",
+        "Act on physical objects (“Do”)",
+        "Modify physical objects",
+        "Move physical objects (Act.v.01, Move.v.02, Send.v.02, Transfer.v.04, Transmit.v.04)",
+        "Put physical objects (Put.v.01)",
+        "Arrange (put in proper or systematic order) (Arrange.v.01)",
+        "Lay (physical) (Lay.v.03, Lay_out.v.05, Range.v.05)",
+        "Lay (physical) (Physical Object)",
+        "Place Corpse"
+      ],
+      "parentTitle": "Lay (physical) (Physical Object)",
+      "topLevelBranch": "Act on physical objects (“Do”)",
+      "evidenceBucket": "single",
+      "evidenceCount": 1,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "23186",
+          "exactRecord": "(O*Net) 23186 - Place corpses into crematory machines to reduce remains to bone fragments using flame, heat, or alkaline hydrolysis.",
+          "task": "Place corpses into crematory machines to reduce remains to bone fragments using flame, heat, or alkaline hydrolysis.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        }
+      ],
+      "exactTitleOccurrenceCount": 1,
+      "semanticCaseId": "title-case-d482a4e344abcde2d677",
+      "occurrenceIds": [
+        "atomic-2592e93c155e2aa52a62"
+      ],
+      "occurrencePaths": [
+        [
+          "Act",
+          "Act on physical objects (“Do”)",
+          "Modify physical objects",
+          "Move physical objects (Act.v.01, Move.v.02, Send.v.02, Transfer.v.04, Transmit.v.04)",
+          "Put physical objects (Put.v.01)",
+          "Arrange (put in proper or systematic order) (Arrange.v.01)",
+          "Lay (physical) (Lay.v.03, Lay_out.v.05, Range.v.05)",
+          "Lay (physical) (Physical Object)",
+          "Place Corpse"
+        ]
+      ],
+      "occurrenceCount": 1,
+      "sampleIndex": 33
+    },
+    {
+      "occurrenceId": "atomic-6e7bc517c8c317b0fd37",
+      "exactTitle": "Mount Assembly",
+      "normalizedTitle": "mount assembly",
+      "leadingAction": "Mount",
+      "recordedActionAliases": [
+        "mount"
+      ],
+      "ownerTitle": "Mount (Mount.v.01)",
+      "assignedSynsetIds": [
+        "mount.v.01"
+      ],
+      "path": [
+        "Act",
+        "Act on physical objects (“Do”)",
+        "Modify physical objects",
+        "Combine physical objects (Create_from_raw_material.v.01)",
+        "Connect (physical) (Affix.v.01, Attach.v.01, Connect.v.01, Join.v.02)",
+        "Mount (Mount.v.01)",
+        "Mount (Physical Object)",
+        "Mount Assembly"
+      ],
+      "parentTitle": "Mount (Physical Object)",
+      "topLevelBranch": "Act on physical objects (“Do”)",
+      "evidenceBucket": "single",
+      "evidenceCount": 1,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "15013",
+          "exactRecord": "(O*Net) 15013 - Mount hairsprings and balance wheel assemblies between jaws of truing calipers.",
+          "task": "Mount hairsprings and balance wheel assemblies between jaws of truing calipers.",
+          "otherLinkedAtomicTitles": [
+            "Mount Hairspring"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Mount Hairspring"
+          ]
+        }
+      ],
+      "exactTitleOccurrenceCount": 1,
+      "semanticCaseId": "title-case-ce1b3a17a0974f0bc538",
+      "occurrenceIds": [
+        "atomic-6e7bc517c8c317b0fd37"
+      ],
+      "occurrencePaths": [
+        [
+          "Act",
+          "Act on physical objects (“Do”)",
+          "Modify physical objects",
+          "Combine physical objects (Create_from_raw_material.v.01)",
+          "Connect (physical) (Affix.v.01, Attach.v.01, Connect.v.01, Join.v.02)",
+          "Mount (Mount.v.01)",
+          "Mount (Physical Object)",
+          "Mount Assembly"
+        ]
+      ],
+      "occurrenceCount": 1,
+      "sampleIndex": 34
+    },
+    {
+      "occurrenceId": "atomic-a8e525fd25ba0091a1b3",
+      "exactTitle": "Inspect Assembly",
+      "normalizedTitle": "inspect assembly",
+      "leadingAction": "Inspect",
+      "recordedActionAliases": [
+        "inspect"
+      ],
+      "ownerTitle": "Inspect (Inspect.v.01)",
+      "assignedSynsetIds": [
+        "inspect.v.01"
+      ],
+      "path": [
+        "Act",
+        "Act on information (“Think”)",
+        "Transfer information",
+        "Get information (Get.v.01, Obtain.v.01, Procure.v.01)",
+        "Perceive (Perceive.v.01)",
+        "Examine (Examine.v.02)",
+        "Inspect (Inspect.v.01)",
+        "Inspect (Physical Object)",
+        "Inspect Assembly"
+      ],
+      "parentTitle": "Inspect (Physical Object)",
+      "topLevelBranch": "Act on information (“Think”)",
+      "evidenceBucket": "small-multi",
+      "evidenceCount": 4,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "10018",
+          "exactRecord": "(O*Net) 10018 - Inspect or test wiring installations, assemblies, or circuits for resistance factors or for operation, and record results.",
+          "task": "Inspect or test wiring installations, assemblies, or circuits for resistance factors or for operation, and record results.",
+          "otherLinkedAtomicTitles": [
+            "Inspect Circuit",
+            "Inspect Installation",
+            "Record Result",
+            "Test Assembly",
+            "Test Circuit",
+            "Test Installation"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Inspect Circuit",
+            "Inspect Installation"
+          ]
+        },
+        {
+          "index": 2,
+          "oNetId": "13929",
+          "exactRecord": "(O*Net) 13929 - Inspect or test installed units, parts, systems, or assemblies for fit, alignment, performance, defects, or compliance with standards, using measuring instruments or test equipment.",
+          "task": "Inspect or test installed units, parts, systems, or assemblies for fit, alignment, performance, defects, or compliance with standards, using measuring instruments or test equipment.",
+          "otherLinkedAtomicTitles": [
+            "Inspect Part",
+            "Inspect System",
+            "Inspect Unit",
+            "Test Assembly",
+            "Test Part",
+            "Test System (Synonyms: Pretest System)",
+            "Test Unit"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Inspect Part",
+            "Inspect System",
+            "Inspect Unit"
+          ]
+        },
+        {
+          "index": 3,
+          "oNetId": "20642",
+          "exactRecord": "(O*Net) 20642 - Inspect individual parts, assemblies, or installations, using measuring instruments, such as calipers, scales, or micrometers.",
+          "task": "Inspect individual parts, assemblies, or installations, using measuring instruments, such as calipers, scales, or micrometers.",
+          "otherLinkedAtomicTitles": [
+            "Inspect Installation",
+            "Inspect Part"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Inspect Installation",
+            "Inspect Part"
+          ]
+        },
+        {
+          "index": 4,
+          "oNetId": "4.A.1.b.2.I06.D18",
+          "exactRecord": "(O*Net) 4.A.1.b.2.I06.D18 - Inspect installed components or assemblies.",
+          "task": "Inspect installed components or assemblies.",
+          "otherLinkedAtomicTitles": [
+            "Inspect Component"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Inspect Component"
+          ]
+        }
+      ],
+      "exactTitleOccurrenceCount": 2,
+      "semanticCaseId": "title-case-0cc64469bb2ef2ee4847",
+      "occurrenceIds": [
+        "atomic-a8e525fd25ba0091a1b3",
+        "atomic-0d7185d271c589414880"
+      ],
+      "occurrencePaths": [
+        [
+          "Act",
+          "Act on information (“Think”)",
+          "Transfer information",
+          "Get information (Get.v.01, Obtain.v.01, Procure.v.01)",
+          "Perceive (Perceive.v.01)",
+          "Examine (Examine.v.02)",
+          "Inspect (Inspect.v.01)",
+          "Inspect (Physical Object)",
+          "Inspect Assembly"
+        ],
+        [
+          "Act",
+          "Act with other activities and actors (“Interact”)",
+          "Transfer between actors",
+          "Transfer information",
+          "Get information (Get.v.01, Obtain.v.01, Procure.v.01)",
+          "Perceive (Perceive.v.01)",
+          "Examine (Examine.v.02)",
+          "Inspect (Inspect.v.01)",
+          "Inspect (Physical Object)",
+          "Inspect Assembly"
+        ]
+      ],
+      "occurrenceCount": 2,
+      "sampleIndex": 35
+    },
+    {
+      "occurrenceId": "atomic-85fe30fc4d5fe0039b70",
+      "exactTitle": "Calibrate Assembly",
+      "normalizedTitle": "calibrate assembly",
+      "leadingAction": "Calibrate",
+      "recordedActionAliases": [
+        "calibrate"
+      ],
+      "ownerTitle": "Calibrate (Calibrate.v.01)",
+      "assignedSynsetIds": [
+        "calibrate.v.01"
+      ],
+      "path": [
+        "Act",
+        "Act on physical objects (“Do”)",
+        "Modify physical objects",
+        "Transform physical objects (Change.v.01, Rework.v.01, Transform.v.02, Work.v.05)",
+        "Adjust (physical) (Adjust.v.01)",
+        "Calibrate (Calibrate.v.01)",
+        "Calibrate (Activity)",
+        "Calibrate Assembly"
+      ],
+      "parentTitle": "Calibrate (Activity)",
+      "topLevelBranch": "Act on physical objects (“Do”)",
+      "evidenceBucket": "single",
+      "evidenceCount": 1,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "10900",
+          "exactRecord": "(O*Net) 10900 - Repair, rework, or calibrate hydraulic or pneumatic assemblies or systems to meet operational specifications or tolerances.",
+          "task": "Repair, rework, or calibrate hydraulic or pneumatic assemblies or systems to meet operational specifications or tolerances.",
+          "otherLinkedAtomicTitles": [
+            "Calibrate System",
+            "Modify Assembly (Synonyms: Rework Assembly)",
+            "Modify System (Synonyms: Rework System)",
+            "Repair Assembly",
+            "Repair System"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Calibrate System"
+          ]
+        }
+      ],
+      "exactTitleOccurrenceCount": 1,
+      "semanticCaseId": "title-case-edb05340a1e5b6570814",
+      "occurrenceIds": [
+        "atomic-85fe30fc4d5fe0039b70"
+      ],
+      "occurrencePaths": [
+        [
+          "Act",
+          "Act on physical objects (“Do”)",
+          "Modify physical objects",
+          "Transform physical objects (Change.v.01, Rework.v.01, Transform.v.02, Work.v.05)",
+          "Adjust (physical) (Adjust.v.01)",
+          "Calibrate (Calibrate.v.01)",
+          "Calibrate (Activity)",
+          "Calibrate Assembly"
+        ]
+      ],
+      "occurrenceCount": 1,
+      "sampleIndex": 36
+    },
+    {
+      "occurrenceId": "atomic-97ae640ff66a5342567c",
+      "exactTitle": "Mount Hanger",
+      "normalizedTitle": "mount hanger",
+      "leadingAction": "Mount",
+      "recordedActionAliases": [
+        "mount"
+      ],
+      "ownerTitle": "Mount (Mount.v.01)",
+      "assignedSynsetIds": [
+        "mount.v.01"
+      ],
+      "path": [
+        "Act",
+        "Act on physical objects (“Do”)",
+        "Modify physical objects",
+        "Combine physical objects (Create_from_raw_material.v.01)",
+        "Connect (physical) (Affix.v.01, Attach.v.01, Connect.v.01, Join.v.02)",
+        "Mount (Mount.v.01)",
+        "Mount (Physical Object)",
+        "Mount Hanger"
+      ],
+      "parentTitle": "Mount (Physical Object)",
+      "topLevelBranch": "Act on physical objects (“Do”)",
+      "evidenceBucket": "single",
+      "evidenceCount": 1,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "4859",
+          "exactRecord": "(O*Net) 4859 - Mount brackets and hangers on walls and ceilings to hold pipes, and set sleeves or inserts to provide support for pipes.",
+          "task": "Mount brackets and hangers on walls and ceilings to hold pipes, and set sleeves or inserts to provide support for pipes.",
+          "otherLinkedAtomicTitles": [
+            "Mount Bracket",
+            "Set Insert",
+            "Set Sleeve"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Mount Bracket"
+          ]
+        }
+      ],
+      "exactTitleOccurrenceCount": 1,
+      "semanticCaseId": "title-case-b91404a9fcd8008f8b67",
+      "occurrenceIds": [
+        "atomic-97ae640ff66a5342567c"
+      ],
+      "occurrencePaths": [
+        [
+          "Act",
+          "Act on physical objects (“Do”)",
+          "Modify physical objects",
+          "Combine physical objects (Create_from_raw_material.v.01)",
+          "Connect (physical) (Affix.v.01, Attach.v.01, Connect.v.01, Join.v.02)",
+          "Mount (Mount.v.01)",
+          "Mount (Physical Object)",
+          "Mount Hanger"
+        ]
+      ],
+      "occurrenceCount": 1,
+      "sampleIndex": 37
+    },
+    {
+      "occurrenceId": "atomic-bb41d50ecd51ca83e4cb",
+      "exactTitle": "Lead Individual (Synonyms: Guide Individual)",
+      "normalizedTitle": "lead individual",
+      "leadingAction": "Lead",
+      "recordedActionAliases": [
+        "lead",
+        "guide"
+      ],
+      "ownerTitle": "Lead (Head.v.02, Induce.v.02, Lead.v.01, Lead.v.05)",
+      "assignedSynsetIds": [
+        "head.v.02",
+        "induce.v.02",
+        "lead.v.01",
+        "lead.v.05"
+      ],
+      "path": [
+        "Act",
+        "Act with other activities and actors (“Interact”)",
+        "Transfer between actors",
+        "Transfer service",
+        "Get service",
+        "Lead (Head.v.02, Induce.v.02, Lead.v.01, Lead.v.05)",
+        "Lead (Actor)",
+        "Lead Individual (Synonyms: Guide Individual)"
+      ],
+      "parentTitle": "Lead (Actor)",
+      "topLevelBranch": "Act with other activities and actors (“Interact”)",
+      "evidenceBucket": "small-multi",
+      "evidenceCount": 3,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "13160",
+          "exactRecord": "(O*Net) 13160 - Lead individuals or groups to tour site locations and describe points of interest.",
+          "task": "Lead individuals or groups to tour site locations and describe points of interest.",
+          "otherLinkedAtomicTitles": [
+            "Describe Point",
+            "Lead Group (Synonyms: Guide Group)"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Lead Group (Synonyms: Guide Group)"
+          ]
+        },
+        {
+          "index": 2,
+          "oNetId": "23425",
+          "exactRecord": "(O*Net) 23425 - Teach or guide individuals or groups unfamiliar with specific hunting methods or types of prey.",
+          "task": "Teach or guide individuals or groups unfamiliar with specific hunting methods or types of prey.",
+          "otherLinkedAtomicTitles": [
+            "Lead Group (Synonyms: Guide Group)",
+            "Teach Group (Synonyms: Instruct Group)",
+            "Teach Individual (Synonyms: Instruct Individual)"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Lead Group (Synonyms: Guide Group)"
+          ]
+        },
+        {
+          "index": 3,
+          "oNetId": "4169",
+          "exactRecord": "(O*Net) 4169 - Plan menus or diets or guide individuals or families in food selection, preparation, or menu planning, based upon nutritional needs and established guidelines.",
+          "task": "Plan menus or diets or guide individuals or families in food selection, preparation, or menu planning, based upon nutritional needs and established guidelines.",
+          "otherLinkedAtomicTitles": [
+            "Guide Family",
+            "Plan Diet",
+            "Plan Menu"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Guide Family"
+          ]
+        }
+      ],
+      "exactTitleOccurrenceCount": 1,
+      "semanticCaseId": "title-case-a4e5e96854c8621f6c17",
+      "occurrenceIds": [
+        "atomic-bb41d50ecd51ca83e4cb"
+      ],
+      "occurrencePaths": [
+        [
+          "Act",
+          "Act with other activities and actors (“Interact”)",
+          "Transfer between actors",
+          "Transfer service",
+          "Get service",
+          "Lead (Head.v.02, Induce.v.02, Lead.v.01, Lead.v.05)",
+          "Lead (Actor)",
+          "Lead Individual (Synonyms: Guide Individual)"
+        ]
+      ],
+      "occurrenceCount": 1,
+      "sampleIndex": 38
+    },
+    {
+      "occurrenceId": "atomic-fd81d01229bae208a728",
+      "exactTitle": "Process Package",
+      "normalizedTitle": "process package",
+      "leadingAction": "Process",
+      "recordedActionAliases": [
+        "process"
+      ],
+      "ownerTitle": "Process (physical) (Process.v.01)",
+      "assignedSynsetIds": [
+        "process.v.01"
+      ],
+      "path": [
+        "Act",
+        "Act on physical objects (“Do”)",
+        "Modify physical objects",
+        "Transform physical objects (Change.v.01, Rework.v.01, Transform.v.02, Work.v.05)",
+        "Process (physical) (Process.v.01)",
+        "Process (physical) (Physical Object)",
+        "Process Package"
+      ],
+      "parentTitle": "Process (physical) (Physical Object)",
+      "topLevelBranch": "Act on physical objects (“Do”)",
+      "evidenceBucket": "single",
+      "evidenceCount": 1,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "20428",
+          "exactRecord": "(O*Net) 20428 - Process incoming or outgoing mail, packages, or deliveries.",
+          "task": "Process incoming or outgoing mail, packages, or deliveries.",
+          "otherLinkedAtomicTitles": [
+            "Process Delivery",
+            "Process Mail"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Process Delivery",
+            "Process Mail"
+          ]
+        }
+      ],
+      "exactTitleOccurrenceCount": 1,
+      "semanticCaseId": "title-case-2adbcee7ead57144ed70",
+      "occurrenceIds": [
+        "atomic-fd81d01229bae208a728"
+      ],
+      "occurrencePaths": [
+        [
+          "Act",
+          "Act on physical objects (“Do”)",
+          "Modify physical objects",
+          "Transform physical objects (Change.v.01, Rework.v.01, Transform.v.02, Work.v.05)",
+          "Process (physical) (Process.v.01)",
+          "Process (physical) (Physical Object)",
+          "Process Package"
+        ]
+      ],
+      "occurrenceCount": 1,
+      "sampleIndex": 39
+    },
+    {
+      "occurrenceId": "atomic-85ed3fb92c0f4e67307d",
+      "exactTitle": "Design Piece",
+      "normalizedTitle": "design piece",
+      "leadingAction": "Design",
+      "recordedActionAliases": [
+        "design"
+      ],
+      "ownerTitle": "Design (Design.v.02)",
+      "assignedSynsetIds": [
+        "design.v.02"
+      ],
+      "path": [
+        "Act",
+        "Act on information (“Think”)",
+        "Create information (Develop.v.01, Generate.v.01, Make.v.03)",
+        "Plan (Mastermind.v.01, Plan.v.02, Plan.v.03)",
+        "Design (Design.v.02)",
+        "Design (Physical Object)",
+        "Design Piece"
+      ],
+      "parentTitle": "Design (Physical Object)",
+      "topLevelBranch": "Act on information (“Think”)",
+      "evidenceBucket": "single",
+      "evidenceCount": 1,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "14269",
+          "exactRecord": "(O*Net) 14269 - Design, create, and decorate entire pieces or specific parts of furniture, such as draws for cabinets.",
+          "task": "Design, create, and decorate entire pieces or specific parts of furniture, such as draws for cabinets.",
+          "otherLinkedAtomicTitles": [
+            "Create Part (Synonyms: Form Part, Make Part)",
+            "Create Piece",
+            "Decorate Part",
+            "Decorate Piece",
+            "Design Part"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Design Part"
+          ]
+        }
+      ],
+      "exactTitleOccurrenceCount": 1,
+      "semanticCaseId": "title-case-b95cc56c0b1fd5af376b",
+      "occurrenceIds": [
+        "atomic-85ed3fb92c0f4e67307d"
+      ],
+      "occurrencePaths": [
+        [
+          "Act",
+          "Act on information (“Think”)",
+          "Create information (Develop.v.01, Generate.v.01, Make.v.03)",
+          "Plan (Mastermind.v.01, Plan.v.02, Plan.v.03)",
+          "Design (Design.v.02)",
+          "Design (Physical Object)",
+          "Design Piece"
+        ]
+      ],
+      "occurrenceCount": 1,
+      "sampleIndex": 40
+    },
+    {
+      "occurrenceId": "atomic-2d023226cf5d64194acc",
+      "exactTitle": "Identify Specification (Synonyms: Key Specification)",
+      "normalizedTitle": "identify specification",
+      "leadingAction": "Identify",
+      "recordedActionAliases": [
+        "identify",
+        "key"
+      ],
+      "ownerTitle": "Identify (Name.v.02)",
+      "assignedSynsetIds": [
+        "name.v.02"
+      ],
+      "path": [
+        "Act",
+        "Act on information (“Think”)",
+        "Create information (Develop.v.01, Generate.v.01, Make.v.03)",
+        "Analyze (Analyze.v.01)",
+        "Determine (Determine.v.01, Determine.v.08)",
+        "Identify (Name.v.02)",
+        "Identify (Information)",
+        "Identify Specification (Synonyms: Key Specification)"
+      ],
+      "parentTitle": "Identify (Information)",
+      "topLevelBranch": "Act on information (“Think”)",
+      "evidenceBucket": "small-multi",
+      "evidenceCount": 2,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "16183",
+          "exactRecord": "(O*Net) 16183 - Identify and develop commercial or technical specifications, such as usability, pricing, checkout, or data security, to promote transactional internet-enabled commerce functionality.",
+          "task": "Identify and develop commercial or technical specifications, such as usability, pricing, checkout, or data security, to promote transactional internet-enabled commerce functionality.",
+          "otherLinkedAtomicTitles": [
+            "Create Specification (Synonyms: Develop Specification)"
+          ],
+          "sameActionLinkedAtomicTitles": []
+        },
+        {
+          "index": 2,
+          "oNetId": "21961",
+          "exactRecord": "(O*Net) 21961 - Key and program specified commands and engineering specifications into computer system to change functions and test final layout.",
+          "task": "Key and program specified commands and engineering specifications into computer system to change functions and test final layout.",
+          "otherLinkedAtomicTitles": [
+            "Key Command",
+            "Program Command",
+            "Program Specification"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Key Command"
+          ]
+        }
+      ],
+      "exactTitleOccurrenceCount": 1,
+      "semanticCaseId": "title-case-7ea52556e2b65ed384f7",
+      "occurrenceIds": [
+        "atomic-2d023226cf5d64194acc"
+      ],
+      "occurrencePaths": [
+        [
+          "Act",
+          "Act on information (“Think”)",
+          "Create information (Develop.v.01, Generate.v.01, Make.v.03)",
+          "Analyze (Analyze.v.01)",
+          "Determine (Determine.v.01, Determine.v.08)",
+          "Identify (Name.v.02)",
+          "Identify (Information)",
+          "Identify Specification (Synonyms: Key Specification)"
+        ]
+      ],
+      "occurrenceCount": 1,
+      "sampleIndex": 41
+    },
+    {
+      "occurrenceId": "atomic-bc97ea792ed52bd58521",
+      "exactTitle": "Select Trade",
+      "normalizedTitle": "select trade",
+      "leadingAction": "Select",
+      "recordedActionAliases": [
+        "select"
+      ],
+      "ownerTitle": "Select (Choose.v.01)",
+      "assignedSynsetIds": [
+        "choose.v.01"
+      ],
+      "path": [
+        "Act",
+        "Act on information (“Think”)",
+        "Create information (Develop.v.01, Generate.v.01, Make.v.03)",
+        "Decide (Decide.v.01)",
+        "Select (Choose.v.01)",
+        "Select (Activity)",
+        "Select Trade"
+      ],
+      "parentTitle": "Select (Activity)",
+      "topLevelBranch": "Act on information (“Think”)",
+      "evidenceBucket": "single",
+      "evidenceCount": 1,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "15676",
+          "exactRecord": "(O*Net) 15676 - Select or direct the execution of trades.",
+          "task": "Select or direct the execution of trades.",
+          "otherLinkedAtomicTitles": [
+            "Direct Execution"
+          ],
+          "sameActionLinkedAtomicTitles": []
+        }
+      ],
+      "exactTitleOccurrenceCount": 1,
+      "semanticCaseId": "title-case-2c588efa77e7be1ed9bf",
+      "occurrenceIds": [
+        "atomic-bc97ea792ed52bd58521"
+      ],
+      "occurrencePaths": [
+        [
+          "Act",
+          "Act on information (“Think”)",
+          "Create information (Develop.v.01, Generate.v.01, Make.v.03)",
+          "Decide (Decide.v.01)",
+          "Select (Choose.v.01)",
+          "Select (Activity)",
+          "Select Trade"
+        ]
+      ],
+      "occurrenceCount": 1,
+      "sampleIndex": 42
+    },
+    {
+      "occurrenceId": "atomic-6ba61114dda59fe8087d",
+      "exactTitle": "Design Effect",
+      "normalizedTitle": "design effect",
+      "leadingAction": "Design",
+      "recordedActionAliases": [
+        "design"
+      ],
+      "ownerTitle": "Plan (Mastermind.v.01, Plan.v.02, Plan.v.03)",
+      "assignedSynsetIds": [
+        "mastermind.v.01",
+        "plan.v.02",
+        "plan.v.03"
+      ],
+      "path": [
+        "Act",
+        "Act on information (“Think”)",
+        "Create information (Develop.v.01, Generate.v.01, Make.v.03)",
+        "Plan (Mastermind.v.01, Plan.v.02, Plan.v.03)",
+        "Plan (Information)",
+        "Design Effect"
+      ],
+      "parentTitle": "Plan (Information)",
+      "topLevelBranch": "Act on information (“Think”)",
+      "evidenceBucket": "single",
+      "evidenceCount": 1,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "4.A.2.b.2.I25.D02",
+          "exactRecord": "(O*Net) 4.A.2.b.2.I25.D02 - Design costumes or cosmetic effects for characters.",
+          "task": "Design costumes or cosmetic effects for characters.",
+          "otherLinkedAtomicTitles": [
+            "Design Costume"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Design Costume"
+          ]
+        }
+      ],
+      "exactTitleOccurrenceCount": 1,
+      "semanticCaseId": "title-case-8ccc74ee65e6c44474b8",
+      "occurrenceIds": [
+        "atomic-6ba61114dda59fe8087d"
+      ],
+      "occurrencePaths": [
+        [
+          "Act",
+          "Act on information (“Think”)",
+          "Create information (Develop.v.01, Generate.v.01, Make.v.03)",
+          "Plan (Mastermind.v.01, Plan.v.02, Plan.v.03)",
+          "Plan (Information)",
+          "Design Effect"
+        ]
+      ],
+      "occurrenceCount": 1,
+      "sampleIndex": 43
+    },
+    {
+      "occurrenceId": "atomic-dd80c26130a9871ec95d",
+      "exactTitle": "Plant Bulb",
+      "normalizedTitle": "plant bulb",
+      "leadingAction": "Plant",
+      "recordedActionAliases": [
+        "plant"
+      ],
+      "ownerTitle": "Plant (Plant.v.01)",
+      "assignedSynsetIds": [
+        "plant.v.01"
+      ],
+      "path": [
+        "Act",
+        "Act on physical objects (“Do”)",
+        "Modify physical objects",
+        "Move physical objects (Act.v.01, Move.v.02, Send.v.02, Transfer.v.04, Transmit.v.04)",
+        "Put physical objects (Put.v.01)",
+        "Plant (Plant.v.01)",
+        "Plant (Physical Object)",
+        "Plant Bulb"
+      ],
+      "parentTitle": "Plant (Physical Object)",
+      "topLevelBranch": "Act on physical objects (“Do”)",
+      "evidenceBucket": "single",
+      "evidenceCount": 1,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "9602",
+          "exactRecord": "(O*Net) 9602 - Plant seeds, bulbs, foliage, flowering plants, grass, ground covers, trees, or shrubs, and apply mulch for protection, using gardening tools.",
+          "task": "Plant seeds, bulbs, foliage, flowering plants, grass, ground covers, trees, or shrubs, and apply mulch for protection, using gardening tools.",
+          "otherLinkedAtomicTitles": [
+            "Apply Mulch",
+            "Plant Cover",
+            "Plant Foliage",
+            "Plant Grass",
+            "Plant Plant",
+            "Plant Seed",
+            "Plant Shrub",
+            "Plant Tree"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Plant Cover",
+            "Plant Foliage",
+            "Plant Grass",
+            "Plant Plant",
+            "Plant Seed",
+            "Plant Shrub",
+            "Plant Tree"
+          ]
+        }
+      ],
+      "exactTitleOccurrenceCount": 1,
+      "semanticCaseId": "title-case-258b776ae9d42ecaea18",
+      "occurrenceIds": [
+        "atomic-dd80c26130a9871ec95d"
+      ],
+      "occurrencePaths": [
+        [
+          "Act",
+          "Act on physical objects (“Do”)",
+          "Modify physical objects",
+          "Move physical objects (Act.v.01, Move.v.02, Send.v.02, Transfer.v.04, Transmit.v.04)",
+          "Put physical objects (Put.v.01)",
+          "Plant (Plant.v.01)",
+          "Plant (Physical Object)",
+          "Plant Bulb"
+        ]
+      ],
+      "occurrenceCount": 1,
+      "sampleIndex": 44
+    },
+    {
+      "occurrenceId": "atomic-f68c13f003677dc3ca5c",
+      "exactTitle": "Submit Sample",
+      "normalizedTitle": "submit sample",
+      "leadingAction": "Submit",
+      "recordedActionAliases": [
+        "submit"
+      ],
+      "ownerTitle": "Present (Present.v.02, Present.v.05, Show.v.01)",
+      "assignedSynsetIds": [
+        "present.v.02",
+        "present.v.05",
+        "show.v.01"
+      ],
+      "path": [
+        "Act",
+        "Act on information (“Think”)",
+        "Transfer information",
+        "Provide information",
+        "Send information (Send.v.02, Transmit.v.04)",
+        "Show (Expose.v.03, Show.v.04)",
+        "Present (Present.v.02, Present.v.05, Show.v.01)",
+        "Present (Physical Object)",
+        "Submit Sample"
+      ],
+      "parentTitle": "Present (Physical Object)",
+      "topLevelBranch": "Act on information (“Think”)",
+      "evidenceBucket": "single",
+      "evidenceCount": 1,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "12900",
+          "exactRecord": "(O*Net) 12900 - Submit samples of products to government laboratories for testing, as required.",
+          "task": "Submit samples of products to government laboratories for testing, as required.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        }
+      ],
+      "exactTitleOccurrenceCount": 2,
+      "semanticCaseId": "title-case-e5272010231246b7ba2e",
+      "occurrenceIds": [
+        "atomic-f68c13f003677dc3ca5c",
+        "atomic-0838bc707b523470cfd4"
+      ],
+      "occurrencePaths": [
+        [
+          "Act",
+          "Act on information (“Think”)",
+          "Transfer information",
+          "Provide information",
+          "Send information (Send.v.02, Transmit.v.04)",
+          "Show (Expose.v.03, Show.v.04)",
+          "Present (Present.v.02, Present.v.05, Show.v.01)",
+          "Present (Physical Object)",
+          "Submit Sample"
+        ],
+        [
+          "Act",
+          "Act with other activities and actors (“Interact”)",
+          "Transfer between actors",
+          "Transfer information",
+          "Provide information",
+          "Send information (Send.v.02, Transmit.v.04)",
+          "Show (Expose.v.03, Show.v.04)",
+          "Present (Present.v.02, Present.v.05, Show.v.01)",
+          "Present (Physical Object)",
+          "Submit Sample"
+        ]
+      ],
+      "occurrenceCount": 2,
+      "sampleIndex": 45
+    },
+    {
+      "occurrenceId": "atomic-2b92ee38fab851fdb3c4",
+      "exactTitle": "Record Effectiveness",
+      "normalizedTitle": "record effectiveness",
+      "leadingAction": "Record",
+      "recordedActionAliases": [
+        "record"
+      ],
+      "ownerTitle": "Record (Record.v.01)",
+      "assignedSynsetIds": [
+        "record.v.01"
+      ],
+      "path": [
+        "Act",
+        "Act on information (“Think”)",
+        "Create information (Develop.v.01, Generate.v.01, Make.v.03)",
+        "Express information",
+        "Record (Record.v.01)",
+        "Record (Information)",
+        "Record Effectiveness"
+      ],
+      "parentTitle": "Record (Information)",
+      "topLevelBranch": "Act on information (“Think”)",
+      "evidenceBucket": "single",
+      "evidenceCount": 1,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "98",
+          "exactRecord": "(O*Net) 98 - Monitor, evaluate, or record training activities or program effectiveness.",
+          "task": "Monitor, evaluate, or record training activities or program effectiveness.",
+          "otherLinkedAtomicTitles": [
+            "Assess Activity (Synonyms: Evaluate Activity)",
+            "Measure Effectiveness (Synonyms: Assess Effectiveness, Evaluate Effectiveness)",
+            "Monitor Activity",
+            "Monitor Effectiveness",
+            "Record Activity"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Record Activity"
+          ]
+        }
+      ],
+      "exactTitleOccurrenceCount": 1,
+      "semanticCaseId": "title-case-cd52a31c427c990781a4",
+      "occurrenceIds": [
+        "atomic-2b92ee38fab851fdb3c4"
+      ],
+      "occurrencePaths": [
+        [
+          "Act",
+          "Act on information (“Think”)",
+          "Create information (Develop.v.01, Generate.v.01, Make.v.03)",
+          "Express information",
+          "Record (Record.v.01)",
+          "Record (Information)",
+          "Record Effectiveness"
+        ]
+      ],
+      "occurrenceCount": 1,
+      "sampleIndex": 46
+    },
+    {
+      "occurrenceId": "atomic-69823295477c4c2ea22f",
+      "exactTitle": "Identify Shortage",
+      "normalizedTitle": "identify shortage",
+      "leadingAction": "Identify",
+      "recordedActionAliases": [
+        "identify"
+      ],
+      "ownerTitle": "Identify (Name.v.02)",
+      "assignedSynsetIds": [
+        "name.v.02"
+      ],
+      "path": [
+        "Act",
+        "Act on information (“Think”)",
+        "Create information (Develop.v.01, Generate.v.01, Make.v.03)",
+        "Analyze (Analyze.v.01)",
+        "Determine (Determine.v.01, Determine.v.08)",
+        "Identify (Name.v.02)",
+        "Identify (Information)",
+        "Identify Shortage"
+      ],
+      "parentTitle": "Identify (Information)",
+      "topLevelBranch": "Act on information (“Think”)",
+      "evidenceBucket": "single",
+      "evidenceCount": 1,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "17565",
+          "exactRecord": "(O*Net) 17565 - Identify and report merchandise or stock shortages.",
+          "task": "Identify and report merchandise or stock shortages.",
+          "otherLinkedAtomicTitles": [
+            "Report Shortage"
+          ],
+          "sameActionLinkedAtomicTitles": []
+        }
+      ],
+      "exactTitleOccurrenceCount": 1,
+      "semanticCaseId": "title-case-819f74b3f924270bd2ec",
+      "occurrenceIds": [
+        "atomic-69823295477c4c2ea22f"
+      ],
+      "occurrencePaths": [
+        [
+          "Act",
+          "Act on information (“Think”)",
+          "Create information (Develop.v.01, Generate.v.01, Make.v.03)",
+          "Analyze (Analyze.v.01)",
+          "Determine (Determine.v.01, Determine.v.08)",
+          "Identify (Name.v.02)",
+          "Identify (Information)",
+          "Identify Shortage"
+        ]
+      ],
+      "occurrenceCount": 1,
+      "sampleIndex": 47
+    },
+    {
+      "occurrenceId": "atomic-73abdb6fe7672743d38c",
+      "exactTitle": "Monitor Flowmeter",
+      "normalizedTitle": "monitor flowmeter",
+      "leadingAction": "Monitor",
+      "recordedActionAliases": [
+        "monitor"
+      ],
+      "ownerTitle": "Monitor (Monitor.v.01)",
+      "assignedSynsetIds": [
+        "monitor.v.01"
+      ],
+      "path": [
+        "Act",
+        "Act on information (“Think”)",
+        "Transfer information",
+        "Get information (Get.v.01, Obtain.v.01, Procure.v.01)",
+        "Perceive (Perceive.v.01)",
+        "Monitor (Monitor.v.01)",
+        "Monitor (Physical Object)",
+        "Monitor Flowmeter"
+      ],
+      "parentTitle": "Monitor (Physical Object)",
+      "topLevelBranch": "Act on information (“Think”)",
+      "evidenceBucket": "small-multi",
+      "evidenceCount": 3,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "10494",
+          "exactRecord": "(O*Net) 10494 - Monitor recording instruments, flowmeters, panel lights, or other indicators and listen for warning signals to verify conformity of process conditions.",
+          "task": "Monitor recording instruments, flowmeters, panel lights, or other indicators and listen for warning signals to verify conformity of process conditions.",
+          "otherLinkedAtomicTitles": [
+            "Listen Signal",
+            "Monitor Indicator",
+            "Monitor Instrument",
+            "Monitor Light"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Monitor Indicator",
+            "Monitor Instrument",
+            "Monitor Light"
+          ]
+        },
+        {
+          "index": 2,
+          "oNetId": "12335",
+          "exactRecord": "(O*Net) 12335 - Monitor gauges, recording instruments, flowmeters, or products to ensure that specified conditions are maintained.",
+          "task": "Monitor gauges, recording instruments, flowmeters, or products to ensure that specified conditions are maintained.",
+          "otherLinkedAtomicTitles": [
+            "Monitor Gauge",
+            "Monitor Instrument",
+            "Monitor Product"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Monitor Gauge",
+            "Monitor Instrument",
+            "Monitor Product"
+          ]
+        },
+        {
+          "index": 3,
+          "oNetId": "8543",
+          "exactRecord": "(O*Net) 8543 - Monitor pressure gauges, ammeters, flowmeters, thermometers, or products, and adjust controls to maintain specified conditions, such as feed rate, product consistency, temperature, air pressure, and machine speed.",
+          "task": "Monitor pressure gauges, ammeters, flowmeters, thermometers, or products, and adjust controls to maintain specified conditions, such as feed rate, product consistency, temperature, air pressure, and machine speed.",
+          "otherLinkedAtomicTitles": [
+            "Adjust Control",
+            "Monitor Ammeter",
+            "Monitor Gauge",
+            "Monitor Product",
+            "Monitor Thermometer"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Monitor Ammeter",
+            "Monitor Gauge",
+            "Monitor Product",
+            "Monitor Thermometer"
+          ]
+        }
+      ],
+      "exactTitleOccurrenceCount": 2,
+      "semanticCaseId": "title-case-a2210f84f0f4ff8b6e85",
+      "occurrenceIds": [
+        "atomic-73abdb6fe7672743d38c",
+        "atomic-8cfbe6d02848e0650117"
+      ],
+      "occurrencePaths": [
+        [
+          "Act",
+          "Act on information (“Think”)",
+          "Transfer information",
+          "Get information (Get.v.01, Obtain.v.01, Procure.v.01)",
+          "Perceive (Perceive.v.01)",
+          "Monitor (Monitor.v.01)",
+          "Monitor (Physical Object)",
+          "Monitor Flowmeter"
+        ],
+        [
+          "Act",
+          "Act with other activities and actors (“Interact”)",
+          "Transfer between actors",
+          "Transfer information",
+          "Get information (Get.v.01, Obtain.v.01, Procure.v.01)",
+          "Perceive (Perceive.v.01)",
+          "Monitor (Monitor.v.01)",
+          "Monitor (Physical Object)",
+          "Monitor Flowmeter"
+        ]
+      ],
+      "occurrenceCount": 2,
+      "sampleIndex": 48
+    },
+    {
+      "occurrenceId": "atomic-9f5cacbb614400503dc0",
+      "exactTitle": "Assess Movement",
+      "normalizedTitle": "assess movement",
+      "leadingAction": "Assess",
+      "recordedActionAliases": [
+        "assess"
+      ],
+      "ownerTitle": "Measure (Measure.v.04, Quantify.v.02)",
+      "assignedSynsetIds": [
+        "measure.v.04",
+        "quantify.v.02"
+      ],
+      "path": [
+        "Act",
+        "Act on information (“Think”)",
+        "Transfer information",
+        "Get information (Get.v.01, Obtain.v.01, Procure.v.01)",
+        "Evaluate (Evaluate.v.02)",
+        "Measure (Measure.v.04, Quantify.v.02)",
+        "Measure (Activity)",
+        "Assess Movement"
+      ],
+      "parentTitle": "Measure (Activity)",
+      "topLevelBranch": "Act on information (“Think”)",
+      "evidenceBucket": "single",
+      "evidenceCount": 1,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "3707",
+          "exactRecord": "(O*Net) 3707 - Assess ground or surface water movement to provide advice on issues, such as waste management, route and site selection, or the restoration of contaminated sites.",
+          "task": "Assess ground or surface water movement to provide advice on issues, such as waste management, route and site selection, or the restoration of contaminated sites.",
+          "otherLinkedAtomicTitles": [],
+          "sameActionLinkedAtomicTitles": []
+        }
+      ],
+      "exactTitleOccurrenceCount": 2,
+      "semanticCaseId": "title-case-94b545d06a58a5008a0b",
+      "occurrenceIds": [
+        "atomic-9f5cacbb614400503dc0",
+        "atomic-5b7a5472dd7c5422e0b7"
+      ],
+      "occurrencePaths": [
+        [
+          "Act",
+          "Act on information (“Think”)",
+          "Transfer information",
+          "Get information (Get.v.01, Obtain.v.01, Procure.v.01)",
+          "Evaluate (Evaluate.v.02)",
+          "Measure (Measure.v.04, Quantify.v.02)",
+          "Measure (Activity)",
+          "Assess Movement"
+        ],
+        [
+          "Act",
+          "Act with other activities and actors (“Interact”)",
+          "Transfer between actors",
+          "Transfer information",
+          "Get information (Get.v.01, Obtain.v.01, Procure.v.01)",
+          "Evaluate (Evaluate.v.02)",
+          "Measure (Measure.v.04, Quantify.v.02)",
+          "Measure (Activity)",
+          "Assess Movement"
+        ]
+      ],
+      "occurrenceCount": 2,
+      "sampleIndex": 49
+    },
+    {
+      "occurrenceId": "atomic-61d0ba05f0ea2a067aa5",
+      "exactTitle": "Assist Host",
+      "normalizedTitle": "assist host",
+      "leadingAction": "Assist",
+      "recordedActionAliases": [
+        "assist"
+      ],
+      "ownerTitle": "Assist (Help.v.01, Support.v.01, Support.v.02)",
+      "assignedSynsetIds": [
+        "help.v.01",
+        "support.v.01",
+        "support.v.02"
+      ],
+      "path": [
+        "Act",
+        "Act with other activities and actors (“Interact”)",
+        "Transfer between actors",
+        "Transfer service",
+        "Provide service",
+        "Assist (Help.v.01, Support.v.01, Support.v.02)",
+        "Assist (Actor)",
+        "Assist Host"
+      ],
+      "parentTitle": "Assist (Actor)",
+      "topLevelBranch": "Act with other activities and actors (“Interact”)",
+      "evidenceBucket": "single",
+      "evidenceCount": 1,
+      "sourceRecords": [
+        {
+          "index": 1,
+          "oNetId": "18746",
+          "exactRecord": "(O*Net) 18746 - Assist host or hostess by answering phones to take reservations or to-go orders, and by greeting, seating, and thanking guests.",
+          "task": "Assist host or hostess by answering phones to take reservations or to-go orders, and by greeting, seating, and thanking guests.",
+          "otherLinkedAtomicTitles": [
+            "Answer Phone",
+            "Assist Hostess",
+            "Greet Guest",
+            "Make Reservation (Synonyms: Take Reservation)",
+            "Seat Guest",
+            "Take Order",
+            "Thank Guest"
+          ],
+          "sameActionLinkedAtomicTitles": [
+            "Assist Hostess"
+          ]
+        }
+      ],
+      "exactTitleOccurrenceCount": 1,
+      "semanticCaseId": "title-case-9653238236120c80f30b",
+      "occurrenceIds": [
+        "atomic-61d0ba05f0ea2a067aa5"
+      ],
+      "occurrencePaths": [
+        [
+          "Act",
+          "Act with other activities and actors (“Interact”)",
+          "Transfer between actors",
+          "Transfer service",
+          "Provide service",
+          "Assist (Help.v.01, Support.v.01, Support.v.02)",
+          "Assist (Actor)",
+          "Assist Host"
+        ]
+      ],
+      "occurrenceCount": 1,
+      "sampleIndex": 50
+    }
+  ]
+}

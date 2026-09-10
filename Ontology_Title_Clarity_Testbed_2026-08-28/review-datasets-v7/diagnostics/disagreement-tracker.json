@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "title-clarification-disagreement-tracker-v1",
+  "updatedAt": "2026-09-09T21:20:27.623Z",
+  "countingRule": "Count one disagreement for each reviewed atomic-activity card whose current response is disagree. Do not treat unreviewed cards as agreements, and do not double-count response revisions.",
+  "interpretation": "Counts monitor expert disagreement. They are not an accuracy estimate or a causal comparison unless prompt, model, sample, and review conditions are held fixed.",
+  "rounds": [
+    {
+      "round": 1,
+      "datasetVersion": "ontology-title-two-route-testbed-2026-09-02-v6",
+      "promptVersion": "two-route title prompts v6",
+      "model": "gpt-5.6-sol",
+      "sampling": "18-case stratified reviewer-interface pilot",
+      "cardsGenerated": 18,
+      "cardsReviewed": 18,
+      "agreements": 15,
+      "disagreements": 3,
+      "disagreementRate": 0.16666666666666666,
+      "status": "complete",
+      "source": "../model-tier-comparison-2026-09-04/rob-review-context.json",
+      "notes": "Rob characterized all three disagreements as minor. The Slack message ends with an incomplete clause, so no missing explanation is inferred."
+    },
+    {
+      "round": 2,
+      "datasetVersion": "ontology-title-random-round-2026-09-09-v7",
+      "promptVersion": "access title-clarification prompts 2026-09-09 v7.4; validator v7.1",
+      "model": "gpt-6-astra 2026-09-03",
+      "sampling": "50 reproducibly random distinct atomic-activity title/evidence cases without replacement, excluding round 1",
+      "cardsGenerated": 50,
+      "cardsReviewed": 0,
+      "agreements": 0,
+      "disagreements": 0,
+      "disagreementRate": null,
+      "status": "ready-for-review",
+      "source": "review-datasets-v7 plus Firestore current responses",
+      "notes": "The 18 prior cases were prompt-development data and are excluded from this random sample. The model also differs from round 1, so rate changes cannot be attributed to the prompt alone."
+    }
+  ]
+}
