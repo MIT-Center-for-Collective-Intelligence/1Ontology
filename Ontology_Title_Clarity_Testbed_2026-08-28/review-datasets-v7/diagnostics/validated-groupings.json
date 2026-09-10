@@ -1,0 +1,4750 @@
+{
+  "schemaVersion": "title-clarification-validated-v7",
+  "generatedAt": "2026-09-09T20:31:59.589Z",
+  "sourceFile": "0401_FINALHIERARCHY.json",
+  "sourceSha256": "f19ce789bce298b0564045fb87427eebd1193b89c133d17519c097dc3e0eb319",
+  "sampleFile": "sample-packet-v7.json",
+  "sampleSha256": "0761561a1f3ffc0ef55685dbe2d68600f454f632f71d758bedb1ff39456c0381",
+  "generatedResultsFile": "grouping-assessments-v7.json",
+  "generatedResultsSha256": "a6f058e9ab959c0e9e98d903aef0baa2f443bfb21deefeb008f594dd12916db3",
+  "libraryFingerprint": "5a6e745a2c913e7c30ac4c22b5421b4097ac29cfdaafcda2d27e84b9836f3815",
+  "promptVersions": {
+    "single": "access-single-description-title-check-2026-09-09-v7.4",
+    "multiple": "access-multiple-description-title-grouping-2026-09-09-v7.4",
+    "validator": "evidence-bound-title-grouping-validator-2026-09-09-v7.1"
+  },
+  "model": {
+    "deployment": "gpt-6-astra-society-of-mind",
+    "name": "gpt-6-astra",
+    "version": "2026-09-03",
+    "sku": "GlobalStandard",
+    "prices": {
+      "inputPerMillion": 10,
+      "cachedInputPerMillion": 1,
+      "cacheWritePerMillion": 12.5,
+      "outputPerMillion": 50
+    }
+  },
+  "counts": {
+    "cases": 50,
+    "keep": 7,
+    "rename": 8,
+    "split": 35,
+    "defer": 0,
+    "resultingGroups": 138,
+    "sharedSourceDeclarations": 57
+  },
+  "safeguards": {
+    "everyCaseBoundToFrozenSource": true,
+    "everySourceAccountedFor": true,
+    "repeatedSourcesRequireExactCompoundEvidence": true,
+    "recordedActionOrSynonymRequired": true,
+    "titleLengthTwoToFiveWords": true,
+    "duplicateTitlesRejected": true,
+    "semanticAccuracyMeasured": false,
+    "expertReviewRequired": true,
+    "ontologyMutationEnabled": false
+  },
+  "assessments": [
+    {
+      "sampleIndex": 1,
+      "occurrenceId": "atomic-0ade9a7b5ea582830d24",
+      "semanticCaseId": "title-case-d1e2939de573647e9a0d",
+      "route": "single-description",
+      "promptVersion": "access-single-description-title-check-2026-09-09-v7.4",
+      "promptTemplateSha256": "8c13de0a558c486bb0023041373ef9b89fa5a0add89138e8a42f15b24f779430",
+      "renderedPromptSha256": "94c63649090b3a5be07d51beab36e67324cd625ad110e09be3abb932a3aa31b8",
+      "decision": "keep",
+      "groups": [
+        {
+          "title": "Encode Check",
+          "status": "current",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Encode and cancel checks, using bank machines."
+          ],
+          "reason": "Checks are the explicit encoding target."
+        }
+      ],
+      "sharedSourceAssignments": [],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "Keep the clear current title; cancellation is a separate action, and bank machines specify equipment rather than another target.",
+      "confidence": "high",
+      "modelProvenance": {
+        "provider": "CloudBank Azure OpenAI",
+        "accessProject": "CIS261400",
+        "deployment": "gpt-6-astra-society-of-mind",
+        "model": "gpt-6-astra",
+        "modelVersion": "2026-09-03",
+        "responseId": "resp_0167ad8f7dba3812006aa1bb7e207c8193aca806e8d02e55a0",
+        "usage": {
+          "input_tokens": 949,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 237,
+          "output_tokens_details": {
+            "reasoning_tokens": 131
+          },
+          "total_tokens": 1186
+        }
+      }
+    },
+    {
+      "sampleIndex": 2,
+      "occurrenceId": "atomic-3b04fc11c9d87e16fa34",
+      "semanticCaseId": "title-case-26854db36e1f9ea72d18",
+      "route": "single-description",
+      "promptVersion": "access-single-description-title-check-2026-09-09-v7.4",
+      "promptTemplateSha256": "8c13de0a558c486bb0023041373ef9b89fa5a0add89138e8a42f15b24f779430",
+      "renderedPromptSha256": "967bf80d3b1fa6f66b8a867da11d3f2a011f99c5536f9338268645490119eb8c",
+      "decision": "split",
+      "groups": [
+        {
+          "title": "Operate Forklift",
+          "status": "existing",
+          "existingOccurrenceCount": 1,
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Operate forklifts, pallet jacks, power lifts, or front-end loaders to load bales, bundles, or other heavy items onto trucks for shipping to smelters or other recycled materials processing facilities."
+          ],
+          "reason": "Forklifts are an explicit target represented by the existing title."
+        },
+        {
+          "title": "Operate Pallet Jack",
+          "status": "new",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Operate forklifts, pallet jacks, power lifts, or front-end loaders to load bales, bundles, or other heavy items onto trucks for shipping to smelters or other recycled materials processing facilities."
+          ],
+          "reason": "Pallet jacks identify the specific jack type, resolving the current title's ambiguity."
+        },
+        {
+          "title": "Operate Lift",
+          "status": "existing",
+          "existingOccurrenceCount": 1,
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Operate forklifts, pallet jacks, power lifts, or front-end loaders to load bales, bundles, or other heavy items onto trucks for shipping to smelters or other recycled materials processing facilities."
+          ],
+          "reason": "Power lifts are an explicit target represented by the existing title."
+        },
+        {
+          "title": "Operate Loader",
+          "status": "existing",
+          "existingOccurrenceCount": 1,
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Operate forklifts, pallet jacks, power lifts, or front-end loaders to load bales, bundles, or other heavy items onto trucks for shipping to smelters or other recycled materials processing facilities."
+          ],
+          "reason": "Front-end loaders are an explicit target represented by the existing title."
+        }
+      ],
+      "sharedSourceAssignments": [
+        {
+          "sourceTaskIndex": 1,
+          "sourceTask": "Operate forklifts, pallet jacks, power lifts, or front-end loaders to load bales, bundles, or other heavy items onto trucks for shipping to smelters or other recycled materials processing facilities.",
+          "evidenceQuote": "Operate forklifts, pallet jacks, power lifts, or front-end loaders to load bales, bundles, or other heavy items onto trucks for shipping to smelters or other recycled materials processing facilities.",
+          "assignments": [
+            {
+              "groupTitle": "Operate Forklift",
+              "targetPhrase": "forklifts"
+            },
+            {
+              "groupTitle": "Operate Pallet Jack",
+              "targetPhrase": "pallet jacks"
+            },
+            {
+              "groupTitle": "Operate Lift",
+              "targetPhrase": "power lifts"
+            },
+            {
+              "groupTitle": "Operate Loader",
+              "targetPhrase": "front-end loaders"
+            }
+          ],
+          "reason": "The coordinated equipment targets are distinct, not near-synonyms; their shared shipping purpose does not justify collapsing them."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "Preserve all four coordinated equipment targets, clarify Jack as Pallet Jack, and reuse the three existing titles. Shipping is incidental.",
+      "confidence": "high",
+      "modelProvenance": {
+        "provider": "CloudBank Azure OpenAI",
+        "accessProject": "CIS261400",
+        "deployment": "gpt-6-astra-society-of-mind",
+        "model": "gpt-6-astra",
+        "modelVersion": "2026-09-03",
+        "responseId": "resp_006401eff962287e006aa1bb7e11448194a13c1f9a6871af1a",
+        "usage": {
+          "input_tokens": 992,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 740,
+          "output_tokens_details": {
+            "reasoning_tokens": 307
+          },
+          "total_tokens": 1732
+        }
+      }
+    },
+    {
+      "sampleIndex": 3,
+      "occurrenceId": "atomic-dbab890cb1cef31f69db",
+      "semanticCaseId": "title-case-041e61b0f9bceccb22df",
+      "route": "single-description",
+      "promptVersion": "access-single-description-title-check-2026-09-09-v7.4",
+      "promptTemplateSha256": "8c13de0a558c486bb0023041373ef9b89fa5a0add89138e8a42f15b24f779430",
+      "renderedPromptSha256": "55cb94f2847a5b694988f1379ea33498d2c3e751e53ab1178378f8b84d1d1d49",
+      "decision": "split",
+      "groups": [
+        {
+          "title": "Remove Steel",
+          "status": "current",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Remove solidified steel or slag from pouring nozzles, using long bars or oxygen burners."
+          ],
+          "reason": "The current title clearly identifies the steel target."
+        },
+        {
+          "title": "Remove Slag",
+          "status": "existing",
+          "existingOccurrenceCount": 1,
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Remove solidified steel or slag from pouring nozzles, using long bars or oxygen burners."
+          ],
+          "reason": "The distinct slag target matches the existing activity title."
+        }
+      ],
+      "sharedSourceAssignments": [
+        {
+          "sourceTaskIndex": 1,
+          "sourceTask": "Remove solidified steel or slag from pouring nozzles, using long bars or oxygen burners.",
+          "evidenceQuote": "Remove solidified steel or slag from pouring nozzles, using long bars or oxygen burners.",
+          "assignments": [
+            {
+              "groupTitle": "Remove Steel",
+              "targetPhrase": "solidified steel"
+            },
+            {
+              "groupTitle": "Remove Slag",
+              "targetPhrase": "slag"
+            }
+          ],
+          "reason": "The source explicitly coordinates two distinct removal targets with \"or\"."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "Steel and slag are distinct coordinated targets, not near-synonyms. Retain Remove Steel and reuse the existing Remove Slag title.",
+      "confidence": "high",
+      "modelProvenance": {
+        "provider": "CloudBank Azure OpenAI",
+        "accessProject": "CIS261400",
+        "deployment": "gpt-6-astra-society-of-mind",
+        "model": "gpt-6-astra",
+        "modelVersion": "2026-09-03",
+        "responseId": "resp_0f4abd89d2bae8e5006aa1bb7e154881949f83257ae23be410",
+        "usage": {
+          "input_tokens": 962,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 450,
+          "output_tokens_details": {
+            "reasoning_tokens": 188
+          },
+          "total_tokens": 1412
+        }
+      }
+    },
+    {
+      "sampleIndex": 4,
+      "occurrenceId": "atomic-0963e0ba89c80b43251a",
+      "semanticCaseId": "title-case-3c48d6e1b05358841a9d",
+      "route": "single-description",
+      "promptVersion": "access-single-description-title-check-2026-09-09-v7.4",
+      "promptTemplateSha256": "8c13de0a558c486bb0023041373ef9b89fa5a0add89138e8a42f15b24f779430",
+      "renderedPromptSha256": "f2b8880135b1bb1ff2f99e7fb0604c6474a8c3a53570227509c07f382abe94c6",
+      "decision": "split",
+      "groups": [
+        {
+          "title": "Inspect Photovoltaic Module",
+          "status": "new",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Visually inspect and test photovoltaic (PV) modules or systems."
+          ],
+          "reason": "Photovoltaic clarifies the otherwise ambiguous module target."
+        },
+        {
+          "title": "Inspect System",
+          "status": "existing",
+          "existingOccurrenceCount": 2,
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Visually inspect and test photovoltaic (PV) modules or systems."
+          ],
+          "reason": "Systems are a distinct explicit target already represented by this existing title."
+        }
+      ],
+      "sharedSourceAssignments": [
+        {
+          "sourceTaskIndex": 1,
+          "sourceTask": "Visually inspect and test photovoltaic (PV) modules or systems.",
+          "evidenceQuote": "Visually inspect and test photovoltaic (PV) modules or systems.",
+          "assignments": [
+            {
+              "groupTitle": "Inspect Photovoltaic Module",
+              "targetPhrase": "photovoltaic (PV) modules"
+            },
+            {
+              "groupTitle": "Inspect System",
+              "targetPhrase": "systems"
+            }
+          ],
+          "reason": "Modules and systems are distinct coordinated inspection targets, not near-synonyms."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "Clarify the photovoltaic module target and preserve the separately coordinated system target using its existing title; exclude testing.",
+      "confidence": "high",
+      "modelProvenance": {
+        "provider": "CloudBank Azure OpenAI",
+        "accessProject": "CIS261400",
+        "deployment": "gpt-6-astra-society-of-mind",
+        "model": "gpt-6-astra",
+        "modelVersion": "2026-09-03",
+        "responseId": "resp_02029525f5e62656006aa1bb7e1bc881948a504c4646dac322",
+        "usage": {
+          "input_tokens": 955,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 740,
+          "output_tokens_details": {
+            "reasoning_tokens": 475
+          },
+          "total_tokens": 1695
+        }
+      }
+    },
+    {
+      "sampleIndex": 5,
+      "occurrenceId": "atomic-a6926444c51a48ccf564",
+      "semanticCaseId": "title-case-0dc2f82e2ef93eb980ba",
+      "route": "single-description",
+      "promptVersion": "access-single-description-title-check-2026-09-09-v7.4",
+      "promptTemplateSha256": "8c13de0a558c486bb0023041373ef9b89fa5a0add89138e8a42f15b24f779430",
+      "renderedPromptSha256": "02758a6c666633a7c5b8def4d8702522428a467834b5730c88bafaf647e4fe7f",
+      "decision": "split",
+      "groups": [
+        {
+          "title": "Meet Department Head",
+          "status": "new",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Meet with department heads, managers, supervisors, vendors, and others, to solicit cooperation and resolve problems."
+          ],
+          "reason": "Department heads specify the otherwise ambiguous target Head."
+        },
+        {
+          "title": "Meet Manager",
+          "status": "existing",
+          "existingOccurrenceCount": 2,
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Meet with department heads, managers, supervisors, vendors, and others, to solicit cooperation and resolve problems."
+          ],
+          "reason": "Managers are an explicit coordinated target represented by this existing title."
+        },
+        {
+          "title": "Meet Supervisor",
+          "status": "existing",
+          "existingOccurrenceCount": 2,
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Meet with department heads, managers, supervisors, vendors, and others, to solicit cooperation and resolve problems."
+          ],
+          "reason": "Supervisors are an explicit coordinated target represented by this existing title."
+        },
+        {
+          "title": "Meet Vendor",
+          "status": "existing",
+          "existingOccurrenceCount": 2,
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Meet with department heads, managers, supervisors, vendors, and others, to solicit cooperation and resolve problems."
+          ],
+          "reason": "Vendors are an explicit coordinated target represented by this existing title."
+        },
+        {
+          "title": "Meet Other",
+          "status": "existing",
+          "existingOccurrenceCount": 2,
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Meet with department heads, managers, supervisors, vendors, and others, to solicit cooperation and resolve problems."
+          ],
+          "reason": "Others are an explicit coordinated target represented by this existing title."
+        }
+      ],
+      "sharedSourceAssignments": [
+        {
+          "sourceTaskIndex": 1,
+          "sourceTask": "Meet with department heads, managers, supervisors, vendors, and others, to solicit cooperation and resolve problems.",
+          "evidenceQuote": "Meet with department heads, managers, supervisors, vendors, and others, to solicit cooperation and resolve problems.",
+          "assignments": [
+            {
+              "groupTitle": "Meet Department Head",
+              "targetPhrase": "department heads"
+            },
+            {
+              "groupTitle": "Meet Manager",
+              "targetPhrase": "managers"
+            },
+            {
+              "groupTitle": "Meet Supervisor",
+              "targetPhrase": "supervisors"
+            },
+            {
+              "groupTitle": "Meet Vendor",
+              "targetPhrase": "vendors"
+            },
+            {
+              "groupTitle": "Meet Other",
+              "targetPhrase": "others"
+            }
+          ],
+          "reason": "The source explicitly coordinates five meeting targets; their shared purpose does not make them equivalent."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "Clarify Head as Department Head and preserve all explicitly coordinated meeting targets, reusing existing titles. Cooperation and problem resolution are incidental purposes.",
+      "confidence": "high",
+      "modelProvenance": {
+        "provider": "CloudBank Azure OpenAI",
+        "accessProject": "CIS261400",
+        "deployment": "gpt-6-astra-society-of-mind",
+        "model": "gpt-6-astra",
+        "modelVersion": "2026-09-03",
+        "responseId": "resp_042712654774141a006aa1bb9a55508196b7e08cb609b80d60",
+        "usage": {
+          "input_tokens": 972,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 736,
+          "output_tokens_details": {
+            "reasoning_tokens": 284
+          },
+          "total_tokens": 1708
+        }
+      }
+    },
+    {
+      "sampleIndex": 6,
+      "occurrenceId": "atomic-9b8c9a70deffe6276924",
+      "semanticCaseId": "title-case-5cbad99c125acd27b774",
+      "route": "multiple-descriptions",
+      "promptVersion": "access-multiple-description-title-grouping-2026-09-09-v7.4",
+      "promptTemplateSha256": "394f779c9399fc715a5dc529fa36a41715ca1fd10a2f6edb370c758160c95a7a",
+      "renderedPromptSha256": "e35cf08681d830565e25d77c8aa05734d5904fcf10e722583ad97e57f1cb9d4b",
+      "decision": "keep",
+      "groups": [
+        {
+          "title": "Display Merchandise",
+          "status": "current",
+          "sourceTaskIndexes": [
+            1,
+            2
+          ],
+          "sourceTasks": [
+            "Set up and display sample merchandise at parties or stands.",
+            "Ticket, arrange, and display merchandise to promote sales."
+          ],
+          "reason": "Both display merchandise; sample status, setting, and sales purpose do not establish distinct activities."
+        }
+      ],
+      "sharedSourceAssignments": [],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "The current title clearly covers both descriptions. Setup, ticketing, and arranging are separate actions outside this review.",
+      "confidence": "high",
+      "modelProvenance": {
+        "provider": "CloudBank Azure OpenAI",
+        "accessProject": "CIS261400",
+        "deployment": "gpt-6-astra-society-of-mind",
+        "model": "gpt-6-astra",
+        "modelVersion": "2026-09-03",
+        "responseId": "resp_0a9bdf3ec096e65a006aa1bba6cd088193bd5aec8e769a6d29",
+        "usage": {
+          "input_tokens": 1275,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 297,
+          "output_tokens_details": {
+            "reasoning_tokens": 177
+          },
+          "total_tokens": 1572
+        }
+      }
+    },
+    {
+      "sampleIndex": 7,
+      "occurrenceId": "atomic-ea1ce6f23a91b3f6c31a",
+      "semanticCaseId": "title-case-7e8c64c3cc5d394965e4",
+      "route": "single-description",
+      "promptVersion": "access-single-description-title-check-2026-09-09-v7.4",
+      "promptTemplateSha256": "8c13de0a558c486bb0023041373ef9b89fa5a0add89138e8a42f15b24f779430",
+      "renderedPromptSha256": "da5c38491d2edab8fadee240cb1a9570835878ad911eb6e2b12427f0f70018f4",
+      "decision": "keep",
+      "groups": [
+        {
+          "title": "Tear_Down Equipment",
+          "status": "current",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Set up and tear down equipment."
+          ],
+          "reason": "Equipment is the sole explicit target of tear down."
+        }
+      ],
+      "sharedSourceAssignments": [],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "Keep the clear current title. Setting up equipment is a separate action outside this review.",
+      "confidence": "high",
+      "modelProvenance": {
+        "provider": "CloudBank Azure OpenAI",
+        "accessProject": "CIS261400",
+        "deployment": "gpt-6-astra-society-of-mind",
+        "model": "gpt-6-astra",
+        "modelVersion": "2026-09-03",
+        "responseId": "resp_06db1e92e98bccc6006aa1bbafa5948190b0d1234154930164",
+        "usage": {
+          "input_tokens": 950,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 239,
+          "output_tokens_details": {
+            "reasoning_tokens": 132
+          },
+          "total_tokens": 1189
+        }
+      }
+    },
+    {
+      "sampleIndex": 8,
+      "occurrenceId": "atomic-a31d07a727097a5255a0",
+      "semanticCaseId": "title-case-1ba7a3c7871827cfdf10",
+      "route": "multiple-descriptions",
+      "promptVersion": "access-multiple-description-title-grouping-2026-09-09-v7.4",
+      "promptTemplateSha256": "394f779c9399fc715a5dc529fa36a41715ca1fd10a2f6edb370c758160c95a7a",
+      "renderedPromptSha256": "f7b52e51759a8102c0b6ddc8b4fa757ec7b4581e17b7bf7ac3f405bc18d5d536",
+      "decision": "split",
+      "groups": [
+        {
+          "title": "Interview Job Applicant",
+          "status": "new",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Interview and hire associates to fill staff vacancies."
+          ],
+          "reason": "Interviewing associates to fill staff vacancies identifies hiring candidates, not applicants' reference contacts."
+        },
+        {
+          "title": "Interview Applicant's Associate",
+          "status": "new",
+          "sourceTaskIndexes": [
+            2
+          ],
+          "sourceTasks": [
+            "Interview neighbors, associates, or former employers of job applicants to verify personal references or to obtain work history data."
+          ],
+          "reason": "These associates provide information about job applicants rather than being interviewed for hiring."
+        },
+        {
+          "title": "Interview Neighbor",
+          "status": "existing",
+          "existingOccurrenceCount": 2,
+          "sourceTaskIndexes": [
+            2
+          ],
+          "sourceTasks": [
+            "Interview neighbors, associates, or former employers of job applicants to verify personal references or to obtain work history data."
+          ],
+          "reason": "The explicit neighbor target matches this existing activity."
+        },
+        {
+          "title": "Interview Employer",
+          "status": "existing",
+          "existingOccurrenceCount": 2,
+          "sourceTaskIndexes": [
+            2
+          ],
+          "sourceTasks": [
+            "Interview neighbors, associates, or former employers of job applicants to verify personal references or to obtain work history data."
+          ],
+          "reason": "The explicit former-employer target matches this existing activity."
+        }
+      ],
+      "sharedSourceAssignments": [
+        {
+          "sourceTaskIndex": 2,
+          "sourceTask": "Interview neighbors, associates, or former employers of job applicants to verify personal references or to obtain work history data.",
+          "evidenceQuote": "Interview neighbors, associates, or former employers of job applicants to verify personal references or to obtain work history data.",
+          "assignments": [
+            {
+              "groupTitle": "Interview Neighbor",
+              "targetPhrase": "neighbors"
+            },
+            {
+              "groupTitle": "Interview Applicant's Associate",
+              "targetPhrase": "associates"
+            },
+            {
+              "groupTitle": "Interview Employer",
+              "targetPhrase": "former employers of job applicants"
+            }
+          ],
+          "reason": "The sentence explicitly coordinates three distinct interview targets, requiring separate assignments."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "Separate hiring candidates from applicants' reference contacts, preserve the three coordinated contact types, and reuse existing neighbor and employer titles.",
+      "confidence": "high",
+      "modelProvenance": {
+        "provider": "CloudBank Azure OpenAI",
+        "accessProject": "CIS261400",
+        "deployment": "gpt-6-astra-society-of-mind",
+        "model": "gpt-6-astra",
+        "modelVersion": "2026-09-03",
+        "responseId": "resp_00612bff7ab5f0ea006aa1bbbda52481959a9f23a62f5e7b76",
+        "usage": {
+          "input_tokens": 1291,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 1672,
+          "output_tokens_details": {
+            "reasoning_tokens": 1298
+          },
+          "total_tokens": 2963
+        }
+      }
+    },
+    {
+      "sampleIndex": 9,
+      "occurrenceId": "atomic-b0107465f227daf30633",
+      "semanticCaseId": "title-case-85b7757b579082d07ac5",
+      "route": "single-description",
+      "promptVersion": "access-single-description-title-check-2026-09-09-v7.4",
+      "promptTemplateSha256": "8c13de0a558c486bb0023041373ef9b89fa5a0add89138e8a42f15b24f779430",
+      "renderedPromptSha256": "0bf8c64860e5a550fc39aa64ede9d4bc97ae47f34af79af327f2198cf8a1d643",
+      "decision": "split",
+      "groups": [
+        {
+          "title": "Remind Patients About Medications",
+          "status": "new",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Remind patients to take medications or nutritional supplements."
+          ],
+          "reason": "Medication-taking defines a specific kind of patient reminder."
+        },
+        {
+          "title": "Remind Patients About Nutritional Supplements",
+          "status": "new",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Remind patients to take medications or nutritional supplements."
+          ],
+          "reason": "Nutritional supplements are a distinct coordinated target, not a synonym for medications."
+        }
+      ],
+      "sharedSourceAssignments": [
+        {
+          "sourceTaskIndex": 1,
+          "sourceTask": "Remind patients to take medications or nutritional supplements.",
+          "evidenceQuote": "Remind patients to take medications or nutritional supplements.",
+          "assignments": [
+            {
+              "groupTitle": "Remind Patients About Medications",
+              "targetPhrase": "medications"
+            },
+            {
+              "groupTitle": "Remind Patients About Nutritional Supplements",
+              "targetPhrase": "nutritional supplements"
+            }
+          ],
+          "reason": "The source explicitly coordinates two distinct targets of patient reminders."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "Separate medication and nutritional supplement reminders preserve explicit target differences that the generic current title obscures.",
+      "confidence": "high",
+      "modelProvenance": {
+        "provider": "CloudBank Azure OpenAI",
+        "accessProject": "CIS261400",
+        "deployment": "gpt-6-astra-society-of-mind",
+        "model": "gpt-6-astra",
+        "modelVersion": "2026-09-03",
+        "responseId": "resp_09b84737e586e253006aa1bbc882d0819096fc3d0e46ea5202",
+        "usage": {
+          "input_tokens": 952,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 853,
+          "output_tokens_details": {
+            "reasoning_tokens": 586
+          },
+          "total_tokens": 1805
+        }
+      }
+    },
+    {
+      "sampleIndex": 10,
+      "occurrenceId": "atomic-f15dcf435b3932f9ea91",
+      "semanticCaseId": "title-case-d226cf96ded6cd23f6ee",
+      "route": "multiple-descriptions",
+      "promptVersion": "access-multiple-description-title-grouping-2026-09-09-v7.4",
+      "promptTemplateSha256": "394f779c9399fc715a5dc529fa36a41715ca1fd10a2f6edb370c758160c95a7a",
+      "renderedPromptSha256": "ff2603e00fd0bf817a9e898f44b861404bad4ca668def694fe12c66f9bea9f8a",
+      "decision": "split",
+      "groups": [
+        {
+          "title": "Make Administrative Decisions",
+          "status": "new",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Meet with other departmental leaders to establish organizational goals, strategic plans, and objectives, as well as make decisions about personnel, resources, and space or equipment needs."
+          ],
+          "reason": "Personnel, resources, space, and equipment needs are ordinary subjects of administrative decisions and remain grouped."
+        },
+        {
+          "title": "Make Library Collection Decisions",
+          "status": "new",
+          "sourceTaskIndexes": [
+            2
+          ],
+          "sourceTasks": [
+            "Confer with colleagues, faculty, and community members and organizations to conduct informational programs, make collection decisions, and determine library services to offer."
+          ],
+          "reason": "The library context identifies the collection decisions and distinguishes them from other collection activities."
+        },
+        {
+          "title": "Make Decision",
+          "status": "current",
+          "sourceTaskIndexes": [
+            3
+          ],
+          "sourceTasks": [
+            "Making Decisions and Solving Problems"
+          ],
+          "reason": "Decision-making is unspecified; solving problems uses a different action."
+        },
+        {
+          "title": "Make Legal Decisions",
+          "status": "new",
+          "sourceTaskIndexes": [
+            4,
+            5
+          ],
+          "sourceTasks": [
+            "Make legal decisions.",
+            "Make decisions in legal cases."
+          ],
+          "reason": "Both descriptions explicitly identify legal decisions; their wording differences do not justify separate groups."
+        },
+        {
+          "title": "Make Diagnosis",
+          "status": "existing",
+          "existingOccurrenceCount": 1,
+          "sourceTaskIndexes": [
+            6
+          ],
+          "sourceTasks": [
+            "Make tentative diagnoses and decisions about management and treatment of patients."
+          ],
+          "reason": "The explicit diagnosis target reuses the already represented activity."
+        },
+        {
+          "title": "Make Patient Care Decisions",
+          "status": "new",
+          "sourceTaskIndexes": [
+            6
+          ],
+          "sourceTasks": [
+            "Make tentative diagnoses and decisions about management and treatment of patients."
+          ],
+          "reason": "Management and treatment are ordinary components of patient care; diagnosis remains a separately coordinated target."
+        }
+      ],
+      "sharedSourceAssignments": [
+        {
+          "sourceTaskIndex": 6,
+          "sourceTask": "Make tentative diagnoses and decisions about management and treatment of patients.",
+          "evidenceQuote": "Make tentative diagnoses and decisions about management and treatment of patients.",
+          "assignments": [
+            {
+              "groupTitle": "Make Diagnosis",
+              "targetPhrase": "tentative diagnoses"
+            },
+            {
+              "groupTitle": "Make Patient Care Decisions",
+              "targetPhrase": "decisions about management and treatment of patients"
+            }
+          ],
+          "reason": "Diagnoses and patient-care decisions are explicitly coordinated; the diagnosis target reuses its existing title."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "Preserve distinct administrative, library-collection, legal, and patient-care decisions alongside unspecified decision-making. Reuse Make Diagnosis for the separately coordinated diagnosis target.",
+      "confidence": "high",
+      "modelProvenance": {
+        "provider": "CloudBank Azure OpenAI",
+        "accessProject": "CIS261400",
+        "deployment": "gpt-6-astra-society-of-mind",
+        "model": "gpt-6-astra",
+        "modelVersion": "2026-09-03",
+        "responseId": "resp_079c5c137e090b7c006aa1bbd1699481968fb906b44031ac5f",
+        "usage": {
+          "input_tokens": 1405,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 1829,
+          "output_tokens_details": {
+            "reasoning_tokens": 1373
+          },
+          "total_tokens": 3234
+        }
+      }
+    },
+    {
+      "sampleIndex": 11,
+      "occurrenceId": "atomic-e5cd578030b59d9b3493",
+      "semanticCaseId": "title-case-e58a3bcd1a776e1493c8",
+      "route": "single-description",
+      "promptVersion": "access-single-description-title-check-2026-09-09-v7.4",
+      "promptTemplateSha256": "8c13de0a558c486bb0023041373ef9b89fa5a0add89138e8a42f15b24f779430",
+      "renderedPromptSha256": "9442d18cce534477db8dc0f184e31aa73dded89f2259c7491087d34959fb2f27",
+      "decision": "split",
+      "groups": [
+        {
+          "title": "Scrape Joint",
+          "status": "current",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Trim, sand, or scrape surfaces or joints to prepare articles for finishing."
+          ],
+          "reason": "Joints are an explicit scraping target; the current title is already clear."
+        },
+        {
+          "title": "Scrape Surface",
+          "status": "existing",
+          "existingOccurrenceCount": 1,
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Trim, sand, or scrape surfaces or joints to prepare articles for finishing."
+          ],
+          "reason": "Surfaces are an explicit scraping target; reuse the existing title."
+        }
+      ],
+      "sharedSourceAssignments": [
+        {
+          "sourceTaskIndex": 1,
+          "sourceTask": "Trim, sand, or scrape surfaces or joints to prepare articles for finishing.",
+          "evidenceQuote": "Trim, sand, or scrape surfaces or joints to prepare articles for finishing.",
+          "assignments": [
+            {
+              "groupTitle": "Scrape Joint",
+              "targetPhrase": "joints"
+            },
+            {
+              "groupTitle": "Scrape Surface",
+              "targetPhrase": "surfaces"
+            }
+          ],
+          "reason": "Surfaces and joints are distinct coordinated targets, not near-synonyms."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "Preserve both explicit scraping targets, retaining the current joint title and reusing the existing surface title. Finishing preparation is incidental.",
+      "confidence": "high",
+      "modelProvenance": {
+        "provider": "CloudBank Azure OpenAI",
+        "accessProject": "CIS261400",
+        "deployment": "gpt-6-astra-society-of-mind",
+        "model": "gpt-6-astra",
+        "modelVersion": "2026-09-03",
+        "responseId": "resp_0e64f6fa960e3855006aa1bc01e1c481909d1a9697e040eb0f",
+        "usage": {
+          "input_tokens": 960,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 483,
+          "output_tokens_details": {
+            "reasoning_tokens": 213
+          },
+          "total_tokens": 1443
+        }
+      }
+    },
+    {
+      "sampleIndex": 12,
+      "occurrenceId": "atomic-c792403e9d83b049ccb1",
+      "semanticCaseId": "title-case-07cec9e3679665961fea",
+      "route": "single-description",
+      "promptVersion": "access-single-description-title-check-2026-09-09-v7.4",
+      "promptTemplateSha256": "8c13de0a558c486bb0023041373ef9b89fa5a0add89138e8a42f15b24f779430",
+      "renderedPromptSha256": "81f2ad94829af89a6c0dda365093362aac052702efcee023ccc9430a5eabec52",
+      "decision": "split",
+      "groups": [
+        {
+          "title": "Insert Bullet",
+          "status": "current",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Insert waterproof sealers, bullets, and/or powder charges into guns, and screw gun ports back into place."
+          ],
+          "reason": "Bullets are an explicit insert target; the current title is already clear."
+        },
+        {
+          "title": "Insert Charge",
+          "status": "existing",
+          "existingOccurrenceCount": 1,
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Insert waterproof sealers, bullets, and/or powder charges into guns, and screw gun ports back into place."
+          ],
+          "reason": "Powder charges are a distinct insert target; reuse the existing title."
+        },
+        {
+          "title": "Insert Sealer",
+          "status": "existing",
+          "existingOccurrenceCount": 1,
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Insert waterproof sealers, bullets, and/or powder charges into guns, and screw gun ports back into place."
+          ],
+          "reason": "Waterproof sealers are a distinct insert target; reuse the existing title."
+        }
+      ],
+      "sharedSourceAssignments": [
+        {
+          "sourceTaskIndex": 1,
+          "sourceTask": "Insert waterproof sealers, bullets, and/or powder charges into guns, and screw gun ports back into place.",
+          "evidenceQuote": "Insert waterproof sealers, bullets, and/or powder charges into guns, and screw gun ports back into place.",
+          "assignments": [
+            {
+              "groupTitle": "Insert Bullet",
+              "targetPhrase": "bullets"
+            },
+            {
+              "groupTitle": "Insert Charge",
+              "targetPhrase": "powder charges"
+            },
+            {
+              "groupTitle": "Insert Sealer",
+              "targetPhrase": "waterproof sealers"
+            }
+          ],
+          "reason": "The sentence explicitly coordinates three distinct targets of Insert."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "Preserve all three coordinated insert targets, retaining Insert Bullet and reusing existing titles. Their shared setting does not justify collapsing them.",
+      "confidence": "high",
+      "modelProvenance": {
+        "provider": "CloudBank Azure OpenAI",
+        "accessProject": "CIS261400",
+        "deployment": "gpt-6-astra-society-of-mind",
+        "model": "gpt-6-astra",
+        "modelVersion": "2026-09-03",
+        "responseId": "resp_084856d706a35408006aa1bc0f1184819496be188bc6aec497",
+        "usage": {
+          "input_tokens": 968,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 631,
+          "output_tokens_details": {
+            "reasoning_tokens": 294
+          },
+          "total_tokens": 1599
+        }
+      }
+    },
+    {
+      "sampleIndex": 13,
+      "occurrenceId": "atomic-6e4ac02589f573bfc7a7",
+      "semanticCaseId": "title-case-61fb0c56a4a6efb22c52",
+      "route": "single-description",
+      "promptVersion": "access-single-description-title-check-2026-09-09-v7.4",
+      "promptTemplateSha256": "8c13de0a558c486bb0023041373ef9b89fa5a0add89138e8a42f15b24f779430",
+      "renderedPromptSha256": "358092b5be977c6140584a8f461d9661be46681fd8700c9fce3808ac534789e5",
+      "decision": "split",
+      "groups": [
+        {
+          "title": "Stay Informed About Regulations",
+          "status": "new",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Stay up to date on new regulations and current events regarding food science by reviewing scientific literature."
+          ],
+          "reason": "The action explicitly targets staying up to date on new regulations."
+        },
+        {
+          "title": "Stay Informed About Current Events",
+          "status": "new",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Stay up to date on new regulations and current events regarding food science by reviewing scientific literature."
+          ],
+          "reason": "Current events are a separately coordinated target of staying up to date."
+        }
+      ],
+      "sharedSourceAssignments": [
+        {
+          "sourceTaskIndex": 1,
+          "sourceTask": "Stay up to date on new regulations and current events regarding food science by reviewing scientific literature.",
+          "evidenceQuote": "Stay up to date on new regulations and current events regarding food science by reviewing scientific literature.",
+          "assignments": [
+            {
+              "groupTitle": "Stay Informed About Regulations",
+              "targetPhrase": "new regulations"
+            },
+            {
+              "groupTitle": "Stay Informed About Current Events",
+              "targetPhrase": "current events"
+            }
+          ],
+          "reason": "The sentence explicitly coordinates two distinct targets of the current action."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "Regulations and current events are distinct targets, not near-synonyms. Their shared food-science context does not justify merging them; literature review describes the method.",
+      "confidence": "high",
+      "modelProvenance": {
+        "provider": "CloudBank Azure OpenAI",
+        "accessProject": "CIS261400",
+        "deployment": "gpt-6-astra-society-of-mind",
+        "model": "gpt-6-astra",
+        "modelVersion": "2026-09-03",
+        "responseId": "resp_0b57925653920d37006aa1bc225ed08195b7dd4c9d51c1c683",
+        "usage": {
+          "input_tokens": 958,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 1205,
+          "output_tokens_details": {
+            "reasoning_tokens": 921
+          },
+          "total_tokens": 2163
+        }
+      }
+    },
+    {
+      "sampleIndex": 14,
+      "occurrenceId": "atomic-45aa4e27579246b4b850",
+      "semanticCaseId": "title-case-08693d890c9b6f94d618",
+      "route": "single-description",
+      "promptVersion": "access-single-description-title-check-2026-09-09-v7.4",
+      "promptTemplateSha256": "8c13de0a558c486bb0023041373ef9b89fa5a0add89138e8a42f15b24f779430",
+      "renderedPromptSha256": "03fefe7cfe79d7d7f9121fd793fa70985f7953f992cd65d062706aa2da7957c1",
+      "decision": "split",
+      "groups": [
+        {
+          "title": "Attach Strip",
+          "status": "existing",
+          "existingOccurrenceCount": 1,
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Cut and attach mounting strips, metal or wood moldings, rubber gaskets, or metal clips to surfaces in preparation for mirror installation."
+          ],
+          "reason": "The existing title directly covers mounting strips."
+        },
+        {
+          "title": "Attach Molding",
+          "status": "existing",
+          "existingOccurrenceCount": 1,
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Cut and attach mounting strips, metal or wood moldings, rubber gaskets, or metal clips to surfaces in preparation for mirror installation."
+          ],
+          "reason": "Metal and wood moldings are material variants of one familiar category, covered by the existing title."
+        },
+        {
+          "title": "Attach Gasket",
+          "status": "current",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Cut and attach mounting strips, metal or wood moldings, rubber gaskets, or metal clips to surfaces in preparation for mirror installation."
+          ],
+          "reason": "The current title clearly covers rubber gaskets."
+        },
+        {
+          "title": "Attach Clip",
+          "status": "existing",
+          "existingOccurrenceCount": 1,
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Cut and attach mounting strips, metal or wood moldings, rubber gaskets, or metal clips to surfaces in preparation for mirror installation."
+          ],
+          "reason": "The existing title directly covers metal clips."
+        }
+      ],
+      "sharedSourceAssignments": [
+        {
+          "sourceTaskIndex": 1,
+          "sourceTask": "Cut and attach mounting strips, metal or wood moldings, rubber gaskets, or metal clips to surfaces in preparation for mirror installation.",
+          "evidenceQuote": "Cut and attach mounting strips, metal or wood moldings, rubber gaskets, or metal clips to surfaces in preparation for mirror installation.",
+          "assignments": [
+            {
+              "groupTitle": "Attach Strip",
+              "targetPhrase": "mounting strips"
+            },
+            {
+              "groupTitle": "Attach Molding",
+              "targetPhrase": "metal or wood moldings"
+            },
+            {
+              "groupTitle": "Attach Gasket",
+              "targetPhrase": "rubber gaskets"
+            },
+            {
+              "groupTitle": "Attach Clip",
+              "targetPhrase": "metal clips"
+            }
+          ],
+          "reason": "The attachment action explicitly coordinates four distinct targets."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "Preserve all four coordinated attachment targets, retaining Attach Gasket and reusing existing titles. The shared mirror-installation purpose does not require narrower titles.",
+      "confidence": "high",
+      "modelProvenance": {
+        "provider": "CloudBank Azure OpenAI",
+        "accessProject": "CIS261400",
+        "deployment": "gpt-6-astra-society-of-mind",
+        "model": "gpt-6-astra",
+        "modelVersion": "2026-09-03",
+        "responseId": "resp_0a9b20b8d27348ee006aa1bc30e15081958fd966463b0f1f0b",
+        "usage": {
+          "input_tokens": 977,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 787,
+          "output_tokens_details": {
+            "reasoning_tokens": 389
+          },
+          "total_tokens": 1764
+        }
+      }
+    },
+    {
+      "sampleIndex": 15,
+      "occurrenceId": "atomic-badcb0b58fd60ddd6c20",
+      "semanticCaseId": "title-case-b447fadae5021a7077d1",
+      "route": "single-description",
+      "promptVersion": "access-single-description-title-check-2026-09-09-v7.4",
+      "promptTemplateSha256": "8c13de0a558c486bb0023041373ef9b89fa5a0add89138e8a42f15b24f779430",
+      "renderedPromptSha256": "a496632497932ef62c2288c0ff53a4cd58f67f71c4439a57c528f06ebaa5c3f5",
+      "decision": "split",
+      "groups": [
+        {
+          "title": "Implement Upgrade",
+          "status": "current",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Implement updates, upgrades, and patches in a timely manner to limit loss of service."
+          ],
+          "reason": "Upgrades are an explicit distinct target; the current title is already clear."
+        },
+        {
+          "title": "Implement Update",
+          "status": "existing",
+          "existingOccurrenceCount": 2,
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Implement updates, upgrades, and patches in a timely manner to limit loss of service."
+          ],
+          "reason": "Updates are an explicit distinct target represented by this existing title."
+        },
+        {
+          "title": "Implement Patch",
+          "status": "existing",
+          "existingOccurrenceCount": 2,
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Implement updates, upgrades, and patches in a timely manner to limit loss of service."
+          ],
+          "reason": "Patches are an explicit distinct target represented by this existing title."
+        }
+      ],
+      "sharedSourceAssignments": [
+        {
+          "sourceTaskIndex": 1,
+          "sourceTask": "Implement updates, upgrades, and patches in a timely manner to limit loss of service.",
+          "evidenceQuote": "Implement updates, upgrades, and patches in a timely manner to limit loss of service.",
+          "assignments": [
+            {
+              "groupTitle": "Implement Upgrade",
+              "targetPhrase": "upgrades"
+            },
+            {
+              "groupTitle": "Implement Update",
+              "targetPhrase": "updates"
+            },
+            {
+              "groupTitle": "Implement Patch",
+              "targetPhrase": "patches"
+            }
+          ],
+          "reason": "The source directly coordinates three distinct targets of Implement."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "Preserve all three coordinated targets, retain the clear current title, and reuse existing titles. Timeliness and limiting service loss are incidental.",
+      "confidence": "high",
+      "modelProvenance": {
+        "provider": "CloudBank Azure OpenAI",
+        "accessProject": "CIS261400",
+        "deployment": "gpt-6-astra-society-of-mind",
+        "model": "gpt-6-astra",
+        "modelVersion": "2026-09-03",
+        "responseId": "resp_0eaaa825df57f54e006aa1bc54a218819480372751d9715b9a",
+        "usage": {
+          "input_tokens": 962,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 458,
+          "output_tokens_details": {
+            "reasoning_tokens": 135
+          },
+          "total_tokens": 1420
+        }
+      }
+    },
+    {
+      "sampleIndex": 16,
+      "occurrenceId": "atomic-e8d6bfbc5d704d9b70b4",
+      "semanticCaseId": "title-case-d48b8cf33b30fbd677f5",
+      "route": "multiple-descriptions",
+      "promptVersion": "access-multiple-description-title-grouping-2026-09-09-v7.4",
+      "promptTemplateSha256": "394f779c9399fc715a5dc529fa36a41715ca1fd10a2f6edb370c758160c95a7a",
+      "renderedPromptSha256": "afe55e7cbd0eb5055ca676820bf26f9a6e1ef5a0d35b1ff25183676dbff61e0d",
+      "decision": "split",
+      "groups": [
+        {
+          "title": "Sew Material (Synonyms: Stitch Material)",
+          "status": "current",
+          "sourceTaskIndexes": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "sourceTasks": [
+            "Sew garments or materials.",
+            "Sew materials.",
+            "Align and stitch or glue materials such as fabric, fleece, leather, or wood, to join parts.",
+            "Dye, soak, polish, paint, stamp, stitch, stain, buff, or engrave leather or other materials to obtain desired effects, decorations, or shapes."
+          ],
+          "reason": "Fabric, fleece, leather, wood, and other materials share one ordinary category; stated purposes do not warrant splitting."
+        },
+        {
+          "title": "Sew Garment",
+          "status": "existing",
+          "existingOccurrenceCount": 1,
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Sew garments or materials."
+          ],
+          "reason": "Garments are a separately named finished-product target already represented by Sew Garment."
+        }
+      ],
+      "sharedSourceAssignments": [
+        {
+          "sourceTaskIndex": 1,
+          "sourceTask": "Sew garments or materials.",
+          "evidenceQuote": "Sew garments or materials.",
+          "assignments": [
+            {
+              "groupTitle": "Sew Garment",
+              "targetPhrase": "garments"
+            },
+            {
+              "groupTitle": "Sew Material (Synonyms: Stitch Material)",
+              "targetPhrase": "materials"
+            }
+          ],
+          "reason": "The source explicitly coordinates garments and materials, supporting both the existing garment activity and material sewing."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "Keep the clear material title, collapse ordinary material examples, and assign the explicitly coordinated garment target to existing Sew Garment.",
+      "confidence": "high",
+      "modelProvenance": {
+        "provider": "CloudBank Azure OpenAI",
+        "accessProject": "CIS261400",
+        "deployment": "gpt-6-astra-society-of-mind",
+        "model": "gpt-6-astra",
+        "modelVersion": "2026-09-03",
+        "responseId": "resp_0a153d0994f7395c006aa1bc5b9c808190bdab278adc84dd47",
+        "usage": {
+          "input_tokens": 1363,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 2226,
+          "output_tokens_details": {
+            "reasoning_tokens": 1943
+          },
+          "total_tokens": 3589
+        }
+      }
+    },
+    {
+      "sampleIndex": 17,
+      "occurrenceId": "atomic-3f888f709e4efe2b7225",
+      "semanticCaseId": "title-case-92b498b3e7c1c76f5f3a",
+      "route": "single-description",
+      "promptVersion": "access-single-description-title-check-2026-09-09-v7.4",
+      "promptTemplateSha256": "8c13de0a558c486bb0023041373ef9b89fa5a0add89138e8a42f15b24f779430",
+      "renderedPromptSha256": "0efe1ad93cc2798958a99dd4c308de37ff40ab869b9806fa491b908b3ce4f39f",
+      "decision": "keep",
+      "groups": [
+        {
+          "title": "Measure Customer",
+          "status": "current",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Measure customers, using tape measures, and record measurements."
+          ],
+          "reason": "Customers are the explicit target of measuring."
+        }
+      ],
+      "sharedSourceAssignments": [],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "Keep the clear current title; tape measures specify the instrument, while recording measurements is a different action.",
+      "confidence": "high",
+      "modelProvenance": {
+        "provider": "CloudBank Azure OpenAI",
+        "accessProject": "CIS261400",
+        "deployment": "gpt-6-astra-society-of-mind",
+        "model": "gpt-6-astra",
+        "modelVersion": "2026-09-03",
+        "responseId": "resp_0ea669b0b802ae24006aa1bc7156348196afacd4dc96b643f1",
+        "usage": {
+          "input_tokens": 951,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 259,
+          "output_tokens_details": {
+            "reasoning_tokens": 154
+          },
+          "total_tokens": 1210
+        }
+      }
+    },
+    {
+      "sampleIndex": 18,
+      "occurrenceId": "atomic-b5ee224274756732a5e1",
+      "semanticCaseId": "title-case-5174e1ddc59ca7904fbd",
+      "route": "multiple-descriptions",
+      "promptVersion": "access-multiple-description-title-grouping-2026-09-09-v7.4",
+      "promptTemplateSha256": "394f779c9399fc715a5dc529fa36a41715ca1fd10a2f6edb370c758160c95a7a",
+      "renderedPromptSha256": "cc73fe188ef229df8d2583695a49b3617393f96a411a1e5e5eec63cc4f62155a",
+      "decision": "split",
+      "groups": [
+        {
+          "title": "Recruit Staff",
+          "status": "current",
+          "sourceTaskIndexes": [
+            1,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "sourceTasks": [
+            "Assess staffing needs and recruit staff, using methods such as newspaper advertisements or attendance at job fairs.",
+            "Recruit, interview, and hire or sign up volunteers and staff.",
+            "Recruit and hire staff members.",
+            "Recruit and hire staff members.",
+            "Recruit and hire staff members.",
+            "Recruit, hire, train, and evaluate primary and supplemental staff and recommend personnel actions for programs and services.",
+            "Recruit, hire, train, and evaluate primary and supplemental staff.",
+            "Recruit, hire, train and supervise staff, or participate in staffing decisions."
+          ],
+          "reason": "Retain the clear title; primary and supplemental staff are ordinary subtypes of staff, not separate recruitment categories."
+        },
+        {
+          "title": "Recruit Kitchen Staff",
+          "status": "new",
+          "sourceTaskIndexes": [
+            2
+          ],
+          "sourceTasks": [
+            "Recruit and hire staff, such as cooks and other kitchen workers."
+          ],
+          "reason": "Cooks and other kitchen workers jointly define a coherent kitchen-staff subset."
+        },
+        {
+          "title": "Recruit Volunteer",
+          "status": "existing",
+          "existingOccurrenceCount": 1,
+          "sourceTaskIndexes": [
+            3
+          ],
+          "sourceTasks": [
+            "Recruit, interview, and hire or sign up volunteers and staff."
+          ],
+          "reason": "Volunteers are explicitly distinct from staff; reuse the existing title."
+        }
+      ],
+      "sharedSourceAssignments": [
+        {
+          "sourceTaskIndex": 3,
+          "sourceTask": "Recruit, interview, and hire or sign up volunteers and staff.",
+          "evidenceQuote": "Recruit, interview, and hire or sign up volunteers and staff.",
+          "assignments": [
+            {
+              "groupTitle": "Recruit Staff",
+              "targetPhrase": "staff"
+            },
+            {
+              "groupTitle": "Recruit Volunteer",
+              "targetPhrase": "volunteers"
+            }
+          ],
+          "reason": "Recruit directly governs the distinct, coordinated targets volunteers and staff."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "Retain general staff recruitment, distinguish the kitchen-specific subset, and assign explicitly coordinated volunteers to the existing title. Other actions and recruitment methods do not define additional groups.",
+      "confidence": "high",
+      "modelProvenance": {
+        "provider": "CloudBank Azure OpenAI",
+        "accessProject": "CIS261400",
+        "deployment": "gpt-6-astra-society-of-mind",
+        "model": "gpt-6-astra",
+        "modelVersion": "2026-09-03",
+        "responseId": "resp_00b56c59a6c2befa006aa1bc735e6c81978aa66b9339c1c717",
+        "usage": {
+          "input_tokens": 1474,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 1254,
+          "output_tokens_details": {
+            "reasoning_tokens": 917
+          },
+          "total_tokens": 2728
+        }
+      }
+    },
+    {
+      "sampleIndex": 19,
+      "occurrenceId": "atomic-1d7b9524377936a3d5af",
+      "semanticCaseId": "title-case-a104d806b26263be73bf",
+      "route": "multiple-descriptions",
+      "promptVersion": "access-multiple-description-title-grouping-2026-09-09-v7.4",
+      "promptTemplateSha256": "394f779c9399fc715a5dc529fa36a41715ca1fd10a2f6edb370c758160c95a7a",
+      "renderedPromptSha256": "32f62c2379f091d5778fcf96fd6c22d58eed3771416c38c97a48b745b3e4a684",
+      "decision": "split",
+      "groups": [
+        {
+          "title": "Remove Paper",
+          "status": "current",
+          "sourceTaskIndexes": [
+            1,
+            2
+          ],
+          "sourceTasks": [
+            "Remove old paper, using water, steam machines, or solvents and scrapers.",
+            "Position mold along guidelines of wall, press mold in place, and remove mold and paper from wall."
+          ],
+          "reason": "Both descriptions explicitly target paper; no evidence requires distinct paper-removal titles."
+        },
+        {
+          "title": "Remove Mold",
+          "status": "existing",
+          "existingOccurrenceCount": 1,
+          "sourceTaskIndexes": [
+            2
+          ],
+          "sourceTasks": [
+            "Position mold along guidelines of wall, press mold in place, and remove mold and paper from wall."
+          ],
+          "reason": "The coordinated mold target maps to the existing Remove Mold activity."
+        }
+      ],
+      "sharedSourceAssignments": [
+        {
+          "sourceTaskIndex": 2,
+          "sourceTask": "Position mold along guidelines of wall, press mold in place, and remove mold and paper from wall.",
+          "evidenceQuote": "remove mold and paper from wall.",
+          "assignments": [
+            {
+              "groupTitle": "Remove Paper",
+              "targetPhrase": "paper"
+            },
+            {
+              "groupTitle": "Remove Mold",
+              "targetPhrase": "mold"
+            }
+          ],
+          "reason": "Mold and paper are explicitly coordinated, distinct removal targets, not synonyms or examples of one familiar category."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "Keep Remove Paper for both descriptions and reuse existing Remove Mold for the distinct coordinated target.",
+      "confidence": "high",
+      "modelProvenance": {
+        "provider": "CloudBank Azure OpenAI",
+        "accessProject": "CIS261400",
+        "deployment": "gpt-6-astra-society-of-mind",
+        "model": "gpt-6-astra",
+        "modelVersion": "2026-09-03",
+        "responseId": "resp_08aa427b3576e448006aa1bc87c5d481908cad15bbe2eb269b",
+        "usage": {
+          "input_tokens": 1292,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 505,
+          "output_tokens_details": {
+            "reasoning_tokens": 249
+          },
+          "total_tokens": 1797
+        }
+      }
+    },
+    {
+      "sampleIndex": 20,
+      "occurrenceId": "atomic-c9284738d9b170ce5bd6",
+      "semanticCaseId": "title-case-8dd0bb9c3a07c5e79b8d",
+      "route": "single-description",
+      "promptVersion": "access-single-description-title-check-2026-09-09-v7.4",
+      "promptTemplateSha256": "8c13de0a558c486bb0023041373ef9b89fa5a0add89138e8a42f15b24f779430",
+      "renderedPromptSha256": "2f1de37ec5e0ac88888c9ce4a3b878f41283ec631b99e13eb36bdd8428c95167",
+      "decision": "keep",
+      "groups": [
+        {
+          "title": "Fit Clothing",
+          "status": "current",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Fit, alter, repair, and make made-to-measure clothing, according to customers' and clothing manufacturers' specifications and fit, and applying principles of garment design, construction, and styling."
+          ],
+          "reason": "Clothing is the single fitting target; altering, repairing, and making are separate actions."
+        }
+      ],
+      "sharedSourceAssignments": [],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "Keep the clear current title. The description coordinates different actions, not distinct targets of fitting.",
+      "confidence": "high",
+      "modelProvenance": {
+        "provider": "CloudBank Azure OpenAI",
+        "accessProject": "CIS261400",
+        "deployment": "gpt-6-astra-society-of-mind",
+        "model": "gpt-6-astra",
+        "modelVersion": "2026-09-03",
+        "responseId": "resp_0040be4716b2c251006aa1bcaddf608197a14cffe8a2f62c7b",
+        "usage": {
+          "input_tokens": 978,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 313,
+          "output_tokens_details": {
+            "reasoning_tokens": 200
+          },
+          "total_tokens": 1291
+        }
+      }
+    },
+    {
+      "sampleIndex": 21,
+      "occurrenceId": "atomic-c8ccbb272e65509fdb48",
+      "semanticCaseId": "title-case-f05be485559169b82f4a",
+      "route": "multiple-descriptions",
+      "promptVersion": "access-multiple-description-title-grouping-2026-09-09-v7.4",
+      "promptTemplateSha256": "394f779c9399fc715a5dc529fa36a41715ca1fd10a2f6edb370c758160c95a7a",
+      "renderedPromptSha256": "eeb6b5ca8ccfca0d83effa21d8c5d0f71fe050a41d7db1a56ba2336abf4371fd",
+      "decision": "split",
+      "groups": [
+        {
+          "title": "Develop Therapeutic Activities",
+          "status": "new",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Develop individual or group activities or programs in schools to deal with behavior, speech, language, or swallowing problems."
+          ],
+          "reason": "Behavior, speech, language, and swallowing problems define therapeutic activities; individual and group formats remain one familiar category."
+        },
+        {
+          "title": "Develop Fundraising Activities",
+          "status": "new",
+          "sourceTaskIndexes": [
+            2
+          ],
+          "sourceTasks": [
+            "Develop or implement fundraising activities, such as annual giving campaigns or direct mail programs."
+          ],
+          "reason": "Annual giving campaigns and direct mail programs clarify the explicitly named fundraising purpose."
+        },
+        {
+          "title": "Develop Executive Protection Activities",
+          "status": "new",
+          "sourceTaskIndexes": [
+            3
+          ],
+          "sourceTasks": [
+            "Develop, arrange for, perform, or assess executive protection activities to reduce security risks."
+          ],
+          "reason": "Executive protection identifies specialized personal-security work, distinct from warehouse safety and security."
+        },
+        {
+          "title": "Develop Safety and Security Activities",
+          "status": "new",
+          "sourceTaskIndexes": [
+            4
+          ],
+          "sourceTasks": [
+            "Plan, develop, or implement warehouse safety and security programs and activities."
+          ],
+          "reason": "Warehouse safety and security characterize protective activities, distinct from executive protection."
+        },
+        {
+          "title": "Develop Program",
+          "status": "new",
+          "sourceTaskIndexes": [
+            1,
+            4
+          ],
+          "sourceTasks": [
+            "Develop individual or group activities or programs in schools to deal with behavior, speech, language, or swallowing problems.",
+            "Plan, develop, or implement warehouse safety and security programs and activities."
+          ],
+          "reason": "Explicit program targets use the recorded Develop Program synonym of the existing Create Program destination."
+        }
+      ],
+      "sharedSourceAssignments": [
+        {
+          "sourceTaskIndex": 1,
+          "sourceTask": "Develop individual or group activities or programs in schools to deal with behavior, speech, language, or swallowing problems.",
+          "evidenceQuote": "Develop individual or group activities or programs in schools to deal with behavior, speech, language, or swallowing problems.",
+          "assignments": [
+            {
+              "groupTitle": "Develop Therapeutic Activities",
+              "targetPhrase": "individual or group activities"
+            },
+            {
+              "groupTitle": "Develop Program",
+              "targetPhrase": "programs"
+            }
+          ],
+          "reason": "Activities and programs are explicitly coordinated targets; the program target retains its existing destination."
+        },
+        {
+          "sourceTaskIndex": 4,
+          "sourceTask": "Plan, develop, or implement warehouse safety and security programs and activities.",
+          "evidenceQuote": "Plan, develop, or implement warehouse safety and security programs and activities.",
+          "assignments": [
+            {
+              "groupTitle": "Develop Safety and Security Activities",
+              "targetPhrase": "activities"
+            },
+            {
+              "groupTitle": "Develop Program",
+              "targetPhrase": "warehouse safety and security programs"
+            }
+          ],
+          "reason": "Programs and activities are explicitly coordinated targets; their shared modifiers do not make them synonymous."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "Distinct activity purposes require clarification. Coordinated program targets remain accounted for through the existing Develop Program synonym rather than duplicate titles.",
+      "confidence": "high",
+      "modelProvenance": {
+        "provider": "CloudBank Azure OpenAI",
+        "accessProject": "CIS261400",
+        "deployment": "gpt-6-astra-society-of-mind",
+        "model": "gpt-6-astra",
+        "modelVersion": "2026-09-03",
+        "responseId": "resp_0326678f218caa59006aa1bcce474c8195a81305be969833f1",
+        "usage": {
+          "input_tokens": 1378,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 2221,
+          "output_tokens_details": {
+            "reasoning_tokens": 1690
+          },
+          "total_tokens": 3599
+        }
+      }
+    },
+    {
+      "sampleIndex": 22,
+      "occurrenceId": "atomic-e6e70dbc480c0431297d",
+      "semanticCaseId": "title-case-c93ca62b19a90ff243ec",
+      "route": "single-description",
+      "promptVersion": "access-single-description-title-check-2026-09-09-v7.4",
+      "promptTemplateSha256": "8c13de0a558c486bb0023041373ef9b89fa5a0add89138e8a42f15b24f779430",
+      "renderedPromptSha256": "6b8f4346fbef604a15c3d5f2e3698ebe42872567161a4bba46f025ddb1769ef1",
+      "decision": "rename",
+      "groups": [
+        {
+          "title": "Read Draft Markings",
+          "status": "new",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Read draft markings to determine depths of vessels in water."
+          ],
+          "reason": "Draft markings are the explicit reading target; determining vessel depth is the purpose."
+        }
+      ],
+      "sharedSourceAssignments": [],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "The current title is underspecified. Adding “draft” identifies the precise markings without incorporating the incidental purpose.",
+      "confidence": "high",
+      "modelProvenance": {
+        "provider": "CloudBank Azure OpenAI",
+        "accessProject": "CIS261400",
+        "deployment": "gpt-6-astra-society-of-mind",
+        "model": "gpt-6-astra",
+        "modelVersion": "2026-09-03",
+        "responseId": "resp_0450065a91b3b7ac006aa1bcd89fe48194a9241fc828b31a70",
+        "usage": {
+          "input_tokens": 952,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 272,
+          "output_tokens_details": {
+            "reasoning_tokens": 157
+          },
+          "total_tokens": 1224
+        }
+      }
+    },
+    {
+      "sampleIndex": 23,
+      "occurrenceId": "atomic-c430b724e7a997797ba1",
+      "semanticCaseId": "title-case-37113965478887820ec3",
+      "route": "single-description",
+      "promptVersion": "access-single-description-title-check-2026-09-09-v7.4",
+      "promptTemplateSha256": "8c13de0a558c486bb0023041373ef9b89fa5a0add89138e8a42f15b24f779430",
+      "renderedPromptSha256": "bb24264f1e8125d07db83b699cbf9aa2d9100d690d72aef3eb0e84924fba5d23",
+      "decision": "rename",
+      "groups": [
+        {
+          "title": "Record Vital Signs",
+          "status": "new",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Take and record measures of patients' physical condition, using devices such as thermometers or blood pressure gauges."
+          ],
+          "reason": "Thermometers and blood pressure gauges jointly identify the recorded patient measurements as vital signs."
+        }
+      ],
+      "sharedSourceAssignments": [],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "The device examples clarify the vague target as vital signs without introducing distinct recording targets.",
+      "confidence": "high",
+      "modelProvenance": {
+        "provider": "CloudBank Azure OpenAI",
+        "accessProject": "CIS261400",
+        "deployment": "gpt-6-astra-society-of-mind",
+        "model": "gpt-6-astra",
+        "modelVersion": "2026-09-03",
+        "responseId": "resp_0c83d24e9b21bd79006aa1bcdbbcf481908b0cd4c32aa0662c",
+        "usage": {
+          "input_tokens": 961,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 398,
+          "output_tokens_details": {
+            "reasoning_tokens": 287
+          },
+          "total_tokens": 1359
+        }
+      }
+    },
+    {
+      "sampleIndex": 24,
+      "occurrenceId": "atomic-b9e053b055fb3caf418c",
+      "semanticCaseId": "title-case-98c44a4d86ae1b9e8d08",
+      "route": "multiple-descriptions",
+      "promptVersion": "access-multiple-description-title-grouping-2026-09-09-v7.4",
+      "promptTemplateSha256": "394f779c9399fc715a5dc529fa36a41715ca1fd10a2f6edb370c758160c95a7a",
+      "renderedPromptSha256": "d5ee28eebb284060d9c4e123756dd131382fca735ec1803287358bbdf58eeff9",
+      "decision": "split",
+      "groups": [
+        {
+          "title": "Inventory Equipment",
+          "status": "current",
+          "sourceTaskIndexes": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16
+          ],
+          "sourceTasks": [
+            "Examine and inventory firefighting equipment, such as axes, fire hoses, shovels, pumps, buckets, and fire extinguishers, to determine amount and condition.",
+            "Inventory and requisition machine parts, equipment, and other supplies so that stock can be maintained and replenished.",
+            "Inventory equipment and supplies, ordering parts and tools as necessary.",
+            "Select, store, order, issue, inventory, and maintain classroom equipment, materials, and supplies.",
+            "Inventory and order medical, lab, or office supplies or equipment.",
+            "Inventory materials or equipment.",
+            "Inventory medical supplies or equipment.",
+            "Select, store, order, issue, and inventory classroom equipment, materials, and supplies.",
+            "Select, store, order, issue, and inventory classroom equipment, materials, and supplies.",
+            "Select, store, order, issue, and inventory classroom equipment, materials, and supplies.",
+            "Select, store, order, issue, and inventory classroom equipment, materials, and supplies.",
+            "Select, store, order, issue, and inventory classroom equipment, materials, and supplies.",
+            "Select, store, order, issue, and inventory classroom equipment, materials, and supplies.",
+            "Select, store, order, issue, and inventory classroom equipment, materials, and supplies.",
+            "Select, order, store, issue, and inventory classroom equipment, materials, and supplies.",
+            "Inventory and distribute nuclear, biological, and chemical detection and contamination equipment, providing instruction in its maintenance and use."
+          ],
+          "reason": "Equipment types and settings vary, but the evidence does not require subdividing the clear current title."
+        },
+        {
+          "title": "Inventory Part",
+          "status": "existing",
+          "existingOccurrenceCount": 1,
+          "sourceTaskIndexes": [
+            2
+          ],
+          "sourceTasks": [
+            "Inventory and requisition machine parts, equipment, and other supplies so that stock can be maintained and replenished."
+          ],
+          "reason": "Machine parts are explicitly inventoried and match the existing Inventory Part activity."
+        },
+        {
+          "title": "Inventory Supply",
+          "status": "existing",
+          "existingOccurrenceCount": 1,
+          "sourceTaskIndexes": [
+            2,
+            3,
+            4,
+            5,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15
+          ],
+          "sourceTasks": [
+            "Inventory and requisition machine parts, equipment, and other supplies so that stock can be maintained and replenished.",
+            "Inventory equipment and supplies, ordering parts and tools as necessary.",
+            "Select, store, order, issue, inventory, and maintain classroom equipment, materials, and supplies.",
+            "Inventory and order medical, lab, or office supplies or equipment.",
+            "Inventory medical supplies or equipment.",
+            "Select, store, order, issue, and inventory classroom equipment, materials, and supplies.",
+            "Select, store, order, issue, and inventory classroom equipment, materials, and supplies.",
+            "Select, store, order, issue, and inventory classroom equipment, materials, and supplies.",
+            "Select, store, order, issue, and inventory classroom equipment, materials, and supplies.",
+            "Select, store, order, issue, and inventory classroom equipment, materials, and supplies.",
+            "Select, store, order, issue, and inventory classroom equipment, materials, and supplies.",
+            "Select, store, order, issue, and inventory classroom equipment, materials, and supplies.",
+            "Select, order, store, issue, and inventory classroom equipment, materials, and supplies."
+          ],
+          "reason": "Explicit supplies targets match the existing Inventory Supply activity and remain separate from equipment and materials."
+        },
+        {
+          "title": "Inventory Material",
+          "status": "existing",
+          "existingOccurrenceCount": 1,
+          "sourceTaskIndexes": [
+            4,
+            6,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15
+          ],
+          "sourceTasks": [
+            "Select, store, order, issue, inventory, and maintain classroom equipment, materials, and supplies.",
+            "Inventory materials or equipment.",
+            "Select, store, order, issue, and inventory classroom equipment, materials, and supplies.",
+            "Select, store, order, issue, and inventory classroom equipment, materials, and supplies.",
+            "Select, store, order, issue, and inventory classroom equipment, materials, and supplies.",
+            "Select, store, order, issue, and inventory classroom equipment, materials, and supplies.",
+            "Select, store, order, issue, and inventory classroom equipment, materials, and supplies.",
+            "Select, store, order, issue, and inventory classroom equipment, materials, and supplies.",
+            "Select, store, order, issue, and inventory classroom equipment, materials, and supplies.",
+            "Select, order, store, issue, and inventory classroom equipment, materials, and supplies."
+          ],
+          "reason": "Explicit materials targets match the existing Inventory Material activity and remain separate from equipment and supplies."
+        }
+      ],
+      "sharedSourceAssignments": [
+        {
+          "sourceTaskIndex": 2,
+          "sourceTask": "Inventory and requisition machine parts, equipment, and other supplies so that stock can be maintained and replenished.",
+          "evidenceQuote": "Inventory and requisition machine parts, equipment, and other supplies so that stock can be maintained and replenished.",
+          "assignments": [
+            {
+              "groupTitle": "Inventory Equipment",
+              "targetPhrase": "equipment"
+            },
+            {
+              "groupTitle": "Inventory Part",
+              "targetPhrase": "machine parts"
+            },
+            {
+              "groupTitle": "Inventory Supply",
+              "targetPhrase": "other supplies"
+            }
+          ],
+          "reason": "Parts, equipment, and supplies are distinct coordinated inventory targets; existing titles cover parts and supplies."
+        },
+        {
+          "sourceTaskIndex": 3,
+          "sourceTask": "Inventory equipment and supplies, ordering parts and tools as necessary.",
+          "evidenceQuote": "Inventory equipment and supplies, ordering parts and tools as necessary.",
+          "assignments": [
+            {
+              "groupTitle": "Inventory Equipment",
+              "targetPhrase": "equipment"
+            },
+            {
+              "groupTitle": "Inventory Supply",
+              "targetPhrase": "supplies"
+            }
+          ],
+          "reason": "Only equipment and supplies are inventoried; parts and tools are targets of ordering."
+        },
+        {
+          "sourceTaskIndex": 4,
+          "sourceTask": "Select, store, order, issue, inventory, and maintain classroom equipment, materials, and supplies.",
+          "evidenceQuote": "Select, store, order, issue, inventory, and maintain classroom equipment, materials, and supplies.",
+          "assignments": [
+            {
+              "groupTitle": "Inventory Equipment",
+              "targetPhrase": "classroom equipment"
+            },
+            {
+              "groupTitle": "Inventory Material",
+              "targetPhrase": "materials"
+            },
+            {
+              "groupTitle": "Inventory Supply",
+              "targetPhrase": "supplies"
+            }
+          ],
+          "reason": "Equipment, materials, and supplies are distinct coordinated inventory targets despite sharing a classroom setting."
+        },
+        {
+          "sourceTaskIndex": 5,
+          "sourceTask": "Inventory and order medical, lab, or office supplies or equipment.",
+          "evidenceQuote": "Inventory and order medical, lab, or office supplies or equipment.",
+          "assignments": [
+            {
+              "groupTitle": "Inventory Equipment",
+              "targetPhrase": "equipment"
+            },
+            {
+              "groupTitle": "Inventory Supply",
+              "targetPhrase": "medical, lab, or office supplies"
+            }
+          ],
+          "reason": "Supplies and equipment are explicit alternative inventory targets; their domain modifiers do not merge these categories."
+        },
+        {
+          "sourceTaskIndex": 6,
+          "sourceTask": "Inventory materials or equipment.",
+          "evidenceQuote": "Inventory materials or equipment.",
+          "assignments": [
+            {
+              "groupTitle": "Inventory Equipment",
+              "targetPhrase": "equipment"
+            },
+            {
+              "groupTitle": "Inventory Material",
+              "targetPhrase": "materials"
+            }
+          ],
+          "reason": "Materials and equipment are explicit alternative inventory targets."
+        },
+        {
+          "sourceTaskIndex": 7,
+          "sourceTask": "Inventory medical supplies or equipment.",
+          "evidenceQuote": "Inventory medical supplies or equipment.",
+          "assignments": [
+            {
+              "groupTitle": "Inventory Equipment",
+              "targetPhrase": "equipment"
+            },
+            {
+              "groupTitle": "Inventory Supply",
+              "targetPhrase": "medical supplies"
+            }
+          ],
+          "reason": "Supplies and equipment remain distinct alternative inventory targets within the medical setting."
+        },
+        {
+          "sourceTaskIndex": 8,
+          "sourceTask": "Select, store, order, issue, and inventory classroom equipment, materials, and supplies.",
+          "evidenceQuote": "Select, store, order, issue, and inventory classroom equipment, materials, and supplies.",
+          "assignments": [
+            {
+              "groupTitle": "Inventory Equipment",
+              "targetPhrase": "classroom equipment"
+            },
+            {
+              "groupTitle": "Inventory Material",
+              "targetPhrase": "materials"
+            },
+            {
+              "groupTitle": "Inventory Supply",
+              "targetPhrase": "supplies"
+            }
+          ],
+          "reason": "Classroom equipment, materials, and supplies are distinct coordinated inventory targets."
+        },
+        {
+          "sourceTaskIndex": 9,
+          "sourceTask": "Select, store, order, issue, and inventory classroom equipment, materials, and supplies.",
+          "evidenceQuote": "Select, store, order, issue, and inventory classroom equipment, materials, and supplies.",
+          "assignments": [
+            {
+              "groupTitle": "Inventory Equipment",
+              "targetPhrase": "classroom equipment"
+            },
+            {
+              "groupTitle": "Inventory Material",
+              "targetPhrase": "materials"
+            },
+            {
+              "groupTitle": "Inventory Supply",
+              "targetPhrase": "supplies"
+            }
+          ],
+          "reason": "Classroom equipment, materials, and supplies are distinct coordinated inventory targets."
+        },
+        {
+          "sourceTaskIndex": 10,
+          "sourceTask": "Select, store, order, issue, and inventory classroom equipment, materials, and supplies.",
+          "evidenceQuote": "Select, store, order, issue, and inventory classroom equipment, materials, and supplies.",
+          "assignments": [
+            {
+              "groupTitle": "Inventory Equipment",
+              "targetPhrase": "classroom equipment"
+            },
+            {
+              "groupTitle": "Inventory Material",
+              "targetPhrase": "materials"
+            },
+            {
+              "groupTitle": "Inventory Supply",
+              "targetPhrase": "supplies"
+            }
+          ],
+          "reason": "Classroom equipment, materials, and supplies are distinct coordinated inventory targets."
+        },
+        {
+          "sourceTaskIndex": 11,
+          "sourceTask": "Select, store, order, issue, and inventory classroom equipment, materials, and supplies.",
+          "evidenceQuote": "Select, store, order, issue, and inventory classroom equipment, materials, and supplies.",
+          "assignments": [
+            {
+              "groupTitle": "Inventory Equipment",
+              "targetPhrase": "classroom equipment"
+            },
+            {
+              "groupTitle": "Inventory Material",
+              "targetPhrase": "materials"
+            },
+            {
+              "groupTitle": "Inventory Supply",
+              "targetPhrase": "supplies"
+            }
+          ],
+          "reason": "Classroom equipment, materials, and supplies are distinct coordinated inventory targets."
+        },
+        {
+          "sourceTaskIndex": 12,
+          "sourceTask": "Select, store, order, issue, and inventory classroom equipment, materials, and supplies.",
+          "evidenceQuote": "Select, store, order, issue, and inventory classroom equipment, materials, and supplies.",
+          "assignments": [
+            {
+              "groupTitle": "Inventory Equipment",
+              "targetPhrase": "classroom equipment"
+            },
+            {
+              "groupTitle": "Inventory Material",
+              "targetPhrase": "materials"
+            },
+            {
+              "groupTitle": "Inventory Supply",
+              "targetPhrase": "supplies"
+            }
+          ],
+          "reason": "Classroom equipment, materials, and supplies are distinct coordinated inventory targets."
+        },
+        {
+          "sourceTaskIndex": 13,
+          "sourceTask": "Select, store, order, issue, and inventory classroom equipment, materials, and supplies.",
+          "evidenceQuote": "Select, store, order, issue, and inventory classroom equipment, materials, and supplies.",
+          "assignments": [
+            {
+              "groupTitle": "Inventory Equipment",
+              "targetPhrase": "classroom equipment"
+            },
+            {
+              "groupTitle": "Inventory Material",
+              "targetPhrase": "materials"
+            },
+            {
+              "groupTitle": "Inventory Supply",
+              "targetPhrase": "supplies"
+            }
+          ],
+          "reason": "Classroom equipment, materials, and supplies are distinct coordinated inventory targets."
+        },
+        {
+          "sourceTaskIndex": 14,
+          "sourceTask": "Select, store, order, issue, and inventory classroom equipment, materials, and supplies.",
+          "evidenceQuote": "Select, store, order, issue, and inventory classroom equipment, materials, and supplies.",
+          "assignments": [
+            {
+              "groupTitle": "Inventory Equipment",
+              "targetPhrase": "classroom equipment"
+            },
+            {
+              "groupTitle": "Inventory Material",
+              "targetPhrase": "materials"
+            },
+            {
+              "groupTitle": "Inventory Supply",
+              "targetPhrase": "supplies"
+            }
+          ],
+          "reason": "Classroom equipment, materials, and supplies are distinct coordinated inventory targets."
+        },
+        {
+          "sourceTaskIndex": 15,
+          "sourceTask": "Select, order, store, issue, and inventory classroom equipment, materials, and supplies.",
+          "evidenceQuote": "Select, order, store, issue, and inventory classroom equipment, materials, and supplies.",
+          "assignments": [
+            {
+              "groupTitle": "Inventory Equipment",
+              "targetPhrase": "classroom equipment"
+            },
+            {
+              "groupTitle": "Inventory Material",
+              "targetPhrase": "materials"
+            },
+            {
+              "groupTitle": "Inventory Supply",
+              "targetPhrase": "supplies"
+            }
+          ],
+          "reason": "Classroom equipment, materials, and supplies are distinct coordinated inventory targets."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "Retain the clear equipment title across settings. Separately account for coordinated parts, materials, and supplies using existing titles; exclude targets of other actions.",
+      "confidence": "high",
+      "modelProvenance": {
+        "provider": "CloudBank Azure OpenAI",
+        "accessProject": "CIS261400",
+        "deployment": "gpt-6-astra-society-of-mind",
+        "model": "gpt-6-astra",
+        "modelVersion": "2026-09-03",
+        "responseId": "resp_019b5b38aefbbc65006aa1bced9d308196964fc4a7a9b79864",
+        "usage": {
+          "input_tokens": 1899,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 4559,
+          "output_tokens_details": {
+            "reasoning_tokens": 2472
+          },
+          "total_tokens": 6458
+        }
+      }
+    },
+    {
+      "sampleIndex": 25,
+      "occurrenceId": "atomic-d4e23da78cba5c99ff53",
+      "semanticCaseId": "title-case-d388c82aa841b931ad23",
+      "route": "single-description",
+      "promptVersion": "access-single-description-title-check-2026-09-09-v7.4",
+      "promptTemplateSha256": "8c13de0a558c486bb0023041373ef9b89fa5a0add89138e8a42f15b24f779430",
+      "renderedPromptSha256": "1b3644040be5ff01800793ea0817ed27a0f24eaf7aecd267f2203212cd1f5999",
+      "decision": "keep",
+      "groups": [
+        {
+          "title": "Load Part",
+          "status": "current",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Load parts into containers and place containers on conveyors to be inserted into furnaces, or insert parts into furnaces."
+          ],
+          "reason": "Parts are the explicit loading target; containers specify the destination."
+        }
+      ],
+      "sharedSourceAssignments": [],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "The current title is clear. Placing containers and inserting parts are expressed by different actions, not coordinated targets of loading.",
+      "confidence": "high",
+      "modelProvenance": {
+        "provider": "CloudBank Azure OpenAI",
+        "accessProject": "CIS261400",
+        "deployment": "gpt-6-astra-society-of-mind",
+        "model": "gpt-6-astra",
+        "modelVersion": "2026-09-03",
+        "responseId": "resp_091721f91c8c8b94006aa1bd2e5f3c8193a6ec0cf694aaeb76",
+        "usage": {
+          "input_tokens": 963,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 307,
+          "output_tokens_details": {
+            "reasoning_tokens": 194
+          },
+          "total_tokens": 1270
+        }
+      }
+    },
+    {
+      "sampleIndex": 26,
+      "occurrenceId": "atomic-8619013aef5070dd078f",
+      "semanticCaseId": "title-case-db4985554b4f76eda3c9",
+      "route": "multiple-descriptions",
+      "promptVersion": "access-multiple-description-title-grouping-2026-09-09-v7.4",
+      "promptTemplateSha256": "394f779c9399fc715a5dc529fa36a41715ca1fd10a2f6edb370c758160c95a7a",
+      "renderedPromptSha256": "ce27761fff4d9c85ce703140a0319c4cdf419b70b68cb50515361bcf770239d2",
+      "decision": "split",
+      "groups": [
+        {
+          "title": "Record Cost",
+          "status": "current",
+          "sourceTaskIndexes": [
+            1,
+            2
+          ],
+          "sourceTasks": [
+            "Record type and cost of maintenance or repair work.",
+            "Estimate freight or postal rates and record shipment costs and weights."
+          ],
+          "reason": "Both descriptions record costs; maintenance and shipment contexts do not require separate titles."
+        },
+        {
+          "title": "Record Type",
+          "status": "existing",
+          "existingOccurrenceCount": 1,
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Record type and cost of maintenance or repair work."
+          ],
+          "reason": "The explicit type target matches the existing Record Type activity."
+        },
+        {
+          "title": "Record Weight",
+          "status": "existing",
+          "existingOccurrenceCount": 1,
+          "sourceTaskIndexes": [
+            2
+          ],
+          "sourceTasks": [
+            "Estimate freight or postal rates and record shipment costs and weights."
+          ],
+          "reason": "The explicit weights target matches the existing Record Weight activity."
+        }
+      ],
+      "sharedSourceAssignments": [
+        {
+          "sourceTaskIndex": 1,
+          "sourceTask": "Record type and cost of maintenance or repair work.",
+          "evidenceQuote": "Record type and cost of maintenance or repair work.",
+          "assignments": [
+            {
+              "groupTitle": "Record Type",
+              "targetPhrase": "type"
+            },
+            {
+              "groupTitle": "Record Cost",
+              "targetPhrase": "cost of maintenance or repair work"
+            }
+          ],
+          "reason": "Type and cost are distinct coordinated recording targets."
+        },
+        {
+          "sourceTaskIndex": 2,
+          "sourceTask": "Estimate freight or postal rates and record shipment costs and weights.",
+          "evidenceQuote": "Estimate freight or postal rates and record shipment costs and weights.",
+          "assignments": [
+            {
+              "groupTitle": "Record Cost",
+              "targetPhrase": "shipment costs"
+            },
+            {
+              "groupTitle": "Record Weight",
+              "targetPhrase": "weights"
+            }
+          ],
+          "reason": "Costs and weights are distinct coordinated recording targets; rate estimation uses a different action."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "Keep Record Cost across both contexts and retain the existing Record Type and Record Weight destinations for explicitly coordinated targets.",
+      "confidence": "high",
+      "modelProvenance": {
+        "provider": "CloudBank Azure OpenAI",
+        "accessProject": "CIS261400",
+        "deployment": "gpt-6-astra-society-of-mind",
+        "model": "gpt-6-astra",
+        "modelVersion": "2026-09-03",
+        "responseId": "resp_03bb6163064c917b006aa1bd3950f48195bde32103aa6806f5",
+        "usage": {
+          "input_tokens": 1281,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 850,
+          "output_tokens_details": {
+            "reasoning_tokens": 455
+          },
+          "total_tokens": 2131
+        }
+      }
+    },
+    {
+      "sampleIndex": 27,
+      "occurrenceId": "atomic-75e1cb997f6d9bd37ece",
+      "semanticCaseId": "title-case-657edc49f6144909bf26",
+      "route": "single-description",
+      "promptVersion": "access-single-description-title-check-2026-09-09-v7.4",
+      "promptTemplateSha256": "8c13de0a558c486bb0023041373ef9b89fa5a0add89138e8a42f15b24f779430",
+      "renderedPromptSha256": "5c0629de62d9f8e9bcf82989e0f4704120af1cde18aae59710e6043df020fe11",
+      "decision": "split",
+      "groups": [
+        {
+          "title": "Investigate Network",
+          "status": "current",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Investigate whether networks, workstations, the central processing unit of the system, or peripheral equipment are responding to a program's instructions."
+          ],
+          "reason": "Retains the clear current title for the explicit network target."
+        },
+        {
+          "title": "Investigate Workstation",
+          "status": "existing",
+          "existingOccurrenceCount": 2,
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Investigate whether networks, workstations, the central processing unit of the system, or peripheral equipment are responding to a program's instructions."
+          ],
+          "reason": "Workstations are a distinct coordinated target represented by this existing title."
+        },
+        {
+          "title": "Investigate Unit",
+          "status": "existing",
+          "existingOccurrenceCount": 2,
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Investigate whether networks, workstations, the central processing unit of the system, or peripheral equipment are responding to a program's instructions."
+          ],
+          "reason": "The central processing unit is a distinct coordinated target represented by this existing title."
+        },
+        {
+          "title": "Investigate Equipment",
+          "status": "existing",
+          "existingOccurrenceCount": 2,
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Investigate whether networks, workstations, the central processing unit of the system, or peripheral equipment are responding to a program's instructions."
+          ],
+          "reason": "Peripheral equipment is a distinct coordinated target represented by this existing title."
+        }
+      ],
+      "sharedSourceAssignments": [
+        {
+          "sourceTaskIndex": 1,
+          "sourceTask": "Investigate whether networks, workstations, the central processing unit of the system, or peripheral equipment are responding to a program's instructions.",
+          "evidenceQuote": "Investigate whether networks, workstations, the central processing unit of the system, or peripheral equipment are responding to a program's instructions.",
+          "assignments": [
+            {
+              "groupTitle": "Investigate Network",
+              "targetPhrase": "networks"
+            },
+            {
+              "groupTitle": "Investigate Workstation",
+              "targetPhrase": "workstations"
+            },
+            {
+              "groupTitle": "Investigate Unit",
+              "targetPhrase": "the central processing unit of the system"
+            },
+            {
+              "groupTitle": "Investigate Equipment",
+              "targetPhrase": "peripheral equipment"
+            }
+          ],
+          "reason": "The action directly governs four distinct targets coordinated with “or”; their shared setting does not justify collapsing them."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "Preserve all four explicitly coordinated investigation targets, retaining the current title and reusing existing titles for the other three.",
+      "confidence": "high",
+      "modelProvenance": {
+        "provider": "CloudBank Azure OpenAI",
+        "accessProject": "CIS261400",
+        "deployment": "gpt-6-astra-society-of-mind",
+        "model": "gpt-6-astra",
+        "modelVersion": "2026-09-03",
+        "responseId": "resp_0ffd0593d240a6ea006aa1bd4a24188193a79deb297df8d502",
+        "usage": {
+          "input_tokens": 981,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 732,
+          "output_tokens_details": {
+            "reasoning_tokens": 314
+          },
+          "total_tokens": 1713
+        }
+      }
+    },
+    {
+      "sampleIndex": 28,
+      "occurrenceId": "atomic-08bed2506f56a96ac670",
+      "semanticCaseId": "title-case-0982f58f38f86a8bc948",
+      "route": "single-description",
+      "promptVersion": "access-single-description-title-check-2026-09-09-v7.4",
+      "promptTemplateSha256": "8c13de0a558c486bb0023041373ef9b89fa5a0add89138e8a42f15b24f779430",
+      "renderedPromptSha256": "d809494ecf5671595866abb664bfb2800cb412a6d046ba8535e42548cc62c299",
+      "decision": "split",
+      "groups": [
+        {
+          "title": "Align Blade",
+          "status": "current",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Install, align, and lock specified punches, dies, cutting blades, or other fixtures in rams or beds of machines, using gauges, templates, feelers, shims, and hand tools."
+          ],
+          "reason": "Cutting blades are explicit targets; the current title is already clear."
+        },
+        {
+          "title": "Align Punch",
+          "status": "existing",
+          "existingOccurrenceCount": 1,
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Install, align, and lock specified punches, dies, cutting blades, or other fixtures in rams or beds of machines, using gauges, templates, feelers, shims, and hand tools."
+          ],
+          "reason": "Punches are explicit targets represented by this existing title."
+        },
+        {
+          "title": "Align Dye",
+          "status": "existing",
+          "existingOccurrenceCount": 1,
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Install, align, and lock specified punches, dies, cutting blades, or other fixtures in rams or beds of machines, using gauges, templates, feelers, shims, and hand tools."
+          ],
+          "reason": "Preserves the explicit dies target using the supplied existing activity title."
+        },
+        {
+          "title": "Align Fixture",
+          "status": "existing",
+          "existingOccurrenceCount": 1,
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Install, align, and lock specified punches, dies, cutting blades, or other fixtures in rams or beds of machines, using gauges, templates, feelers, shims, and hand tools."
+          ],
+          "reason": "Other fixtures form an explicit residual target beyond the named punches, dies, and blades."
+        }
+      ],
+      "sharedSourceAssignments": [
+        {
+          "sourceTaskIndex": 1,
+          "sourceTask": "Install, align, and lock specified punches, dies, cutting blades, or other fixtures in rams or beds of machines, using gauges, templates, feelers, shims, and hand tools.",
+          "evidenceQuote": "Install, align, and lock specified punches, dies, cutting blades, or other fixtures in rams or beds of machines, using gauges, templates, feelers, shims, and hand tools.",
+          "assignments": [
+            {
+              "groupTitle": "Align Blade",
+              "targetPhrase": "cutting blades"
+            },
+            {
+              "groupTitle": "Align Punch",
+              "targetPhrase": "punches"
+            },
+            {
+              "groupTitle": "Align Dye",
+              "targetPhrase": "dies"
+            },
+            {
+              "groupTitle": "Align Fixture",
+              "targetPhrase": "other fixtures"
+            }
+          ],
+          "reason": "The alignment action directly coordinates four distinct targets."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "Preserve all four explicitly coordinated targets, retain the clear current title, and reuse supplied existing titles without collapsing distinct work into an umbrella.",
+      "confidence": "high",
+      "modelProvenance": {
+        "provider": "CloudBank Azure OpenAI",
+        "accessProject": "CIS261400",
+        "deployment": "gpt-6-astra-society-of-mind",
+        "model": "gpt-6-astra",
+        "modelVersion": "2026-09-03",
+        "responseId": "resp_09222f0cfb86e6ce006aa1bd7b069c81958207c3ee0fd8fd24",
+        "usage": {
+          "input_tokens": 985,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 1361,
+          "output_tokens_details": {
+            "reasoning_tokens": 951
+          },
+          "total_tokens": 2346
+        }
+      }
+    },
+    {
+      "sampleIndex": 29,
+      "occurrenceId": "atomic-224399c4a110f01d0ca3",
+      "semanticCaseId": "title-case-d94baab3ca6ef2466934",
+      "route": "single-description",
+      "promptVersion": "access-single-description-title-check-2026-09-09-v7.4",
+      "promptTemplateSha256": "8c13de0a558c486bb0023041373ef9b89fa5a0add89138e8a42f15b24f779430",
+      "renderedPromptSha256": "4d2fc209343188c063d6254110f098459d619d325cdc693bf83274b7dcde2a50",
+      "decision": "split",
+      "groups": [
+        {
+          "title": "Varnish Deck",
+          "status": "existing",
+          "existingOccurrenceCount": 1,
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Paint or varnish decks, superstructures, lifeboats, or sides of ships."
+          ],
+          "reason": "Explicit distinct target; reuse the existing same-action title."
+        },
+        {
+          "title": "Varnish Superstructure",
+          "status": "existing",
+          "existingOccurrenceCount": 1,
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Paint or varnish decks, superstructures, lifeboats, or sides of ships."
+          ],
+          "reason": "Explicit distinct target; reuse the existing same-action title."
+        },
+        {
+          "title": "Varnish Lifeboat",
+          "status": "current",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Paint or varnish decks, superstructures, lifeboats, or sides of ships."
+          ],
+          "reason": "Explicit distinct target; the current title is already clear."
+        },
+        {
+          "title": "Varnish Side",
+          "status": "new",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Paint or varnish decks, superstructures, lifeboats, or sides of ships."
+          ],
+          "reason": "Reuse the existing Seal Side activity through its recorded Varnish Side synonym."
+        }
+      ],
+      "sharedSourceAssignments": [
+        {
+          "sourceTaskIndex": 1,
+          "sourceTask": "Paint or varnish decks, superstructures, lifeboats, or sides of ships.",
+          "evidenceQuote": "Paint or varnish decks, superstructures, lifeboats, or sides of ships.",
+          "assignments": [
+            {
+              "groupTitle": "Varnish Deck",
+              "targetPhrase": "decks"
+            },
+            {
+              "groupTitle": "Varnish Superstructure",
+              "targetPhrase": "superstructures"
+            },
+            {
+              "groupTitle": "Varnish Lifeboat",
+              "targetPhrase": "lifeboats"
+            },
+            {
+              "groupTitle": "Varnish Side",
+              "targetPhrase": "sides of ships"
+            }
+          ],
+          "reason": "The coordinated targets are distinct; their shared ship setting does not justify collapsing them."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "Preserve all four explicit varnishing targets, retain the current title, and reuse existing destinations, including Seal Side through its recorded synonym.",
+      "confidence": "high",
+      "modelProvenance": {
+        "provider": "CloudBank Azure OpenAI",
+        "accessProject": "CIS261400",
+        "deployment": "gpt-6-astra-society-of-mind",
+        "model": "gpt-6-astra",
+        "modelVersion": "2026-09-03",
+        "responseId": "resp_04b33bc6d80f5f31006aa1bda983f881958d191e538ba4542a",
+        "usage": {
+          "input_tokens": 986,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 823,
+          "output_tokens_details": {
+            "reasoning_tokens": 411
+          },
+          "total_tokens": 1809
+        }
+      }
+    },
+    {
+      "sampleIndex": 30,
+      "occurrenceId": "atomic-22825d08129e6d562ffa",
+      "semanticCaseId": "title-case-131f2d2eda99c004b56c",
+      "route": "single-description",
+      "promptVersion": "access-single-description-title-check-2026-09-09-v7.4",
+      "promptTemplateSha256": "8c13de0a558c486bb0023041373ef9b89fa5a0add89138e8a42f15b24f779430",
+      "renderedPromptSha256": "3e97146ef5796951c8d57f15a1eca6183c2c159cdc94b2feb5dd47c6d6ed0ac3",
+      "decision": "rename",
+      "groups": [
+        {
+          "title": "Establish Payment Method",
+          "status": "new",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Verify customers' credit, and establish how the customer will pay for the accommodation."
+          ],
+          "reason": "The explicit target is how the customer will pay, rather than payment itself."
+        }
+      ],
+      "sharedSourceAssignments": [],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "Payment method clarifies the target of establish. Credit verification is a separate action, and accommodation is incidental context.",
+      "confidence": "high",
+      "modelProvenance": {
+        "provider": "CloudBank Azure OpenAI",
+        "accessProject": "CIS261400",
+        "deployment": "gpt-6-astra-society-of-mind",
+        "model": "gpt-6-astra",
+        "modelVersion": "2026-09-03",
+        "responseId": "resp_0f1f3fe9ea6d0547006aa1bdb0e6ec81949f3b36d2e0e8898f",
+        "usage": {
+          "input_tokens": 957,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 254,
+          "output_tokens_details": {
+            "reasoning_tokens": 138
+          },
+          "total_tokens": 1211
+        }
+      }
+    },
+    {
+      "sampleIndex": 31,
+      "occurrenceId": "atomic-af25677fe5c82151f00e",
+      "semanticCaseId": "title-case-ec863d19e101394b83d7",
+      "route": "single-description",
+      "promptVersion": "access-single-description-title-check-2026-09-09-v7.4",
+      "promptTemplateSha256": "8c13de0a558c486bb0023041373ef9b89fa5a0add89138e8a42f15b24f779430",
+      "renderedPromptSha256": "36c15a83aa4646720c74c2842d5afdbe9a0ab209939a5c1bebca6b136b1333b5",
+      "decision": "split",
+      "groups": [
+        {
+          "title": "Move Equipment",
+          "status": "existing",
+          "existingOccurrenceCount": 1,
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Move equipment, supplies or food to required locations."
+          ],
+          "reason": "Equipment is an explicit target; reuse the existing title."
+        },
+        {
+          "title": "Move Supply",
+          "status": "existing",
+          "existingOccurrenceCount": 1,
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Move equipment, supplies or food to required locations."
+          ],
+          "reason": "Supplies are an explicit target; reuse the existing title."
+        },
+        {
+          "title": "Move Food",
+          "status": "current",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Move equipment, supplies or food to required locations."
+          ],
+          "reason": "Food is an explicit target; the current title is already clear."
+        }
+      ],
+      "sharedSourceAssignments": [
+        {
+          "sourceTaskIndex": 1,
+          "sourceTask": "Move equipment, supplies or food to required locations.",
+          "evidenceQuote": "Move equipment, supplies or food to required locations.",
+          "assignments": [
+            {
+              "groupTitle": "Move Equipment",
+              "targetPhrase": "equipment"
+            },
+            {
+              "groupTitle": "Move Supply",
+              "targetPhrase": "supplies"
+            },
+            {
+              "groupTitle": "Move Food",
+              "targetPhrase": "food"
+            }
+          ],
+          "reason": "The sentence directly coordinates three distinct targets of Move."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "Preserve the three explicit targets, retaining Move Food and reusing existing titles. Required locations does not define a distinct work category.",
+      "confidence": "high",
+      "modelProvenance": {
+        "provider": "CloudBank Azure OpenAI",
+        "accessProject": "CIS261400",
+        "deployment": "gpt-6-astra-society-of-mind",
+        "model": "gpt-6-astra",
+        "modelVersion": "2026-09-03",
+        "responseId": "resp_039d2b8e4fa2b6b0006aa1bdd064888190adfeb86ffda50c78",
+        "usage": {
+          "input_tokens": 955,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 503,
+          "output_tokens_details": {
+            "reasoning_tokens": 193
+          },
+          "total_tokens": 1458
+        }
+      }
+    },
+    {
+      "sampleIndex": 32,
+      "occurrenceId": "atomic-b9dbf8e75c4e3b8ee0ae",
+      "semanticCaseId": "title-case-5870d0328bb3acc0973c",
+      "route": "single-description",
+      "promptVersion": "access-single-description-title-check-2026-09-09-v7.4",
+      "promptTemplateSha256": "8c13de0a558c486bb0023041373ef9b89fa5a0add89138e8a42f15b24f779430",
+      "renderedPromptSha256": "6d91e9bc2b39e4138662de82a78f95915f7cebc2cc11de515127813a1284f9f0",
+      "decision": "split",
+      "groups": [
+        {
+          "title": "Test Battery",
+          "status": "existing",
+          "existingOccurrenceCount": 2,
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Test backup batteries, keypad programming, sirens, or other security features to ensure proper functioning or to diagnose malfunctions."
+          ],
+          "reason": "Backup batteries are an explicit testing target represented by this existing title."
+        },
+        {
+          "title": "Test Keypad Programming",
+          "status": "new",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Test backup batteries, keypad programming, sirens, or other security features to ensure proper functioning or to diagnose malfunctions."
+          ],
+          "reason": "Keypad identifies the specific programming being tested, clarifying the current title."
+        },
+        {
+          "title": "Test Siren",
+          "status": "existing",
+          "existingOccurrenceCount": 2,
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Test backup batteries, keypad programming, sirens, or other security features to ensure proper functioning or to diagnose malfunctions."
+          ],
+          "reason": "Sirens are an explicit testing target represented by this existing title."
+        },
+        {
+          "title": "Test Feature",
+          "status": "existing",
+          "existingOccurrenceCount": 2,
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Test backup batteries, keypad programming, sirens, or other security features to ensure proper functioning or to diagnose malfunctions."
+          ],
+          "reason": "Other security features are an explicit testing target represented by this existing title."
+        }
+      ],
+      "sharedSourceAssignments": [
+        {
+          "sourceTaskIndex": 1,
+          "sourceTask": "Test backup batteries, keypad programming, sirens, or other security features to ensure proper functioning or to diagnose malfunctions.",
+          "evidenceQuote": "Test backup batteries, keypad programming, sirens, or other security features to ensure proper functioning or to diagnose malfunctions.",
+          "assignments": [
+            {
+              "groupTitle": "Test Battery",
+              "targetPhrase": "backup batteries"
+            },
+            {
+              "groupTitle": "Test Keypad Programming",
+              "targetPhrase": "keypad programming"
+            },
+            {
+              "groupTitle": "Test Siren",
+              "targetPhrase": "sirens"
+            },
+            {
+              "groupTitle": "Test Feature",
+              "targetPhrase": "other security features"
+            }
+          ],
+          "reason": "The sentence directly coordinates four distinct testing targets; their shared security context does not erase those distinctions."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "Preserve the four coordinated targets, reuse existing titles, and clarify programming as keypad programming. Proper functioning and malfunction diagnosis are incidental purposes.",
+      "confidence": "high",
+      "modelProvenance": {
+        "provider": "CloudBank Azure OpenAI",
+        "accessProject": "CIS261400",
+        "deployment": "gpt-6-astra-society-of-mind",
+        "model": "gpt-6-astra",
+        "modelVersion": "2026-09-03",
+        "responseId": "resp_0c848e614088c412006aa1bdd97d588190a6100dec4e0bdb9d",
+        "usage": {
+          "input_tokens": 973,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 858,
+          "output_tokens_details": {
+            "reasoning_tokens": 447
+          },
+          "total_tokens": 1831
+        }
+      }
+    },
+    {
+      "sampleIndex": 33,
+      "occurrenceId": "atomic-2592e93c155e2aa52a62",
+      "semanticCaseId": "title-case-d482a4e344abcde2d677",
+      "route": "single-description",
+      "promptVersion": "access-single-description-title-check-2026-09-09-v7.4",
+      "promptTemplateSha256": "8c13de0a558c486bb0023041373ef9b89fa5a0add89138e8a42f15b24f779430",
+      "renderedPromptSha256": "4e4b0e7753b36b8350c40806e30514adf01c62125a2ac3da2fc8762edb3f26c3",
+      "decision": "rename",
+      "groups": [
+        {
+          "title": "Place Corpses in Cremators",
+          "status": "new",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Place corpses into crematory machines to reduce remains to bone fragments using flame, heat, or alkaline hydrolysis."
+          ],
+          "reason": "The crematory destination distinguishes this work from other corpse placement activities."
+        }
+      ],
+      "sharedSourceAssignments": [],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "One placement activity is supported. The destination clarifies the work; flame, heat, and alkaline hydrolysis are treatment methods, not distinct placement targets.",
+      "confidence": "high",
+      "modelProvenance": {
+        "provider": "CloudBank Azure OpenAI",
+        "accessProject": "CIS261400",
+        "deployment": "gpt-6-astra-society-of-mind",
+        "model": "gpt-6-astra",
+        "modelVersion": "2026-09-03",
+        "responseId": "resp_0374ad38cb9019ae006aa1be13cc5c8194b6d7fda4396b54d1",
+        "usage": {
+          "input_tokens": 964,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 1158,
+          "output_tokens_details": {
+            "reasoning_tokens": 1034
+          },
+          "total_tokens": 2122
+        }
+      }
+    },
+    {
+      "sampleIndex": 34,
+      "occurrenceId": "atomic-6e7bc517c8c317b0fd37",
+      "semanticCaseId": "title-case-ce1b3a17a0974f0bc538",
+      "route": "single-description",
+      "promptVersion": "access-single-description-title-check-2026-09-09-v7.4",
+      "promptTemplateSha256": "8c13de0a558c486bb0023041373ef9b89fa5a0add89138e8a42f15b24f779430",
+      "renderedPromptSha256": "cdcddbea27741518cbec9331e6ac6475d1e54f03156685f84691df75d41f4c0b",
+      "decision": "split",
+      "groups": [
+        {
+          "title": "Mount Hairspring",
+          "status": "existing",
+          "existingOccurrenceCount": 1,
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Mount hairsprings and balance wheel assemblies between jaws of truing calipers."
+          ],
+          "reason": "Explicit hairspring target matches the existing activity exactly."
+        },
+        {
+          "title": "Mount Balance Wheel Assembly",
+          "status": "new",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Mount hairsprings and balance wheel assemblies between jaws of truing calipers."
+          ],
+          "reason": "Specifies the distinct assembly target that the current title leaves unclear."
+        }
+      ],
+      "sharedSourceAssignments": [
+        {
+          "sourceTaskIndex": 1,
+          "sourceTask": "Mount hairsprings and balance wheel assemblies between jaws of truing calipers.",
+          "evidenceQuote": "Mount hairsprings and balance wheel assemblies between jaws of truing calipers.",
+          "assignments": [
+            {
+              "groupTitle": "Mount Hairspring",
+              "targetPhrase": "hairsprings"
+            },
+            {
+              "groupTitle": "Mount Balance Wheel Assembly",
+              "targetPhrase": "balance wheel assemblies"
+            }
+          ],
+          "reason": "The action directly coordinates two distinct targets, requiring separate assignments."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "Preserve both explicit mounting targets, reuse the existing hairspring title, and clarify the assembly title. Caliper placement is incidental.",
+      "confidence": "high",
+      "modelProvenance": {
+        "provider": "CloudBank Azure OpenAI",
+        "accessProject": "CIS261400",
+        "deployment": "gpt-6-astra-society-of-mind",
+        "model": "gpt-6-astra",
+        "modelVersion": "2026-09-03",
+        "responseId": "resp_0b641d5976be9d71006aa1be2add28819788b6a301e48ffee7",
+        "usage": {
+          "input_tokens": 960,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 387,
+          "output_tokens_details": {
+            "reasoning_tokens": 117
+          },
+          "total_tokens": 1347
+        }
+      }
+    },
+    {
+      "sampleIndex": 35,
+      "occurrenceId": "atomic-a8e525fd25ba0091a1b3",
+      "semanticCaseId": "title-case-0cc64469bb2ef2ee4847",
+      "route": "multiple-descriptions",
+      "promptVersion": "access-multiple-description-title-grouping-2026-09-09-v7.4",
+      "promptTemplateSha256": "394f779c9399fc715a5dc529fa36a41715ca1fd10a2f6edb370c758160c95a7a",
+      "renderedPromptSha256": "20b41f52ca519aa2a316183e80f6d032b28c4c867f172c965696bc6013793aa1",
+      "decision": "split",
+      "groups": [
+        {
+          "title": "Inspect Assembly",
+          "status": "current",
+          "sourceTaskIndexes": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "sourceTasks": [
+            "Inspect or test wiring installations, assemblies, or circuits for resistance factors or for operation, and record results.",
+            "Inspect or test installed units, parts, systems, or assemblies for fit, alignment, performance, defects, or compliance with standards, using measuring instruments or test equipment.",
+            "Inspect individual parts, assemblies, or installations, using measuring instruments, such as calipers, scales, or micrometers.",
+            "Inspect installed components or assemblies."
+          ],
+          "reason": "All descriptions explicitly target assemblies; differing inspection criteria and installation status do not require separate titles."
+        },
+        {
+          "title": "Inspect Circuit",
+          "status": "existing",
+          "existingOccurrenceCount": 2,
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Inspect or test wiring installations, assemblies, or circuits for resistance factors or for operation, and record results."
+          ],
+          "reason": "Circuits are a distinct coordinated target matching the existing title."
+        },
+        {
+          "title": "Inspect Installation",
+          "status": "existing",
+          "existingOccurrenceCount": 2,
+          "sourceTaskIndexes": [
+            1,
+            3
+          ],
+          "sourceTasks": [
+            "Inspect or test wiring installations, assemblies, or circuits for resistance factors or for operation, and record results.",
+            "Inspect individual parts, assemblies, or installations, using measuring instruments, such as calipers, scales, or micrometers."
+          ],
+          "reason": "Both descriptions explicitly target installations, matching the existing title."
+        },
+        {
+          "title": "Inspect Part",
+          "status": "existing",
+          "existingOccurrenceCount": 2,
+          "sourceTaskIndexes": [
+            2,
+            3
+          ],
+          "sourceTasks": [
+            "Inspect or test installed units, parts, systems, or assemblies for fit, alignment, performance, defects, or compliance with standards, using measuring instruments or test equipment.",
+            "Inspect individual parts, assemblies, or installations, using measuring instruments, such as calipers, scales, or micrometers."
+          ],
+          "reason": "Parts recur as explicit inspection targets matching the existing title."
+        },
+        {
+          "title": "Inspect System",
+          "status": "existing",
+          "existingOccurrenceCount": 2,
+          "sourceTaskIndexes": [
+            2
+          ],
+          "sourceTasks": [
+            "Inspect or test installed units, parts, systems, or assemblies for fit, alignment, performance, defects, or compliance with standards, using measuring instruments or test equipment."
+          ],
+          "reason": "Systems are a distinct coordinated target matching the existing title."
+        },
+        {
+          "title": "Inspect Unit",
+          "status": "existing",
+          "existingOccurrenceCount": 2,
+          "sourceTaskIndexes": [
+            2
+          ],
+          "sourceTasks": [
+            "Inspect or test installed units, parts, systems, or assemblies for fit, alignment, performance, defects, or compliance with standards, using measuring instruments or test equipment."
+          ],
+          "reason": "Installed units are an explicit inspection target matching the existing title."
+        },
+        {
+          "title": "Inspect Component",
+          "status": "existing",
+          "existingOccurrenceCount": 2,
+          "sourceTaskIndexes": [
+            4
+          ],
+          "sourceTasks": [
+            "Inspect installed components or assemblies."
+          ],
+          "reason": "Installed components are an explicit inspection target matching the existing title."
+        }
+      ],
+      "sharedSourceAssignments": [
+        {
+          "sourceTaskIndex": 1,
+          "sourceTask": "Inspect or test wiring installations, assemblies, or circuits for resistance factors or for operation, and record results.",
+          "evidenceQuote": "Inspect or test wiring installations, assemblies, or circuits for resistance factors or for operation, and record results.",
+          "assignments": [
+            {
+              "groupTitle": "Inspect Installation",
+              "targetPhrase": "wiring installations"
+            },
+            {
+              "groupTitle": "Inspect Assembly",
+              "targetPhrase": "assemblies"
+            },
+            {
+              "groupTitle": "Inspect Circuit",
+              "targetPhrase": "circuits"
+            }
+          ],
+          "reason": "The source explicitly coordinates installations, assemblies, and circuits as inspection targets."
+        },
+        {
+          "sourceTaskIndex": 2,
+          "sourceTask": "Inspect or test installed units, parts, systems, or assemblies for fit, alignment, performance, defects, or compliance with standards, using measuring instruments or test equipment.",
+          "evidenceQuote": "Inspect or test installed units, parts, systems, or assemblies for fit, alignment, performance, defects, or compliance with standards, using measuring instruments or test equipment.",
+          "assignments": [
+            {
+              "groupTitle": "Inspect Unit",
+              "targetPhrase": "installed units"
+            },
+            {
+              "groupTitle": "Inspect Part",
+              "targetPhrase": "parts"
+            },
+            {
+              "groupTitle": "Inspect System",
+              "targetPhrase": "systems"
+            },
+            {
+              "groupTitle": "Inspect Assembly",
+              "targetPhrase": "assemblies"
+            }
+          ],
+          "reason": "The source explicitly coordinates units, parts, systems, and assemblies as inspection targets."
+        },
+        {
+          "sourceTaskIndex": 3,
+          "sourceTask": "Inspect individual parts, assemblies, or installations, using measuring instruments, such as calipers, scales, or micrometers.",
+          "evidenceQuote": "Inspect individual parts, assemblies, or installations, using measuring instruments, such as calipers, scales, or micrometers.",
+          "assignments": [
+            {
+              "groupTitle": "Inspect Part",
+              "targetPhrase": "individual parts"
+            },
+            {
+              "groupTitle": "Inspect Assembly",
+              "targetPhrase": "assemblies"
+            },
+            {
+              "groupTitle": "Inspect Installation",
+              "targetPhrase": "installations"
+            }
+          ],
+          "reason": "The source explicitly coordinates parts, assemblies, and installations as inspection targets."
+        },
+        {
+          "sourceTaskIndex": 4,
+          "sourceTask": "Inspect installed components or assemblies.",
+          "evidenceQuote": "Inspect installed components or assemblies.",
+          "assignments": [
+            {
+              "groupTitle": "Inspect Component",
+              "targetPhrase": "installed components"
+            },
+            {
+              "groupTitle": "Inspect Assembly",
+              "targetPhrase": "assemblies"
+            }
+          ],
+          "reason": "The source explicitly coordinates components and assemblies as inspection targets."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "Keep Inspect Assembly across all records and reuse existing titles for other coordinated targets. Inspection criteria and instruments do not establish a narrower recurring category.",
+      "confidence": "high",
+      "modelProvenance": {
+        "provider": "CloudBank Azure OpenAI",
+        "accessProject": "CIS261400",
+        "deployment": "gpt-6-astra-society-of-mind",
+        "model": "gpt-6-astra",
+        "modelVersion": "2026-09-03",
+        "responseId": "resp_037002cc1ae34e8f006aa1be3fad408190a211d1844c98a1de",
+        "usage": {
+          "input_tokens": 1392,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 1634,
+          "output_tokens_details": {
+            "reasoning_tokens": 735
+          },
+          "total_tokens": 3026
+        }
+      }
+    },
+    {
+      "sampleIndex": 36,
+      "occurrenceId": "atomic-85fe30fc4d5fe0039b70",
+      "semanticCaseId": "title-case-edb05340a1e5b6570814",
+      "route": "single-description",
+      "promptVersion": "access-single-description-title-check-2026-09-09-v7.4",
+      "promptTemplateSha256": "8c13de0a558c486bb0023041373ef9b89fa5a0add89138e8a42f15b24f779430",
+      "renderedPromptSha256": "1c6a2b0b0694d08161d39823aa38b589cfe043803b9085b526dccc516a6ad803",
+      "decision": "split",
+      "groups": [
+        {
+          "title": "Calibrate Assembly",
+          "status": "current",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Repair, rework, or calibrate hydraulic or pneumatic assemblies or systems to meet operational specifications or tolerances."
+          ],
+          "reason": "Assemblies are an explicit calibration target; the current title is clear."
+        },
+        {
+          "title": "Calibrate System",
+          "status": "existing",
+          "existingOccurrenceCount": 1,
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Repair, rework, or calibrate hydraulic or pneumatic assemblies or systems to meet operational specifications or tolerances."
+          ],
+          "reason": "Systems are a distinct explicit target, already represented by this existing title."
+        }
+      ],
+      "sharedSourceAssignments": [
+        {
+          "sourceTaskIndex": 1,
+          "sourceTask": "Repair, rework, or calibrate hydraulic or pneumatic assemblies or systems to meet operational specifications or tolerances.",
+          "evidenceQuote": "Repair, rework, or calibrate hydraulic or pneumatic assemblies or systems to meet operational specifications or tolerances.",
+          "assignments": [
+            {
+              "groupTitle": "Calibrate Assembly",
+              "targetPhrase": "assemblies"
+            },
+            {
+              "groupTitle": "Calibrate System",
+              "targetPhrase": "systems"
+            }
+          ],
+          "reason": "The source explicitly coordinates assemblies and systems as distinct calibration targets."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "Keep Calibrate Assembly and reuse Calibrate System for the distinct coordinated target; operational specifications and tolerances describe results.",
+      "confidence": "high",
+      "modelProvenance": {
+        "provider": "CloudBank Azure OpenAI",
+        "accessProject": "CIS261400",
+        "deployment": "gpt-6-astra-society-of-mind",
+        "model": "gpt-6-astra",
+        "modelVersion": "2026-09-03",
+        "responseId": "resp_0c4be57be2daff21006aa1be76f22c8195bb22274b06c64ed1",
+        "usage": {
+          "input_tokens": 967,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 558,
+          "output_tokens_details": {
+            "reasoning_tokens": 288
+          },
+          "total_tokens": 1525
+        }
+      }
+    },
+    {
+      "sampleIndex": 37,
+      "occurrenceId": "atomic-97ae640ff66a5342567c",
+      "semanticCaseId": "title-case-b91404a9fcd8008f8b67",
+      "route": "single-description",
+      "promptVersion": "access-single-description-title-check-2026-09-09-v7.4",
+      "promptTemplateSha256": "8c13de0a558c486bb0023041373ef9b89fa5a0add89138e8a42f15b24f779430",
+      "renderedPromptSha256": "0bb8540e92aeb5b6932f2311ebb9bf29cd990ce1f1fbdfb7b57006775992f0bf",
+      "decision": "split",
+      "groups": [
+        {
+          "title": "Mount Hanger",
+          "status": "current",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Mount brackets and hangers on walls and ceilings to hold pipes, and set sleeves or inserts to provide support for pipes."
+          ],
+          "reason": "Hangers are an explicit mounting target, and the current title is clear."
+        },
+        {
+          "title": "Mount Bracket",
+          "status": "existing",
+          "existingOccurrenceCount": 1,
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Mount brackets and hangers on walls and ceilings to hold pipes, and set sleeves or inserts to provide support for pipes."
+          ],
+          "reason": "Brackets are a distinct mounting target already represented by this existing title."
+        }
+      ],
+      "sharedSourceAssignments": [
+        {
+          "sourceTaskIndex": 1,
+          "sourceTask": "Mount brackets and hangers on walls and ceilings to hold pipes, and set sleeves or inserts to provide support for pipes.",
+          "evidenceQuote": "Mount brackets and hangers on walls and ceilings to hold pipes",
+          "assignments": [
+            {
+              "groupTitle": "Mount Hanger",
+              "targetPhrase": "hangers"
+            },
+            {
+              "groupTitle": "Mount Bracket",
+              "targetPhrase": "brackets"
+            }
+          ],
+          "reason": "The source directly coordinates two distinct mounting targets, not near-synonyms."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "Preserve both coordinated mounting targets, retaining Mount Hanger and reusing Mount Bracket. Sleeve and insert setting uses a different action.",
+      "confidence": "high",
+      "modelProvenance": {
+        "provider": "CloudBank Azure OpenAI",
+        "accessProject": "CIS261400",
+        "deployment": "gpt-6-astra-society-of-mind",
+        "model": "gpt-6-astra",
+        "modelVersion": "2026-09-03",
+        "responseId": "resp_0b29836e63ac5863006aa1be8367908194944441ea67be4e02",
+        "usage": {
+          "input_tokens": 968,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 911,
+          "output_tokens_details": {
+            "reasoning_tokens": 641
+          },
+          "total_tokens": 1879
+        }
+      }
+    },
+    {
+      "sampleIndex": 38,
+      "occurrenceId": "atomic-bb41d50ecd51ca83e4cb",
+      "semanticCaseId": "title-case-a4e5e96854c8621f6c17",
+      "route": "multiple-descriptions",
+      "promptVersion": "access-multiple-description-title-grouping-2026-09-09-v7.4",
+      "promptTemplateSha256": "394f779c9399fc715a5dc529fa36a41715ca1fd10a2f6edb370c758160c95a7a",
+      "renderedPromptSha256": "e1a0de70d1fd13268f069279e2ad8d95f53a3db00cc2096b56843491df7a1e68",
+      "decision": "split",
+      "groups": [
+        {
+          "title": "Lead Individual on Tours",
+          "status": "new",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Lead individuals or groups to tour site locations and describe points of interest."
+          ],
+          "reason": "Tour-site leading is distinct from hunting instruction and nutritional guidance."
+        },
+        {
+          "title": "Lead Group",
+          "status": "existing",
+          "existingOccurrenceCount": 1,
+          "sourceTaskIndexes": [
+            1,
+            2
+          ],
+          "sourceTasks": [
+            "Lead individuals or groups to tour site locations and describe points of interest.",
+            "Teach or guide individuals or groups unfamiliar with specific hunting methods or types of prey."
+          ],
+          "reason": "Both descriptions explicitly target groups, already represented by this existing title."
+        },
+        {
+          "title": "Lead Individual in Hunting",
+          "status": "new",
+          "sourceTaskIndexes": [
+            2
+          ],
+          "sourceTasks": [
+            "Teach or guide individuals or groups unfamiliar with specific hunting methods or types of prey."
+          ],
+          "reason": "Hunting methods and prey define hunting-specific guidance."
+        },
+        {
+          "title": "Lead Individual in Nutrition",
+          "status": "new",
+          "sourceTaskIndexes": [
+            3
+          ],
+          "sourceTasks": [
+            "Plan menus or diets or guide individuals or families in food selection, preparation, or menu planning, based upon nutritional needs and established guidelines."
+          ],
+          "reason": "Food selection, preparation, menu planning, and nutritional needs jointly identify nutritional guidance."
+        },
+        {
+          "title": "Guide Family",
+          "status": "existing",
+          "existingOccurrenceCount": 1,
+          "sourceTaskIndexes": [
+            3
+          ],
+          "sourceTasks": [
+            "Plan menus or diets or guide individuals or families in food selection, preparation, or menu planning, based upon nutritional needs and established guidelines."
+          ],
+          "reason": "Retains the existing family-guidance destination using the recorded action synonym."
+        }
+      ],
+      "sharedSourceAssignments": [
+        {
+          "sourceTaskIndex": 1,
+          "sourceTask": "Lead individuals or groups to tour site locations and describe points of interest.",
+          "evidenceQuote": "Lead individuals or groups to tour site locations and describe points of interest.",
+          "assignments": [
+            {
+              "groupTitle": "Lead Individual on Tours",
+              "targetPhrase": "individuals"
+            },
+            {
+              "groupTitle": "Lead Group",
+              "targetPhrase": "groups"
+            }
+          ],
+          "reason": "Individuals and groups are explicitly coordinated, distinct targets; group leading already has a destination."
+        },
+        {
+          "sourceTaskIndex": 2,
+          "sourceTask": "Teach or guide individuals or groups unfamiliar with specific hunting methods or types of prey.",
+          "evidenceQuote": "guide individuals or groups unfamiliar with specific hunting methods or types of prey.",
+          "assignments": [
+            {
+              "groupTitle": "Lead Individual in Hunting",
+              "targetPhrase": "individuals"
+            },
+            {
+              "groupTitle": "Lead Group",
+              "targetPhrase": "groups"
+            }
+          ],
+          "reason": "Individuals and groups are explicitly coordinated, distinct targets; group guidance already has a destination."
+        },
+        {
+          "sourceTaskIndex": 3,
+          "sourceTask": "Plan menus or diets or guide individuals or families in food selection, preparation, or menu planning, based upon nutritional needs and established guidelines.",
+          "evidenceQuote": "guide individuals or families in food selection, preparation, or menu planning, based upon nutritional needs and established guidelines.",
+          "assignments": [
+            {
+              "groupTitle": "Lead Individual in Nutrition",
+              "targetPhrase": "individuals"
+            },
+            {
+              "groupTitle": "Guide Family",
+              "targetPhrase": "families"
+            }
+          ],
+          "reason": "Individuals and families are explicitly coordinated, distinct targets; family guidance already has a destination."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "Individual tour leading, hunting guidance, and nutritional guidance differ meaningfully; coordinated groups and families retain their existing destinations.",
+      "confidence": "high",
+      "modelProvenance": {
+        "provider": "CloudBank Azure OpenAI",
+        "accessProject": "CIS261400",
+        "deployment": "gpt-6-astra-society-of-mind",
+        "model": "gpt-6-astra",
+        "modelVersion": "2026-09-03",
+        "responseId": "resp_0df9d94fe4d526e5006aa1beadd5308193ae198a4399fcaabb",
+        "usage": {
+          "input_tokens": 1356,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 3344,
+          "output_tokens_details": {
+            "reasoning_tokens": 2728
+          },
+          "total_tokens": 4700
+        }
+      }
+    },
+    {
+      "sampleIndex": 39,
+      "occurrenceId": "atomic-fd81d01229bae208a728",
+      "semanticCaseId": "title-case-2adbcee7ead57144ed70",
+      "route": "single-description",
+      "promptVersion": "access-single-description-title-check-2026-09-09-v7.4",
+      "promptTemplateSha256": "8c13de0a558c486bb0023041373ef9b89fa5a0add89138e8a42f15b24f779430",
+      "renderedPromptSha256": "0727e362f1efe56133e9539c84db9000ea6dc8ebe4b38694c3444feead7f915f",
+      "decision": "split",
+      "groups": [
+        {
+          "title": "Process Package",
+          "status": "current",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Process incoming or outgoing mail, packages, or deliveries."
+          ],
+          "reason": "Packages are an explicit target; the current title is already clear."
+        },
+        {
+          "title": "Process Mail",
+          "status": "existing",
+          "existingOccurrenceCount": 1,
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Process incoming or outgoing mail, packages, or deliveries."
+          ],
+          "reason": "Mail is a distinct explicit target; reuse the existing title."
+        },
+        {
+          "title": "Process Delivery",
+          "status": "existing",
+          "existingOccurrenceCount": 1,
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Process incoming or outgoing mail, packages, or deliveries."
+          ],
+          "reason": "Deliveries are a distinct explicit target; reuse the existing title."
+        }
+      ],
+      "sharedSourceAssignments": [
+        {
+          "sourceTaskIndex": 1,
+          "sourceTask": "Process incoming or outgoing mail, packages, or deliveries.",
+          "evidenceQuote": "Process incoming or outgoing mail, packages, or deliveries.",
+          "assignments": [
+            {
+              "groupTitle": "Process Package",
+              "targetPhrase": "packages"
+            },
+            {
+              "groupTitle": "Process Mail",
+              "targetPhrase": "mail"
+            },
+            {
+              "groupTitle": "Process Delivery",
+              "targetPhrase": "deliveries"
+            }
+          ],
+          "reason": "The source explicitly coordinates three distinct targets of Process."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "Preserve all three coordinated targets: keep Process Package and reuse the existing Process Mail and Process Delivery titles.",
+      "confidence": "high",
+      "modelProvenance": {
+        "provider": "CloudBank Azure OpenAI",
+        "accessProject": "CIS261400",
+        "deployment": "gpt-6-astra-society-of-mind",
+        "model": "gpt-6-astra",
+        "modelVersion": "2026-09-03",
+        "responseId": "resp_04e6f649322525ea006aa1beaffb4c8196979ed6bfd194a8b8",
+        "usage": {
+          "input_tokens": 956,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 532,
+          "output_tokens_details": {
+            "reasoning_tokens": 224
+          },
+          "total_tokens": 1488
+        }
+      }
+    },
+    {
+      "sampleIndex": 40,
+      "occurrenceId": "atomic-85ed3fb92c0f4e67307d",
+      "semanticCaseId": "title-case-b95cc56c0b1fd5af376b",
+      "route": "single-description",
+      "promptVersion": "access-single-description-title-check-2026-09-09-v7.4",
+      "promptTemplateSha256": "8c13de0a558c486bb0023041373ef9b89fa5a0add89138e8a42f15b24f779430",
+      "renderedPromptSha256": "16dafabe168282c2c9a8480dea03bdc30b5dae3e44fd72f017b29c4b8b4f8866",
+      "decision": "split",
+      "groups": [
+        {
+          "title": "Design Furniture",
+          "status": "existing",
+          "existingOccurrenceCount": 1,
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Design, create, and decorate entire pieces or specific parts of furniture, such as draws for cabinets."
+          ],
+          "reason": "Entire furniture pieces are an explicit design target; naming furniture clarifies the vague current title."
+        },
+        {
+          "title": "Design Part",
+          "status": "existing",
+          "existingOccurrenceCount": 1,
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Design, create, and decorate entire pieces or specific parts of furniture, such as draws for cabinets."
+          ],
+          "reason": "Specific furniture parts are a distinct target already represented by the existing title."
+        }
+      ],
+      "sharedSourceAssignments": [
+        {
+          "sourceTaskIndex": 1,
+          "sourceTask": "Design, create, and decorate entire pieces or specific parts of furniture, such as draws for cabinets.",
+          "evidenceQuote": "Design, create, and decorate entire pieces or specific parts of furniture, such as draws for cabinets.",
+          "assignments": [
+            {
+              "groupTitle": "Design Furniture",
+              "targetPhrase": "entire pieces"
+            },
+            {
+              "groupTitle": "Design Part",
+              "targetPhrase": "specific parts of furniture"
+            }
+          ],
+          "reason": "The source explicitly coordinates whole furniture pieces and furniture parts as distinct design targets."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "Preserve the explicit distinction between whole furniture and parts, clarify the current title, and reuse the existing part-design activity.",
+      "confidence": "high",
+      "modelProvenance": {
+        "provider": "CloudBank Azure OpenAI",
+        "accessProject": "CIS261400",
+        "deployment": "gpt-6-astra-society-of-mind",
+        "model": "gpt-6-astra",
+        "modelVersion": "2026-09-03",
+        "responseId": "resp_05f6e25a3d00835e006aa1bed5d5c48194bfa462f0aa78491b",
+        "usage": {
+          "input_tokens": 962,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 792,
+          "output_tokens_details": {
+            "reasoning_tokens": 516
+          },
+          "total_tokens": 1754
+        }
+      }
+    },
+    {
+      "sampleIndex": 41,
+      "occurrenceId": "atomic-2d023226cf5d64194acc",
+      "semanticCaseId": "title-case-7ea52556e2b65ed384f7",
+      "route": "multiple-descriptions",
+      "promptVersion": "access-multiple-description-title-grouping-2026-09-09-v7.4",
+      "promptTemplateSha256": "394f779c9399fc715a5dc529fa36a41715ca1fd10a2f6edb370c758160c95a7a",
+      "renderedPromptSha256": "5bda72f002c20daa4b4b3716602e080eeab64ab02905ed0324036b3fec554479",
+      "decision": "split",
+      "groups": [
+        {
+          "title": "Identify E-Commerce Specifications",
+          "status": "new",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Identify and develop commercial or technical specifications, such as usability, pricing, checkout, or data security, to promote transactional internet-enabled commerce functionality."
+          ],
+          "reason": "Commercial and technical specifications form one familiar functional category, defined by the examples and transactional e-commerce purpose."
+        },
+        {
+          "title": "Identify Engineering Specifications",
+          "status": "new",
+          "sourceTaskIndexes": [
+            2
+          ],
+          "sourceTasks": [
+            "Key and program specified commands and engineering specifications into computer system to change functions and test final layout."
+          ],
+          "reason": "Engineering specifications are an explicit target of the recorded action synonym, distinct from commands and e-commerce specifications."
+        },
+        {
+          "title": "Key Command",
+          "status": "existing",
+          "existingOccurrenceCount": 1,
+          "sourceTaskIndexes": [
+            2
+          ],
+          "sourceTasks": [
+            "Key and program specified commands and engineering specifications into computer system to change functions and test final layout."
+          ],
+          "reason": "Commands are a separately coordinated target already represented by this existing title."
+        }
+      ],
+      "sharedSourceAssignments": [
+        {
+          "sourceTaskIndex": 2,
+          "sourceTask": "Key and program specified commands and engineering specifications into computer system to change functions and test final layout.",
+          "evidenceQuote": "Key and program specified commands and engineering specifications into computer system to change functions and test final layout.",
+          "assignments": [
+            {
+              "groupTitle": "Identify Engineering Specifications",
+              "targetPhrase": "engineering specifications"
+            },
+            {
+              "groupTitle": "Key Command",
+              "targetPhrase": "specified commands"
+            }
+          ],
+          "reason": "The recorded action synonym explicitly coordinates commands and engineering specifications; both targets require assignments."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "E-commerce purpose unifies commercial and technical specifications; engineering specifications and commands remain distinct, preserving the existing command title.",
+      "confidence": "high",
+      "modelProvenance": {
+        "provider": "CloudBank Azure OpenAI",
+        "accessProject": "CIS261400",
+        "deployment": "gpt-6-astra-society-of-mind",
+        "model": "gpt-6-astra",
+        "modelVersion": "2026-09-03",
+        "responseId": "resp_01afa87cf6e40745006aa1bedda95c81949c780421b76ad3cd",
+        "usage": {
+          "input_tokens": 1311,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 3429,
+          "output_tokens_details": {
+            "reasoning_tokens": 3106
+          },
+          "total_tokens": 4740
+        }
+      }
+    },
+    {
+      "sampleIndex": 42,
+      "occurrenceId": "atomic-bc97ea792ed52bd58521",
+      "semanticCaseId": "title-case-2c588efa77e7be1ed9bf",
+      "route": "single-description",
+      "promptVersion": "access-single-description-title-check-2026-09-09-v7.4",
+      "promptTemplateSha256": "8c13de0a558c486bb0023041373ef9b89fa5a0add89138e8a42f15b24f779430",
+      "renderedPromptSha256": "84c04d39b6f291db8f7150f7fb23aca2bc86abbaf2026a6741ba7ef1eb42602e",
+      "decision": "rename",
+      "groups": [
+        {
+          "title": "Select Trade Execution",
+          "status": "new",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Select or direct the execution of trades."
+          ],
+          "reason": "The explicit object shared by 'select' and 'direct' is the execution of trades."
+        }
+      ],
+      "sharedSourceAssignments": [],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "The sentence coordinates actions, not distinct selection targets. Trade execution is the single explicit target of the current action.",
+      "confidence": "high",
+      "modelProvenance": {
+        "provider": "CloudBank Azure OpenAI",
+        "accessProject": "CIS261400",
+        "deployment": "gpt-6-astra-society-of-mind",
+        "model": "gpt-6-astra",
+        "modelVersion": "2026-09-03",
+        "responseId": "resp_0d0177506dda7038006aa1bf07bc388190aa110df93d40b523",
+        "usage": {
+          "input_tokens": 948,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 1065,
+          "output_tokens_details": {
+            "reasoning_tokens": 947
+          },
+          "total_tokens": 2013
+        }
+      }
+    },
+    {
+      "sampleIndex": 43,
+      "occurrenceId": "atomic-6ba61114dda59fe8087d",
+      "semanticCaseId": "title-case-8ccc74ee65e6c44474b8",
+      "route": "single-description",
+      "promptVersion": "access-single-description-title-check-2026-09-09-v7.4",
+      "promptTemplateSha256": "8c13de0a558c486bb0023041373ef9b89fa5a0add89138e8a42f15b24f779430",
+      "renderedPromptSha256": "4e92e522d7816c08a66b628dc35acc208fdb1fafd8ac374a9a75a8aac8946c7f",
+      "decision": "split",
+      "groups": [
+        {
+          "title": "Design Costume",
+          "status": "existing",
+          "existingOccurrenceCount": 1,
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Design costumes or cosmetic effects for characters."
+          ],
+          "reason": "The explicit costume target matches the existing activity, so reuse its title."
+        },
+        {
+          "title": "Design Cosmetic Effect",
+          "status": "new",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Design costumes or cosmetic effects for characters."
+          ],
+          "reason": "Cosmetic effects are a distinct design target; the modifier clarifies the vague current title."
+        }
+      ],
+      "sharedSourceAssignments": [
+        {
+          "sourceTaskIndex": 1,
+          "sourceTask": "Design costumes or cosmetic effects for characters.",
+          "evidenceQuote": "Design costumes or cosmetic effects for characters.",
+          "assignments": [
+            {
+              "groupTitle": "Design Costume",
+              "targetPhrase": "costumes"
+            },
+            {
+              "groupTitle": "Design Cosmetic Effect",
+              "targetPhrase": "cosmetic effects"
+            }
+          ],
+          "reason": "The source explicitly coordinates two distinct targets of design."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "Reuse Design Costume and clarify Design Effect as Design Cosmetic Effect, preserving both explicitly coordinated targets.",
+      "confidence": "high",
+      "modelProvenance": {
+        "provider": "CloudBank Azure OpenAI",
+        "accessProject": "CIS261400",
+        "deployment": "gpt-6-astra-society-of-mind",
+        "model": "gpt-6-astra",
+        "modelVersion": "2026-09-03",
+        "responseId": "resp_09a8a8d29f404b98006aa1bf5037fc8190810cd3da5ccf5a1f",
+        "usage": {
+          "input_tokens": 950,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 533,
+          "output_tokens_details": {
+            "reasoning_tokens": 280
+          },
+          "total_tokens": 1483
+        }
+      }
+    },
+    {
+      "sampleIndex": 44,
+      "occurrenceId": "atomic-dd80c26130a9871ec95d",
+      "semanticCaseId": "title-case-258b776ae9d42ecaea18",
+      "route": "single-description",
+      "promptVersion": "access-single-description-title-check-2026-09-09-v7.4",
+      "promptTemplateSha256": "8c13de0a558c486bb0023041373ef9b89fa5a0add89138e8a42f15b24f779430",
+      "renderedPromptSha256": "e8407ca04d95120171eea3bc010dbd32b3924f03d7c90fbfd91555b31c47948a",
+      "decision": "split",
+      "groups": [
+        {
+          "title": "Plant Seed",
+          "status": "existing",
+          "existingOccurrenceCount": 1,
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Plant seeds, bulbs, foliage, flowering plants, grass, ground covers, trees, or shrubs, and apply mulch for protection, using gardening tools."
+          ],
+          "reason": "Seeds are an explicit target; reuse the existing title."
+        },
+        {
+          "title": "Plant Bulb",
+          "status": "current",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Plant seeds, bulbs, foliage, flowering plants, grass, ground covers, trees, or shrubs, and apply mulch for protection, using gardening tools."
+          ],
+          "reason": "Bulbs are an explicit target; retain the clear current title."
+        },
+        {
+          "title": "Plant Foliage",
+          "status": "existing",
+          "existingOccurrenceCount": 1,
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Plant seeds, bulbs, foliage, flowering plants, grass, ground covers, trees, or shrubs, and apply mulch for protection, using gardening tools."
+          ],
+          "reason": "Foliage is an explicit target; reuse the existing title."
+        },
+        {
+          "title": "Plant Plant",
+          "status": "existing",
+          "existingOccurrenceCount": 1,
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Plant seeds, bulbs, foliage, flowering plants, grass, ground covers, trees, or shrubs, and apply mulch for protection, using gardening tools."
+          ],
+          "reason": "Flowering plants are an explicit target already represented by this title."
+        },
+        {
+          "title": "Plant Grass",
+          "status": "existing",
+          "existingOccurrenceCount": 1,
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Plant seeds, bulbs, foliage, flowering plants, grass, ground covers, trees, or shrubs, and apply mulch for protection, using gardening tools."
+          ],
+          "reason": "Grass is an explicit target; reuse the existing title."
+        },
+        {
+          "title": "Plant Cover",
+          "status": "existing",
+          "existingOccurrenceCount": 1,
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Plant seeds, bulbs, foliage, flowering plants, grass, ground covers, trees, or shrubs, and apply mulch for protection, using gardening tools."
+          ],
+          "reason": "Ground covers are an explicit target already represented by this title."
+        },
+        {
+          "title": "Plant Tree",
+          "status": "existing",
+          "existingOccurrenceCount": 1,
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Plant seeds, bulbs, foliage, flowering plants, grass, ground covers, trees, or shrubs, and apply mulch for protection, using gardening tools."
+          ],
+          "reason": "Trees are an explicit target; reuse the existing title."
+        },
+        {
+          "title": "Plant Shrub",
+          "status": "existing",
+          "existingOccurrenceCount": 1,
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Plant seeds, bulbs, foliage, flowering plants, grass, ground covers, trees, or shrubs, and apply mulch for protection, using gardening tools."
+          ],
+          "reason": "Shrubs are an explicit target; reuse the existing title."
+        }
+      ],
+      "sharedSourceAssignments": [
+        {
+          "sourceTaskIndex": 1,
+          "sourceTask": "Plant seeds, bulbs, foliage, flowering plants, grass, ground covers, trees, or shrubs, and apply mulch for protection, using gardening tools.",
+          "evidenceQuote": "Plant seeds, bulbs, foliage, flowering plants, grass, ground covers, trees, or shrubs, and apply mulch for protection, using gardening tools.",
+          "assignments": [
+            {
+              "groupTitle": "Plant Seed",
+              "targetPhrase": "seeds"
+            },
+            {
+              "groupTitle": "Plant Bulb",
+              "targetPhrase": "bulbs"
+            },
+            {
+              "groupTitle": "Plant Foliage",
+              "targetPhrase": "foliage"
+            },
+            {
+              "groupTitle": "Plant Plant",
+              "targetPhrase": "flowering plants"
+            },
+            {
+              "groupTitle": "Plant Grass",
+              "targetPhrase": "grass"
+            },
+            {
+              "groupTitle": "Plant Cover",
+              "targetPhrase": "ground covers"
+            },
+            {
+              "groupTitle": "Plant Tree",
+              "targetPhrase": "trees"
+            },
+            {
+              "groupTitle": "Plant Shrub",
+              "targetPhrase": "shrubs"
+            }
+          ],
+          "reason": "The source explicitly coordinates eight distinct planting targets, warranting separate assignments rather than a broad umbrella."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "Preserve all eight coordinated planting targets, retaining Plant Bulb and reusing existing titles. Their shared gardening setting does not justify collapsing them; mulch application uses a different action.",
+      "confidence": "high",
+      "modelProvenance": {
+        "provider": "CloudBank Azure OpenAI",
+        "accessProject": "CIS261400",
+        "deployment": "gpt-6-astra-society-of-mind",
+        "model": "gpt-6-astra",
+        "modelVersion": "2026-09-03",
+        "responseId": "resp_067945983a5cc354006aa1bf71fe948196b0b411d2de9127b1",
+        "usage": {
+          "input_tokens": 994,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 1060,
+          "output_tokens_details": {
+            "reasoning_tokens": 402
+          },
+          "total_tokens": 2054
+        }
+      }
+    },
+    {
+      "sampleIndex": 45,
+      "occurrenceId": "atomic-f68c13f003677dc3ca5c",
+      "semanticCaseId": "title-case-e5272010231246b7ba2e",
+      "route": "single-description",
+      "promptVersion": "access-single-description-title-check-2026-09-09-v7.4",
+      "promptTemplateSha256": "8c13de0a558c486bb0023041373ef9b89fa5a0add89138e8a42f15b24f779430",
+      "renderedPromptSha256": "6ac58d7326da27802537ab11a5f34a4a09e439abf636443f5188f68c491a41dc",
+      "decision": "rename",
+      "groups": [
+        {
+          "title": "Submit Samples for Testing",
+          "status": "new",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Submit samples of products to government laboratories for testing, as required."
+          ],
+          "reason": "The explicit testing purpose identifies a recognizable kind of sample submission."
+        }
+      ],
+      "sharedSourceAssignments": [],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "The description expresses one submission activity. Testing clarifies its kind; the government recipient and requirement need not appear in the title.",
+      "confidence": "high",
+      "modelProvenance": {
+        "provider": "CloudBank Azure OpenAI",
+        "accessProject": "CIS261400",
+        "deployment": "gpt-6-astra-society-of-mind",
+        "model": "gpt-6-astra",
+        "modelVersion": "2026-09-03",
+        "responseId": "resp_0530f68f6c5690cc006aa1bfb0f5888195a564e7fb34b1d0ee",
+        "usage": {
+          "input_tokens": 953,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 819,
+          "output_tokens_details": {
+            "reasoning_tokens": 703
+          },
+          "total_tokens": 1772
+        }
+      }
+    },
+    {
+      "sampleIndex": 46,
+      "occurrenceId": "atomic-2b92ee38fab851fdb3c4",
+      "semanticCaseId": "title-case-cd52a31c427c990781a4",
+      "route": "single-description",
+      "promptVersion": "access-single-description-title-check-2026-09-09-v7.4",
+      "promptTemplateSha256": "8c13de0a558c486bb0023041373ef9b89fa5a0add89138e8a42f15b24f779430",
+      "renderedPromptSha256": "b38e65b723926aee7c46ad042b2305067cc81dc588064c89b21f6665fdc9a7d3",
+      "decision": "split",
+      "groups": [
+        {
+          "title": "Record Effectiveness",
+          "status": "current",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Monitor, evaluate, or record training activities or program effectiveness."
+          ],
+          "reason": "Program effectiveness is an explicit recording target; the current title remains clear."
+        },
+        {
+          "title": "Record Activity",
+          "status": "existing",
+          "existingOccurrenceCount": 1,
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Monitor, evaluate, or record training activities or program effectiveness."
+          ],
+          "reason": "The existing title already represents recording training activities."
+        }
+      ],
+      "sharedSourceAssignments": [
+        {
+          "sourceTaskIndex": 1,
+          "sourceTask": "Monitor, evaluate, or record training activities or program effectiveness.",
+          "evidenceQuote": "Monitor, evaluate, or record training activities or program effectiveness.",
+          "assignments": [
+            {
+              "groupTitle": "Record Effectiveness",
+              "targetPhrase": "program effectiveness"
+            },
+            {
+              "groupTitle": "Record Activity",
+              "targetPhrase": "training activities"
+            }
+          ],
+          "reason": "The source explicitly coordinates two distinct recording targets, not synonyms or examples of one category."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "Preserve both explicit recording targets: retain the clear current title for effectiveness and reuse the existing title for activities.",
+      "confidence": "high",
+      "modelProvenance": {
+        "provider": "CloudBank Azure OpenAI",
+        "accessProject": "CIS261400",
+        "deployment": "gpt-6-astra-society-of-mind",
+        "model": "gpt-6-astra",
+        "modelVersion": "2026-09-03",
+        "responseId": "resp_0e2d37977b75f618006aa1bfbfcca48195b2710b630b91ca56",
+        "usage": {
+          "input_tokens": 955,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 595,
+          "output_tokens_details": {
+            "reasoning_tokens": 337
+          },
+          "total_tokens": 1550
+        }
+      }
+    },
+    {
+      "sampleIndex": 47,
+      "occurrenceId": "atomic-69823295477c4c2ea22f",
+      "semanticCaseId": "title-case-819f74b3f924270bd2ec",
+      "route": "single-description",
+      "promptVersion": "access-single-description-title-check-2026-09-09-v7.4",
+      "promptTemplateSha256": "8c13de0a558c486bb0023041373ef9b89fa5a0add89138e8a42f15b24f779430",
+      "renderedPromptSha256": "677f4459cf5d66a85c7e378f270b6484b06ae2a54052a622043c4fb67db11294",
+      "decision": "rename",
+      "groups": [
+        {
+          "title": "Identify Stock Shortages",
+          "status": "new",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Identify and report merchandise or stock shortages."
+          ],
+          "reason": "Merchandise and stock are near-synonymous targets here, so their shortages form one activity."
+        }
+      ],
+      "sharedSourceAssignments": [],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "Specifying stock clarifies the shortage type. The coordinated targets do not require splitting, and reporting is outside the current action.",
+      "confidence": "high",
+      "modelProvenance": {
+        "provider": "CloudBank Azure OpenAI",
+        "accessProject": "CIS261400",
+        "deployment": "gpt-6-astra-society-of-mind",
+        "model": "gpt-6-astra",
+        "modelVersion": "2026-09-03",
+        "responseId": "resp_05e7ebd7a085309a006aa1bfece94c819492c9e2a49821155e",
+        "usage": {
+          "input_tokens": 949,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 327,
+          "output_tokens_details": {
+            "reasoning_tokens": 203
+          },
+          "total_tokens": 1276
+        }
+      }
+    },
+    {
+      "sampleIndex": 48,
+      "occurrenceId": "atomic-73abdb6fe7672743d38c",
+      "semanticCaseId": "title-case-a2210f84f0f4ff8b6e85",
+      "route": "multiple-descriptions",
+      "promptVersion": "access-multiple-description-title-grouping-2026-09-09-v7.4",
+      "promptTemplateSha256": "394f779c9399fc715a5dc529fa36a41715ca1fd10a2f6edb370c758160c95a7a",
+      "renderedPromptSha256": "db0bcbadb32758df9356c339bc2e7129b3333b262c28916a4189d09c69fe2d73",
+      "decision": "split",
+      "groups": [
+        {
+          "title": "Monitor Flowmeter",
+          "status": "current",
+          "sourceTaskIndexes": [
+            1,
+            2,
+            3
+          ],
+          "sourceTasks": [
+            "Monitor recording instruments, flowmeters, panel lights, or other indicators and listen for warning signals to verify conformity of process conditions.",
+            "Monitor gauges, recording instruments, flowmeters, or products to ensure that specified conditions are maintained.",
+            "Monitor pressure gauges, ammeters, flowmeters, thermometers, or products, and adjust controls to maintain specified conditions, such as feed rate, product consistency, temperature, air pressure, and machine speed."
+          ],
+          "reason": "The current title clearly represents the recurring flowmeter target."
+        },
+        {
+          "title": "Monitor Instrument",
+          "status": "existing",
+          "existingOccurrenceCount": 2,
+          "sourceTaskIndexes": [
+            1,
+            2
+          ],
+          "sourceTasks": [
+            "Monitor recording instruments, flowmeters, panel lights, or other indicators and listen for warning signals to verify conformity of process conditions.",
+            "Monitor gauges, recording instruments, flowmeters, or products to ensure that specified conditions are maintained."
+          ],
+          "reason": "Recording instruments map directly to this existing activity."
+        },
+        {
+          "title": "Monitor Light",
+          "status": "existing",
+          "existingOccurrenceCount": 2,
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Monitor recording instruments, flowmeters, panel lights, or other indicators and listen for warning signals to verify conformity of process conditions."
+          ],
+          "reason": "Panel lights are explicit monitoring targets represented by this existing title."
+        },
+        {
+          "title": "Monitor Indicator",
+          "status": "existing",
+          "existingOccurrenceCount": 2,
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Monitor recording instruments, flowmeters, panel lights, or other indicators and listen for warning signals to verify conformity of process conditions."
+          ],
+          "reason": "Other indicators are explicitly coordinated targets with an existing destination."
+        },
+        {
+          "title": "Monitor Gauge",
+          "status": "existing",
+          "existingOccurrenceCount": 2,
+          "sourceTaskIndexes": [
+            2,
+            3
+          ],
+          "sourceTasks": [
+            "Monitor gauges, recording instruments, flowmeters, or products to ensure that specified conditions are maintained.",
+            "Monitor pressure gauges, ammeters, flowmeters, thermometers, or products, and adjust controls to maintain specified conditions, such as feed rate, product consistency, temperature, air pressure, and machine speed."
+          ],
+          "reason": "Gauges and pressure gauges fit the same ordinary category and existing title."
+        },
+        {
+          "title": "Monitor Product",
+          "status": "existing",
+          "existingOccurrenceCount": 2,
+          "sourceTaskIndexes": [
+            2,
+            3
+          ],
+          "sourceTasks": [
+            "Monitor gauges, recording instruments, flowmeters, or products to ensure that specified conditions are maintained.",
+            "Monitor pressure gauges, ammeters, flowmeters, thermometers, or products, and adjust controls to maintain specified conditions, such as feed rate, product consistency, temperature, air pressure, and machine speed."
+          ],
+          "reason": "Products are distinct monitoring targets represented by this existing activity."
+        },
+        {
+          "title": "Monitor Ammeter",
+          "status": "existing",
+          "existingOccurrenceCount": 2,
+          "sourceTaskIndexes": [
+            3
+          ],
+          "sourceTasks": [
+            "Monitor pressure gauges, ammeters, flowmeters, thermometers, or products, and adjust controls to maintain specified conditions, such as feed rate, product consistency, temperature, air pressure, and machine speed."
+          ],
+          "reason": "Ammeters are explicit monitoring targets with an existing destination."
+        },
+        {
+          "title": "Monitor Thermometer",
+          "status": "existing",
+          "existingOccurrenceCount": 2,
+          "sourceTaskIndexes": [
+            3
+          ],
+          "sourceTasks": [
+            "Monitor pressure gauges, ammeters, flowmeters, thermometers, or products, and adjust controls to maintain specified conditions, such as feed rate, product consistency, temperature, air pressure, and machine speed."
+          ],
+          "reason": "Thermometers are explicit monitoring targets with an existing destination."
+        }
+      ],
+      "sharedSourceAssignments": [
+        {
+          "sourceTaskIndex": 1,
+          "sourceTask": "Monitor recording instruments, flowmeters, panel lights, or other indicators and listen for warning signals to verify conformity of process conditions.",
+          "evidenceQuote": "Monitor recording instruments, flowmeters, panel lights, or other indicators and listen for warning signals to verify conformity of process conditions.",
+          "assignments": [
+            {
+              "groupTitle": "Monitor Instrument",
+              "targetPhrase": "recording instruments"
+            },
+            {
+              "groupTitle": "Monitor Flowmeter",
+              "targetPhrase": "flowmeters"
+            },
+            {
+              "groupTitle": "Monitor Light",
+              "targetPhrase": "panel lights"
+            },
+            {
+              "groupTitle": "Monitor Indicator",
+              "targetPhrase": "other indicators"
+            }
+          ],
+          "reason": "The source explicitly coordinates four monitoring targets; listening for warning signals is a separate action."
+        },
+        {
+          "sourceTaskIndex": 2,
+          "sourceTask": "Monitor gauges, recording instruments, flowmeters, or products to ensure that specified conditions are maintained.",
+          "evidenceQuote": "Monitor gauges, recording instruments, flowmeters, or products to ensure that specified conditions are maintained.",
+          "assignments": [
+            {
+              "groupTitle": "Monitor Gauge",
+              "targetPhrase": "gauges"
+            },
+            {
+              "groupTitle": "Monitor Instrument",
+              "targetPhrase": "recording instruments"
+            },
+            {
+              "groupTitle": "Monitor Flowmeter",
+              "targetPhrase": "flowmeters"
+            },
+            {
+              "groupTitle": "Monitor Product",
+              "targetPhrase": "products"
+            }
+          ],
+          "reason": "Four explicitly coordinated monitoring targets map to the current title and existing destinations."
+        },
+        {
+          "sourceTaskIndex": 3,
+          "sourceTask": "Monitor pressure gauges, ammeters, flowmeters, thermometers, or products, and adjust controls to maintain specified conditions, such as feed rate, product consistency, temperature, air pressure, and machine speed.",
+          "evidenceQuote": "Monitor pressure gauges, ammeters, flowmeters, thermometers, or products, and adjust controls to maintain specified conditions, such as feed rate, product consistency, temperature, air pressure, and machine speed.",
+          "assignments": [
+            {
+              "groupTitle": "Monitor Gauge",
+              "targetPhrase": "pressure gauges"
+            },
+            {
+              "groupTitle": "Monitor Ammeter",
+              "targetPhrase": "ammeters"
+            },
+            {
+              "groupTitle": "Monitor Flowmeter",
+              "targetPhrase": "flowmeters"
+            },
+            {
+              "groupTitle": "Monitor Thermometer",
+              "targetPhrase": "thermometers"
+            },
+            {
+              "groupTitle": "Monitor Product",
+              "targetPhrase": "products"
+            }
+          ],
+          "reason": "Five monitoring targets are explicitly coordinated; adjusting controls is a separate action."
+        }
+      ],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "Keep Monitor Flowmeter unchanged and reuse existing titles for other explicit targets. Similar condition-maintenance purposes require no further split; listening and adjusting fall outside the current action.",
+      "confidence": "high",
+      "modelProvenance": {
+        "provider": "CloudBank Azure OpenAI",
+        "accessProject": "CIS261400",
+        "deployment": "gpt-6-astra-society-of-mind",
+        "model": "gpt-6-astra",
+        "modelVersion": "2026-09-03",
+        "responseId": "resp_0d137ddd3155fd5f006aa1bff1985081938c55db6c0357abd1",
+        "usage": {
+          "input_tokens": 1386,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 1728,
+          "output_tokens_details": {
+            "reasoning_tokens": 803
+          },
+          "total_tokens": 3114
+        }
+      }
+    },
+    {
+      "sampleIndex": 49,
+      "occurrenceId": "atomic-9f5cacbb614400503dc0",
+      "semanticCaseId": "title-case-94b545d06a58a5008a0b",
+      "route": "single-description",
+      "promptVersion": "access-single-description-title-check-2026-09-09-v7.4",
+      "promptTemplateSha256": "8c13de0a558c486bb0023041373ef9b89fa5a0add89138e8a42f15b24f779430",
+      "renderedPromptSha256": "2bcf6200f4d56a109596af1d4e435040d98c0d12efcc0e577f67e194db556e82",
+      "decision": "rename",
+      "groups": [
+        {
+          "title": "Assess Water Movement",
+          "status": "new",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Assess ground or surface water movement to provide advice on issues, such as waste management, route and site selection, or the restoration of contaminated sites."
+          ],
+          "reason": "Groundwater and surface water are ordinary water types, supporting one familiar category of water movement."
+        }
+      ],
+      "sharedSourceAssignments": [],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "Specify water to clarify the otherwise ambiguous movement target. The coordinated water types fit one category; advisory purposes are incidental.",
+      "confidence": "high",
+      "modelProvenance": {
+        "provider": "CloudBank Azure OpenAI",
+        "accessProject": "CIS261400",
+        "deployment": "gpt-6-astra-society-of-mind",
+        "model": "gpt-6-astra",
+        "modelVersion": "2026-09-03",
+        "responseId": "resp_0144595ddebf2109006aa1c00d12f0819681907ba064de65df",
+        "usage": {
+          "input_tokens": 970,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 813,
+          "output_tokens_details": {
+            "reasoning_tokens": 694
+          },
+          "total_tokens": 1783
+        }
+      }
+    },
+    {
+      "sampleIndex": 50,
+      "occurrenceId": "atomic-61d0ba05f0ea2a067aa5",
+      "semanticCaseId": "title-case-9653238236120c80f30b",
+      "route": "single-description",
+      "promptVersion": "access-single-description-title-check-2026-09-09-v7.4",
+      "promptTemplateSha256": "8c13de0a558c486bb0023041373ef9b89fa5a0add89138e8a42f15b24f779430",
+      "renderedPromptSha256": "4c6882aaa1f58ccbb62139dc47232e25712ceded2336904fc174df2a32f0b212",
+      "decision": "keep",
+      "groups": [
+        {
+          "title": "Assist Host",
+          "status": "current",
+          "sourceTaskIndexes": [
+            1
+          ],
+          "sourceTasks": [
+            "Assist host or hostess by answering phones to take reservations or to-go orders, and by greeting, seating, and thanking guests."
+          ],
+          "reason": "Host and hostess are gendered labels for the same role, so their coordinated targets are collapsed."
+        }
+      ],
+      "sharedSourceAssignments": [],
+      "deferredTaskIndexes": [],
+      "deferredTasks": [],
+      "reason": "Keep the clear current title. It covers both near-synonymous targets; the phone and guest-service duties describe how assistance is provided.",
+      "confidence": "high",
+      "modelProvenance": {
+        "provider": "CloudBank Azure OpenAI",
+        "accessProject": "CIS261400",
+        "deployment": "gpt-6-astra-society-of-mind",
+        "model": "gpt-6-astra",
+        "modelVersion": "2026-09-03",
+        "responseId": "resp_0ae4a51f0a514b5b006aa1c035478881938edf19465c67f814",
+        "usage": {
+          "input_tokens": 968,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 536,
+          "output_tokens_details": {
+            "reasoning_tokens": 413
+          },
+          "total_tokens": 1504
+        }
+      }
+    }
+  ]
+}

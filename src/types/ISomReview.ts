@@ -81,6 +81,7 @@ export interface SomAgentTrace {
   summary: string;
   runtimeInputNote: string;
   stages: SomAgentTraceStage[];
+  provenance?: { label: string; value: string }[];
 }
 
 export type SomReviewerRole = "steward" | "researcher" | "contributor";

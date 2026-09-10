@@ -212,6 +212,17 @@ const AgentTracePanel = ({
             {trace.runtimeInputNote}
           </Typography>
 
+          {trace.provenance && (
+            <Box component="dl" sx={{ m: 0, pb: 1.5, overflowWrap: "anywhere" }}>
+              {trace.provenance.map(({ label, value }) => (
+                <Box key={label} sx={{ mb: 0.75 }}>
+                  <Typography component="dt" sx={{ fontSize: "0.8rem", fontWeight: 700 }}>{label}</Typography>
+                  <Typography component="dd" sx={{ m: 0, fontSize: "0.8rem", color: "text.secondary" }}>{value}</Typography>
+                </Box>
+              ))}
+            </Box>
+          )}
+
           {trace.stages.map((stage, index) => {
             const stageKey = `${stage.id}:${index}`;
             const promptExpanded = expandedPrompts.has(stageKey);

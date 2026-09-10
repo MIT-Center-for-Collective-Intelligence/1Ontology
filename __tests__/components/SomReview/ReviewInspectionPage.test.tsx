@@ -260,4 +260,32 @@ describe("Tom's prior-review inspection page", () => {
       "This page is restricted to the Society of Mind research team.",
     );
   });
+
+  it("preserves the title test bed workspace through load and return navigation", async () => {
+    routerQuery = { workspace: "ontology-title-testbed", reviewer: "rob" };
+    (Post as jest.Mock).mockResolvedValue({
+      workspaceId: "ontology-title-testbed",
+      workspaceLabel: "Ontology-wide title test bed",
+      reviewers: [],
+      tasks: [],
+      items: [],
+    });
+    render(<ReviewInspectionPage />);
+    await screen.findByText(/No reviewer has saved inspectable responses/);
+    expect(Post).toHaveBeenCalledWith(
+      "/som-review/inspection/overview",
+      { workspaceId: "ontology-title-testbed", reviewerId: "rob" },
+      false,
+    );
+    expect(screen.getByRole("button", { name: "Ontology-wide title test bed" }))
+      .toHaveAttribute("aria-pressed", "true");
+    fireEvent.click(screen.getByRole("button", { name: "Proposal review" }));
+    expect(push).toHaveBeenCalledWith({
+      pathname: "/review",
+      query: { dataset: "ontology-title-testbed-v7" },
+    });
+    expect((Post as jest.Mock).mock.calls.every(([url]) =>
+      url === "/som-review/inspection/overview",
+    )).toBe(true);
+  });
 });

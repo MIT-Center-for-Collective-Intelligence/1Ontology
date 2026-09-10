@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "ontology-title-pilot-release-audit-v6",
+  "generatedAt": "2026-09-02T17:44:19.913Z",
+  "scope": "release quality assurance; not a proposal-generation stage",
+  "sampleFile": "sample-packet-v6.json",
+  "validatedFile": "validated-groupings-v6.json",
+  "sourceSha256": "f19ce789bce298b0564045fb87427eebd1193b89c133d17519c097dc3e0eb319",
+  "inputHashes": {
+    "sample": "5eb35d4fc95127417c03b6a8fed4f634134b8afe5850342f3ee83534fe32d3ce",
+    "validated": "452275db6605a96630545e9bcbef3432e9b3239c91fef19c767f6abcc71184d1"
+  },
+  "summary": "No material semantic defects were identified across the 18 title-grouping cases.",
+  "materialIssues": [],
+  "modelProvenance": {
+    "provider": "CloudBank Azure OpenAI",
+    "accessProject": "CIS261400",
+    "subscriptionId": "119df478-1b28-4c3a-93c0-d4f782040157",
+    "resourceName": "societymindcis261400",
+    "deployment": "gpt-5-6-sol-society-of-mind",
+    "responseId": "resp_017a41175611179a016a985fd770e4819093eabb2c04a2c2dc",
+    "createdAt": "2026-09-02T17:44:19.912Z",
+    "usage": {
+      "input_tokens": 15938,
+      "input_tokens_details": {
+        "cache_write_tokens": 15935,
+        "cached_tokens": 0
+      },
+      "output_tokens": 12436,
+      "output_tokens_details": {
+        "reasoning_tokens": 12397
+      },
+      "total_tokens": 28374
+    }
+  }
+}

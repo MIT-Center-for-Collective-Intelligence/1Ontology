@@ -3,6 +3,54 @@ import { SOM_REVIEW_WORKSPACES } from "../../../src/lib/somReview/reviewWorkspac
 import { toReviewerCard } from "../../../src/lib/somReview/sanitize";
 
 describe("Society of Mind agent transparency", () => {
+  it("discloses archived v6 model, funding, and source without inventing a model build", () => {
+    const dataset = getDataset("ontology-title-testbed");
+    const records = [...dataset.recordsById.values()];
+    expect(records).toHaveLength(18);
+    for (const record of records) {
+      const provenance = toReviewerCard(record).agentTrace!.provenance!;
+      expect(provenance).toEqual(expect.arrayContaining([
+        { label: "Model / deployment", value: "CloudBank Azure OpenAI / gpt-5-6-sol-society-of-mind" },
+        { label: "Funding route", value: "ACCESS project CIS261400 through CloudBank Azure (archived v6 manifest)" },
+        { label: "Source record", value: record.provenance.sourceRecord },
+      ]));
+      expect(provenance.find((item) => item.label === "Model build version")?.value).toContain("Not captured");
+    }
+  });
+
+  it("discloses the calibrated v7 prompt, deterministic checks, model build, and ACCESS route", () => {
+    const workspace = SOM_REVIEW_WORKSPACES.find(
+      (item) => item.id === "ontology-title-testbed",
+    )!;
+    expect(workspace.activeDatasetId).toBe("ontology-title-testbed-v7");
+    const records = [...getDataset(workspace.activeDatasetId).recordsById.values()];
+    expect(records).toHaveLength(50);
+    const multiple = records.find(
+      (record) => record.reviewerView.context.linkedTasks.length > 1,
+    )!;
+    const trace = toReviewerCard(multiple).agentTrace!;
+    expect(trace.stages.map((stage) => stage.actorId)).toEqual([
+      "access-multiple-description-title-grouping-v7",
+      "evidence-bound-title-grouping-validator-v7",
+      "evidence-bound-title-testbed-card-assembler-v7",
+    ]);
+    expect(trace.stages[0].promptVersion).toBe(
+      "access-multiple-description-title-grouping-2026-09-09-v7.4",
+    );
+    expect(trace.stages[0].prompt).toMatch(/Reviewed calibration decisions/);
+    expect(trace.stages[0].prompt).toMatch(/shared-source assignment/);
+    expect(trace.stages[1].prompt).toMatch(/exact source quote/i);
+    expect(trace.provenance).toEqual(
+      expect.arrayContaining([
+        { label: "Model build version", value: "2026-09-03" },
+        {
+          label: "Funding route",
+          value: "ACCESS project CIS261400 through CloudBank Azure",
+        },
+      ]),
+    );
+  });
+
   it("shows the archived prompts used by both Clarify unclear titles rounds", () => {
     const initialRecord = [
       ...getDataset("sell-initial-review").recordsById.values(),
@@ -35,35 +83,48 @@ describe("Society of Mind agent transparency", () => {
     expect(followUpDetector?.prompt).toMatch(/choose exactly one decision/i);
   });
 
-  it("shows the reader-ready title workflow as one model call plus deterministic checks", () => {
-    const record = [
+  it("shows the separate one- and multi-description workflows", () => {
+    const records = [
       ...getDataset("ontology-title-testbed").recordsById.values(),
-    ][0];
-    const trace = toReviewerCard(record).agentTrace;
-
-    expect(trace?.stages.map((stage) => stage.actorId)).toEqual([
-      "access-homogeneous-title-grouping-v5",
-      "homogeneous-title-grouping-validator-v5",
-      "homogeneous-title-testbed-card-assembler-v5",
-    ]);
-    expect(trace?.stages[0]).toMatchObject({
-      roleLabel: "Group the evidence and propose titles",
-      promptVersion: "access-homogeneous-title-grouping-2026-08-30-v5",
-      promptLabel: "Prompt template",
-    });
-    expect(trace?.stages[0].prompt).toMatch(/ontology of work activities/i);
-    expect(trace?.stages[0].prompt).toMatch(/non-expert/i);
-    expect(trace?.stages[0].prompt).toMatch(
-      /same verb or an accepted synonym/i,
+    ];
+    const single = records.find(
+      (record) =>
+        record.reviewerView.context.type === "title-split" &&
+        record.reviewerView.context.linkedTasks.length === 1,
     );
-    expect(trace?.stages[0].prompt).not.toMatch(
+    const multiple = records.find(
+      (record) =>
+        record.reviewerView.context.type === "title-split" &&
+        record.reviewerView.context.linkedTasks.length > 1,
+    );
+    const singleTrace = toReviewerCard(single!).agentTrace;
+    const multipleTrace = toReviewerCard(multiple!).agentTrace;
+
+    expect(singleTrace?.stages.map((stage) => stage.actorId)).toEqual([
+      "access-single-description-title-check-v6",
+      "two-route-title-grouping-validator-v6",
+      "two-route-title-testbed-card-assembler-v6",
+    ]);
+    expect(multipleTrace?.stages.map((stage) => stage.actorId)).toEqual([
+      "access-multiple-description-title-grouping-v6",
+      "two-route-title-grouping-validator-v6",
+      "two-route-title-testbed-card-assembler-v6",
+    ]);
+    expect(singleTrace?.stages[0].prompt).toMatch(
+      /one linked O\*NET description/i,
+    );
+    expect(multipleTrace?.stages[0].prompt).toMatch(
+      /put like descriptions together/i,
+    );
+    expect(multipleTrace?.stages[0].prompt).toMatch(/broad umbrella title/i);
+    expect(multipleTrace?.stages[0].prompt).not.toMatch(
       /alternatives for Web architecture|audio and video data/i,
     );
-    expect(trace?.stages[1].prompt).toMatch(/exact evidence quote/i);
-    expect(trace?.stages[1].prompt).toMatch(/existing-title occurrence count/i);
-    expect(trace?.stages[1].prompt).toMatch(
-      /placement remains a later review/i,
+    expect(singleTrace?.stages[1].prompt).toMatch(
+      /deterministic computer check/i,
     );
+    expect(singleTrace?.stages[1].prompt).toMatch(/exactly once/i);
+    expect(singleTrace?.stages[1].prompt).toMatch(/does not decide/i);
   });
 
   it("classifies every recorded component in every configured round", () => {

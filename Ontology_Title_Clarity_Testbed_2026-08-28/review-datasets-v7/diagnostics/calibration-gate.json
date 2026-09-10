@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "title-clarification-regression-gate-v1",
+  "checkedAt": "2026-09-09T20:29:45.664Z",
+  "passed": true,
+  "libraryFingerprint": "5a6e745a2c913e7c30ac4c22b5421b4097ac29cfdaafcda2d27e84b9836f3815",
+  "developmentResults": "regression-assessments-v7.json",
+  "developmentResultsSha256": "b30a1275d3ec4ca4d5694ca912549786b0444f4ff69ec449b50f3cb73832610d",
+  "developmentResultNote": "The three reviewed cases are prompt-development data, not held-out performance. Their v7.1-v7.3 reruns are retained because they exposed stochastic instability and motivated explicit calibration examples.",
+  "checks": [
+    {
+      "case": "Conduct Research",
+      "concern": "Mixed sample evidence defines the biological research subgroup",
+      "passed": true
+    },
+    {
+      "case": "Collect Specimen",
+      "concern": "A recurring testing purpose takes priority over a broad material label",
+      "passed": true
+    },
+    {
+      "case": "Stock Area",
+      "concern": "One explicit compound source supports both coordinated targets",
+      "passed": true
+    }
+  ],
+  "boundary": "This gate checks that all three expert decisions are explicitly incorporated into the versioned prompt policy. It does not estimate accuracy, count as held-out evaluation, or authorize ontology changes. The random 50-case round is the held-out expert review."
+}

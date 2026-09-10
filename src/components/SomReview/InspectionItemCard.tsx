@@ -19,6 +19,7 @@ import ContextRenderer, {
   contextShowsStateComparison,
 } from "./ContextRenderer";
 import { reviewAccentColor } from "./reviewStyles";
+import AgentTracePanel from "./AgentTracePanel";
 
 const sourceLabel = {
   "proposed-change": "Proposed change",
@@ -246,6 +247,8 @@ const InspectionItemCard = ({
       <Box sx={{ mt: 2 }}>
         <ContextRenderer context={view.context} branch={item.card.branch} />
       </Box>
+
+      {item.card.agentTrace && <AgentTracePanel trace={item.card.agentTrace} />}
 
       {view.reasoning && (
         <Box sx={{ mt: 1.5 }}>

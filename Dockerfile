@@ -15,6 +15,15 @@ COPY src ./src
 COPY public ./public
 COPY next.config.js ./
 COPY tsconfig.json ./
+COPY jest.config.js ./
+COPY Dockerfile ./
+COPY scripts/deployment/review-package-lock.json ./scripts/deployment/review-package-lock.json
+COPY __tests__ ./__tests__
+COPY Buy_Society_of_Mind_Exploratory_2026-07-25 ./Buy_Society_of_Mind_Exploratory_2026-07-25
+COPY Buy_Society_of_Mind_Title_Followup_2026-07-25 ./Buy_Society_of_Mind_Title_Followup_2026-07-25
+COPY Buy_Society_of_Mind_Content_Identity_2026-07-26 ./Buy_Society_of_Mind_Content_Identity_2026-07-26
+COPY Sell_Society_of_Mind_Review_UI_Handoff_2026-07-15 ./Sell_Society_of_Mind_Review_UI_Handoff_2026-07-15
+COPY Ontology_Title_Clarity_Testbed_2026-08-28 ./Ontology_Title_Clarity_Testbed_2026-08-28
 
 
 ARG NEXT_PUBLIC_API_KEY
@@ -49,6 +58,7 @@ ENV NEXT_PUBLIC_DEV_APP_ID=${NEXT_PUBLIC_DEV_APP_ID}
 
 ENV NODE_ENV=production
 
+RUN NODE_ENV=test npx jest --runInBand --watch=false --coverage=false __tests__/lib/somReview __tests__/components/SomReview __tests__/pages/api/deployment.test.ts
 RUN npm run build
 
 # Step 2. Production image (Runner)
@@ -59,6 +69,12 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
+ARG SOURCE_COMMIT=unknown
+ARG SOURCE_BUILD_ID=local
+ENV SOURCE_COMMIT=${SOURCE_COMMIT}
+ENV SOURCE_BUILD_ID=${SOURCE_BUILD_ID}
+LABEL org.opencontainers.image.revision=${SOURCE_COMMIT}
+LABEL org.opencontainers.image.source="https://github.com/MIT-Center-for-Collective-Intelligence/1Ontology"
 
 RUN apk add --no-cache libc6-compat
 
@@ -71,6 +87,7 @@ USER nextjs
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/next.config.js .
 COPY --from=builder /app/package.json .
+COPY --from=builder /app/scripts/deployment/review-package-lock.json ./scripts/deployment/review-package-lock.json
 
 # Automatically leverage output traces to reduce image size 
 # https://nextjs.org/docs/advanced-features/output-file-tracing
@@ -84,7 +101,8 @@ COPY --chown=nextjs:nodejs Buy_Society_of_Mind_Title_Followup_2026-07-25/review-
 COPY --chown=nextjs:nodejs Buy_Society_of_Mind_Content_Identity_2026-07-26/review-datasets-content-identity-v1 ./Buy_Society_of_Mind_Content_Identity_2026-07-26/review-datasets-content-identity-v1
 COPY --chown=nextjs:nodejs Sell_Society_of_Mind_Review_UI_Handoff_2026-07-15 ./Sell_Society_of_Mind_Review_UI_Handoff_2026-07-15
 COPY --chown=nextjs:nodejs Ontology_Title_Clarity_Testbed_2026-08-28 ./Ontology_Title_Clarity_Testbed_2026-08-28
-RUN test -f ./Ontology_Title_Clarity_Testbed_2026-08-28/review-datasets-v5/manifest.json
+RUN test -f ./Ontology_Title_Clarity_Testbed_2026-08-28/review-datasets-v6/manifest.json
+RUN test -f ./Ontology_Title_Clarity_Testbed_2026-08-28/review-datasets-v7/manifest.json
 
 EXPOSE 3000
 CMD ["node", "server.js"]

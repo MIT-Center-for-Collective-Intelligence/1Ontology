@@ -108,9 +108,11 @@ const PhaseMarker = ({
 const ReviewPath = ({
   issueTypes,
   onStart,
+  reviewOnly = false,
 }: {
   issueTypes: SomIssueTypeOption[];
   onStart: (issueType: SomIssueType) => void;
+  reviewOnly?: boolean;
 }) => {
   const issuesById = new Map(issueTypes.map((issue) => [issue.id, issue]));
   const path = reviewPathForIssueTypes(issueTypes.map((issue) => issue.id));
@@ -158,8 +160,9 @@ const ReviewPath = ({
         Guided review path
       </Typography>
       <Typography sx={{ mt: 0.3, color: "text.secondary", lineHeight: 1.45 }}>
-        Complete this phase first. Its approved changes must then be applied and
-        the remaining proposals regenerated before later phases open.
+        {reviewOnly
+          ? "Check whether each title clearly describes its supporting O*NET evidence. Your responses are saved for discussion; reviewing does not change the ontology. WordNet meanings and final placement will be reviewed later."
+          : "Complete this phase first. Its approved changes must then be applied and the remaining proposals regenerated before later phases open."}
       </Typography>
       <Box
         component="ol"

@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "title-clarification-random-round-quality-report-v7",
+  "generatedAt": "2026-09-09T20:31:59.589Z",
+  "sourceSha256": "f19ce789bce298b0564045fb87427eebd1193b89c133d17519c097dc3e0eb319",
+  "snapshotSha256": "c8021ffae6949b3532a09d1b6ef2b5fe1f67b402c63d4e9af7d9b208b7766329",
+  "counts": {
+    "cards": 50,
+    "keep": 7,
+    "rename": 8,
+    "split": 35,
+    "defer": 0,
+    "groups": 138,
+    "sharedSourceDeclarations": 57
+  },
+  "safeguards": {
+    "everyCaseBoundToFrozenSource": true,
+    "everySourceAccountedFor": true,
+    "repeatedSourcesRequireExactCompoundEvidence": true,
+    "recordedActionOrSynonymRequired": true,
+    "titleLengthTwoToFiveWords": true,
+    "duplicateTitlesRejected": true,
+    "semanticAccuracyMeasured": false,
+    "expertReviewRequired": true,
+    "ontologyMutationEnabled": false
+  },
+  "evaluationStatus": {
+    "expertReviewsCompleted": 0,
+    "disagreements": null,
+    "disagreementRate": null,
+    "note": "Unreviewed cards are not counted as agreements."
+  }
+}

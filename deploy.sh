@@ -1,43 +1,12 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 
-# Set variables for project ID, app name, and repository
-PROJECT_ID="ontology-41607"
-IMAGE_NAME="ontology"
-REGION="us-central1"
-REPO_NAME="ontology-repo"
-TIMEOUT="2000s"
-
-# Authenticate with Google Cloud
-#gcloud auth login
-gcloud config set project $PROJECT_ID
-
-# Build the Docker image
-docker build -t $IMAGE_NAME .
-
-# Tag the Docker image for Artifact Registry
-docker tag $IMAGE_NAME $REGION-docker.pkg.dev/$PROJECT_ID/$REPO_NAME/$IMAGE_NAME
-
-# Push the image to Artifact Registry
-docker push $REGION-docker.pkg.dev/$PROJECT_ID/$REPO_NAME/$IMAGE_NAME
-
-# Deploy to Google Cloud Run
-gcloud run deploy $IMAGE_NAME \
-   --image $REGION-docker.pkg.dev/$PROJECT_ID/$REPO_NAME/$IMAGE_NAME \
-   --platform managed \
-   --region $REGION \
-   --allow-unauthenticated \
-   --timeout $TIMEOUT
-
-# Keep the latest image and delete older ones
-images=($(gcloud artifacts docker images list $REGION-docker.pkg.dev/$PROJECT_ID/$REPO_NAME/$IMAGE_NAME \
-    --format="get(tags)" \
-    --sort-by=~UPDATE_TIME))
-
-# Keep the latest image
-latest_image=${images[0]}
-
-# Delete older images
-for img in "${images[@]:1}"; do
-    gcloud artifacts docker images delete \
-        "$REGION-docker.pkg.dev/$PROJECT_ID/$REPO_NAME/$IMAGE_NAME:$img" --quiet
-done
+# Production is built by the GitHub main Cloud Build trigger, never this checkout.
+# Never upload an uncommitted standalone build or delete rollback images.
+cat >&2 <<'MESSAGE'
+Local production deployment is disabled.
+Commit the complete tested change (including required review datasets), push a PR,
+and merge it into main. The ontology Cloud Build trigger deploys that exact commit.
+See docs/deployment.md for verification and rollback instructions.
+MESSAGE
+exit 1

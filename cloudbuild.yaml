@@ -10,6 +10,16 @@ steps:
   - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
     entrypoint: bash
     args:
+      - "-ceu"
+      - |
+        test '${BRANCH_NAME}' = main
+        [[ '${COMMIT_SHA}' =~ ^[0-9a-f]{40}$ ]]
+        test -n '${BUILD_ID}'
+        python3 -m unittest discover -s scripts/deployment -p 'test_*.py'
+
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    entrypoint: bash
+    args:
       - "-c"
       - |
         gsutil cp gs://${_NEXT_PUBLIC_PROJECT_ID}_cloudbuild/next-cache.tar.gz next-cache.tar.gz || echo "No cache found in GCS"
@@ -21,7 +31,10 @@ steps:
     args:
       - "-c"
       - |
-        docker build -t ${_AR_IMAGE} \
+        set -euo pipefail
+        docker build -t ${_AR_IMAGE}:${COMMIT_SHA}-${BUILD_ID} \
+        --build-arg=SOURCE_COMMIT=${COMMIT_SHA} \
+        --build-arg=SOURCE_BUILD_ID=${BUILD_ID} \
         --cache-from ${_AR_IMAGE} \
         --build-arg=NEXT_PUBLIC_API_KEY="$${NEXT_PUBLIC_API_KEY}" \
         --build-arg=NEXT_PUBLIC_AUTH_DOMAIN="$${NEXT_PUBLIC_AUTH_DOMAIN}" \
@@ -62,7 +75,7 @@ steps:
       - "-c"
       - |
         # Create a temporary container from the new image to extract files
-        docker create --name temp-container ${_AR_IMAGE}
+        docker create --name temp-container ${_AR_IMAGE}:${COMMIT_SHA}-${BUILD_ID}
         # Copy the newly generated Next.js cache out to the Cloud Build workspace
         docker cp temp-container:/app/.next/cache ./.next-cache || echo "Cache extraction failed"
         docker rm temp-container
@@ -79,7 +92,7 @@ steps:
   - name: "gcr.io/cloud-builders/docker"
     args:
       - "push"
-      - "${_AR_IMAGE}"
+      - "${_AR_IMAGE}:${COMMIT_SHA}-${BUILD_ID}"
 
   # Deploy to Cloud Run (attaching secrets at runtime)
   - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
@@ -89,7 +102,11 @@ steps:
       - "deploy"
       - "ontology"
       - "--image"
-      - "${_AR_IMAGE}"
+      - "${_AR_IMAGE}:${COMMIT_SHA}-${BUILD_ID}"
+      - "--revision-suffix=git-${SHORT_SHA}-${BUILD_ID}"
+      - "--labels=commit-sha=${COMMIT_SHA},build-id=${BUILD_ID}"
+      - "--no-traffic"
+      - "--tag=git-candidate"
       - "--region"
       - "us-central1"
       - "--project"
@@ -117,5 +134,13 @@ steps:
         PROD_ONTOLOGY_CRED_AUTH_PROVIDER_X509_CERT_URL=PROD_ONTOLOGY_CRED_AUTH_PROVIDER_X509_CERT_URL:1,\
         PROD_ONTOLOGY_CRED_CLIENT_X509_CERT_URL=PROD_ONTOLOGY_CRED_CLIENT_X509_CERT_URL:1,\
         PROD_ONTOLOGY_STORAGE_BUCKET=PROD_ONTOLOGY_STORAGE_BUCKET:1"
+
+  # Verify the exact candidate before explicitly moving traffic off a pinned revision.
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    entrypoint: python3
+    args: ["scripts/deployment/promote.py", "${COMMIT_SHA}", "${BUILD_ID}", "ontology-git-${SHORT_SHA}-${BUILD_ID}"]
+
+images:
+  - "${_AR_IMAGE}:${COMMIT_SHA}-${BUILD_ID}"
 
 timeout: 2000s
