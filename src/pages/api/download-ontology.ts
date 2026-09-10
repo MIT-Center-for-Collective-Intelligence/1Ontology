@@ -16,6 +16,7 @@ const NODE_PROJECTION = [
   "title",
   "root",
   "properties.description",
+  "properties.parts",
   "inheritance.description",
   "specializations",
   "generalizations",
@@ -229,12 +230,19 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       const data = jobDoc.data();
       if (data?.status === "completed" && data?.completedAt) {
         console.log(`Using cached export for app: ${appName}`);
-        return res.status(200).json({ status: "processing", jobId: appName });
+        return res.status(200).json({ status: "completed", jobId: appName, storagePath: data?.storagePath });
       }
 
       if (data?.status === "processing") {
-        console.log(`Export already in progress for app: ${appName}`);
-        return res.status(200).json({ status: "processing", jobId: appName });
+        const createdAt = data.createdAt?.toMillis?.() || 0;
+        const FIVE_MINUTES_AGO = Date.now() - 5 * 60 * 1000;
+        
+        if (createdAt > FIVE_MINUTES_AGO) {
+          console.log(`Export already in progress for app: ${appName}`);
+          return res.status(200).json({ status: "processing", jobId: appName });
+        } else {
+          console.warn(`Stale export job detected for app: ${appName}, restarting...`);
+        }
       }
     }
 

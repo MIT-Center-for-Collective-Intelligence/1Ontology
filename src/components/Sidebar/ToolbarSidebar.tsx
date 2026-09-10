@@ -329,21 +329,46 @@ const ToolbarSidebar = ({
         throw new Error(message);
       }
 
-      const { jobId, status } = await downloadRes.json();
+      const { jobId, status, storagePath } = await downloadRes.json();
 
       if (!jobId) {
         setIsDownloading(false);
         throw new Error("Did not receive a job ID from the server");
       }
 
-      // Listen to the job document
       const storage = getStorage();
+
+      if (status === "completed" && storagePath) {
+        try {
+          const storageRef = refStorage(storage, storagePath);
+          const downloadUrl = await getDownloadURL(storageRef);
+          window.location.href = downloadUrl;
+        } catch (err) {
+          console.error("Error downloading from storage:", err);
+          confirmIt("Failed to download the generated file.", "Ok");
+        } finally {
+          setIsDownloading(false);
+        }
+        return;
+      }
+
+      confirmIt("Ontology is large (~40k nodes). Generating JSON export, please wait (1-2 mins)...", "Ok");
+
+      const TIMEOUT_MS = 3 * 60 * 1000;
+      const timeoutId = setTimeout(() => {
+        setIsDownloading(false);
+        if (unsubscribe) unsubscribe();
+        confirmIt("Export took too long. Please try again later.", "Ok");
+      }, TIMEOUT_MS);
+
+      // Listen to the job document
       unsubscribe = onSnapshot(
         doc(db, "ontologyExports", jobId),
         async (snapshot) => {
           if (!snapshot.exists()) return;
           const data = snapshot.data();
           if (data.status === "completed" && data.storagePath) {
+            clearTimeout(timeoutId);
             try {
               const storageRef = refStorage(storage, data.storagePath);
               const downloadUrl = await getDownloadURL(storageRef);
@@ -358,6 +383,7 @@ const ToolbarSidebar = ({
               if (unsubscribe) unsubscribe();
             }
           } else if (data.status === "error") {
+            clearTimeout(timeoutId);
             setIsDownloading(false);
             if (unsubscribe) unsubscribe();
             confirmIt(
@@ -367,6 +393,7 @@ const ToolbarSidebar = ({
           }
         },
         (error) => {
+          clearTimeout(timeoutId);
           console.error("Snapshot error:", error);
           setIsDownloading(false);
           if (unsubscribe) unsubscribe();
