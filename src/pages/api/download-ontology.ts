@@ -134,7 +134,7 @@ const buildOntologyTree = (
   return buildTree(mainCategories);
 };
 
-async function processExport(jobId: string, appName: string) {
+async function processExport(jobId: string, appName: string, exportName: string) {
   try {
     console.log(`Starting export job ${jobId} for app ${appName}`);
 
@@ -177,8 +177,7 @@ async function processExport(jobId: string, appName: string) {
     const storagePath = `ontologyExports/${jobId}.json`;
     const file = bucket.file(storagePath);
 
-    const rawAppName = appName || "ontology";
-    const sanitizedAppName = rawAppName.replace(/[\/\\?%*:|"<>]/g, "-");
+    const sanitizedAppName = exportName.replace(/[\/\\?%*:|"<>]/g, "-");
     const filename = `${sanitizedAppName}-${new Date().toISOString().slice(0, 10)}.json`;
 
     await file.save(payload, {
@@ -213,7 +212,7 @@ async function processExport(jobId: string, appName: string) {
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     const payload = req.body.data || req.body;
-    const { appName } = payload;
+    const { appName, exportName } = payload;
 
     const user = (req as any).user;
 
@@ -230,18 +229,26 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       const data = jobDoc.data();
       if (data?.status === "completed" && data?.completedAt) {
         console.log(`Using cached export for app: ${appName}`);
-        return res.status(200).json({ status: "completed", jobId: appName, storagePath: data?.storagePath });
+        return res
+          .status(200)
+          .json({
+            status: "completed",
+            jobId: appName,
+            storagePath: data?.storagePath,
+          });
       }
 
       if (data?.status === "processing") {
         const createdAt = data.createdAt?.toMillis?.() || 0;
         const FIVE_MINUTES_AGO = Date.now() - 5 * 60 * 1000;
-        
+
         if (createdAt > FIVE_MINUTES_AGO) {
           console.log(`Export already in progress for app: ${appName}`);
           return res.status(200).json({ status: "processing", jobId: appName });
         } else {
-          console.warn(`Stale export job detected for app: ${appName}, restarting...`);
+          console.warn(
+            `Stale export job detected for app: ${appName}, restarting...`,
+          );
         }
       }
     }
@@ -253,7 +260,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 
-    processExport(appName, appName);
+    processExport(appName, appName, exportName || appName);
 
     return res.status(200).json({ status: "processing", jobId: appName });
   } catch (error: any) {

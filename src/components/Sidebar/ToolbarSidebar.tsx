@@ -309,6 +309,9 @@ const ToolbarSidebar = ({
         throw new Error("Missing ontology app name");
       }
 
+      const ontologyApp = ONTOLOGY_APPS.find((app: any) => app.id === appName);
+      const exportName = ontologyApp?.name || appName;
+
       const token = await getIdToken();
       const downloadRes = await fetch("/api/download-ontology", {
         method: "POST",
@@ -316,7 +319,7 @@ const ToolbarSidebar = ({
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ appName: appName }),
+        body: JSON.stringify({ appName, exportName }),
       });
 
       if (!downloadRes.ok) {
