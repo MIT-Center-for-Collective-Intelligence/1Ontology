@@ -1,10 +1,12 @@
 node_modules
 npm-debug.log
-Dockerfile
 .dockerignore
 .git
 .gitignore
 *.md
+!Ontology_Title_Clarity_Testbed_2026-08-28/**/*.md
 *.env
+.env*
+**/.env*
 tests
 **/.stage-cache/

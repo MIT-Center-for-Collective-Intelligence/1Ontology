@@ -168,7 +168,29 @@ const sellDatasets: SomReviewDatasetConfig[] = [
 
 const ontologyTitleTestbedDatasets: SomReviewDatasetConfig[] = [
   {
+    id: "ontology-title-testbed-v7",
+    datasetVersion: "ontology-title-random-round-2026-09-09-v7",
+    workspaceId: "ontology-title-testbed",
+    label: "Random 50 title review",
+    relativeDir: [
+      "Ontology_Title_Clarity_Testbed_2026-08-28",
+      "review-datasets-v7",
+    ],
+    current: true,
+  },
+  {
     id: "ontology-title-testbed",
+    datasetVersion: "ontology-title-two-route-testbed-2026-09-02-v6",
+    workspaceId: "ontology-title-testbed",
+    label: "Single/multiple-description title review",
+    relativeDir: [
+      "Ontology_Title_Clarity_Testbed_2026-08-28",
+      "review-datasets-v6",
+    ],
+    current: false,
+  },
+  {
+    id: "ontology-title-testbed-v5",
     datasetVersion: "ontology-title-homogeneous-testbed-2026-08-30-v5",
     workspaceId: "ontology-title-testbed",
     label: "Reader-ready homogeneous title review",
@@ -176,7 +198,7 @@ const ontologyTitleTestbedDatasets: SomReviewDatasetConfig[] = [
       "Ontology_Title_Clarity_Testbed_2026-08-28",
       "review-datasets-v5",
     ],
-    current: true,
+    current: false,
   },
   {
     id: "ontology-title-testbed-v4",
@@ -195,7 +217,7 @@ export const SOM_REVIEW_WORKSPACES: SomReviewWorkspaceConfig[] = [
   {
     id: "ontology-title-testbed",
     label: "Ontology-wide title test bed",
-    activeDatasetId: "ontology-title-testbed",
+    activeDatasetId: "ontology-title-testbed-v7",
     originalDatasetId: "ontology-title-testbed",
     datasets: ontologyTitleTestbedDatasets,
   },

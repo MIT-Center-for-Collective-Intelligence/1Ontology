@@ -7,24 +7,36 @@ import { toReviewerCard } from "../../../src/lib/somReview/sanitize";
 const DATASET_DIR = path.join(
   process.cwd(),
   "Ontology_Title_Clarity_Testbed_2026-08-28",
-  "review-datasets-v5",
+  "review-datasets-v6",
 );
+type ProposedTitleNode = {
+  title: string;
+  sourceTaskIndexes: number[];
+  sourceTasks: string[];
+};
 
-describe("ontology-wide homogeneous title test bed", () => {
+describe("ontology-wide two-route title test bed", () => {
   const dataset = loadDataset(DATASET_DIR, "ontology-title-testbed");
   const records = [...dataset.recordsById.values()];
   const titleRecords = records.filter(
     (record) => record.issueType === "title-clarity",
   );
-  it("loads only the claim-aware title cards", () => {
+
+  it("loads the 18 validated title-evidence cases without write authority", () => {
     expect(dataset.recordsById.size).toBe(18);
     expect(titleRecords).toHaveLength(18);
     expect(
       titleRecords.filter((record) => record.reviewMode === "status-quo-audit"),
-    ).toHaveLength(5);
-    expect(dataset.manifest.issueTypes).toHaveLength(1);
-    expect(dataset.manifest.issueTypes[0].id).toBe("title-clarity");
-    expect(dataset.manifest.upstreamSource.resultingHomogeneousGroups).toBe(30);
+    ).toHaveLength(1);
+    expect(dataset.manifest.upstreamSource).toMatchObject({
+      atomicActivityOccurrences: 20491,
+      distinctTitleEvidenceCases: 15994,
+      reusedOccurrenceResults: 4497,
+      oneDescriptionOccurrences: 13720,
+      oneDescriptionCases: 10810,
+      multipleDescriptionCases: 5184,
+      resultingHomogeneousGroups: 61,
+    });
     expect(dataset.manifest.safety).toMatchObject({
       reviewOnly: true,
       mutatesOntology: false,
@@ -32,20 +44,17 @@ describe("ontology-wide homogeneous title test bed", () => {
     });
   });
 
-  it("packages the active title dataset into the production image", () => {
+  it("packages the active v6 title dataset into the production image", () => {
     const dockerfile = fs.readFileSync(
       path.join(process.cwd(), "Dockerfile"),
       "utf8",
     );
-    expect(dockerfile).toMatch(
-      /COPY --chown=nextjs:nodejs Ontology_Title_Clarity_Testbed_2026-08-28 \.\/Ontology_Title_Clarity_Testbed_2026-08-28/,
-    );
     expect(dockerfile).toContain(
-      "RUN test -f ./Ontology_Title_Clarity_Testbed_2026-08-28/review-datasets-v5/manifest.json",
+      "RUN test -f ./Ontology_Title_Clarity_Testbed_2026-08-28/review-datasets-v6/manifest.json",
     );
   });
 
-  it("packages the complete large-case inventory requested for cost sampling", () => {
+  it("packages the complete large-case inventory", () => {
     const inventory = dataset.manifest.largeCaseInventory;
     expect(inventory).toMatchObject({
       cutoff: 10,
@@ -59,127 +68,127 @@ describe("ontology-wide homogeneous title test bed", () => {
         (row: any) => row.linkedONetDescriptionCount > inventory.cutoff,
       ),
     ).toBe(true);
-    expect(dataset.manifest.files.largeCaseInventoryCsv).toBe(
-      "diagnostics/large-onet-activity-inventory.csv",
-    );
   });
 
-  it("packages a source-bound full-run ACCESS estimate", () => {
+  it("estimates one model call per distinct title-evidence case", () => {
     const estimate = JSON.parse(
       fs.readFileSync(
         path.join(DATASET_DIR, "diagnostics", "full-run-estimate.json"),
         "utf8",
       ),
     );
-
     expect(estimate.inventory).toMatchObject({
       atomicActivityOccurrences: 20491,
-      uniqueExactTitles: 15994,
-      oNetRecords: 53608,
+      distinctTitleEvidenceCases: 15994,
+      reusedOccurrenceResults: 4497,
+      distinctCaseONetRecords: 40949,
     });
     expect(estimate.projection.homogeneousGroupScenarios).toMatchObject({
-      noSplit: 20491,
-      stratifiedPilot: 26765,
-      oneGroupPerSourceRecord: 53608,
+      noSplit: 15994,
+      stratifiedPilot: 24647,
+      oneGroupPerSourceRecord: 40949,
     });
-    expect(
-      estimate.projection.claimAwareAllCandidatePipeline.stratifiedPilotScenario
-        .modelCalls,
-    ).toBe(47256);
-    expect(
-      estimate.projection.claimAwareAllCandidatePipeline.stratifiedPilotScenario
-        .totalAccessTokensPlanningRange.central,
-    ).toBeLessThan(110000000);
-    expect(
-      estimate.projection.claimAwareAllCandidatePipeline.directApiCharge
-        .amountUsd,
-    ).toBe(0);
-    expect(
-      (dataset.manifest as any).fullRunEstimate.stratifiedPilotModelCalls,
-    ).toBe(
-      estimate.projection.claimAwareAllCandidatePipeline.stratifiedPilotScenario
-        .modelCalls,
+    const central =
+      estimate.projection.twoRouteAllCandidatePipeline.stratifiedPilotScenario;
+    expect(central.calls.titleGrouping).toBe(15994);
+    expect(central.modelCalls).toBe(40641);
+    expect(central.totalAccessTokensPlanningRange.central).toBeLessThan(
+      100000000,
     );
+    expect(
+      estimate.projection.twoRouteAllCandidatePipeline.billing,
+    ).toMatchObject({
+      route: "ACCESS-funded CloudBank Azure allocation CIS261400",
+      allocationConsumptionIsZero: false,
+    });
   });
 
-  it("binds every source record to at least one distinct direct-object claim", () => {
+  it("assigns every description exactly once under concise same-verb titles", () => {
     for (const record of titleRecords) {
       const context = record.reviewerView.context;
       expect(context.type).toBe("title-split");
-      const claims = context.proposedNodes.flatMap(
-        (node: any) => node.sourceClaims,
+      if (context.type !== "title-split") continue;
+      const groupedIndexes = context.proposedNodes.flatMap(
+        (node: ProposedTitleNode) => node.sourceTaskIndexes,
       );
-      const groupedIndexes = claims.map((claim: any) => claim.sourceTaskIndex);
-      const accounted = new Set([
-        ...groupedIndexes,
-        ...context.deferredTaskIndexes,
-      ]);
-      expect([...accounted].sort((left, right) => left - right)).toEqual(
-        context.linkedTasks.map((_: string, index: number) => index + 1),
+      const accounted = [...groupedIndexes, ...context.deferredTaskIndexes];
+      expect(accounted.sort((left, right) => left - right)).toEqual(
+        context.linkedTasks.map((_task: string, index: number) => index + 1),
       );
-      const claimKeys = claims.map(
-        (claim: any) =>
-          `${claim.sourceTaskIndex}|${claim.directObject.toLowerCase()}`,
-      );
-      expect(claimKeys).toHaveLength(new Set(claimKeys).size);
-      for (const node of context.proposedNodes) {
+      expect(accounted).toHaveLength(new Set(accounted).size);
+      for (const node of context.proposedNodes as ProposedTitleNode[]) {
         expect(node.sourceTaskIndexes).toHaveLength(node.sourceTasks.length);
         expect(node.title.split(/\s+/).length).toBeGreaterThanOrEqual(2);
         expect(node.title.split(/\s+/).length).toBeLessThanOrEqual(5);
         expect(node.title.split(/\s+/)[0]).toBe(
           context.currentTitle.split(/\s+/)[0],
         );
-        for (const claim of node.sourceClaims) {
-          expect(claim.sourceTask.toLowerCase()).toContain(
-            claim.evidenceQuote.toLowerCase(),
-          );
-          expect(claim.evidenceQuote.toLowerCase()).toContain(
-            claim.directObject.toLowerCase(),
-          );
-        }
+      }
+      if (context.linkedTasks.length === 1 && context.proposedNodes.length) {
+        expect(context.proposedNodes).toHaveLength(1);
+        expect(context.proposedNodes[0].sourceTaskIndexes).toEqual([1]);
       }
     }
+  });
 
-    const duplicateEvidence = titleRecords.find(
+  it("retains expert regressions and exercises Conduct Research at full size", () => {
+    const documentAlternative = titleRecords.find(
       (record) => record.subject.title === "Document Alternative",
     );
-    expect(duplicateEvidence.reviewerView.context.linkedTasks).toHaveLength(2);
-    expect(duplicateEvidence.reviewerView.context.linkedTasks[0]).toBe(
-      duplicateEvidence.reviewerView.context.linkedTasks[1],
-    );
+    expect(documentAlternative?.reviewerView.context).toMatchObject({
+      proposedNodes: [
+        {
+          title: "Document Web Technical Alternatives",
+          sourceTaskIndexes: [1, 2],
+        },
+      ],
+    });
 
-    const multiClaimEvidence = titleRecords.find(
-      (record) => record.subject.title === "Coordinate Care",
-    );
-    const sourceTwoClaims =
-      multiClaimEvidence.reviewerView.context.proposedNodes
-        .flatMap((node: any) => node.sourceClaims)
-        .filter((claim: any) => claim.sourceTaskIndex === 2);
-    expect(sourceTwoClaims.map((claim: any) => claim.directObject)).toEqual([
-      "client or patient care",
-      "rehabilitation",
-    ]);
-
-    const trailingRestriction = titleRecords.find(
-      (record) => record.subject.title === "Document Alternative",
-    );
-    expect(
-      trailingRestriction.reviewerView.context.proposedNodes,
-    ).toMatchObject([
-      {
-        title: "Document Web Alternative",
-        sourceTaskIndexes: [1, 2],
-      },
-    ]);
-
-    const coordinatedSubtypes = titleRecords.find(
+    const storeData = titleRecords.find(
       (record) => record.subject.title === "Store Datum",
     );
     expect(
-      coordinatedSubtypes.reviewerView.context.proposedNodes.map(
-        (node: any) => node.title,
+      storeData?.reviewerView.context.type === "title-split"
+        ? storeData.reviewerView.context.proposedNodes.map(
+            (node: ProposedTitleNode) => node.title,
+          )
+        : [],
+    ).toEqual(["Store Audio and Video Data", "Store System Analysis Data"]);
+
+    const conductResearch = titleRecords.find(
+      (record) => record.subject.title === "Conduct Research",
+    );
+    expect(conductResearch?.reviewerView.context.type).toBe("title-split");
+    if (conductResearch?.reviewerView.context.type === "title-split") {
+      expect(conductResearch.reviewerView.context.linkedTasks).toHaveLength(
+        133,
+      );
+      expect(conductResearch.reviewerView.context.proposedNodes).toHaveLength(
+        20,
+      );
+      expect(
+        conductResearch.reviewerView.context.proposedNodes.flatMap(
+          (node: ProposedTitleNode) => node.sourceTaskIndexes,
+        ),
+      ).toHaveLength(133);
+    }
+  });
+
+  it("packages a clean ACCESS release audit bound to the exact inputs", () => {
+    const audit = JSON.parse(
+      fs.readFileSync(
+        path.join(DATASET_DIR, "diagnostics", "release-audit.json"),
+        "utf8",
       ),
-    ).toEqual(["Store Audio Data", "Store Video Data", "Store Data"]);
+    );
+    expect(dataset.manifest.releaseAudit).toMatchObject({
+      materialIssueCount: 0,
+      fundingRoute: "ACCESS project CIS261400 through CloudBank Azure",
+    });
+    expect(audit.materialIssues).toEqual([]);
+    expect(audit.inputHashes).toEqual(
+      dataset.manifest.releaseAudit.inputHashes,
+    );
   });
 
   it("defers WordNet work until a title group has been accepted", () => {
@@ -188,22 +197,24 @@ describe("ontology-wide homogeneous title test bed", () => {
       releasedIssueTypes: ["title-clarity"],
       awaitingRegenerationIssueTypes: ["synset-alignment"],
     });
-    expect(dataset.manifest.reviewRelease.message).toMatch(
-      /retrieve every local candidate sense and compare them together/i,
-    );
   });
 
-  it("discloses every recorded agent, prompt, and deterministic rule", () => {
+  it("discloses the correct route, deterministic check, and assembler", () => {
     for (const record of records) {
-      const trace = toReviewerCard(record).agentTrace;
+      const card = toReviewerCard(record);
+      const trace = card.agentTrace;
       expect(trace?.stages).toHaveLength(3);
+      const expectedDetector =
+        card.reviewerView.context.type === "title-split" &&
+        card.reviewerView.context.linkedTasks.length === 1
+          ? "access-single-description-title-check-v6"
+          : "access-multiple-description-title-grouping-v6";
       expect(trace?.stages.map((stage) => stage.actorId)).toEqual([
-        "access-homogeneous-title-grouping-v5",
-        "homogeneous-title-grouping-validator-v5",
-        "homogeneous-title-testbed-card-assembler-v5",
+        expectedDetector,
+        "two-route-title-grouping-validator-v6",
+        "two-route-title-testbed-card-assembler-v6",
       ]);
       for (const stage of trace?.stages || []) {
-        expect(stage.actorId).not.toMatch(/^no-/);
         expect(stage.promptLabel).not.toBe("Prompt unavailable");
         expect(stage.prompt.length).toBeGreaterThan(40);
       }

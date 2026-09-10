@@ -50,6 +50,19 @@ const trace: SomAgentTrace = {
 };
 
 describe("AgentTracePanel", () => {
+  it("keeps recorded funding and source provenance inside the disclosure", () => {
+    render(<AgentTracePanel trace={{ ...trace, provenance: [
+      { label: "Funding route", value: "ACCESS project CIS261400 through CloudBank Azure" },
+      { label: "Source record", value: "atomic-source-test" },
+      { label: "Model build version", value: "Not captured in this historical proposal" },
+    ] }} />);
+    expect(screen.queryByText("atomic-source-test")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /How the system produced this proposal/i }));
+    expect(screen.getByText("atomic-source-test")).toBeInTheDocument();
+    expect(screen.getByText("ACCESS project CIS261400 through CloudBank Azure")).toBeInTheDocument();
+    expect(screen.getByText("Not captured in this historical proposal")).toBeInTheDocument();
+  });
+
   it("keeps pipeline detail optional and expands each prompt independently", () => {
     render(<AgentTracePanel trace={trace} />);
 

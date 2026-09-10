@@ -1,0 +1,201 @@
+{
+  "schemaVersion": "som-review-v1",
+  "datasetVersion": "ontology-title-random-round-2026-09-09-v7",
+  "branch": "Ontology-wide title test bed",
+  "generatedAt": "2026-09-09T20:31:59.589Z",
+  "sourceOntology": "artifact://0401_FINALHIERARCHY.json",
+  "sourceOntologySha256": "c8021ffae6949b3532a09d1b6ef2b5fe1f67b402c63d4e9af7d9b208b7766329",
+  "upstreamSource": {
+    "file": "0401_FINALHIERARCHY.json",
+    "sha256": "f19ce789bce298b0564045fb87427eebd1193b89c133d17519c097dc3e0eb319",
+    "atomicActivityOccurrences": 20491,
+    "distinctTitleEvidenceCases": 15994,
+    "eligibleAfterExcludingPriorRound": 15976,
+    "sampledTitleEvidenceCases": 50,
+    "resultingGroups": 138
+  },
+  "sampleDesign": {
+    "method": "Reproducible pseudo-random sample without replacement from every distinct atomic-activity title/evidence case with a recorded leading action and at least one linked O*NET description: sort cases by SHA-256(seed + '|' + semanticCaseId), then take the first 50.",
+    "seed": "title-clarification-round-2-random-50-2026-09-09",
+    "unit": "distinct title-evidence case",
+    "sampleSize": 50,
+    "excludesReviewedRound": "ontology-title-two-route-testbed-2026-09-02-v6",
+    "excludedSemanticCaseIds": [
+      "title-case-494c788deca29b6e1d57",
+      "title-case-d081268e82e00d3c3572",
+      "title-case-c70142f1053afe164197",
+      "title-case-154ca2e4f2b603b710dd",
+      "title-case-2039e7b844ba7958cfb3",
+      "title-case-5cb0a916da9f065a9954",
+      "title-case-a05387b4dfa33d9f5058",
+      "title-case-31be9445c543950c4bf3",
+      "title-case-82efde4d76b97eed3b8f",
+      "title-case-0c2d49dc23308c3cdbc1",
+      "title-case-d565b3ff02f546db26df",
+      "title-case-68c2e3e26198778ef74f",
+      "title-case-3fbdcc7ce91fe12c3654",
+      "title-case-71acd49a1054a905e3fc",
+      "title-case-5a6c7e05279e96194080",
+      "title-case-7e67974387d65efa97e3",
+      "title-case-07f75364947f831cb18d",
+      "title-case-e33c7742f8d7f6d77e28"
+    ],
+    "stratified": false
+  },
+  "realizedDistribution": {
+    "topLevelBranch": {
+      "Act on information (“Think”)": 25,
+      "Act on physical objects (“Do”)": 18,
+      "Act with other activities and actors (“Interact”)": 7
+    },
+    "evidenceBucket": {
+      "medium-multi": 3,
+      "single": 37,
+      "small-multi": 10
+    },
+    "evidenceCount": {
+      "minimum": 1,
+      "maximum": 16,
+      "median": 1
+    }
+  },
+  "safety": {
+    "reviewOnly": true,
+    "mutatesOntology": false,
+    "approvalAuthorizesAutomaticWrite": false,
+    "modelConfidenceVisibleToReviewer": false
+  },
+  "uiContract": {
+    "issueHomogeneousSessions": true,
+    "defaultSessionSize": 10,
+    "maximumSessionSize": 15,
+    "oneAtomicItemAtATime": true,
+    "agreeAutoAdvancesWithoutPageReload": true,
+    "disagreeRequiresReason": true,
+    "optionalContextCollapsedByDefault": true,
+    "allowSaveAndExit": true
+  },
+  "issueTypes": [
+    {
+      "id": "title-clarity",
+      "label": "Random title clarification round",
+      "stage": "content",
+      "robTaskIds": [
+        1
+      ],
+      "rolloutStatus": "experimental",
+      "view": "title-split",
+      "proposals": 43,
+      "controls": 7
+    }
+  ],
+  "files": {
+    "allProposals": "all_proposals.jsonl",
+    "allControls": "all_controls.jsonl",
+    "manualChecks": "manual_checks.jsonl",
+    "proposalsByIssue": "proposals/<issue-type>.jsonl",
+    "controlsByIssue": "controls/<issue-type>.jsonl",
+    "rejectedAgentCandidates": "diagnostics/rejected_agent_candidates.jsonl",
+    "samplePacket": "diagnostics/sample-packet.json",
+    "validatedGroupings": "diagnostics/validated-groupings.json",
+    "generationResults": "diagnostics/generation-results.json",
+    "disagreementTracker": "diagnostics/disagreement-tracker.json",
+    "calibrationGate": "diagnostics/calibration-gate.json",
+    "proposalSchema": "schema/review-proposal.schema.json",
+    "responseSchema": "schema/review-response.schema.json",
+    "schemaSource": "scripts/som-review/build-title-clarification-round-2-dataset.mjs",
+    "ontologySnapshot": "ontology-snapshot.json"
+  },
+  "counts": {
+    "proposals": 43,
+    "controls": 7,
+    "manualChecks": 0,
+    "rejectedAgentCandidates": 0
+  },
+  "limitations": [
+    "The 50 cases are a reproducibly random held-out expert-review round, not gold labels or an accuracy claim.",
+    "The previous 18 reviewed cases were used to calibrate v7.4 and are excluded from this sample.",
+    "A source may appear in multiple proposed groups only with an exact evidence-bound compound-source declaration. This review does not settle the final overlapping-membership policy.",
+    "The model differs from the prior 18-case round, so disagreement-rate changes cannot be attributed to the prompt alone.",
+    "New titles and existing-title destinations remain provisional until later placement review.",
+    "WordNet alignment and top-level collection assignment are deliberately deferred.",
+    "No generated proposal or expert response writes to the ontology automatically."
+  ],
+  "sourceSnapshot": {
+    "file": "ontology-snapshot.json",
+    "sha256": "c8021ffae6949b3532a09d1b6ef2b5fe1f67b402c63d4e9af7d9b208b7766329",
+    "ontologyAppId": "final-hierarchy-with-onet-title-random-round-2026-09-09-v7",
+    "ontologyName": "Final Hierarchy with O*NET - Random title round 2026-09-09",
+    "environment": "production",
+    "capturedAt": "2026-09-09T20:31:59.589Z",
+    "branchRootNodeId": "node-0368e65a11318373d75faee7",
+    "branchRootTitle": "Act",
+    "nodeCount": 179,
+    "branchNodeCount": 179,
+    "referenceNodeCount": 0,
+    "edgeCount": 178
+  },
+  "coverage": {
+    "snapshotBound": true,
+    "exhaustiveWithinPackagedDetectorOutputs": true,
+    "semanticCompletenessGuaranteed": false,
+    "detectorAgents": [
+      "access-single-description-title-check-v7",
+      "access-multiple-description-title-grouping-v7"
+    ],
+    "criticAgents": [],
+    "note": "Every packaged card passed exact source binding, evidence accounting, duplicate-description, title-length, recorded-action, title-status, and compound-overlap validation. Expert review remains the semantic evaluation."
+  },
+  "generation": {
+    "model": {
+      "deployment": "gpt-6-astra-society-of-mind",
+      "name": "gpt-6-astra",
+      "version": "2026-09-03",
+      "sku": "GlobalStandard",
+      "prices": {
+        "inputPerMillion": 10,
+        "cachedInputPerMillion": 1,
+        "cacheWritePerMillion": 12.5,
+        "outputPerMillion": 50
+      }
+    },
+    "promptVersions": {
+      "single": "access-single-description-title-check-2026-09-09-v7.4",
+      "multiple": "access-multiple-description-title-grouping-2026-09-09-v7.4",
+      "validator": "evidence-bound-title-grouping-validator-2026-09-09-v7.1"
+    },
+    "libraryFingerprint": "5a6e745a2c913e7c30ac4c22b5421b4097ac29cfdaafcda2d27e84b9836f3815",
+    "usageAndEstimatedRetailCost": {
+      "inputTokens": 53766,
+      "cachedInputTokens": 0,
+      "cacheWriteTokens": 0,
+      "uncachedInputTokens": 53766,
+      "outputTokens": 49273,
+      "reasoningTokens": 32246,
+      "totalTokens": 103039,
+      "estimatedUsd": 3.0013099999999997,
+      "unknownUsageAttempts": 0,
+      "reservedUnknownUsd": 0
+    },
+    "accessProject": "CIS261400"
+  },
+  "disagreementTracking": {
+    "countingRule": "Count one disagreement for each reviewed atomic-activity card whose current response is disagree. Do not treat unreviewed cards as agreements, and do not double-count response revisions.",
+    "round1": {
+      "round": 1,
+      "datasetVersion": "ontology-title-two-route-testbed-2026-09-02-v6",
+      "promptVersion": "two-route title prompts v6",
+      "model": "gpt-5.6-sol",
+      "sampling": "18-case stratified reviewer-interface pilot",
+      "cardsGenerated": 18,
+      "cardsReviewed": 18,
+      "agreements": 15,
+      "disagreements": 3,
+      "disagreementRate": 0.16666666666666666,
+      "status": "complete",
+      "source": "../model-tier-comparison-2026-09-04/rob-review-context.json",
+      "notes": "Rob characterized all three disagreements as minor. The Slack message ends with an incomplete clause, so no missing explanation is inferred."
+    },
+    "round2Status": "ready-for-review"
+  }
+}

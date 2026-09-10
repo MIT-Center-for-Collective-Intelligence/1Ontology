@@ -214,6 +214,7 @@ const ReviewQueueSelector = ({
   workspaceControls,
   readyFollowUps = [],
   onStartFollowUp,
+  reviewOnly = false,
 }: {
   issueTypes: SomIssueTypeOption[];
   branch?: string;
@@ -227,6 +228,7 @@ const ReviewQueueSelector = ({
   workspaceControls?: React.ReactNode;
   readyFollowUps?: SomLinkedFollowUp[];
   onStartFollowUp?: (followUp: SomLinkedFollowUp) => void;
+  reviewOnly?: boolean;
 }) => {
   const reviewPathStepByIssue = new Map(
     reviewPathForIssueTypes(issueTypes.map((issue) => issue.id)).flatMap(
@@ -311,7 +313,7 @@ const ReviewQueueSelector = ({
 
       {workspaceControls}
 
-      <ReviewPath issueTypes={issueTypes} onStart={onStart} />
+      <ReviewPath issueTypes={issueTypes} onStart={onStart} reviewOnly={reviewOnly} />
 
       {releaseMessage && (
         <Alert severity="info" sx={{ mb: 3 }}>
