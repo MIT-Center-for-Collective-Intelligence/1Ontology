@@ -19,6 +19,7 @@ COPY jest.config.js ./
 COPY Dockerfile ./
 COPY scripts/deployment/review-package-lock.json ./scripts/deployment/review-package-lock.json
 COPY __tests__ ./__tests__
+COPY artifacts/rob-sell-followup-2026-07-28/followup-audit.json ./artifacts/rob-sell-followup-2026-07-28/followup-audit.json
 COPY Buy_Society_of_Mind_Exploratory_2026-07-25 ./Buy_Society_of_Mind_Exploratory_2026-07-25
 COPY Buy_Society_of_Mind_Title_Followup_2026-07-25 ./Buy_Society_of_Mind_Title_Followup_2026-07-25
 COPY Buy_Society_of_Mind_Content_Identity_2026-07-26 ./Buy_Society_of_Mind_Content_Identity_2026-07-26
