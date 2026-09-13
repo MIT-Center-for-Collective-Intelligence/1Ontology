@@ -18,6 +18,7 @@ COPY tsconfig.json ./
 COPY jest.config.js ./
 COPY Dockerfile ./
 COPY scripts/deployment/review-package-lock.json ./scripts/deployment/review-package-lock.json
+COPY scripts/som-review/title-prompt-study-lib.mjs scripts/som-review/title-prompt-study-lib.test.mjs ./scripts/som-review/
 COPY __tests__ ./__tests__
 COPY artifacts/rob-sell-followup-2026-07-28/followup-audit.json ./artifacts/rob-sell-followup-2026-07-28/followup-audit.json
 COPY Buy_Society_of_Mind_Exploratory_2026-07-25 ./Buy_Society_of_Mind_Exploratory_2026-07-25
@@ -60,6 +61,7 @@ ENV NEXT_PUBLIC_DEV_APP_ID=${NEXT_PUBLIC_DEV_APP_ID}
 ENV NODE_ENV=production
 
 RUN NODE_ENV=test npx jest --runInBand --watch=false --coverage=false __tests__/lib/somReview __tests__/components/SomReview __tests__/pages/api/deployment.test.ts
+RUN node --test scripts/som-review/title-prompt-study-lib.test.mjs
 RUN npm run build
 
 # Step 2. Production image (Runner)

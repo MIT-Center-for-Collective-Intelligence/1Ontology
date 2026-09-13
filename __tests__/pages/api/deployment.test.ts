@@ -25,7 +25,12 @@ describe("public deployment identity", () => {
           manifestSha256: "d761c9729e79db44890d804c44df935a1972accb11d1870d8b90f37ba04eeded" }),
       ]);
       expect(info.packageSha256).toMatch(/^[a-f0-9]{64}$/);
-      expect(Object.keys(info).sort()).toEqual(["buildId", "commit", "datasets", "packageSha256", "revision"]);
+      expect(info.titlePromptStudy).toEqual(expect.objectContaining({
+        version: "rob-simple-title-prompt-2026-09-13-development-v1", cases: 18,
+        promptSha256: expect.stringMatching(/^[a-f0-9]{64}$/),
+        bundleSha256: expect.stringMatching(/^[a-f0-9]{64}$/),
+      }));
+      expect(Object.keys(info).sort()).toEqual(["buildId", "commit", "datasets", "packageSha256", "revision", "titlePromptStudy"]);
     } finally {
       if (previous === undefined) delete process.env.SOURCE_COMMIT;
       else process.env.SOURCE_COMMIT = previous;

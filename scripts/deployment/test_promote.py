@@ -1,23 +1,28 @@
 import copy
 import hashlib
+import json
 from pathlib import Path
 import unittest
-from promote import MANIFESTS, SERVICE, validate_release, promote_if_current
+from promote import MANIFESTS, SERVICE, TITLE_PROMPT_STUDY, validate_release, promote_if_current
 
 
 class ReleaseVerificationTests(unittest.TestCase):
     def setUp(self):
+        study_bytes = (Path(__file__).resolve().parents[2] / TITLE_PROMPT_STUDY).read_bytes()
+        study = json.loads(study_bytes)
         self.info = {"commit": "a" * 40, "buildId": "build-1", "revision": "revision-1",
                      "packageSha256": hashlib.sha256(Path(__file__).with_name("review-package-lock.json").read_bytes()).hexdigest(),
                      "datasets": [{"id": key, "version": value[0], "cards": value[1],
                                    "current": value[2], "manifestSha256": value[3]}
                                   for key, value in MANIFESTS.items()]}
+        self.info["titlePromptStudy"] = {"version": study["version"], "cases": 18,
+            "promptSha256": study["promptSha256"], "bundleSha256": hashlib.sha256(study_bytes).hexdigest()}
 
     def test_accepts_exact_release(self):
         validate_release(self.info, "a" * 40, "build-1", "revision-1")
 
     def test_rejects_stale_or_mispackaged_release(self):
-        for field in ("commit", "buildId", "revision", "packageSha256"):
+        for field in ("commit", "buildId", "revision", "packageSha256", "titlePromptStudy"):
             with self.subTest(field=field):
                 broken = copy.deepcopy(self.info)
                 broken[field] = "stale"

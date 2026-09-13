@@ -12,6 +12,7 @@ PROJECT = "ontology-41607"
 REGION = "us-central1"
 REPOSITORY = "https://github.com/MIT-Center-for-Collective-Intelligence/1Ontology.git"
 SERVICE = "projects/ontology-41607/locations/us-central1/services/ontology"
+TITLE_PROMPT_STUDY = "Ontology_Title_Clarity_Testbed_2026-08-28/prompt-study-2026-09-13/bundle.json"
 MANIFESTS = {
     "ontology-title-testbed": ("ontology-title-two-route-testbed-2026-09-02-v6", 18, False,
         "d37949667f4efce3d7a16fec9ec04c95774aea8789cedba4d8a19d3d753f91ea"),
@@ -38,6 +39,15 @@ def validate_release(info, commit, build_id, revision):
     lock = Path(__file__).with_name("review-package-lock.json").read_bytes()
     if info.get("packageSha256") != hashlib.sha256(lock).hexdigest():
         raise ValueError("Runtime review package lock differs from the committed source")
+    study_bytes = (Path(__file__).resolve().parents[2] / TITLE_PROMPT_STUDY).read_bytes()
+    study = json.loads(study_bytes)
+    if len(study["cases"]) != 18 or any(c["status"] != "completed" for c in study["cases"]):
+        raise ValueError("The development pilot must be complete before release")
+    expected_study = {"version": study["version"], "cases": 18,
+                      "promptSha256": study["promptSha256"],
+                      "bundleSha256": hashlib.sha256(study_bytes).hexdigest()}
+    if info.get("titlePromptStudy") != expected_study:
+        raise ValueError("The candidate does not contain the exact committed title prompt pilot")
 
 
 def promote_if_current(commit, revision, api, main_head):
