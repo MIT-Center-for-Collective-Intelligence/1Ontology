@@ -76,10 +76,14 @@ as approved runners for the September 13 title examples:
   current title proposals intentionally do not use that representation. It also
   filters inherited senses by lemma before the suitability judgment and does not
   pin the corpus bytes.
-- The historical WordNet prompt receives inherited senses and all alternatives
-  together. The current intended procedure first evaluates the inherited sense
-  using the accepted title and all homogeneous evidence, then retrieves exact-verb
-  alternatives only when replacement is needed.
+- The historical all-candidate v3 prompt receives inherited senses and all
+  alternatives together. An earlier conditional v2 pair does check the inherited
+  sense first, but its replacement step receives only the flagged source records.
+  Both exact historical prompts remain in `agentTransparency.ts`; neither should
+  be copied unchanged into the current handoff. The intended procedure first
+  evaluates the inherited sense using the accepted title and all homogeneous
+  evidence, then retrieves exact-verb alternatives only when replacement is
+  needed, retaining the full accepted group's evidence for candidate selection.
 
 This helper is deliberately not wired into those historical scripts. Updating
 their outputs in place would change the meaning of the archived provenance.
