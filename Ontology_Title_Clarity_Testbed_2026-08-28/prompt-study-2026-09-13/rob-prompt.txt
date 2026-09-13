@@ -1,0 +1,53 @@
+﻿Title Clarification Parley Prompt
+09/13/2026
+
+
+Some colleagues and I are creating an ontology of work activities. It is structured as a knowledge graph, with general kinds of work activities, such as “Sell,” differentiated hierarchically from more specific kinds, such as “Sell Food” or “Sell Insurance.”
+
+
+A key source for this ontology has been the US Dept of Labor's O*Net database. We extracted the core verb and direct object from each activity description in O*NET (including GWAs, IWAs, DWAs, and tasks) and used the resulting verb-direct object pairs as the titles of key nodes in our knowledge graph. We call these verb-direct object pairs “atomic activities,” and each was linked to the O*NET description(s) that served as their basis. 
+
+
+When an O*NET description listed multiple core verbs, we created separate verb-direct object pairs to cover all the relevant verbs and direct objects. And when a verb-direct object pair was based on multiple O*NET descriptions, that verb-direct object was linked to all of the relevant O*NET descriptions from which it ws derived. 
+
+
+In most cases, this approach worked well, but two issues arose:
+* In some instances, the verb-direct object pair did not supply enough information for a non-expert user of the system to gain a clear, intuitive sense of underlying work activity. 
+* In other instances, a verb-direct object pair was linked with more than one O*NET description, and they were different enough that we thought they should, rather than continuing to be grouped together, instead be grouped into separate categories, with each category given a new title. 
+
+
+We’re now seeking to improve our ontology, and we'd like some help. The inputs will be: 
+* verb-object pair, that is, the title of an atomic activity in our ontology
+* list of all O*NET descriptions linked to that verb-direct object pair
+
+
+For each verb-object pair, do the following;
+* If a single O*NET description is linked to a verb-object pair, evaluate whether the current title conveys a clear, intuitively understandable sense of the work activity in question. If so, confirm that the current title is adequate. If not, propose a new title that is clearer and more readily understandable to a non-expert. When generating a new title, confine it to 2-5 words. In both cases, give a rationale. 
+* If multiple O*NET descriptions are linked to a single verb-direct pair, evaluate whether all of these O*NET descriptions are similar enough that they warrant being grouped in a single category. If so, go on to evaluate the appropriateness of the title, as described in the step above. If not, group the O*NET descriptions into more appropriate categories and propose a new title for each, using the same approach described in the step above for creating new titles. If some of the O*NET descriptions in the list can still be appropriately linked to the original title, indicate that as well. In all cases, give a rationale.    
+ 
+
+
+When considering how well a verb-direct object title captures the essence of a linked O*NET description, focus on the verb and direct object included in the title and ignore others. When an O*NET description includes compound verbs or compound direct objects, the additional verbs and direct objects will be covered by other atomic activities located in other areas in the ontology. 
+
+
+Keep in mind these considerations when evaluating titles: 
+* Semantic clarity: Does a title immediately convey what the activity is?
+* Specificity vs. generality: Is there important context or scope that's missing?
+* User intuitiveness: Would someone unfamiliar with O*NET understand what this activity involves?
+* Consistency: Does it fit with the style/structure of other titles in the ontology?
+
+
+When proposing new titles, please choose ones that are: 
+* More descriptive (by adding additional context)
+* More specific (by narrowing the scope when the verb-direct object is too broad)
+* More colloquial (by using language that's more immediately understandable)
+
+
+Outputs from the exercise should be:
+* For titles with a single linked O*NET activity, indicate those for which
+--the current title is adequate and should not be changed
+--the current title is inadequate and should be changed, with proposed new title included 
+* For titles linked to multiple O*NET descriptions, indicate those for which
+--the existing grouping of O*NET descriptions and title are both adequate
+--the existing grouping of O*NET descriptions is adequate but title is inadequate and should be changed, with proposed new title included
+--the existing grouping of O*NET descriptions should be restructured, with proposed new groupings and proposed titles provided; also list all O*NET descriptions for which the existing title is still adequate

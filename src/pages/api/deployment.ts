@@ -3,6 +3,7 @@ import path from "path";
 import crypto from "crypto";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { reviewDatasetConfig, reviewDatasetDir } from "../../lib/somReview/reviewWorkspaces";
+import { titlePromptStudyRelease } from "../../lib/somReview/titlePromptStudyRelease";
 
 // Public, read-only release identity. Never include runtime configuration or user data.
 export default function deployment(req: NextApiRequest, res: NextApiResponse) {
@@ -34,6 +35,7 @@ export default function deployment(req: NextApiRequest, res: NextApiResponse) {
       revision: process.env.K_REVISION || null,
       packageSha256: crypto.createHash("sha256").update(lock).digest("hex"),
       datasets,
+      titlePromptStudy: titlePromptStudyRelease(),
     });
   } catch {
     return res.status(503).json({ error: "Release dataset verification failed" });

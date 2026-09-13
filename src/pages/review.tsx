@@ -843,6 +843,11 @@ export const ReviewPage = () => {
                     datasetId={datasetId}
                     onChange={switchDataset}
                   />
+                  {workspaceId === "ontology-title-testbed" && (
+                    <Button href="/title-prompt-study" sx={{ mb: 2 }}>
+                      Explore Rob’s simple prompt — development examples
+                    </Button>
+                  )}
                   {largeCaseInventory && (
                     <LargeCaseInventoryPanel inventory={largeCaseInventory} />
                   )}
