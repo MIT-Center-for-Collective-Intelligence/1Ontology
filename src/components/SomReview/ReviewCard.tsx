@@ -286,10 +286,14 @@ const ReviewCard = ({
           "&:focus": { outline: "none" },
         }}
       >
-        {view.question}
+        {view.context.type === "title-split" ? "Do these titles clearly describe the work?" : view.question}
       </Typography>
 
-      {card.agentTrace && <AgentTracePanel trace={card.agentTrace} prominent />}
+      {card.datasetVersion === "ontology-title-two-route-testbed-2026-09-02-v6" && view.context.type === "title-split" && (
+        <Button href={`/title-prompt-study?title=${encodeURIComponent(view.context.currentTitle)}`} sx={{ mb: 2 }}>
+          Compare with Rob’s prompt
+        </Button>
+      )}
 
       {showStatePanels && (
         <Stack
@@ -412,6 +416,8 @@ const ReviewCard = ({
       </Box>
 
       <ContextRenderer context={view.context} branch={branch} />
+
+      {card.agentTrace && <AgentTracePanel trace={card.agentTrace} />}
 
       <Box
         sx={{

@@ -54,11 +54,16 @@ describe("AgentTracePanel", () => {
     render(<AgentTracePanel trace={{ ...trace, provenance: [
       { label: "Funding route", value: "ACCESS project CIS261400 through CloudBank Azure" },
       { label: "Source record", value: "atomic-source-test" },
+      { label: "Ontology snapshot SHA-256", value: "a".repeat(64) },
+      { label: "Source ontology", value: "Final Hierarchy with O*NET" },
       { label: "Model build version", value: "Not captured in this historical proposal" },
     ] }} />);
     expect(screen.queryByText("atomic-source-test")).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /How the system produced this proposal/i }));
-    expect(screen.getByText("atomic-source-test")).toBeInTheDocument();
+    expect(screen.queryByText("atomic-source-test")).not.toBeInTheDocument();
+    expect(screen.queryByText("a".repeat(64))).not.toBeInTheDocument();
+    expect(screen.queryByText(/SHA-256/)).not.toBeInTheDocument();
+    expect(screen.getByText("Final Hierarchy with O*NET")).toBeInTheDocument();
     expect(screen.getByText("ACCESS project CIS261400 through CloudBank Azure")).toBeInTheDocument();
     expect(screen.getByText("Not captured in this historical proposal")).toBeInTheDocument();
   });
@@ -74,7 +79,7 @@ describe("AgentTracePanel", () => {
     );
 
     expect(screen.getByText(/Detect the issue/)).toBeInTheDocument();
-    expect(screen.getAllByText("Shared execution")).toHaveLength(2);
+    expect(screen.getAllByText("Same model call")).toHaveLength(2);
     expect(
       screen.getByText(
         "Detection and solution generation share one model call.",
@@ -90,7 +95,7 @@ describe("AgentTracePanel", () => {
     expect(
       screen.getByText("Compare the title with its source evidence."),
     ).toBeInTheDocument();
-    expect(screen.getByText("Version: ontology-review-v5")).toBeInTheDocument();
+    expect(screen.queryByText("Version: ontology-review-v5")).not.toBeInTheDocument();
     expect(screen.getByText("Runtime inputs are omitted.")).toBeInTheDocument();
   });
 

@@ -35,7 +35,7 @@ const withAuthUser =
     shouldRedirectToLogin,
   }: Props) =>
   (ChildComponent: any) => {
-    const WithAuthUserHOC = (): JSX.Element => {
+    const WithAuthUserHOC = (props: Record<string, unknown>): JSX.Element => {
       const [{ isAuthenticated, isAuthInitialized }] = useAuth();
       const router = useRouter();
 
@@ -66,7 +66,7 @@ const withAuthUser =
         }
       }, [isAuthInitialized, isAuthenticated, redirectToLogin]);
 
-      let returnVal = <ChildComponent />;
+      let returnVal = <ChildComponent {...props} />;
 
       // if (
       //   !isAuthInitialized ||

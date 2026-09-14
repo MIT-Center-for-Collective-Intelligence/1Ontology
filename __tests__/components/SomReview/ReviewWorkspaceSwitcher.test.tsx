@@ -74,6 +74,6 @@ describe("review workspace switcher", () => {
     fireEvent.click(screen.getByRole("option", { name: "Initial Buy round" }));
 
     expect(onChange).toHaveBeenCalledWith("buy-original");
-    expect(screen.getByText("Current hierarchy")).toBeInTheDocument();
+    expect(screen.getByText("Current round")).toBeInTheDocument();
   });
 });

@@ -65,16 +65,6 @@ const PromptControl = ({
       </Button>
       <Collapse in={expanded} timeout="auto" unmountOnExit>
         <Box id={controlId} sx={{ mt: 1.25 }}>
-          <Typography
-            sx={{
-              mb: 0.75,
-              color: "text.secondary",
-              fontSize: "0.78rem",
-              fontWeight: 700,
-            }}
-          >
-            Version: {stage.promptVersion}
-          </Typography>
           {stage.promptDisclosureNote && (
             <Typography
               sx={{
@@ -84,7 +74,9 @@ const PromptControl = ({
                 lineHeight: 1.45,
               }}
             >
-              {stage.promptDisclosureNote}
+              {/SHA.?256/i.test(stage.promptDisclosureNote)
+                ? "These are the exact recorded instructions used for this proposal."
+                : stage.promptDisclosureNote}
             </Typography>
           )}
           <Box
@@ -214,7 +206,9 @@ const AgentTracePanel = ({
 
           {trace.provenance && (
             <Box component="dl" sx={{ m: 0, pb: 1.5, overflowWrap: "anywhere" }}>
-              {trace.provenance.map(({ label, value }) => (
+              {trace.provenance.filter(({ label }) =>
+                ["Model / deployment", "Model build version", "Funding route", "Source ontology"].includes(label)
+              ).map(({ label, value }) => (
                 <Box key={label} sx={{ mb: 0.75 }}>
                   <Typography component="dt" sx={{ fontSize: "0.8rem", fontWeight: 700 }}>{label}</Typography>
                   <Typography component="dd" sx={{ m: 0, fontSize: "0.8rem", color: "text.secondary" }}>{value}</Typography>
@@ -276,7 +270,7 @@ const AgentTracePanel = ({
                           overflowWrap: "anywhere",
                         }}
                       >
-                        {stage.actorName} ({stage.actorId})
+                        {stage.actorName}
                       </Typography>
                     </Stack>
 
@@ -297,7 +291,7 @@ const AgentTracePanel = ({
                         <Chip
                           size="small"
                           variant="outlined"
-                          label="Shared execution"
+                          label="Same model call"
                           sx={{ height: 26, borderRadius: 1 }}
                         />
                       )}

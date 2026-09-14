@@ -226,8 +226,14 @@ const InspectionItemCard = ({
           lineHeight: 1.45,
         }}
       >
-        {view.question}
+        {view.context.type === "title-split" ? "Do these titles clearly describe the work?" : view.question}
       </Typography>
+
+      {item.card.datasetVersion === "ontology-title-two-route-testbed-2026-09-02-v6" && view.context.type === "title-split" && (
+        <Button href={`/title-prompt-study?title=${encodeURIComponent(view.context.currentTitle)}`} sx={{ mt: 1 }}>
+          Compare with Rob’s prompt
+        </Button>
+      )}
 
       {!comparisonInContext && (
         <Stack

@@ -843,19 +843,19 @@ export const ReviewPage = () => {
                     datasetId={datasetId}
                     onChange={switchDataset}
                   />
-                  {workspaceId === "ontology-title-testbed" && (
-                    <Button href="/title-prompt-study" sx={{ mb: 2 }}>
-                      Explore Rob’s simple prompt — development examples
-                    </Button>
-                  )}
+                  <Box sx={{ mb: 3, p: 2, border: 1, borderColor: "divider", borderRadius: 1 }}>
+                    <Typography component="h2" sx={{ fontWeight: 750 }}>Compare the two title prompts</Typography>
+                    <Typography sx={{ mt: 0.5, mb: 1.5 }}>See the previous results beside Rob’s new wording on the same 18 examples, with shared O*NET descriptions.</Typography>
+                    <Button href="/title-prompt-study" variant="outlined">Compare title prompts</Button>
+                  </Box>
                   {largeCaseInventory && (
                     <LargeCaseInventoryPanel inventory={largeCaseInventory} />
                   )}
                   {!currentRound && (
                     <Alert severity="warning" sx={{ mb: 3 }}>
-                      You are reviewing a past round. Revisions are saved with
-                      that round, but they will not affect the current ontology
-                      until its decisions are propagated again.
+                      {workspaceId === "ontology-title-testbed"
+                        ? "You are reviewing a past round. Your answers stay with this round. Reviewing does not change the ontology."
+                        : "You are reviewing a past round. Revisions are saved with that round, but they will not affect the current ontology until its decisions are propagated again."}
                     </Alert>
                   )}
                 </>
