@@ -1831,16 +1831,16 @@ export const agentTraceForRecord = (record: any): SomAgentTrace => {
   return {
     title: "Agents and prompts used for this proposal",
     summary:
-      "Inspect every recorded model agent, deterministic check, human-expert step, and its source-backed prompt template or decision rules.",
+      "See the model, exact instructions, and source information behind this proposal.",
     runtimeInputNote:
-      "This panel shows recorded prompt templates or deterministic rules when the source preserves them. Bracketed placeholders replace runtime ontology data and policy inserts. Confidence scores and raw model outputs are outside this panel; historical gaps are labeled explicitly.",
+      "Recorded instructions and software checks are shown below. Placeholders stand for the information supplied for each activity. Missing historical details are labeled explicitly.",
     stages,
     provenance: [
       { label: "Model / deployment", value: recordedModels.join("; ") || "Not captured in this historical proposal" },
       { label: "Model build version", value: clean(evidence.modelVersion) || "Not captured in this historical proposal; prompt versions are shown below" },
       { label: "Funding route", value: isTitleV6 ? "ACCESS project CIS261400 through CloudBank Azure (archived v6 manifest)" : isTitleV7 ? "ACCESS project CIS261400 through CloudBank Azure" : clean(evidence.fundingRoute) || "Not captured in this historical proposal" },
       { label: "Dataset version", value: clean(record.datasetVersion) },
-      { label: "Source ontology", value: clean(provenance.sourceOntology) },
+      { label: "Source ontology", value: clean(provenance.sourceOntologyName || provenance.sourceOntology) },
       { label: "Source record", value: clean(provenance.sourceRecord) },
       { label: "Source artifact", value: clean(provenance.sourceArtifact) },
       { label: "Ontology snapshot SHA-256", value: clean(provenance.sourceSnapshotSha256 || provenance.sourceOntologySha256) },

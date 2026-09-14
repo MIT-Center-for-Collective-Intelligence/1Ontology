@@ -61,12 +61,12 @@ const ReviewWorkspaceSwitcher = ({
               component="h2"
               sx={{ fontSize: "1rem", fontWeight: 800 }}
             >
-              Review workspace
+              Choose what to review
             </Typography>
             <Typography
               sx={{ mt: 0.25, color: "text.secondary", lineHeight: 1.45 }}
             >
-              Switch sub-ontology without mixing review progress.
+              Your saved answers stay with their review round.
             </Typography>
           </Box>
           <ToggleButtonGroup
@@ -128,7 +128,7 @@ const ReviewWorkspaceSwitcher = ({
             </Select>
           </FormControl>
           <Chip
-            label={selectedRound?.current ? "Current hierarchy" : "Past round"}
+            label={selectedRound?.current ? "Current round" : "Past round"}
             color={selectedRound?.current ? "primary" : "default"}
             variant="outlined"
             sx={{ alignSelf: { xs: "flex-start", sm: "center" } }}
