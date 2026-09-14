@@ -1837,7 +1837,7 @@ export const agentTraceForRecord = (record: any): SomAgentTrace => {
     stages,
     provenance: [
       { label: "Model / deployment", value: recordedModels.join("; ") || "Not captured in this historical proposal" },
-      { label: "Model build version", value: clean(evidence.modelVersion) || "Not captured in this historical proposal; prompt versions are shown below" },
+      { label: "Model build version", value: clean(evidence.modelVersion) || "Not captured in this historical proposal" },
       { label: "Funding route", value: isTitleV6 ? "ACCESS project CIS261400 through CloudBank Azure (archived v6 manifest)" : isTitleV7 ? "ACCESS project CIS261400 through CloudBank Azure" : clean(evidence.fundingRoute) || "Not captured in this historical proposal" },
       { label: "Dataset version", value: clean(record.datasetVersion) },
       { label: "Source ontology", value: clean(provenance.sourceOntologyName || provenance.sourceOntology) },
