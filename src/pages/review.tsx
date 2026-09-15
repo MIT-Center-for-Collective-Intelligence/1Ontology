@@ -843,10 +843,25 @@ export const ReviewPage = () => {
                     datasetId={datasetId}
                     onChange={switchDataset}
                   />
-                  <Box sx={{ mb: 3, p: 2, border: 1, borderColor: "divider", borderRadius: 1 }}>
-                    <Typography component="h2" sx={{ fontWeight: 750 }}>Compare the two title prompts</Typography>
-                    <Typography sx={{ mt: 0.5, mb: 1.5 }}>See the previous results beside Rob’s new wording on the same 18 examples, with shared O*NET descriptions.</Typography>
-                    <Button href="/title-prompt-study" variant="outlined">Compare title prompts</Button>
+                  <Box
+                    sx={{
+                      mb: 3,
+                      p: 2,
+                      border: 1,
+                      borderColor: "divider",
+                      borderRadius: 1,
+                    }}
+                  >
+                    <Typography component="h2" sx={{ fontWeight: 750 }}>
+                      Compare the three title prompts
+                    </Typography>
+                    <Typography sx={{ mt: 0.5, mb: 1.5 }}>
+                      See the previous prompt, Rob’s September 13 version, and
+                      his latest version on the same 18 examples.
+                    </Typography>
+                    <Button href="/title-prompt-study" variant="outlined">
+                      Compare title prompts
+                    </Button>
                   </Box>
                   {largeCaseInventory && (
                     <LargeCaseInventoryPanel inventory={largeCaseInventory} />

@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   Alert,
   Box,
@@ -28,7 +34,10 @@ import { useAuth } from "@components/components/context/AuthContext";
 import withAuthUser from "@components/components/hoc/withAuthUser";
 import { Post } from "@components/lib/utils/Post";
 import { reviewPathForIssueTypes } from "@components/lib/somReview/reviewDependencies";
-import { SOM_REVIEW_WORKSPACES, reviewWorkspaceConfig } from "@components/lib/somReview/reviewWorkspaces";
+import {
+  SOM_REVIEW_WORKSPACES,
+  reviewWorkspaceConfig,
+} from "@components/lib/somReview/reviewWorkspaces";
 import {
   SomInspectionItem,
   SomInspectionMutationResult,
@@ -52,8 +61,9 @@ export const ReviewInspectionPage = () => {
   const [{ user }] = useAuth();
   const router = useRouter();
   const workspace =
-    SOM_REVIEW_WORKSPACES.find((candidate) => candidate.id === router.query.workspace) ||
-    reviewWorkspaceConfig("sell");
+    SOM_REVIEW_WORKSPACES.find(
+      (candidate) => candidate.id === router.query.workspace,
+    ) || reviewWorkspaceConfig("sell");
   const workspaceId = workspace.id;
   const requestedReviewerId =
     typeof router.query.reviewer === "string" ? router.query.reviewer : "";
@@ -65,9 +75,11 @@ export const ReviewInspectionPage = () => {
   const [loadError, setLoadError] = useState("");
   const [search, setSearch] = useState("");
   const [itemFilter, setItemFilter] = useState<ItemFilter>("all");
+  const loadSequence = useRef(0);
 
   const loadOverview = useCallback(
     async (quiet = false) => {
+      const sequence = ++loadSequence.current;
       if (!quiet) setLoading(true);
       setLoadError("");
       try {
@@ -80,6 +92,7 @@ export const ReviewInspectionPage = () => {
           },
           false,
         );
+        if (sequence !== loadSequence.current) return;
         setOverview(result);
         if (
           result.selectedReviewerId &&
@@ -105,9 +118,10 @@ export const ReviewInspectionPage = () => {
           );
         }
       } catch (error: any) {
-        setLoadError(inspectionLoadErrorMessage(error));
+        if (sequence === loadSequence.current)
+          setLoadError(inspectionLoadErrorMessage(error));
       } finally {
-        if (!quiet) setLoading(false);
+        if (!quiet && sequence === loadSequence.current) setLoading(false);
       }
     },
     [requestedReviewerId, requestedTaskKey, router, workspaceId],
@@ -115,9 +129,13 @@ export const ReviewInspectionPage = () => {
 
   useEffect(() => {
     if (user && router.isReady) loadOverview();
+    return () => {
+      loadSequence.current += 1;
+    };
   }, [loadOverview, router.isReady, user]);
 
   const selectTask = async (taskKey: string) => {
+    loadSequence.current += 1;
     await router.push(
       {
         pathname: "/review/inspection",
@@ -133,6 +151,7 @@ export const ReviewInspectionPage = () => {
   };
 
   const returnToTasks = async () => {
+    loadSequence.current += 1;
     await router.replace(
       {
         pathname: "/review/inspection",
@@ -285,8 +304,7 @@ export const ReviewInspectionPage = () => {
                     pathname: "/review",
                     query: {
                       dataset:
-                        overview?.activeDatasetId ||
-                        workspace.activeDatasetId,
+                        overview?.activeDatasetId || workspace.activeDatasetId,
                     },
                   })
                 }
@@ -336,6 +354,7 @@ export const ReviewInspectionPage = () => {
               value={workspaceId}
               onChange={(_, value) => {
                 if (!value || value === workspaceId) return;
+                loadSequence.current += 1;
                 router.push({
                   pathname: "/review/inspection",
                   query: { workspace: value },

@@ -1,0 +1,18 @@
+We have built an ontology or work activities. A key element of it  is set of verb-direct object pairs derived by extracting the core verb and direct object from activity descriptions in the O*NET database. These verb-direct object pairs serve as the title of work activities in the ontology. Some are based on a single O*NET description and others on multiple O*NET descriptions. We now seek to improve our ontology with your help. We will provide two inputs:
+(1) verb-direct object pair, which serves as the title of a work activity
+(2) one or multiple O*NET descriptions that served as the basis for the verb-direct object pair 
+
+Execute the following operations:
+(A) If the verb-direct object pair is based on single O*NET description, evaluate whether the current title conveys a clear, intuitively understandable sense of the work activity as depicted in O*NET. If so, confirm that the current title is adequate. If not, propose a new title that is clearer and more understandable, but do not change the initial verb. When creating new titles, select wording that is semantically transparent, as specific as possible, intuitive to a non-expert, and confined to 2-5 words. In all cases, provide a rationale. 
+(B) If a verb-direct object pair is based on multiple O*NET description, evaluate whether all of the O*NET descriptions are similar enough that they warrant being grouped in a single category. If so, go on to assess the appropriateness of the title, as described in step (A). If the O*NET descriptions do not warrant being kept together in a single category, group them into more appropriate categories and propose a new title for each, using the same approach described in step (A) for creating new titles. When categorizing O*NET descriptions, create groupings of approximately 5-9, unless there is a strong reason for creating larger or smaller groupings (for example, if a very large number of O*NET descriptions are identical, they should be kept in a single group). If a grouping of O*NET descriptions can still be appropriately linked to the original title, indicate as much. In all cases, give a rationale. 
+
+When considering how well a verb-direct object title captures the essence of a linked O*NET description, focus on the verb and direct object included in the title and ignore others. To take into account O*NET descriptions that contain compound verbs or compound direct objects, we have created verb-direct object pairs that encompass all possible combinations. 
+
+Produce the following outputs:
+(A) For verb-direct object pairs based on a single O*NET description, indicate those for which
+(i) The current title is adequate and should not be changed. 
+(ii) The current title is inadequate and should be changed; in such a case, propose a new title. 
+(B) For verb-direct object pairs based on multiple O*NET descriptions, indicate those for which 
+(i) The existing grouping of O*NET descriptions and title are both adequate. 
+(ii) The existing grouping of O*NET descriptions is adequate but the title is inadequate and should be changed; in such a case, propose a new title. 
+(iii) The existing grouping of O*NET descriptions should be restructured; in such a case, propose new groupings and titles for each, and if the current title is still adequate for one of the resulting new groupings, indicate as much. 

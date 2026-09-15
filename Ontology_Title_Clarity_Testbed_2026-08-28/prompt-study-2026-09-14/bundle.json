@@ -1,0 +1,2280 @@
+{
+  "version": "rob-revised-title-prompt-2026-09-14-v3",
+  "label": "Rob’s latest title prompt",
+  "explanation": "Rob’s revised prompt supplied by Iman on September 14, compared on the same 18 development examples.",
+  "prompt": "We have built an ontology or work activities. A key element of it  is set of verb-direct object pairs derived by extracting the core verb and direct object from activity descriptions in the O*NET database. These verb-direct object pairs serve as the title of work activities in the ontology. Some are based on a single O*NET description and others on multiple O*NET descriptions. We now seek to improve our ontology with your help. We will provide two inputs:\n(1) verb-direct object pair, which serves as the title of a work activity\n(2) one or multiple O*NET descriptions that served as the basis for the verb-direct object pair \n\nExecute the following operations:\n(A) If the verb-direct object pair is based on single O*NET description, evaluate whether the current title conveys a clear, intuitively understandable sense of the work activity as depicted in O*NET. If so, confirm that the current title is adequate. If not, propose a new title that is clearer and more understandable, but do not change the initial verb. When creating new titles, select wording that is semantically transparent, as specific as possible, intuitive to a non-expert, and confined to 2-5 words. In all cases, provide a rationale. \n(B) If a verb-direct object pair is based on multiple O*NET description, evaluate whether all of the O*NET descriptions are similar enough that they warrant being grouped in a single category. If so, go on to assess the appropriateness of the title, as described in step (A). If the O*NET descriptions do not warrant being kept together in a single category, group them into more appropriate categories and propose a new title for each, using the same approach described in step (A) for creating new titles. When categorizing O*NET descriptions, create groupings of approximately 5-9, unless there is a strong reason for creating larger or smaller groupings (for example, if a very large number of O*NET descriptions are identical, they should be kept in a single group). If a grouping of O*NET descriptions can still be appropriately linked to the original title, indicate as much. In all cases, give a rationale. \n\nWhen considering how well a verb-direct object title captures the essence of a linked O*NET description, focus on the verb and direct object included in the title and ignore others. To take into account O*NET descriptions that contain compound verbs or compound direct objects, we have created verb-direct object pairs that encompass all possible combinations. \n\nProduce the following outputs:\n(A) For verb-direct object pairs based on a single O*NET description, indicate those for which\n(i) The current title is adequate and should not be changed. \n(ii) The current title is inadequate and should be changed; in such a case, propose a new title. \n(B) For verb-direct object pairs based on multiple O*NET descriptions, indicate those for which \n(i) The existing grouping of O*NET descriptions and title are both adequate. \n(ii) The existing grouping of O*NET descriptions is adequate but the title is inadequate and should be changed; in such a case, propose a new title. \n(iii) The existing grouping of O*NET descriptions should be restructured; in such a case, propose new groupings and titles for each, and if the current title is still adequate for one of the resulting new groupings, indicate as much. \n",
+  "outputFormat": "Output format for the software: return one JSON object with \"groups\" (a list of objects containing \"title\", \"descriptionNumbers\", and \"reason\") and \"reason\" (the overall rationale). \"descriptionNumbers\" contains the numbers of the O*NET descriptions supporting that group. These numbers identify descriptions in this input, not group numbers. Include the current title as a group if the current title is adequate for some or all descriptions. Keep rationales brief.",
+  "outputSchema": {
+    "type": "json_schema",
+    "name": "title_groups",
+    "strict": true,
+    "schema": {
+      "type": "object",
+      "properties": {
+        "groups": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string"
+              },
+              "descriptionNumbers": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                }
+              },
+              "reason": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "title",
+              "descriptionNumbers",
+              "reason"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "reason": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "groups",
+        "reason"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "softwareChecks": "Ordinary code checks whether the answer can be read, whether description numbers exist, and whether any description is missing or repeated. It flags empty groups, repeated titles, inconsistent grouping of identical descriptions, titles outside 2–5 words, and changes to the leading verb. A description supporting more than one group is shown as a representation-policy question. The code does not change the model answer, assign missing descriptions, decide semantic correctness, approve a grouping, or write to the ontology. For newly split groups, the code also identifies group sizes outside the approximate 5–9-description target so a person can review the exception rationale. A single homogeneous group is not required to split to meet that target.",
+  "promptSha256": "77132627ef86c7ef5a882a186c02eab5ab208e0d5cb5c1c06a605bed13f0cf2d",
+  "sourceSha256": "f19ce789bce298b0564045fb87427eebd1193b89c133d17519c097dc3e0eb319",
+  "sourceFile": "0401_FINALHIERARCHY.json",
+  "collaborationUrl": "https://docs.google.com/document/d/1ZUDNSY4ttNasTRVLPWwSl7jQcymWzLyeRiOk4LOOjmU/edit",
+  "model": "gpt-6-astra",
+  "modelVersion": "2026-09-03",
+  "reasoning": "max",
+  "deployment": "gpt-6-astra-society-of-mind",
+  "funding": "ACCESS project CIS261400 through MIT CloudBank Azure",
+  "costs": {
+    "knownUsd": 1.9890474999999999,
+    "knownUpperUsd": 2.038217875,
+    "unknownReservedUsd": 1.339398875,
+    "attempts": 20,
+    "successfulRequests": 18,
+    "rejectedRequests": 2,
+    "totalTokens": 56326,
+    "asOf": "2026-09-15T00:06:41.882Z",
+    "prices": {
+      "inputPerMillion": 10,
+      "cachedInputPerMillion": 1,
+      "cacheWritePerMillion": 12.5,
+      "outputPerMillion": 50
+    },
+    "budgetPrices": {
+      "inputPerMillion": 12.625,
+      "cachedInputPerMillion": 1.01,
+      "cacheWritePerMillion": 12.625,
+      "outputPerMillion": 50.5
+    },
+    "scope": "Every direct request for the September 14 third-prompt run, including two rejected schema preparations retained at their full unknown-usage reservations. Lead engineering/review inference is separately included in the private combined ACCESS ledger. Estimates are not invoices."
+  },
+  "cases": [
+    {
+      "id": "case-1",
+      "label": "title-01",
+      "title": "Review Programming",
+      "semanticCaseId": "title-case-494c788deca29b6e1d57",
+      "occurrenceId": "atomic-a61bf28bc554d802743f",
+      "originalTitle": "Review Programming",
+      "input": "Current title: Review Programming\n\nO*NET descriptions:\n1. Monitor and review programming to ensure that schedules are met, guidelines are adhered to, and performances are of adequate quality.",
+      "inputSha256": "57d469fee5597875da463f437144ff5c890240baef893afb13ab6fd8ceb9022d",
+      "descriptions": [
+        {
+          "number": 1,
+          "text": "Monitor and review programming to ensure that schedules are met, guidelines are adhered to, and performances are of adequate quality.",
+          "oNetId": "7663"
+        }
+      ],
+      "occurrenceIds": [
+        "atomic-a61bf28bc554d802743f",
+        "atomic-0e7b07ce2a651ad876a1"
+      ],
+      "groups": [
+        {
+          "title": "Review Broadcast Programming",
+          "descriptionNumbers": [
+            1
+          ],
+          "reason": "Clarifies that the review concerns scheduled media content and its quality, rather than software programming."
+        }
+      ],
+      "reason": "The current title is ambiguous and should be changed. The revised title retains the initial verb, 'Review'.",
+      "observations": [],
+      "status": "completed",
+      "rawOutput": "{\n  \"groups\": [\n    {\n      \"title\": \"Review Broadcast Programming\",\n      \"descriptionNumbers\": [1],\n      \"reason\": \"Clarifies that the review concerns scheduled media content and its quality, rather than software programming.\"\n    }\n  ],\n  \"reason\": \"The current title is ambiguous and should be changed. The revised title retains the initial verb, 'Review'.\"\n}",
+      "requestedAt": "2026-09-14T23:57:34.849Z",
+      "attemptId": "3300a23ea2638342c247ffa4c5813853d69f7270fb3a9fa7c1558d509112d0c5",
+      "outputSha256": "6ed8c0825917b38f085fbd322f7865d75126e8069812d7e27113e08cd038998c",
+      "completedAt": "2026-09-14T23:57:52.374Z",
+      "requestSha256": "064d20a853905bb757c2b0f9c07bc30349d259f0efe3382118c1a775841231f5",
+      "maximumOutputTokens": 12000
+    },
+    {
+      "id": "case-2",
+      "label": "title-02",
+      "title": "Outline Pattern",
+      "semanticCaseId": "title-case-d081268e82e00d3c3572",
+      "occurrenceId": "atomic-ed7f926d6f8a2afe185c",
+      "originalTitle": "Outline Pattern",
+      "input": "Current title: Outline Pattern\n\nO*NET descriptions:\n1. Draw patterns, using measurements, designs, plaster casts, or customer specifications, and position or outline patterns on work pieces.",
+      "inputSha256": "f6478bb8edb02821dd363814fb30025accc7a31e059320fae7d51391ab3d642c",
+      "descriptions": [
+        {
+          "number": 1,
+          "text": "Draw patterns, using measurements, designs, plaster casts, or customer specifications, and position or outline patterns on work pieces.",
+          "oNetId": "14083"
+        }
+      ],
+      "occurrenceIds": [
+        "atomic-ed7f926d6f8a2afe185c"
+      ],
+      "groups": [
+        {
+          "title": "Outline Patterns on Workpieces",
+          "descriptionNumbers": [
+            1
+          ],
+          "reason": "Clarifies that the activity involves marking a pattern’s outline on a workpiece."
+        }
+      ],
+      "reason": "The current title is too vague. Adding the workpiece context makes the physical task clear while retaining the original verb.",
+      "observations": [],
+      "status": "completed",
+      "rawOutput": "{\n  \"groups\": [\n    {\n      \"title\": \"Outline Patterns on Workpieces\",\n      \"descriptionNumbers\": [1],\n      \"reason\": \"Clarifies that the activity involves marking a pattern’s outline on a workpiece.\"\n    }\n  ],\n  \"reason\": \"The current title is too vague. Adding the workpiece context makes the physical task clear while retaining the original verb.\"\n}",
+      "requestedAt": "2026-09-14T23:57:35.722Z",
+      "attemptId": "3ec171217a82a8c24e720f5994aadbdf423ba25dc23d3e0083a617741b05470e",
+      "outputSha256": "4f46a7303f340915e263b05953690d5dba3451b636eb322b65b8ab873619f60b",
+      "completedAt": "2026-09-14T23:57:54.318Z",
+      "requestSha256": "61e8d9f775316aec1997e2f8f6cfbe8bd091400bdc551f9ca2085fdef763ca51",
+      "maximumOutputTokens": 12000
+    },
+    {
+      "id": "case-3",
+      "label": "title-03",
+      "title": "Document Alternative",
+      "semanticCaseId": "title-case-c70142f1053afe164197",
+      "occurrenceId": "atomic-4443f0439ebf52a58824",
+      "originalTitle": "Document Alternative",
+      "input": "Current title: Document Alternative\n\nO*NET descriptions:\n1. Research, document, rate, or select alternatives for Web architecture or technologies.\n\n2. Research, document, rate, or select alternatives for Web architecture or technologies.",
+      "inputSha256": "b641f277fddb9b58ef61d1fb9303761bb370041445999d4df8a8b43b5ae640f9",
+      "descriptions": [
+        {
+          "number": 1,
+          "text": "Research, document, rate, or select alternatives for Web architecture or technologies.",
+          "oNetId": "14727"
+        },
+        {
+          "number": 2,
+          "text": "Research, document, rate, or select alternatives for Web architecture or technologies.",
+          "oNetId": "21710"
+        }
+      ],
+      "occurrenceIds": [
+        "atomic-4443f0439ebf52a58824"
+      ],
+      "groups": [
+        {
+          "title": "Document Web Technology Alternatives",
+          "descriptionNumbers": [
+            1,
+            2
+          ],
+          "reason": "Clarifies that the alternatives being documented concern web architecture or technologies, while retaining the original verb."
+        }
+      ],
+      "reason": "The descriptions are identical and should remain grouped. The current title, 'Document Alternative,' is too vague about the alternatives being documented.",
+      "observations": [],
+      "status": "completed",
+      "rawOutput": "{\n  \"groups\": [\n    {\n      \"title\": \"Document Web Technology Alternatives\",\n      \"descriptionNumbers\": [1, 2],\n      \"reason\": \"Clarifies that the alternatives being documented concern web architecture or technologies, while retaining the original verb.\"\n    }\n  ],\n  \"reason\": \"The descriptions are identical and should remain grouped. The current title, 'Document Alternative,' is too vague about the alternatives being documented.\"\n}",
+      "requestedAt": "2026-09-14T23:57:53.867Z",
+      "attemptId": "4ca95b7a19ebcb5d95b434541a5c063768ee55838a5066d0a4be075f6d306d0e",
+      "outputSha256": "1a7231eb894d5010750bb4476717dfc54ee1b23f230e8203746d323cfa83c45d",
+      "completedAt": "2026-09-14T23:58:06.023Z",
+      "requestSha256": "64a7ed43c77944a46d4156614fba541f01d36efd619cdf548c8e631cb92b4fa2",
+      "maximumOutputTokens": 12000
+    },
+    {
+      "id": "case-4",
+      "label": "title-04",
+      "title": "Store Datum",
+      "semanticCaseId": "title-case-154ca2e4f2b603b710dd",
+      "occurrenceId": "atomic-5ea2fd867a90d0098f88",
+      "originalTitle": "Store Datum",
+      "input": "Current title: Store Datum\n\nO*NET descriptions:\n1. Compress, digitize, duplicate, and store audio and video data.\n\n2. Store, retrieve, and manipulate data for analysis of system capabilities and requirements.\n\n3. Store, retrieve, and manipulate data for analysis of system capabilities and requirements.\n\n4. Store, retrieve, and manipulate data for analysis of system capabilities and requirements.",
+      "inputSha256": "93147775f6937eecddb9dedd9df3e8a1ff8b97164d906b4e3a962648a98a7e46",
+      "descriptions": [
+        {
+          "number": 1,
+          "text": "Compress, digitize, duplicate, and store audio and video data.",
+          "oNetId": "3990"
+        },
+        {
+          "number": 2,
+          "text": "Store, retrieve, and manipulate data for analysis of system capabilities and requirements.",
+          "oNetId": "7401"
+        },
+        {
+          "number": 3,
+          "text": "Store, retrieve, and manipulate data for analysis of system capabilities and requirements.",
+          "oNetId": "21682"
+        },
+        {
+          "number": 4,
+          "text": "Store, retrieve, and manipulate data for analysis of system capabilities and requirements.",
+          "oNetId": "21676"
+        }
+      ],
+      "occurrenceIds": [
+        "atomic-5ea2fd867a90d0098f88"
+      ],
+      "groups": [
+        {
+          "title": "Store Data",
+          "descriptionNumbers": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "reason": "All descriptions involve storing data; differences in data format or intended use do not warrant separate categories."
+        }
+      ],
+      "reason": "The existing grouping is adequate, but the title should change. 'Store Data' preserves the initial verb and replaces the awkward singular 'Datum' with familiar wording that matches the descriptions.",
+      "observations": [],
+      "status": "completed",
+      "rawOutput": "{\n  \"groups\": [\n    {\n      \"title\": \"Store Data\",\n      \"descriptionNumbers\": [1, 2, 3, 4],\n      \"reason\": \"All descriptions involve storing data; differences in data format or intended use do not warrant separate categories.\"\n    }\n  ],\n  \"reason\": \"The existing grouping is adequate, but the title should change. 'Store Data' preserves the initial verb and replaces the awkward singular 'Datum' with familiar wording that matches the descriptions.\"\n}",
+      "requestedAt": "2026-09-14T23:57:55.428Z",
+      "attemptId": "fcf8757b9a686fc1ac2b0e14cbead1f9bde71dfdf400bd8c6e71aa26c3d8db81",
+      "outputSha256": "5efdb3f90950009be61df09c92bce87a7d1bad8d565793059ce2771506c3b87f",
+      "completedAt": "2026-09-14T23:58:08.651Z",
+      "requestSha256": "00a23e22b778142da2e3e2191e6b9417b15e72aca275acefd65b516acd9b4e43",
+      "maximumOutputTokens": 12000
+    },
+    {
+      "id": "case-5",
+      "label": "title-05",
+      "title": "Measure Equipment",
+      "semanticCaseId": "title-case-2039e7b844ba7958cfb3",
+      "occurrenceId": "atomic-2859d08d7545509478a7",
+      "originalTitle": "Measure Equipment (Synonyms: Evaluate Equipment)",
+      "input": "Current title: Measure Equipment\n\nO*NET descriptions:\n1. Weigh or measure materials, equipment, or products to maintain relevant records, using volume meters, scales, rules, or calipers.\n\n2. Measure and mark equipment, objects, or parts to ensure grinding and polishing standards are met.\n\n3. Inspect or evaluate workplace environments, equipment, or practices to ensure compliance with safety standards and government regulations.\n\n4. Evaluate new supplies and equipment to ensure operability in specific laboratory settings.\n\n5. Evaluate chemical equipment and processes to identify ways to optimize performance or to ensure compliance with safety and environmental regulations.\n\n6. Test, evaluate, and classify excess or in-use medical equipment and determine serviceability, condition, and disposition, in accordance with regulations.\n\n7. Evaluate the safety, efficiency, and effectiveness of biomedical equipment.",
+      "inputSha256": "ee7244a0a689763e8dc8eae8104e2636b2a4d881b26152b4028b28a781cbe4f8",
+      "descriptions": [
+        {
+          "number": 1,
+          "text": "Weigh or measure materials, equipment, or products to maintain relevant records, using volume meters, scales, rules, or calipers.",
+          "oNetId": "11383"
+        },
+        {
+          "number": 2,
+          "text": "Measure and mark equipment, objects, or parts to ensure grinding and polishing standards are met.",
+          "oNetId": "14333"
+        },
+        {
+          "number": 3,
+          "text": "Inspect or evaluate workplace environments, equipment, or practices to ensure compliance with safety standards and government regulations.",
+          "oNetId": "11067"
+        },
+        {
+          "number": 4,
+          "text": "Evaluate new supplies and equipment to ensure operability in specific laboratory settings.",
+          "oNetId": "16798"
+        },
+        {
+          "number": 5,
+          "text": "Evaluate chemical equipment and processes to identify ways to optimize performance or to ensure compliance with safety and environmental regulations.",
+          "oNetId": "18472"
+        },
+        {
+          "number": 6,
+          "text": "Test, evaluate, and classify excess or in-use medical equipment and determine serviceability, condition, and disposition, in accordance with regulations.",
+          "oNetId": "3071"
+        },
+        {
+          "number": 7,
+          "text": "Evaluate the safety, efficiency, and effectiveness of biomedical equipment.",
+          "oNetId": "8968"
+        }
+      ],
+      "occurrenceIds": [
+        "atomic-2859d08d7545509478a7",
+        "atomic-daa5e8ca44125e770b90"
+      ],
+      "groups": [
+        {
+          "title": "Measure Equipment",
+          "descriptionNumbers": [
+            1,
+            2
+          ],
+          "reason": "The current title is adequate: both descriptions involve physically measuring equipment for recordkeeping or to meet finishing standards."
+        },
+        {
+          "title": "Measure Equipment Safety and Performance",
+          "descriptionNumbers": [
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "reason": "These evaluate equipment safety, compliance, operability, or serviceability rather than physical dimensions. The title clarifies this evaluative focus while preserving 'Measure' as required, although the source verb is 'evaluate'."
+        }
+      ],
+      "reason": "Restructure into physical measurement and equipment evaluation. The original title remains adequate for descriptions 1–2, whose distinct activity justifies a group smaller than the recommended 5–9 descriptions.",
+      "observations": [
+        "“Measure Equipment” has 2 descriptions. Review its reason for being outside the approximate 5–9 target."
+      ],
+      "status": "completed",
+      "rawOutput": "{\n  \"groups\": [\n    {\n      \"title\": \"Measure Equipment\",\n      \"descriptionNumbers\": [1, 2],\n      \"reason\": \"The current title is adequate: both descriptions involve physically measuring equipment for recordkeeping or to meet finishing standards.\"\n    },\n    {\n      \"title\": \"Measure Equipment Safety and Performance\",\n      \"descriptionNumbers\": [3, 4, 5, 6, 7],\n      \"reason\": \"These evaluate equipment safety, compliance, operability, or serviceability rather than physical dimensions. The title clarifies this evaluative focus while preserving 'Measure' as required, although the source verb is 'evaluate'.\"\n    }\n  ],\n  \"reason\": \"Restructure into physical measurement and equipment evaluation. The original title remains adequate for descriptions 1–2, whose distinct activity justifies a group smaller than the recommended 5–9 descriptions.\"\n}",
+      "requestedAt": "2026-09-14T23:58:07.821Z",
+      "attemptId": "00d5c26be8c718c147ced987db49b393a252a35390b7e9a8cea6b585684d6004",
+      "outputSha256": "ce5904f66d86d5f9fc0732fbc3fc69cfd6e3b94dcfd2adf49263f45f50f6600e",
+      "completedAt": "2026-09-14T23:59:01.977Z",
+      "requestSha256": "d4164070a1e296047e8a5f5d1f1b51403e48126ddb7c5773fa045f6586d57c26",
+      "maximumOutputTokens": 12000
+    },
+    {
+      "id": "case-6",
+      "label": "title-06",
+      "title": "Negotiate Contract",
+      "semanticCaseId": "title-case-5cb0a916da9f065a9954",
+      "occurrenceId": "atomic-a54b49bd2d355cd32613",
+      "originalTitle": "Negotiate Contract",
+      "input": "Current title: Negotiate Contract\n\nO*NET descriptions:\n1. Negotiate contracts with clients for desired training outcomes, fees, or expenses.\n\n2. Negotiate, renegotiate, and administer contracts with suppliers, vendors, and other representatives.\n\n3. Negotiate contracts with such service providers and suppliers as hotels, convention centers, and speakers.\n\n4. Negotiate contracts with farmers for the production or purchase of farm products.\n\n5. Review, negotiate, or approve wind farm contracts.\n\n6. Negotiate contracts for services or materials needed for environmental remediation.\n\n7. Negotiate contracts with waste management or other firms.\n\n8. Interview and hire writers and reporters or negotiate contracts, royalties, and payments for authors or freelancers.\n\n9. Negotiate contracts for prearranged funeral services.\n\n10. Negotiate details of contracts and payments.\n\n11. Negotiate with contractors on prices for new contracts or modifications to existing contracts.\n\n12. Evaluate vendor products and performance, negotiate contracts, and place orders.\n\n13. Hold auditions for parts or negotiate contracts with actors determined suitable for specific roles.\n\n14. Negotiate prices or contracts for securities or commodities sales or purchases.\n\n15. Prepare and negotiate advertising and sales contracts.\n\n16. Negotiate contracts or agreements.\n\n17. Negotiate contracts for transportation, distribution, or logistics services.\n\n18. Negotiate purchases or contracts.\n\n19. Negotiate contracts for environmental remediation, green energy, or renewable resources.\n\n20. Negotiate contracts with clients or service providers.\n\n21. Negotiate or approve contracts or agreements with suppliers, distributors, federal or state agencies, or other organizational entities.\n\n22. Negotiate contracts with vendors or distributors to manage product distribution, establishing distribution networks or developing distribution strategies.",
+      "inputSha256": "deda2a8283f3d3423abe8eee1027408bae3536100bf33550a9dcb189c42c52a6",
+      "descriptions": [
+        {
+          "number": 1,
+          "text": "Negotiate contracts with clients for desired training outcomes, fees, or expenses.",
+          "oNetId": "108"
+        },
+        {
+          "number": 2,
+          "text": "Negotiate, renegotiate, and administer contracts with suppliers, vendors, and other representatives.",
+          "oNetId": "1147"
+        },
+        {
+          "number": 3,
+          "text": "Negotiate contracts with such service providers and suppliers as hotels, convention centers, and speakers.",
+          "oNetId": "1219"
+        },
+        {
+          "number": 4,
+          "text": "Negotiate contracts with farmers for the production or purchase of farm products.",
+          "oNetId": "12879"
+        },
+        {
+          "number": 5,
+          "text": "Review, negotiate, or approve wind farm contracts.",
+          "oNetId": "15814"
+        },
+        {
+          "number": 6,
+          "text": "Negotiate contracts for services or materials needed for environmental remediation.",
+          "oNetId": "15844"
+        },
+        {
+          "number": 7,
+          "text": "Negotiate contracts with waste management or other firms.",
+          "oNetId": "17899"
+        },
+        {
+          "number": 8,
+          "text": "Interview and hire writers and reporters or negotiate contracts, royalties, and payments for authors or freelancers.",
+          "oNetId": "1792"
+        },
+        {
+          "number": 9,
+          "text": "Negotiate contracts for prearranged funeral services.",
+          "oNetId": "18836"
+        },
+        {
+          "number": 10,
+          "text": "Negotiate details of contracts and payments.",
+          "oNetId": "20268"
+        },
+        {
+          "number": 11,
+          "text": "Negotiate with contractors on prices for new contracts or modifications to existing contracts.",
+          "oNetId": "20966"
+        },
+        {
+          "number": 12,
+          "text": "Evaluate vendor products and performance, negotiate contracts, and place orders.",
+          "oNetId": "22429"
+        },
+        {
+          "number": 13,
+          "text": "Hold auditions for parts or negotiate contracts with actors determined suitable for specific roles.",
+          "oNetId": "22542"
+        },
+        {
+          "number": 14,
+          "text": "Negotiate prices or contracts for securities or commodities sales or purchases.",
+          "oNetId": "23218"
+        },
+        {
+          "number": 15,
+          "text": "Prepare and negotiate advertising and sales contracts.",
+          "oNetId": "3228"
+        },
+        {
+          "number": 16,
+          "text": "Negotiate contracts or agreements.",
+          "oNetId": "4.A.4.a.7.I02"
+        },
+        {
+          "number": 17,
+          "text": "Negotiate contracts for transportation, distribution, or logistics services.",
+          "oNetId": "4.A.4.a.7.I02.D04"
+        },
+        {
+          "number": 18,
+          "text": "Negotiate purchases or contracts.",
+          "oNetId": "4.A.4.a.7.I02.D05"
+        },
+        {
+          "number": 19,
+          "text": "Negotiate contracts for environmental remediation, green energy, or renewable resources.",
+          "oNetId": "4.A.4.a.7.I02.D08"
+        },
+        {
+          "number": 20,
+          "text": "Negotiate contracts with clients or service providers.",
+          "oNetId": "4.A.4.a.7.I02.D10"
+        },
+        {
+          "number": 21,
+          "text": "Negotiate or approve contracts or agreements with suppliers, distributors, federal or state agencies, or other organizational entities.",
+          "oNetId": "8829"
+        },
+        {
+          "number": 22,
+          "text": "Negotiate contracts with vendors or distributors to manage product distribution, establishing distribution networks or developing distribution strategies.",
+          "oNetId": "955"
+        }
+      ],
+      "occurrenceIds": [
+        "atomic-a54b49bd2d355cd32613",
+        "atomic-96c0811b47ba95f7fb4b"
+      ],
+      "groups": [
+        {
+          "title": "Negotiate Contract",
+          "descriptionNumbers": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22
+          ],
+          "reason": "All descriptions involve negotiating contracts or their terms. Differences in industry, counterparties, and additional duties do not change the core activity."
+        }
+      ],
+      "reason": "The existing grouping and title are adequate. The title clearly identifies the shared activity, and splitting the descriptions by industry or contract purpose would unnecessarily fragment it.",
+      "observations": [],
+      "status": "completed",
+      "rawOutput": "{\n  \"groups\": [\n    {\n      \"title\": \"Negotiate Contract\",\n      \"descriptionNumbers\": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22],\n      \"reason\": \"All descriptions involve negotiating contracts or their terms. Differences in industry, counterparties, and additional duties do not change the core activity.\"\n    }\n  ],\n  \"reason\": \"The existing grouping and title are adequate. The title clearly identifies the shared activity, and splitting the descriptions by industry or contract purpose would unnecessarily fragment it.\"\n}",
+      "requestedAt": "2026-09-14T23:58:09.900Z",
+      "attemptId": "cb680a22b415e36741e355aaef40a81d02bfe16cc2be5977c8ccb8314364c031",
+      "outputSha256": "6b2c963d3b0a2d6702397a1e0d6f951e4568774ad25ebdd973c30bfc11bd8aa9",
+      "completedAt": "2026-09-14T23:58:32.542Z",
+      "requestSha256": "47e0ae45ab576ea14e7d5e7f0b8f620819418d92f74346bfafa517b4a58a68b2",
+      "maximumOutputTokens": 12000
+    },
+    {
+      "id": "case-7",
+      "label": "title-07",
+      "title": "Batch Ticket",
+      "semanticCaseId": "title-case-a05387b4dfa33d9f5058",
+      "occurrenceId": "atomic-1aa2c1f7abf6cf574efd",
+      "originalTitle": "Batch Ticket",
+      "input": "Current title: Batch Ticket\n\nO*NET descriptions:\n1. Inspect bundle packaging for conformance to regulations or customer requirements, and remove and batch packaging tickets.",
+      "inputSha256": "54e4a6c96d2b81d00d96e2284215e7003f77f377488557cfa674161914a38c7e",
+      "descriptions": [
+        {
+          "number": 1,
+          "text": "Inspect bundle packaging for conformance to regulations or customer requirements, and remove and batch packaging tickets.",
+          "oNetId": "10777"
+        }
+      ],
+      "occurrenceIds": [
+        "atomic-bd88ab864593bbf0f161",
+        "atomic-1aa2c1f7abf6cf574efd",
+        "atomic-a626f38694cf0ff19680"
+      ],
+      "groups": [
+        {
+          "title": "Batch Packaging Tickets",
+          "descriptionNumbers": [
+            1
+          ],
+          "reason": "Identifies packaging tickets as the items being grouped into batches while preserving the original verb."
+        }
+      ],
+      "reason": "The current title should be changed because it leaves the ticket type unspecified and can be mistaken for a document name rather than an activity.",
+      "observations": [],
+      "status": "completed",
+      "rawOutput": "{\n  \"groups\": [\n    {\n      \"title\": \"Batch Packaging Tickets\",\n      \"descriptionNumbers\": [1],\n      \"reason\": \"Identifies packaging tickets as the items being grouped into batches while preserving the original verb.\"\n    }\n  ],\n  \"reason\": \"The current title should be changed because it leaves the ticket type unspecified and can be mistaken for a document name rather than an activity.\"\n}",
+      "requestedAt": "2026-09-14T23:58:33.831Z",
+      "attemptId": "dd9e4427d39345741f8c58f4fd288bf1a87f5e05456fca6ed379c1d5064d8ea7",
+      "outputSha256": "795c8d627e189ffeb0e4b9d7d4390bdb0f6c93653f913b22e394c5158952d8c3",
+      "completedAt": "2026-09-14T23:58:47.378Z",
+      "requestSha256": "873662b8c408cf8d93be116e2960be13383e10530ad9406887b5fd2b96de2a3b",
+      "maximumOutputTokens": 12000
+    },
+    {
+      "id": "case-8",
+      "label": "title-08",
+      "title": "Use Staple",
+      "semanticCaseId": "title-case-31be9445c543950c4bf3",
+      "occurrenceId": "atomic-2ab12fbc2f7fd9dfa849",
+      "originalTitle": "Use Staple",
+      "input": "Current title: Use Staple\n\nO*NET descriptions:\n1. Stretch carpet to align with walls and ensure a smooth surface, and press carpet in place over tack strips or use staples, tape, tacks or glue to hold carpet in place.",
+      "inputSha256": "4db585aba8f15a411784db60e432eaa270f4b275f87ad63d3e6a124aafee581d",
+      "descriptions": [
+        {
+          "number": 1,
+          "text": "Stretch carpet to align with walls and ensure a smooth surface, and press carpet in place over tack strips or use staples, tape, tacks or glue to hold carpet in place.",
+          "oNetId": "2838"
+        }
+      ],
+      "occurrenceIds": [
+        "atomic-2ab12fbc2f7fd9dfa849"
+      ],
+      "groups": [
+        {
+          "title": "Use Carpet Staples",
+          "descriptionNumbers": [
+            1
+          ],
+          "reason": "Clarifies that staples are used to hold carpet in place while retaining the original verb."
+        }
+      ],
+      "reason": "The current title, 'Use Staple,' is vague and unidiomatic. It should be changed to identify the carpet-installation context.",
+      "observations": [],
+      "status": "completed",
+      "rawOutput": "{\n  \"groups\": [\n    {\n      \"title\": \"Use Carpet Staples\",\n      \"descriptionNumbers\": [1],\n      \"reason\": \"Clarifies that staples are used to hold carpet in place while retaining the original verb.\"\n    }\n  ],\n  \"reason\": \"The current title, 'Use Staple,' is vague and unidiomatic. It should be changed to identify the carpet-installation context.\"\n}",
+      "requestedAt": "2026-09-14T23:58:48.253Z",
+      "attemptId": "3b8025ec3727a282fb523514c6502eefbd90dfec9407dcfc01c282cacfb6f8b4",
+      "outputSha256": "80ea26631a8bb93ced1c52776396cc901266f981e2ff8d7e324c6cde69c6e11d",
+      "completedAt": "2026-09-14T23:59:03.459Z",
+      "requestSha256": "58aaa9fda1d013bc0b5f7c552ff0aac6dab612b6b639ea85737be328e9e66eba",
+      "maximumOutputTokens": 12000
+    },
+    {
+      "id": "case-9",
+      "label": "title-09",
+      "title": "Gather Material",
+      "semanticCaseId": "title-case-82efde4d76b97eed3b8f",
+      "occurrenceId": "atomic-558870e7f22980d10ae7",
+      "originalTitle": "Gather Material",
+      "input": "Current title: Gather Material\n\nO*NET descriptions:\n1. Advance machines to gather material and convey it into cars.\n\n2. Gather materials to be filed from departments or employees.\n\n3. Gather all relevant material for bid processes, and coordinate bidding and contract approval.\n\n4. Gather, register, and arrange the material to be typed, following instructions.",
+      "inputSha256": "4ec5d5565ad967315b234348558941767d28f5c81f248874e82377060f1f13f7",
+      "descriptions": [
+        {
+          "number": 1,
+          "text": "Advance machines to gather material and convey it into cars.",
+          "oNetId": "15191"
+        },
+        {
+          "number": 2,
+          "text": "Gather materials to be filed from departments or employees.",
+          "oNetId": "2596"
+        },
+        {
+          "number": 3,
+          "text": "Gather all relevant material for bid processes, and coordinate bidding and contract approval.",
+          "oNetId": "4596"
+        },
+        {
+          "number": 4,
+          "text": "Gather, register, and arrange the material to be typed, following instructions.",
+          "oNetId": "792"
+        }
+      ],
+      "occurrenceIds": [
+        "atomic-558870e7f22980d10ae7",
+        "atomic-2cac1531f241bb9112cf",
+        "atomic-fd88fababa33cf427481"
+      ],
+      "groups": [
+        {
+          "title": "Gather Material",
+          "descriptionNumbers": [
+            1
+          ],
+          "reason": "The current title is adequate for the literal, machine-assisted collection of physical material."
+        },
+        {
+          "title": "Gather Documents",
+          "descriptionNumbers": [
+            2,
+            3,
+            4
+          ],
+          "reason": "These descriptions involve collecting documentary materials for filing, bidding, or typing. Their subsequent uses differ, but the gathering activity is similar."
+        }
+      ],
+      "reason": "Restructure to distinguish physical material collection from document gathering. This substantive difference and the four-description input justify groups smaller than five.",
+      "observations": [
+        "“Gather Material” has 1 description. Review its reason for being outside the approximate 5–9 target.",
+        "“Gather Documents” has 3 descriptions. Review its reason for being outside the approximate 5–9 target."
+      ],
+      "status": "completed",
+      "rawOutput": "{\n  \"groups\": [\n    {\n      \"title\": \"Gather Material\",\n      \"descriptionNumbers\": [1],\n      \"reason\": \"The current title is adequate for the literal, machine-assisted collection of physical material.\"\n    },\n    {\n      \"title\": \"Gather Documents\",\n      \"descriptionNumbers\": [2, 3, 4],\n      \"reason\": \"These descriptions involve collecting documentary materials for filing, bidding, or typing. Their subsequent uses differ, but the gathering activity is similar.\"\n    }\n  ],\n  \"reason\": \"Restructure to distinguish physical material collection from document gathering. This substantive difference and the four-description input justify groups smaller than five.\"\n}",
+      "requestedAt": "2026-09-14T23:59:03.026Z",
+      "attemptId": "e5a28c3119b8e1f21cbe38182d35df2bcc5b560bdcbd16836cfe7479f53ae5ad",
+      "outputSha256": "a398b65030727a536ed295e25af824b817098197724f33e417395832008dddd0",
+      "completedAt": "2026-09-14T23:59:53.291Z",
+      "requestSha256": "4118b91489d9cfea6cf40052198a1a5520bfebf6045315effc0dda5793b82236",
+      "maximumOutputTokens": 12000
+    },
+    {
+      "id": "case-10",
+      "label": "title-10",
+      "title": "Create Print",
+      "semanticCaseId": "title-case-0c2d49dc23308c3cdbc1",
+      "occurrenceId": "atomic-1aa7265cee80ea6c10a6",
+      "originalTitle": "Create Print (Synonyms: Produce Print)",
+      "input": "Current title: Create Print\n\nO*NET descriptions:\n1. Create prints according to customer specifications and laboratory protocols.\n\n2. Produce timed prints with separate densities or color settings for each scene of a production.",
+      "inputSha256": "016723334fa51b32b2b74a45bbdd4639bf65d5dba502a87f445785967127f9d4",
+      "descriptions": [
+        {
+          "number": 1,
+          "text": "Create prints according to customer specifications and laboratory protocols.",
+          "oNetId": "19465"
+        },
+        {
+          "number": 2,
+          "text": "Produce timed prints with separate densities or color settings for each scene of a production.",
+          "oNetId": "19496"
+        }
+      ],
+      "occurrenceIds": [
+        "atomic-1aa7265cee80ea6c10a6"
+      ],
+      "groups": [
+        {
+          "title": "Create Photographic Prints",
+          "descriptionNumbers": [
+            1,
+            2
+          ],
+          "reason": "Both describe producing photographic prints to specified requirements, including scene-specific density or color settings for film prints."
+        }
+      ],
+      "reason": "The existing grouping is adequate, but 'Create Print' leaves the type of print unclear. The revised title identifies the shared photographic activity while retaining 'Create'.",
+      "observations": [],
+      "status": "completed",
+      "rawOutput": "{\n  \"groups\": [\n    {\n      \"title\": \"Create Photographic Prints\",\n      \"descriptionNumbers\": [1, 2],\n      \"reason\": \"Both describe producing photographic prints to specified requirements, including scene-specific density or color settings for film prints.\"\n    }\n  ],\n  \"reason\": \"The existing grouping is adequate, but 'Create Print' leaves the type of print unclear. The revised title identifies the shared photographic activity while retaining 'Create'.\"\n}",
+      "requestedAt": "2026-09-14T23:59:04.443Z",
+      "attemptId": "72efe425b3c12bf4c2935b7959f68a8dcde35ec147dda634e03e2ea726842818",
+      "outputSha256": "50d24559ed217239e4d872a59329e1533427e11670ff40b2806a73b8465dd872",
+      "completedAt": "2026-09-14T23:59:30.224Z",
+      "requestSha256": "dd67efb15a712a40e1a07d691d9fce716428ab167e60cfe756727099060c1a0e",
+      "maximumOutputTokens": 12000
+    },
+    {
+      "id": "case-11",
+      "label": "title-11",
+      "title": "Collect Specimen",
+      "semanticCaseId": "title-case-d565b3ff02f546db26df",
+      "occurrenceId": "atomic-4d2739c0803c967e2c1d",
+      "originalTitle": "Collect Specimen",
+      "input": "Current title: Collect Specimen\n\nO*NET descriptions:\n1. Collect and dissect animal specimens and examine specimens under microscope.\n\n2. Collect samples or specimens for diagnostic testing.\n\n3. Collect specimens for use in laboratory tests.\n\n4. Collect specimens from patients, using standard medical procedures.\n\n5. Collect specimens for laboratory tests.\n\n6. Collect specimens, such as urine, feces, or sputum.\n\n7. Collect specimens at specific time intervals for tests, such as those assessing therapeutic drug levels.\n\n8. Collect blood, tissue, or other laboratory specimens, log the specimens, and prepare them for testing.\n\n9. Collect biological specimens from patients.\n\n10. Collect biological specimens.\n\n11. Collect laboratory specimens, such as blood, urine, or feces, for testing.",
+      "inputSha256": "71b3482dc2a70676a2ae34d9f703a1d12f484b766118716a535d6fb47abb779f",
+      "descriptions": [
+        {
+          "number": 1,
+          "text": "Collect and dissect animal specimens and examine specimens under microscope.",
+          "oNetId": "1504"
+        },
+        {
+          "number": 2,
+          "text": "Collect samples or specimens for diagnostic testing.",
+          "oNetId": "17298"
+        },
+        {
+          "number": 3,
+          "text": "Collect specimens for use in laboratory tests.",
+          "oNetId": "17471"
+        },
+        {
+          "number": 4,
+          "text": "Collect specimens from patients, using standard medical procedures.",
+          "oNetId": "17527"
+        },
+        {
+          "number": 5,
+          "text": "Collect specimens for laboratory tests.",
+          "oNetId": "18338"
+        },
+        {
+          "number": 6,
+          "text": "Collect specimens, such as urine, feces, or sputum.",
+          "oNetId": "19322"
+        },
+        {
+          "number": 7,
+          "text": "Collect specimens at specific time intervals for tests, such as those assessing therapeutic drug levels.",
+          "oNetId": "19385"
+        },
+        {
+          "number": 8,
+          "text": "Collect blood, tissue, or other laboratory specimens, log the specimens, and prepare them for testing.",
+          "oNetId": "2028"
+        },
+        {
+          "number": 9,
+          "text": "Collect biological specimens from patients.",
+          "oNetId": "4.A.3.a.2.I38.D01"
+        },
+        {
+          "number": 10,
+          "text": "Collect biological specimens.",
+          "oNetId": "4.A.3.a.2.I38.D02"
+        },
+        {
+          "number": 11,
+          "text": "Collect laboratory specimens, such as blood, urine, or feces, for testing.",
+          "oNetId": "4315"
+        }
+      ],
+      "occurrenceIds": [
+        "atomic-4d2739c0803c967e2c1d",
+        "atomic-aa98a3022453f589d928",
+        "atomic-4c9079124bbae19b7d69"
+      ],
+      "groups": [
+        {
+          "title": "Collect Specimen",
+          "descriptionNumbers": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11
+          ],
+          "reason": "All describe collecting biological specimens. Differences in specimen type, source, timing, or subsequent handling do not change the core collection activity."
+        }
+      ],
+      "reason": "The existing grouping and title are adequate. Animal and patient specimens fit the same understandable category; additional actions such as dissection, logging, and preparation do not require changing this title.",
+      "observations": [],
+      "status": "completed",
+      "rawOutput": "{\n  \"groups\": [\n    {\n      \"title\": \"Collect Specimen\",\n      \"descriptionNumbers\": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],\n      \"reason\": \"All describe collecting biological specimens. Differences in specimen type, source, timing, or subsequent handling do not change the core collection activity.\"\n    }\n  ],\n  \"reason\": \"The existing grouping and title are adequate. Animal and patient specimens fit the same understandable category; additional actions such as dissection, logging, and preparation do not require changing this title.\"\n}",
+      "requestedAt": "2026-09-14T23:59:31.373Z",
+      "attemptId": "91661f43717b665341dc19fb166d75d7f23ca98e30c0f6159184fec499226372",
+      "outputSha256": "3b29851625f6fcfb108c1a3d082a104e40a9f1b4320b187e2ff15143d58303da",
+      "completedAt": "2026-09-15T00:00:06.587Z",
+      "requestSha256": "a6db5ce3590c176926a6b939c4c3b8862f3430dee7dcb615fd0835742e72177e",
+      "maximumOutputTokens": 12000
+    },
+    {
+      "id": "case-12",
+      "label": "title-12",
+      "title": "Acquire Supply",
+      "semanticCaseId": "title-case-68c2e3e26198778ef74f",
+      "occurrenceId": "atomic-a0fd3579dc4aa2b564c3",
+      "originalTitle": "Acquire Supply (Synonyms: Obtain Supply)",
+      "input": "Current title: Acquire Supply\n\nO*NET descriptions:\n1. Acquire books, pamphlets, periodicals, audio-visual materials, and other library supplies by checking prices, figuring costs, and preparing appropriate order forms and facilitating the ordering process by providing such information to others.\n\n2. Acquire, distribute and store supplies.\n\n3. Acquire, distribute and store supplies.\n\n4. Acquire supplies or equipment.\n\n5. Perform a variety of duties as requested by client, such as obtaining household supplies or running errands.\n\n6. Select and obtain materials and supplies, such as textbooks.\n\n7. Select and obtain materials and supplies, such as textbooks.\n\n8. Select and obtain materials and supplies, such as textbooks.\n\n9. Select and obtain materials and supplies, such as textbooks.\n\n10. Select and obtain materials and supplies, such as textbooks.\n\n11. Select and obtain materials and supplies, such as textbooks.\n\n12. Select and obtain materials and supplies, such as textbooks.\n\n13. Select and obtain materials and supplies, such as textbooks.\n\n14. Select and obtain materials and supplies, such as textbooks.\n\n15. Select and obtain materials and supplies, such as textbooks.\n\n16. Select and obtain materials and supplies, such as textbooks.\n\n17. Select and obtain materials and supplies, such as textbooks.\n\n18. Select and obtain materials and supplies, such as textbooks.\n\n19. Select and obtain materials and supplies, such as textbooks.\n\n20. Select and obtain materials and supplies, such as textbooks.\n\n21. Select and obtain materials and supplies, such as textbooks.\n\n22. Select and obtain materials and supplies, such as textbooks.\n\n23. Select and obtain materials and supplies, such as textbooks.\n\n24. Select and obtain materials and supplies, such as textbooks and laboratory equipment.\n\n25. Select and obtain materials and supplies, such as textbooks and laboratory equipment.\n\n26. Select and obtain materials and supplies, such as textbooks and laboratory equipment.\n\n27. Select and obtain materials and supplies, such as textbooks and laboratory equipment.\n\n28. Select and obtain materials and supplies, such as textbooks and laboratory equipment.\n\n29. Select and obtain materials and supplies, such as textbooks and laboratory equipment.\n\n30. Select and obtain materials and supplies, such as textbooks and laboratory equipment.\n\n31. Select and obtain materials and supplies, such as textbooks and laboratory equipment.\n\n32. Select and obtain materials and supplies, such as textbooks and laboratory equipment.\n\n33. Select and obtain materials and supplies, such as textbooks and laboratory equipment.\n\n34. Select and obtain materials and supplies, such as textbooks and laboratory equipment.\n\n35. Select and obtain materials and supplies, such as textbooks and laboratory equipment.\n\n36. Select and obtain materials and supplies, such as textbooks and laboratory equipment.\n\n37. Select and obtain materials and supplies, such as textbooks or laboratory equipment.\n\n38. Select and obtain materials and supplies, such as textbooks and performance pieces.",
+      "inputSha256": "266ad11caccdc1f50d873697e62af06bf0c0599d4777ff6dcab536814d4e538c",
+      "descriptions": [
+        {
+          "number": 1,
+          "text": "Acquire books, pamphlets, periodicals, audio-visual materials, and other library supplies by checking prices, figuring costs, and preparing appropriate order forms and facilitating the ordering process by providing such information to others.",
+          "oNetId": "18777"
+        },
+        {
+          "number": 2,
+          "text": "Acquire, distribute and store supplies.",
+          "oNetId": "23"
+        },
+        {
+          "number": 3,
+          "text": "Acquire, distribute and store supplies.",
+          "oNetId": "21272"
+        },
+        {
+          "number": 4,
+          "text": "Acquire supplies or equipment.",
+          "oNetId": "4.A.4.c.3.I05.D08"
+        },
+        {
+          "number": 5,
+          "text": "Perform a variety of duties as requested by client, such as obtaining household supplies or running errands.",
+          "oNetId": "4249"
+        },
+        {
+          "number": 6,
+          "text": "Select and obtain materials and supplies, such as textbooks.",
+          "oNetId": "5672"
+        },
+        {
+          "number": 7,
+          "text": "Select and obtain materials and supplies, such as textbooks.",
+          "oNetId": "5992"
+        },
+        {
+          "number": 8,
+          "text": "Select and obtain materials and supplies, such as textbooks.",
+          "oNetId": "6319"
+        },
+        {
+          "number": 9,
+          "text": "Select and obtain materials and supplies, such as textbooks.",
+          "oNetId": "6065"
+        },
+        {
+          "number": 10,
+          "text": "Select and obtain materials and supplies, such as textbooks.",
+          "oNetId": "6342"
+        },
+        {
+          "number": 11,
+          "text": "Select and obtain materials and supplies, such as textbooks.",
+          "oNetId": "6203"
+        },
+        {
+          "number": 12,
+          "text": "Select and obtain materials and supplies, such as textbooks.",
+          "oNetId": "6411"
+        },
+        {
+          "number": 13,
+          "text": "Select and obtain materials and supplies, such as textbooks.",
+          "oNetId": "6161"
+        },
+        {
+          "number": 14,
+          "text": "Select and obtain materials and supplies, such as textbooks.",
+          "oNetId": "6366"
+        },
+        {
+          "number": 15,
+          "text": "Select and obtain materials and supplies, such as textbooks.",
+          "oNetId": "6019"
+        },
+        {
+          "number": 16,
+          "text": "Select and obtain materials and supplies, such as textbooks.",
+          "oNetId": "6299"
+        },
+        {
+          "number": 17,
+          "text": "Select and obtain materials and supplies, such as textbooks.",
+          "oNetId": "6185"
+        },
+        {
+          "number": 18,
+          "text": "Select and obtain materials and supplies, such as textbooks.",
+          "oNetId": "6387"
+        },
+        {
+          "number": 19,
+          "text": "Select and obtain materials and supplies, such as textbooks.",
+          "oNetId": "6434"
+        },
+        {
+          "number": 20,
+          "text": "Select and obtain materials and supplies, such as textbooks.",
+          "oNetId": "5974"
+        },
+        {
+          "number": 21,
+          "text": "Select and obtain materials and supplies, such as textbooks.",
+          "oNetId": "6226"
+        },
+        {
+          "number": 22,
+          "text": "Select and obtain materials and supplies, such as textbooks.",
+          "oNetId": "5717"
+        },
+        {
+          "number": 23,
+          "text": "Select and obtain materials and supplies, such as textbooks.",
+          "oNetId": "6041"
+        },
+        {
+          "number": 24,
+          "text": "Select and obtain materials and supplies, such as textbooks and laboratory equipment.",
+          "oNetId": "5695"
+        },
+        {
+          "number": 25,
+          "text": "Select and obtain materials and supplies, such as textbooks and laboratory equipment.",
+          "oNetId": "6088"
+        },
+        {
+          "number": 26,
+          "text": "Select and obtain materials and supplies, such as textbooks and laboratory equipment.",
+          "oNetId": "5905"
+        },
+        {
+          "number": 27,
+          "text": "Select and obtain materials and supplies, such as textbooks and laboratory equipment.",
+          "oNetId": "5837"
+        },
+        {
+          "number": 28,
+          "text": "Select and obtain materials and supplies, such as textbooks and laboratory equipment.",
+          "oNetId": "5955"
+        },
+        {
+          "number": 29,
+          "text": "Select and obtain materials and supplies, such as textbooks and laboratory equipment.",
+          "oNetId": "5811"
+        },
+        {
+          "number": 30,
+          "text": "Select and obtain materials and supplies, such as textbooks and laboratory equipment.",
+          "oNetId": "6116"
+        },
+        {
+          "number": 31,
+          "text": "Select and obtain materials and supplies, such as textbooks and laboratory equipment.",
+          "oNetId": "5768"
+        },
+        {
+          "number": 32,
+          "text": "Select and obtain materials and supplies, such as textbooks and laboratory equipment.",
+          "oNetId": "5792"
+        },
+        {
+          "number": 33,
+          "text": "Select and obtain materials and supplies, such as textbooks and laboratory equipment.",
+          "oNetId": "5862"
+        },
+        {
+          "number": 34,
+          "text": "Select and obtain materials and supplies, such as textbooks and laboratory equipment.",
+          "oNetId": "6141"
+        },
+        {
+          "number": 35,
+          "text": "Select and obtain materials and supplies, such as textbooks and laboratory equipment.",
+          "oNetId": "5928"
+        },
+        {
+          "number": 36,
+          "text": "Select and obtain materials and supplies, such as textbooks and laboratory equipment.",
+          "oNetId": "5747"
+        },
+        {
+          "number": 37,
+          "text": "Select and obtain materials and supplies, such as textbooks or laboratory equipment.",
+          "oNetId": "6256"
+        },
+        {
+          "number": 38,
+          "text": "Select and obtain materials and supplies, such as textbooks and performance pieces.",
+          "oNetId": "6277"
+        }
+      ],
+      "occurrenceIds": [
+        "atomic-a0fd3579dc4aa2b564c3",
+        "atomic-cdfc38f01338ba5d67d1"
+      ],
+      "groups": [
+        {
+          "title": "Acquire Supplies",
+          "descriptionNumbers": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27,
+            28,
+            29,
+            30,
+            31,
+            32,
+            33,
+            34,
+            35,
+            36,
+            37,
+            38
+          ],
+          "reason": "All descriptions involve obtaining supplies. Library, household, and educational settings do not change that core activity. The many identical or near-identical descriptions also support keeping this larger group intact."
+        }
+      ],
+      "reason": "The existing grouping is adequate, but the title should change from 'Acquire Supply' to 'Acquire Supplies.' The plural clearly identifies the items being obtained and uses natural wording while retaining the initial verb.",
+      "observations": [],
+      "status": "completed",
+      "rawOutput": "{\n  \"groups\": [\n    {\n      \"title\": \"Acquire Supplies\",\n      \"descriptionNumbers\": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38],\n      \"reason\": \"All descriptions involve obtaining supplies. Library, household, and educational settings do not change that core activity. The many identical or near-identical descriptions also support keeping this larger group intact.\"\n    }\n  ],\n  \"reason\": \"The existing grouping is adequate, but the title should change from 'Acquire Supply' to 'Acquire Supplies.' The plural clearly identifies the items being obtained and uses natural wording while retaining the initial verb.\"\n}",
+      "requestedAt": "2026-09-14T23:59:54.290Z",
+      "attemptId": "1a005be3a4f89d49796a27a6dba1b780327f0f2cf6e01daaf3317389131370b7",
+      "outputSha256": "15278aea5d7018fa0ff74835f0568ba18facf4d9d1f94a05db41b2a1dfa93a98",
+      "completedAt": "2026-09-15T00:00:30.378Z",
+      "requestSha256": "36e5dadf21c9f317e0e13c67688de4aab583315591ff3540db0fe6e880ce3fda",
+      "maximumOutputTokens": 12000
+    },
+    {
+      "id": "case-13",
+      "label": "title-13",
+      "title": "Patrol Car",
+      "semanticCaseId": "title-case-3fbdcc7ce91fe12c3654",
+      "occurrenceId": "atomic-7e2902dd1801393141f9",
+      "originalTitle": "Patrol Car",
+      "input": "Current title: Patrol Car\n\nO*NET descriptions:\n1. Patrol railroad yards, cars, stations, or other facilities to protect company property or shipments and to maintain order.",
+      "inputSha256": "2fead816d3c30a3b741ca575e9da86ef0d6e3dcf3bb6130613006fbf5dc07e15",
+      "descriptions": [
+        {
+          "number": 1,
+          "text": "Patrol railroad yards, cars, stations, or other facilities to protect company property or shipments and to maintain order.",
+          "oNetId": "9475"
+        }
+      ],
+      "occurrenceIds": [
+        "atomic-cf31137d982ddbeb51c6",
+        "atomic-eade2fd8686d032d111c",
+        "atomic-7e2902dd1801393141f9",
+        "atomic-4e0d9e923c2a5abfb633"
+      ],
+      "groups": [
+        {
+          "title": "Patrol Railroad Cars",
+          "descriptionNumbers": [
+            1
+          ],
+          "reason": "Identifies railroad cars as the objects being patrolled and avoids confusion with a police patrol vehicle."
+        }
+      ],
+      "reason": "The current title is ambiguous and should be changed, retaining the verb 'Patrol'.",
+      "observations": [],
+      "status": "completed",
+      "rawOutput": "{\n  \"groups\": [\n    {\n      \"title\": \"Patrol Railroad Cars\",\n      \"descriptionNumbers\": [1],\n      \"reason\": \"Identifies railroad cars as the objects being patrolled and avoids confusion with a police patrol vehicle.\"\n    }\n  ],\n  \"reason\": \"The current title is ambiguous and should be changed, retaining the verb 'Patrol'.\"\n}",
+      "requestedAt": "2026-09-15T00:00:07.911Z",
+      "attemptId": "5c4b60264a179f898c6995f19ee31a0b22c31ef6b98fcf5a5e27c1379227c6f5",
+      "outputSha256": "ad365e1404d724acd8f1ac8ea3354b98cf5c1aa3aba10c82bd030964bf2a1809",
+      "completedAt": "2026-09-15T00:00:19.993Z",
+      "requestSha256": "be57dd3cc0035313d2debaee754778dfdd17711a4dc7ce5903c66e2baa0dca74",
+      "maximumOutputTokens": 12000
+    },
+    {
+      "id": "case-14",
+      "label": "title-14",
+      "title": "Teach Astrophysics",
+      "semanticCaseId": "title-case-71acd49a1054a905e3fc",
+      "occurrenceId": "atomic-c98fde62701a8ea52c02",
+      "originalTitle": "Teach Astrophysics",
+      "input": "Current title: Teach Astrophysics\n\nO*NET descriptions:\n1. Teach astronomy or astrophysics.",
+      "inputSha256": "3c12778769a1264a822f35630e9da19b129e58909ec1d68bcb6a3df2804c71f7",
+      "descriptions": [
+        {
+          "number": 1,
+          "text": "Teach astronomy or astrophysics.",
+          "oNetId": "7532"
+        }
+      ],
+      "occurrenceIds": [
+        "atomic-5caf936d060c443a200a",
+        "atomic-c98fde62701a8ea52c02"
+      ],
+      "groups": [
+        {
+          "title": "Teach Astrophysics",
+          "descriptionNumbers": [
+            1
+          ],
+          "reason": "Clearly identifies teaching astrophysics, one of the subjects explicitly named in the description."
+        }
+      ],
+      "reason": "The current title is adequate and should not be changed.",
+      "observations": [],
+      "status": "completed",
+      "rawOutput": "{\n  \"groups\": [\n    {\n      \"title\": \"Teach Astrophysics\",\n      \"descriptionNumbers\": [1],\n      \"reason\": \"Clearly identifies teaching astrophysics, one of the subjects explicitly named in the description.\"\n    }\n  ],\n  \"reason\": \"The current title is adequate and should not be changed.\"\n}",
+      "requestedAt": "2026-09-15T00:00:21.168Z",
+      "attemptId": "eddf4620db3228f2e6753da902789513df2bfac637176ca739d5450f0da9f2d3",
+      "outputSha256": "e569403777638999644319e1283b0f1eccf8523fcf2653816141ab28b14edf52",
+      "completedAt": "2026-09-15T00:00:29.315Z",
+      "requestSha256": "a374ed8118e40dc96b687fc5c2530edd58f493e53cc08dfa7d097c91c8ea35bd",
+      "maximumOutputTokens": 12000
+    },
+    {
+      "id": "case-15",
+      "label": "title-15",
+      "title": "Stock Area",
+      "semanticCaseId": "title-case-5a6c7e05279e96194080",
+      "occurrenceId": "atomic-f4d0681ddbe4078c3938",
+      "originalTitle": "Stock Area",
+      "input": "Current title: Stock Area\n\nO*NET descriptions:\n1. Stock cabinets or serving areas with condiments and refill condiment containers.\n\n2. Stock serving stations or dining areas with food or supplies.",
+      "inputSha256": "dd9e73ed8ecc3ad3e63194ec9df13083e0b4041198b75498a0132451843104b3",
+      "descriptions": [
+        {
+          "number": 1,
+          "text": "Stock cabinets or serving areas with condiments and refill condiment containers.",
+          "oNetId": "11171"
+        },
+        {
+          "number": 2,
+          "text": "Stock serving stations or dining areas with food or supplies.",
+          "oNetId": "4.A.3.a.2.I37.D05"
+        }
+      ],
+      "occurrenceIds": [
+        "atomic-f4d0681ddbe4078c3938",
+        "atomic-1099bfaffac32dca10e4"
+      ],
+      "groups": [
+        {
+          "title": "Stock Food Service Areas",
+          "descriptionNumbers": [
+            1,
+            2
+          ],
+          "reason": "Both descriptions involve stocking serving or dining areas with food, condiments, or supplies."
+        }
+      ],
+      "reason": "The existing grouping is adequate, but 'Stock Area' is too vague. The revised title clarifies the food-service setting while retaining the original verb.",
+      "observations": [],
+      "status": "completed",
+      "rawOutput": "{\n  \"groups\": [\n    {\n      \"title\": \"Stock Food Service Areas\",\n      \"descriptionNumbers\": [1, 2],\n      \"reason\": \"Both descriptions involve stocking serving or dining areas with food, condiments, or supplies.\"\n    }\n  ],\n  \"reason\": \"The existing grouping is adequate, but 'Stock Area' is too vague. The revised title clarifies the food-service setting while retaining the original verb.\"\n}",
+      "requestedAt": "2026-09-15T00:00:30.360Z",
+      "attemptId": "078f4c869b79c215826d1349789240c44d1573bc0cb64ee0d915976e93a7701a",
+      "outputSha256": "35967e6a6522123161214df84fa22701dd7020a25b50b62706e44fc37a1f07ef",
+      "completedAt": "2026-09-15T00:00:46.632Z",
+      "requestSha256": "d4a80a8cca6d8a4b18a7889295c027c4c84df15d11e4a8343b2dcdd49ebe2868",
+      "maximumOutputTokens": 12000
+    },
+    {
+      "id": "case-16",
+      "label": "title-16",
+      "title": "Coordinate Care",
+      "semanticCaseId": "title-case-7e67974387d65efa97e3",
+      "occurrenceId": "atomic-3ff5239b88576c658e83",
+      "originalTitle": "Coordinate Care",
+      "input": "Current title: Coordinate Care\n\nO*NET descriptions:\n1. Coordinate the care of patients with other health care professionals or support staff.\n\n2. Utilize consultation data and social work experience to plan and coordinate client or patient care and rehabilitation, following through to ensure service efficacy.",
+      "inputSha256": "066bef2e849d870383f5fa364c906885cdf49167db2d74eaea3d276a85db1b10",
+      "descriptions": [
+        {
+          "number": 1,
+          "text": "Coordinate the care of patients with other health care professionals or support staff.",
+          "oNetId": "17072"
+        },
+        {
+          "number": 2,
+          "text": "Utilize consultation data and social work experience to plan and coordinate client or patient care and rehabilitation, following through to ensure service efficacy.",
+          "oNetId": "265"
+        }
+      ],
+      "occurrenceIds": [
+        "atomic-3ff5239b88576c658e83"
+      ],
+      "groups": [
+        {
+          "title": "Coordinate Care",
+          "descriptionNumbers": [
+            1,
+            2
+          ],
+          "reason": "The title clearly captures the shared activity of coordinating patient or client care. Differences in professional context and coordination methods do not warrant separate categories."
+        }
+      ],
+      "reason": "The existing grouping and current title are adequate and should be retained.",
+      "observations": [],
+      "status": "completed",
+      "rawOutput": "{\n  \"groups\": [\n    {\n      \"title\": \"Coordinate Care\",\n      \"descriptionNumbers\": [1, 2],\n      \"reason\": \"The title clearly captures the shared activity of coordinating patient or client care. Differences in professional context and coordination methods do not warrant separate categories.\"\n    }\n  ],\n  \"reason\": \"The existing grouping and current title are adequate and should be retained.\"\n}",
+      "requestedAt": "2026-09-15T00:00:31.203Z",
+      "attemptId": "07aebdbedd8e81440ddffa8e16465a4b12d3cb6301d8187a01c5ce58684de77b",
+      "outputSha256": "0830be59c06e239e4cc02b965bea51c269d5d57d0a6b88f7da157a2122d44755",
+      "completedAt": "2026-09-15T00:00:53.234Z",
+      "requestSha256": "de2cc548e6587a4a4834c781156ee81939f535e5077df5af38221dae6748e095",
+      "maximumOutputTokens": 12000
+    },
+    {
+      "id": "case-17",
+      "label": "title-17",
+      "title": "Open Valve",
+      "semanticCaseId": "title-case-07f75364947f831cb18d",
+      "occurrenceId": "atomic-8310941bed0450e8b2de",
+      "originalTitle": "Open Valve",
+      "input": "Current title: Open Valve\n\nO*NET descriptions:\n1. Open valves, gates, or chutes or use shovels to load or remove products from ovens or other equipment.\n\n2. Open and close valves and switches in sequence to start or shut down auxiliary units.\n\n3. Open valves or start pumps, agitators, reactors, blowers, or automatic feed of materials.\n\n4. Stop mixing or blending machines when specified product qualities are obtained and open valves and start pumps to transfer mixtures.\n\n5. Open valves to drain slurry from mixers into storage tanks.\n\n6. Start pumps and open valves or use automated equipment to regulate the flow of oil in pipelines and into and out of tanks.\n\n7. Open valves to return compressed gas to bottoms of specified wells to repressurize them and force oil to surface.",
+      "inputSha256": "83b30abe0dcb8d46569a63206b29a9a871967f9e4c32ff3c25a783ea994701a4",
+      "descriptions": [
+        {
+          "number": 1,
+          "text": "Open valves, gates, or chutes or use shovels to load or remove products from ovens or other equipment.",
+          "oNetId": "10068"
+        },
+        {
+          "number": 2,
+          "text": "Open and close valves and switches in sequence to start or shut down auxiliary units.",
+          "oNetId": "12325"
+        },
+        {
+          "number": 3,
+          "text": "Open valves or start pumps, agitators, reactors, blowers, or automatic feed of materials.",
+          "oNetId": "12345"
+        },
+        {
+          "number": 4,
+          "text": "Stop mixing or blending machines when specified product qualities are obtained and open valves and start pumps to transfer mixtures.",
+          "oNetId": "12403"
+        },
+        {
+          "number": 5,
+          "text": "Open valves to drain slurry from mixers into storage tanks.",
+          "oNetId": "12415"
+        },
+        {
+          "number": 6,
+          "text": "Start pumps and open valves or use automated equipment to regulate the flow of oil in pipelines and into and out of tanks.",
+          "oNetId": "14306"
+        },
+        {
+          "number": 7,
+          "text": "Open valves to return compressed gas to bottoms of specified wells to repressurize them and force oil to surface.",
+          "oNetId": "5020"
+        }
+      ],
+      "occurrenceIds": [
+        "atomic-8310941bed0450e8b2de",
+        "atomic-87939a970da50054a476"
+      ],
+      "groups": [
+        {
+          "title": "Open Valve",
+          "descriptionNumbers": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "reason": "All seven descriptions involve opening valves. Differences in equipment, substances, and operational purposes do not warrant separating this shared activity."
+        }
+      ],
+      "reason": "The existing grouping and title are adequate. 'Open Valve' clearly and intuitively names the common action without adding unnecessary context.",
+      "observations": [],
+      "status": "completed",
+      "rawOutput": "{\n  \"groups\": [\n    {\n      \"title\": \"Open Valve\",\n      \"descriptionNumbers\": [1, 2, 3, 4, 5, 6, 7],\n      \"reason\": \"All seven descriptions involve opening valves. Differences in equipment, substances, and operational purposes do not warrant separating this shared activity.\"\n    }\n  ],\n  \"reason\": \"The existing grouping and title are adequate. 'Open Valve' clearly and intuitively names the common action without adding unnecessary context.\"\n}",
+      "requestedAt": "2026-09-15T00:00:48.058Z",
+      "attemptId": "424480275190b6aad5e4e74443a1cdb6062b5e991308df7d7b89e782883f75d9",
+      "outputSha256": "29fb814aa4064f3d7937e93e5965de7147fd2d196a7145c71be8855d87b316d0",
+      "completedAt": "2026-09-15T00:01:04.461Z",
+      "requestSha256": "70abc8992ac3a7d491f78de4bbdd853b43b591768adc9bbe348711629b403631",
+      "maximumOutputTokens": 12000
+    },
+    {
+      "id": "case-18",
+      "label": "title-18",
+      "title": "Conduct Research",
+      "semanticCaseId": "title-case-e33c7742f8d7f6d77e28",
+      "occurrenceId": "atomic-807db37b1c008a3bf60d",
+      "originalTitle": "Conduct Research",
+      "input": "Current title: Conduct Research\n\nO*NET descriptions:\n1. Conduct research on hazardous waste management projects to determine the magnitude of problems and treatment or disposal alternatives and costs.\n\n2. Conduct agricultural research, analyze data, and prepare research reports.\n\n3. Conduct internet-based and library research.\n\n4. Conduct research that tests or analyzes the feasibility, design, operation, or performance of equipment, components, or systems.\n\n5. Conduct applied research on environmental topics, such as waste control or treatment or pollution abatement methods.\n\n6. Teach, take continuing education classes, attend conferences or seminars, or conduct research and publish findings to increase understanding of mental, emotional, or behavioral states or disorders.\n\n7. Conduct research to breed or develop energy crops with improved biomass yield, environmental adaptability, pest resistance, production efficiency, bioprocessing characteristics, or reduced environmental impacts.\n\n8. Conduct research to evaluate potential solutions related to changes in equipment design, procedures, manpower, personnel, or training.\n\n9. Conduct research on robotic technology to create new robotic systems or system capabilities.\n\n10. Conduct research into the feasibility, design, operation, or performance of robotic mechanisms, components, or systems, such as planetary rovers, multiple mobile robots, reconfigurable robots, or man-machine interactions.\n\n11. Conduct research related to a range of nanotechnology topics, such as packaging, heat transfer, fluorescence detection, nanoparticle dispersion, hybrid systems, liquid systems, nanocomposites, nanofabrication, optoelectronics, or nanolithography.\n\n12. Conduct research on cell organization and function, including mechanisms of gene expression, cellular bioinformatics, cell signaling, or cell differentiation.\n\n13. Conduct applied research aimed at improvements in areas such as disease testing, crop quality, pharmaceuticals, and the harnessing of microbes to recycle waste.\n\n14. Plan or conduct basic genomic and biological research related to areas such as regulation of gene expression, protein interactions, metabolic networks, and nucleic acid or protein complexes.\n\n15. Plan or conduct field research on topics such as industrial production, industrial ecology, population ecology, and environmental production or sustainability.\n\n16. Conduct applied research on the effects of industrial processes on the protection, restoration, inventory, monitoring, or reintroduction of species to the natural environment.\n\n17. Conduct research to study the relationships among environmental problems and patterns of economic production and consumption.\n\n18. Conduct research on economic and environmental topics, such as alternative fuel use, public and private land use, soil conservation, air and water pollution control, and endangered species protection.\n\n19. Conduct laboratory or clinical research on allergy or immunology topics.\n\n20. Conduct clinical or basic research.\n\n21. Conduct clinical or laboratory-based research in ophthalmology.\n\n22. Conduct research and present scientific findings.\n\n23. Conduct research in the prevention or treatment of injuries or medical conditions related to sports and exercise.\n\n24. Plan or conduct market or public opinion research to test products or determine potential for product success, communicating results to client or management.\n\n25. Design, conduct, or provide support to nursing informatics research.\n\n26. Conduct research on new photonics technologies.\n\n27. Conduct research into the application or enhancement of remote sensing technology.\n\n28. Conduct clinical research on topics such as maternal or infant health care, contraceptive methods, breastfeeding, and gynecological care.\n\n29. Conduct or direct research on hearing or balance topics and report findings to help in the development of procedures, technology, or treatments.\n\n30. Conduct market research and analyze industry trends.\n\n31. Conduct or direct research on speech or hearing topics and report findings for use in developing procedures, technologies, or treatments.\n\n32. Conduct research to help clients avoid repossessions or foreclosures or remove levies or wage garnishments.\n\n33. Conduct, or assist in the conduct of, music therapy research.\n\n34. Conduct research into the use of plant species as green fuels or in the production of green fuels.\n\n35. Conduct research on economic issues, and disseminate research findings through technical reports or scientific articles in journals.\n\n36. Conduct research in a particular field of knowledge and present findings in professional journals, books, electronic media, or at professional conferences.\n\n37. Conduct research in a particular field of knowledge and present findings in professional journals, books, electronic media, or at professional conferences.\n\n38. Conduct meteorological research into the processes or determinants of atmospheric phenomena, weather, or climate.\n\n39. Archive documents, conduct research, and read copy, using the internet and various computer programs.\n\n40. Conduct ethnographic field research.\n\n41. Conduct research on consumer opinions and buying habits, and identify target audiences for products, services, or technologies.\n\n42. Conduct research to identify the goals, net worth, charitable donation history, or other data related to potential donors, potential investors, or general donor markets.\n\n43. Conduct research to identify the goals, net worth, charitable donation history, or other data related to potential donors, potential investors, or general donor markets.\n\n44. Conduct user research to determine design requirements and analyze user feedback to improve design quality.\n\n45. Conduct research, data analysis, systems design, or support for software such as Geographic Information Systems (GIS) or Global Positioning Systems (GPS) mapping software.\n\n46. Conduct research to evaluate safety levels for products.\n\n47. Plan and conduct industrial hygiene research.\n\n48. Conduct research to develop or improve diagnostic or therapeutic counseling techniques.\n\n49. Plan, supervise, and conduct psychological research and write papers describing research results.\n\n50. Conduct research on neuropsychological disorders.\n\n51. Conduct participatory action research in communities and organizations to assess how work is done and to design work systems, technologies, and environments.\n\n52. Interview subject-matter experts or conduct other research to develop instructional content.\n\n53. Conduct research and interviews to determine which of a product's selling features should be promoted.\n\n54. Conduct research to obtain factual information and authentic detail, using sources such as newspaper accounts, diaries, and interviews.\n\n55. Conduct research to obtain factual information and authentic detail, using sources such as newspaper accounts, diaries, and interviews.\n\n56. Conduct research to develop or test medications, treatments, or procedures that prevent or control disease or injury.\n\n57. Conduct field investigations, surveys, impact studies, or other research to compile and analyze data on economic, social, regulatory, or physical factors affecting land use.\n\n58. Conduct research to develop and test surgical techniques that can improve operating procedures and outcomes related to musculoskeletal injuries and diseases.\n\n59. Conduct research to develop and test surgical techniques that can improve operating procedures and outcomes.\n\n60. Conduct radiation oncology-related research, such as improving computer treatment planning systems or developing new treatment devices.\n\n61. Plan, conduct, and evaluate nutrigenomic or nutrigenetic research.\n\n62. Conduct social research.\n\n63. Conduct social research to advance knowledge in the social work field.\n\n64. Conduct research, compile data, and prepare papers for consideration and presentation by executives, committees, and boards of directors.\n\n65. Plan, conduct, and evaluate dietary, nutritional, and epidemiological research.\n\n66. Conduct research in surveying and mapping methods, using knowledge of photogrammetric map compilation and electronic data processing.\n\n67. Conduct research to develop new and improved chemical manufacturing processes.\n\n68. Conduct research in occupational therapy.\n\n69. Conduct historical research as a basis for the identification, conservation, and reconstruction of historic places and materials.\n\n70. Teach and conduct research in colleges, universities, museums, and other research agencies and schools.\n\n71. Conduct historical research, and publish or present findings and theories.\n\n72. Conduct research, or assist in the conduct of research, including the collection of information and samples, such as blood, water, soil, plants and animals.\n\n73. Plan and conduct research to develop and improve methods of restoring and preserving specimens.\n\n74. Conduct or support research and apply research findings to practice.\n\n75. Conduct climatological research.\n\n76. Conduct scientific research of organizational behavior or processes.\n\n77. Conduct market research.\n\n78. Conduct research of processes in natural or industrial ecosystems.\n\n79. Conduct anthropological or archaeological research.\n\n80. Conduct historical research.\n\n81. Conduct research on social issues.\n\n82. Conduct research to increase knowledge about medical issues.\n\n83. Conduct research to gain information about products or processes.\n\n84. Conduct research to inform art, designs, or other work.\n\n85. Conduct research or provide instruction on subject matter related to athletic training or sports medicine.\n\n86. Conduct research concerning animal nutrition, breeding, or management to improve products or processes.\n\n87. Conduct research on consumer opinions and marketing strategies, collaborating with marketing professionals, statisticians, pollsters, and other professionals.\n\n88. Plan and conduct research to develop and test theories about societal issues such as crime, group relations, poverty, and aging.\n\n89. Conduct research in a particular field of knowledge and publish findings in professional journals, books, or electronic media.\n\n90. Conduct research in a particular field of knowledge and publish findings in professional journals, books, or electronic media.\n\n91. Conduct research in a particular field of knowledge and publish findings in professional journals, books, or electronic media.\n\n92. Conduct research in a particular field of knowledge and publish findings in professional journals, books, or electronic media.\n\n93. Conduct research in a particular field of knowledge and publish findings in professional journals, books, or electronic media.\n\n94. Conduct research in a particular field of knowledge and publish findings in professional journals, books, or electronic media.\n\n95. Conduct research in a particular field of knowledge and publish findings in professional journals, books, or electronic media.\n\n96. Conduct research in a particular field of knowledge and publish findings in professional journals, books, or electronic media.\n\n97. Conduct research in a particular field of knowledge and publish findings in professional journals, books, or electronic media.\n\n98. Conduct research in a particular field of knowledge and publish findings in professional journals, books, or electronic media.\n\n99. Conduct research in a particular field of knowledge and publish findings in professional journals, books, or electronic media.\n\n100. Conduct research in a particular field of knowledge and publish findings in professional journals, books, or electronic media.\n\n101. Conduct research in a particular field of knowledge and publish findings in professional journals, books, or electronic media.\n\n102. Conduct research in a particular field of knowledge and publish findings in professional journals, books, or electronic media.\n\n103. Conduct research in a particular field of knowledge and publish findings in professional journals, books, or electronic media.\n\n104. Conduct research in a particular field of knowledge and publish findings in professional journals, books, or electronic media.\n\n105. Conduct research in a particular field of knowledge and publish findings in professional journals, books, or electronic media.\n\n106. Conduct research in a particular field of knowledge and publish findings in professional journals, books, or electronic media.\n\n107. Conduct research in a particular field of knowledge and publish findings in professional journals, books, or electronic media.\n\n108. Conduct research in a particular field of knowledge and publish findings in professional journals, books, or electronic media.\n\n109. Conduct research in a particular field of knowledge and publish findings in professional journals, books, or electronic media.\n\n110. Conduct research in a particular field of knowledge and publish findings in professional journals, books, or electronic media.\n\n111. Conduct research in a particular field of knowledge and publish findings in professional journals, books, or electronic media.\n\n112. Conduct research in a particular field of knowledge and publish findings in professional journals, books, or electronic media.\n\n113. Conduct research in a particular field of knowledge and publish findings in professional journals, books, or electronic media.\n\n114. Conduct research in a particular field of knowledge and publish findings in professional journals, books, or electronic media.\n\n115. Conduct research in a particular field of knowledge and publish findings in professional journals, books, or electronic media.\n\n116. Conduct research in a particular field of knowledge and publish findings in professional journals, books, or electronic media.\n\n117. Conduct research in a particular field of knowledge and publish findings in professional journals, books, or electronic media.\n\n118. Conduct research in a particular field of knowledge and publish findings in books, professional journals, or electronic media.\n\n119. Conduct research in a particular field of knowledge and publish findings in books, professional journals, or electronic media.\n\n120. Conduct research in a particular field of knowledge and publish findings in scholarly journals, books, or electronic media.\n\n121. Conduct own research in field of expertise.\n\n122. Conduct research to extend mathematical knowledge in traditional areas, such as algebra, geometry, probability, and logic.\n\n123. Conduct research to gather information about survey topics.\n\n124. Conduct medical research to aid in controlling and curing disease, to investigate new medications, and to develop and test new medical techniques.\n\n125. Conduct research to develop or test medications, treatments, or procedures to prevent or control disease or injury.\n\n126. Conduct research to develop or test medications, treatments, or procedures to prevent or control disease or injury.\n\n127. Conduct research to study anatomy and develop or test medications, treatments, or procedures to prevent or control disease or injury.\n\n128. Direct or conduct studies or research on issues affecting areas of responsibility.\n\n129. Conduct research, along with life scientists, chemists, and medical scientists, on the engineering aspects of the biological systems of humans and animals.\n\n130. Conduct research on fire retardants and the fire safety of materials and devices.\n\n131. Conduct research to determine best methods of planting, spraying, cultivating, harvesting, storing, processing, or transporting horticultural products.\n\n132. Conduct research on the structures and properties of materials, such as metals, alloys, polymers, and ceramics, to obtain information that could be used to develop new products or enhance existing ones.\n\n133. Conduct research and communicate information to promote the conservation and preservation of water resources.",
+      "inputSha256": "e19cfbb1b8b10fe46f67b175abc0ff032566287adca36d1860a7599378bd97c8",
+      "descriptions": [
+        {
+          "number": 1,
+          "text": "Conduct research on hazardous waste management projects to determine the magnitude of problems and treatment or disposal alternatives and costs.",
+          "oNetId": "10852"
+        },
+        {
+          "number": 2,
+          "text": "Conduct agricultural research, analyze data, and prepare research reports.",
+          "oNetId": "10985"
+        },
+        {
+          "number": 3,
+          "text": "Conduct internet-based and library research.",
+          "oNetId": "12960"
+        },
+        {
+          "number": 4,
+          "text": "Conduct research that tests or analyzes the feasibility, design, operation, or performance of equipment, components, or systems.",
+          "oNetId": "1420"
+        },
+        {
+          "number": 5,
+          "text": "Conduct applied research on environmental topics, such as waste control or treatment or pollution abatement methods.",
+          "oNetId": "15223"
+        },
+        {
+          "number": 6,
+          "text": "Teach, take continuing education classes, attend conferences or seminars, or conduct research and publish findings to increase understanding of mental, emotional, or behavioral states or disorders.",
+          "oNetId": "15230"
+        },
+        {
+          "number": 7,
+          "text": "Conduct research to breed or develop energy crops with improved biomass yield, environmental adaptability, pest resistance, production efficiency, bioprocessing characteristics, or reduced environmental impacts.",
+          "oNetId": "15581"
+        },
+        {
+          "number": 8,
+          "text": "Conduct research to evaluate potential solutions related to changes in equipment design, procedures, manpower, personnel, or training.",
+          "oNetId": "16391"
+        },
+        {
+          "number": 9,
+          "text": "Conduct research on robotic technology to create new robotic systems or system capabilities.",
+          "oNetId": "16523"
+        },
+        {
+          "number": 10,
+          "text": "Conduct research into the feasibility, design, operation, or performance of robotic mechanisms, components, or systems, such as planetary rovers, multiple mobile robots, reconfigurable robots, or man-machine interactions.",
+          "oNetId": "16525"
+        },
+        {
+          "number": 11,
+          "text": "Conduct research related to a range of nanotechnology topics, such as packaging, heat transfer, fluorescence detection, nanoparticle dispersion, hybrid systems, liquid systems, nanocomposites, nanofabrication, optoelectronics, or nanolithography.",
+          "oNetId": "16546"
+        },
+        {
+          "number": 12,
+          "text": "Conduct research on cell organization and function, including mechanisms of gene expression, cellular bioinformatics, cell signaling, or cell differentiation.",
+          "oNetId": "16815"
+        },
+        {
+          "number": 13,
+          "text": "Conduct applied research aimed at improvements in areas such as disease testing, crop quality, pharmaceuticals, and the harnessing of microbes to recycle waste.",
+          "oNetId": "16816"
+        },
+        {
+          "number": 14,
+          "text": "Plan or conduct basic genomic and biological research related to areas such as regulation of gene expression, protein interactions, metabolic networks, and nucleic acid or protein complexes.",
+          "oNetId": "16839"
+        },
+        {
+          "number": 15,
+          "text": "Plan or conduct field research on topics such as industrial production, industrial ecology, population ecology, and environmental production or sustainability.",
+          "oNetId": "16885"
+        },
+        {
+          "number": 16,
+          "text": "Conduct applied research on the effects of industrial processes on the protection, restoration, inventory, monitoring, or reintroduction of species to the natural environment.",
+          "oNetId": "16896"
+        },
+        {
+          "number": 17,
+          "text": "Conduct research to study the relationships among environmental problems and patterns of economic production and consumption.",
+          "oNetId": "16914"
+        },
+        {
+          "number": 18,
+          "text": "Conduct research on economic and environmental topics, such as alternative fuel use, public and private land use, soil conservation, air and water pollution control, and endangered species protection.",
+          "oNetId": "16915"
+        },
+        {
+          "number": 19,
+          "text": "Conduct laboratory or clinical research on allergy or immunology topics.",
+          "oNetId": "17064"
+        },
+        {
+          "number": 20,
+          "text": "Conduct clinical or basic research.",
+          "oNetId": "17086"
+        },
+        {
+          "number": 21,
+          "text": "Conduct clinical or laboratory-based research in ophthalmology.",
+          "oNetId": "17164"
+        },
+        {
+          "number": 22,
+          "text": "Conduct research and present scientific findings.",
+          "oNetId": "17183"
+        },
+        {
+          "number": 23,
+          "text": "Conduct research in the prevention or treatment of injuries or medical conditions related to sports and exercise.",
+          "oNetId": "17262"
+        },
+        {
+          "number": 24,
+          "text": "Plan or conduct market or public opinion research to test products or determine potential for product success, communicating results to client or management.",
+          "oNetId": "1775"
+        },
+        {
+          "number": 25,
+          "text": "Design, conduct, or provide support to nursing informatics research.",
+          "oNetId": "18098"
+        },
+        {
+          "number": 26,
+          "text": "Conduct research on new photonics technologies.",
+          "oNetId": "18193"
+        },
+        {
+          "number": 27,
+          "text": "Conduct research into the application or enhancement of remote sensing technology.",
+          "oNetId": "18266"
+        },
+        {
+          "number": 28,
+          "text": "Conduct clinical research on topics such as maternal or infant health care, contraceptive methods, breastfeeding, and gynecological care.",
+          "oNetId": "18457"
+        },
+        {
+          "number": 29,
+          "text": "Conduct or direct research on hearing or balance topics and report findings to help in the development of procedures, technology, or treatments.",
+          "oNetId": "18676"
+        },
+        {
+          "number": 30,
+          "text": "Conduct market research and analyze industry trends.",
+          "oNetId": "18831"
+        },
+        {
+          "number": 31,
+          "text": "Conduct or direct research on speech or hearing topics and report findings for use in developing procedures, technologies, or treatments.",
+          "oNetId": "1885"
+        },
+        {
+          "number": 32,
+          "text": "Conduct research to help clients avoid repossessions or foreclosures or remove levies or wage garnishments.",
+          "oNetId": "18949"
+        },
+        {
+          "number": 33,
+          "text": "Conduct, or assist in the conduct of, music therapy research.",
+          "oNetId": "19186"
+        },
+        {
+          "number": 34,
+          "text": "Conduct research into the use of plant species as green fuels or in the production of green fuels.",
+          "oNetId": "19750"
+        },
+        {
+          "number": 35,
+          "text": "Conduct research on economic issues, and disseminate research findings through technical reports or scientific articles in journals.",
+          "oNetId": "20053"
+        },
+        {
+          "number": 36,
+          "text": "Conduct research in a particular field of knowledge and present findings in professional journals, books, electronic media, or at professional conferences.",
+          "oNetId": "20076"
+        },
+        {
+          "number": 37,
+          "text": "Conduct research in a particular field of knowledge and present findings in professional journals, books, electronic media, or at professional conferences.",
+          "oNetId": "20087"
+        },
+        {
+          "number": 38,
+          "text": "Conduct meteorological research into the processes or determinants of atmospheric phenomena, weather, or climate.",
+          "oNetId": "20210"
+        },
+        {
+          "number": 39,
+          "text": "Archive documents, conduct research, and read copy, using the internet and various computer programs.",
+          "oNetId": "20908"
+        },
+        {
+          "number": 40,
+          "text": "Conduct ethnographic field research.",
+          "oNetId": "21118"
+        },
+        {
+          "number": 41,
+          "text": "Conduct research on consumer opinions and buying habits, and identify target audiences for products, services, or technologies.",
+          "oNetId": "21220"
+        },
+        {
+          "number": 42,
+          "text": "Conduct research to identify the goals, net worth, charitable donation history, or other data related to potential donors, potential investors, or general donor markets.",
+          "oNetId": "21248"
+        },
+        {
+          "number": 43,
+          "text": "Conduct research to identify the goals, net worth, charitable donation history, or other data related to potential donors, potential investors, or general donor markets.",
+          "oNetId": "18926"
+        },
+        {
+          "number": 44,
+          "text": "Conduct user research to determine design requirements and analyze user feedback to improve design quality.",
+          "oNetId": "21688"
+        },
+        {
+          "number": 45,
+          "text": "Conduct research, data analysis, systems design, or support for software such as Geographic Information Systems (GIS) or Global Positioning Systems (GPS) mapping software.",
+          "oNetId": "21741"
+        },
+        {
+          "number": 46,
+          "text": "Conduct research to evaluate safety levels for products.",
+          "oNetId": "21861"
+        },
+        {
+          "number": 47,
+          "text": "Plan and conduct industrial hygiene research.",
+          "oNetId": "21879"
+        },
+        {
+          "number": 48,
+          "text": "Conduct research to develop or improve diagnostic or therapeutic counseling techniques.",
+          "oNetId": "22188"
+        },
+        {
+          "number": 49,
+          "text": "Plan, supervise, and conduct psychological research and write papers describing research results.",
+          "oNetId": "22189"
+        },
+        {
+          "number": 50,
+          "text": "Conduct research on neuropsychological disorders.",
+          "oNetId": "22194"
+        },
+        {
+          "number": 51,
+          "text": "Conduct participatory action research in communities and organizations to assess how work is done and to design work systems, technologies, and environments.",
+          "oNetId": "22252"
+        },
+        {
+          "number": 52,
+          "text": "Interview subject-matter experts or conduct other research to develop instructional content.",
+          "oNetId": "22448"
+        },
+        {
+          "number": 53,
+          "text": "Conduct research and interviews to determine which of a product's selling features should be promoted.",
+          "oNetId": "22658"
+        },
+        {
+          "number": 54,
+          "text": "Conduct research to obtain factual information and authentic detail, using sources such as newspaper accounts, diaries, and interviews.",
+          "oNetId": "22662"
+        },
+        {
+          "number": 55,
+          "text": "Conduct research to obtain factual information and authentic detail, using sources such as newspaper accounts, diaries, and interviews.",
+          "oNetId": "11054"
+        },
+        {
+          "number": 56,
+          "text": "Conduct research to develop or test medications, treatments, or procedures that prevent or control disease or injury.",
+          "oNetId": "22696"
+        },
+        {
+          "number": 57,
+          "text": "Conduct field investigations, surveys, impact studies, or other research to compile and analyze data on economic, social, regulatory, or physical factors affecting land use.",
+          "oNetId": "227"
+        },
+        {
+          "number": 58,
+          "text": "Conduct research to develop and test surgical techniques that can improve operating procedures and outcomes related to musculoskeletal injuries and diseases.",
+          "oNetId": "22746"
+        },
+        {
+          "number": 59,
+          "text": "Conduct research to develop and test surgical techniques that can improve operating procedures and outcomes.",
+          "oNetId": "22761"
+        },
+        {
+          "number": 60,
+          "text": "Conduct radiation oncology-related research, such as improving computer treatment planning systems or developing new treatment devices.",
+          "oNetId": "22835"
+        },
+        {
+          "number": 61,
+          "text": "Plan, conduct, and evaluate nutrigenomic or nutrigenetic research.",
+          "oNetId": "23917"
+        },
+        {
+          "number": 62,
+          "text": "Conduct social research.",
+          "oNetId": "255"
+        },
+        {
+          "number": 63,
+          "text": "Conduct social research to advance knowledge in the social work field.",
+          "oNetId": "271"
+        },
+        {
+          "number": 64,
+          "text": "Conduct research, compile data, and prepare papers for consideration and presentation by executives, committees, and boards of directors.",
+          "oNetId": "2780"
+        },
+        {
+          "number": 65,
+          "text": "Plan, conduct, and evaluate dietary, nutritional, and epidemiological research.",
+          "oNetId": "330"
+        },
+        {
+          "number": 66,
+          "text": "Conduct research in surveying and mapping methods, using knowledge of photogrammetric map compilation and electronic data processing.",
+          "oNetId": "3546"
+        },
+        {
+          "number": 67,
+          "text": "Conduct research to develop new and improved chemical manufacturing processes.",
+          "oNetId": "3558"
+        },
+        {
+          "number": 68,
+          "text": "Conduct research in occupational therapy.",
+          "oNetId": "361"
+        },
+        {
+          "number": 69,
+          "text": "Conduct historical research as a basis for the identification, conservation, and reconstruction of historic places and materials.",
+          "oNetId": "3720"
+        },
+        {
+          "number": 70,
+          "text": "Teach and conduct research in colleges, universities, museums, and other research agencies and schools.",
+          "oNetId": "3721"
+        },
+        {
+          "number": 71,
+          "text": "Conduct historical research, and publish or present findings and theories.",
+          "oNetId": "3722"
+        },
+        {
+          "number": 72,
+          "text": "Conduct research, or assist in the conduct of research, including the collection of information and samples, such as blood, water, soil, plants and animals.",
+          "oNetId": "3741"
+        },
+        {
+          "number": 73,
+          "text": "Plan and conduct research to develop and improve methods of restoring and preserving specimens.",
+          "oNetId": "3823"
+        },
+        {
+          "number": 74,
+          "text": "Conduct or support research and apply research findings to practice.",
+          "oNetId": "383"
+        },
+        {
+          "number": 75,
+          "text": "Conduct climatological research.",
+          "oNetId": "4.A.1.a.1.I08.D03"
+        },
+        {
+          "number": 76,
+          "text": "Conduct scientific research of organizational behavior or processes.",
+          "oNetId": "4.A.1.a.1.I09.D03"
+        },
+        {
+          "number": 77,
+          "text": "Conduct market research.",
+          "oNetId": "4.A.1.a.1.I14.D01"
+        },
+        {
+          "number": 78,
+          "text": "Conduct research of processes in natural or industrial ecosystems.",
+          "oNetId": "4.A.1.a.1.I16.D03"
+        },
+        {
+          "number": 79,
+          "text": "Conduct anthropological or archaeological research.",
+          "oNetId": "4.A.1.a.1.I18.D01"
+        },
+        {
+          "number": 80,
+          "text": "Conduct historical research.",
+          "oNetId": "4.A.1.a.1.I18.D02"
+        },
+        {
+          "number": 81,
+          "text": "Conduct research on social issues.",
+          "oNetId": "4.A.1.a.1.I18.D03"
+        },
+        {
+          "number": 82,
+          "text": "Conduct research to increase knowledge about medical issues.",
+          "oNetId": "4.A.1.a.1.I19.D01"
+        },
+        {
+          "number": 83,
+          "text": "Conduct research to gain information about products or processes.",
+          "oNetId": "4.A.1.a.1.I20.D04"
+        },
+        {
+          "number": 84,
+          "text": "Conduct research to inform art, designs, or other work.",
+          "oNetId": "4.A.2.b.3.I01.D13"
+        },
+        {
+          "number": 85,
+          "text": "Conduct research or provide instruction on subject matter related to athletic training or sports medicine.",
+          "oNetId": "4233"
+        },
+        {
+          "number": 86,
+          "text": "Conduct research concerning animal nutrition, breeding, or management to improve products or processes.",
+          "oNetId": "5413"
+        },
+        {
+          "number": 87,
+          "text": "Conduct research on consumer opinions and marketing strategies, collaborating with marketing professionals, statisticians, pollsters, and other professionals.",
+          "oNetId": "5439"
+        },
+        {
+          "number": 88,
+          "text": "Plan and conduct research to develop and test theories about societal issues such as crime, group relations, poverty, and aging.",
+          "oNetId": "5466"
+        },
+        {
+          "number": 89,
+          "text": "Conduct research in a particular field of knowledge and publish findings in professional journals, books, or electronic media.",
+          "oNetId": "5681"
+        },
+        {
+          "number": 90,
+          "text": "Conduct research in a particular field of knowledge and publish findings in professional journals, books, or electronic media.",
+          "oNetId": "6242"
+        },
+        {
+          "number": 91,
+          "text": "Conduct research in a particular field of knowledge and publish findings in professional journals, books, or electronic media.",
+          "oNetId": "6042"
+        },
+        {
+          "number": 92,
+          "text": "Conduct research in a particular field of knowledge and publish findings in professional journals, books, or electronic media.",
+          "oNetId": "6199"
+        },
+        {
+          "number": 93,
+          "text": "Conduct research in a particular field of knowledge and publish findings in professional journals, books, or electronic media.",
+          "oNetId": "6365"
+        },
+        {
+          "number": 94,
+          "text": "Conduct research in a particular field of knowledge and publish findings in professional journals, books, or electronic media.",
+          "oNetId": "6107"
+        },
+        {
+          "number": 95,
+          "text": "Conduct research in a particular field of knowledge and publish findings in professional journals, books, or electronic media.",
+          "oNetId": "6063"
+        },
+        {
+          "number": 96,
+          "text": "Conduct research in a particular field of knowledge and publish findings in professional journals, books, or electronic media.",
+          "oNetId": "6441"
+        },
+        {
+          "number": 97,
+          "text": "Conduct research in a particular field of knowledge and publish findings in professional journals, books, or electronic media.",
+          "oNetId": "6412"
+        },
+        {
+          "number": 98,
+          "text": "Conduct research in a particular field of knowledge and publish findings in professional journals, books, or electronic media.",
+          "oNetId": "5893"
+        },
+        {
+          "number": 99,
+          "text": "Conduct research in a particular field of knowledge and publish findings in professional journals, books, or electronic media.",
+          "oNetId": "6017"
+        },
+        {
+          "number": 100,
+          "text": "Conduct research in a particular field of knowledge and publish findings in professional journals, books, or electronic media.",
+          "oNetId": "5703"
+        },
+        {
+          "number": 101,
+          "text": "Conduct research in a particular field of knowledge and publish findings in professional journals, books, or electronic media.",
+          "oNetId": "5757"
+        },
+        {
+          "number": 102,
+          "text": "Conduct research in a particular field of knowledge and publish findings in professional journals, books, or electronic media.",
+          "oNetId": "6271"
+        },
+        {
+          "number": 103,
+          "text": "Conduct research in a particular field of knowledge and publish findings in professional journals, books, or electronic media.",
+          "oNetId": "5994"
+        },
+        {
+          "number": 104,
+          "text": "Conduct research in a particular field of knowledge and publish findings in professional journals, books, or electronic media.",
+          "oNetId": "5781"
+        },
+        {
+          "number": 105,
+          "text": "Conduct research in a particular field of knowledge and publish findings in professional journals, books, or electronic media.",
+          "oNetId": "5740"
+        },
+        {
+          "number": 106,
+          "text": "Conduct research in a particular field of knowledge and publish findings in professional journals, books, or electronic media.",
+          "oNetId": "6087"
+        },
+        {
+          "number": 107,
+          "text": "Conduct research in a particular field of knowledge and publish findings in professional journals, books, or electronic media.",
+          "oNetId": "5962"
+        },
+        {
+          "number": 108,
+          "text": "Conduct research in a particular field of knowledge and publish findings in professional journals, books, or electronic media.",
+          "oNetId": "6321"
+        },
+        {
+          "number": 109,
+          "text": "Conduct research in a particular field of knowledge and publish findings in professional journals, books, or electronic media.",
+          "oNetId": "5813"
+        },
+        {
+          "number": 110,
+          "text": "Conduct research in a particular field of knowledge and publish findings in professional journals, books, or electronic media.",
+          "oNetId": "6389"
+        },
+        {
+          "number": 111,
+          "text": "Conduct research in a particular field of knowledge and publish findings in professional journals, books, or electronic media.",
+          "oNetId": "5880"
+        },
+        {
+          "number": 112,
+          "text": "Conduct research in a particular field of knowledge and publish findings in professional journals, books, or electronic media.",
+          "oNetId": "5926"
+        },
+        {
+          "number": 113,
+          "text": "Conduct research in a particular field of knowledge and publish findings in professional journals, books, or electronic media.",
+          "oNetId": "5845"
+        },
+        {
+          "number": 114,
+          "text": "Conduct research in a particular field of knowledge and publish findings in professional journals, books, or electronic media.",
+          "oNetId": "6301"
+        },
+        {
+          "number": 115,
+          "text": "Conduct research in a particular field of knowledge and publish findings in professional journals, books, or electronic media.",
+          "oNetId": "6160"
+        },
+        {
+          "number": 116,
+          "text": "Conduct research in a particular field of knowledge and publish findings in professional journals, books, or electronic media.",
+          "oNetId": "6223"
+        },
+        {
+          "number": 117,
+          "text": "Conduct research in a particular field of knowledge and publish findings in professional journals, books, or electronic media.",
+          "oNetId": "6136"
+        },
+        {
+          "number": 118,
+          "text": "Conduct research in a particular field of knowledge and publish findings in books, professional journals, or electronic media.",
+          "oNetId": "5724"
+        },
+        {
+          "number": 119,
+          "text": "Conduct research in a particular field of knowledge and publish findings in books, professional journals, or electronic media.",
+          "oNetId": "5822"
+        },
+        {
+          "number": 120,
+          "text": "Conduct research in a particular field of knowledge and publish findings in scholarly journals, books, or electronic media.",
+          "oNetId": "6345"
+        },
+        {
+          "number": 121,
+          "text": "Conduct own research in field of expertise.",
+          "oNetId": "7214"
+        },
+        {
+          "number": 122,
+          "text": "Conduct research to extend mathematical knowledge in traditional areas, such as algebra, geometry, probability, and logic.",
+          "oNetId": "7376"
+        },
+        {
+          "number": 123,
+          "text": "Conduct research to gather information about survey topics.",
+          "oNetId": "7549"
+        },
+        {
+          "number": 124,
+          "text": "Conduct medical research to aid in controlling and curing disease, to investigate new medications, and to develop and test new medical techniques.",
+          "oNetId": "7770"
+        },
+        {
+          "number": 125,
+          "text": "Conduct research to develop or test medications, treatments, or procedures to prevent or control disease or injury.",
+          "oNetId": "7802"
+        },
+        {
+          "number": 126,
+          "text": "Conduct research to develop or test medications, treatments, or procedures to prevent or control disease or injury.",
+          "oNetId": "7818"
+        },
+        {
+          "number": 127,
+          "text": "Conduct research to study anatomy and develop or test medications, treatments, or procedures to prevent or control disease or injury.",
+          "oNetId": "7833"
+        },
+        {
+          "number": 128,
+          "text": "Direct or conduct studies or research on issues affecting areas of responsibility.",
+          "oNetId": "8848"
+        },
+        {
+          "number": 129,
+          "text": "Conduct research, along with life scientists, chemists, and medical scientists, on the engineering aspects of the biological systems of humans and animals.",
+          "oNetId": "8975"
+        },
+        {
+          "number": 130,
+          "text": "Conduct research on fire retardants and the fire safety of materials and devices.",
+          "oNetId": "8994"
+        },
+        {
+          "number": 131,
+          "text": "Conduct research to determine best methods of planting, spraying, cultivating, harvesting, storing, processing, or transporting horticultural products.",
+          "oNetId": "9036"
+        },
+        {
+          "number": 132,
+          "text": "Conduct research on the structures and properties of materials, such as metals, alloys, polymers, and ceramics, to obtain information that could be used to develop new products or enhance existing ones.",
+          "oNetId": "9087"
+        },
+        {
+          "number": 133,
+          "text": "Conduct research and communicate information to promote the conservation and preservation of water resources.",
+          "oNetId": "9116"
+        }
+      ],
+      "occurrenceIds": [
+        "atomic-807db37b1c008a3bf60d",
+        "atomic-fde714635d22c3602d9d"
+      ],
+      "groups": [
+        {
+          "title": "Conduct Research",
+          "descriptionNumbers": [
+            3,
+            22,
+            36,
+            37,
+            39,
+            64,
+            70,
+            72,
+            74,
+            89,
+            90,
+            91,
+            92,
+            93,
+            94,
+            95,
+            96,
+            97,
+            98,
+            99,
+            100,
+            101,
+            102,
+            103,
+            104,
+            105,
+            106,
+            107,
+            108,
+            109,
+            110,
+            111,
+            112,
+            113,
+            114,
+            115,
+            116,
+            117,
+            118,
+            119,
+            120,
+            121,
+            128
+          ],
+          "reason": "The current title remains adequate where no substantive research topic is specified. Duplicate and near-duplicate academic descriptions should remain together."
+        },
+        {
+          "title": "Conduct Environmental Research",
+          "descriptionNumbers": [
+            1,
+            5,
+            15,
+            16,
+            17,
+            18,
+            57,
+            78,
+            133
+          ],
+          "reason": "Investigates environmental problems, ecosystems, resource conservation, land use, and the environmental effects of production and consumption."
+        },
+        {
+          "title": "Conduct Agricultural Research",
+          "descriptionNumbers": [
+            2,
+            7,
+            34,
+            86,
+            131
+          ],
+          "reason": "Research concerns agricultural production, including crop improvement, plant-based fuels, horticultural methods, and animal nutrition or breeding."
+        },
+        {
+          "title": "Conduct Engineering and Technology Research",
+          "descriptionNumbers": [
+            4,
+            8,
+            9,
+            10,
+            11,
+            26,
+            67,
+            129,
+            132
+          ],
+          "reason": "Studies the design, performance, or improvement of engineered systems, advanced technologies, materials, and manufacturing or work processes."
+        },
+        {
+          "title": "Conduct Psychological and Behavioral Research",
+          "descriptionNumbers": [
+            6,
+            44,
+            48,
+            49,
+            50,
+            51,
+            76
+          ],
+          "reason": "Investigates mental functioning, counseling methods, user experiences, and individual or organizational behavior."
+        },
+        {
+          "title": "Conduct Biological Research",
+          "descriptionNumbers": [
+            12,
+            13,
+            14,
+            61
+          ],
+          "reason": "These four descriptions share a focus on cellular biology, genetics, and biotechnology, including interactions between nutrition and genes."
+        },
+        {
+          "title": "Conduct Medical and Healthcare Research",
+          "descriptionNumbers": [
+            19,
+            20,
+            21,
+            25,
+            28,
+            65,
+            82
+          ],
+          "reason": "Studies medical conditions and healthcare through clinical, laboratory, nursing informatics, maternal health, and nutritional research."
+        },
+        {
+          "title": "Conduct Therapy and Rehabilitation Research",
+          "descriptionNumbers": [
+            23,
+            29,
+            31,
+            33,
+            68,
+            85
+          ],
+          "reason": "Groups research in sports medicine, hearing and speech care, and music or occupational therapy around maintaining or restoring function."
+        },
+        {
+          "title": "Conduct Market Research",
+          "descriptionNumbers": [
+            24,
+            30,
+            41,
+            53,
+            77,
+            87
+          ],
+          "reason": "Examines markets, consumer opinions, buying behavior, product success, and promotional positioning."
+        },
+        {
+          "title": "Conduct Mapping Technology Research",
+          "descriptionNumbers": [
+            27,
+            45,
+            66
+          ],
+          "reason": "Remote sensing, mapping software, and surveying methods share a geographic-data focus that warrants a small, distinct technology group."
+        },
+        {
+          "title": "Conduct Debt Relief Research",
+          "descriptionNumbers": [
+            32
+          ],
+          "reason": "Identifies options for avoiding repossession or foreclosure and lifting debt-enforcement actions—a distinct client-support purpose."
+        },
+        {
+          "title": "Conduct Social and Economic Research",
+          "descriptionNumbers": [
+            35,
+            62,
+            63,
+            81,
+            88
+          ],
+          "reason": "Research concerns economic questions, social issues, social-work knowledge, and theories about societal patterns."
+        },
+        {
+          "title": "Conduct Weather and Climate Research",
+          "descriptionNumbers": [
+            38,
+            75
+          ],
+          "reason": "Both study atmospheric or climate processes, a distinct scientific subject that warrants a two-description group."
+        },
+        {
+          "title": "Conduct Historical and Cultural Research",
+          "descriptionNumbers": [
+            40,
+            69,
+            71,
+            79,
+            80
+          ],
+          "reason": "Studies history and human cultures through historical inquiry, ethnography, anthropology, archaeology, and investigation of historic places."
+        },
+        {
+          "title": "Conduct Donor and Investor Research",
+          "descriptionNumbers": [
+            42,
+            43
+          ],
+          "reason": "These identical descriptions investigate prospective donors or investors, rather than product markets, and should remain together."
+        },
+        {
+          "title": "Conduct Safety Research",
+          "descriptionNumbers": [
+            46,
+            47,
+            130
+          ],
+          "reason": "Product hazards, industrial hygiene, and fire safety share a safety-focused objective distinct from general technology development."
+        },
+        {
+          "title": "Conduct Background Research",
+          "descriptionNumbers": [
+            52,
+            54,
+            55,
+            83,
+            84,
+            123
+          ],
+          "reason": "Gathers factual or contextual information to support instructional content, creative work, design, product understanding, or survey topics."
+        },
+        {
+          "title": "Conduct Medical Treatment Research",
+          "descriptionNumbers": [
+            56,
+            58,
+            59,
+            60,
+            124,
+            125,
+            126,
+            127
+          ],
+          "reason": "Explicitly develops, tests, or improves medicines, treatments, surgical techniques, and treatment technologies to prevent or manage disease and injury."
+        },
+        {
+          "title": "Conduct Specimen Preservation Research",
+          "descriptionNumbers": [
+            73
+          ],
+          "reason": "Develops specimen restoration and preservation methods, a distinct focus that should not be conflated with historical inquiry or ecological conservation."
+        },
+        {
+          "title": "Conduct Mathematical Research",
+          "descriptionNumbers": [
+            122
+          ],
+          "reason": "Extends mathematical knowledge and theory; its distinct subject warrants a standalone group."
+        }
+      ],
+      "reason": "Restructure by research topic and purpose. The original title remains adequate for unspecified research, including the large block of duplicate academic descriptions. Most new groups contain 5–9 descriptions; smaller groups preserve distinct subjects or applications rather than force unrelated activities together.",
+      "observations": [
+        "“Conduct Research” has 43 descriptions. Review its reason for being outside the approximate 5–9 target.",
+        "“Conduct Biological Research” has 4 descriptions. Review its reason for being outside the approximate 5–9 target.",
+        "“Conduct Mapping Technology Research” has 3 descriptions. Review its reason for being outside the approximate 5–9 target.",
+        "“Conduct Debt Relief Research” has 1 description. Review its reason for being outside the approximate 5–9 target.",
+        "“Conduct Weather and Climate Research” has 2 descriptions. Review its reason for being outside the approximate 5–9 target.",
+        "“Conduct Donor and Investor Research” has 2 descriptions. Review its reason for being outside the approximate 5–9 target.",
+        "“Conduct Safety Research” has 3 descriptions. Review its reason for being outside the approximate 5–9 target.",
+        "“Conduct Specimen Preservation Research” has 1 description. Review its reason for being outside the approximate 5–9 target.",
+        "“Conduct Mathematical Research” has 1 description. Review its reason for being outside the approximate 5–9 target."
+      ],
+      "status": "completed",
+      "rawOutput": "{\n  \"groups\": [\n    {\n      \"title\": \"Conduct Research\",\n      \"descriptionNumbers\": [3, 22, 36, 37, 39, 64, 70, 72, 74, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 128],\n      \"reason\": \"The current title remains adequate where no substantive research topic is specified. Duplicate and near-duplicate academic descriptions should remain together.\"\n    },\n    {\n      \"title\": \"Conduct Environmental Research\",\n      \"descriptionNumbers\": [1, 5, 15, 16, 17, 18, 57, 78, 133],\n      \"reason\": \"Investigates environmental problems, ecosystems, resource conservation, land use, and the environmental effects of production and consumption.\"\n    },\n    {\n      \"title\": \"Conduct Agricultural Research\",\n      \"descriptionNumbers\": [2, 7, 34, 86, 131],\n      \"reason\": \"Research concerns agricultural production, including crop improvement, plant-based fuels, horticultural methods, and animal nutrition or breeding.\"\n    },\n    {\n      \"title\": \"Conduct Engineering and Technology Research\",\n      \"descriptionNumbers\": [4, 8, 9, 10, 11, 26, 67, 129, 132],\n      \"reason\": \"Studies the design, performance, or improvement of engineered systems, advanced technologies, materials, and manufacturing or work processes.\"\n    },\n    {\n      \"title\": \"Conduct Psychological and Behavioral Research\",\n      \"descriptionNumbers\": [6, 44, 48, 49, 50, 51, 76],\n      \"reason\": \"Investigates mental functioning, counseling methods, user experiences, and individual or organizational behavior.\"\n    },\n    {\n      \"title\": \"Conduct Biological Research\",\n      \"descriptionNumbers\": [12, 13, 14, 61],\n      \"reason\": \"These four descriptions share a focus on cellular biology, genetics, and biotechnology, including interactions between nutrition and genes.\"\n    },\n    {\n      \"title\": \"Conduct Medical and Healthcare Research\",\n      \"descriptionNumbers\": [19, 20, 21, 25, 28, 65, 82],\n      \"reason\": \"Studies medical conditions and healthcare through clinical, laboratory, nursing informatics, maternal health, and nutritional research.\"\n    },\n    {\n      \"title\": \"Conduct Therapy and Rehabilitation Research\",\n      \"descriptionNumbers\": [23, 29, 31, 33, 68, 85],\n      \"reason\": \"Groups research in sports medicine, hearing and speech care, and music or occupational therapy around maintaining or restoring function.\"\n    },\n    {\n      \"title\": \"Conduct Market Research\",\n      \"descriptionNumbers\": [24, 30, 41, 53, 77, 87],\n      \"reason\": \"Examines markets, consumer opinions, buying behavior, product success, and promotional positioning.\"\n    },\n    {\n      \"title\": \"Conduct Mapping Technology Research\",\n      \"descriptionNumbers\": [27, 45, 66],\n      \"reason\": \"Remote sensing, mapping software, and surveying methods share a geographic-data focus that warrants a small, distinct technology group.\"\n    },\n    {\n      \"title\": \"Conduct Debt Relief Research\",\n      \"descriptionNumbers\": [32],\n      \"reason\": \"Identifies options for avoiding repossession or foreclosure and lifting debt-enforcement actions—a distinct client-support purpose.\"\n    },\n    {\n      \"title\": \"Conduct Social and Economic Research\",\n      \"descriptionNumbers\": [35, 62, 63, 81, 88],\n      \"reason\": \"Research concerns economic questions, social issues, social-work knowledge, and theories about societal patterns.\"\n    },\n    {\n      \"title\": \"Conduct Weather and Climate Research\",\n      \"descriptionNumbers\": [38, 75],\n      \"reason\": \"Both study atmospheric or climate processes, a distinct scientific subject that warrants a two-description group.\"\n    },\n    {\n      \"title\": \"Conduct Historical and Cultural Research\",\n      \"descriptionNumbers\": [40, 69, 71, 79, 80],\n      \"reason\": \"Studies history and human cultures through historical inquiry, ethnography, anthropology, archaeology, and investigation of historic places.\"\n    },\n    {\n      \"title\": \"Conduct Donor and Investor Research\",\n      \"descriptionNumbers\": [42, 43],\n      \"reason\": \"These identical descriptions investigate prospective donors or investors, rather than product markets, and should remain together.\"\n    },\n    {\n      \"title\": \"Conduct Safety Research\",\n      \"descriptionNumbers\": [46, 47, 130],\n      \"reason\": \"Product hazards, industrial hygiene, and fire safety share a safety-focused objective distinct from general technology development.\"\n    },\n    {\n      \"title\": \"Conduct Background Research\",\n      \"descriptionNumbers\": [52, 54, 55, 83, 84, 123],\n      \"reason\": \"Gathers factual or contextual information to support instructional content, creative work, design, product understanding, or survey topics.\"\n    },\n    {\n      \"title\": \"Conduct Medical Treatment Research\",\n      \"descriptionNumbers\": [56, 58, 59, 60, 124, 125, 126, 127],\n      \"reason\": \"Explicitly develops, tests, or improves medicines, treatments, surgical techniques, and treatment technologies to prevent or manage disease and injury.\"\n    },\n    {\n      \"title\": \"Conduct Specimen Preservation Research\",\n      \"descriptionNumbers\": [73],\n      \"reason\": \"Develops specimen restoration and preservation methods, a distinct focus that should not be conflated with historical inquiry or ecological conservation.\"\n    },\n    {\n      \"title\": \"Conduct Mathematical Research\",\n      \"descriptionNumbers\": [122],\n      \"reason\": \"Extends mathematical knowledge and theory; its distinct subject warrants a standalone group.\"\n    }\n  ],\n  \"reason\": \"Restructure by research topic and purpose. The original title remains adequate for unspecified research, including the large block of duplicate academic descriptions. Most new groups contain 5–9 descriptions; smaller groups preserve distinct subjects or applications rather than force unrelated activities together.\"\n}",
+      "requestedAt": "2026-09-15T00:00:54.250Z",
+      "attemptId": "b3d5540dfa05a01090f3835712dfc9fcdbe85cb176494ace5e2dab08e6655930",
+      "outputSha256": "5ec77922ab1b7b5bf034a8e171a1cd5f11016b2b074491912f2919abd70e0852",
+      "completedAt": "2026-09-15T00:06:41.882Z",
+      "requestSha256": "79bf3dd958edd961d86c2759bbd0743a90f5b7511e44d2a919ffc861cf002804",
+      "maximumOutputTokens": 24000
+    }
+  ],
+  "clarification": "Rob previously clarified that “groupings of approximately 5-9” means approximately 5-9 O*NET descriptions in each newly proposed group. Exceptions are permitted as stated in the prompt.\n",
+  "clarificationSha256": "9769729a37103b405b0a97faf555eeeb0a3ac24dbb5b243516bb5d0a59b25ad9"
+}

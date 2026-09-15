@@ -3,15 +3,21 @@ import TitlePromptStudy, {
   TitlePromptStudyData,
 } from "@components/components/SomReview/TitlePromptStudy";
 import data from "../../Ontology_Title_Clarity_Testbed_2026-08-28/prompt-study-2026-09-13/bundle.json";
-import { compareTitlePromptResults } from "@components/lib/somReview/titlePromptComparison";
+import latestData from "../../Ontology_Title_Clarity_Testbed_2026-08-28/prompt-study-2026-09-14/bundle.json";
+import {
+  compareTitlePromptResults,
+  alignAdditionalTitleStudy,
+} from "@components/lib/somReview/titlePromptComparison";
 import fs from "fs";
 import path from "path";
 
 export const TitlePromptStudyPage = ({
   study,
+  latestStudy,
 }: {
   study: TitlePromptStudyData;
-}) => <TitlePromptStudy data={study} />;
+  latestStudy?: TitlePromptStudyData;
+}) => <TitlePromptStudy data={study} latestData={latestStudy} />;
 
 export function getStaticProps() {
   const directory = path.join(
@@ -29,6 +35,10 @@ export function getStaticProps() {
   return {
     props: {
       study: compareTitlePromptResults(data as TitlePromptStudyData, records),
+      latestStudy: alignAdditionalTitleStudy(
+        data as TitlePromptStudyData,
+        latestData as TitlePromptStudyData,
+      ),
     },
   };
 }

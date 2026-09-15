@@ -36,6 +36,7 @@ export interface TitlePromptStudyData {
   label: string;
   explanation: string;
   prompt: string;
+  clarification?: string;
   outputFormat: string;
   outputSchema?: object;
   softwareChecks: string;

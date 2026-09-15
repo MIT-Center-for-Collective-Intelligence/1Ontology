@@ -134,6 +134,18 @@ describe("read-only title prompt development examples", () => {
     ).toBeNull();
     expect(screen.getByText("No answer returned.")).toBeInTheDocument();
   });
+
+  it("preserves the chosen evidence and filter when a responsive layout remounts the page", () => {
+    const view = render(<TitlePromptStudy data={data} />);
+    fireEvent.change(screen.getByLabelText("Description number"), { target: { value: "2" } });
+    fireEvent.click(screen.getByRole("switch", { name: /Show only groups containing description #2/ }));
+    expect(window.location.search).toContain("description=2");
+    expect(window.location.search).toContain("focus=1");
+    view.unmount();
+    render(<TitlePromptStudy data={data} />);
+    expect(screen.getByLabelText("Description number")).toHaveValue("2");
+    expect(screen.getByRole("switch", { name: /Show only groups containing description #2/ })).toBeChecked();
+  });
   it("compares the selected description in both versions without altering memberships", () => {
     const item = {
       ...data.cases[0],
@@ -208,5 +220,85 @@ describe("read-only title prompt development examples", () => {
     expect(
       screen.getByLabelText("Find a description by wording or number"),
     ).toHaveValue("");
+  });
+
+  it("compares three runs on shared evidence and keeps each exact prompt available", () => {
+    const baseline = {
+      ...data,
+      cases: [
+        {
+          ...data.cases[0],
+          previous: {
+            groups: [
+              {
+                title: "Stock Both Areas",
+                descriptionNumbers: [1, 2],
+                reason: "Broader.",
+              },
+            ],
+            reason: "Broader.",
+            trace: {
+              title: "Previous instructions",
+              summary: "Previous",
+              runtimeInputNote: "Recorded",
+              stages: [],
+            },
+          },
+        },
+      ],
+    };
+    const latest = {
+      ...data,
+      prompt: "Rob's latest exact prompt",
+      clarification: "Approximately 5–9 descriptions per group.",
+      cases: [
+        {
+          ...data.cases[0],
+          groups: [
+            {
+              title: "Stock Service Areas",
+              descriptionNumbers: [1],
+              reason: "Serving.",
+            },
+            {
+              title: "Stock Other Areas",
+              descriptionNumbers: [2],
+              reason: "Other.",
+            },
+          ],
+          observations: [],
+        },
+      ],
+    };
+    render(<TitlePromptStudy data={baseline} latestData={latest} />);
+    expect(
+      screen.getByText("The same evidence in all three versions"),
+    ).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Description number"), {
+      target: { value: "2" },
+    });
+    const evidence = within(
+      screen.getByRole("region", { name: "Shared O*NET evidence" }),
+    );
+    expect(evidence.getByText("Stock Both Areas")).toBeInTheDocument();
+    expect(
+      evidence.getByText("No group includes this description."),
+    ).toBeInTheDocument();
+    expect(evidence.getByText("Stock Other Areas")).toBeInTheDocument();
+    const latestColumn = within(
+      screen.getByTestId("comparison-version-latest"),
+    );
+    expect(latestColumn.getByText(latest.prompt)).toBeInTheDocument();
+    expect(latestColumn.getByText(latest.clarification)).toBeInTheDocument();
+    expect(
+      within(screen.getByTestId("comparison-version-earlier")).getByText(
+        data.prompt,
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", {
+        name: /agree|apply|submit|save judgment/i,
+      }),
+    ).not.toBeInTheDocument();
   });
 });
