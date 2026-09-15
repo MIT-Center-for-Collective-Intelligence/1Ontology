@@ -2,7 +2,13 @@
  * @jest-environment jsdom
  */
 import React from "react";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import "@testing-library/jest-dom";
 
 import { Post } from "../../../src/lib/utils/Post";
@@ -179,6 +185,49 @@ describe("Tom's prior-review inspection page", () => {
     ).toBe(false);
   });
 
+  it("does not let a delayed earlier load replace the newly selected workspace", async () => {
+    let finishEarlier: (value: any) => void = () => {};
+    (Post as jest.Mock).mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finishEarlier = resolve;
+        }),
+    );
+    const { rerender } = render(<ReviewInspectionPage />);
+    await waitFor(() => expect(Post).toHaveBeenCalledTimes(1));
+    routerQuery = { workspace: "ontology-title-testbed", reviewer: "rob" };
+    (Post as jest.Mock).mockResolvedValue({
+      workspaceId: "ontology-title-testbed",
+      reviewers: [],
+      tasks: [],
+      items: [],
+    });
+    rerender(<ReviewInspectionPage />);
+    expect(
+      await screen.findByText(/No reviewer has saved inspectable responses/),
+    ).toBeVisible();
+    await act(async () =>
+      finishEarlier({
+        workspaceId: "sell",
+        selectedReviewerId: "old-reviewer",
+        reviewers: [
+          {
+            reviewerId: "old-reviewer",
+            displayName: "Stale reviewer",
+            responseCount: 1,
+          },
+        ],
+        tasks: [],
+        items: [],
+      }),
+    );
+    expect(screen.queryByText(/Stale reviewer/)).toBeNull();
+    expect(replace).not.toHaveBeenCalled();
+    expect(
+      screen.getByText(/No reviewer has saved inspectable responses/),
+    ).toBeVisible();
+  });
+
   it("shows all responses for one selected task on a scrollable page", async () => {
     routerQuery = {
       workspace: "sell",
@@ -277,15 +326,18 @@ describe("Tom's prior-review inspection page", () => {
       { workspaceId: "ontology-title-testbed", reviewerId: "rob" },
       false,
     );
-    expect(screen.getByRole("button", { name: "Ontology-wide title test bed" }))
-      .toHaveAttribute("aria-pressed", "true");
+    expect(
+      screen.getByRole("button", { name: "Ontology-wide title test bed" }),
+    ).toHaveAttribute("aria-pressed", "true");
     fireEvent.click(screen.getByRole("button", { name: "Proposal review" }));
     expect(push).toHaveBeenCalledWith({
       pathname: "/review",
       query: { dataset: "ontology-title-testbed-v7" },
     });
-    expect((Post as jest.Mock).mock.calls.every(([url]) =>
-      url === "/som-review/inspection/overview",
-    )).toBe(true);
+    expect(
+      (Post as jest.Mock).mock.calls.every(
+        ([url]) => url === "/som-review/inspection/overview",
+      ),
+    ).toBe(true);
   });
 });

@@ -1,6 +1,39 @@
 import type { TitlePromptStudyData } from "../../types/ITitlePromptStudy";
 import { agentTraceForRecord } from "./agentTransparency";
 
+/** A new run must use every original input unchanged before it can be compared. */
+export function alignAdditionalTitleStudy(
+  baseline: TitlePromptStudyData,
+  additional: TitlePromptStudyData,
+): TitlePromptStudyData {
+  if (
+    baseline.sourceSha256 !== additional.sourceSha256 ||
+    baseline.cases.length !== additional.cases.length ||
+    new Set(additional.cases.map((item) => item.id)).size !==
+      additional.cases.length
+  ) {
+    throw new Error("Comparison runs must contain the same source cases.");
+  }
+  const cases = baseline.cases.map((item) => {
+    const candidate = additional.cases.find((other) => other.id === item.id);
+    if (
+      !candidate ||
+      candidate.title !== item.title ||
+      candidate.input !== item.input ||
+      candidate.inputSha256 !== item.inputSha256 ||
+      candidate.originalTitle !== item.originalTitle ||
+      JSON.stringify(candidate.descriptions) !==
+        JSON.stringify(item.descriptions) ||
+      JSON.stringify(candidate.occurrenceIds) !==
+        JSON.stringify(item.occurrenceIds)
+    ) {
+      throw new Error(`Comparison source evidence differs for ${item.id}.`);
+    }
+    return candidate;
+  });
+  return { ...additional, cases };
+}
+
 /** Join archived displays only after checking source identity and every source line.
  * Neither archive nor the stored review responses are modified by this adapter.
  */

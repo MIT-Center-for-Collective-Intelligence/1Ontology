@@ -1,6 +1,9 @@
 import fs from "fs";
 import path from "path";
-import { compareTitlePromptResults } from "../../../src/lib/somReview/titlePromptComparison";
+import {
+  compareTitlePromptResults,
+  alignAdditionalTitleStudy,
+} from "../../../src/lib/somReview/titlePromptComparison";
 import type { TitlePromptStudyData } from "../../../src/types/ITitlePromptStudy";
 
 const root = path.join(
@@ -22,6 +25,44 @@ const records = ["all_proposals.jsonl", "all_controls.jsonl"].flatMap((file) =>
 );
 
 describe("archived prompt result comparison", () => {
+  it("aligns another run by source identity without altering either archive", () => {
+    const extra = {
+      ...study,
+      version: "third",
+      cases: [...study.cases].reverse(),
+    };
+    const original = JSON.stringify(extra);
+    const result = alignAdditionalTitleStudy(study, extra);
+    expect(result.cases.map((item) => item.id)).toEqual(
+      study.cases.map((item) => item.id),
+    );
+    expect(JSON.stringify(extra)).toBe(original);
+  });
+
+  it("rejects a new run with changed evidence, input, or duplicate cases", () => {
+    for (const field of [
+      "title",
+      "originalTitle",
+      "input",
+      "inputSha256",
+      "descriptions",
+      "occurrenceIds",
+    ]) {
+      const extra = JSON.parse(JSON.stringify(study));
+      extra.cases[0][field] =
+        field === "descriptions" || field === "occurrenceIds" ? [] : "changed";
+      expect(() => alignAdditionalTitleStudy(study, extra)).toThrow(
+        /source evidence differs/,
+      );
+    }
+    const duplicate = {
+      ...study,
+      cases: [study.cases[0], ...study.cases.slice(0, -1)],
+    };
+    expect(() => alignAdditionalTitleStudy(study, duplicate)).toThrow(
+      /same source cases/,
+    );
+  });
   it("matches all 18 cases including the keep control without changing either archive", () => {
     const before = JSON.stringify({ study, records });
     const result = compareTitlePromptResults(study, records);

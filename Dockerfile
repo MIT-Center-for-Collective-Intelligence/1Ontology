@@ -61,7 +61,7 @@ ENV NEXT_PUBLIC_DEV_APP_ID=${NEXT_PUBLIC_DEV_APP_ID}
 ENV NODE_ENV=production
 
 RUN NODE_ENV=test npx jest --runInBand --watch=false --coverage=false __tests__/lib/somReview __tests__/components/SomReview __tests__/pages/api/deployment.test.ts
-RUN node --test scripts/som-review/title-prompt-study-lib.test.mjs
+RUN node --test scripts/som-review/title-prompt-study-lib.test.mjs scripts/som-review/latest-title-prompt-study-lib.test.mjs
 RUN npm run build
 
 # Step 2. Production image (Runner)

@@ -1,6 +1,6 @@
 /** @jest-environment jsdom */
 import React from "react";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import Page, { getStaticProps } from "../../../src/pages/title-prompt-study";
 
@@ -45,7 +45,7 @@ it("passes the archived comparison through the real authentication wrapper", () 
     }),
   ).toBeInTheDocument();
   expect(
-    screen.getByRole("heading", { name: "Review Broadcast Programming" }),
+    within(screen.getByTestId("comparison-version-latest")).getByRole("heading", { name: "Review Broadcast Programming" }),
   ).toBeInTheDocument();
   expect(mockReplace).not.toHaveBeenCalled();
 });
