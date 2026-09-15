@@ -60,7 +60,8 @@ initializeFirestore();
 
 const App = (props: AppPropsWithLayout) => {
   const { Component, emotionCache = clientSideEmotionCache, pageProps } = props;
-  const reviewSurface = props.router.pathname.startsWith("/review");
+  const reviewSurface = props.router.pathname.startsWith("/review") ||
+    props.router.pathname === "/title-prompt-study";
   const showReactQueryDevtools =
     process.env.NODE_ENV === "development" && !reviewSurface;
   const db = getFirestore();
@@ -76,6 +77,8 @@ const App = (props: AppPropsWithLayout) => {
       }),
   );
   useEffect(() => {
+    // A background ontology-refresh signal must not interrupt a review in progress.
+    if (reviewSurface) return;
     const reloadDocRef = doc(db, LOGS, "00EWFECw1PnBRPy4wZVt");
 
     const SESSION_KEY = "force-reload:lastDocHash";
@@ -117,7 +120,7 @@ const App = (props: AppPropsWithLayout) => {
     );
 
     return () => unsubscribeUser();
-  }, [db]);
+  }, [db, reviewSurface]);
 
   const getLayout = Component.getLayout ?? ((page: any) => page);
 
