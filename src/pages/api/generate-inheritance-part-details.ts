@@ -18,10 +18,10 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         .json({ success: false, error: "nodeId is required" });
     }
 
-    if (!appName || typeof appName !== "string") {
+    if (appName !== undefined && typeof appName !== "string") {
       return res
         .status(400)
-        .json({ success: false, error: "appName is required" });
+        .json({ success: false, error: "appName must be a string" });
     }
 
     const currentNodeDoc = await db.collection(NODES).doc(nodeId).get();

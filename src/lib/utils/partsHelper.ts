@@ -82,6 +82,91 @@ export const getPartGeneralizationSources = (
   return sources;
 };
 
+export type OrderInheritanceSummary = {
+  /** Gen-part ids in the child's resolved order (inherited slots only). */
+  childGenSequence: string[];
+  /** First index in the gen-part sequence where order diverges. */
+  breakIndex: number;
+};
+
+type OrderInheritanceDetail = {
+  from: string;
+  to: string;
+  symbol: string;
+};
+
+export const ORDER_INHERITANCE_LINE_COLOR = "#2ecc71";
+
+export const genPartIdFromDetail = (
+  entry: OrderInheritanceDetail,
+): string | undefined => {
+  if (entry.symbol === "=" || entry.symbol === ">") return entry.from || undefined;
+  return undefined;
+};
+
+/** Dotted separator between two list rows: green only when both rows are
+ *  consecutive inherited slots still inside the unbroken order prefix. */
+export const separatorInheritsOrder = (
+  prevEntry: OrderInheritanceDetail | null | undefined,
+  entry: OrderInheritanceDetail,
+  summary: OrderInheritanceSummary,
+): boolean => {
+  if (!prevEntry) return false;
+  const prevId = genPartIdFromDetail(prevEntry);
+  const currId = genPartIdFromDetail(entry);
+  if (!prevId || !currId) return false;
+  const { childGenSequence, breakIndex } = summary;
+  const prevIdx = childGenSequence.indexOf(prevId);
+  const currIdx = childGenSequence.indexOf(currId);
+  if (prevIdx === -1 || currIdx !== prevIdx + 1) return false;
+  return currIdx < breakIndex;
+};
+
+export const orderSeparatorBackground = (lineColor: string): string =>
+  `repeating-linear-gradient(to right, ${lineColor} 0, ${lineColor} 1px, transparent 1px, transparent 6px)`;
+
+/**
+ * Rule 2 — reordering parts causes a partial break: the longest prefix of
+ * source-provided parts whose relative order still matches the generalization
+ * keeps order inheritance; everything from the first mismatch onward does not.
+ */
+export const computeOrderInheritanceForGen = (
+  resolvedParts: ILinkNode[],
+  genId: string,
+  _genTitle: string,
+  resolvedOf: (id: string) => ILinkNode[],
+  detailEntries: OrderInheritanceDetail[],
+): OrderInheritanceSummary => {
+  const parentOrder = resolvedOf(genId).map((p) => p.id);
+  const parentSet = new Set(parentOrder);
+
+  const childToGenPart = new Map<string, string>();
+  for (const entry of detailEntries) {
+    if (entry.symbol !== "=" && entry.symbol !== ">") continue;
+    childToGenPart.set(entry.to, entry.from);
+  }
+
+  const childGenSequence: string[] = [];
+  for (const part of resolvedParts) {
+    if (parentSet.has(part.id)) {
+      childGenSequence.push(part.id);
+    } else {
+      const genPartId = childToGenPart.get(part.id);
+      if (genPartId) childGenSequence.push(genPartId);
+    }
+  }
+
+  let breakIndex = childGenSequence.length;
+  for (let i = 0; i < childGenSequence.length; i++) {
+    if (i >= parentOrder.length || childGenSequence[i] !== parentOrder[i]) {
+      breakIndex = i;
+      break;
+    }
+  }
+
+  return { childGenSequence, breakIndex };
+};
+
 /**
  * Get all generalizations for a node
  */

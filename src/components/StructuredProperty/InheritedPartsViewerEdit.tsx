@@ -13,6 +13,7 @@ import {
   ListSubheader,
   Popover,
   TextField,
+  alpha,
 } from "@mui/material";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import {
@@ -22,7 +23,7 @@ import {
   INode,
 } from "@components/types/INode";
 import ArrowRightAltIcon from "@mui/icons-material/ArrowRightAlt";
-import RemoveIcon from "@mui/icons-material/Remove";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import SearchIcon from "@mui/icons-material/Search";
 import CheckIcon from "@mui/icons-material/Check";
 import { DragDropContext, Draggable, Droppable } from "@hello-pangea/dnd";
@@ -32,12 +33,33 @@ import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import DragHandleIcon from "@mui/icons-material/DragHandle";
 import CloseIcon from "@mui/icons-material/Close";
 import InheritedPartsLegend from "../Common/InheritedPartsLegend";
+import PartOrderSeparator, {
+  ORDER_INHERITANCE_ICON_GUTTER,
+} from "../Common/PartOrderSeparator";
+import PartInheritanceModeButton, {
+  InheritanceMode,
+} from "../Common/PartInheritanceModeButton";
+
+/** Fixed width for = / > / x / + so symbols stay in one column. */
+const SYMBOL_COL_SX = {
+  minWidth: 28,
+  width: 28,
+  justifyContent: "center",
+  display: "flex",
+  alignItems: "center",
+} as const;
 
 import { Timestamp } from "firebase/firestore";
 import { recordLogs } from "@components/lib/utils/helpers";
-import { getPartGeneralizationSources } from "@components/lib/utils/partsHelper";
+import { Post } from "@components/lib/utils/Post";
+import {
+  computeOrderInheritanceForGen,
+  getPartGeneralizationSources,
+  separatorInheritsOrder,
+} from "@components/lib/utils/partsHelper";
 import { makeResolvedOf } from "@components/lib/hooks/useResolvedParts";
 import SyncedSpinner from "@components/components/SyncedSpinner";
+import { DESIGN_SYSTEM_COLORS } from "@components/lib/theme/colors";
 
 interface GeneralizationNode {
   id: string;
@@ -133,8 +155,10 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
     getAllGeneralizations();
 
   // Root node: no generalizations, but may have own parts. Treat current node as its own
-  // "generalization" so parts can be displayed for comparison.
+  // "generalization" so parts can still be displayed, but hide the left-side label.
   const hasOwnParts = resolvedParts.length > 0;
+  // True when the node has no real generalizations (it is a root).
+  const isRootNode = generalizationsFromParent.length === 0;
   const generalizations: GeneralizationNode[] =
     generalizationsFromParent.length > 0
       ? generalizationsFromParent
@@ -153,9 +177,40 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
   const [pickingFor, setPickingFor] = useState<string>("");
   const [anchorEl, setAnchorEl] = useState(null);
   const [isSelectOpen, setIsSelectOpen] = useState(false);
+  const defaultPartInheritanceMode: InheritanceMode =
+    (currentVisibleNode.inheritance?.parts?.inheritanceType as
+      | InheritanceMode
+      | undefined) ?? "inheritUnlessAlreadyOverRidden";
+  const [partInheritanceModes, setPartInheritanceModes] = useState<{
+    [partId: string]: InheritanceMode;
+  }>(currentVisibleNode.partInheritanceModes || {});
+
+  useEffect(() => {
+    if (currentVisibleNode.partInheritanceModes) {
+      setPartInheritanceModes(currentVisibleNode.partInheritanceModes);
+    }
+  }, [currentVisibleNode.id, currentVisibleNode.partInheritanceModes]);
+
+  const getPartInheritanceMode = (partId: string): InheritanceMode =>
+    partInheritanceModes[partId] ?? defaultPartInheritanceMode;
+  const setPartInheritanceMode = (partId: string, mode: InheritanceMode) => {
+    setPartInheritanceModes((prev) => ({ ...prev, [partId]: mode }));
+  };
+
+  const [orderInheritanceModes, setOrderInheritanceModes] = useState<{
+    [orderId: string]: InheritanceMode;
+  }>({});
+
+  const getOrderInheritanceMode = (orderId: string): InheritanceMode =>
+    orderInheritanceModes[orderId] ?? defaultPartInheritanceMode;
+
+  const setOrderInheritanceMode = (orderId: string, mode: InheritanceMode) => {
+    setOrderInheritanceModes((prev) => ({ ...prev, [orderId]: mode }));
+  };
   const [approvingPendingIds, setApprovingPendingIds] = useState<Set<string>>(
     new Set(),
   );
+  const [hoveredPartIndex, setHoveredPartIndex] = useState<number | null>(null);
   // Titles of just-approved parts, used as a fallback while the cloned node
   // hasn't loaded into relatedNodes yet (otherwise the new row shows blank).
   const [approvedTitles, setApprovedTitles] = useState<{
@@ -259,7 +314,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
         <Box component="span" sx={{ display: "inline" }}>
           {title}{" "}
           <Box component="span" sx={{ color: "#ff9500", fontWeight: "bold" }}>
-            +(O)
+            +*
           </Box>
         </Box>
       );
@@ -275,7 +330,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
               fontWeight: "bold",
             }}
           >
-            (O)
+            *
           </Box>
         </Box>
       );
@@ -284,7 +339,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
         <Box component="span" sx={{ display: "inline" }}>
           {title}{" "}
           <Box component="span" sx={{ color: "#ff9500", fontWeight: "bold" }}>
-            (O)
+            *
           </Box>
         </Box>
       );
@@ -366,6 +421,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
         });
       }
     }
+    99;
   };
 
   const handleSelect = async (option: string) => {
@@ -777,25 +833,43 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
           via: partNode.via,
         };
       }
+      const isInheritedFromThisGen =
+        partNode.inheritedFrom === generalizationId ||
+        partNode.via === generalizationId;
       return {
-        from: "",
+        from: isInheritedFromThisGen ? partNode.id : "",
         to: partNode.id,
-        symbol: "",
-        fromTitle: "",
+        symbol: isInheritedFromThisGen ? "=" : "+",
+        fromTitle: isInheritedFromThisGen
+          ? allNodes[partNode.id]?.title || partNode.title || ""
+          : "",
         toTitle:
           allNodes[partNode.id]?.title ||
           partNode.title ||
           approvedTitles[partNode.id] ||
           "",
-        fromOptional: false,
+        fromOptional: isInheritedFromThisGen
+          ? Boolean(
+              resolvedOf(generalizationId)?.find(
+                (p: any) => p.id === partNode.id,
+              )?.optional,
+            )
+          : false,
         toOptional: liveOptional,
         optionalChange: "none",
         hops: 0,
-        pending: true,
+        pending: Boolean(inheritedPartsRepairing),
         inheritedFrom: partNode.inheritedFrom,
         via: partNode.via,
       };
     });
+    const orderInheritance = computeOrderInheritanceForGen(
+      resolvedParts,
+      generalizationId,
+      genTitle,
+      resolvedOf,
+      details,
+    );
 
     const partAlternativesLookup: {
       [partId: string]: {
@@ -983,527 +1057,577 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
     return (
       <Box
         sx={{
-          border: draggableItems.length > 0 ? "1px dashed gray" : "",
-          borderRadius: "20px",
+          border: (theme) =>
+            draggableItems.length > 0
+              ? `1px dashed ${alpha(theme.palette.divider, theme.palette.mode === "dark" ? 0.55 : 0.85)}`
+              : "none",
+          borderRadius: "16px",
+          py: 1,
+          px: 1.5,
+          my: 1.5,
+          backgroundColor: (theme) =>
+            draggableItems.length > 0
+              ? alpha(
+                  theme.palette.common.white,
+                  theme.palette.mode === "dark" ? 0.02 : 0.4,
+                )
+              : "transparent",
         }}
       >
         <Droppable droppableId={`droppable-${generalizationId}`}>
           {(provided) => (
             <List
+              dense
+              disablePadding
               ref={provided.innerRef}
               {...provided.droppableProps}
               sx={{
-                px: 1.8,
+                px: 1,
+                py: 0,
                 pb: hasTrailingXRows ? 0 : undefined,
               }}
             >
-              {draggableItems.map((entry: any, index: number) => (
-                <Draggable key={entry.to} draggableId={entry.to} index={index}>
-                  {(providedDraggable) => (
-                    <ListItem
-                      ref={providedDraggable.innerRef}
-                      {...providedDraggable.draggableProps}
-                      {...providedDraggable.dragHandleProps}
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 1,
-                        px: 1,
-                        py: 0,
-                        backgroundImage:
-                          index !== 0
-                            ? "repeating-linear-gradient(to right, gray 0, gray 1px, transparent 1px, transparent 6px)"
-                            : "",
-                        backgroundPosition: index !== 0 ? "top" : "",
-                        backgroundRepeat: "repeat-x",
-                        backgroundSize: "100% 1px",
-                      }}
-                    >
-                      {!readOnly &&
-                        entry.from &&
-                        entry.symbol !== "x" &&
-                        entry.symbol !== "=" && (
-                          <ListItemIcon sx={{ minWidth: "auto" }}>
-                            <Tooltip title="Search it below" placement="left">
-                              <IconButton
-                                sx={{ p: 0.4 }}
-                                onClick={() =>
-                                  triggerSearch({
-                                    id: entry.from,
-                                    title: allNodes[entry.from]?.title,
-                                  })
-                                }
-                              >
-                                <SearchIcon
-                                  sx={{ fontSize: 19, color: "orange" }}
-                                />
-                              </IconButton>
-                            </Tooltip>
-                          </ListItemIcon>
-                        )}
-
-                      <ListItemText
-                        primary={
-                          entry.from ? (
-                            <Typography>
-                              {formatPartTitle(
-                                entry.from,
-                                entry.fromOptional || false,
-                                entry.optionalChange,
-                                entry.fromTitle,
-                              )}
-                            </Typography>
-                          ) : null
-                        }
-                        sx={{ flex: 1, minWidth: 0.3 }}
-                      />
-
-                      <ListItemIcon sx={{ minWidth: "auto" }}>
-                        {savingPartIds.has(entry.to) ? (
-                          <Tooltip title="Linking this part…" placement="top">
-                            <span
-                              style={{
-                                display: "inline-flex",
-                                cursor: "default",
-                              }}
-                            >
-                              <SyncedSpinner size={18} />
-                            </span>
-                          </Tooltip>
-                        ) : entry.pending ? (
-                          <Tooltip
-                            title="Calculating inheritance…"
-                            placement="top"
-                          >
-                            <span
-                              style={{
-                                display: "inline-flex",
-                                cursor: "default",
-                              }}
-                            >
-                              <SyncedSpinner size={18} />
-                            </span>
-                          </Tooltip>
-                        ) : entry.symbol === "x" ? (
-                          <Tooltip
-                            title={`"${genTitle}" has this part, but this node does not inherit it.`}
-                            placement="top"
-                          >
-                            <CloseIcon sx={{ fontSize: 20, color: "orange" }} />
-                          </Tooltip>
-                        ) : entry.symbol === ">" ? (
-                          <Tooltip
-                            title={`"${genTitle}" has the part "${
-                              allNodes[entry.from]?.title ||
-                              entry.fromTitle ||
-                              ""
-                            }". This node has "${
-                              allNodes[entry.to]?.title || entry.toTitle || ""
-                            }", a descendant of it.${
-                              (nonPickedOnes[entry.from] || []).length > 0
-                                ? " Click to switch."
-                                : ""
-                            }`}
-                            placement="top"
-                          >
-                            <ArrowForwardIosIcon
-                              sx={{
-                                fontSize: 20,
-                                color:
-                                  pickingFor === entry.from
-                                    ? "white"
-                                    : "orange",
-                                backgroundColor:
-                                  pickingFor === entry.from
-                                    ? "orange"
-                                    : (nonPickedOnes[entry.from] || []).length >
-                                        0
-                                      ? (theme) =>
-                                          theme.palette.mode === "light"
-                                            ? "#a8a8a8"
-                                            : "#4a4646"
-                                      : "",
-                                p: 0.2,
-                                borderRadius: "50%",
-                                ":hover":
-                                  (nonPickedOnes[entry.from] || []).length > 0
-                                    ? {
-                                        backgroundColor: "gray",
-                                      }
-                                    : {},
-                                cursor:
-                                  (nonPickedOnes[entry.from] || []).length > 0
-                                    ? "pointer"
-                                    : "",
-                              }}
-                              onClick={(e) => {
-                                if (
-                                  (nonPickedOnes[entry.from] || []).length > 0
-                                ) {
-                                  handleClick(e, entry.from);
-                                }
-                              }}
-                            />
-                          </Tooltip>
-                        ) : entry.symbol === "=" ? (
-                          <Tooltip
-                            title={`This part is inherited from "${genTitle}". If it changes there, it changes here too.`}
-                            placement="top"
-                          >
-                            <DragHandleIcon
-                              sx={{
-                                fontSize: 20,
-                                color: "orange",
-                                visibility:
-                                  !entry.inheritedFrom ||
-                                  (getCurrentSource(entry)?.genId ??
-                                    generalizationId) === generalizationId
-                                    ? "visible"
-                                    : "hidden",
-                              }}
-                            />
-                          </Tooltip>
-                        ) : entry.symbol === "+" ? (
-                          <Tooltip
-                            title={`This part was added directly to this node. "${genTitle}" does not have it, so it is not inherited.`}
-                            placement="top"
-                          >
-                            <AddIcon sx={{ fontSize: 20, color: "orange" }} />
-                          </Tooltip>
-                        ) : null}
-                      </ListItemIcon>
-
-                      {!!removePart && entry.symbol !== "x" && (
-                        <Tooltip title={"Remove part"} placement="top">
-                          <span
-                            style={{
-                              cursor: savingPartIds.has(entry.to)
-                                ? "not-allowed"
-                                : undefined,
-                              display: "inline-flex",
-                            }}
-                          >
-                            <IconButton
-                              sx={{ p: 0.5 }}
-                              disabled={savingPartIds.has(entry.to)}
-                              onClick={() => {
-                                onRemovePart(entry.to);
-                              }}
-                            >
-                              <RemoveIcon
-                                sx={{
-                                  fontSize: 20,
-                                  color: savingPartIds.has(entry.to)
-                                    ? "gray"
-                                    : "red",
-                                  border: savingPartIds.has(entry.to)
-                                    ? "1px solid gray"
-                                    : "1px solid red",
-                                  borderRadius: "50%",
-                                  opacity: savingPartIds.has(entry.to)
-                                    ? 0.5
-                                    : 1,
-                                }}
-                              />
-                            </IconButton>
-                          </span>
-                        </Tooltip>
-                      )}
-
-                      {entry.symbol === "x" && !!addPart && (
-                        <Tooltip title={"Add Part"} placement="top">
-                          <IconButton
-                            sx={{ p: 0.5 }}
-                            onClick={() => {
-                              onAddPart(entry.from);
-                            }}
-                          >
-                            <AddIcon
-                              sx={{
-                                fontSize: 20,
-                                color: "green",
-                                border: "1px solid green",
-                                borderRadius: "50%",
-                              }}
-                            />
-                          </IconButton>
-                        </Tooltip>
-                      )}
-
-                      <ListItemText
-                        primary={
-                          entry.to ? (
+              {draggableItems.map((entry: any, index: number) => {
+                const prevEntry = index > 0 ? draggableItems[index - 1] : null;
+                const inheritsOrder =
+                  index !== 0 &&
+                  separatorInheritsOrder(prevEntry, entry, orderInheritance);
+                return (
+                  <Draggable
+                    key={entry.to}
+                    draggableId={entry.to}
+                    index={index}
+                  >
+                    {(providedDraggable) => {
+                      return (
+                        <ListItem
+                          dense
+                          disableGutters
+                          ref={providedDraggable.innerRef}
+                          {...providedDraggable.draggableProps}
+                          sx={{
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "stretch",
+                            gap: 0,
+                            px: 0,
+                            py: 0,
+                            minHeight: 0,
+                            overflow: "visible",
+                          }}
+                        >
+                          {index !== 0 ? (
                             <Box
                               sx={{
                                 display: "flex",
                                 alignItems: "center",
-                                gap: 1,
+                                width: "100%",
+                                minHeight: 0,
+                                height: "auto",
+                                py: 0,
+                                px: 1,
+                                overflow: "visible",
                               }}
                             >
-                              <Tooltip
-                                title={
-                                  entry.toOptional
-                                    ? "Mark as required"
-                                    : "Mark as optional"
+                              <PartOrderSeparator
+                                inheritsOrder={inheritsOrder}
+                                orderMode={getOrderInheritanceMode(
+                                  entry.to || entry.from,
+                                )}
+                                onChangeOrderMode={(mode) =>
+                                  setOrderInheritanceMode(
+                                    entry.to || entry.from,
+                                    mode,
+                                  )
                                 }
-                                placement="top"
-                              >
-                                <Box
-                                  component="button"
-                                  type="button"
-                                  disabled={savingPartIds.has(entry.to)}
-                                  onMouseDown={(e: React.MouseEvent) => {
-                                    e.stopPropagation();
-                                  }}
-                                  onClick={(e: React.MouseEvent) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    toggleOptional(entry.to);
-                                  }}
-                                  sx={{
-                                    cursor: savingPartIds.has(entry.to)
-                                      ? "not-allowed"
-                                      : "pointer",
-                                    "&:disabled": { opacity: 0.5 },
-                                    textTransform: "none",
-                                    fontSize: 12,
-                                    fontWeight: entry.toOptional ? 700 : 600,
-                                    color: entry.toOptional
-                                      ? "#f2a43a"
-                                      : (theme) =>
-                                          theme.palette.mode === "light"
-                                            ? "#111827"
-                                            : "#f3f4f6",
-                                    width: 28,
-                                    height: 28,
-                                    flexShrink: 0,
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    borderRadius: "50%",
-                                    border: entry.toOptional
-                                      ? "1px solid rgba(242, 164, 58, 0.55)"
-                                      : (theme) =>
-                                          theme.palette.mode === "light"
-                                            ? "1px solid #d0d5dd"
-                                            : "1px solid #3b3b3b",
-                                    background: entry.toOptional
-                                      ? (theme) =>
-                                          theme.palette.mode === "light"
-                                            ? "linear-gradient(180deg, #f8fafc 0%, #e8edf3 100%)"
-                                            : "linear-gradient(180deg, #2b2f39 0%, #1d2129 100%)"
-                                      : (theme) =>
-                                          theme.palette.mode === "light"
-                                            ? "linear-gradient(180deg, #ffffff 0%, #f3f5f8 100%)"
-                                            : "linear-gradient(180deg, #17191f 0%, #101217 100%)",
-                                    boxShadow: entry.toOptional
-                                      ? (theme) =>
-                                          theme.palette.mode === "light"
-                                            ? "inset 0 0 0 1px rgba(242, 164, 58, 0.22)"
-                                            : "inset 0 0 0 1px rgba(255, 187, 86, 0.16)"
-                                      : "none",
-                                    transition: "all 0.2s ease",
-                                    "&:hover": {
-                                      background: (theme) =>
-                                        theme.palette.mode === "light"
-                                          ? "rgba(15, 23, 42, 0.05)"
-                                          : "rgba(255, 255, 255, 0.06)",
-                                    },
-                                  }}
-                                >
-                                  (o)
-                                </Box>
-                              </Tooltip>
-                              <Tooltip
-                                title={
-                                  !isSelectOpen
-                                    ? allNodes[entry.to]?.title || ""
-                                    : ""
+                                disabled={savingPartIds.has(
+                                  entry.to || entry.from,
+                                )}
+                                forceShowIcons={
+                                  hoveredPartIndex === index ||
+                                  hoveredPartIndex === index - 1
                                 }
-                                placement="top"
-                                disableHoverListener={isSelectOpen}
-                              >
-                                <Box
-                                  component="span"
-                                  sx={{ display: "flex", flex: 1, minWidth: 0 }}
-                                >
-                                  <Select
-                                    value={entry.to}
-                                    disabled={
-                                      savingPartIds.has(entry.to) ||
-                                      (partAlternativesLookup[entry.to]?.specs
-                                        .length ?? 0) +
-                                        (partAlternativesLookup[entry.to]?.gens
-                                          .length ?? 0) ===
-                                        0
-                                    }
-                                    onChange={(e) => {
-                                      const newPartId = e.target.value;
-                                      onReplacePart(entry.to, newPartId);
-                                    }}
-                                    onOpen={() => {
-                                      setIsSelectOpen(true);
-                                      handleDropdownOpen(entry.to);
-                                    }}
-                                    onClose={() => setIsSelectOpen(false)}
-                                    size="small"
-                                    renderValue={() => (
-                                      <Box
-                                        sx={{
-                                          overflow: "hidden",
-                                          textOverflow: "ellipsis",
-                                          whiteSpace: "nowrap",
-                                          display: "block",
-                                        }}
+                                noGeneralizations={isRootNode}
+                              />
+                            </Box>
+                          ) : null}
+                          <Box
+                            {...providedDraggable.dragHandleProps}
+                            onMouseEnter={() => setHoveredPartIndex(index)}
+                            onMouseLeave={() => setHoveredPartIndex(null)}
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 0.5,
+                              width: "100%",
+                              py: 0.25,
+                              pl: 1,
+                              pr: 1,
+                              minHeight: 0,
+                              boxSizing: "border-box",
+                              "&:hover .part-remove-button, &:focus-within .part-remove-button":
+                                {
+                                  opacity: 1,
+                                  pointerEvents: "auto",
+                                },
+                            }}
+                          >
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 0.5,
+                                flex: 1,
+                                minWidth: 0,
+                              }}
+                            >
+                              {!readOnly &&
+                                entry.from &&
+                                entry.symbol !== "x" &&
+                                entry.symbol !== "=" && (
+                                  <ListItemIcon sx={{ minWidth: "auto" }}>
+                                    <Tooltip
+                                      title="Search it below"
+                                      placement="left"
+                                    >
+                                      <IconButton
+                                        sx={{ p: 0.4 }}
+                                        onClick={() =>
+                                          triggerSearch({
+                                            id: entry.from,
+                                            title: allNodes[entry.from]?.title,
+                                          })
+                                        }
                                       >
-                                        {allNodes[entry.to]?.title ||
-                                          entry.toTitle}
-                                      </Box>
-                                    )}
+                                        <SearchIcon
+                                          sx={{ fontSize: 19, color: "orange" }}
+                                        />
+                                      </IconButton>
+                                    </Tooltip>
+                                  </ListItemIcon>
+                                )}
+
+                              <ListItemText
+                                primary={
+                                  entry.from ? (
+                                    <Typography>
+                                      {formatPartTitle(
+                                        entry.from,
+                                        Boolean(
+                                          entry.fromOptional ??
+                                          resolvedOf(generalizationId)?.find(
+                                            (p: any) => p.id === entry.from,
+                                          )?.optional,
+                                        ),
+                                        "none",
+                                        entry.fromTitle,
+                                      )}
+                                    </Typography>
+                                  ) : null
+                                }
+                                sx={{ flex: 1, minWidth: 0, my: 0 }}
+                              />
+                            </Box>
+
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                gap: 0.5,
+                                flexShrink: 0,
+                                px: 0.5,
+                              }}
+                            >
+                              {!!removePart && entry.symbol !== "x" && (
+                                <Tooltip title={"Remove part"} placement="top">
+                                  <Box
+                                    component="span"
+                                    className="part-remove-button"
                                     sx={{
-                                      color: (theme) =>
-                                        theme.palette.mode === "dark"
-                                          ? "white"
-                                          : "black",
-                                      fontSize: "0.9rem",
-                                      flex: 1,
-                                      minWidth: 0,
-                                      borderRadius: "15px",
-                                      backgroundColor: (theme) =>
-                                        theme.palette.background.paper,
-                                      overflow: "hidden",
-                                      textOverflow: "ellipsis",
-                                      whiteSpace: "nowrap",
-                                    }}
-                                    MenuProps={{
-                                      PaperProps: { sx: menuPaperSx },
-                                      MenuListProps: {
-                                        sx: {
-                                          paddingTop: 0.5,
-                                          paddingBottom: 0.5,
-                                        },
+                                      cursor: savingPartIds.has(entry.to)
+                                        ? "not-allowed"
+                                        : undefined,
+                                      display: "inline-flex",
+                                      opacity: 0,
+                                      pointerEvents: "none",
+                                      transition: "opacity 0.2s ease-in-out",
+                                      "&:focus-within": {
+                                        opacity: 1,
+                                        pointerEvents: "auto",
                                       },
                                     }}
                                   >
-                                    <ListSubheader sx={menuTitleSx}>
-                                      Switch to:
-                                    </ListSubheader>
-                                    <ListSubheader sx={sectionHeaderSx}>
-                                      Specializations
-                                    </ListSubheader>
-                                    {loadingSpecializations.has(entry.to) ? (
-                                      <MenuItem disabled sx={emptyStateSx}>
-                                        <SyncedSpinner size={16} />
-                                        <Typography
-                                          sx={{ ...emptyTextSx, ml: 1 }}
-                                        >
-                                          Loading specializations...
-                                        </Typography>
-                                      </MenuItem>
-                                    ) : (partAlternativesLookup[entry.to]?.specs
-                                        .length ?? 0) > 0 ? (
-                                      (
-                                        partAlternativesLookup[entry.to]
-                                          ?.specs ?? []
-                                      ).map((spec: any) => (
-                                        <MenuItem
-                                          key={`spec-${spec.id}`}
-                                          value={spec.id}
-                                          sx={optionItemSx}
-                                        >
-                                          <SwapHorizIcon
-                                            sx={{
-                                              fontSize: 18,
-                                              color: "#f2a43a",
-                                            }}
-                                          />
-                                          <Typography sx={{ fontSize: "1rem" }}>
-                                            {spec.title}
-                                          </Typography>
-                                        </MenuItem>
-                                      ))
-                                    ) : (
-                                      <MenuItem disabled sx={emptyStateSx}>
-                                        <Typography sx={emptyTextSx}>
-                                          There is no Specializations to switch
-                                          to.
-                                        </Typography>
-                                      </MenuItem>
-                                    )}
-
-                                    <ListSubheader
-                                      sx={{ ...sectionHeaderSx, mt: 1 }}
+                                    <IconButton
+                                      sx={{ p: 0.5 }}
+                                      disabled={savingPartIds.has(entry.to)}
+                                      onClick={() => {
+                                        onRemovePart(entry.to);
+                                      }}
                                     >
-                                      Generalizations
-                                    </ListSubheader>
-                                    {loadingSpecializations.has(entry.to) ? (
-                                      <MenuItem disabled sx={emptyStateSx}>
-                                        <SyncedSpinner size={16} />
-                                        <Typography
-                                          sx={{ ...emptyTextSx, ml: 1 }}
-                                        >
-                                          Loading generalizations...
-                                        </Typography>
-                                      </MenuItem>
-                                    ) : (partAlternativesLookup[entry.to]?.gens
-                                        .length ?? 0) > 0 ? (
-                                      (
-                                        partAlternativesLookup[entry.to]
-                                          ?.gens ?? []
-                                      ).map((gen: any) => (
-                                        <MenuItem
-                                          key={`gen-${gen.id}`}
-                                          value={gen.id}
-                                          sx={optionItemSx}
-                                        >
-                                          <SwapHorizIcon
-                                            sx={{
-                                              fontSize: 18,
-                                              color: "#f2a43a",
-                                            }}
-                                          />
-                                          <Typography sx={{ fontSize: "1rem" }}>
-                                            {gen.title}
-                                          </Typography>
-                                        </MenuItem>
-                                      ))
-                                    ) : (
-                                      <MenuItem disabled sx={emptyStateSx}>
-                                        <Typography sx={emptyTextSx}>
-                                          There is no Generalizations to switch
-                                          to.
-                                        </Typography>
-                                      </MenuItem>
-                                    )}
-                                  </Select>
-                                </Box>
-                              </Tooltip>
-                              {!!entry.inheritedFrom &&
-                                (partSourcesLookup[entry.to] ?? []).length >=
-                                  2 && (
+                                      <DeleteOutlineIcon
+                                        sx={{
+                                          fontSize: 20,
+                                          color: savingPartIds.has(entry.to)
+                                            ? "gray"
+                                            : "red",
+                                          opacity: savingPartIds.has(entry.to)
+                                            ? 0.5
+                                            : 1,
+                                        }}
+                                      />
+                                    </IconButton>
+                                  </Box>
+                                </Tooltip>
+                              )}
+
+                              {entry.symbol === "x" && !!addPart && (
+                                <Tooltip title={"Add Part"} placement="top">
+                                  <IconButton
+                                    sx={{ p: 0.5 }}
+                                    onClick={() => {
+                                      onAddPart(entry.from);
+                                    }}
+                                  >
+                                    <AddIcon
+                                      sx={{
+                                        fontSize: 20,
+                                        color: "green",
+                                        border: "1px solid green",
+                                        borderRadius: "50%",
+                                      }}
+                                    />
+                                  </IconButton>
+                                </Tooltip>
+                              )}
+
+                              <ListItemIcon sx={SYMBOL_COL_SX}>
+                                {savingPartIds.has(entry.to) ? (
                                   <Tooltip
-                                    title={`Exists in ${
-                                      (partSourcesLookup[entry.to] ?? []).length
-                                    } generalizations, but inherited from ${
-                                      getCurrentSource(entry)?.title ?? ""
+                                    title="Linking this part…"
+                                    placement="top"
+                                  >
+                                    <span
+                                      style={{
+                                        display: "inline-flex",
+                                        cursor: "default",
+                                      }}
+                                    >
+                                      <SyncedSpinner size={18} />
+                                    </span>
+                                  </Tooltip>
+                                ) : entry.pending ? (
+                                  <Tooltip
+                                    title="Calculating inheritance…"
+                                    placement="top"
+                                  >
+                                    <span
+                                      style={{
+                                        display: "inline-flex",
+                                        cursor: "default",
+                                      }}
+                                    >
+                                      <SyncedSpinner size={18} />
+                                    </span>
+                                  </Tooltip>
+                                ) : entry.symbol === "x" ? (
+                                  <Tooltip
+                                    title={`"${genTitle}" has this part, but this node does not inherit it.`}
+                                    placement="top"
+                                  >
+                                    <CloseIcon
+                                      sx={{ fontSize: 20, color: "orange" }}
+                                    />
+                                  </Tooltip>
+                                ) : entry.symbol === ">" ? (
+                                  <Tooltip
+                                    title={`"${genTitle}" has the part "${
+                                      allNodes[entry.from]?.title ||
+                                      entry.fromTitle ||
+                                      ""
+                                    }". This node has "${
+                                      allNodes[entry.to]?.title ||
+                                      entry.toTitle ||
+                                      ""
+                                    }", a descendant of it.${
+                                      (nonPickedOnes[entry.from] || []).length >
+                                      0
+                                        ? " Click to switch."
+                                        : ""
                                     }`}
                                     placement="top"
                                   >
-                                    {/* Span, not the input: InputBase fires an
-                                        event-less onBlur when disabled
-                                        mid-focus. */}
+                                    <ArrowForwardIosIcon
+                                      sx={{
+                                        fontSize: 20,
+                                        color:
+                                          pickingFor === entry.from
+                                            ? "white"
+                                            : "orange",
+                                        backgroundColor:
+                                          pickingFor === entry.from
+                                            ? "orange"
+                                            : (nonPickedOnes[entry.from] || [])
+                                                  .length > 0
+                                              ? (theme) =>
+                                                  theme.palette.mode === "light"
+                                                    ? "#a8a8a8"
+                                                    : "#4a4646"
+                                              : "",
+                                        p: 0.2,
+                                        borderRadius: "50%",
+                                        ":hover":
+                                          (nonPickedOnes[entry.from] || [])
+                                            .length > 0
+                                            ? {
+                                                backgroundColor: "gray",
+                                              }
+                                            : {},
+                                        cursor:
+                                          (nonPickedOnes[entry.from] || [])
+                                            .length > 0
+                                            ? "pointer"
+                                            : "",
+                                      }}
+                                      onClick={(e) => {
+                                        if (
+                                          (nonPickedOnes[entry.from] || [])
+                                            .length > 0
+                                        ) {
+                                          handleClick(e, entry.from);
+                                        }
+                                      }}
+                                    />
+                                  </Tooltip>
+                                ) : entry.symbol === "=" ? (
+                                  <Tooltip
+                                    title={`This part is inherited from "${genTitle}". If it changes there, it changes here too.`}
+                                    placement="top"
+                                  >
+                                    <DragHandleIcon
+                                      sx={{
+                                        fontSize: 20,
+                                        color: "orange",
+                                        visibility:
+                                          !entry.inheritedFrom ||
+                                          (getCurrentSource(entry)?.genId ??
+                                            generalizationId) ===
+                                            generalizationId
+                                            ? "visible"
+                                            : "hidden",
+                                      }}
+                                    />
+                                  </Tooltip>
+                                ) : entry.symbol === "+" ? (
+                                  <Tooltip
+                                    title={`This part was added directly to this node. "${genTitle}" does not have it, so it is not inherited.`}
+                                    placement="top"
+                                  >
+                                    <AddIcon
+                                      sx={{ fontSize: 20, color: "orange" }}
+                                    />
+                                  </Tooltip>
+                                ) : null}
+                              </ListItemIcon>
+
+                              {entry.to ? (
+                                <Tooltip
+                                  title={
+                                    entry.toOptional
+                                      ? "Mark as required"
+                                      : "Mark as optional"
+                                  }
+                                  placement="top"
+                                >
+                                  <Box
+                                    component="button"
+                                    type="button"
+                                    disabled={savingPartIds.has(entry.to)}
+                                    onMouseDown={(e: React.MouseEvent) => {
+                                      e.stopPropagation();
+                                    }}
+                                    onClick={(e: React.MouseEvent) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      toggleOptional(entry.to);
+                                    }}
+                                    sx={{
+                                      cursor: savingPartIds.has(entry.to)
+                                        ? "not-allowed"
+                                        : "pointer",
+                                      "&:disabled": { opacity: 0.5 },
+                                      textTransform: "none",
+                                      fontSize: "0.8125rem",
+                                      fontFamily:
+                                        "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
+                                      letterSpacing: "-0.03em",
+                                      lineHeight: 1,
+                                      fontWeight: 700,
+                                      color: entry.toOptional
+                                        ? DESIGN_SYSTEM_COLORS.orange250
+                                        : (theme) =>
+                                            theme.palette.mode === "light"
+                                              ? "#111827"
+                                              : "#797b7dff",
+                                      width: 23,
+                                      height: 23,
+                                      flexShrink: 0,
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      borderRadius: "50%",
+                                      border: entry.toOptional
+                                        ? "1.5px solid #f2a43a"
+                                        : (theme) =>
+                                            theme.palette.mode === "light"
+                                              ? "1px solid #9ca3af"
+                                              : "1px solid rgba(255, 255, 255, 0.45)",
+                                      background: "transparent",
+                                      boxShadow: "none",
+                                      transition: "all 0.2s ease",
+                                      "&:hover": {
+                                        background: entry.toOptional
+                                          ? "#e0942e"
+                                          : (theme) =>
+                                              theme.palette.mode === "light"
+                                                ? "rgba(15, 23, 42, 0.06)"
+                                                : "rgba(255, 255, 255, 0.08)",
+                                        borderColor: entry.toOptional
+                                          ? "#e0942e"
+                                          : (theme) =>
+                                              theme.palette.mode === "light"
+                                                ? "#6b7280"
+                                                : "rgba(255, 255, 255, 0.7)",
+                                      },
+                                    }}
+                                  >
+                                    *
+                                  </Box>
+                                </Tooltip>
+                              ) : null}
+
+                              {entry.to ? (
+                                <PartInheritanceModeButton
+                                  value={getPartInheritanceMode(
+                                    entry.to || entry.from,
+                                  )}
+                                  disabled={savingPartIds.has(entry.to)}
+                                  onChange={async (mode) => {
+                                    const partId = entry.to || entry.from;
+                                    if (!partId) return;
+
+                                    setPartInheritanceMode(partId, mode);
+
+                                    // Get the true owner of this part from the resolved view.
+                                    // If the part is inherited (has an inheritedFrom), use that;
+                                    // otherwise the current node is the owner.
+                                    const partOwner =
+                                      entry.inheritedFrom ??
+                                      resolvedParts.find((p) => p.id === partId)
+                                        ?.inheritedFrom ??
+                                      currentVisibleNode.id;
+                                    const partTitle =
+                                      entry.toTitle ||
+                                      entry.fromTitle ||
+                                      resolvedParts.find((p) => p.id === partId)
+                                        ?.title ||
+                                      allNodes[partId]?.title ||
+                                      "";
+                                    const optional =
+                                      entry.toOptional ??
+                                      resolvedParts.find((p) => p.id === partId)
+                                        ?.optional ??
+                                      false;
+
+                                    // Cascade to all descendants:
+                                    // - neverInherit: removes the part from descendants
+                                    // - alwaysInherit / inheritUnlessAlreadyOverRidden: adds the part back to descendants
+                                    // The part always stays on the current node (e.g. Act).
+                                    try {
+                                      await Post(
+                                        "/nodes/parts/set-inheritance-mode",
+                                        {
+                                          nodeId: currentVisibleNode.id,
+                                          partId,
+                                          partOwner,
+                                          mode,
+                                          partTitle,
+                                          optional,
+                                          ...(appName ? { appName } : {}),
+                                        },
+                                      );
+                                    } catch (err: any) {
+                                      console.error(
+                                        "set-inheritance-mode cascade failed",
+                                        err,
+                                      );
+                                      recordLogs({
+                                        type: "error",
+                                        error: JSON.stringify({
+                                          name: err?.name,
+                                          message: err?.message,
+                                          stack: err?.stack,
+                                        }),
+                                      });
+                                    }
+                                  }}
+                                />
+                              ) : null}
+                            </Box>
+
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                flex: 1,
+                                minWidth: 0,
+                              }}
+                            >
+                              {entry.to ? (
+                                <Box
+                                  sx={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    width: "100%",
+                                    minWidth: 0,
+                                  }}
+                                >
+                                  <Tooltip
+                                    title={
+                                      !isSelectOpen
+                                        ? allNodes[entry.to]?.title || ""
+                                        : ""
+                                    }
+                                    placement="top"
+                                    disableHoverListener={isSelectOpen}
+                                  >
                                     <Box
                                       component="span"
                                       sx={{
                                         display: "flex",
-                                        flex: "0 0 25%",
+                                        flex: 1,
                                         minWidth: 0,
                                       }}
                                     >
                                       <Select
-                                        value=""
-                                        displayEmpty
-                                        disabled={savingPartIds.has(entry.to)}
+                                        value={entry.to}
+                                        disabled={
+                                          savingPartIds.has(entry.to) ||
+                                          (partAlternativesLookup[entry.to]
+                                            ?.specs.length ?? 0) +
+                                            (partAlternativesLookup[entry.to]
+                                              ?.gens.length ?? 0) ===
+                                            0
+                                        }
+                                        onChange={(e) => {
+                                          const newPartId = e.target.value;
+                                          onReplacePart(entry.to, newPartId);
+                                        }}
+                                        onOpen={() => {
+                                          setIsSelectOpen(true);
+                                          handleDropdownOpen(entry.to);
+                                        }}
+                                        onClose={() => setIsSelectOpen(false)}
                                         size="small"
                                         renderValue={() => (
                                           <Box
@@ -1511,30 +1635,33 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                               overflow: "hidden",
                                               textOverflow: "ellipsis",
                                               whiteSpace: "nowrap",
-                                              fontSize: "0.72rem",
-                                              fontWeight: "bold",
+                                              display: "block",
                                             }}
                                           >
-                                            Inherited from
+                                            {allNodes[entry.to]?.title ||
+                                              entry.toTitle}
                                           </Box>
                                         )}
                                         sx={{
+                                          color: (theme) =>
+                                            theme.palette.mode === "dark"
+                                              ? "white"
+                                              : "black",
+                                          fontSize: "0.9rem",
                                           flex: 1,
                                           minWidth: 0,
-                                          color: "#f2a43a",
-                                          fontWeight: "bold",
                                           borderRadius: "15px",
                                           backgroundColor: (theme) =>
                                             theme.palette.background.paper,
-                                          "& .MuiOutlinedInput-notchedOutline":
-                                            {
-                                              borderColor:
-                                                "rgba(242, 164, 58, 0.55)",
-                                            },
-                                          "&:hover .MuiOutlinedInput-notchedOutline":
-                                            {
-                                              borderColor: "#f2a43a",
-                                            },
+                                          overflow: "hidden",
+                                          textOverflow: "ellipsis",
+                                          whiteSpace: "nowrap",
+                                          "& .MuiSelect-select": {
+                                            py: "4px",
+                                            minHeight: "unset",
+                                            display: "flex",
+                                            alignItems: "center",
+                                          },
                                         }}
                                         MenuProps={{
                                           PaperProps: { sx: menuPaperSx },
@@ -1547,165 +1674,394 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                         }}
                                       >
                                         <ListSubheader sx={menuTitleSx}>
-                                          This part is specifically inherited
-                                          from:
+                                          Switch to:
                                         </ListSubheader>
-                                        {(() => {
-                                          // Check sits on the picked gen (via),
-                                          // else on the resolution path. Picking
-                                          // a relay records the pick; picking
-                                          // another owner repoints.
-                                          const sources =
-                                            partSourcesLookup[entry.to] ?? [];
-                                          const currentGenId =
-                                            getCurrentSource(entry)?.genId;
-                                          return [...sources]
-                                            .sort(
-                                              (a, b) =>
-                                                (b.genId === currentGenId
-                                                  ? 1
-                                                  : 0) -
-                                                (a.genId === currentGenId
-                                                  ? 1
-                                                  : 0),
-                                            )
-                                            .map((source) => {
-                                              const isCurrent =
-                                                source.genId === currentGenId;
-                                              return (
-                                                <MenuItem
-                                                  key={`source-${source.genId}`}
-                                                  disabled={isCurrent}
-                                                  onClick={() => {
-                                                    if (
-                                                      isCurrent ||
-                                                      savingPartIds.has(
-                                                        entry.to,
-                                                      )
-                                                    ) {
-                                                      return;
-                                                    }
-                                                    switchPartSource(
-                                                      entry.to,
-                                                      source.genId,
-                                                    );
-                                                  }}
-                                                  sx={
-                                                    isCurrent
-                                                      ? currentSourceItemSx
-                                                      : optionItemSx
-                                                  }
-                                                >
-                                                  <CheckIcon
-                                                    sx={{
-                                                      fontSize: 18,
-                                                      color: "#f2a43a",
-                                                      visibility: isCurrent
-                                                        ? "visible"
-                                                        : "hidden",
-                                                    }}
-                                                  />
-                                                  <Typography
-                                                    sx={{
-                                                      fontSize: "1rem",
-                                                      fontWeight: isCurrent
-                                                        ? 700
-                                                        : 400,
-                                                    }}
-                                                  >
-                                                    {source.title}
-                                                  </Typography>
-                                                </MenuItem>
-                                              );
-                                            });
-                                        })()}
+                                        <ListSubheader sx={sectionHeaderSx}>
+                                          Specializations
+                                        </ListSubheader>
+                                        {loadingSpecializations.has(
+                                          entry.to,
+                                        ) ? (
+                                          <MenuItem disabled sx={emptyStateSx}>
+                                            <SyncedSpinner size={16} />
+                                            <Typography
+                                              sx={{ ...emptyTextSx, ml: 1 }}
+                                            >
+                                              Loading specializations...
+                                            </Typography>
+                                          </MenuItem>
+                                        ) : (partAlternativesLookup[entry.to]
+                                            ?.specs.length ?? 0) > 0 ? (
+                                          (
+                                            partAlternativesLookup[entry.to]
+                                              ?.specs ?? []
+                                          ).map((spec: any) => (
+                                            <MenuItem
+                                              key={`spec-${spec.id}`}
+                                              value={spec.id}
+                                              sx={optionItemSx}
+                                            >
+                                              <SwapHorizIcon
+                                                sx={{
+                                                  fontSize: 18,
+                                                  color: "#f2a43a",
+                                                }}
+                                              />
+                                              <Typography
+                                                sx={{ fontSize: "1rem" }}
+                                              >
+                                                {spec.title}
+                                              </Typography>
+                                            </MenuItem>
+                                          ))
+                                        ) : (
+                                          <MenuItem disabled sx={emptyStateSx}>
+                                            <Typography sx={emptyTextSx}>
+                                              There is no Specializations to
+                                              switch to.
+                                            </Typography>
+                                          </MenuItem>
+                                        )}
+
+                                        <ListSubheader
+                                          sx={{ ...sectionHeaderSx, mt: 1 }}
+                                        >
+                                          Generalizations
+                                        </ListSubheader>
+                                        {loadingSpecializations.has(
+                                          entry.to,
+                                        ) ? (
+                                          <MenuItem disabled sx={emptyStateSx}>
+                                            <SyncedSpinner size={16} />
+                                            <Typography
+                                              sx={{ ...emptyTextSx, ml: 1 }}
+                                            >
+                                              Loading generalizations...
+                                            </Typography>
+                                          </MenuItem>
+                                        ) : (partAlternativesLookup[entry.to]
+                                            ?.gens.length ?? 0) > 0 ? (
+                                          (
+                                            partAlternativesLookup[entry.to]
+                                              ?.gens ?? []
+                                          ).map((gen: any) => (
+                                            <MenuItem
+                                              key={`gen-${gen.id}`}
+                                              value={gen.id}
+                                              sx={optionItemSx}
+                                            >
+                                              <SwapHorizIcon
+                                                sx={{
+                                                  fontSize: 18,
+                                                  color: "#f2a43a",
+                                                }}
+                                              />
+                                              <Typography
+                                                sx={{ fontSize: "1rem" }}
+                                              >
+                                                {gen.title}
+                                              </Typography>
+                                            </MenuItem>
+                                          ))
+                                        ) : (
+                                          <MenuItem disabled sx={emptyStateSx}>
+                                            <Typography sx={emptyTextSx}>
+                                              There is no Generalizations to
+                                              switch to.
+                                            </Typography>
+                                          </MenuItem>
+                                        )}
                                       </Select>
                                     </Box>
                                   </Tooltip>
-                                )}
+                                  {!!entry.inheritedFrom &&
+                                    (partSourcesLookup[entry.to] ?? [])
+                                      .length >= 2 && (
+                                      <Tooltip
+                                        title={`Exists in ${
+                                          (partSourcesLookup[entry.to] ?? [])
+                                            .length
+                                        } generalizations, but inherited from ${getCurrentSource(entry)?.title ?? ""}`}
+                                        placement="top"
+                                      >
+                                        {/* Span, not the input: InputBase fires an
+                              event-less onBlur when disabled
+                              mid-focus. */}
+                                        <Box
+                                          component="span"
+                                          sx={{
+                                            display: "flex",
+                                            flex: "0 0 25%",
+                                            minWidth: 0,
+                                          }}
+                                        >
+                                          <Select
+                                            value=""
+                                            displayEmpty
+                                            disabled={savingPartIds.has(
+                                              entry.to,
+                                            )}
+                                            size="small"
+                                            renderValue={() => (
+                                              <Box
+                                                sx={{
+                                                  overflow: "hidden",
+                                                  textOverflow: "ellipsis",
+                                                  whiteSpace: "nowrap",
+                                                  fontSize: "0.72rem",
+                                                  fontWeight: "bold",
+                                                }}
+                                              >
+                                                Inherited from
+                                              </Box>
+                                            )}
+                                            sx={{
+                                              flex: 1,
+                                              minWidth: 0,
+                                              color: "#f2a43a",
+                                              fontWeight: "bold",
+                                              borderRadius: "15px",
+                                              backgroundColor: (theme) =>
+                                                theme.palette.background.paper,
+                                              "& .MuiOutlinedInput-notchedOutline":
+                                                {
+                                                  borderColor:
+                                                    "rgba(242, 164, 58, 0.55)",
+                                                },
+                                              "&:hover .MuiOutlinedInput-notchedOutline":
+                                                {
+                                                  borderColor: "#f2a43a",
+                                                },
+                                            }}
+                                            MenuProps={{
+                                              PaperProps: { sx: menuPaperSx },
+                                              MenuListProps: {
+                                                sx: {
+                                                  paddingTop: 0.5,
+                                                  paddingBottom: 0.5,
+                                                },
+                                              },
+                                            }}
+                                          >
+                                            <ListSubheader sx={menuTitleSx}>
+                                              This part is specifically
+                                              inherited from:
+                                            </ListSubheader>
+                                            {(() => {
+                                              // Check sits on the picked gen (via),
+                                              // else on the resolution path. Picking
+                                              // a relay records the pick; picking
+                                              // another owner repoints.
+                                              const sources =
+                                                partSourcesLookup[entry.to] ??
+                                                [];
+                                              const currentGenId =
+                                                getCurrentSource(entry)?.genId;
+                                              return [...sources]
+                                                .sort(
+                                                  (a, b) =>
+                                                    (b.genId === currentGenId
+                                                      ? 1
+                                                      : 0) -
+                                                    (a.genId === currentGenId
+                                                      ? 1
+                                                      : 0),
+                                                )
+                                                .map((source) => {
+                                                  const isCurrent =
+                                                    source.genId ===
+                                                    currentGenId;
+                                                  return (
+                                                    <MenuItem
+                                                      key={`source-${source.genId}`}
+                                                      disabled={isCurrent}
+                                                      onClick={() => {
+                                                        if (
+                                                          isCurrent ||
+                                                          savingPartIds.has(
+                                                            entry.to,
+                                                          )
+                                                        ) {
+                                                          return;
+                                                        }
+                                                        switchPartSource(
+                                                          entry.to,
+                                                          source.genId,
+                                                        );
+                                                      }}
+                                                      sx={
+                                                        isCurrent
+                                                          ? currentSourceItemSx
+                                                          : optionItemSx
+                                                      }
+                                                    >
+                                                      <CheckIcon
+                                                        sx={{
+                                                          fontSize: 18,
+                                                          color: "#f2a43a",
+                                                          visibility: isCurrent
+                                                            ? "visible"
+                                                            : "hidden",
+                                                        }}
+                                                      />
+                                                      <Typography
+                                                        sx={{
+                                                          fontSize: "1rem",
+                                                          fontWeight: isCurrent
+                                                            ? 700
+                                                            : 400,
+                                                        }}
+                                                      >
+                                                        {source.title}
+                                                      </Typography>
+                                                    </MenuItem>
+                                                  );
+                                                });
+                                            })()}
+                                          </Select>
+                                        </Box>
+                                      </Tooltip>
+                                    )}
+                                </Box>
+                              ) : null}
                             </Box>
-                          ) : null
-                        }
-                        sx={{ flex: 1, minWidth: 0.3 }}
-                      />
-                    </ListItem>
-                  )}
-                </Draggable>
-              ))}
+                          </Box>
+                        </ListItem>
+                      );
+                    }}
+                  </Draggable>
+                );
+              })}
               {provided.placeholder}
             </List>
           )}
         </Droppable>
         {notInheritedItems.length > 0 && (
-          <List sx={{ px: 1.8, py: 0 }}>
+          <List sx={{ px: 1, py: 0, pt: "15px" }}>
             {notInheritedItems.map((entry: any, index: number) => (
               <ListItem
                 key={`not-inherited-${entry.from || index}`}
+                dense
+                disableGutters
                 sx={{
                   display: "flex",
                   alignItems: "center",
-                  gap: 1,
-                  px: 1,
+                  gap: 0.5,
+                  pl: 1,
+                  pr: 1,
                   py: 0,
-                  backgroundImage:
-                    "repeating-linear-gradient(to right, gray 0, gray 1px, transparent 1px, transparent 6px)",
+                  minHeight: 0,
+                  boxSizing: "border-box",
+
                   backgroundPosition: "top",
                   backgroundRepeat: "repeat-x",
                   backgroundSize: "100% 1px",
                 }}
               >
-                <ListItemText
-                  primary={
-                    <Typography>
-                      {formatPartTitle(
-                        entry.from,
-                        entry.fromOptional || false,
-                        "none",
-                        entry.fromTitle,
-                      )}
-                    </Typography>
-                  }
-                  sx={{ flex: 1, minWidth: 0.3 }}
-                />
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 0.5,
+                    flex: 1,
+                    minWidth: 0,
+                  }}
+                >
+                  {!readOnly && (
+                    <ListItemIcon sx={{ minWidth: "auto" }}>
+                      <Tooltip title="Search it below" placement="left">
+                        <IconButton
+                          sx={{ p: 0.4 }}
+                          onClick={() =>
+                            triggerSearch({
+                              id: entry.from,
+                              title: allNodes[entry.from]?.title,
+                            })
+                          }
+                        >
+                          <SearchIcon sx={{ fontSize: 19, color: "orange" }} />
+                        </IconButton>
+                      </Tooltip>
+                    </ListItemIcon>
+                  )}
+                  <ListItemText
+                    primary={
+                      <Typography>
+                        {formatPartTitle(
+                          entry.from,
+                          Boolean(
+                            entry.fromOptional ??
+                            resolvedOf(generalizationId)?.find(
+                              (p: any) => p.id === entry.from,
+                            )?.optional,
+                          ),
+                          "none",
+                          entry.fromTitle,
+                        )}
+                      </Typography>
+                    }
+                    sx={{ flex: 1, minWidth: 0, my: 0 }}
+                  />
+                </Box>
 
-                <ListItemIcon sx={{ minWidth: "auto" }}>
-                  <Tooltip
-                    title={`"${genTitle}" has this part, but this node does not inherit it.`}
-                    placement="top"
-                  >
-                    <CloseIcon sx={{ fontSize: 20, color: "orange" }} />
-                  </Tooltip>
-                </ListItemIcon>
-
-                {/* Inherits the part specifically through this tab's
-                    generalization. Unlike a plain add, it never becomes
-                    owned and overall inheritance is untouched. */}
-                {!!addPartFromGen && (
-                  <Tooltip title={"Inherit this part"} placement="top">
-                    <IconButton
-                      sx={{ p: 0.5 }}
-                      onClick={async () => {
-                        await addPartFromGen(entry.from, generalizationId);
-                      }}
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 0.5,
+                    flexShrink: 0,
+                    px: 0.5,
+                  }}
+                >
+                  <ListItemIcon sx={SYMBOL_COL_SX}>
+                    <Tooltip
+                      title={`"${genTitle}" has this part, but this node does not inherit it.`}
+                      placement="top"
                     >
-                      <AddIcon
-                        sx={{
-                          fontSize: 20,
-                          color: "green",
-                          border: "1px solid green",
-                          borderRadius: "50%",
+                      <CloseIcon sx={{ fontSize: 20, color: "orange" }} />
+                    </Tooltip>
+                  </ListItemIcon>
+
+                  {/* Inherits the part specifically through this tab's
+                      generalization. Unlike a plain add, it never becomes
+                      owned and overall inheritance is untouched. */}
+                  {!!addPartFromGen && (
+                    <Tooltip title={"Inherit this part"} placement="top">
+                      <IconButton
+                        sx={{ p: 0.5 }}
+                        onClick={async () => {
+                          await addPartFromGen(entry.from, generalizationId);
                         }}
-                      />
-                    </IconButton>
-                  </Tooltip>
-                )}
+                      >
+                        <AddIcon
+                          sx={{
+                            fontSize: 20,
+                            color: "green",
+                            border: "1px solid green",
+                            borderRadius: "50%",
+                          }}
+                        />
+                      </IconButton>
+                    </Tooltip>
+                  )}
+                </Box>
 
                 {/* Not inherited: no switch dropdown since the part isn't on
                     this node — an invisible one keeps the row height equal. */}
-                <ListItemText
-                  primary={rowHeightSpacer}
-                  sx={{ flex: 1, minWidth: 0.3 }}
-                />
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    flex: 1,
+                    minWidth: 0,
+                  }}
+                >
+                  <ListItemText
+                    primary={rowHeightSpacer}
+                    sx={{ flex: 1, minWidth: 0, my: 0 }}
+                  />
+                </Box>
               </ListItem>
             ))}
           </List>
@@ -1724,12 +2080,14 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
             vertical: "center",
             horizontal: "left",
           }}
-          PaperProps={{
-            sx: {
-              border: "1.5px solid orange",
-              borderRadius: "10px",
-              backgroundColor: (theme) =>
-                theme.palette.mode === "light" ? "#f8f8f8" : "#524e4e",
+          slotProps={{
+            paper: {
+              sx: {
+                border: "1.5px solid orange",
+                borderRadius: "10px",
+                backgroundColor: (theme) =>
+                  theme.palette.mode === "light" ? "#f8f8f8" : "#524e4e",
+              },
             },
           }}
         >
@@ -1761,67 +2119,128 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
           </List>
         </Popover>
         {nonDraggableItems.length > 0 && (
-          <List sx={{ px: 1.8, py: 1, mt: -0.5 }}>
+          <List sx={{ px: 1, py: 0 }}>
             {nonDraggableItems.map((entryFrom: string, index: number) => (
               <ListItem
                 key={`non-draggable-${entryFrom || index}`}
+                dense
+                disableGutters
                 sx={{
                   display: "flex",
                   alignItems: "center",
                   backgroundImage:
-                    "repeating-linear-gradient(to right, gray 0, gray 1px, transparent 1px, transparent 6px)",
+                    "repeating-linear-gradient(to right, rgba(180,180,180,0.55) 0px, rgba(180,180,180,0.55) 4px, transparent 4px, transparent 8px)",
                   backgroundPosition: "top",
                   backgroundRepeat: "repeat-x",
                   backgroundSize: "100% 1px",
-                  gap: 1,
-                  px: 1,
+                  gap: 0.5,
+                  pl: 1,
+                  pr: 1,
                   py: 0,
+                  minHeight: 0,
+                  boxSizing: "border-box",
                 }}
               >
-                <ListItemText
-                  primary={
-                    entryFrom ? (
-                      <Typography>
-                        {formatPartTitle(entryFrom, false)}
-                      </Typography>
-                    ) : null
-                  }
-                  sx={{ flex: 1, minWidth: 0.3 }}
-                />
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 0.5,
+                    flex: 1,
+                    minWidth: 0,
+                  }}
+                >
+                  {!readOnly && entryFrom && (
+                    <ListItemIcon sx={{ minWidth: "auto" }}>
+                      <Tooltip title="Search it below" placement="left">
+                        <IconButton
+                          sx={{ p: 0.4 }}
+                          onClick={() =>
+                            triggerSearch({
+                              id: entryFrom,
+                              title: allNodes[entryFrom]?.title,
+                            })
+                          }
+                        >
+                          <SearchIcon sx={{ fontSize: 19, color: "orange" }} />
+                        </IconButton>
+                      </Tooltip>
+                    </ListItemIcon>
+                  )}
+                  <ListItemText
+                    primary={
+                      entryFrom ? (
+                        <Typography>
+                          {formatPartTitle(
+                            entryFrom,
+                            Boolean(
+                              resolvedOf(generalizationId)?.find(
+                                (p: any) => p.id === entryFrom,
+                              )?.optional,
+                            ),
+                            "none",
+                            allNodes[entryFrom]?.title,
+                          )}
+                        </Typography>
+                      ) : null
+                    }
+                    sx={{ flex: 1, minWidth: 0, my: 0 }}
+                  />
+                </Box>
 
-                <ListItemIcon sx={{ minWidth: "auto" }}>
-                  <Tooltip
-                    title={`"${genTitle}" has this part, but this node does not inherit it.`}
-                    placement="top"
-                  >
-                    <CloseIcon sx={{ fontSize: 24, color: "orange" }} />
-                  </Tooltip>
-                </ListItemIcon>
-
-                {!!addPart && (
-                  <Tooltip title={"Add Part"} placement="top">
-                    <IconButton
-                      sx={{ p: 0.5 }}
-                      onClick={() => {
-                        onAddPart(entryFrom);
-                      }}
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 0.5,
+                    flexShrink: 0,
+                    px: 0.5,
+                  }}
+                >
+                  <ListItemIcon sx={SYMBOL_COL_SX}>
+                    <Tooltip
+                      title={`"${genTitle}" has this part, but this node does not inherit it.`}
+                      placement="top"
                     >
-                      <AddIcon
-                        sx={{
-                          fontSize: 23,
-                          color: "green",
-                          border: "1px solid green",
-                          borderRadius: "50%",
-                        }}
-                      />
-                    </IconButton>
-                  </Tooltip>
-                )}
+                      <CloseIcon sx={{ fontSize: 20, color: "orange" }} />
+                    </Tooltip>
+                  </ListItemIcon>
 
-                <ListItemText
-                  primary={rowHeightSpacer}
-                  sx={{ flex: 1, minWidth: 0.3 }}
-                />
+                  {!!addPart && (
+                    <Tooltip title={"Add Part"} placement="top">
+                      <IconButton
+                        sx={{ p: 0.5 }}
+                        onClick={() => {
+                          onAddPart(entryFrom);
+                        }}
+                      >
+                        <AddIcon
+                          sx={{
+                            fontSize: 20,
+                            color: "green",
+                            border: "1px solid green",
+                            borderRadius: "50%",
+                          }}
+                        />
+                      </IconButton>
+                    </Tooltip>
+                  )}
+                </Box>
+
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    flex: 1,
+                    minWidth: 0,
+                  }}
+                >
+                  <ListItemText
+                    primary={rowHeightSpacer}
+                    sx={{ flex: 1, minWidth: 0, my: 0 }}
+                  />
+                </Box>
               </ListItem>
             ))}
           </List>
@@ -1928,10 +2347,10 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
               position: "relative",
               mx: 2,
               mt: 2,
-              mb: inheritedPartsRepairing ? 4 : 2.5,
+              mb: 2.5,
             }}
           >
-            {/* Left Text */}
+            {/* Left Text — hidden for root nodes (no real generalizations) */}
             <Box
               sx={{
                 flex: 1,
@@ -1942,84 +2361,85 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                 pr: "30px", // space to avoid overlap with center icon
               }}
             >
-              {generalizations.length > 1 ? (
-                <TextField
-                  value={activeGenId}
-                  onChange={(e) => setActiveTab(e.target.value)}
-                  select
-                  label="Generalizations"
-                  sx={{ flex: 1, minWidth: 0 }}
-                  slotProps={{
-                    input: {
-                      sx: {
-                        height: "40px",
-                        borderRadius: "18px",
+              {!isRootNode &&
+                (generalizations.length > 1 ? (
+                  <TextField
+                    value={activeGenId}
+                    onChange={(e) => setActiveTab(e.target.value)}
+                    select
+                    label="Generalizations"
+                    sx={{ flex: 1, minWidth: 0 }}
+                    slotProps={{
+                      input: {
+                        sx: {
+                          height: "40px",
+                          borderRadius: "18px",
+                          color: "orange",
+                          fontWeight: 700,
+                          fontSize: "1.15rem",
+                          backgroundColor: (theme) =>
+                            theme.palette.background.paper,
+                        },
+                      },
+                      inputLabel: { style: { color: "grey" } },
+                      select: {
+                        MenuProps: {
+                          PaperProps: {
+                            sx: {
+                              border: "2px solid orange",
+                              borderRadius: "12px",
+                              "&::-webkit-scrollbar": { display: "none" },
+                            },
+                          },
+                          MenuListProps: {
+                            sx: { paddingTop: 0, paddingBottom: 0 },
+                          },
+                        },
+                        renderValue: () => (
+                          <Box
+                            sx={{
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {activeGenTitle}
+                          </Box>
+                        ),
+                      },
+                    }}
+                  >
+                    {generalizations.map((gen) => (
+                      <MenuItem
+                        key={gen.id}
+                        value={gen.id}
+                        sx={{
+                          border: "1px solid gray",
+                          borderRadius: "25px",
+                          my: "4px",
+                          mx: "8px",
+                        }}
+                      >
+                        <Typography>{gen.title}</Typography>
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                ) : (
+                  <Tooltip title={activeGenTitle}>
+                    <Typography
+                      sx={{
                         color: "orange",
                         fontWeight: 700,
                         fontSize: "1.15rem",
-                        backgroundColor: (theme) =>
-                          theme.palette.background.paper,
-                      },
-                    },
-                    inputLabel: { style: { color: "grey" } },
-                    select: {
-                      MenuProps: {
-                        PaperProps: {
-                          sx: {
-                            border: "2px solid orange",
-                            borderRadius: "12px",
-                            "&::-webkit-scrollbar": { display: "none" },
-                          },
-                        },
-                        MenuListProps: {
-                          sx: { paddingTop: 0, paddingBottom: 0 },
-                        },
-                      },
-                      renderValue: () => (
-                        <Box
-                          sx={{
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          {activeGenTitle}
-                        </Box>
-                      ),
-                    },
-                  }}
-                >
-                  {generalizations.map((gen) => (
-                    <MenuItem
-                      key={gen.id}
-                      value={gen.id}
-                      sx={{
-                        border: "1px solid gray",
-                        borderRadius: "25px",
-                        my: "4px",
-                        mx: "8px",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
                       }}
                     >
-                      <Typography>{gen.title}</Typography>
-                    </MenuItem>
-                  ))}
-                </TextField>
-              ) : (
-                <Tooltip title={activeGenTitle}>
-                  <Typography
-                    sx={{
-                      color: "orange",
-                      fontWeight: 700,
-                      fontSize: "1.15rem",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {activeGenTitle}
-                  </Typography>
-                </Tooltip>
-              )}
+                      {activeGenTitle}
+                    </Typography>
+                  </Tooltip>
+                ))}
             </Box>
 
             <Box
@@ -2028,42 +2448,37 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                 left: "50%",
                 transform: "translateX(-50%)",
                 display: "flex",
+                flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "center",
-                gap: 1,
-                height: "50px",
-                width: "50px",
+                gap: 0.5,
+                height: "40px",
                 whiteSpace: "nowrap",
               }}
             >
               {/* Rows keep rendering from the resolved view; only the arrow
                   hints that the annotation is recomputing. */}
               {inheritedPartsRepairing ? (
-                <SyncedSpinner size={20} />
+                <>
+                  <SyncedSpinner size={20} />
+                  <Typography
+                    sx={{
+                      fontSize: "0.7rem",
+                      fontWeight: "bold",
+                      fontStyle: "italic",
+                      color: "orange",
+                      whiteSpace: "nowrap",
+                      pointerEvents: "none",
+                      lineHeight: 1,
+                    }}
+                  >
+                    Calculating inheritance…
+                  </Typography>
+                </>
               ) : (
                 <ArrowRightAltIcon sx={{ color: "orange", fontSize: "50px" }} />
               )}
             </Box>
-
-            {inheritedPartsRepairing && (
-              <Typography
-                sx={{
-                  position: "absolute",
-                  top: "100%",
-                  left: "50%",
-                  transform: "translateX(-50%)",
-                  mt: "1px",
-                  fontSize: "0.75rem",
-                  fontWeight: "bold",
-                  fontStyle: "italic",
-                  color: "orange",
-                  whiteSpace: "nowrap",
-                  pointerEvents: "none",
-                }}
-              >
-                Calculating inheritance…
-              </Typography>
-            )}
 
             <Box
               sx={{
@@ -2101,15 +2516,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
         </Box>
       )}
 
-      <InheritedPartsLegend
-        legendItems={[
-          { symbol: "(o)", description: "Optional" },
-          { symbol: "=", description: "No Change" },
-          { symbol: ">", description: "Specialized Part" },
-          { symbol: "x", description: "Part not Inherited" },
-          { symbol: "+", description: "Part Added" },
-        ]}
-      />
+      <InheritedPartsLegend sx={{ px: 2, pr: 3 }} />
     </Box>
   );
 };

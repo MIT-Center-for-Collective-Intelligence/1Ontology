@@ -433,21 +433,22 @@ const analyzeInheritance = (
   for (const currentPart of currentParts) {
     const existIdx = finalResult.findIndex((c) => c.to === currentPart);
     if (existIdx === -1) {
-      if (!generalizationParts.includes(currentPart)) {
-        finalResult.push({
-          from: "",
-          to: currentPart,
-          symbol: "+",
-          fromOptional: false,
-          toOptional: getPartOptionalStatus(
-            currentPart,
-            currentVisibleNode.id,
-            resolvedOf,
-          ),
-          optionalChange: "none",
-          hops: 0,
-        });
-      }
+      const isGenPart = generalizationParts.includes(currentPart);
+      finalResult.push({
+        from: isGenPart ? currentPart : "",
+        to: currentPart,
+        symbol: isGenPart ? "=" : "+",
+        fromOptional: isGenPart
+          ? getPartOptionalStatus(currentPart, generalizationId, resolvedOf)
+          : false,
+        toOptional: getPartOptionalStatus(
+          currentPart,
+          currentVisibleNode.id,
+          resolvedOf,
+        ),
+        optionalChange: "none",
+        hops: 0,
+      });
     }
   }
 

@@ -136,7 +136,7 @@ const ManageNodeButtons = ({
             transformOrigin={{ horizontal: "right", vertical: "top" }}
             anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
           >
-            {!locked && (
+            {/* {!locked && (
               <MenuItem onClick={displayInheritanceSettings}>
                 <ListItemIcon>
                   <AccountTreeIcon
@@ -150,7 +150,7 @@ const ManageNodeButtons = ({
                 </ListItemIcon>
                 <ListItemText>Manage Inheritance</ListItemText>
               </MenuItem>
-            )}
+            )} */}
             <MenuItem onClick={displayNodeChat}>
               <ListItemIcon>
                 <ChatIcon
@@ -186,7 +186,7 @@ const ManageNodeButtons = ({
 
     return (
       <>
-        {!locked && (
+        {/* {!locked && (
           <Tooltip title="Manage Inheritance">
             <IconButton onClick={displayInheritanceSettings}>
               <AccountTreeIcon
@@ -198,7 +198,7 @@ const ManageNodeButtons = ({
               />
             </IconButton>
           </Tooltip>
-        )}
+        )} */}
         <Tooltip title="Open Node Comments">
           <IconButton onClick={displayNodeChat}>
             <Badge

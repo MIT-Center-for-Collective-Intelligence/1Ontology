@@ -211,7 +211,7 @@ const SelectInheritance = ({
 
   return (
     <Box sx={{ ml: "auto" }}>
-      <TextField
+      {/* <TextField
         value={inheritanceRef}
         onChange={(e: any) =>
           controlled
@@ -277,7 +277,7 @@ const SelectInheritance = ({
             {generalization.title}
           </MenuItem>
         ))}
-      </TextField>
+      </TextField> */}
     </Box>
   );
 };

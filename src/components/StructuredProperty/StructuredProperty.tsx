@@ -61,6 +61,10 @@ import {
   updatePropertyOf,
 } from "@components/lib/utils/helpers";
 import SelectInheritance from "../SelectInheritance/SelectInheritance";
+import PartInheritanceModeButton, {
+  InheritanceMode,
+} from "../Common/PartInheritanceModeButton";
+import { setPropertyInheritanceMode } from "@components/lib/utils/propertyInheritanceMode";
 import VisualizeTheProperty from "./VisualizeTheProperty";
 import CollectionStructure from "./CollectionStructure";
 import PropertyContributors from "./PropertyContributors";
@@ -863,8 +867,9 @@ const StructuredProperty = ({
       );
       pendingWrites.start(nodeId, "properties.parts");
       pendingWrites.start(nodeId, "partsInheritance");
+      let responseData: any = null;
       try {
-        await Post(endpoint, {
+        responseData = await Post(endpoint, {
           nodeId,
           ...payload,
           ...(appName ? { appName } : {}),
@@ -892,7 +897,17 @@ const StructuredProperty = ({
         // The freshness comparison skipped its runs while the write was
         // pending; a new identity makes it run once more now the gate is open.
         setCurrentVisibleNode((prev: any) =>
-          prev && prev.id === nodeId ? { ...prev } : prev,
+          prev && prev.id === nodeId
+            ? {
+                ...prev,
+                ...(responseData?.inheritedPartsDetails
+                  ? { inheritedPartsDetails: responseData.inheritedPartsDetails }
+                  : {}),
+                ...(responseData?.resolvedParts
+                  ? { resolvedParts: responseData.resolvedParts }
+                  : {}),
+              }
+            : prev,
         );
       }
     },
@@ -1525,7 +1540,7 @@ const StructuredProperty = ({
                 : "",
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center" }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             {editProperty === property && modifyProperty ? (
               <EditProperty
                 value={newPropertyValue}
@@ -1603,6 +1618,30 @@ const StructuredProperty = ({
                 </Box>
               </Tooltip>
             )}
+            {!!currentVisibleNode.inheritance?.[property] &&
+              property !== "parts" &&
+              property !== "generalizations" &&
+              property !== "specializations" &&
+              property !== "isPartOf" &&
+              !currentVisibleNode.unclassified && (
+                <PartInheritanceModeButton
+                  value={
+                    (currentVisibleNode.inheritance[property]
+                      .inheritanceType as InheritanceMode) ||
+                    "inheritUnlessAlreadyOverRidden"
+                  }
+                  disabled={!enableEdit || locked}
+                  onChange={(mode) => {
+                    void setPropertyInheritanceMode({
+                      nodeId: currentVisibleNode.id,
+                      property,
+                      mode,
+                      nodes: relatedNodes,
+                      fetchNode,
+                    });
+                  }}
+                />
+              )}
             {(property === "generalizations" ||
               property === "specializations" ||
               property === "isPartOf" ||

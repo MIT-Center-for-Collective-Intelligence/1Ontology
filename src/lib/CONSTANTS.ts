@@ -172,6 +172,11 @@ export const GEMINI_MODEL = "gemini-3.1-pro-preview";
 export const ONTOLOGY_APPS: any = development
   ? [
       {
+        id: "test-ontology",
+        name: "Test Ontology",
+        group: "main",
+      },
+      {
         id: "final-hierarchy-with-o*net",
         name: "Final Hierarchy with O*Net",
         group: "main",

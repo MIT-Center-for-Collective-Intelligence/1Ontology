@@ -29,6 +29,10 @@ import EditIcon from "@mui/icons-material/Edit";
 import EditProperty from "../AddPropertyForm/EditProperty";
 import InheritanceDetailsPanel from "./InheritanceDetailsPanel";
 import SelectInheritance from "../SelectInheritance/SelectInheritance";
+import PartInheritanceModeButton, {
+  InheritanceMode,
+} from "../Common/PartInheritanceModeButton";
+import { setPropertyInheritanceMode } from "@components/lib/utils/propertyInheritanceMode";
 import { Post } from "@components/lib/utils/Post";
 
 interface NumericPropertyValue {
@@ -327,86 +331,108 @@ const NumericProperty = ({
             borderTopLeftRadius: "18px",
           }}
         >
-          {editProperty === property ? (
-            <EditProperty
-              value={newPropertyValue}
-              onChange={setNewPropertyValue}
-              onSave={() => {
-                if (modifyProperty) {
-                  modifyProperty({
-                    newValue: newPropertyValue,
-                    previousValue: property,
-                  });
-                }
-                setEditProperty("");
-                setNewPropertyValue("");
-              }}
-              onCancel={() => {
-                setEditProperty("");
-                setNewPropertyValue("");
-              }}
-              property={property}
-            />
-          ) : (
-            <Tooltip title={getTooltipHelper(lowercaseFirstLetter(property))}>
-              <Box
-                sx={{
-                  position: "relative",
-                  display: "inline-block",
-                  pl: "1px",
-                  "&:hover":
-                    enableEdit && modifyProperty
-                      ? {
-                          border: "2px solid orange",
-                          borderRadius: "15px",
-                          pr: "15px",
-                          cursor: "pointer",
-                          backgroundColor: "gray",
-                        }
-                      : {},
-                  "&:hover .edit-icon":
-                    enableEdit && modifyProperty
-                      ? {
-                          display: "block",
-                        }
-                      : {},
-                }}
-                onClick={() => {
-                  if (enableEdit && modifyProperty) {
-                    setEditProperty(property);
-                    setNewPropertyValue(property);
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            {editProperty === property ? (
+              <EditProperty
+                value={newPropertyValue}
+                onChange={setNewPropertyValue}
+                onSave={() => {
+                  if (modifyProperty) {
+                    modifyProperty({
+                      newValue: newPropertyValue,
+                      previousValue: property,
+                    });
                   }
+                  setEditProperty("");
+                  setNewPropertyValue("");
                 }}
-              >
-                <Typography
+                onCancel={() => {
+                  setEditProperty("");
+                  setNewPropertyValue("");
+                }}
+                property={property}
+              />
+            ) : (
+              <Tooltip title={getTooltipHelper(lowercaseFirstLetter(property))}>
+                <Box
                   sx={{
-                    fontSize: "20px",
-                    fontWeight: 500,
-                    fontFamily: "Roboto, sans-serif",
-                    padding: "4px",
+                    position: "relative",
+                    display: "inline-block",
+                    pl: "1px",
+                    "&:hover":
+                      enableEdit && modifyProperty
+                        ? {
+                            border: "2px solid orange",
+                            borderRadius: "15px",
+                            pr: "15px",
+                            cursor: "pointer",
+                            backgroundColor: "gray",
+                          }
+                        : {},
+                    "&:hover .edit-icon":
+                      enableEdit && modifyProperty
+                        ? {
+                            display: "block",
+                          }
+                        : {},
+                  }}
+                  onClick={() => {
+                    if (enableEdit && modifyProperty) {
+                      setEditProperty(property);
+                      setNewPropertyValue(property);
+                    }
                   }}
                 >
-                  {capitalizeFirstLetter(
-                    DISPLAY[property] ? DISPLAY[property] : property,
-                  )}
-                </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: "20px",
+                      fontWeight: 500,
+                      fontFamily: "Roboto, sans-serif",
+                      padding: "4px",
+                    }}
+                  >
+                    {capitalizeFirstLetter(
+                      DISPLAY[property] ? DISPLAY[property] : property,
+                    )}
+                  </Typography>
 
-                <EditIcon
-                  className="edit-icon"
-                  sx={{
-                    position: "absolute",
-                    top: "-8px",
-                    right: "-8px",
-                    color: "orange",
-                    backgroundColor: "white",
-                    borderRadius: "50%",
-                    fontSize: "16px",
-                    display: "none",
+                  <EditIcon
+                    className="edit-icon"
+                    sx={{
+                      position: "absolute",
+                      top: "-8px",
+                      right: "-8px",
+                      color: "orange",
+                      backgroundColor: "white",
+                      borderRadius: "50%",
+                      fontSize: "16px",
+                      display: "none",
+                    }}
+                  />
+                </Box>
+              </Tooltip>
+            )}
+            {!!currentVisibleNode.inheritance?.[property] &&
+              !currentVisibleNode.unclassified && (
+                <PartInheritanceModeButton
+                  value={
+                    (currentVisibleNode.inheritance[property]
+                      .inheritanceType as InheritanceMode) ||
+                    "inheritUnlessAlreadyOverRidden"
+                  }
+                  disabled={!enableEdit || locked}
+                  onChange={(mode) => {
+                    void setPropertyInheritanceMode({
+                      nodeId: currentVisibleNode.id,
+                      property,
+                      mode,
+                      nodes: relatedNodes,
+                      fetchNode,
+                    });
                   }}
                 />
-              </Box>
-            </Tooltip>
-          )}
+              )}
+          </Box>
 
           <Box
             sx={{
