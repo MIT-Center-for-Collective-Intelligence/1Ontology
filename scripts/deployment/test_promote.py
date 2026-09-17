@@ -2,8 +2,13 @@ import copy
 import hashlib
 import json
 from pathlib import Path
+import tempfile
 import unittest
-from promote import MANIFESTS, SERVICE, TITLE_PROMPT_STUDY, LATEST_TITLE_PROMPT_STUDY, validate_release, promote_if_current
+from promote import (MANIFESTS, SERVICE, TITLE_PROMPT_STUDY, LATEST_TITLE_PROMPT_STUDY, TITLE_MODEL_COMPARISON,
+                     TITLE_MODEL_COMPARISON_JUDGE_RESULTS, title_model_comparison_release, validate_release,
+                     promote_if_current)
+
+ROOT = Path(__file__).resolve().parents[2]
 
 
 class ReleaseVerificationTests(unittest.TestCase):
@@ -21,12 +26,25 @@ class ReleaseVerificationTests(unittest.TestCase):
         latest = json.loads(latest_bytes)
         self.info["latestTitlePromptStudy"] = {"version": latest["version"], "cases": 18,
             "promptSha256": latest["promptSha256"], "bundleSha256": hashlib.sha256(latest_bytes).hexdigest()}
+        comparison_bytes = (ROOT / TITLE_MODEL_COMPARISON).read_bytes()
+        judge_bytes = (ROOT / TITLE_MODEL_COMPARISON_JUDGE_RESULTS).read_bytes()
+        comparison = json.loads(comparison_bytes)
+        judge = json.loads(judge_bytes)
+        self.info["titleModelComparison"] = {
+            "version": "rob-very-short-prompt-model-comparison-2026-09-16-v1", "cases": 18, "answers": 72,
+            "judgments": 72, "validJudgments": [j["status"] for j in judge["judgments"]].count("valid"),
+            "judgePromptVersion": "title-clarification-judge-2026-09-16-v1",
+            "judgeLibraryFingerprint": judge["judge"]["libraryFingerprint"],
+            "bundleSha256": hashlib.sha256(comparison_bytes).hexdigest(),
+            "judgeResultsSha256": hashlib.sha256(judge_bytes).hexdigest()}
+        self.assertEqual(comparison["version"], judge["studyVersion"])
 
     def test_accepts_exact_release(self):
         validate_release(self.info, "a" * 40, "build-1", "revision-1")
 
     def test_rejects_stale_or_mispackaged_release(self):
-        for field in ("commit", "buildId", "revision", "packageSha256", "titlePromptStudy", "latestTitlePromptStudy"):
+        for field in ("commit", "buildId", "revision", "packageSha256", "titlePromptStudy", "latestTitlePromptStudy",
+                      "titleModelComparison"):
             with self.subTest(field=field):
                 broken = copy.deepcopy(self.info)
                 broken[field] = "stale"
@@ -38,6 +56,64 @@ class ReleaseVerificationTests(unittest.TestCase):
                 broken["datasets"][0][field] = "changed"
                 with self.assertRaises(ValueError):
                     validate_release(broken, "a" * 40, "build-1", "revision-1")
+        for field in self.info["titleModelComparison"]:
+            with self.subTest(titleModelComparison=field):
+                broken = copy.deepcopy(self.info)
+                value = broken["titleModelComparison"][field]
+                broken["titleModelComparison"][field] = value + 1 if isinstance(value, int) else value + "-changed"
+                with self.assertRaises(ValueError):
+                    validate_release(broken, "a" * 40, "build-1", "revision-1")
+        broken = copy.deepcopy(self.info)
+        del broken["titleModelComparison"]
+        with self.assertRaises(ValueError):
+            validate_release(broken, "a" * 40, "build-1", "revision-1")
+
+
+class TitleModelComparisonReleaseTests(unittest.TestCase):
+    def setUp(self):
+        self.comparison = json.loads((ROOT / TITLE_MODEL_COMPARISON).read_bytes())
+        self.judge = json.loads((ROOT / TITLE_MODEL_COMPARISON_JUDGE_RESULTS).read_bytes())
+
+    def release(self, comparison, judge):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for relative, data in ((TITLE_MODEL_COMPARISON, comparison), (TITLE_MODEL_COMPARISON_JUDGE_RESULTS, judge)):
+                (root / relative).parent.mkdir(parents=True, exist_ok=True)
+                (root / relative).write_text(json.dumps(data), encoding="utf-8")
+            return title_model_comparison_release(root)
+
+    def test_counts_valid_judgments(self):
+        judge = copy.deepcopy(self.judge)
+        for judgment in judge["judgments"]:
+            judgment["status"] = "missing"
+        judge["judgments"][0]["status"] = "valid"
+        judge["judgments"][1]["status"] = "invalid"
+        judge["judgments"][2]["status"] = "valid"
+        self.assertEqual(self.release(self.comparison, judge)["validJudgments"], 2)
+
+    def test_rejects_incomplete_or_mismatched_archives(self):
+        def duplicate_answer(c, j):
+            c["answers"][1] = dict(c["answers"][0])
+        def duplicate_judgment(c, j):
+            j["judgments"][1] = dict(j["judgments"][0])
+        mutations = {
+            "version": lambda c, j: c.update(version="another-comparison-v2"),
+            "17 cases": lambda c, j: c["cases"].pop(),
+            "3 models": lambda c, j: c["models"].pop(),
+            "pending answer": lambda c, j: c["answers"][10].update(status="pending"),
+            "duplicate answer": duplicate_answer,
+            "changed prompt": lambda c, j: c.update(prompt=c["prompt"] + " Changed."),
+            "missing judgment": lambda c, j: j["judgments"].pop(),
+            "duplicate judgment": duplicate_judgment,
+            "unknown answer": lambda c, j: j["judgments"][3].update(answerId="another-model"),
+            "study version": lambda c, j: j.update(studyVersion="another-study"),
+        }
+        for label, mutate in mutations.items():
+            with self.subTest(label):
+                comparison, judge = copy.deepcopy(self.comparison), copy.deepcopy(self.judge)
+                mutate(comparison, judge)
+                with self.assertRaises(ValueError):
+                    self.release(comparison, judge)
 
 
 class ConcurrentPromotionTests(unittest.TestCase):

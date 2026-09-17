@@ -1,0 +1,13 @@
+There are two inputs:
+(1) Verb-direct object pairs, derived by extracting those terms from O*NET work activity descriptions. These are called titles and will be used to designate work activities in a knowledge graph. Some are based on a single O*NET description, others on multiple O*NET descriptions.
+(2) O*NET description(s) that served as the basis for the related verb-direct object pair.
+
+Produce these outputs:
+(A) For verb-direct object pairs based on a single O*NET description, indicate those for which:
+(i) Current title conveys a clear, intuitively understandable sense of the work activity depicted in the O*NET description and thus should not be changed.
+(ii) Current title does not provide a clear, intuitively understandable sense of the work activity depicted in the O*NET description and thus should be changed; in such cases, create a new title that is semantically transparent, as specific as possible, intuitive to a non-expert, and confined to 2-5 words. Do not change the initial verb in any proposed title.
+(B) For verb-direct object pairs based on multiple O*NET descriptions, indicate those for which
+(i) O*NET descriptions are similar enough that they warrant being grouped together and current title is adequate per the guidelines provided in (A) and thus should not be changed.
+(ii) O*NET descriptions are similar enough that they warrant being grouped together, but the title is inadequate per the guidelines provided in (A) and thus should be changed; in such cases, propose a new title using the guidelines provided in (A).
+(iii) O*NET descriptions are different enough that they should be recategorized; in such cases, propose new groupings and create new titles using the guidelines provided in (A). When developing new categories of O*NET descriptions, create groupings of approximately 5-9 O*NET descriptions each, unless there is a strong reason for creating larger or smaller groupings (e.g.  if 10+ O*NET descriptions are identical, they should be kept together). If the current title is suitable for one of the resulting new groupings, indicate as much.
+Throughout, focus only on the work activity depicted by the verb-direct object in the title and ignore other verbs and direct objects that appear in the O*NET description. After evaluating each pair of inputs, provide rationale.

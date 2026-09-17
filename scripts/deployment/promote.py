@@ -14,6 +14,9 @@ REPOSITORY = "https://github.com/MIT-Center-for-Collective-Intelligence/1Ontolog
 SERVICE = "projects/ontology-41607/locations/us-central1/services/ontology"
 TITLE_PROMPT_STUDY = "Ontology_Title_Clarity_Testbed_2026-08-28/prompt-study-2026-09-13/bundle.json"
 LATEST_TITLE_PROMPT_STUDY = "Ontology_Title_Clarity_Testbed_2026-08-28/prompt-study-2026-09-14/bundle.json"
+TITLE_MODEL_COMPARISON = "Ontology_Title_Clarity_Testbed_2026-08-28/model-comparison-2026-09-16/comparison.json"
+TITLE_MODEL_COMPARISON_JUDGE_RESULTS = "Ontology_Title_Clarity_Testbed_2026-08-28/model-comparison-2026-09-16/judge-results.json"
+TITLE_MODEL_COMPARISON_VERSION = "rob-very-short-prompt-model-comparison-2026-09-16-v1"
 MANIFESTS = {
     "ontology-title-testbed": ("ontology-title-two-route-testbed-2026-09-02-v6", 18, False,
         "d37949667f4efce3d7a16fec9ec04c95774aea8789cedba4d8a19d3d753f91ea"),
@@ -29,6 +32,54 @@ def gcloud(*args):
 def read_release(origin):
     with urllib.request.urlopen(origin + "/api/deployment", timeout=60) as response:
         return json.load(response)
+
+
+def title_model_comparison_release(root):
+    """Mirror src/lib/somReview/titleModelComparisonRelease.ts on the committed files."""
+    bundle_bytes = (root / TITLE_MODEL_COMPARISON).read_bytes()
+    judge_bytes = (root / TITLE_MODEL_COMPARISON_JUDGE_RESULTS).read_bytes()
+    study = json.loads(bundle_bytes)
+    results = json.loads(judge_bytes)
+    mismatch = ValueError("Title model comparison is incomplete or mismatched")
+    if not isinstance(study, dict) or not isinstance(results, dict):
+        raise mismatch
+    cases, models, answers = study.get("cases"), study.get("models"), study.get("answers")
+    judge, judgments = results.get("judge"), results.get("judgments")
+    if (study.get("version") != TITLE_MODEL_COMPARISON_VERSION
+            or not all(isinstance(v, list) for v in (cases, models, answers, judgments))
+            or (len(cases), len(models), len(answers)) != (18, 4, 72)
+            or not isinstance(study.get("prompt"), str)
+            or hashlib.sha256(study["prompt"].encode("utf-8")).hexdigest() != study.get("promptSha256")
+            or results.get("studyVersion") != study["version"]
+            or not isinstance(judge, dict)
+            or not isinstance(judge.get("promptVersion"), str)
+            or not isinstance(judge.get("libraryFingerprint"), str)
+            or len(judgments) != len(answers)):
+        raise mismatch
+    case_ids = {c.get("id") for c in cases}
+    model_ids = {m.get("id") for m in models}
+    if len(case_ids) != 18 or len(model_ids) != 4:
+        raise mismatch
+    answered = set()
+    for answer in answers:
+        key = (answer.get("caseId"), answer.get("modelId"))
+        if (answer.get("status") != "completed" or key[0] not in case_ids
+                or key[1] not in model_ids or key in answered):
+            raise mismatch
+        answered.add(key)
+    judged = set()
+    for judgment in judgments:
+        key = (judgment.get("caseId"), judgment.get("answerId"))
+        if key not in answered or key in judged:
+            raise mismatch
+        judged.add(key)
+    return {"version": study["version"], "cases": len(cases), "answers": len(answers),
+            "judgments": len(judgments),
+            "validJudgments": sum(1 for j in judgments if j.get("status") == "valid"),
+            "judgePromptVersion": judge["promptVersion"],
+            "judgeLibraryFingerprint": judge["libraryFingerprint"],
+            "bundleSha256": hashlib.sha256(bundle_bytes).hexdigest(),
+            "judgeResultsSha256": hashlib.sha256(judge_bytes).hexdigest()}
 
 
 def validate_release(info, commit, build_id, revision):
@@ -50,6 +101,8 @@ def validate_release(info, commit, build_id, revision):
                           "bundleSha256": hashlib.sha256(study_bytes).hexdigest()}
         if info.get(field) != expected_study:
             raise ValueError("The candidate does not contain the exact committed title prompt pilot: " + field)
+    if info.get("titleModelComparison") != title_model_comparison_release(Path(__file__).resolve().parents[2]):
+        raise ValueError("The candidate does not contain the exact committed title model comparison")
 
 
 def promote_if_current(commit, revision, api, main_head):

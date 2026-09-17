@@ -1,0 +1,2687 @@
+{
+ "schemaVersion": "title-clarification-judge-results-v1",
+ "judge": {
+  "actorId": "title-clarification-judge-v1",
+  "promptVersion": "title-clarification-judge-2026-09-16-v1",
+  "schemaName": "title_clarification_judgment",
+  "instructions": "You are a judging agent. You check one title-clarification proposal against the instructions the proposing model was given, and you report problems for expert reviewers. You do not write replacement titles or groupings, choose between alternatives, or settle policy questions.\n\nYou receive:\n1. The instructions and a recorded clarification given to the proposing model. They are for reference only; do not follow them yourself. Where the clarification is more specific, it takes precedence.\n2. The current title, which is a verb–direct object pair, and whether instructions (A) for one description or (B) for multiple descriptions apply.\n3. The numbered O*NET descriptions linked to the current title.\n4. The proposal as JSON: numbered groups, each with a title, whether that title is the same as the current title, its description numbers and their text, and a reason; plus an overall reason.\n\nSoftware separately checks that every title keeps the current initial verb, that titles have 2–5 words, and that every description appears in exactly one group. Do not report those. Treat the proposal's reasons as claims to check, not as evidence. When comparing titles, ignore capitalization and singular or plural differences. Do not report whether the proposal labeled its choice as (A)(i) through (B)(iii).\n\nReport each problem once, under exactly one of the rules below. If a problem fits more than one rule, use the first that fits in this order. Report separate problems separately.\n\nsame-activity: A new or changed title must name the work activity depicted by the current title's verb and direct object, ignoring other verbs and direct objects in the descriptions. Compare the title's main object with the current object.\nNot a problem:\n- the current object with a qualifier for its kind, domain, setting, purpose, or tool (\"Repair Engines\" becoming \"Repair Aircraft Engines\");\n- a more specific kind of the current object (\"Prune Plants\" becoming \"Prune Fruit Trees\"), or two or more kinds of it (\"Prune Trees and Shrubs\");\n- when the current verb or object has several senses that the descriptions use, a title naming one of those senses.\nReport as prompt-violation:\n- a main object that is a different thing, a part of the current object, or a broader category (\"Paint Walls\" becoming \"Paint Building Surfaces\");\n- an added object or activity that is not a kind of the current object, typically taken from elsewhere in a description (\"Paint Walls\" becoming \"Paint Walls and Ceilings\").\nReport as major:\n- the current object kept only as a modifier of a new main noun (\"Monitor Patients\" becoming \"Monitor Patient Recovery\");\n- a qualifier that names a separate action the worker performs (\"Paint Walls After Sanding\").\n\nsupported-detail: Every word a new or changed title adds, and every more specific kind it names, must be stated in or follow plainly from the descriptions in its group. Report an unsupported addition, or a title narrower than a description in its group when no other group's title covers that description. Use major if it would mislead a reader about the work, and minor if it is plausible but not clearly supported.\n\ngrouping: Applies only when there are multiple descriptions. Compare descriptions by the kind of the title's activity they depict; differences only in their other verbs, objects, or wording do not make them different kinds. Report:\n- a group that keeps clearly different kinds of the activity together without a strong reason, including a proposal that keeps every description in one group (major when the kinds are clearly different and numerous, otherwise minor);\n- a description whose group title does not describe it while another group's title does (major);\n- a split that separates identical or nearly identical descriptions, or whose groups differ only in the descriptions' other verbs or objects (minor, or major if it misleads);\n- two groups whose titles do not tell them apart (minor);\n- a newly created group far outside approximately 5–9 descriptions when the reasons give no strong reason (minor). Identical descriptions are a strong reason for a larger group. Never report a single-group proposal for its size.\nHow much subject detail is useful is partly a policy decision, so do not report a reasonable grouping merely because a finer or coarser grouping would also be reasonable.\n\nclarity: A kept or new title should give a non-expert a clear, intuitive, and specific sense of the activity. Report a title that is ambiguous, uses jargon, or is so general that it is easily misread, when the descriptions support a clearer title of 2–5 words that keeps the initial verb. Use major if a non-expert would likely misunderstand the work, and minor otherwise. Do not report unclarity that only a different verb could fix. Report as minor a changed title when the current title was already clear and the change adds nothing a non-expert needs. Do not report a title merely because another acceptable wording exists.\n\nSeverities: prompt-violation means an explicit instruction is broken; major means the proposal is probably unacceptable as written; minor means a reviewer may reasonably accept it. same-activity issues are prompt-violation or major; supported-detail, grouping, and clarity issues are major or minor.\n\nReturn only one JSON object, with no other text:\n- issues: a list. Each issue has rule; severity; groupNumbers (the groupNumber values it concerns: at least one, each listed once); descriptionNumbers (the O*NET description numbers involved, each listed once, or an empty list when none in particular); evidenceQuote (an empty string, or a short phrase copied word for word from one O*NET description, without quotation marks or ellipses); and explanation (one or two plain sentences).\n- summary: one or two plain sentences stating the overall finding. If there are no issues, return an empty issues list and say so.\nJudge only this proposal. Do not mention other proposals, models, or costs.",
+  "instructionsSha256": "82ecf98338e64ce1ff44acb709d272f3bcb28f2ac2425ad2f0481db112676fa1",
+  "schema": {
+   "type": "json_schema",
+   "name": "title_clarification_judgment",
+   "strict": true,
+   "schema": {
+    "type": "object",
+    "properties": {
+     "issues": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "properties": {
+        "rule": {
+         "type": "string",
+         "enum": [
+          "same-activity",
+          "supported-detail",
+          "grouping",
+          "clarity"
+         ]
+        },
+        "severity": {
+         "type": "string",
+         "enum": [
+          "prompt-violation",
+          "major",
+          "minor"
+         ]
+        },
+        "groupNumbers": {
+         "type": "array",
+         "description": "groupNumber values from the proposal JSON, never description numbers.",
+         "items": {
+          "type": "integer"
+         }
+        },
+        "descriptionNumbers": {
+         "type": "array",
+         "description": "O*NET description numbers involved; empty when none in particular.",
+         "items": {
+          "type": "integer"
+         }
+        },
+        "evidenceQuote": {
+         "type": "string"
+        },
+        "explanation": {
+         "type": "string"
+        }
+       },
+       "required": [
+        "rule",
+        "severity",
+        "groupNumbers",
+        "descriptionNumbers",
+        "evidenceQuote",
+        "explanation"
+       ],
+       "additionalProperties": false
+      }
+     },
+     "summary": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "issues",
+     "summary"
+    ],
+    "additionalProperties": false
+   }
+  },
+  "validationRules": "Software accepts a model judgment only if it is one JSON object with an issues list and a non-empty summary; every issue uses a listed rule with a severity allowed for that rule, cites at least one existing group and only existing descriptions, lists no number twice, and has an explanation. An evidence quote that cannot be found in any linked description, ignoring case, punctuation, and quotation style, is kept as a warning rather than rejecting the judgment. The verdict is the most severe finding from the software checks and the model judge; software computes it. Nothing repairs a judgment, changes a proposal, or writes to the ontology.",
+  "softwareChecks": "Software checks every proposed title for the current title's initial verb and for 2–5 words, and checks that each description number exists and appears in exactly one group. A changed verb or a title outside 2–5 words is a prompt violation. A missing or unknown description number is a major issue. A description in more than one group is a minor representation-policy question.",
+  "libraryFingerprint": "7396fc50446a1df26e4a5e5bc149561e31c713b5f79aba7b01789e01ab163a09"
+ },
+ "studyVersion": "rob-very-short-prompt-model-comparison-2026-09-16-v1",
+ "execution": {
+  "runner": "Claude Code workflow subagents, one fresh subagent per proposal",
+  "model": "Anthropic Claude Opus 5 (claude-opus-5)",
+  "runDate": "2026-09-16",
+  "run": 2,
+  "method": "Each subagent read only the judging agent instructions and one rendered proposal, then returned JSON. It did not see model names, option letters, other proposals, or expert ratings. Software validated every judgment without repairing it. The judge instructions were frozen before the first judgment was produced.",
+  "stability": "An identical second run produced valid judgments for 72 proposals that were also valid in the first run. The overall verdict changed for 8 of them, and 2 moved across the line between minor-or-none and major-or-worse. The page shows the first run.",
+  "toolUseCheck": "72 of 72 subagents used no tool other than reading the instructions file and their own proposal file.",
+  "limitations": [
+   "This is development evidence on the same 18 examples, and the judge instructions were written after reading the expert’s description of the two errors and notes on these examples, so agreement is likely optimistic.",
+   "The judge was run by a Claude model through Claude Code, not by the OpenAI models that would run it in the production title pipeline.",
+   "Findings are possible problems for expert review. They are not ground truth, and the judging agent does not approve, repair, or apply proposals.",
+   "No ontology project model account or cloud credits were used for these judgments."
+  ]
+ },
+ "unjudgedAnswers": [],
+ "unmatchedResponses": [],
+ "judgments": [
+  {
+   "requestId": "4cf221665e377985",
+   "caseId": "case-1",
+   "answerId": "astra",
+   "requestSha256": "35ac960a9ce7948b9d22b8cce736dc1109d6ad8ee549f66bcdb2ee842d775187",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "minor",
+   "verdict": "minor",
+   "judgment": {
+    "issues": [
+     {
+      "rule": "supported-detail",
+      "severity": "minor",
+      "groupNumbers": [
+       1
+      ],
+      "descriptionNumbers": [
+       1
+      ],
+      "evidenceQuote": "performances are of adequate quality",
+      "explanation": "The description never mentions broadcasting. Schedules, guidelines and performances fit radio or TV programming, but they could also describe programming at a performing arts venue or for events, so the qualifier Broadcast is plausible but not clearly supported."
+     }
+    ],
+    "summary": "The new title names the same activity and makes clear this is not computer programming, but the added qualifier Broadcast is plausible rather than clearly supported by the description."
+   },
+   "rawText": "{\"issues\":[{\"rule\":\"supported-detail\",\"severity\":\"minor\",\"groupNumbers\":[1],\"descriptionNumbers\":[1],\"evidenceQuote\":\"performances are of adequate quality\",\"explanation\":\"The description never mentions broadcasting. Schedules, guidelines and performances fit radio or TV programming, but they could also describe programming at a performing arts venue or for events, so the qualifier Broadcast is plausible but not clearly supported.\"}],\"summary\":\"The new title names the same activity and makes clear this is not computer programming, but the added qualifier Broadcast is plausible rather than clearly supported by the description.\"}"
+  },
+  {
+   "requestId": "bb4c9caddf51d586",
+   "caseId": "case-1",
+   "answerId": "sol",
+   "requestSha256": "79ef34547bbbb5372dbcebf8ffe1480ca0bb09480132ad2214c8f18cdf26fb13",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "minor",
+   "verdict": "minor",
+   "judgment": {
+    "issues": [
+     {
+      "rule": "supported-detail",
+      "severity": "minor",
+      "groupNumbers": [
+       1
+      ],
+      "descriptionNumbers": [
+       1
+      ],
+      "evidenceQuote": "performances are of adequate quality",
+      "explanation": "The description never mentions broadcasting. Schedules, guidelines and performances make media programming plausible, but they could also point to theater, arts or event programming, so the added word \"Broadcast\" is not clearly supported."
+     }
+    ],
+    "summary": "The change fixes a real ambiguity and keeps the same activity. The added qualifier \"Broadcast\" is plausible but not clearly stated in the description."
+   },
+   "rawText": "{\"issues\":[{\"rule\":\"supported-detail\",\"severity\":\"minor\",\"groupNumbers\":[1],\"descriptionNumbers\":[1],\"evidenceQuote\":\"performances are of adequate quality\",\"explanation\":\"The description never mentions broadcasting. Schedules, guidelines and performances make media programming plausible, but they could also point to theater, arts or event programming, so the added word \\\"Broadcast\\\" is not clearly supported.\"}],\"summary\":\"The change fixes a real ambiguity and keeps the same activity. The added qualifier \\\"Broadcast\\\" is plausible but not clearly stated in the description.\"}"
+  },
+  {
+   "requestId": "e7b71970fc13c7f5",
+   "caseId": "case-1",
+   "answerId": "terra",
+   "requestSha256": "a25b1da106001f175f1adb4c27531a307fa2784f77edeeaa244163e0babad037",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "major",
+   "verdict": "major",
+   "judgment": {
+    "issues": [
+     {
+      "rule": "clarity",
+      "severity": "major",
+      "groupNumbers": [
+       1
+      ],
+      "descriptionNumbers": [
+       1
+      ],
+      "evidenceQuote": "performances are of adequate quality",
+      "explanation": "The kept title's object, programming, will likely make a non-expert think of reviewing software code. The description is about scheduled performances, and it supports a clearer 2-5 word title that keeps the verb Review."
+     }
+    ],
+    "summary": "The proposal keeps the current title, but that title is ambiguous: a non-expert would likely read programming as computer programming rather than scheduled performance programming."
+   },
+   "rawText": "{\"issues\":[{\"rule\":\"clarity\",\"severity\":\"major\",\"groupNumbers\":[1],\"descriptionNumbers\":[1],\"evidenceQuote\":\"performances are of adequate quality\",\"explanation\":\"The kept title's object, programming, will likely make a non-expert think of reviewing software code. The description is about scheduled performances, and it supports a clearer 2-5 word title that keeps the verb Review.\"}],\"summary\":\"The proposal keeps the current title, but that title is ambiguous: a non-expert would likely read programming as computer programming rather than scheduled performance programming.\"}"
+  },
+  {
+   "requestId": "7263d62607979145",
+   "caseId": "case-1",
+   "answerId": "mini",
+   "requestSha256": "41950572983f7fd2215b8afda2ca845ba95a2f3cf543a2dcc4c07020e5ff632d",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "major",
+   "verdict": "major",
+   "judgment": {
+    "issues": [
+     {
+      "rule": "clarity",
+      "severity": "major",
+      "groupNumbers": [
+       1
+      ],
+      "descriptionNumbers": [
+       1
+      ],
+      "evidenceQuote": "performances are of adequate quality",
+      "explanation": "The kept title's word \"Programming\" will likely make a non-expert think of writing computer code. The description is about scheduled performances or program content. The description supports a clearer 2-5 word title with the same verb, one that points to scheduled performance or program content."
+     }
+    ],
+    "summary": "The single-description grouping is fine. The kept title is ambiguous, though, because a non-expert would likely read \"programming\" as computer programming rather than scheduled performance content."
+   },
+   "rawText": "{\"issues\":[{\"rule\":\"clarity\",\"severity\":\"major\",\"groupNumbers\":[1],\"descriptionNumbers\":[1],\"evidenceQuote\":\"performances are of adequate quality\",\"explanation\":\"The kept title's word \\\"Programming\\\" will likely make a non-expert think of writing computer code. The description is about scheduled performances or program content. The description supports a clearer 2-5 word title with the same verb, one that points to scheduled performance or program content.\"}],\"summary\":\"The single-description grouping is fine. The kept title is ambiguous, though, because a non-expert would likely read \\\"programming\\\" as computer programming rather than scheduled performance content.\"}"
+  },
+  {
+   "requestId": "14c4d0f47c2db72a",
+   "caseId": "case-2",
+   "answerId": "astra",
+   "requestSha256": "512aeea8c26f223eafd848dc7cf040d9b1fd21b80c6825eade2ae1fad593bdef",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "no-issues",
+   "verdict": "no-issues",
+   "judgment": {
+    "issues": [],
+    "summary": "No issues found: the new title keeps the current activity and object, adds only a setting qualifier stated in the description (outline patterns on work pieces), and is clearer than the current title."
+   },
+   "rawText": "{\"issues\":[],\"summary\":\"No issues found: the new title keeps the current activity and object, adds only a setting qualifier stated in the description (outline patterns on work pieces), and is clearer than the current title.\"}"
+  },
+  {
+   "requestId": "f0277822485fefdc",
+   "caseId": "case-2",
+   "answerId": "sol",
+   "requestSha256": "5cf54f0447a80e017c65d8b163bd69564260a3ab076687fb1d757da2030d5e2b",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "no-issues",
+   "verdict": "no-issues",
+   "judgment": {
+    "issues": [],
+    "summary": "I found no issues. The proposed title \"Outline Patterns on Workpieces\" keeps the current activity and adds a setting qualifier taken straight from the description (\"outline patterns on work pieces\"), which makes the title clearer."
+   },
+   "rawText": "{\"issues\":[],\"summary\":\"I found no issues. The proposed title \\\"Outline Patterns on Workpieces\\\" keeps the current activity and adds a setting qualifier taken straight from the description (\\\"outline patterns on work pieces\\\"), which makes the title clearer.\"}"
+  },
+  {
+   "requestId": "e98aa818b279fc63",
+   "caseId": "case-2",
+   "answerId": "terra",
+   "requestSha256": "48b7eee41f15829397fc070b6580503dfe5e225d27c214d1f98a790a602360f1",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "minor",
+   "verdict": "minor",
+   "judgment": {
+    "issues": [
+     {
+      "rule": "clarity",
+      "severity": "minor",
+      "groupNumbers": [
+       1
+      ],
+      "descriptionNumbers": [
+       1
+      ],
+      "evidenceQuote": "position or outline patterns on work pieces",
+      "explanation": "The kept title is ambiguous. A non-expert could read Outline Pattern as summarizing or sketching a design, not as tracing a pattern onto material. The description supports a clearer title that keeps the verb and names where the outlining happens, such as the work pieces."
+     }
+    ],
+    "summary": "The proposal keeps the current title, which names the right activity. The title is vague enough to be misread, though, and the description supports a clearer wording."
+   },
+   "rawText": "{\"issues\":[{\"rule\":\"clarity\",\"severity\":\"minor\",\"groupNumbers\":[1],\"descriptionNumbers\":[1],\"evidenceQuote\":\"position or outline patterns on work pieces\",\"explanation\":\"The kept title is ambiguous. A non-expert could read Outline Pattern as summarizing or sketching a design, not as tracing a pattern onto material. The description supports a clearer title that keeps the verb and names where the outlining happens, such as the work pieces.\"}],\"summary\":\"The proposal keeps the current title, which names the right activity. The title is vague enough to be misread, though, and the description supports a clearer wording.\"}"
+  },
+  {
+   "requestId": "4383f594a66f726a",
+   "caseId": "case-2",
+   "answerId": "mini",
+   "requestSha256": "b425d52d589c2460fdd2b854556f470b20ff324b50e9a0a036b1debb2063ce07",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "minor",
+   "verdict": "minor",
+   "judgment": {
+    "issues": [
+     {
+      "rule": "clarity",
+      "severity": "minor",
+      "groupNumbers": [
+       1
+      ],
+      "descriptionNumbers": [
+       1
+      ],
+      "evidenceQuote": "outline patterns on work pieces",
+      "explanation": "Without context, \"Outline Pattern\" could be read as summarizing or describing a pattern, such as a trend, rather than tracing a template onto material. The description supports a clearer title that keeps the verb, one that says the pattern is outlined on work pieces."
+     }
+    ],
+    "summary": "The kept title matches the activity in the description, but it is somewhat ambiguous for a non-expert, and the description supports a clearer 2-5 word wording."
+   },
+   "rawText": "{\"issues\":[{\"rule\":\"clarity\",\"severity\":\"minor\",\"groupNumbers\":[1],\"descriptionNumbers\":[1],\"evidenceQuote\":\"outline patterns on work pieces\",\"explanation\":\"Without context, \\\"Outline Pattern\\\" could be read as summarizing or describing a pattern, such as a trend, rather than tracing a template onto material. The description supports a clearer title that keeps the verb, one that says the pattern is outlined on work pieces.\"}],\"summary\":\"The kept title matches the activity in the description, but it is somewhat ambiguous for a non-expert, and the description supports a clearer 2-5 word wording.\"}"
+  },
+  {
+   "requestId": "d161021a5ab53be9",
+   "caseId": "case-3",
+   "answerId": "astra",
+   "requestSha256": "33a5a1844449f79a89020bc7dc87cb864da33aee53622960cddf21ecf0c32e14",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "minor",
+   "verdict": "minor",
+   "judgment": {
+    "issues": [
+     {
+      "rule": "supported-detail",
+      "severity": "minor",
+      "groupNumbers": [
+       1
+      ],
+      "descriptionNumbers": [
+       1,
+       2
+      ],
+      "evidenceQuote": "alternatives for Web architecture or technologies",
+      "explanation": "The descriptions cover alternatives for both Web architecture and Web technologies, but the title names only Web technology. That makes it narrower than both descriptions, and no other group covers the architecture alternatives."
+     }
+    ],
+    "summary": "Keeping the two identical descriptions in one group and qualifying the object with a domain is sound. The one minor issue is that the title leaves out the Web architecture alternatives that both descriptions include."
+   },
+   "rawText": "{\"issues\":[{\"rule\":\"supported-detail\",\"severity\":\"minor\",\"groupNumbers\":[1],\"descriptionNumbers\":[1,2],\"evidenceQuote\":\"alternatives for Web architecture or technologies\",\"explanation\":\"The descriptions cover alternatives for both Web architecture and Web technologies, but the title names only Web technology. That makes it narrower than both descriptions, and no other group covers the architecture alternatives.\"}],\"summary\":\"Keeping the two identical descriptions in one group and qualifying the object with a domain is sound. The one minor issue is that the title leaves out the Web architecture alternatives that both descriptions include.\"}"
+  },
+  {
+   "requestId": "3809ec0c2297c4c6",
+   "caseId": "case-3",
+   "answerId": "sol",
+   "requestSha256": "d2e1b34343583ad5a2cbbbe6b544fd91ab0d65f081ee915bd2071d95768ee328",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "minor",
+   "verdict": "minor",
+   "judgment": {
+    "issues": [
+     {
+      "rule": "supported-detail",
+      "severity": "minor",
+      "groupNumbers": [
+       1
+      ],
+      "descriptionNumbers": [
+       1,
+       2
+      ],
+      "evidenceQuote": "alternatives for Web architecture or technologies",
+      "explanation": "The title limits the alternatives to Web technology, but both descriptions also cover alternatives for Web architecture. No other group covers that part. The group reason says the title covers architecture, but the title does not."
+     }
+    ],
+    "summary": "Keeping the two identical descriptions together and qualifying \"Alternatives\" is sound. However, the new title leaves out the Web architecture alternatives that both descriptions include."
+   },
+   "rawText": "{\"issues\":[{\"rule\":\"supported-detail\",\"severity\":\"minor\",\"groupNumbers\":[1],\"descriptionNumbers\":[1,2],\"evidenceQuote\":\"alternatives for Web architecture or technologies\",\"explanation\":\"The title limits the alternatives to Web technology, but both descriptions also cover alternatives for Web architecture. No other group covers that part. The group reason says the title covers architecture, but the title does not.\"}],\"summary\":\"Keeping the two identical descriptions together and qualifying \\\"Alternatives\\\" is sound. However, the new title leaves out the Web architecture alternatives that both descriptions include.\"}"
+  },
+  {
+   "requestId": "531058dc90e451ba",
+   "caseId": "case-3",
+   "answerId": "terra",
+   "requestSha256": "49483dd0148ce7a39e3ab18e39f1af8e71976aba00c60b2c5fcab14807b80523",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "major",
+   "verdict": "major",
+   "judgment": {
+    "issues": [
+     {
+      "rule": "clarity",
+      "severity": "major",
+      "groupNumbers": [
+       1
+      ],
+      "descriptionNumbers": [
+       1,
+       2
+      ],
+      "evidenceQuote": "alternatives for Web architecture or technologies",
+      "explanation": "Apart from the plural, which does not count as a change, the title is the same as the current one and is still too general: a reader could take it to mean alternatives to documents, and it never says what the alternatives are for. The descriptions support a clearer title that keeps the verb, such as one naming Web architecture or technology alternatives."
+     }
+    ],
+    "summary": "Keeping the two identical descriptions in one group is fine, but the title is only the current title made plural, so it stays vague and could be misread when the descriptions support a more specific title."
+   },
+   "rawText": "{\"issues\":[{\"rule\":\"clarity\",\"severity\":\"major\",\"groupNumbers\":[1],\"descriptionNumbers\":[1,2],\"evidenceQuote\":\"alternatives for Web architecture or technologies\",\"explanation\":\"Apart from the plural, which does not count as a change, the title is the same as the current one and is still too general: a reader could take it to mean alternatives to documents, and it never says what the alternatives are for. The descriptions support a clearer title that keeps the verb, such as one naming Web architecture or technology alternatives.\"}],\"summary\":\"Keeping the two identical descriptions in one group is fine, but the title is only the current title made plural, so it stays vague and could be misread when the descriptions support a more specific title.\"}"
+  },
+  {
+   "requestId": "b02bb29af43287cb",
+   "caseId": "case-3",
+   "answerId": "mini",
+   "requestSha256": "0fc7c32aa47d25868152009f151e3f83612915093feb7737f13cddca52c916f1",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "minor",
+   "verdict": "minor",
+   "judgment": {
+    "issues": [
+     {
+      "rule": "clarity",
+      "severity": "minor",
+      "groupNumbers": [
+       1
+      ],
+      "descriptionNumbers": [
+       1,
+       2
+      ],
+      "evidenceQuote": "alternatives for Web architecture or technologies",
+      "explanation": "A reader could take \"Web Alternatives\" to mean alternatives to the Web rather than competing options for Web architecture or technologies. The descriptions support a clearer title of 2-5 words, such as one that names Web architecture or technology alternatives."
+     }
+    ],
+    "summary": "Keeping the two identical descriptions in one group is fine, and the added qualifier \"Web\" is supported. The new title is a little ambiguous, though, because \"Web Alternatives\" could be read as alternatives to the Web."
+   },
+   "rawText": "{\"issues\":[{\"rule\":\"clarity\",\"severity\":\"minor\",\"groupNumbers\":[1],\"descriptionNumbers\":[1,2],\"evidenceQuote\":\"alternatives for Web architecture or technologies\",\"explanation\":\"A reader could take \\\"Web Alternatives\\\" to mean alternatives to the Web rather than competing options for Web architecture or technologies. The descriptions support a clearer title of 2-5 words, such as one that names Web architecture or technology alternatives.\"}],\"summary\":\"Keeping the two identical descriptions in one group is fine, and the added qualifier \\\"Web\\\" is supported. The new title is a little ambiguous, though, because \\\"Web Alternatives\\\" could be read as alternatives to the Web.\"}"
+  },
+  {
+   "requestId": "0b1738477a524eff",
+   "caseId": "case-4",
+   "answerId": "astra",
+   "requestSha256": "58f86223468772e6af2cc500b1390bd8d64834cc5d6272a633a62d36e5ca81c4",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "no-issues",
+   "verdict": "no-issues",
+   "judgment": {
+    "issues": [],
+    "summary": "No issues found. Changing \"Datum\" to \"Data\" is only a singular/plural change, all four descriptions describe storing data, and keeping the one audio/video description with the three identical system-analysis descriptions is a reasonable grouping."
+   },
+   "rawText": "{\"issues\":[],\"summary\":\"No issues found. Changing \\\"Datum\\\" to \\\"Data\\\" is only a singular/plural change, all four descriptions describe storing data, and keeping the one audio/video description with the three identical system-analysis descriptions is a reasonable grouping.\"}"
+  },
+  {
+   "requestId": "91b7177235843cd1",
+   "caseId": "case-4",
+   "answerId": "sol",
+   "requestSha256": "c43494821e582cd54009cc4f5aca4d17f0a2a8bbf667910e1b77a5d65455fd34",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "no-issues",
+   "verdict": "no-issues",
+   "judgment": {
+    "issues": [],
+    "summary": "No issues found. Changing \"Datum\" to \"Data\" is only a singular-to-plural change, \"Store Data\" is a clear name for the activity, and keeping all four descriptions in one group is reasonable because three of them are identical and all four describe storing data."
+   },
+   "rawText": "{\"issues\":[],\"summary\":\"No issues found. Changing \\\"Datum\\\" to \\\"Data\\\" is only a singular-to-plural change, \\\"Store Data\\\" is a clear name for the activity, and keeping all four descriptions in one group is reasonable because three of them are identical and all four describe storing data.\"}"
+  },
+  {
+   "requestId": "84dc247e9015f12d",
+   "caseId": "case-4",
+   "answerId": "terra",
+   "requestSha256": "1b449b369d05e4dc8fb143079ceba119d3e5ed888dd6ad96e8d1dc975ac627ce",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "no-issues",
+   "verdict": "no-issues",
+   "judgment": {
+    "issues": [],
+    "summary": "No issues found. The title changes only from singular to plural, which counts as the same title, and \"Store Data\" is clear. Keeping the four descriptions together is reasonable because three are identical and all describe storing data."
+   },
+   "rawText": "{\"issues\":[],\"summary\":\"No issues found. The title changes only from singular to plural, which counts as the same title, and \\\"Store Data\\\" is clear. Keeping the four descriptions together is reasonable because three are identical and all describe storing data.\"}"
+  },
+  {
+   "requestId": "6f14c9f144c38b9d",
+   "caseId": "case-4",
+   "answerId": "mini",
+   "requestSha256": "9ddc345545dec8621f1a707eba004c78bec27c9774d2abbe54b6afa98e6bc520",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "minor",
+   "verdict": "minor",
+   "judgment": {
+    "issues": [
+     {
+      "rule": "clarity",
+      "severity": "minor",
+      "groupNumbers": [
+       2
+      ],
+      "descriptionNumbers": [
+       2,
+       3,
+       4
+      ],
+      "evidenceQuote": "for analysis of system capabilities and requirements",
+      "explanation": "The title \"Store System Data\" is vague. A non-expert could read it as operating system files or data a system generates, when the descriptions are about data kept to analyze a system's capabilities and requirements. A title like \"Store System Analysis Data\" also fits within 2-5 words and would be clearer."
+     }
+    ],
+    "summary": "The split is sound: description 1, about audio and video data, is set apart from three identical descriptions about data for system analysis, and both titles keep the current activity. The only problem is minor: the second group's title \"Store System Data\" is somewhat vague."
+   },
+   "rawText": "{\"issues\":[{\"rule\":\"clarity\",\"severity\":\"minor\",\"groupNumbers\":[2],\"descriptionNumbers\":[2,3,4],\"evidenceQuote\":\"for analysis of system capabilities and requirements\",\"explanation\":\"The title \\\"Store System Data\\\" is vague. A non-expert could read it as operating system files or data a system generates, when the descriptions are about data kept to analyze a system's capabilities and requirements. A title like \\\"Store System Analysis Data\\\" also fits within 2-5 words and would be clearer.\"}],\"summary\":\"The split is sound: description 1, about audio and video data, is set apart from three identical descriptions about data for system analysis, and both titles keep the current activity. The only problem is minor: the second group's title \\\"Store System Data\\\" is somewhat vague.\"}"
+  },
+  {
+   "requestId": "646d81f481afbd07",
+   "caseId": "case-5",
+   "answerId": "astra",
+   "requestSha256": "b72161741a60f54b3da2f18e2ffc03dd51a5ffff048860e049b97f9de36b03ab",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "major",
+   "verdict": "major",
+   "judgment": {
+    "issues": [
+     {
+      "rule": "same-activity",
+      "severity": "major",
+      "groupNumbers": [
+       2
+      ],
+      "descriptionNumbers": [
+       3,
+       4,
+       5,
+       6,
+       7
+      ],
+      "evidenceQuote": "safety, efficiency, and effectiveness of biomedical equipment",
+      "explanation": "The new title makes \"Safety and Performance\" the main object and keeps \"Equipment\" only as a modifier. The activity it names is no longer measuring equipment but measuring qualities of equipment."
+     }
+    ],
+    "summary": "Separating physical measurement from equipment evaluation is a reasonable split. However, group 2's new title turns the current object into a modifier of a new main noun, a major same-activity problem."
+   },
+   "rawText": "{\"issues\":[{\"rule\":\"same-activity\",\"severity\":\"major\",\"groupNumbers\":[2],\"descriptionNumbers\":[3,4,5,6,7],\"evidenceQuote\":\"safety, efficiency, and effectiveness of biomedical equipment\",\"explanation\":\"The new title makes \\\"Safety and Performance\\\" the main object and keeps \\\"Equipment\\\" only as a modifier. The activity it names is no longer measuring equipment but measuring qualities of equipment.\"}],\"summary\":\"Separating physical measurement from equipment evaluation is a reasonable split. However, group 2's new title turns the current object into a modifier of a new main noun, a major same-activity problem.\"}"
+  },
+  {
+   "requestId": "f6faff95bfb3cf24",
+   "caseId": "case-5",
+   "answerId": "sol",
+   "requestSha256": "4fb4992d995cc900945bb2a9b33fdb22c4937fa91cf32cd0aaabc4e80cc21356",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "major",
+   "verdict": "major",
+   "judgment": {
+    "issues": [
+     {
+      "rule": "same-activity",
+      "severity": "major",
+      "groupNumbers": [
+       2
+      ],
+      "descriptionNumbers": [
+       3,
+       5
+      ],
+      "evidenceQuote": "ensure compliance with safety standards",
+      "explanation": "In \"Measure Equipment Safety Compliance\", \"equipment\" is now only a modifier and the main noun is \"safety compliance\". The title no longer names the current activity of measuring equipment."
+     },
+     {
+      "rule": "same-activity",
+      "severity": "major",
+      "groupNumbers": [
+       3
+      ],
+      "descriptionNumbers": [
+       4,
+       6,
+       7
+      ],
+      "evidenceQuote": "ensure operability in specific laboratory settings",
+      "explanation": "In \"Measure Equipment Operational Fitness\", \"equipment\" is now only a modifier and the main noun is \"operational fitness\". The object being measured has changed."
+     },
+     {
+      "rule": "grouping",
+      "severity": "minor",
+      "groupNumbers": [
+       2,
+       3
+      ],
+      "descriptionNumbers": [
+       5,
+       6,
+       7
+      ],
+      "evidenceQuote": "safety, efficiency, and effectiveness",
+      "explanation": "Groups 2 and 3 both describe evaluating equipment, and their stated purposes overlap. Description 7 covers safety but sits in the fitness group, description 6 cites regulations, and description 5 covers performance. The split between them is weak."
+     },
+     {
+      "rule": "grouping",
+      "severity": "minor",
+      "groupNumbers": [
+       2,
+       3
+      ],
+      "descriptionNumbers": [],
+      "evidenceQuote": "",
+      "explanation": "The new groups have only 2 and 3 descriptions, far below about 5–9. Having only seven descriptions is not a strong reason, especially since combining the two evaluation groups would fall within the range."
+     }
+    ],
+    "summary": "Group 1 keeps the current title and works. The titles for groups 2 and 3 keep equipment only as a modifier of a new main noun, and their split is weak and leaves both groups small."
+   },
+   "rawText": "{\"issues\":[{\"rule\":\"same-activity\",\"severity\":\"major\",\"groupNumbers\":[2],\"descriptionNumbers\":[3,5],\"evidenceQuote\":\"ensure compliance with safety standards\",\"explanation\":\"In \\\"Measure Equipment Safety Compliance\\\", \\\"equipment\\\" is now only a modifier and the main noun is \\\"safety compliance\\\". The title no longer names the current activity of measuring equipment.\"},{\"rule\":\"same-activity\",\"severity\":\"major\",\"groupNumbers\":[3],\"descriptionNumbers\":[4,6,7],\"evidenceQuote\":\"ensure operability in specific laboratory settings\",\"explanation\":\"In \\\"Measure Equipment Operational Fitness\\\", \\\"equipment\\\" is now only a modifier and the main noun is \\\"operational fitness\\\". The object being measured has changed.\"},{\"rule\":\"grouping\",\"severity\":\"minor\",\"groupNumbers\":[2,3],\"descriptionNumbers\":[5,6,7],\"evidenceQuote\":\"safety, efficiency, and effectiveness\",\"explanation\":\"Groups 2 and 3 both describe evaluating equipment, and their stated purposes overlap. Description 7 covers safety but sits in the fitness group, description 6 cites regulations, and description 5 covers performance. The split between them is weak.\"},{\"rule\":\"grouping\",\"severity\":\"minor\",\"groupNumbers\":[2,3],\"descriptionNumbers\":[],\"evidenceQuote\":\"\",\"explanation\":\"The new groups have only 2 and 3 descriptions, far below about 5–9. Having only seven descriptions is not a strong reason, especially since combining the two evaluation groups would fall within the range.\"}],\"summary\":\"Group 1 keeps the current title and works. The titles for groups 2 and 3 keep equipment only as a modifier of a new main noun, and their split is weak and leaves both groups small.\"}"
+  },
+  {
+   "requestId": "1c7c9f20bf7d9154",
+   "caseId": "case-5",
+   "answerId": "terra",
+   "requestSha256": "259580da8d06cf0755392cc33bd8b645ed65acb7704e349afbcc7b3c9a4d6297",
+   "softwareFindings": [
+    {
+     "check": "initial-verb",
+     "severity": "prompt-violation",
+     "groupNumbers": [
+      2
+     ],
+     "descriptionNumbers": [],
+     "explanation": "“Inspect Workplace Safety” does not begin with the current verb “Measure”."
+    },
+    {
+     "check": "initial-verb",
+     "severity": "prompt-violation",
+     "groupNumbers": [
+      3
+     ],
+     "descriptionNumbers": [],
+     "explanation": "“Evaluate Equipment” does not begin with the current verb “Measure”."
+    }
+   ],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "prompt-violation",
+   "verdict": "prompt-violation",
+   "judgment": {
+    "issues": [
+     {
+      "rule": "same-activity",
+      "severity": "prompt-violation",
+      "groupNumbers": [
+       2
+      ],
+      "descriptionNumbers": [
+       3
+      ],
+      "evidenceQuote": "workplace environments, equipment, or practices",
+      "explanation": "The title's main object, Workplace Safety, is a different thing from the current object, Equipment. It takes its focus from other objects in the description rather than naming a kind of equipment."
+     },
+     {
+      "rule": "grouping",
+      "severity": "minor",
+      "groupNumbers": [
+       2,
+       3
+      ],
+      "descriptionNumbers": [
+       3,
+       4,
+       5,
+       6,
+       7
+      ],
+      "evidenceQuote": "ensure compliance with safety and environmental regulations",
+      "explanation": "Description 3 evaluates equipment for safety compliance, the same kind of equipment evaluation as descriptions 5 and 7. Putting it in its own group rests mainly on its other objects (environments, practices), and that leaves a one-description group without a strong reason."
+     }
+    ],
+    "summary": "The proposal correctly keeps Measure Equipment for the two descriptions that involve measuring. However, the title for description 3 swaps equipment for a different object, and description 3 is split from the other equipment-evaluation descriptions without a strong reason."
+   },
+   "rawText": "{\"issues\":[{\"rule\":\"same-activity\",\"severity\":\"prompt-violation\",\"groupNumbers\":[2],\"descriptionNumbers\":[3],\"evidenceQuote\":\"workplace environments, equipment, or practices\",\"explanation\":\"The title's main object, Workplace Safety, is a different thing from the current object, Equipment. It takes its focus from other objects in the description rather than naming a kind of equipment.\"},{\"rule\":\"grouping\",\"severity\":\"minor\",\"groupNumbers\":[2,3],\"descriptionNumbers\":[3,4,5,6,7],\"evidenceQuote\":\"ensure compliance with safety and environmental regulations\",\"explanation\":\"Description 3 evaluates equipment for safety compliance, the same kind of equipment evaluation as descriptions 5 and 7. Putting it in its own group rests mainly on its other objects (environments, practices), and that leaves a one-description group without a strong reason.\"}],\"summary\":\"The proposal correctly keeps Measure Equipment for the two descriptions that involve measuring. However, the title for description 3 swaps equipment for a different object, and description 3 is split from the other equipment-evaluation descriptions without a strong reason.\"}"
+  },
+  {
+   "requestId": "dee0288ce5f7dc26",
+   "caseId": "case-5",
+   "answerId": "mini",
+   "requestSha256": "83481059ffd327b9115bf8a9682902bd1be7f218948c9079be13f80f07725ecf",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "major",
+   "verdict": "major",
+   "judgment": {
+    "issues": [
+     {
+      "rule": "same-activity",
+      "severity": "major",
+      "groupNumbers": [
+       2
+      ],
+      "descriptionNumbers": [
+       3,
+       4,
+       5,
+       6,
+       7
+      ],
+      "evidenceQuote": "serviceability, condition, and disposition",
+      "explanation": "In \"Measure Equipment Condition\", equipment is no longer the main object. It only describes a new main noun, \"Condition\". Also, only description 6 mentions condition; the others are about evaluating safety, compliance, operability, efficiency, or performance."
+     }
+    ],
+    "summary": "Splitting direct measurement (1-2) from equipment evaluation (3-7) is reasonable. The main problem is the new title for group 2: it turns the current object into a modifier of a new main noun, \"Condition\", which is a major same-activity issue."
+   },
+   "rawText": "{\"issues\":[{\"rule\":\"same-activity\",\"severity\":\"major\",\"groupNumbers\":[2],\"descriptionNumbers\":[3,4,5,6,7],\"evidenceQuote\":\"serviceability, condition, and disposition\",\"explanation\":\"In \\\"Measure Equipment Condition\\\", equipment is no longer the main object. It only describes a new main noun, \\\"Condition\\\". Also, only description 6 mentions condition; the others are about evaluating safety, compliance, operability, efficiency, or performance.\"}],\"summary\":\"Splitting direct measurement (1-2) from equipment evaluation (3-7) is reasonable. The main problem is the new title for group 2: it turns the current object into a modifier of a new main noun, \\\"Condition\\\", which is a major same-activity issue.\"}"
+  },
+  {
+   "requestId": "fed072e7d1ad2030",
+   "caseId": "case-6",
+   "answerId": "astra",
+   "requestSha256": "f041062526b094af2e5e80e6440b8a9b61313d4f0ad1ce7ef6de6b9339839de9",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "minor",
+   "verdict": "minor",
+   "judgment": {
+    "issues": [
+     {
+      "rule": "grouping",
+      "severity": "minor",
+      "groupNumbers": [
+       1
+      ],
+      "descriptionNumbers": [
+       1,
+       2,
+       8,
+       12,
+       13,
+       14,
+       15
+      ],
+      "evidenceQuote": "negotiate contracts with actors",
+      "explanation": "The single group mixes different kinds of contract negotiation: buying from suppliers and vendors (2, 12), selling to clients or selling advertising (1, 15), hiring performers and authors (8, 13), and trading securities or commodities (14). The reason calls these only differences in industry or counterparty and gives no strong reason to keep them together, but a reviewer could reasonably accept one broad group."
+     }
+    ],
+    "summary": "The kept title Negotiate Contract is clear and names the current activity. The only concern is minor: all 22 descriptions stay in one group even though they cover several different kinds of contract negotiation."
+   },
+   "rawText": "{\"issues\":[{\"rule\":\"grouping\",\"severity\":\"minor\",\"groupNumbers\":[1],\"descriptionNumbers\":[1,2,8,12,13,14,15],\"evidenceQuote\":\"negotiate contracts with actors\",\"explanation\":\"The single group mixes different kinds of contract negotiation: buying from suppliers and vendors (2, 12), selling to clients or selling advertising (1, 15), hiring performers and authors (8, 13), and trading securities or commodities (14). The reason calls these only differences in industry or counterparty and gives no strong reason to keep them together, but a reviewer could reasonably accept one broad group.\"}],\"summary\":\"The kept title Negotiate Contract is clear and names the current activity. The only concern is minor: all 22 descriptions stay in one group even though they cover several different kinds of contract negotiation.\"}"
+  },
+  {
+   "requestId": "2006c392eaa53404",
+   "caseId": "case-6",
+   "answerId": "sol",
+   "requestSha256": "7f0582da5e6c1a8f5096156414b46c33b54d596c9ddfef9ed291c3431b71589b",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "minor",
+   "verdict": "minor",
+   "judgment": {
+    "issues": [
+     {
+      "rule": "grouping",
+      "severity": "minor",
+      "groupNumbers": [
+       1
+      ],
+      "descriptionNumbers": [
+       1,
+       2,
+       3,
+       7,
+       8,
+       12,
+       13,
+       15,
+       17,
+       21,
+       22
+      ],
+      "evidenceQuote": "negotiate contracts with actors determined suitable for specific roles",
+      "explanation": "The one group combines contracts to buy from suppliers and vendors (for example 2, 3, 12 and 17), contracts to sell to clients (1 and 15) and hiring contracts with performers or writers (8 and 13). The proposal's reason only says they share the same core activity, which is not a strong reason to keep these kinds together. Reviewers may still reasonably accept one group, since several descriptions (10, 16 and 18) are generic and the core activity is the same."
+     }
+    ],
+    "summary": "The kept title 'Negotiate Contract' is clear and fits all 22 descriptions. The one issue is minor: a single group keeps supplier, client-sales and talent contract negotiation together without a strong reason."
+   },
+   "rawText": "{\"issues\":[{\"rule\":\"grouping\",\"severity\":\"minor\",\"groupNumbers\":[1],\"descriptionNumbers\":[1,2,3,7,8,12,13,15,17,21,22],\"evidenceQuote\":\"negotiate contracts with actors determined suitable for specific roles\",\"explanation\":\"The one group combines contracts to buy from suppliers and vendors (for example 2, 3, 12 and 17), contracts to sell to clients (1 and 15) and hiring contracts with performers or writers (8 and 13). The proposal's reason only says they share the same core activity, which is not a strong reason to keep these kinds together. Reviewers may still reasonably accept one group, since several descriptions (10, 16 and 18) are generic and the core activity is the same.\"}],\"summary\":\"The kept title 'Negotiate Contract' is clear and fits all 22 descriptions. The one issue is minor: a single group keeps supplier, client-sales and talent contract negotiation together without a strong reason.\"}"
+  },
+  {
+   "requestId": "af0d123dbaa8926c",
+   "caseId": "case-6",
+   "answerId": "terra",
+   "requestSha256": "2964196fc86570b7f10d33a487d7df75654cb5440fa435730b23378edd9e7727",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "minor",
+   "verdict": "minor",
+   "judgment": {
+    "issues": [
+     {
+      "rule": "grouping",
+      "severity": "minor",
+      "groupNumbers": [
+       1
+      ],
+      "descriptionNumbers": [
+       1,
+       2,
+       3,
+       4,
+       6,
+       7,
+       8,
+       12,
+       13,
+       14,
+       15,
+       17,
+       20,
+       21,
+       22
+      ],
+      "evidenceQuote": "negotiate contracts with actors determined suitable for specific roles",
+      "explanation": "All 22 descriptions sit in one group, but they cover somewhat different kinds of contract negotiation: buying from suppliers or vendors (2, 3, 4, 6, 7, 12, 17, 21, 22), selling to or serving clients (1, 15, 20), hiring performers or writers (8, 13), and trading securities (14). The proposal's reasons do not give a strong reason for keeping these kinds together, although a single group is arguably defensible because the core activity is the same."
+     }
+    ],
+    "summary": "The kept title Negotiate Contract is clear and accurate for all descriptions. The only concern is a minor one: the proposal keeps 22 descriptions in one group when they include different kinds of contracts, such as purchasing, sales, talent, and securities contracts."
+   },
+   "rawText": "{\"issues\":[{\"rule\":\"grouping\",\"severity\":\"minor\",\"groupNumbers\":[1],\"descriptionNumbers\":[1,2,3,4,6,7,8,12,13,14,15,17,20,21,22],\"evidenceQuote\":\"negotiate contracts with actors determined suitable for specific roles\",\"explanation\":\"All 22 descriptions sit in one group, but they cover somewhat different kinds of contract negotiation: buying from suppliers or vendors (2, 3, 4, 6, 7, 12, 17, 21, 22), selling to or serving clients (1, 15, 20), hiring performers or writers (8, 13), and trading securities (14). The proposal's reasons do not give a strong reason for keeping these kinds together, although a single group is arguably defensible because the core activity is the same.\"}],\"summary\":\"The kept title Negotiate Contract is clear and accurate for all descriptions. The only concern is a minor one: the proposal keeps 22 descriptions in one group when they include different kinds of contracts, such as purchasing, sales, talent, and securities contracts.\"}"
+  },
+  {
+   "requestId": "9e2002f045bc1f58",
+   "caseId": "case-6",
+   "answerId": "mini",
+   "requestSha256": "7277b7657983e20c3f783541b95e8831e733dd693c3a7b010b77a273f0a59c53",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "minor",
+   "verdict": "minor",
+   "judgment": {
+    "issues": [
+     {
+      "rule": "grouping",
+      "severity": "minor",
+      "groupNumbers": [
+       1
+      ],
+      "descriptionNumbers": [
+       1,
+       2,
+       3,
+       4,
+       8,
+       12,
+       13,
+       14,
+       15,
+       20,
+       21,
+       22
+      ],
+      "evidenceQuote": "negotiate contracts with actors determined suitable for specific roles",
+      "explanation": "All 22 descriptions sit in one group, but they cover different kinds of contract negotiation. Some are buying contracts with suppliers or vendors (2, 3, 4, 12, 21, 22), some are sales or client contracts (1, 14, 15, 20), and some are hiring contracts with actors or authors (8, 13). The proposal gives no strong reason for keeping these different kinds together."
+     }
+    ],
+    "summary": "The kept title \"Negotiate Contract\" is clear and names the right activity. The only problem is minor: the single group mixes different kinds of contract negotiation (buying, selling and hiring) without giving a strong reason."
+   },
+   "rawText": "{\"issues\":[{\"rule\":\"grouping\",\"severity\":\"minor\",\"groupNumbers\":[1],\"descriptionNumbers\":[1,2,3,4,8,12,13,14,15,20,21,22],\"evidenceQuote\":\"negotiate contracts with actors determined suitable for specific roles\",\"explanation\":\"All 22 descriptions sit in one group, but they cover different kinds of contract negotiation. Some are buying contracts with suppliers or vendors (2, 3, 4, 12, 21, 22), some are sales or client contracts (1, 14, 15, 20), and some are hiring contracts with actors or authors (8, 13). The proposal gives no strong reason for keeping these different kinds together.\"}],\"summary\":\"The kept title \\\"Negotiate Contract\\\" is clear and names the right activity. The only problem is minor: the single group mixes different kinds of contract negotiation (buying, selling and hiring) without giving a strong reason.\"}"
+  },
+  {
+   "requestId": "3c31f55ff1259ebc",
+   "caseId": "case-7",
+   "answerId": "astra",
+   "requestSha256": "0c30f06ee129b330055a6bf5d7501e2db4c8ba5802751783301944a41cab952e",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "no-issues",
+   "verdict": "no-issues",
+   "judgment": {
+    "issues": [],
+    "summary": "No issues found. The title \"Batch Packaging Tickets\" keeps the current activity, adds only the word \"packaging\", which comes straight from the description, and is clearer than \"Batch Ticket\"."
+   },
+   "rawText": "{\"issues\":[],\"summary\":\"No issues found. The title \\\"Batch Packaging Tickets\\\" keeps the current activity, adds only the word \\\"packaging\\\", which comes straight from the description, and is clearer than \\\"Batch Ticket\\\".\"}"
+  },
+  {
+   "requestId": "ccb8ec61b798625f",
+   "caseId": "case-7",
+   "answerId": "sol",
+   "requestSha256": "2eb199605aa18bde1c84ae66926ab3727d12bb804690a863e9bc46ae872533a3",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "no-issues",
+   "verdict": "no-issues",
+   "judgment": {
+    "issues": [],
+    "summary": "No issues found. The proposed title \"Batch Packaging Tickets\" keeps the current activity and adds only the kind of ticket, which description 1 states directly, so the title is clearer and supported."
+   },
+   "rawText": "{\"issues\":[],\"summary\":\"No issues found. The proposed title \\\"Batch Packaging Tickets\\\" keeps the current activity and adds only the kind of ticket, which description 1 states directly, so the title is clearer and supported.\"}"
+  },
+  {
+   "requestId": "0f8b5af109b9788e",
+   "caseId": "case-7",
+   "answerId": "terra",
+   "requestSha256": "2c32e00b76042ff310638814885ae73bcd084e230ddbe6c6d7e6a6e80133e211",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "no-issues",
+   "verdict": "no-issues",
+   "judgment": {
+    "issues": [],
+    "summary": "No issues found. The new title names the same object from the description with a supported qualifier ('packaging tickets') and keeps the verb, so a non-expert gets a clearer sense of the activity than from the current title."
+   },
+   "rawText": "{\"issues\":[],\"summary\":\"No issues found. The new title names the same object from the description with a supported qualifier ('packaging tickets') and keeps the verb, so a non-expert gets a clearer sense of the activity than from the current title.\"}"
+  },
+  {
+   "requestId": "f87d1aabe8f6b992",
+   "caseId": "case-7",
+   "answerId": "mini",
+   "requestSha256": "86955429f97a5e8389adbeab4c33b90b8a79ae35c73eb7ff3e742610b9b02f6a",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "no-issues",
+   "verdict": "no-issues",
+   "judgment": {
+    "issues": [],
+    "summary": "No issues found: the title \"Batch Packaging Tickets\" names the same activity as the current title. The only word it adds, \"packaging\", comes straight from the description, and the new title is clearer than \"Batch Ticket\"."
+   },
+   "rawText": "{\"issues\":[],\"summary\":\"No issues found: the title \\\"Batch Packaging Tickets\\\" names the same activity as the current title. The only word it adds, \\\"packaging\\\", comes straight from the description, and the new title is clearer than \\\"Batch Ticket\\\".\"}"
+  },
+  {
+   "requestId": "67d3f0a25a70c53f",
+   "caseId": "case-8",
+   "answerId": "astra",
+   "requestSha256": "2e8114e4689389285066f31ed1970e30961afd90dfd42784df86c2d3db7eaae2",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "no-issues",
+   "verdict": "no-issues",
+   "judgment": {
+    "issues": [],
+    "summary": "No issues found. The new title keeps staples as the main object and adds a purpose that the description supports, since it says to use staples to hold carpet in place, making the vague current title clear to a non-expert."
+   },
+   "rawText": "{\"issues\":[],\"summary\":\"No issues found. The new title keeps staples as the main object and adds a purpose that the description supports, since it says to use staples to hold carpet in place, making the vague current title clear to a non-expert.\"}"
+  },
+  {
+   "requestId": "3dd36da4f884a191",
+   "caseId": "case-8",
+   "answerId": "sol",
+   "requestSha256": "7471abc6510563c0034d8cf2ed4abea7a1c1c67f220fab905655ab8c28a5e0e9",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "no-issues",
+   "verdict": "no-issues",
+   "judgment": {
+    "issues": [],
+    "summary": "No issues found. The title keeps the current object, staples, and adds a purpose qualifier that the description supports: staples are used to hold carpet in place. The new title is also clearer than the current one."
+   },
+   "rawText": "{\"issues\": [], \"summary\": \"No issues found. The title keeps the current object, staples, and adds a purpose qualifier that the description supports: staples are used to hold carpet in place. The new title is also clearer than the current one.\"}"
+  },
+  {
+   "requestId": "abf888b8d0278ce0",
+   "caseId": "case-8",
+   "answerId": "terra",
+   "requestSha256": "1f3e8016c2e22cb9d1e0cc959766135789f117bc5fe23bb6cd77ea7e2813f264",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "minor",
+   "verdict": "minor",
+   "judgment": {
+    "issues": [
+     {
+      "rule": "clarity",
+      "severity": "minor",
+      "groupNumbers": [
+       1
+      ],
+      "descriptionNumbers": [
+       1
+      ],
+      "evidenceQuote": "use staples, tape, tacks or glue to hold carpet in place",
+      "explanation": "Apart from the plural, this is the current title, and it is so general that a non-expert could take it to mean office stapling. The description supports a clearer title that keeps the verb, such as one saying the staples secure carpet."
+     }
+    ],
+    "summary": "Other than making the object plural, the proposal keeps the current title. The title is accurate but vague, and the description supports a clearer title that mentions fastening carpet."
+   },
+   "rawText": "{\"issues\":[{\"rule\":\"clarity\",\"severity\":\"minor\",\"groupNumbers\":[1],\"descriptionNumbers\":[1],\"evidenceQuote\":\"use staples, tape, tacks or glue to hold carpet in place\",\"explanation\":\"Apart from the plural, this is the current title, and it is so general that a non-expert could take it to mean office stapling. The description supports a clearer title that keeps the verb, such as one saying the staples secure carpet.\"}],\"summary\":\"Other than making the object plural, the proposal keeps the current title. The title is accurate but vague, and the description supports a clearer title that mentions fastening carpet.\"}"
+  },
+  {
+   "requestId": "ff167f56ebda98e8",
+   "caseId": "case-8",
+   "answerId": "mini",
+   "requestSha256": "f0fc8c189f6289b5f4e83b13cfaa293a2ab99e1ae3ec70b59ae37dbbbd334ff3",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "no-issues",
+   "verdict": "no-issues",
+   "judgment": {
+    "issues": [],
+    "summary": "No issues found. The proposed title \"Use Carpet Staples\" names the same activity as the current title with a domain qualifier the description supports, and it gives a non-expert a clear sense of the work."
+   },
+   "rawText": "{\"issues\": [], \"summary\": \"No issues found. The proposed title \\\"Use Carpet Staples\\\" names the same activity as the current title with a domain qualifier the description supports, and it gives a non-expert a clear sense of the work.\"}"
+  },
+  {
+   "requestId": "a5d4869356c5cd7c",
+   "caseId": "case-9",
+   "answerId": "astra",
+   "requestSha256": "fbb47ec19bd3bbac3cb1b8f9e419ac47df59d2c20110b4cc730dc9a7da3a6648",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "minor",
+   "verdict": "minor",
+   "judgment": {
+    "issues": [
+     {
+      "rule": "supported-detail",
+      "severity": "minor",
+      "groupNumbers": [
+       1
+      ],
+      "descriptionNumbers": [
+       1
+      ],
+      "evidenceQuote": "gather material and convey it into cars",
+      "explanation": "The description does not say the material is bulk material. Machines that load material into cars make this likely, but the description never states it."
+     }
+    ],
+    "summary": "The split between machine-gathered physical material and gathered documents is sound, and both titles keep the current activity. The only concern is that the qualifier Bulk in group 1 is inferred rather than stated in its description."
+   },
+   "rawText": "{\"issues\":[{\"rule\":\"supported-detail\",\"severity\":\"minor\",\"groupNumbers\":[1],\"descriptionNumbers\":[1],\"evidenceQuote\":\"gather material and convey it into cars\",\"explanation\":\"The description does not say the material is bulk material. Machines that load material into cars make this likely, but the description never states it.\"}],\"summary\":\"The split between machine-gathered physical material and gathered documents is sound, and both titles keep the current activity. The only concern is that the qualifier Bulk in group 1 is inferred rather than stated in its description.\"}"
+  },
+  {
+   "requestId": "52d478d86d0f391f",
+   "caseId": "case-9",
+   "answerId": "sol",
+   "requestSha256": "6766a996d40652e0fa1774a561595095036442d9b6c086b04fd7f4322bbc76fe",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "minor",
+   "verdict": "minor",
+   "judgment": {
+    "issues": [
+     {
+      "rule": "supported-detail",
+      "severity": "minor",
+      "groupNumbers": [
+       1
+      ],
+      "descriptionNumbers": [
+       1
+      ],
+      "evidenceQuote": "gather material and convey it into cars",
+      "explanation": "The description says machines gather material and convey it into cars, but it never says the material is bulk. The added word is plausible but not stated."
+     },
+     {
+      "rule": "grouping",
+      "severity": "minor",
+      "groupNumbers": [
+       2,
+       3,
+       4
+      ],
+      "descriptionNumbers": [
+       2,
+       3,
+       4
+      ],
+      "evidenceQuote": "",
+      "explanation": "Descriptions 2, 3 and 4 all describe collecting documents for office work. They differ only in what the material is for (filing, bids or typing), which comes from the descriptions' other verbs. Splitting them leaves three groups of one description each, and the reasons give no strong case for that."
+     }
+    ],
+    "summary": "The titles keep the current activity, and separating the machine-gathered material in description 1 from the office documents is sound. However, the three office-document descriptions are split into single groups only by purpose, and the word 'Bulk' in group 1 is not clearly supported."
+   },
+   "rawText": "{\"issues\":[{\"rule\":\"supported-detail\",\"severity\":\"minor\",\"groupNumbers\":[1],\"descriptionNumbers\":[1],\"evidenceQuote\":\"gather material and convey it into cars\",\"explanation\":\"The description says machines gather material and convey it into cars, but it never says the material is bulk. The added word is plausible but not stated.\"},{\"rule\":\"grouping\",\"severity\":\"minor\",\"groupNumbers\":[2,3,4],\"descriptionNumbers\":[2,3,4],\"evidenceQuote\":\"\",\"explanation\":\"Descriptions 2, 3 and 4 all describe collecting documents for office work. They differ only in what the material is for (filing, bids or typing), which comes from the descriptions' other verbs. Splitting them leaves three groups of one description each, and the reasons give no strong case for that.\"}],\"summary\":\"The titles keep the current activity, and separating the machine-gathered material in description 1 from the office documents is sound. However, the three office-document descriptions are split into single groups only by purpose, and the word 'Bulk' in group 1 is not clearly supported.\"}"
+  },
+  {
+   "requestId": "74a902784e89d79b",
+   "caseId": "case-9",
+   "answerId": "terra",
+   "requestSha256": "6ff295b118368458b8732142624b1c1bc3bc75bb79c8f98e502c17034b1375c3",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "minor",
+   "verdict": "minor",
+   "judgment": {
+    "issues": [
+     {
+      "rule": "grouping",
+      "severity": "minor",
+      "groupNumbers": [
+       2,
+       3,
+       4
+      ],
+      "descriptionNumbers": [
+       2,
+       3,
+       4
+      ],
+      "evidenceQuote": "Gather materials to be filed",
+      "explanation": "Descriptions 2, 3 and 4 all describe collecting documents or information for office work, and differ only in what the material is for (filing, bidding, typing). Putting each in its own single-description group is an unusually fine split, and the reasons give no strong case for it."
+     },
+     {
+      "rule": "clarity",
+      "severity": "minor",
+      "groupNumbers": [
+       1
+      ],
+      "descriptionNumbers": [
+       1
+      ],
+      "evidenceQuote": "Advance machines to gather material and convey it into cars",
+      "explanation": "\"Gather Bulk Material\" does not tell a non-expert that the work means using machines to collect material and load it into cars. A clearer title that keeps the verb is possible, such as one naming machine loading into cars."
+     }
+    ],
+    "summary": "All the new titles name kinds of the current object. However, the office-document descriptions are split into three single-description groups on thin grounds, and the title for the machine-loading description is vague."
+   },
+   "rawText": "{\"issues\":[{\"rule\":\"grouping\",\"severity\":\"minor\",\"groupNumbers\":[2,3,4],\"descriptionNumbers\":[2,3,4],\"evidenceQuote\":\"Gather materials to be filed\",\"explanation\":\"Descriptions 2, 3 and 4 all describe collecting documents or information for office work, and differ only in what the material is for (filing, bidding, typing). Putting each in its own single-description group is an unusually fine split, and the reasons give no strong case for it.\"},{\"rule\":\"clarity\",\"severity\":\"minor\",\"groupNumbers\":[1],\"descriptionNumbers\":[1],\"evidenceQuote\":\"Advance machines to gather material and convey it into cars\",\"explanation\":\"\\\"Gather Bulk Material\\\" does not tell a non-expert that the work means using machines to collect material and load it into cars. A clearer title that keeps the verb is possible, such as one naming machine loading into cars.\"}],\"summary\":\"All the new titles name kinds of the current object. However, the office-document descriptions are split into three single-description groups on thin grounds, and the title for the machine-loading description is vague.\"}"
+  },
+  {
+   "requestId": "8d8706d3f674a916",
+   "caseId": "case-9",
+   "answerId": "mini",
+   "requestSha256": "5cefaf3fdf690cf925577b2e12d9dda501f8d25a945fa885b4c3abd053de86eb",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "minor",
+   "verdict": "minor",
+   "judgment": {
+    "issues": [
+     {
+      "rule": "supported-detail",
+      "severity": "minor",
+      "groupNumbers": [
+       1
+      ],
+      "descriptionNumbers": [
+       1
+      ],
+      "evidenceQuote": "Advance machines to gather material and convey it into cars",
+      "explanation": "The description never says the material is bulk. Machine loading into cars makes that likely, but the word is an assumption, and a reader could take bulk to mean buying large quantities."
+     }
+    ],
+    "summary": "Splitting machine loading from gathering documents is reasonable, and both titles name the gathering of material. The only problem is that Bulk in the first title is plausible but not stated in the description."
+   },
+   "rawText": "{\"issues\":[{\"rule\":\"supported-detail\",\"severity\":\"minor\",\"groupNumbers\":[1],\"descriptionNumbers\":[1],\"evidenceQuote\":\"Advance machines to gather material and convey it into cars\",\"explanation\":\"The description never says the material is bulk. Machine loading into cars makes that likely, but the word is an assumption, and a reader could take bulk to mean buying large quantities.\"}],\"summary\":\"Splitting machine loading from gathering documents is reasonable, and both titles name the gathering of material. The only problem is that Bulk in the first title is plausible but not stated in the description.\"}"
+  },
+  {
+   "requestId": "452a9d49f4db25d0",
+   "caseId": "case-10",
+   "answerId": "astra",
+   "requestSha256": "5a2deafc09d4ad98cc4b074e6a23ce36f87451aa07a79d5ace198c005f86f85e",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "no-issues",
+   "verdict": "no-issues",
+   "judgment": {
+    "issues": [],
+    "summary": "No issues found. The title 'Create Photographic Prints' names a kind of the current object, and 'photographic' follows plainly from the lab, density and color-setting details in the descriptions; keeping both descriptions in one group is reasonable, and the title is clear."
+   },
+   "rawText": "{\"issues\":[],\"summary\":\"No issues found. The title 'Create Photographic Prints' names a kind of the current object, and 'photographic' follows plainly from the lab, density and color-setting details in the descriptions; keeping both descriptions in one group is reasonable, and the title is clear.\"}"
+  },
+  {
+   "requestId": "c1796eb216c76e63",
+   "caseId": "case-10",
+   "answerId": "sol",
+   "requestSha256": "8ab1de3f7f9137055c9a7e44be5e16ddf33944746309662a8ea47efa54498e7b",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "minor",
+   "verdict": "minor",
+   "judgment": {
+    "issues": [
+     {
+      "rule": "supported-detail",
+      "severity": "minor",
+      "groupNumbers": [
+       1
+      ],
+      "descriptionNumbers": [
+       1,
+       2
+      ],
+      "evidenceQuote": "each scene of a production",
+      "explanation": "Neither description says the prints are photographic. Description 2 points to motion picture film prints, and a non-expert may read \"photographic prints\" as still photos, so the qualifier is plausible but not clearly supported."
+     }
+    ],
+    "summary": "Keeping both descriptions in one group is reasonable and the title names the same activity. The only concern is a minor one: the added word \"Photographic\" is not clearly supported for the film production prints in description 2."
+   },
+   "rawText": "{\"issues\":[{\"rule\":\"supported-detail\",\"severity\":\"minor\",\"groupNumbers\":[1],\"descriptionNumbers\":[1,2],\"evidenceQuote\":\"each scene of a production\",\"explanation\":\"Neither description says the prints are photographic. Description 2 points to motion picture film prints, and a non-expert may read \\\"photographic prints\\\" as still photos, so the qualifier is plausible but not clearly supported.\"}],\"summary\":\"Keeping both descriptions in one group is reasonable and the title names the same activity. The only concern is a minor one: the added word \\\"Photographic\\\" is not clearly supported for the film production prints in description 2.\"}"
+  },
+  {
+   "requestId": "32e6a4246f764fcf",
+   "caseId": "case-10",
+   "answerId": "terra",
+   "requestSha256": "6dbe4893e4a10ca2e4c55f1b9464cbe68a9a4d231a08e0edd50075c58fff0d22",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "minor",
+   "verdict": "minor",
+   "judgment": {
+    "issues": [
+     {
+      "rule": "clarity",
+      "severity": "minor",
+      "groupNumbers": [
+       1
+      ],
+      "descriptionNumbers": [
+       1,
+       2
+      ],
+      "evidenceQuote": "according to customer specifications and laboratory protocols",
+      "explanation": "On its own, \"Create Print\" could mean printing documents, making art prints or 3D printing. The descriptions mention laboratory protocols and density or color settings, so a clearer title of 2–5 words that says these are photographic or film prints is possible."
+     }
+    ],
+    "summary": "Keeping both descriptions in one group is reasonable. The kept title is somewhat ambiguous because it does not say what kind of print is made, even though the proposal's own reason calls them photographic prints."
+   },
+   "rawText": "{\"issues\":[{\"rule\":\"clarity\",\"severity\":\"minor\",\"groupNumbers\":[1],\"descriptionNumbers\":[1,2],\"evidenceQuote\":\"according to customer specifications and laboratory protocols\",\"explanation\":\"On its own, \\\"Create Print\\\" could mean printing documents, making art prints or 3D printing. The descriptions mention laboratory protocols and density or color settings, so a clearer title of 2–5 words that says these are photographic or film prints is possible.\"}],\"summary\":\"Keeping both descriptions in one group is reasonable. The kept title is somewhat ambiguous because it does not say what kind of print is made, even though the proposal's own reason calls them photographic prints.\"}"
+  },
+  {
+   "requestId": "76d0beb0a9337112",
+   "caseId": "case-10",
+   "answerId": "mini",
+   "requestSha256": "64507ecc5617095b8d5e7bd76083991bd8439a1d9f0942e219f6db48c1c228b7",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "minor",
+   "verdict": "minor",
+   "judgment": {
+    "issues": [
+     {
+      "rule": "clarity",
+      "severity": "minor",
+      "groupNumbers": [
+       1
+      ],
+      "descriptionNumbers": [
+       1,
+       2
+      ],
+      "evidenceQuote": "timed prints with separate densities or color settings",
+      "explanation": "On its own, \"Create Print\" could mean printing documents, making art prints or other kinds of printing. The descriptions point to photographic or film prints made in a lab, so a clearer 2–5 word title that keeps the verb, such as one naming photographic or film prints, is supported."
+     }
+    ],
+    "summary": "Grouping both descriptions together is reasonable. The kept title is somewhat vague about what kind of print is made, and a more specific title is supported."
+   },
+   "rawText": "{\"issues\":[{\"rule\":\"clarity\",\"severity\":\"minor\",\"groupNumbers\":[1],\"descriptionNumbers\":[1,2],\"evidenceQuote\":\"timed prints with separate densities or color settings\",\"explanation\":\"On its own, \\\"Create Print\\\" could mean printing documents, making art prints or other kinds of printing. The descriptions point to photographic or film prints made in a lab, so a clearer 2–5 word title that keeps the verb, such as one naming photographic or film prints, is supported.\"}],\"summary\":\"Grouping both descriptions together is reasonable. The kept title is somewhat vague about what kind of print is made, and a more specific title is supported.\"}"
+  },
+  {
+   "requestId": "93102c7fbd260b4c",
+   "caseId": "case-11",
+   "answerId": "astra",
+   "requestSha256": "5d69a36cb0647675dfd9d0714564527354e75c37ea5143bef82f45432c7a2b2d",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "minor",
+   "verdict": "minor",
+   "judgment": {
+    "issues": [
+     {
+      "rule": "clarity",
+      "severity": "minor",
+      "groupNumbers": [
+       1
+      ],
+      "descriptionNumbers": [
+       9,
+       10
+      ],
+      "evidenceQuote": "Collect biological specimens",
+      "explanation": "The kept title does not say what kind of specimen is meant. A non-expert could read it as collecting things like rocks or museum items rather than biological or lab samples. The descriptions support a clearer 2–5 word title with the same verb that still covers all eleven descriptions, such as naming biological specimens."
+     }
+    ],
+    "summary": "Keeping all eleven descriptions in one group under the current activity is reasonable. The kept title is only minorly unclear, because it does not say that the specimens are biological or laboratory samples."
+   },
+   "rawText": "{\"issues\":[{\"rule\":\"clarity\",\"severity\":\"minor\",\"groupNumbers\":[1],\"descriptionNumbers\":[9,10],\"evidenceQuote\":\"Collect biological specimens\",\"explanation\":\"The kept title does not say what kind of specimen is meant. A non-expert could read it as collecting things like rocks or museum items rather than biological or lab samples. The descriptions support a clearer 2–5 word title with the same verb that still covers all eleven descriptions, such as naming biological specimens.\"}],\"summary\":\"Keeping all eleven descriptions in one group under the current activity is reasonable. The kept title is only minorly unclear, because it does not say that the specimens are biological or laboratory samples.\"}"
+  },
+  {
+   "requestId": "d58e8322f0c864b0",
+   "caseId": "case-11",
+   "answerId": "sol",
+   "requestSha256": "cb5f949110a78a0072a67a33b944f1eadd5d016d2d0caadb366b9f22acade35d",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "minor",
+   "verdict": "minor",
+   "judgment": {
+    "issues": [
+     {
+      "rule": "grouping",
+      "severity": "minor",
+      "groupNumbers": [
+       1
+      ],
+      "descriptionNumbers": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11
+      ],
+      "evidenceQuote": "Collect and dissect animal specimens",
+      "explanation": "Description 1 is about collecting animal specimens to dissect and study under a microscope, which is a different kind of collecting from the clinical and laboratory-testing work in most of the other descriptions. The proposal keeps it in the same group without saying why."
+     },
+     {
+      "rule": "clarity",
+      "severity": "minor",
+      "groupNumbers": [
+       1
+      ],
+      "descriptionNumbers": [
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11
+      ],
+      "evidenceQuote": "Collect biological specimens",
+      "explanation": "The title is so general that a non-expert could read it as collecting other kinds of specimens, such as rocks or museum items. The descriptions support a clearer title, such as naming biological or laboratory specimens."
+     }
+    ],
+    "summary": "The proposal keeps the current title and one group, which is broadly reasonable because most descriptions are nearly identical. However, it keeps the animal-dissection description with the clinical ones without a stated reason, and the title could say more clearly what kind of specimens are collected."
+   },
+   "rawText": "{\"issues\":[{\"rule\":\"grouping\",\"severity\":\"minor\",\"groupNumbers\":[1],\"descriptionNumbers\":[1,2,3,4,5,6,7,8,9,10,11],\"evidenceQuote\":\"Collect and dissect animal specimens\",\"explanation\":\"Description 1 is about collecting animal specimens to dissect and study under a microscope, which is a different kind of collecting from the clinical and laboratory-testing work in most of the other descriptions. The proposal keeps it in the same group without saying why.\"},{\"rule\":\"clarity\",\"severity\":\"minor\",\"groupNumbers\":[1],\"descriptionNumbers\":[2,3,4,5,6,7,8,9,10,11],\"evidenceQuote\":\"Collect biological specimens\",\"explanation\":\"The title is so general that a non-expert could read it as collecting other kinds of specimens, such as rocks or museum items. The descriptions support a clearer title, such as naming biological or laboratory specimens.\"}],\"summary\":\"The proposal keeps the current title and one group, which is broadly reasonable because most descriptions are nearly identical. However, it keeps the animal-dissection description with the clinical ones without a stated reason, and the title could say more clearly what kind of specimens are collected.\"}"
+  },
+  {
+   "requestId": "b5bfacbe1bda494d",
+   "caseId": "case-11",
+   "answerId": "terra",
+   "requestSha256": "d9092084dedaa0234d7a47e43b6206bb97600328173c116ce56ad2e3abd8b536",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "minor",
+   "verdict": "minor",
+   "judgment": {
+    "issues": [
+     {
+      "rule": "supported-detail",
+      "severity": "minor",
+      "groupNumbers": [
+       2
+      ],
+      "descriptionNumbers": [
+       10
+      ],
+      "evidenceQuote": "Collect biological specimens",
+      "explanation": "Description 10 does not say whether the biological specimens are for laboratory testing, so the qualifier Laboratory is plausible but narrower than what this description states. Group 1's animal-specimen title does not clearly cover it either."
+     }
+    ],
+    "summary": "The split between collecting animal specimens and collecting clinical or laboratory specimens is reasonable, and both titles keep the current activity. The only issue is minor: the Laboratory qualifier is not clearly supported for the most general description."
+   },
+   "rawText": "{\"issues\":[{\"rule\":\"supported-detail\",\"severity\":\"minor\",\"groupNumbers\":[2],\"descriptionNumbers\":[10],\"evidenceQuote\":\"Collect biological specimens\",\"explanation\":\"Description 10 does not say whether the biological specimens are for laboratory testing, so the qualifier Laboratory is plausible but narrower than what this description states. Group 1's animal-specimen title does not clearly cover it either.\"}],\"summary\":\"The split between collecting animal specimens and collecting clinical or laboratory specimens is reasonable, and both titles keep the current activity. The only issue is minor: the Laboratory qualifier is not clearly supported for the most general description.\"}"
+  },
+  {
+   "requestId": "4c3f67b80eff2f73",
+   "caseId": "case-11",
+   "answerId": "mini",
+   "requestSha256": "cebdf089aaa38b92dd59e778bb5e06c39f0855d2a93355294cf712b9c07ea581",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "minor",
+   "verdict": "minor",
+   "judgment": {
+    "issues": [
+     {
+      "rule": "grouping",
+      "severity": "minor",
+      "groupNumbers": [
+       1
+      ],
+      "descriptionNumbers": [
+       1
+      ],
+      "evidenceQuote": "Collect and dissect animal specimens",
+      "explanation": "Description 1 is about collecting animal specimens to dissect and examine under a microscope, which is research biology. The other descriptions are about collecting clinical or lab specimens, often from patients, for diagnostic testing. The proposal groups them without noting this difference, and its reason that all are gathered for testing does not clearly fit description 1."
+     }
+    ],
+    "summary": "Apart from being plural, the title is the same as the current one, and it fits all the descriptions. The only issue is minor: the animal-specimen description is a somewhat different kind of collecting from the clinical ones, and it is grouped with them without comment."
+   },
+   "rawText": "{\"issues\":[{\"rule\":\"grouping\",\"severity\":\"minor\",\"groupNumbers\":[1],\"descriptionNumbers\":[1],\"evidenceQuote\":\"Collect and dissect animal specimens\",\"explanation\":\"Description 1 is about collecting animal specimens to dissect and examine under a microscope, which is research biology. The other descriptions are about collecting clinical or lab specimens, often from patients, for diagnostic testing. The proposal groups them without noting this difference, and its reason that all are gathered for testing does not clearly fit description 1.\"}],\"summary\":\"Apart from being plural, the title is the same as the current one, and it fits all the descriptions. The only issue is minor: the animal-specimen description is a somewhat different kind of collecting from the clinical ones, and it is grouped with them without comment.\"}"
+  },
+  {
+   "requestId": "70b1fe985b4d5b4e",
+   "caseId": "case-12",
+   "answerId": "astra",
+   "requestSha256": "1c2611c379a84e9c66537e30f2aeb2bf4a3cd407e64a815c1833b362259eb957",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "no-issues",
+   "verdict": "no-issues",
+   "judgment": {
+    "issues": [],
+    "summary": "No issues found. Apart from making 'Supply' plural, the title is unchanged and still clearly names the activity, and keeping all 38 descriptions together is reasonable because they all describe getting supplies and most are near-identical."
+   },
+   "rawText": "{\"issues\":[],\"summary\":\"No issues found. Apart from making 'Supply' plural, the title is unchanged and still clearly names the activity, and keeping all 38 descriptions together is reasonable because they all describe getting supplies and most are near-identical.\"}"
+  },
+  {
+   "requestId": "0838cb59276e3fe6",
+   "caseId": "case-12",
+   "answerId": "sol",
+   "requestSha256": "b5eb32525a30df7227e4b134579ae50800e992786e901439be122e24b1c45212",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "prompt-violation",
+   "verdict": "prompt-violation",
+   "judgment": {
+    "issues": [
+     {
+      "rule": "same-activity",
+      "severity": "prompt-violation",
+      "groupNumbers": [
+       1
+      ],
+      "descriptionNumbers": [
+       1,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14,
+       15,
+       16,
+       17,
+       18,
+       19,
+       20,
+       21,
+       22,
+       23,
+       24,
+       25,
+       26,
+       27,
+       28,
+       29,
+       30,
+       31,
+       32,
+       33,
+       34,
+       35,
+       36,
+       37,
+       38
+      ],
+      "evidenceQuote": "Select and obtain materials and supplies",
+      "explanation": "The new title adds \"Materials\" as a second object next to the current object \"Supply\". The descriptions list materials alongside supplies as a separate item, so this imports another direct object rather than naming a kind of supply."
+     },
+     {
+      "rule": "grouping",
+      "severity": "minor",
+      "groupNumbers": [
+       1
+      ],
+      "descriptionNumbers": [
+       1,
+       5,
+       6,
+       24,
+       38
+      ],
+      "evidenceQuote": "obtaining household supplies or running errands",
+      "explanation": "The single group mixes clearly different kinds of supply acquisition: choosing teaching materials such as textbooks and lab equipment (6-38), ordering library supplies (1), general supply handling (2-4) and buying household supplies for a client (5). The reasons do not explain why these should stay together beyond the identical teaching-material descriptions."
+     }
+    ],
+    "summary": "The proposal adds \"Materials\" as an extra object to the title, which breaks the rule to keep the current object. It also keeps different kinds of supply acquisition in one group without a strong reason, a minor grouping concern."
+   },
+   "rawText": "{\"issues\":[{\"rule\":\"same-activity\",\"severity\":\"prompt-violation\",\"groupNumbers\":[1],\"descriptionNumbers\":[1,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38],\"evidenceQuote\":\"Select and obtain materials and supplies\",\"explanation\":\"The new title adds \\\"Materials\\\" as a second object next to the current object \\\"Supply\\\". The descriptions list materials alongside supplies as a separate item, so this imports another direct object rather than naming a kind of supply.\"},{\"rule\":\"grouping\",\"severity\":\"minor\",\"groupNumbers\":[1],\"descriptionNumbers\":[1,5,6,24,38],\"evidenceQuote\":\"obtaining household supplies or running errands\",\"explanation\":\"The single group mixes clearly different kinds of supply acquisition: choosing teaching materials such as textbooks and lab equipment (6-38), ordering library supplies (1), general supply handling (2-4) and buying household supplies for a client (5). The reasons do not explain why these should stay together beyond the identical teaching-material descriptions.\"}],\"summary\":\"The proposal adds \\\"Materials\\\" as an extra object to the title, which breaks the rule to keep the current object. It also keeps different kinds of supply acquisition in one group without a strong reason, a minor grouping concern.\"}"
+  },
+  {
+   "requestId": "e13ae77de511a897",
+   "caseId": "case-12",
+   "answerId": "terra",
+   "requestSha256": "3653e7a563b02a917d41a7979d36c4b04aed6fbeae34c175d1b295715f5be63e",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "minor",
+   "verdict": "minor",
+   "judgment": {
+    "issues": [
+     {
+      "rule": "supported-detail",
+      "severity": "minor",
+      "groupNumbers": [
+       4,
+       5,
+       6
+      ],
+      "descriptionNumbers": [
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14,
+       15,
+       16,
+       17,
+       18,
+       19,
+       20,
+       21,
+       22,
+       23,
+       24,
+       25,
+       26,
+       27,
+       28,
+       29,
+       30,
+       31,
+       32,
+       33,
+       34,
+       35,
+       36,
+       37,
+       38
+      ],
+      "evidenceQuote": "Select and obtain materials and supplies, such as textbooks",
+      "explanation": "These descriptions are about getting materials and supplies in general, and textbooks, laboratory equipment and performance pieces are only examples. The titles treat the examples as the whole activity, so they are narrower than the descriptions."
+     },
+     {
+      "rule": "grouping",
+      "severity": "minor",
+      "groupNumbers": [
+       4,
+       5,
+       6
+      ],
+      "descriptionNumbers": [
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14,
+       15,
+       16,
+       17,
+       18,
+       19,
+       20,
+       21,
+       22,
+       23,
+       24,
+       25,
+       26,
+       27,
+       28,
+       29,
+       30,
+       31,
+       32,
+       33,
+       34,
+       35,
+       36,
+       37,
+       38
+      ],
+      "evidenceQuote": "such as textbooks and performance pieces",
+      "explanation": "Descriptions 6-38 are nearly identical and differ only in the examples after 'such as'. Splitting them into three groups, one with a single description, separates what is really one activity."
+     },
+     {
+      "rule": "grouping",
+      "severity": "minor",
+      "groupNumbers": [
+       1,
+       3
+      ],
+      "descriptionNumbers": [
+       1,
+       5
+      ],
+      "evidenceQuote": "obtaining household supplies",
+      "explanation": "Groups 1 and 3 each hold only one description, far below about 5-9. The reasons name only the setting, which is not a strong reason, and both could sit with the other general supply-acquisition descriptions."
+     }
+    ],
+    "summary": "The proposal splits nearly identical instructional-materials descriptions into three groups by their examples and names them narrowly after those examples. It also creates two single-description groups without a strong reason. All issues are minor."
+   },
+   "rawText": "{\"issues\":[{\"rule\":\"supported-detail\",\"severity\":\"minor\",\"groupNumbers\":[4,5,6],\"descriptionNumbers\":[6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38],\"evidenceQuote\":\"Select and obtain materials and supplies, such as textbooks\",\"explanation\":\"These descriptions are about getting materials and supplies in general, and textbooks, laboratory equipment and performance pieces are only examples. The titles treat the examples as the whole activity, so they are narrower than the descriptions.\"},{\"rule\":\"grouping\",\"severity\":\"minor\",\"groupNumbers\":[4,5,6],\"descriptionNumbers\":[6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38],\"evidenceQuote\":\"such as textbooks and performance pieces\",\"explanation\":\"Descriptions 6-38 are nearly identical and differ only in the examples after 'such as'. Splitting them into three groups, one with a single description, separates what is really one activity.\"},{\"rule\":\"grouping\",\"severity\":\"minor\",\"groupNumbers\":[1,3],\"descriptionNumbers\":[1,5],\"evidenceQuote\":\"obtaining household supplies\",\"explanation\":\"Groups 1 and 3 each hold only one description, far below about 5-9. The reasons name only the setting, which is not a strong reason, and both could sit with the other general supply-acquisition descriptions.\"}],\"summary\":\"The proposal splits nearly identical instructional-materials descriptions into three groups by their examples and names them narrowly after those examples. It also creates two single-description groups without a strong reason. All issues are minor.\"}"
+  },
+  {
+   "requestId": "760d300d931fc6e8",
+   "caseId": "case-12",
+   "answerId": "mini",
+   "requestSha256": "0381496e0059b6e304b9f6b8057e7d289c4280962732bc4cb649f521a889e610",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "major",
+   "verdict": "major",
+   "judgment": {
+    "issues": [
+     {
+      "rule": "grouping",
+      "severity": "major",
+      "groupNumbers": [
+       4,
+       5,
+       6
+      ],
+      "descriptionNumbers": [
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14,
+       15,
+       16,
+       17,
+       18,
+       19,
+       20,
+       21,
+       22,
+       23,
+       24,
+       25,
+       26,
+       27,
+       28,
+       29,
+       30,
+       31,
+       32,
+       33,
+       34,
+       35,
+       36,
+       37,
+       38
+      ],
+      "evidenceQuote": "Select and obtain materials and supplies, such as textbooks and laboratory equipment",
+      "explanation": "Descriptions 6-38 are nearly identical. They differ only in the example items listed after 'such as', but the proposal splits them into three groups. The titles suggest three different activities when all of these descriptions depict the same general acquisition of materials and supplies."
+     },
+     {
+      "rule": "grouping",
+      "severity": "minor",
+      "groupNumbers": [
+       1,
+       3
+      ],
+      "descriptionNumbers": [
+       1,
+       5
+      ],
+      "evidenceQuote": "",
+      "explanation": "Groups 1 and 3 each hold a single description, far below about 5-9. The only reason given is the setting (library or household), which is not a strong reason. Both descriptions could fit the general supply-acquisition group."
+     }
+    ],
+    "summary": "The main problem is that 33 nearly identical descriptions, which differ only in their example items, are split into three groups with misleading titles. There are also two single-description groups without a strong reason for them."
+   },
+   "rawText": "{\"issues\":[{\"rule\":\"grouping\",\"severity\":\"major\",\"groupNumbers\":[4,5,6],\"descriptionNumbers\":[6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38],\"evidenceQuote\":\"Select and obtain materials and supplies, such as textbooks and laboratory equipment\",\"explanation\":\"Descriptions 6-38 are nearly identical. They differ only in the example items listed after 'such as', but the proposal splits them into three groups. The titles suggest three different activities when all of these descriptions depict the same general acquisition of materials and supplies.\"},{\"rule\":\"grouping\",\"severity\":\"minor\",\"groupNumbers\":[1,3],\"descriptionNumbers\":[1,5],\"evidenceQuote\":\"\",\"explanation\":\"Groups 1 and 3 each hold a single description, far below about 5-9. The only reason given is the setting (library or household), which is not a strong reason. Both descriptions could fit the general supply-acquisition group.\"}],\"summary\":\"The main problem is that 33 nearly identical descriptions, which differ only in their example items, are split into three groups with misleading titles. There are also two single-description groups without a strong reason for them.\"}"
+  },
+  {
+   "requestId": "efe3e95bc58b0b7c",
+   "caseId": "case-13",
+   "answerId": "astra",
+   "requestSha256": "e25f5ff7eba058967ef293fc4fcd1e7b47a5de6ae729507cc1084bc066082711",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "no-issues",
+   "verdict": "no-issues",
+   "judgment": {
+    "issues": [],
+    "summary": "No issues found. \"Patrol Railroad Cars\" keeps the current object and adds a domain qualifier that the description supports, and the new title is clearer than the ambiguous \"Patrol Car\"."
+   },
+   "rawText": "{\"issues\":[],\"summary\":\"No issues found. \\\"Patrol Railroad Cars\\\" keeps the current object and adds a domain qualifier that the description supports, and the new title is clearer than the ambiguous \\\"Patrol Car\\\".\"}"
+  },
+  {
+   "requestId": "41e89c748c21363b",
+   "caseId": "case-13",
+   "answerId": "sol",
+   "requestSha256": "09461ff4366fbaf3d3874a7e8acbd9f45cee7a7998b080ea5fa4e348fba7d74a",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "prompt-violation",
+   "verdict": "prompt-violation",
+   "judgment": {
+    "issues": [
+     {
+      "rule": "same-activity",
+      "severity": "prompt-violation",
+      "groupNumbers": [
+       1
+      ],
+      "descriptionNumbers": [
+       1
+      ],
+      "evidenceQuote": "Patrol railroad yards, cars, stations, or other facilities",
+      "explanation": "The current object is cars, but the new title's main object is railroad facilities. That is a broader category, and it takes in yards and stations, which are other objects in the description and not kinds of car. A title that keeps cars as the main object, such as naming railroad cars, would stay on the current activity."
+     }
+    ],
+    "summary": "The new title fixes the police-car confusion but swaps cars for the broader railroad facilities, so it no longer names the current activity."
+   },
+   "rawText": "{\"issues\":[{\"rule\":\"same-activity\",\"severity\":\"prompt-violation\",\"groupNumbers\":[1],\"descriptionNumbers\":[1],\"evidenceQuote\":\"Patrol railroad yards, cars, stations, or other facilities\",\"explanation\":\"The current object is cars, but the new title's main object is railroad facilities. That is a broader category, and it takes in yards and stations, which are other objects in the description and not kinds of car. A title that keeps cars as the main object, such as naming railroad cars, would stay on the current activity.\"}],\"summary\":\"The new title fixes the police-car confusion but swaps cars for the broader railroad facilities, so it no longer names the current activity.\"}"
+  },
+  {
+   "requestId": "0369a22ef63358c4",
+   "caseId": "case-13",
+   "answerId": "terra",
+   "requestSha256": "2a9cf74be832afe847130f527ee2d9fede1756ec5894142f6a84f259d3920b57",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "no-issues",
+   "verdict": "no-issues",
+   "judgment": {
+    "issues": [],
+    "summary": "No issues found. The title Patrol Railroad Cars keeps the current activity and adds the railroad setting, which the description states, and it is clearer than Patrol Car, which could be misread as a police vehicle."
+   },
+   "rawText": "{\"issues\": [], \"summary\": \"No issues found. The title Patrol Railroad Cars keeps the current activity and adds the railroad setting, which the description states, and it is clearer than Patrol Car, which could be misread as a police vehicle.\"}"
+  },
+  {
+   "requestId": "2bdd764ba8f9339e",
+   "caseId": "case-13",
+   "answerId": "mini",
+   "requestSha256": "297d8b73934eb6c815b6785228ab2521fdccf4a91f498dca7a52125d25d43e90",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "prompt-violation",
+   "verdict": "prompt-violation",
+   "judgment": {
+    "issues": [
+     {
+      "rule": "same-activity",
+      "severity": "prompt-violation",
+      "groupNumbers": [
+       1
+      ],
+      "descriptionNumbers": [
+       1
+      ],
+      "evidenceQuote": "yards, cars, stations, or other facilities",
+      "explanation": "The current object is car, but the new title's main object is facilities. The description treats cars as one kind of facility, so the new title swaps the current object for a broader category instead of naming the activity of patrolling cars."
+     }
+    ],
+    "summary": "The new title replaces the current object, car, with the broader category facilities, which breaks the rule to keep the current activity. It adds no unsupported detail and is otherwise clear."
+   },
+   "rawText": "{\"issues\":[{\"rule\":\"same-activity\",\"severity\":\"prompt-violation\",\"groupNumbers\":[1],\"descriptionNumbers\":[1],\"evidenceQuote\":\"yards, cars, stations, or other facilities\",\"explanation\":\"The current object is car, but the new title's main object is facilities. The description treats cars as one kind of facility, so the new title swaps the current object for a broader category instead of naming the activity of patrolling cars.\"}],\"summary\":\"The new title replaces the current object, car, with the broader category facilities, which breaks the rule to keep the current activity. It adds no unsupported detail and is otherwise clear.\"}"
+  },
+  {
+   "requestId": "259ca5d14acc3d88",
+   "caseId": "case-14",
+   "answerId": "astra",
+   "requestSha256": "a155e0b00f11469867d952abca3e7cb5ebb8ac55680086a9f86d2dd1748f6c5d",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "minor",
+   "verdict": "minor",
+   "judgment": {
+    "issues": [
+     {
+      "rule": "supported-detail",
+      "severity": "minor",
+      "groupNumbers": [
+       1
+      ],
+      "descriptionNumbers": [
+       1
+      ],
+      "evidenceQuote": "Teach astronomy or astrophysics",
+      "explanation": "The kept title names only astrophysics, but the description covers astronomy too, and astronomy is the broader and more familiar subject. No other group covers astronomy, so a reader could take the title to leave out general astronomy teaching."
+     }
+    ],
+    "summary": "Keeping the title is mostly reasonable. One minor issue: the title is narrower than the description because it leaves out astronomy."
+   },
+   "rawText": "{\"issues\":[{\"rule\":\"supported-detail\",\"severity\":\"minor\",\"groupNumbers\":[1],\"descriptionNumbers\":[1],\"evidenceQuote\":\"Teach astronomy or astrophysics\",\"explanation\":\"The kept title names only astrophysics, but the description covers astronomy too, and astronomy is the broader and more familiar subject. No other group covers astronomy, so a reader could take the title to leave out general astronomy teaching.\"}],\"summary\":\"Keeping the title is mostly reasonable. One minor issue: the title is narrower than the description because it leaves out astronomy.\"}"
+  },
+  {
+   "requestId": "c16fe22789920f67",
+   "caseId": "case-14",
+   "answerId": "sol",
+   "requestSha256": "36e815af20f2f84749a6494cb271b7ff222ec044b1cda995b7143f89ee3862df",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "no-issues",
+   "verdict": "no-issues",
+   "judgment": {
+    "issues": [],
+    "summary": "No issues found. The proposal keeps the current title, Teach Astrophysics, which is clear and matches a teaching activity stated directly in the description."
+   },
+   "rawText": "{\"issues\":[],\"summary\":\"No issues found. The proposal keeps the current title, Teach Astrophysics, which is clear and matches a teaching activity stated directly in the description.\"}"
+  },
+  {
+   "requestId": "8f7a8e17d356885c",
+   "caseId": "case-14",
+   "answerId": "terra",
+   "requestSha256": "daa62c9285a7b0d816d5dd9cec876cd4ec13b329f14abdb407edcc6fe007fa29",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "minor",
+   "verdict": "minor",
+   "judgment": {
+    "issues": [
+     {
+      "rule": "clarity",
+      "severity": "minor",
+      "groupNumbers": [
+       1
+      ],
+      "descriptionNumbers": [
+       1
+      ],
+      "evidenceQuote": "Teach astronomy or astrophysics",
+      "explanation": "The kept title names only astrophysics, a more technical term, and leaves out astronomy, which a non-expert is more likely to recognize. The description supports a clearer title within 2-5 words that covers both subjects."
+     }
+    ],
+    "summary": "Keeping the current title is mostly reasonable, but the title covers only half of the description by dropping astronomy, which is a minor clarity problem."
+   },
+   "rawText": "{\"issues\":[{\"rule\":\"clarity\",\"severity\":\"minor\",\"groupNumbers\":[1],\"descriptionNumbers\":[1],\"evidenceQuote\":\"Teach astronomy or astrophysics\",\"explanation\":\"The kept title names only astrophysics, a more technical term, and leaves out astronomy, which a non-expert is more likely to recognize. The description supports a clearer title within 2-5 words that covers both subjects.\"}],\"summary\":\"Keeping the current title is mostly reasonable, but the title covers only half of the description by dropping astronomy, which is a minor clarity problem.\"}"
+  },
+  {
+   "requestId": "766528c6a86169c8",
+   "caseId": "case-14",
+   "answerId": "mini",
+   "requestSha256": "7432fa61423636f29afdc74978e37cc8166c3d47c17899524a7c3b94b48c2fc5",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "prompt-violation",
+   "verdict": "prompt-violation",
+   "judgment": {
+    "issues": [
+     {
+      "rule": "same-activity",
+      "severity": "prompt-violation",
+      "groupNumbers": [
+       1
+      ],
+      "descriptionNumbers": [
+       1
+      ],
+      "evidenceQuote": "Teach astronomy or astrophysics",
+      "explanation": "The current object is Astrophysics, and the new title adds Astronomy. Astronomy is not a kind of astrophysics. It is the broader field, so the change adds an object the same way Paint Walls and Ceilings does. The title also turns the description's 'or' into 'and'."
+     }
+    ],
+    "summary": "The single-group proposal adds Astronomy as a second object. Astronomy is not a kind of the current object, Astrophysics, so the title no longer names only the current activity."
+   },
+   "rawText": "{\"issues\":[{\"rule\":\"same-activity\",\"severity\":\"prompt-violation\",\"groupNumbers\":[1],\"descriptionNumbers\":[1],\"evidenceQuote\":\"Teach astronomy or astrophysics\",\"explanation\":\"The current object is Astrophysics, and the new title adds Astronomy. Astronomy is not a kind of astrophysics. It is the broader field, so the change adds an object the same way Paint Walls and Ceilings does. The title also turns the description's 'or' into 'and'.\"}],\"summary\":\"The single-group proposal adds Astronomy as a second object. Astronomy is not a kind of the current object, Astrophysics, so the title no longer names only the current activity.\"}"
+  },
+  {
+   "requestId": "732ac7e3578af4f7",
+   "caseId": "case-15",
+   "answerId": "astra",
+   "requestSha256": "66799390ff12b23b9a931a3f26fafcee9ed8f02eede2ec6bf8a7420da6de7f8d",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "no-issues",
+   "verdict": "no-issues",
+   "judgment": {
+    "issues": [],
+    "summary": "No issues found. The title 'Stock Food Service Areas' adds a food-service qualifier to 'Area' that follows plainly from both descriptions, which mention serving areas, serving stations, dining areas, condiments and food. Keeping these two nearly identical descriptions in one group is reasonable."
+   },
+   "rawText": "{\"issues\":[],\"summary\":\"No issues found. The title 'Stock Food Service Areas' adds a food-service qualifier to 'Area' that follows plainly from both descriptions, which mention serving areas, serving stations, dining areas, condiments and food. Keeping these two nearly identical descriptions in one group is reasonable.\"}"
+  },
+  {
+   "requestId": "ac5db793804a7271",
+   "caseId": "case-15",
+   "answerId": "sol",
+   "requestSha256": "719dacba56a4ba4cd7b9c701bb97d46024fc95b4264f8c89b19bfc4bee2d3bbb",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "no-issues",
+   "verdict": "no-issues",
+   "judgment": {
+    "issues": [],
+    "summary": "No issues found. The proposal keeps both closely related descriptions in one group, and \"Stock Food Service Areas\" adds a domain qualifier to the current object that the serving areas, dining areas, condiments and food in the descriptions clearly support."
+   },
+   "rawText": "{\"issues\":[],\"summary\":\"No issues found. The proposal keeps both closely related descriptions in one group, and \\\"Stock Food Service Areas\\\" adds a domain qualifier to the current object that the serving areas, dining areas, condiments and food in the descriptions clearly support.\"}"
+  },
+  {
+   "requestId": "c441ce6fe98ca6f4",
+   "caseId": "case-15",
+   "answerId": "terra",
+   "requestSha256": "631b3e83a95b1c4a6bd24eb5f6f121dc0fd6d2809b56d87cb5957255c0845b2e",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "no-issues",
+   "verdict": "no-issues",
+   "judgment": {
+    "issues": [],
+    "summary": "No issues found. \"Stock Serving Areas\" still names the current activity with a supported qualifier, it fits both descriptions, and keeping the two nearly identical descriptions in one group is reasonable."
+   },
+   "rawText": "{\"issues\":[],\"summary\":\"No issues found. \\\"Stock Serving Areas\\\" still names the current activity with a supported qualifier, it fits both descriptions, and keeping the two nearly identical descriptions in one group is reasonable.\"}"
+  },
+  {
+   "requestId": "6f1ab7ebf7abe07f",
+   "caseId": "case-15",
+   "answerId": "mini",
+   "requestSha256": "69000248227ce530c5812f707b7f0270418638a1555caa3d7432aa3abf29bd9c",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "no-issues",
+   "verdict": "no-issues",
+   "judgment": {
+    "issues": [],
+    "summary": "No issues found. The title \"Stock serving areas\" keeps the current activity with a qualifier that both descriptions support, it is clear to a non-expert, and keeping these two similar descriptions in one group is reasonable."
+   },
+   "rawText": "{\"issues\":[],\"summary\":\"No issues found. The title \\\"Stock serving areas\\\" keeps the current activity with a qualifier that both descriptions support, it is clear to a non-expert, and keeping these two similar descriptions in one group is reasonable.\"}"
+  },
+  {
+   "requestId": "70126a8711e123ae",
+   "caseId": "case-16",
+   "answerId": "astra",
+   "requestSha256": "4026528ea75944d7ff6c1c8189d427901846a37a885e2cbcadccb03aacdf1b1d",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "minor",
+   "verdict": "minor",
+   "judgment": {
+    "issues": [
+     {
+      "rule": "clarity",
+      "severity": "minor",
+      "groupNumbers": [
+       1
+      ],
+      "descriptionNumbers": [
+       1,
+       2
+      ],
+      "evidenceQuote": "Coordinate the care of patients",
+      "explanation": "On its own, \"Care\" does not say whose care is being coordinated, so it could be read as childcare, pet care or general caregiving. Both descriptions support a more specific title about coordinating patient or client care."
+     }
+    ],
+    "summary": "Keeping both descriptions in one group is sound because both describe coordinating patient or client care. The kept title is acceptable but could name the patient or client to be clearer."
+   },
+   "rawText": "{\"issues\":[{\"rule\":\"clarity\",\"severity\":\"minor\",\"groupNumbers\":[1],\"descriptionNumbers\":[1,2],\"evidenceQuote\":\"Coordinate the care of patients\",\"explanation\":\"On its own, \\\"Care\\\" does not say whose care is being coordinated, so it could be read as childcare, pet care or general caregiving. Both descriptions support a more specific title about coordinating patient or client care.\"}],\"summary\":\"Keeping both descriptions in one group is sound because both describe coordinating patient or client care. The kept title is acceptable but could name the patient or client to be clearer.\"}"
+  },
+  {
+   "requestId": "da9890a28ce7d0ea",
+   "caseId": "case-16",
+   "answerId": "sol",
+   "requestSha256": "5ba68a53e0e5dc9dc24ef31d6693e59fbd31ab8197eb2fda745ff8898e7055cf",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "minor",
+   "verdict": "minor",
+   "judgment": {
+    "issues": [
+     {
+      "rule": "clarity",
+      "severity": "minor",
+      "groupNumbers": [
+       1
+      ],
+      "descriptionNumbers": [
+       1,
+       2
+      ],
+      "evidenceQuote": "coordinate client or patient care",
+      "explanation": "On its own, \"Coordinate Care\" doesn't say whose care is meant or what kind of care it is. Both descriptions point to patient or client care, which would make a clearer title of 2-5 words."
+     }
+    ],
+    "summary": "Keeping both similar descriptions in one group is reasonable. The kept title is accurate but somewhat general and could name patient or client care more clearly."
+   },
+   "rawText": "{\"issues\":[{\"rule\":\"clarity\",\"severity\":\"minor\",\"groupNumbers\":[1],\"descriptionNumbers\":[1,2],\"evidenceQuote\":\"coordinate client or patient care\",\"explanation\":\"On its own, \\\"Coordinate Care\\\" doesn't say whose care is meant or what kind of care it is. Both descriptions point to patient or client care, which would make a clearer title of 2-5 words.\"}],\"summary\":\"Keeping both similar descriptions in one group is reasonable. The kept title is accurate but somewhat general and could name patient or client care more clearly.\"}"
+  },
+  {
+   "requestId": "dfb7eee74c77d654",
+   "caseId": "case-16",
+   "answerId": "terra",
+   "requestSha256": "9adbf7b55cf9f2efde61cd6c64bf5f830d35147bdd18c0701e14ae75d6090399",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "no-issues",
+   "verdict": "no-issues",
+   "judgment": {
+    "issues": [],
+    "summary": "No issues found. Both descriptions are about coordinating patient or client care, so one group fits, and the current title Coordinate Care clearly describes that work."
+   },
+   "rawText": "{\"issues\":[],\"summary\":\"No issues found. Both descriptions are about coordinating patient or client care, so one group fits, and the current title Coordinate Care clearly describes that work.\"}"
+  },
+  {
+   "requestId": "db43f84622170dda",
+   "caseId": "case-16",
+   "answerId": "mini",
+   "requestSha256": "8d6975751022f87eff54d5108513639bba11706e190adaf9303b681b96b425d5",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "minor",
+   "verdict": "minor",
+   "judgment": {
+    "issues": [
+     {
+      "rule": "clarity",
+      "severity": "minor",
+      "groupNumbers": [
+       1
+      ],
+      "descriptionNumbers": [
+       1,
+       2
+      ],
+      "evidenceQuote": "Coordinate the care of patients",
+      "explanation": "Without context, \"Care\" is broad and could mean childcare, customer care, or personal caregiving. Both descriptions are about patient or client care, so a clearer 2–5 word title with the same verb would fit, such as one naming patient care."
+     }
+    ],
+    "summary": "Keeping the two descriptions together is reasonable because both describe coordinating patient or client care. The kept title is somewhat general, and a more specific wording would be clearer to a non-expert."
+   },
+   "rawText": "{\"issues\":[{\"rule\":\"clarity\",\"severity\":\"minor\",\"groupNumbers\":[1],\"descriptionNumbers\":[1,2],\"evidenceQuote\":\"Coordinate the care of patients\",\"explanation\":\"Without context, \\\"Care\\\" is broad and could mean childcare, customer care, or personal caregiving. Both descriptions are about patient or client care, so a clearer 2–5 word title with the same verb would fit, such as one naming patient care.\"}],\"summary\":\"Keeping the two descriptions together is reasonable because both describe coordinating patient or client care. The kept title is somewhat general, and a more specific wording would be clearer to a non-expert.\"}"
+  },
+  {
+   "requestId": "e8c9baa261c5c072",
+   "caseId": "case-17",
+   "answerId": "astra",
+   "requestSha256": "a7e8cf5cd2bc1892a71ad6ae4f9a2dd8bdd84c0ada49c3a39fa85c6270306937",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "no-issues",
+   "verdict": "no-issues",
+   "judgment": {
+    "issues": [],
+    "summary": "No issues found: all seven descriptions involve opening valves to move or control materials or fluids, so one group of seven is reasonable, and 'Open Valve' is a clear, accurate title that a non-expert can understand."
+   },
+   "rawText": "{\"issues\":[],\"summary\":\"No issues found: all seven descriptions involve opening valves to move or control materials or fluids, so one group of seven is reasonable, and 'Open Valve' is a clear, accurate title that a non-expert can understand.\"}"
+  },
+  {
+   "requestId": "24cbb37bf5d6ace2",
+   "caseId": "case-17",
+   "answerId": "sol",
+   "requestSha256": "81cec91208b722d680fe847a83f78d27f194d8bd0ad31c0d570c341b24418bd1",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "no-issues",
+   "verdict": "no-issues",
+   "judgment": {
+    "issues": [],
+    "summary": "No issues found. Opening a valve is the same activity in all seven descriptions, since they differ only in purpose and setting. Keeping them in one group of seven under the clear current title is reasonable."
+   },
+   "rawText": "{\"issues\":[],\"summary\":\"No issues found. Opening a valve is the same activity in all seven descriptions, since they differ only in purpose and setting. Keeping them in one group of seven under the clear current title is reasonable.\"}"
+  },
+  {
+   "requestId": "84cf1d788764379b",
+   "caseId": "case-17",
+   "answerId": "terra",
+   "requestSha256": "bb419b456c68875ca630bfa81b68ef0eab3e5b2457c24156d6efaded11cedd3b",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "no-issues",
+   "verdict": "no-issues",
+   "judgment": {
+    "issues": [],
+    "summary": "No issues found. All seven descriptions depict opening valves to control the flow of materials in industrial processes, so keeping them in one group is reasonable, and the current title \"Open Valve\" is clear."
+   },
+   "rawText": "{\"issues\":[],\"summary\":\"No issues found. All seven descriptions depict opening valves to control the flow of materials in industrial processes, so keeping them in one group is reasonable, and the current title \\\"Open Valve\\\" is clear.\"}"
+  },
+  {
+   "requestId": "0afeea64e37b46a8",
+   "caseId": "case-17",
+   "answerId": "mini",
+   "requestSha256": "bf2a2f1b7453da8a24fd0986c49cd2a52ebe18626c1c9622c44a96b2ff187df6",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "no-issues",
+   "verdict": "no-issues",
+   "judgment": {
+    "issues": [],
+    "summary": "No issues found. All seven descriptions involve opening valves to control the flow of materials in industrial operations, so keeping them in one group of seven is reasonable, and \"Open Valve\" is a clear title for a non-expert."
+   },
+   "rawText": "{\"issues\":[],\"summary\":\"No issues found. All seven descriptions involve opening valves to control the flow of materials in industrial operations, so keeping them in one group of seven is reasonable, and \\\"Open Valve\\\" is a clear title for a non-expert.\"}"
+  },
+  {
+   "requestId": "58ebc519f5b2a4bb",
+   "caseId": "case-18",
+   "answerId": "astra",
+   "requestSha256": "9933dbeb43070395f059228149e7da1c05ac79ab1a8e52211a1aee3516d101af",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "minor",
+   "verdict": "minor",
+   "judgment": {
+    "issues": [
+     {
+      "rule": "grouping",
+      "severity": "minor",
+      "groupNumbers": [
+       9,
+       19
+      ],
+      "descriptionNumbers": [
+       19,
+       20,
+       21,
+       28,
+       56,
+       82,
+       124
+      ],
+      "evidenceQuote": "research to increase knowledge about medical issues",
+      "explanation": "The title 'Conduct Medical Research' also fits every description in 'Conduct Medical Treatment Research', so the two titles do not clearly tell the groups apart. The split is also blurry because several descriptions in group 9, such as the clinical research on contraceptive methods or immunology, could equally be treatment research."
+     },
+     {
+      "rule": "grouping",
+      "severity": "minor",
+      "groupNumbers": [
+       18
+      ],
+      "descriptionNumbers": [
+       46,
+       130
+      ],
+      "evidenceQuote": "fire safety of materials and devices",
+      "explanation": "This new group has only two descriptions, and the reason gives only a shared safety aim rather than a strong reason for so small a group. Description 130, research on materials and devices, could reasonably fit under engineering and technology research."
+     },
+     {
+      "rule": "grouping",
+      "severity": "minor",
+      "groupNumbers": [
+       15
+      ],
+      "descriptionNumbers": [
+       38,
+       75
+      ],
+      "evidenceQuote": "atmospheric phenomena, weather, or climate",
+      "explanation": "This new group has only two descriptions. Its reason separates it only from environmental management and conservation, but the environmental group also covers research on natural processes such as ecosystems, so weather and climate research could reasonably join that group."
+     }
+    ],
+    "summary": "The proposal is largely sound: the titles keep the activity, add supported subject qualifiers, and keep the identical descriptions together. The remaining problems are minor: the two medical research groups overlap, and two very small groups rest on thin reasons."
+   },
+   "rawText": "{\"issues\":[{\"rule\":\"grouping\",\"severity\":\"minor\",\"groupNumbers\":[9,19],\"descriptionNumbers\":[19,20,21,28,56,82,124],\"evidenceQuote\":\"research to increase knowledge about medical issues\",\"explanation\":\"The title 'Conduct Medical Research' also fits every description in 'Conduct Medical Treatment Research', so the two titles do not clearly tell the groups apart. The split is also blurry because several descriptions in group 9, such as the clinical research on contraceptive methods or immunology, could equally be treatment research.\"},{\"rule\":\"grouping\",\"severity\":\"minor\",\"groupNumbers\":[18],\"descriptionNumbers\":[46,130],\"evidenceQuote\":\"fire safety of materials and devices\",\"explanation\":\"This new group has only two descriptions, and the reason gives only a shared safety aim rather than a strong reason for so small a group. Description 130, research on materials and devices, could reasonably fit under engineering and technology research.\"},{\"rule\":\"grouping\",\"severity\":\"minor\",\"groupNumbers\":[15],\"descriptionNumbers\":[38,75],\"evidenceQuote\":\"atmospheric phenomena, weather, or climate\",\"explanation\":\"This new group has only two descriptions. Its reason separates it only from environmental management and conservation, but the environmental group also covers research on natural processes such as ecosystems, so weather and climate research could reasonably join that group.\"}],\"summary\":\"The proposal is largely sound: the titles keep the activity, add supported subject qualifiers, and keep the identical descriptions together. The remaining problems are minor: the two medical research groups overlap, and two very small groups rest on thin reasons.\"}"
+  },
+  {
+   "requestId": "436b7265414ba398",
+   "caseId": "case-18",
+   "answerId": "sol",
+   "requestSha256": "f74619d9e9e3a43db9a9950e407cf3001d4e2ab3219791fea23603f8f4c53f4b",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "major",
+   "verdict": "major",
+   "judgment": {
+    "issues": [
+     {
+      "rule": "supported-detail",
+      "severity": "major",
+      "groupNumbers": [
+       5
+      ],
+      "descriptionNumbers": [
+       11,
+       47,
+       67,
+       130,
+       132
+      ],
+      "evidenceQuote": "industrial hygiene research",
+      "explanation": "None of these descriptions mentions industrial engineering, which is a specific field. The group actually covers nanotechnology, materials science, fire safety, chemical manufacturing and industrial hygiene, so the title would mislead a reader about the work."
+     },
+     {
+      "rule": "grouping",
+      "severity": "major",
+      "groupNumbers": [
+       8,
+       7
+      ],
+      "descriptionNumbers": [
+       68
+      ],
+      "evidenceQuote": "Conduct research in occupational therapy",
+      "explanation": "Occupational therapy research is not clearly behavioral health research, so the Group 8 title does not describe it. The Group 7 title, Conduct Health Research, does."
+     },
+     {
+      "rule": "supported-detail",
+      "severity": "minor",
+      "groupNumbers": [
+       6
+      ],
+      "descriptionNumbers": [
+       12,
+       14
+      ],
+      "evidenceQuote": "basic genomic and biological research",
+      "explanation": "Descriptions 12 and 14 are about basic cell and genomic biology, not biotechnology. For them the added word Biotechnology is plausible but not clearly supported."
+     },
+     {
+      "rule": "grouping",
+      "severity": "minor",
+      "groupNumbers": [
+       3
+      ],
+      "descriptionNumbers": [
+       17,
+       18,
+       32,
+       35,
+       42,
+       43
+      ],
+      "evidenceQuote": "economic and environmental topics",
+      "explanation": "This group mixes academic research on economic and environmental issues with research to help clients avoid foreclosures and research on potential donors, which are clearly different kinds of research. Description 18 is also largely environmental but is kept apart from the environmental group."
+     },
+     {
+      "rule": "clarity",
+      "severity": "minor",
+      "groupNumbers": [
+       4
+      ],
+      "descriptionNumbers": [
+       4,
+       9,
+       26,
+       27,
+       45,
+       66
+      ],
+      "evidenceQuote": "",
+      "explanation": "Systems Technology is vague, and a non-expert could read it as IT systems work. The descriptions support more specific wording about equipment, robotics, sensing and mapping technology."
+     },
+     {
+      "rule": "grouping",
+      "severity": "minor",
+      "groupNumbers": [
+       9
+      ],
+      "descriptionNumbers": [
+       23,
+       85
+      ],
+      "evidenceQuote": "",
+      "explanation": "This new group has only two descriptions, well below about 5 to 9, and the reason given is weak. Both descriptions would also fit the health or medical treatment groups."
+     },
+     {
+      "rule": "grouping",
+      "severity": "minor",
+      "groupNumbers": [
+       15
+      ],
+      "descriptionNumbers": [
+       122
+      ],
+      "evidenceQuote": "",
+      "explanation": "This new group has a single description, far below about 5 to 9. The only reason given is that the topic is distinctive."
+     }
+    ],
+    "summary": "The domain-based split is mostly reasonable, but the Industrial Engineering title is not supported and is misleading, and occupational therapy research is misplaced under behavioral health. There are also minor problems: an unsupported Biotechnology label, a mixed financial and economic group, a vague Systems Technology title, and two very small groups."
+   },
+   "rawText": "{\"issues\":[{\"rule\":\"supported-detail\",\"severity\":\"major\",\"groupNumbers\":[5],\"descriptionNumbers\":[11,47,67,130,132],\"evidenceQuote\":\"industrial hygiene research\",\"explanation\":\"None of these descriptions mentions industrial engineering, which is a specific field. The group actually covers nanotechnology, materials science, fire safety, chemical manufacturing and industrial hygiene, so the title would mislead a reader about the work.\"},{\"rule\":\"grouping\",\"severity\":\"major\",\"groupNumbers\":[8,7],\"descriptionNumbers\":[68],\"evidenceQuote\":\"Conduct research in occupational therapy\",\"explanation\":\"Occupational therapy research is not clearly behavioral health research, so the Group 8 title does not describe it. The Group 7 title, Conduct Health Research, does.\"},{\"rule\":\"supported-detail\",\"severity\":\"minor\",\"groupNumbers\":[6],\"descriptionNumbers\":[12,14],\"evidenceQuote\":\"basic genomic and biological research\",\"explanation\":\"Descriptions 12 and 14 are about basic cell and genomic biology, not biotechnology. For them the added word Biotechnology is plausible but not clearly supported.\"},{\"rule\":\"grouping\",\"severity\":\"minor\",\"groupNumbers\":[3],\"descriptionNumbers\":[17,18,32,35,42,43],\"evidenceQuote\":\"economic and environmental topics\",\"explanation\":\"This group mixes academic research on economic and environmental issues with research to help clients avoid foreclosures and research on potential donors, which are clearly different kinds of research. Description 18 is also largely environmental but is kept apart from the environmental group.\"},{\"rule\":\"clarity\",\"severity\":\"minor\",\"groupNumbers\":[4],\"descriptionNumbers\":[4,9,26,27,45,66],\"evidenceQuote\":\"\",\"explanation\":\"Systems Technology is vague, and a non-expert could read it as IT systems work. The descriptions support more specific wording about equipment, robotics, sensing and mapping technology.\"},{\"rule\":\"grouping\",\"severity\":\"minor\",\"groupNumbers\":[9],\"descriptionNumbers\":[23,85],\"evidenceQuote\":\"\",\"explanation\":\"This new group has only two descriptions, well below about 5 to 9, and the reason given is weak. Both descriptions would also fit the health or medical treatment groups.\"},{\"rule\":\"grouping\",\"severity\":\"minor\",\"groupNumbers\":[15],\"descriptionNumbers\":[122],\"evidenceQuote\":\"\",\"explanation\":\"This new group has a single description, far below about 5 to 9. The only reason given is that the topic is distinctive.\"}],\"summary\":\"The domain-based split is mostly reasonable, but the Industrial Engineering title is not supported and is misleading, and occupational therapy research is misplaced under behavioral health. There are also minor problems: an unsupported Biotechnology label, a mixed financial and economic group, a vague Systems Technology title, and two very small groups.\"}"
+  },
+  {
+   "requestId": "aef39a8fe64b7d3b",
+   "caseId": "case-18",
+   "answerId": "terra",
+   "requestSha256": "3d9498b85f1fbfe6098d9e24cc3ce8804c3deb21de6c7233379cfc4dfbbd6ce0",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "major",
+   "verdict": "major",
+   "judgment": {
+    "issues": [
+     {
+      "rule": "grouping",
+      "severity": "major",
+      "groupNumbers": [
+       13,
+       29
+      ],
+      "descriptionNumbers": [
+       20
+      ],
+      "evidenceQuote": "Conduct clinical or basic research",
+      "explanation": "Description 20 names only clinical or basic research and says nothing about treating disease, so the Disease Treatment title does not describe it. The general Conduct Research group, and in part the Clinical Health Research group, would describe it."
+     },
+     {
+      "rule": "grouping",
+      "severity": "major",
+      "groupNumbers": [
+       21,
+       23
+      ],
+      "descriptionNumbers": [
+       54,
+       55
+      ],
+      "evidenceQuote": "obtain factual information and authentic detail",
+      "explanation": "Descriptions 54 and 55 are about gathering factual detail from sources such as interviews and never mention history, so the Historical Research title does not clearly describe them. Group 23's title and reason, which concern locating factual information, fit them better."
+     },
+     {
+      "rule": "supported-detail",
+      "severity": "major",
+      "groupNumbers": [
+       4
+      ],
+      "descriptionNumbers": [
+       46,
+       83
+      ],
+      "evidenceQuote": "evaluate safety levels for products",
+      "explanation": "Descriptions 46 and 83 are about product safety and about products or processes in general, not equipment systems. For half of this group, the Equipment Systems title would mislead a reader about the work."
+     },
+     {
+      "rule": "supported-detail",
+      "severity": "major",
+      "groupNumbers": [
+       9
+      ],
+      "descriptionNumbers": [
+       65
+      ],
+      "evidenceQuote": "dietary, nutritional, and epidemiological research",
+      "explanation": "Dietary and epidemiological research looks at whole populations, not cells or genomes. The Cell and Genomics title gives a misleading picture of description 65, and no other group's title covers it."
+     },
+     {
+      "rule": "supported-detail",
+      "severity": "major",
+      "groupNumbers": [
+       25
+      ],
+      "descriptionNumbers": [
+       72,
+       73
+      ],
+      "evidenceQuote": "methods of restoring and preserving specimens",
+      "explanation": "Neither description says the work happens in the field. Description 73 is about methods for preserving specimens, and description 72 includes collecting blood samples, so the word Field is unsupported and misleading."
+     },
+     {
+      "rule": "supported-detail",
+      "severity": "minor",
+      "groupNumbers": [
+       1
+      ],
+      "descriptionNumbers": [
+       47,
+       78
+      ],
+      "evidenceQuote": "industrial hygiene research",
+      "explanation": "Industrial hygiene is about workplace health hazards, and description 78 is about how ecosystems work. The Environmental Management title does not clearly cover either one."
+     },
+     {
+      "rule": "supported-detail",
+      "severity": "minor",
+      "groupNumbers": [
+       2
+      ],
+      "descriptionNumbers": [
+       15
+      ],
+      "evidenceQuote": "industrial ecology, population ecology",
+      "explanation": "Description 15 covers ecology and sustainability topics and does not mention economics, so the Environmental Economics title does not clearly describe it."
+     },
+     {
+      "rule": "supported-detail",
+      "severity": "minor",
+      "groupNumbers": [
+       7
+      ],
+      "descriptionNumbers": [
+       67
+      ],
+      "evidenceQuote": "chemical manufacturing processes",
+      "explanation": "Description 67 is about improving chemical manufacturing processes, not about materials, and no other group's title covers it."
+     },
+     {
+      "rule": "supported-detail",
+      "severity": "minor",
+      "groupNumbers": [
+       11
+      ],
+      "descriptionNumbers": [
+       49
+      ],
+      "evidenceQuote": "psychological research",
+      "explanation": "Psychological research in general is broader than mental health research, so the title is narrower than description 49."
+     },
+     {
+      "rule": "supported-detail",
+      "severity": "minor",
+      "groupNumbers": [
+       15
+      ],
+      "descriptionNumbers": [
+       74
+      ],
+      "evidenceQuote": "apply research findings to practice",
+      "explanation": "Description 74 does not mention health, so the word Health in the title is not supported for it."
+     },
+     {
+      "rule": "supported-detail",
+      "severity": "minor",
+      "groupNumbers": [
+       16
+      ],
+      "descriptionNumbers": [
+       29,
+       31
+      ],
+      "evidenceQuote": "speech or hearing topics",
+      "explanation": "The title names only hearing, but the descriptions also cover speech and balance research, and no other group covers those."
+     },
+     {
+      "rule": "supported-detail",
+      "severity": "minor",
+      "groupNumbers": [
+       20
+      ],
+      "descriptionNumbers": [
+       64,
+       128
+      ],
+      "evidenceQuote": "issues affecting areas of responsibility",
+      "explanation": "Descriptions 64 and 128 describe research done for executives or on a person's own areas of responsibility, not research about organizations, so the Organizational Research title is not clearly supported for them."
+     },
+     {
+      "rule": "supported-detail",
+      "severity": "minor",
+      "groupNumbers": [
+       22
+      ],
+      "descriptionNumbers": [
+       52
+      ],
+      "evidenceQuote": "develop instructional content",
+      "explanation": "Research to develop instructional content is neither user research nor design research as the title states, and no other group's title clearly covers it."
+     },
+     {
+      "rule": "grouping",
+      "severity": "minor",
+      "groupNumbers": [
+       5,
+       8,
+       10,
+       16,
+       24,
+       25,
+       28
+      ],
+      "descriptionNumbers": [
+       9,
+       10,
+       11,
+       13,
+       129,
+       29,
+       31,
+       38,
+       75,
+       72,
+       73,
+       35
+      ],
+      "evidenceQuote": "",
+      "explanation": "Several new groups have only 1 or 2 descriptions, even though they would merge naturally with related groups. For example, economic research could join environmental economics, nanotechnology could join materials or technology, and climate research could join the environmental groups. Calling each one a narrow specialty is not a strong reason for keeping them this far below 5 to 9."
+     },
+     {
+      "rule": "clarity",
+      "severity": "minor",
+      "groupNumbers": [
+       6
+      ],
+      "descriptionNumbers": [
+       26,
+       27,
+       45,
+       66
+      ],
+      "evidenceQuote": "",
+      "explanation": "Technology Research is so general that it would also describe the robotics, nanotechnology and equipment groups. It does not tell a non-expert that this group covers photonics, remote sensing and mapping."
+     },
+     {
+      "rule": "clarity",
+      "severity": "minor",
+      "groupNumbers": [
+       23
+      ],
+      "descriptionNumbers": [
+       3,
+       39,
+       123
+      ],
+      "evidenceQuote": "internet-based and library research",
+      "explanation": "Almost all research gathers information, so Information Research is vague and could be read as research in information science. The descriptions support a clearer title such as internet and library research."
+     },
+     {
+      "rule": "clarity",
+      "severity": "minor",
+      "groupNumbers": [
+       27
+      ],
+      "descriptionNumbers": [
+       32
+      ],
+      "evidenceQuote": "avoid repossessions or foreclosures",
+      "explanation": "Financial Assistance Research could be read as research on financial aid programs. The description is really about helping clients with debt problems such as foreclosures, repossessions and wage garnishments."
+     },
+     {
+      "rule": "clarity",
+      "severity": "minor",
+      "groupNumbers": [
+       29
+      ],
+      "descriptionNumbers": [],
+      "evidenceQuote": "publish findings in professional journals, books, or electronic media",
+      "explanation": "After the split, the unqualified title Conduct Research covers all 28 sibling groups and does not set this group apart. Its descriptions support a clearer title, such as scholarly or academic research."
+     }
+    ],
+    "summary": "The subject-based split is broadly reasonable, but several groups contain descriptions their titles do not describe, notably groups 4, 9, 13, 21 and 25. There are also many undersized groups without a strong reason, and a few titles are vague, including the retained general title."
+   },
+   "rawText": "{\"issues\":[{\"rule\":\"grouping\",\"severity\":\"major\",\"groupNumbers\":[13,29],\"descriptionNumbers\":[20],\"evidenceQuote\":\"Conduct clinical or basic research\",\"explanation\":\"Description 20 names only clinical or basic research and says nothing about treating disease, so the Disease Treatment title does not describe it. The general Conduct Research group, and in part the Clinical Health Research group, would describe it.\"},{\"rule\":\"grouping\",\"severity\":\"major\",\"groupNumbers\":[21,23],\"descriptionNumbers\":[54,55],\"evidenceQuote\":\"obtain factual information and authentic detail\",\"explanation\":\"Descriptions 54 and 55 are about gathering factual detail from sources such as interviews and never mention history, so the Historical Research title does not clearly describe them. Group 23's title and reason, which concern locating factual information, fit them better.\"},{\"rule\":\"supported-detail\",\"severity\":\"major\",\"groupNumbers\":[4],\"descriptionNumbers\":[46,83],\"evidenceQuote\":\"evaluate safety levels for products\",\"explanation\":\"Descriptions 46 and 83 are about product safety and about products or processes in general, not equipment systems. For half of this group, the Equipment Systems title would mislead a reader about the work.\"},{\"rule\":\"supported-detail\",\"severity\":\"major\",\"groupNumbers\":[9],\"descriptionNumbers\":[65],\"evidenceQuote\":\"dietary, nutritional, and epidemiological research\",\"explanation\":\"Dietary and epidemiological research looks at whole populations, not cells or genomes. The Cell and Genomics title gives a misleading picture of description 65, and no other group's title covers it.\"},{\"rule\":\"supported-detail\",\"severity\":\"major\",\"groupNumbers\":[25],\"descriptionNumbers\":[72,73],\"evidenceQuote\":\"methods of restoring and preserving specimens\",\"explanation\":\"Neither description says the work happens in the field. Description 73 is about methods for preserving specimens, and description 72 includes collecting blood samples, so the word Field is unsupported and misleading.\"},{\"rule\":\"supported-detail\",\"severity\":\"minor\",\"groupNumbers\":[1],\"descriptionNumbers\":[47,78],\"evidenceQuote\":\"industrial hygiene research\",\"explanation\":\"Industrial hygiene is about workplace health hazards, and description 78 is about how ecosystems work. The Environmental Management title does not clearly cover either one.\"},{\"rule\":\"supported-detail\",\"severity\":\"minor\",\"groupNumbers\":[2],\"descriptionNumbers\":[15],\"evidenceQuote\":\"industrial ecology, population ecology\",\"explanation\":\"Description 15 covers ecology and sustainability topics and does not mention economics, so the Environmental Economics title does not clearly describe it.\"},{\"rule\":\"supported-detail\",\"severity\":\"minor\",\"groupNumbers\":[7],\"descriptionNumbers\":[67],\"evidenceQuote\":\"chemical manufacturing processes\",\"explanation\":\"Description 67 is about improving chemical manufacturing processes, not about materials, and no other group's title covers it.\"},{\"rule\":\"supported-detail\",\"severity\":\"minor\",\"groupNumbers\":[11],\"descriptionNumbers\":[49],\"evidenceQuote\":\"psychological research\",\"explanation\":\"Psychological research in general is broader than mental health research, so the title is narrower than description 49.\"},{\"rule\":\"supported-detail\",\"severity\":\"minor\",\"groupNumbers\":[15],\"descriptionNumbers\":[74],\"evidenceQuote\":\"apply research findings to practice\",\"explanation\":\"Description 74 does not mention health, so the word Health in the title is not supported for it.\"},{\"rule\":\"supported-detail\",\"severity\":\"minor\",\"groupNumbers\":[16],\"descriptionNumbers\":[29,31],\"evidenceQuote\":\"speech or hearing topics\",\"explanation\":\"The title names only hearing, but the descriptions also cover speech and balance research, and no other group covers those.\"},{\"rule\":\"supported-detail\",\"severity\":\"minor\",\"groupNumbers\":[20],\"descriptionNumbers\":[64,128],\"evidenceQuote\":\"issues affecting areas of responsibility\",\"explanation\":\"Descriptions 64 and 128 describe research done for executives or on a person's own areas of responsibility, not research about organizations, so the Organizational Research title is not clearly supported for them.\"},{\"rule\":\"supported-detail\",\"severity\":\"minor\",\"groupNumbers\":[22],\"descriptionNumbers\":[52],\"evidenceQuote\":\"develop instructional content\",\"explanation\":\"Research to develop instructional content is neither user research nor design research as the title states, and no other group's title clearly covers it.\"},{\"rule\":\"grouping\",\"severity\":\"minor\",\"groupNumbers\":[5,8,10,16,24,25,28],\"descriptionNumbers\":[9,10,11,13,129,29,31,38,75,72,73,35],\"evidenceQuote\":\"\",\"explanation\":\"Several new groups have only 1 or 2 descriptions, even though they would merge naturally with related groups. For example, economic research could join environmental economics, nanotechnology could join materials or technology, and climate research could join the environmental groups. Calling each one a narrow specialty is not a strong reason for keeping them this far below 5 to 9.\"},{\"rule\":\"clarity\",\"severity\":\"minor\",\"groupNumbers\":[6],\"descriptionNumbers\":[26,27,45,66],\"evidenceQuote\":\"\",\"explanation\":\"Technology Research is so general that it would also describe the robotics, nanotechnology and equipment groups. It does not tell a non-expert that this group covers photonics, remote sensing and mapping.\"},{\"rule\":\"clarity\",\"severity\":\"minor\",\"groupNumbers\":[23],\"descriptionNumbers\":[3,39,123],\"evidenceQuote\":\"internet-based and library research\",\"explanation\":\"Almost all research gathers information, so Information Research is vague and could be read as research in information science. The descriptions support a clearer title such as internet and library research.\"},{\"rule\":\"clarity\",\"severity\":\"minor\",\"groupNumbers\":[27],\"descriptionNumbers\":[32],\"evidenceQuote\":\"avoid repossessions or foreclosures\",\"explanation\":\"Financial Assistance Research could be read as research on financial aid programs. The description is really about helping clients with debt problems such as foreclosures, repossessions and wage garnishments.\"},{\"rule\":\"clarity\",\"severity\":\"minor\",\"groupNumbers\":[29],\"descriptionNumbers\":[],\"evidenceQuote\":\"publish findings in professional journals, books, or electronic media\",\"explanation\":\"After the split, the unqualified title Conduct Research covers all 28 sibling groups and does not set this group apart. Its descriptions support a clearer title, such as scholarly or academic research.\"}],\"summary\":\"The subject-based split is broadly reasonable, but several groups contain descriptions their titles do not describe, notably groups 4, 9, 13, 21 and 25. There are also many undersized groups without a strong reason, and a few titles are vague, including the retained general title.\"}"
+  },
+  {
+   "requestId": "7ee97969e170cc54",
+   "caseId": "case-18",
+   "answerId": "mini",
+   "requestSha256": "08ba3dfd211e877b8b1feaef500eef4357554286048c1e9bfee1a036ae48b3be",
+   "softwareFindings": [],
+   "status": "valid",
+   "validationErrors": [],
+   "warnings": [],
+   "modelVerdict": "major",
+   "verdict": "major",
+   "judgment": {
+    "issues": [
+     {
+      "rule": "grouping",
+      "severity": "major",
+      "groupNumbers": [
+       1
+      ],
+      "descriptionNumbers": [
+       3,
+       19,
+       21,
+       24,
+       30,
+       38,
+       41,
+       42,
+       54,
+       56,
+       77,
+       89,
+       124,
+       132
+      ],
+      "evidenceQuote": "Conduct internet-based and library research",
+      "explanation": "All 133 descriptions sit in one group, but they cover many clearly different kinds of research. These include clinical and medical research, market and consumer research, environmental and climate research, engineering and materials research, academic research published in journals, and basic fact-finding such as library, donor or background research. The near-identical academic publishing descriptions justify one large group for those items, but they are not a strong reason to combine all the other kinds with them."
+     }
+    ],
+    "summary": "Keeping the current title is reasonable, but putting all 133 descriptions in one group lumps together many clearly different kinds of research without a strong reason."
+   },
+   "rawText": "{\"issues\":[{\"rule\":\"grouping\",\"severity\":\"major\",\"groupNumbers\":[1],\"descriptionNumbers\":[3,19,21,24,30,38,41,42,54,56,77,89,124,132],\"evidenceQuote\":\"Conduct internet-based and library research\",\"explanation\":\"All 133 descriptions sit in one group, but they cover many clearly different kinds of research. These include clinical and medical research, market and consumer research, environmental and climate research, engineering and materials research, academic research published in journals, and basic fact-finding such as library, donor or background research. The near-identical academic publishing descriptions justify one large group for those items, but they are not a strong reason to combine all the other kinds with them.\"}],\"summary\":\"Keeping the current title is reasonable, but putting all 133 descriptions in one group lumps together many clearly different kinds of research without a strong reason.\"}"
+  }
+ ]
+}

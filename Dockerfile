@@ -20,6 +20,7 @@ COPY Dockerfile ./
 COPY scripts/deployment/review-package-lock.json ./scripts/deployment/review-package-lock.json
 COPY scripts/som-review/title-prompt-study-lib.mjs scripts/som-review/title-prompt-study-lib.test.mjs ./scripts/som-review/
 COPY scripts/som-review/latest-title-prompt-study-lib.mjs scripts/som-review/latest-title-prompt-study-lib.test.mjs ./scripts/som-review/
+COPY scripts/som-review/title-clarification-judge-lib.mjs scripts/som-review/title-clarification-judge-lib.test.mjs ./scripts/som-review/
 COPY __tests__ ./__tests__
 COPY artifacts/rob-sell-followup-2026-07-28/followup-audit.json ./artifacts/rob-sell-followup-2026-07-28/followup-audit.json
 COPY Buy_Society_of_Mind_Exploratory_2026-07-25 ./Buy_Society_of_Mind_Exploratory_2026-07-25
@@ -62,7 +63,7 @@ ENV NEXT_PUBLIC_DEV_APP_ID=${NEXT_PUBLIC_DEV_APP_ID}
 ENV NODE_ENV=production
 
 RUN NODE_ENV=test npx jest --runInBand --watch=false --coverage=false __tests__/lib/somReview __tests__/components/SomReview __tests__/pages/api/deployment.test.ts
-RUN node --test scripts/som-review/title-prompt-study-lib.test.mjs scripts/som-review/latest-title-prompt-study-lib.test.mjs
+RUN node --test scripts/som-review/title-prompt-study-lib.test.mjs scripts/som-review/latest-title-prompt-study-lib.test.mjs scripts/som-review/title-clarification-judge-lib.test.mjs
 RUN npm run build
 
 # Step 2. Production image (Runner)
@@ -107,6 +108,8 @@ COPY --chown=nextjs:nodejs Sell_Society_of_Mind_Review_UI_Handoff_2026-07-15 ./S
 COPY --chown=nextjs:nodejs Ontology_Title_Clarity_Testbed_2026-08-28 ./Ontology_Title_Clarity_Testbed_2026-08-28
 RUN test -f ./Ontology_Title_Clarity_Testbed_2026-08-28/review-datasets-v6/manifest.json
 RUN test -f ./Ontology_Title_Clarity_Testbed_2026-08-28/review-datasets-v7/manifest.json
+RUN test -f ./Ontology_Title_Clarity_Testbed_2026-08-28/model-comparison-2026-09-16/comparison.json
+RUN test -f ./Ontology_Title_Clarity_Testbed_2026-08-28/model-comparison-2026-09-16/judge-results.json
 
 EXPOSE 3000
 CMD ["node", "server.js"]

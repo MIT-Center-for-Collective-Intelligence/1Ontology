@@ -15,7 +15,7 @@ jest.mock("@mui/material/CssBaseline", () => () => null);
 jest.mock("react-query/devtools", () => ({ ReactQueryDevtools: () => null }));
 
 afterEach(() => jest.clearAllMocks());
-it.each(["/review", "/review/inspection", "/title-prompt-study"])("does not subscribe %s to forced ontology refreshes", pathname => {
+it.each(["/review", "/review/inspection", "/title-prompt-study", "/title-model-comparison"])("does not subscribe %s to forced ontology refreshes", pathname => {
   render(<App {...({ Component: () => <div>Review remains open</div>, pageProps: {}, router: {pathname} } as any)} />);
   expect(screen.getByText("Review remains open")).toBeInTheDocument();
   expect(onSnapshot).not.toHaveBeenCalled();
