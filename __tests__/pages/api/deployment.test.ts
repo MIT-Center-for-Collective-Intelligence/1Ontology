@@ -1,3 +1,5 @@
+import fs from "fs";
+import path from "path";
 import deployment from "../../../src/pages/api/deployment";
 
 describe("public deployment identity", () => {
@@ -55,6 +57,28 @@ describe("public deployment identity", () => {
           bundleSha256: expect.stringMatching(/^[a-f0-9]{64}$/),
         }),
       );
+      const judgeResults = JSON.parse(
+        fs.readFileSync(
+          path.join(
+            process.cwd(),
+            "Ontology_Title_Clarity_Testbed_2026-08-28/model-comparison-2026-09-16/judge-results.json",
+          ),
+          "utf8",
+        ),
+      );
+      expect(info.titleModelComparison).toEqual({
+        version: "rob-very-short-prompt-model-comparison-2026-09-16-v1",
+        cases: 18,
+        answers: 72,
+        judgments: 72,
+        validJudgments: judgeResults.judgments.filter(
+          (judgment: { status: string }) => judgment.status === "valid",
+        ).length,
+        judgePromptVersion: "title-clarification-judge-2026-09-16-v1",
+        judgeLibraryFingerprint: expect.stringMatching(/^[a-f0-9]{64}$/),
+        bundleSha256: expect.stringMatching(/^[a-f0-9]{64}$/),
+        judgeResultsSha256: expect.stringMatching(/^[a-f0-9]{64}$/),
+      });
       expect(Object.keys(info).sort()).toEqual([
         "buildId",
         "commit",
@@ -62,6 +86,7 @@ describe("public deployment identity", () => {
         "latestTitlePromptStudy",
         "packageSha256",
         "revision",
+        "titleModelComparison",
         "titlePromptStudy",
       ]);
     } finally {

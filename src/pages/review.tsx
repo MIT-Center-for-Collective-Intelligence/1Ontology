@@ -853,7 +853,7 @@ export const ReviewPage = () => {
                     }}
                   >
                     <Typography component="h2" sx={{ fontWeight: 750 }}>
-                      Compare the three title prompts
+                      Compare title prompts and models
                     </Typography>
                     <Typography sx={{ mt: 0.5, mb: 1.5 }}>
                       See the previous prompt, Rob’s September 13 version, and
@@ -861,6 +861,13 @@ export const ReviewPage = () => {
                     </Typography>
                     <Button href="/title-prompt-study" variant="outlined">
                       Compare title prompts
+                    </Button>
+                    <Typography sx={{ mt: 2, mb: 1.5 }}>
+                      See four models’ proposals for Rob’s very short prompt,
+                      with the judging agent’s findings.
+                    </Typography>
+                    <Button href="/title-model-comparison" variant="outlined">
+                      Compare models and the judging agent
                     </Button>
                   </Box>
                   {largeCaseInventory && (

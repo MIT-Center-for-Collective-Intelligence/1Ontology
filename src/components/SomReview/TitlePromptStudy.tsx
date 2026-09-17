@@ -609,9 +609,12 @@ export default function TitlePromptStudy({
           alignItems="center"
           gap={2}
         >
-          <Button href="/review?dataset=ontology-title-testbed">
-            Back to review
-          </Button>
+          <Stack direction="row" flexWrap="wrap" useFlexGap gap={0.5}>
+            <Button href="/review?dataset=ontology-title-testbed">
+              Back to review
+            </Button>
+            <Button href="/title-model-comparison">Compare models</Button>
+          </Stack>
           <ThemeModeToggle />
         </Stack>
         <Typography

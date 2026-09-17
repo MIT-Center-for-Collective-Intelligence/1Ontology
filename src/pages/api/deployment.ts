@@ -10,6 +10,7 @@ import {
   titlePromptStudyRelease,
   latestTitlePromptStudyRelease,
 } from "../../lib/somReview/titlePromptStudyRelease";
+import { titleModelComparisonRelease } from "../../lib/somReview/titleModelComparisonRelease";
 
 // Public, read-only release identity. Never include runtime configuration or user data.
 export default function deployment(req: NextApiRequest, res: NextApiResponse) {
@@ -62,6 +63,7 @@ export default function deployment(req: NextApiRequest, res: NextApiResponse) {
       datasets,
       titlePromptStudy: titlePromptStudyRelease(),
       latestTitlePromptStudy: latestTitlePromptStudyRelease(),
+      titleModelComparison: titleModelComparisonRelease(),
     });
   } catch {
     return res

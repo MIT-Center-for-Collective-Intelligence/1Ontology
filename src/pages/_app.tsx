@@ -61,7 +61,8 @@ initializeFirestore();
 const App = (props: AppPropsWithLayout) => {
   const { Component, emotionCache = clientSideEmotionCache, pageProps } = props;
   const reviewSurface = props.router.pathname.startsWith("/review") ||
-    props.router.pathname === "/title-prompt-study";
+    props.router.pathname === "/title-prompt-study" ||
+    props.router.pathname === "/title-model-comparison";
   const showReactQueryDevtools =
     process.env.NODE_ENV === "development" && !reviewSurface;
   const db = getFirestore();
