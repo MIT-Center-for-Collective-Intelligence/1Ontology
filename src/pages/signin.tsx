@@ -44,7 +44,6 @@ import React, { ReactNode, useState } from "react";
 
 import * as yup from "yup";
 import { getAuth, signOut } from "firebase/auth";
-import { delay } from "@components/lib/utils/utils";
 import { ONTOLOGY_APPS } from "@components/lib/CONSTANTS";
 
 interface SignInFormValues {
@@ -121,8 +120,8 @@ const SignInPage: NextPageWithLayout = () => {
         return;
       }
       closeSnackbar();
-      await delay(5000);
-      await router.push(`/${ONTOLOGY_APPS[0].id}`);
+      //AuthLayout naturally redirects the user. This keeps the submit button loading.
+      await new Promise(() => {});
     } catch (error) {
       const errorMessage = getFirebaseFriendlyError(error as FirebaseError);
       setSignInError(
