@@ -22,7 +22,7 @@ steps:
     args:
       - "-c"
       - |
-        gsutil cp gs://${_NEXT_PUBLIC_PROJECT_ID}_cloudbuild/next-cache.tar.gz next-cache.tar.gz || echo "No cache found in GCS"
+        gcloud storage cp gs://${_NEXT_PUBLIC_PROJECT_ID}_cloudbuild/next-cache.tar.gz next-cache.tar.gz || echo "No cache found in GCS"
         tar -zxf next-cache.tar.gz || echo "No tar to extract"
         mkdir -p .next-cache # Ensures the directory exists so Docker doesn't fail
 
@@ -87,7 +87,7 @@ steps:
     args:
       - "-c"
       - |
-        gsutil cp next-cache.tar.gz gs://${_NEXT_PUBLIC_PROJECT_ID}_cloudbuild/next-cache.tar.gz
+        gcloud storage cp next-cache.tar.gz gs://${_NEXT_PUBLIC_PROJECT_ID}_cloudbuild/next-cache.tar.gz
 
   - name: "gcr.io/cloud-builders/docker"
     args:
