@@ -1889,7 +1889,7 @@ const StructuredProperty = ({
           showTopOptionalLegend && (
             <InheritedPartsLegend
               sx={{ ml: 2 }}
-              legendItems={[{ symbol: "(o)", description: "Optional" }]}
+              legendItems={[{ symbol: "?", description: "Optional" }]}
             />
           )}
         {property === "parts" && !selectedDiffNode && !currentImprovement && (

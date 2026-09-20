@@ -9,10 +9,18 @@ import {
   ListItem,
   List,
   Select,
+  Menu,
+  Button,
   MenuItem,
   ListSubheader,
   Popover,
   TextField,
+  Divider,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  useTheme,
   alpha,
 } from "@mui/material";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
@@ -24,6 +32,8 @@ import {
 } from "@components/types/INode";
 import ArrowRightAltIcon from "@mui/icons-material/ArrowRightAlt";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
+import AccountTreeOutlinedIcon from "@mui/icons-material/AccountTreeOutlined";
 import SearchIcon from "@mui/icons-material/Search";
 import CheckIcon from "@mui/icons-material/Check";
 import { DragDropContext, Draggable, Droppable } from "@hello-pangea/dnd";
@@ -33,15 +43,26 @@ import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import DragHandleIcon from "@mui/icons-material/DragHandle";
 import CloseIcon from "@mui/icons-material/Close";
 import InheritedPartsLegend from "../Common/InheritedPartsLegend";
-import PartOrderSeparator, {
-  ORDER_INHERITANCE_ICON_GUTTER,
-} from "../Common/PartOrderSeparator";
 import PartInheritanceModeButton, {
   InheritanceMode,
+  PART_INHERITANCE_MODE_OPTIONS,
 } from "../Common/PartInheritanceModeButton";
+
+const RAIL_MARKER_SIZE = 19;
+const RAIL_MARKER_INSET = ORDER_RUN_BRACKET_LEFT + 1 - RAIL_MARKER_SIZE / 2;
+
+const ROW_MENU_ITEM_SX = {
+  borderRadius: "7px",
+  px: "10px",
+  py: "8px",
+  minHeight: "auto",
+} as const;
+
+const SYMBOL_GRID_COLUMNS = "calc(50% - 34px) 50px calc(50% - 16px)";
 
 /** Fixed width for = / > / x / + so symbols stay in one column. */
 const SYMBOL_COL_SX = {
+  position: "relative",
   minWidth: 28,
   width: 28,
   justifyContent: "center",
@@ -53,10 +74,21 @@ import { Timestamp } from "firebase/firestore";
 import { recordLogs } from "@components/lib/utils/helpers";
 import { Post } from "@components/lib/utils/Post";
 import {
-  computeOrderInheritanceForGen,
+  computeOrderRuns,
   getPartGeneralizationSources,
-  separatorInheritsOrder,
+  orderBracketsAt,
+  orderLinkKey,
 } from "@components/lib/utils/partsHelper";
+import {
+  DESCENDANT_RAIL_ACCENT,
+  descendantBaseRailSx,
+  descendantRailHalfSx,
+  ORDER_RUN_BRACKET_LEFT,
+  orderLinkColor,
+  orderRunBracketSx,
+  orderRunBracketWrapperSx,
+  orderRunRowSx,
+} from "@components/lib/utils/partsOrderStyles";
 import { makeResolvedOf } from "@components/lib/hooks/useResolvedParts";
 import SyncedSpinner from "@components/components/SyncedSpinner";
 import { DESIGN_SYSTEM_COLORS } from "@components/lib/theme/colors";
@@ -150,6 +182,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
   cancelPendingPart,
   updatePendingPartTitle,
 }) => {
+  const isDarkMode = useTheme().palette.mode === "dark";
   const [activeTab, setActiveTab] = React.useState<string | null>(null);
   const generalizationsFromParent: GeneralizationNode[] =
     getAllGeneralizations();
@@ -191,22 +224,25 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
     }
   }, [currentVisibleNode.id, currentVisibleNode.partInheritanceModes]);
 
+  const [orderModes, setOrderModes] = useState<{
+    [linkKey: string]: InheritanceMode;
+  }>({});
+  const setOrderMode = (linkKey: string, mode: InheritanceMode) =>
+    setOrderModes((prev) => ({ ...prev, [linkKey]: mode }));
+
+  const [rowMenu, setRowMenu] = useState<{
+    el: HTMLElement;
+    index: number;
+    partId: string;
+  } | null>(null);
+  const [orderDialogFor, setOrderDialogFor] = useState<number>(-1);
+
   const getPartInheritanceMode = (partId: string): InheritanceMode =>
     partInheritanceModes[partId] ?? defaultPartInheritanceMode;
   const setPartInheritanceMode = (partId: string, mode: InheritanceMode) => {
     setPartInheritanceModes((prev) => ({ ...prev, [partId]: mode }));
   };
 
-  const [orderInheritanceModes, setOrderInheritanceModes] = useState<{
-    [orderId: string]: InheritanceMode;
-  }>({});
-
-  const getOrderInheritanceMode = (orderId: string): InheritanceMode =>
-    orderInheritanceModes[orderId] ?? defaultPartInheritanceMode;
-
-  const setOrderInheritanceMode = (orderId: string, mode: InheritanceMode) => {
-    setOrderInheritanceModes((prev) => ({ ...prev, [orderId]: mode }));
-  };
   const [approvingPendingIds, setApprovingPendingIds] = useState<Set<string>>(
     new Set(),
   );
@@ -330,7 +366,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
               fontWeight: "bold",
             }}
           >
-            *
+            ?
           </Box>
         </Box>
       );
@@ -339,7 +375,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
         <Box component="span" sx={{ display: "inline" }}>
           {title}{" "}
           <Box component="span" sx={{ color: "#ff9500", fontWeight: "bold" }}>
-            *
+            ?
           </Box>
         </Box>
       );
@@ -863,12 +899,34 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
         via: partNode.via,
       };
     });
-    const orderInheritance = computeOrderInheritanceForGen(
-      resolvedParts,
-      generalizationId,
-      genTitle,
-      resolvedOf,
-      details,
+    const linkAt = (upperIdx: number) => {
+      const upper = draggableItems[upperIdx];
+      const lower = draggableItems[upperIdx + 1];
+      if (!upper?.to || !lower?.to) return undefined;
+      const key = orderLinkKey(upper.to, lower.to);
+      const mode = orderModes[key] ?? defaultPartInheritanceMode;
+      const option = PART_INHERITANCE_MODE_OPTIONS.find(
+        (o) => o.value === mode,
+      );
+      const isDefault = mode === defaultPartInheritanceMode;
+      return {
+        key,
+        option,
+        Icon: option?.Icon,
+        isDefault,
+        upperTitle: upper.toTitle || allNodes[upper.to]?.title || "",
+        lowerTitle: lower.toTitle || allNodes[lower.to]?.title || "",
+        color: orderLinkColor(mode, isDarkMode),
+        visible:
+          !isDefault ||
+          hoveredPartIndex === upperIdx ||
+          hoveredPartIndex === upperIdx + 1,
+      };
+    };
+
+    const orderRuns = computeOrderRuns(
+      draggableItems,
+      resolvedOf(generalizationId).map((p: ILinkNode) => p.id),
     );
 
     const partAlternativesLookup: {
@@ -1062,9 +1120,6 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
               ? `1px dashed ${alpha(theme.palette.divider, theme.palette.mode === "dark" ? 0.55 : 0.85)}`
               : "none",
           borderRadius: "16px",
-          py: 1,
-          px: 1.5,
-          my: 1.5,
           backgroundColor: (theme) =>
             draggableItems.length > 0
               ? alpha(
@@ -1072,6 +1127,9 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                   theme.palette.mode === "dark" ? 0.02 : 0.4,
                 )
               : "transparent",
+          py: 1,
+          px: 1.5,
+          my: 1.5,
         }}
       >
         <Droppable droppableId={`droppable-${generalizationId}`}>
@@ -1088,10 +1146,9 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
               }}
             >
               {draggableItems.map((entry: any, index: number) => {
-                const prevEntry = index > 0 ? draggableItems[index - 1] : null;
-                const inheritsOrder =
-                  index !== 0 &&
-                  separatorInheritsOrder(prevEntry, entry, orderInheritance);
+                const brackets = orderBracketsAt(orderRuns, index);
+                const linkAbove = linkAt(index - 1);
+                const linkBelow = linkAt(index);
                 return (
                   <Draggable
                     key={entry.to}
@@ -1103,6 +1160,8 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                         <ListItem
                           dense
                           disableGutters
+                          onMouseEnter={() => setHoveredPartIndex(index)}
+                          onMouseLeave={() => setHoveredPartIndex(null)}
                           ref={providedDraggable.innerRef}
                           {...providedDraggable.draggableProps}
                           sx={{
@@ -1111,65 +1170,125 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                             alignItems: "stretch",
                             gap: 0,
                             px: 0,
-                            py: 0,
                             minHeight: 0,
                             overflow: "visible",
+                            ...orderRunRowSx(
+                              isDarkMode,
+                              index === draggableItems.length - 1 &&
+                                !hasTrailingXRows,
+                            ),
+                            borderRadius: "8px",
+                            transition: "background-color 0.15s ease-in-out",
+                            "&:hover .part-optional-toggle": {
+                              opacity: 1,
+                              pointerEvents: "auto",
+                              borderColor: entry.toOptional
+                                ? "#f2a43a"
+                                : isDarkMode
+                                  ? "rgba(255, 255, 255, 0.45)"
+                                  : "#9ca3af",
+                            },
+                            "&:hover": {
+                              backgroundColor: isDarkMode
+                                ? "rgba(255,255,255,0.05)"
+                                : "rgba(0,0,0,0.035)",
+                            },
+                            "&:hover .part-remove-button, &:focus-within .part-remove-button":
+                              {
+                                opacity: 1,
+                                pointerEvents: "auto",
+                              },
                           }}
                         >
-                          {index !== 0 ? (
-                            <Box
-                              sx={{
-                                display: "flex",
-                                alignItems: "center",
-                                width: "100%",
-                                minHeight: 0,
-                                height: "auto",
-                                py: 0,
-                                px: 1,
-                                overflow: "visible",
-                              }}
-                            >
-                              <PartOrderSeparator
-                                inheritsOrder={inheritsOrder}
-                                orderMode={getOrderInheritanceMode(
-                                  entry.to || entry.from,
-                                )}
-                                onChangeOrderMode={(mode) =>
-                                  setOrderInheritanceMode(
-                                    entry.to || entry.from,
-                                    mode,
-                                  )
-                                }
-                                disabled={savingPartIds.has(
-                                  entry.to || entry.from,
-                                )}
-                                forceShowIcons={
-                                  hoveredPartIndex === index ||
-                                  hoveredPartIndex === index - 1
-                                }
-                                noGeneralizations={isRootNode}
-                              />
+                          {brackets.length > 0 && (
+                            <Box sx={orderRunBracketWrapperSx()}>
+                              {brackets.map((seg) => (
+                                <Box
+                                  key={seg.depth}
+                                  className="part-order-bracket"
+                                  sx={orderRunBracketSx(seg, isDarkMode)}
+                                />
+                              ))}
                             </Box>
-                          ) : null}
+                          )}
+                          <Box sx={orderRunBracketWrapperSx(true)}>
+                            <Box
+                              sx={descendantBaseRailSx(
+                                {
+                                  isFirst: index === 0,
+                                  isLast: index === draggableItems.length - 1,
+                                },
+                                isDarkMode,
+                              )}
+                            />
+                            {linkAbove?.visible ? (
+                              <Box
+                                sx={descendantRailHalfSx({
+                                  half: "upper",
+                                  otherVisible: !!linkBelow?.visible,
+                                  color: DESCENDANT_RAIL_ACCENT,
+                                })}
+                              />
+                            ) : null}
+                            {linkBelow?.visible ? (
+                              <Box
+                                sx={descendantRailHalfSx({
+                                  half: "lower",
+                                  otherVisible: !!linkAbove?.visible,
+                                  color: DESCENDANT_RAIL_ACCENT,
+                                })}
+                              />
+                            ) : null}
+                            {linkBelow &&
+                            !linkBelow.isDefault &&
+                            linkBelow.Icon ? (
+                              <Tooltip
+                                title={`Order from "${linkBelow.upperTitle}" to "${linkBelow.lowerTitle}" for descendants: ${linkBelow.option?.label}`}
+                                placement="right"
+                              >
+                                <Box
+                                  sx={{
+                                    position: "absolute",
+                                    right: `${RAIL_MARKER_INSET}px`,
+                                    bottom: `${-RAIL_MARKER_SIZE / 2}px`,
+                                    display: "flex",
+                                    borderRadius: "50%",
+                                    backgroundColor: (theme) =>
+                                      theme.palette.background.paper,
+                                    backgroundImage: (theme) => {
+                                      const wash = alpha(
+                                        theme.palette.common.white,
+                                        isDarkMode ? 0.02 : 0.4,
+                                      );
+                                      return `linear-gradient(${wash}, ${wash})`;
+                                    },
+                                    pointerEvents: "none",
+                                    zIndex: 4,
+                                  }}
+                                >
+                                  <linkBelow.Icon
+                                    sx={{
+                                      fontSize: RAIL_MARKER_SIZE,
+                                      color: linkBelow.color,
+                                    }}
+                                  />
+                                </Box>
+                              </Tooltip>
+                            ) : null}
+                          </Box>
                           <Box
                             {...providedDraggable.dragHandleProps}
-                            onMouseEnter={() => setHoveredPartIndex(index)}
-                            onMouseLeave={() => setHoveredPartIndex(null)}
                             sx={{
-                              display: "flex",
+                              display: "grid",
+                              gridTemplateColumns: SYMBOL_GRID_COLUMNS,
                               alignItems: "center",
-                              gap: 0.5,
                               width: "100%",
                               py: 0.25,
-                              pl: 1,
                               pr: 1,
                               minHeight: 0,
                               boxSizing: "border-box",
-                              "&:hover .part-remove-button, &:focus-within .part-remove-button":
-                                {
-                                  opacity: 1,
-                                  pointerEvents: "auto",
-                                },
+                              cursor: "grab",
+                              "&:active": { cursor: "grabbing" },
                             }}
                           >
                             <Box
@@ -1234,74 +1353,92 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "center",
-                                gap: 0.5,
                                 flexShrink: 0,
                                 px: 0.5,
+                                position: "relative",
                               }}
                             >
-                              {!!removePart && entry.symbol !== "x" && (
-                                <Tooltip title={"Remove part"} placement="top">
-                                  <Box
-                                    component="span"
-                                    className="part-remove-button"
-                                    sx={{
-                                      cursor: savingPartIds.has(entry.to)
-                                        ? "not-allowed"
-                                        : undefined,
-                                      display: "inline-flex",
-                                      opacity: 0,
-                                      pointerEvents: "none",
-                                      transition: "opacity 0.2s ease-in-out",
-                                      "&:focus-within": {
-                                        opacity: 1,
-                                        pointerEvents: "auto",
-                                      },
-                                    }}
-                                  >
-                                    <IconButton
-                                      sx={{ p: 0.5 }}
+                              <ListItemIcon sx={SYMBOL_COL_SX}>
+                                <Box
+                                  sx={{
+                                    position: "absolute",
+                                    right: "100%",
+                                    mr: "2px",
+                                    display: "flex",
+                                    alignItems: "center",
+                                  }}
+                                >
+                                  {entry.to ? (
+                                    <PartInheritanceModeButton
+                                      value={getPartInheritanceMode(
+                                        entry.to || entry.from,
+                                      )}
                                       disabled={savingPartIds.has(entry.to)}
-                                      onClick={() => {
-                                        onRemovePart(entry.to);
-                                      }}
-                                    >
-                                      <DeleteOutlineIcon
-                                        sx={{
-                                          fontSize: 20,
-                                          color: savingPartIds.has(entry.to)
-                                            ? "gray"
-                                            : "red",
-                                          opacity: savingPartIds.has(entry.to)
-                                            ? 0.5
-                                            : 1,
-                                        }}
-                                      />
-                                    </IconButton>
-                                  </Box>
-                                </Tooltip>
-                              )}
+                                      onChange={async (mode) => {
+                                        const partId = entry.to || entry.from;
+                                        if (!partId) return;
 
-                              {entry.symbol === "x" && !!addPart && (
-                                <Tooltip title={"Add Part"} placement="top">
-                                  <IconButton
-                                    sx={{ p: 0.5 }}
-                                    onClick={() => {
-                                      onAddPart(entry.from);
-                                    }}
-                                  >
-                                    <AddIcon
-                                      sx={{
-                                        fontSize: 20,
-                                        color: "green",
-                                        border: "1px solid green",
-                                        borderRadius: "50%",
+                                        setPartInheritanceMode(partId, mode);
+
+                                        // Get the true owner of this part from the resolved view.
+                                        // If the part is inherited (has an inheritedFrom), use that;
+                                        // otherwise the current node is the owner.
+                                        const partOwner =
+                                          entry.inheritedFrom ??
+                                          resolvedParts.find(
+                                            (p) => p.id === partId,
+                                          )?.inheritedFrom ??
+                                          currentVisibleNode.id;
+                                        const partTitle =
+                                          entry.toTitle ||
+                                          entry.fromTitle ||
+                                          resolvedParts.find(
+                                            (p) => p.id === partId,
+                                          )?.title ||
+                                          allNodes[partId]?.title ||
+                                          "";
+                                        const optional =
+                                          entry.toOptional ??
+                                          resolvedParts.find(
+                                            (p) => p.id === partId,
+                                          )?.optional ??
+                                          false;
+
+                                        // Cascade to all descendants:
+                                        // - neverInherit: removes the part from descendants
+                                        // - alwaysInherit / inheritUnlessAlreadyOverRidden: adds the part back to descendants
+                                        // The part always stays on the current node (e.g. Act).
+                                        try {
+                                          await Post(
+                                            "/nodes/parts/set-inheritance-mode",
+                                            {
+                                              nodeId: currentVisibleNode.id,
+                                              partId,
+                                              partOwner,
+                                              mode,
+                                              partTitle,
+                                              optional,
+                                              ...(appName ? { appName } : {}),
+                                            },
+                                          );
+                                        } catch (err: any) {
+                                          console.error(
+                                            "set-inheritance-mode cascade failed",
+                                            err,
+                                          );
+                                          recordLogs({
+                                            type: "error",
+                                            error: JSON.stringify({
+                                              name: err?.name,
+                                              message: err?.message,
+                                              stack: err?.stack,
+                                            }),
+                                          });
+                                        }
                                       }}
                                     />
-                                  </IconButton>
-                                </Tooltip>
-                              )}
-
-                              <ListItemIcon sx={SYMBOL_COL_SX}>
+                                  ) : null}
+                                </Box>
                                 {savingPartIds.has(entry.to) ? (
                                   <Tooltip
                                     title="Linking this part…"
@@ -1429,7 +1566,18 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                   </Tooltip>
                                 ) : null}
                               </ListItemIcon>
+                            </Box>
 
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 0.5,
+                                flex: 1,
+                                minWidth: 0,
+                                pr: "20px",
+                              }}
+                            >
                               {entry.to ? (
                                 <Tooltip
                                   title={
@@ -1442,6 +1590,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                   <Box
                                     component="button"
                                     type="button"
+                                    className="part-optional-toggle"
                                     disabled={savingPartIds.has(entry.to)}
                                     onMouseDown={(e: React.MouseEvent) => {
                                       e.stopPropagation();
@@ -1455,6 +1604,10 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                       cursor: savingPartIds.has(entry.to)
                                         ? "not-allowed"
                                         : "pointer",
+                                      opacity: entry.toOptional ? 1 : 0,
+                                      pointerEvents: entry.toOptional
+                                        ? "auto"
+                                        : "none",
                                       "&:disabled": { opacity: 0.5 },
                                       textTransform: "none",
                                       fontSize: "0.8125rem",
@@ -1471,17 +1624,14 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                               : "#797b7dff",
                                       width: 23,
                                       height: 23,
+                                      ml: "-5px",
+                                      mr: "8px",
                                       flexShrink: 0,
                                       display: "flex",
                                       alignItems: "center",
                                       justifyContent: "center",
                                       borderRadius: "50%",
-                                      border: entry.toOptional
-                                        ? "1.5px solid #f2a43a"
-                                        : (theme) =>
-                                            theme.palette.mode === "light"
-                                              ? "1px solid #9ca3af"
-                                              : "1px solid rgba(255, 255, 255, 0.45)",
+                                      border: "1.5px solid transparent",
                                       background: "transparent",
                                       boxShadow: "none",
                                       transition: "all 0.2s ease",
@@ -1498,91 +1648,16 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                               theme.palette.mode === "light"
                                                 ? "#6b7280"
                                                 : "rgba(255, 255, 255, 0.7)",
+                                        ...(entry.toOptional && {
+                                          color: "#fff",
+                                        }),
                                       },
                                     }}
                                   >
-                                    *
+                                    ?
                                   </Box>
                                 </Tooltip>
                               ) : null}
-
-                              {entry.to ? (
-                                <PartInheritanceModeButton
-                                  value={getPartInheritanceMode(
-                                    entry.to || entry.from,
-                                  )}
-                                  disabled={savingPartIds.has(entry.to)}
-                                  onChange={async (mode) => {
-                                    const partId = entry.to || entry.from;
-                                    if (!partId) return;
-
-                                    setPartInheritanceMode(partId, mode);
-
-                                    // Get the true owner of this part from the resolved view.
-                                    // If the part is inherited (has an inheritedFrom), use that;
-                                    // otherwise the current node is the owner.
-                                    const partOwner =
-                                      entry.inheritedFrom ??
-                                      resolvedParts.find((p) => p.id === partId)
-                                        ?.inheritedFrom ??
-                                      currentVisibleNode.id;
-                                    const partTitle =
-                                      entry.toTitle ||
-                                      entry.fromTitle ||
-                                      resolvedParts.find((p) => p.id === partId)
-                                        ?.title ||
-                                      allNodes[partId]?.title ||
-                                      "";
-                                    const optional =
-                                      entry.toOptional ??
-                                      resolvedParts.find((p) => p.id === partId)
-                                        ?.optional ??
-                                      false;
-
-                                    // Cascade to all descendants:
-                                    // - neverInherit: removes the part from descendants
-                                    // - alwaysInherit / inheritUnlessAlreadyOverRidden: adds the part back to descendants
-                                    // The part always stays on the current node (e.g. Act).
-                                    try {
-                                      await Post(
-                                        "/nodes/parts/set-inheritance-mode",
-                                        {
-                                          nodeId: currentVisibleNode.id,
-                                          partId,
-                                          partOwner,
-                                          mode,
-                                          partTitle,
-                                          optional,
-                                          ...(appName ? { appName } : {}),
-                                        },
-                                      );
-                                    } catch (err: any) {
-                                      console.error(
-                                        "set-inheritance-mode cascade failed",
-                                        err,
-                                      );
-                                      recordLogs({
-                                        type: "error",
-                                        error: JSON.stringify({
-                                          name: err?.name,
-                                          message: err?.message,
-                                          stack: err?.stack,
-                                        }),
-                                      });
-                                    }
-                                  }}
-                                />
-                              ) : null}
-                            </Box>
-
-                            <Box
-                              sx={{
-                                display: "flex",
-                                alignItems: "center",
-                                flex: 1,
-                                minWidth: 0,
-                              }}
-                            >
                               {entry.to ? (
                                 <Box
                                   sx={{
@@ -1657,8 +1732,6 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                           textOverflow: "ellipsis",
                                           whiteSpace: "nowrap",
                                           "& .MuiSelect-select": {
-                                            py: "4px",
-                                            minHeight: "unset",
                                             display: "flex",
                                             alignItems: "center",
                                           },
@@ -1924,6 +1997,96 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                     )}
                                 </Box>
                               ) : null}
+                              {entry.symbol === "x" && !!addPart && (
+                                <Tooltip title={"Add Part"} placement="top">
+                                  <IconButton
+                                    sx={{ p: 0.5 }}
+                                    onClick={() => {
+                                      onAddPart(entry.from);
+                                    }}
+                                  >
+                                    <AddIcon
+                                      sx={{
+                                        fontSize: 20,
+                                        color: "green",
+                                        border: "1px solid green",
+                                        borderRadius: "50%",
+                                      }}
+                                    />
+                                  </IconButton>
+                                </Tooltip>
+                              )}
+                              {!!removePart && entry.symbol !== "x" && (
+                                <Tooltip title={"More"} placement="top">
+                                  <Box
+                                    component="span"
+                                    className="part-remove-button"
+                                    sx={{
+                                      position: "absolute",
+                                      right: "-2px",
+                                      top: "50%",
+                                      transform: "translateY(-50%)",
+                                      display: "inline-flex",
+                                      opacity: 0,
+                                      pointerEvents: "none",
+                                      transition: "opacity 0.15s ease-in-out",
+                                      zIndex: 5,
+                                      "&:focus-within": {
+                                        opacity: 1,
+                                        pointerEvents: "auto",
+                                      },
+                                    }}
+                                  >
+                                    <IconButton
+                                      disabled={savingPartIds.has(entry.to)}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setRowMenu({
+                                          el: e.currentTarget,
+                                          index,
+                                          partId: entry.to,
+                                        });
+                                      }}
+                                      sx={{
+                                        width: 24,
+                                        height: 24,
+                                        borderRadius: "7px",
+                                        color: (theme) =>
+                                          theme.palette.text.secondary,
+                                        border: `1px solid ${alpha(
+                                          "#9ca3af",
+                                          isDarkMode ? 0.55 : 0.45,
+                                        )}`,
+                                        backgroundColor: (theme) =>
+                                          theme.palette.background.paper,
+                                        backgroundImage: (theme) => {
+                                          const wash = alpha(
+                                            theme.palette.common.white,
+                                            isDarkMode ? 0.02 : 0.4,
+                                          );
+                                          return `linear-gradient(${wash}, ${wash})`;
+                                        },
+                                        boxShadow: isDarkMode
+                                          ? "0 0 0 3px rgba(0,0,0,0.35)"
+                                          : "0 1px 4px rgba(0,0,0,0.2)",
+                                        "&:hover": {
+                                          backgroundColor: (theme) =>
+                                            theme.palette.background.paper,
+                                          backgroundImage: (theme) => {
+                                            const wash = alpha(
+                                              theme.palette.common.white,
+                                              isDarkMode ? 0.1 : 0.55,
+                                            );
+                                            return `linear-gradient(${wash}, ${wash})`;
+                                          },
+                                        },
+                                      }}
+                                    >
+                                      <MoreVertIcon sx={{ fontSize: 16 }} />
+                                    </IconButton>
+                                  </Box>
+                                </Tooltip>
+                              )}
                             </Box>
                           </Box>
                         </ListItem>
@@ -1937,7 +2100,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
           )}
         </Droppable>
         {notInheritedItems.length > 0 && (
-          <List sx={{ px: 1, py: 0, pt: "15px" }}>
+          <List sx={{ px: 1, py: 0 }}>
             {notInheritedItems.map((entry: any, index: number) => (
               <ListItem
                 key={`not-inherited-${entry.from || index}`}
@@ -1945,122 +2108,137 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                 disableGutters
                 sx={{
                   display: "flex",
-                  alignItems: "center",
-                  gap: 0.5,
-                  pl: 1,
-                  pr: 1,
-                  py: 0,
+                  flexDirection: "column",
+                  alignItems: "stretch",
+                  px: 0,
                   minHeight: 0,
                   boxSizing: "border-box",
-
-                  backgroundPosition: "top",
-                  backgroundRepeat: "repeat-x",
-                  backgroundSize: "100% 1px",
+                  ...orderRunRowSx(
+                    isDarkMode,
+                    index === notInheritedItems.length - 1 &&
+                      nonDraggableItems.length === 0,
+                  ),
                 }}
               >
                 <Box
                   sx={{
-                    display: "flex",
+                    display: "grid",
+                    gridTemplateColumns: SYMBOL_GRID_COLUMNS,
                     alignItems: "center",
-                    gap: 0.5,
-                    flex: 1,
-                    minWidth: 0,
+                    width: "100%",
+                    py: 0.25,
+                    pr: 1,
+                    minHeight: 0,
+                    boxSizing: "border-box",
                   }}
                 >
-                  {!readOnly && (
-                    <ListItemIcon sx={{ minWidth: "auto" }}>
-                      <Tooltip title="Search it below" placement="left">
-                        <IconButton
-                          sx={{ p: 0.4 }}
-                          onClick={() =>
-                            triggerSearch({
-                              id: entry.from,
-                              title: allNodes[entry.from]?.title,
-                            })
-                          }
-                        >
-                          <SearchIcon sx={{ fontSize: 19, color: "orange" }} />
-                        </IconButton>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 0.5,
+                      flex: 1,
+                      minWidth: 0,
+                    }}
+                  >
+                    {!readOnly && (
+                      <ListItemIcon sx={{ minWidth: "auto" }}>
+                        <Tooltip title="Search it below" placement="left">
+                          <IconButton
+                            sx={{ p: 0.4 }}
+                            onClick={() =>
+                              triggerSearch({
+                                id: entry.from,
+                                title: allNodes[entry.from]?.title,
+                              })
+                            }
+                          >
+                            <SearchIcon
+                              sx={{ fontSize: 19, color: "orange" }}
+                            />
+                          </IconButton>
+                        </Tooltip>
+                      </ListItemIcon>
+                    )}
+                    <ListItemText
+                      primary={
+                        <Typography>
+                          {formatPartTitle(
+                            entry.from,
+                            Boolean(
+                              entry.fromOptional ??
+                              resolvedOf(generalizationId)?.find(
+                                (p: any) => p.id === entry.from,
+                              )?.optional,
+                            ),
+                            "none",
+                            entry.fromTitle,
+                          )}
+                        </Typography>
+                      }
+                      sx={{ flex: 1, minWidth: 0, my: 0 }}
+                    />
+                  </Box>
+
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 0.5,
+                      flexShrink: 0,
+                      px: 0.5,
+                    }}
+                  >
+                    <ListItemIcon sx={SYMBOL_COL_SX}>
+                      <Tooltip
+                        title={`"${genTitle}" has this part, but this node does not inherit it.`}
+                        placement="top"
+                      >
+                        <CloseIcon sx={{ fontSize: 20, color: "orange" }} />
                       </Tooltip>
                     </ListItemIcon>
-                  )}
-                  <ListItemText
-                    primary={
-                      <Typography>
-                        {formatPartTitle(
-                          entry.from,
-                          Boolean(
-                            entry.fromOptional ??
-                            resolvedOf(generalizationId)?.find(
-                              (p: any) => p.id === entry.from,
-                            )?.optional,
-                          ),
-                          "none",
-                          entry.fromTitle,
-                        )}
-                      </Typography>
-                    }
-                    sx={{ flex: 1, minWidth: 0, my: 0 }}
-                  />
-                </Box>
+                  </Box>
 
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: 0.5,
-                    flexShrink: 0,
-                    px: 0.5,
-                  }}
-                >
-                  <ListItemIcon sx={SYMBOL_COL_SX}>
-                    <Tooltip
-                      title={`"${genTitle}" has this part, but this node does not inherit it.`}
-                      placement="top"
-                    >
-                      <CloseIcon sx={{ fontSize: 20, color: "orange" }} />
-                    </Tooltip>
-                  </ListItemIcon>
-
-                  {/* Inherits the part specifically through this tab's
-                      generalization. Unlike a plain add, it never becomes
-                      owned and overall inheritance is untouched. */}
-                  {!!addPartFromGen && (
-                    <Tooltip title={"Inherit this part"} placement="top">
-                      <IconButton
-                        sx={{ p: 0.5 }}
-                        onClick={async () => {
-                          await addPartFromGen(entry.from, generalizationId);
-                        }}
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "flex-end",
+                      flex: 1,
+                      minWidth: 0,
+                    }}
+                  >
+                    <Box aria-hidden sx={{ width: 0, overflow: "hidden" }}>
+                      {rowHeightSpacer}
+                    </Box>
+                    {!!addPartFromGen && (
+                      <Tooltip
+                        title={`Inherit this part from "${genTitle}"`}
+                        placement="top"
                       >
-                        <AddIcon
-                          sx={{
-                            fontSize: 20,
-                            color: "green",
-                            border: "1px solid green",
-                            borderRadius: "50%",
+                        <Button
+                          size="small"
+                          variant="contained"
+                          disableElevation
+                          startIcon={<AddIcon sx={{ fontSize: 18 }} />}
+                          onClick={async () => {
+                            await addPartFromGen(entry.from, generalizationId);
                           }}
-                        />
-                      </IconButton>
-                    </Tooltip>
-                  )}
-                </Box>
-
-                {/* Not inherited: no switch dropdown since the part isn't on
-                    this node — an invisible one keeps the row height equal. */}
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    flex: 1,
-                    minWidth: 0,
-                  }}
-                >
-                  <ListItemText
-                    primary={rowHeightSpacer}
-                    sx={{ flex: 1, minWidth: 0, my: 0 }}
-                  />
+                          sx={{
+                            textTransform: "none",
+                            borderRadius: "15px",
+                            fontSize: "0.82rem",
+                            py: "3px",
+                            backgroundColor: "green",
+                            "&:hover": { backgroundColor: "#1b7a1b" },
+                          }}
+                        >
+                          Inherit
+                        </Button>
+                      </Tooltip>
+                    )}
+                  </Box>
                 </Box>
               </ListItem>
             ))}
@@ -2128,17 +2306,14 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                 sx={{
                   display: "flex",
                   alignItems: "center",
-                  backgroundImage:
-                    "repeating-linear-gradient(to right, rgba(180,180,180,0.55) 0px, rgba(180,180,180,0.55) 4px, transparent 4px, transparent 8px)",
-                  backgroundPosition: "top",
-                  backgroundRepeat: "repeat-x",
-                  backgroundSize: "100% 1px",
                   gap: 0.5,
-                  pl: 1,
                   pr: 1,
-                  py: 0,
                   minHeight: 0,
                   boxSizing: "border-box",
+                  ...orderRunRowSx(
+                    isDarkMode,
+                    index === nonDraggableItems.length - 1,
+                  ),
                 }}
               >
                 <Box
@@ -2516,6 +2691,249 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
         </Box>
       )}
 
+      <Menu
+        anchorEl={rowMenu?.el ?? null}
+        open={Boolean(rowMenu)}
+        onClose={() => setRowMenu(null)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        transformOrigin={{ vertical: "top", horizontal: "right" }}
+        slotProps={{
+          paper: {
+            elevation: 0,
+            sx: {
+              mt: 0.75,
+              p: "4px",
+              minWidth: 232,
+              borderRadius: "10px",
+              border: `1px solid ${alpha("#9ca3af", isDarkMode ? 0.55 : 0.45)}`,
+              boxShadow: (theme) =>
+                theme.palette.mode === "dark"
+                  ? "0 6px 20px rgba(0,0,0,0.45)"
+                  : "0 6px 20px rgba(15,23,42,0.10)",
+            },
+          },
+          list: { sx: { p: 0 } },
+        }}
+      >
+        <MenuItem
+          onClick={() => {
+            if (rowMenu) setOrderDialogFor(rowMenu.index);
+            setRowMenu(null);
+          }}
+          sx={ROW_MENU_ITEM_SX}
+        >
+          <ListItemIcon sx={{ minWidth: "auto" }}>
+            <AccountTreeOutlinedIcon sx={{ fontSize: 18, color: "#f2a43a" }} />
+          </ListItemIcon>
+          <ListItemText
+            primary="Edit Order Inheritance"
+            sx={{ m: 0 }}
+            primaryTypographyProps={{ fontSize: "0.875rem" }}
+          />
+        </MenuItem>
+        <Divider sx={{ mx: "-4px", my: "4px" }} />
+        <MenuItem
+          onClick={() => {
+            if (rowMenu) onRemovePart(rowMenu.partId);
+            setRowMenu(null);
+          }}
+          sx={{
+            ...ROW_MENU_ITEM_SX,
+            color: "#e04848",
+            "&:hover": {
+              backgroundColor: (theme: any) =>
+                theme.palette.mode === "dark"
+                  ? "rgba(224,72,72,0.14)"
+                  : "rgba(224,72,72,0.08)",
+            },
+          }}
+        >
+          <ListItemIcon sx={{ minWidth: "auto" }}>
+            <DeleteOutlineIcon sx={{ fontSize: 18, color: "#e04848" }} />
+          </ListItemIcon>
+          <ListItemText
+            primary="Remove part"
+            sx={{ m: 0 }}
+            primaryTypographyProps={{ fontSize: "0.875rem" }}
+          />
+        </MenuItem>
+      </Menu>
+      <Dialog
+        open={orderDialogFor >= 0}
+        onClose={() => setOrderDialogFor(-1)}
+        slotProps={{
+          paper: {
+            elevation: 0,
+            sx: {
+              width: 470,
+              maxWidth: "100%",
+              borderRadius: "14px",
+              border: `1px solid ${alpha("#9ca3af", isDarkMode ? 0.55 : 0.45)}`,
+              boxShadow: isDarkMode
+                ? "0 14px 44px rgba(0,0,0,0.5)"
+                : "0 14px 44px rgba(15,23,42,0.14)",
+            },
+          },
+        }}
+      >
+        {orderDialogFor >= 0 &&
+          (() => {
+            const from = Math.max(0, orderDialogFor - 1);
+            const to = Math.min(resolvedParts.length - 1, orderDialogFor + 1);
+            const slice = resolvedParts.slice(from, to + 1);
+            const titleOf = (part: ILinkNode) =>
+              allNodes[part.id]?.title || "this part";
+            const clicked = resolvedParts[orderDialogFor];
+            const consequence = (
+              mode: InheritanceMode,
+              upper: string,
+              lower: string,
+            ) =>
+              mode === "alwaysInherit"
+                ? `Descendants must keep "${upper}" before "${lower}".`
+                : mode === "neverInherit"
+                  ? `Descendants may place "${upper}" and "${lower}" independently.`
+                  : `Descendants start with this order and may reorder it.`;
+
+            return (
+              <>
+                <DialogTitle sx={{ pb: 0, fontSize: "1.05rem" }}>
+                  <Box
+                    sx={{ display: "flex", alignItems: "center", gap: "8px" }}
+                  >
+                    <AccountTreeOutlinedIcon
+                      sx={{ fontSize: 20, color: "#f2a43a" }}
+                    />
+                    Order inheritance
+                  </Box>
+                </DialogTitle>
+                <DialogContent sx={{ "&.MuiDialogContent-root": { pt: 4.5 } }}>
+                  {slice.map((part: ILinkNode, i: number) => {
+                    const next = slice[i + 1];
+                    const key = next ? orderLinkKey(part.id, next.id) : "";
+                    const mode: InheritanceMode = key
+                      ? (orderModes[key] ?? defaultPartInheritanceMode)
+                      : defaultPartInheritanceMode;
+                    const accent = orderLinkColor(mode, isDarkMode);
+                    const isClicked = from + i === orderDialogFor;
+                    return (
+                      <Box key={part.id}>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "10px",
+                          }}
+                        >
+                          <Box
+                            sx={{
+                              width: 9,
+                              height: 9,
+                              borderRadius: "50%",
+                              flexShrink: 0,
+                              backgroundColor: isClicked
+                                ? "#f2a43a"
+                                : alpha("#9ca3af", 0.7),
+                            }}
+                          />
+                          <Typography
+                            sx={{
+                              fontWeight: isClicked ? 700 : 500,
+                              color: isClicked
+                                ? "text.primary"
+                                : "text.secondary",
+                              fontSize: "0.95rem",
+                            }}
+                          >
+                            {titleOf(part)}
+                          </Typography>
+                        </Box>
+                        {next ? (
+                          <Box
+                            sx={{
+                              ml: "4px",
+                              pl: "18px",
+                              py: 1,
+                              borderLeft: `2px solid ${accent}`,
+                            }}
+                          >
+                            <Box
+                              sx={{
+                                display: "flex",
+                                borderRadius: "9px",
+                                overflow: "hidden",
+                                border: `1px solid ${alpha("#9ca3af", isDarkMode ? 0.5 : 0.4)}`,
+                              }}
+                            >
+                              {PART_INHERITANCE_MODE_OPTIONS.map((option) => {
+                                const selected = option.value === mode;
+                                return (
+                                  <Box
+                                    key={option.value}
+                                    component="button"
+                                    type="button"
+                                    onClick={() =>
+                                      setOrderMode(key, option.value)
+                                    }
+                                    sx={{
+                                      flex: 1,
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      gap: "6px",
+                                      px: "8px",
+                                      py: "7px",
+                                      border: "none",
+                                      cursor: "pointer",
+                                      fontSize: "0.78rem",
+                                      fontWeight: selected ? 700 : 500,
+                                      color: selected
+                                        ? option.color
+                                        : "text.secondary",
+                                      backgroundColor: selected
+                                        ? alpha(
+                                            option.color,
+                                            isDarkMode ? 0.18 : 0.12,
+                                          )
+                                        : "transparent",
+                                      "&:hover": {
+                                        backgroundColor: alpha(
+                                          option.color,
+                                          isDarkMode ? 0.12 : 0.08,
+                                        ),
+                                      },
+                                    }}
+                                  >
+                                    <option.Icon
+                                      sx={{ fontSize: 16, color: option.color }}
+                                    />
+                                    {option.label}
+                                  </Box>
+                                );
+                              })}
+                            </Box>
+                            <Typography
+                              sx={{
+                                mt: 0.85,
+                                fontSize: "0.8rem",
+                                color: "text.secondary",
+                              }}
+                            >
+                              {consequence(mode, titleOf(part), titleOf(next))}
+                            </Typography>
+                          </Box>
+                        ) : null}
+                      </Box>
+                    );
+                  })}
+                </DialogContent>
+                <DialogActions sx={{ px: 3, pb: 2 }}>
+                  <Button onClick={() => setOrderDialogFor(-1)}>Close</Button>
+                </DialogActions>
+              </>
+            );
+          })()}
+      </Dialog>
       <InheritedPartsLegend sx={{ px: 2, pr: 3 }} />
     </Box>
   );

@@ -4,23 +4,22 @@ import DragHandleIcon from "@mui/icons-material/DragHandle";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import CloseIcon from "@mui/icons-material/Close";
 import AddIcon from "@mui/icons-material/Add";
-import UnfoldMoreIcon from "@mui/icons-material/UnfoldMore";
 import SyncIcon from "@mui/icons-material/Sync";
 import AccountTreeIcon from "@mui/icons-material/AccountTree";
 import BlockIcon from "@mui/icons-material/Block";
-import AccountTreeOutlinedIcon from '@mui/icons-material/AccountTreeOutlined';
+import AccountTreeOutlinedIcon from "@mui/icons-material/AccountTreeOutlined";
 
 export interface LegendItem {
   symbol?: string;
   icon?: React.ReactNode;
   description: string;
-  type?: "symbol" | "dotted-line" | "icon";
+  type?: "symbol" | "dotted-line" | "icon" | "order-rail";
   lineColor?: "green" | "orange" | string;
   color?: "green" | "orange" | "red" | string;
 }
 
 export const getDefaultInheritedPartsLegendItems = (): LegendItem[] => [
-  { symbol: "*", description: "Optional" },
+  { symbol: "?", description: "Optional" },
   {
     icon: <DragHandleIcon sx={{ fontSize: 20 }} />,
     symbol: "=",
@@ -46,19 +45,9 @@ export const getDefaultInheritedPartsLegendItems = (): LegendItem[] => [
     description: "Part Added",
   },
   {
-    type: "dotted-line",
-    lineColor: "green",
-    description: "Order Inherited",
-  },
-  {
-    type: "dotted-line",
-    lineColor: "red",
-    description: "Order not Inherited",
-  },
-  {
-    icon: <UnfoldMoreIcon sx={{ fontSize: 20 }} />,
+    type: "order-rail",
     color: "green",
-    description: "Order Inherited Between Parts",
+    description: "Inherited Order",
   },
   {
     icon: <SyncIcon sx={{ fontSize: 20 }} />,
@@ -78,9 +67,7 @@ export const getDefaultInheritedPartsLegendItems = (): LegendItem[] => [
 ];
 
 const RIGHT_COLUMN_DESCRIPTIONS = new Set([
-  "Order Inherited",
-  "Order not Inherited",
-  "Order Inherited Between Parts",
+  "Inherited Order",
   "Always Inherit",
   "Inherit Unless Overridden",
   "Never Inherit",
@@ -118,6 +105,7 @@ const InheritedPartsLegend = ({
   const renderItem = (item: LegendItem, index: number) => {
     const itemKey = item.description || item.symbol || `${item.type}-${index}`;
     const isDottedLine = item.type === "dotted-line";
+    const isOrderRail = item.type === "order-rail";
     const itemColor = resolveColor(
       item.color || (isDottedLine ? item.lineColor : undefined),
     );
@@ -146,7 +134,22 @@ const InheritedPartsLegend = ({
             justifyContent: "center",
           }}
         >
-          {isDottedLine ? (
+          {isOrderRail ? (
+            <Box
+              component="span"
+              sx={{
+                boxSizing: "border-box",
+                height: theme.spacing(3),
+                minHeight: theme.spacing(3),
+                width: "12px",
+                borderLeft: `2px solid ${itemColor}`,
+                borderTop: `2px solid ${itemColor}`,
+                borderBottom: `2px solid ${itemColor}`,
+                borderTopLeftRadius: "7px",
+                borderBottomLeftRadius: "7px",
+              }}
+            />
+          ) : isDottedLine ? (
             <Box
               component="span"
               sx={{

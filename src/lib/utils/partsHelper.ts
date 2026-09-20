@@ -82,90 +82,147 @@ export const getPartGeneralizationSources = (
   return sources;
 };
 
-export type OrderInheritanceSummary = {
-  /** Gen-part ids in the child's resolved order (inherited slots only). */
-  childGenSequence: string[];
-  /** First index in the gen-part sequence where order diverges. */
-  breakIndex: number;
-};
-
 type OrderInheritanceDetail = {
   from: string;
   to: string;
   symbol: string;
 };
 
-export const ORDER_INHERITANCE_LINE_COLOR = "#2ecc71";
-
-export const genPartIdFromDetail = (
+const genPartIdFromDetail = (
   entry: OrderInheritanceDetail,
 ): string | undefined => {
-  if (entry.symbol === "=" || entry.symbol === ">") return entry.from || undefined;
+  if (entry.symbol === "=" || entry.symbol === ">")
+    return entry.from || undefined;
   return undefined;
 };
 
-/** Dotted separator between two list rows: green only when both rows are
- *  consecutive inherited slots still inside the unbroken order prefix. */
-export const separatorInheritsOrder = (
-  prevEntry: OrderInheritanceDetail | null | undefined,
-  entry: OrderInheritanceDetail,
-  summary: OrderInheritanceSummary,
-): boolean => {
-  if (!prevEntry) return false;
-  const prevId = genPartIdFromDetail(prevEntry);
-  const currId = genPartIdFromDetail(entry);
-  if (!prevId || !currId) return false;
-  const { childGenSequence, breakIndex } = summary;
-  const prevIdx = childGenSequence.indexOf(prevId);
-  const currIdx = childGenSequence.indexOf(currId);
-  if (prevIdx === -1 || currIdx !== prevIdx + 1) return false;
-  return currIdx < breakIndex;
+/** A set of parts still in the generalization's order, spanning first member
+ *  to last. Non-members inside the span are pass-throughs. Rails can overlap,
+ *  so each carries the column it draws in. */
+type OrderBracket = {
+  from: number;
+  to: number;
+  depth: number;
+  members: number[];
 };
 
-export const orderSeparatorBackground = (lineColor: string): string =>
-  `repeating-linear-gradient(to right, ${lineColor} 0, ${lineColor} 1px, transparent 1px, transparent 6px)`;
+export type OrderRuns = {
+  brackets: OrderBracket[];
+};
+
+/** The number of maximal increasing subsequences is exponential worst case. */
+const MAX_RAILS = 6;
 
 /**
- * Rule 2 — reordering parts causes a partial break: the longest prefix of
- * source-provided parts whose relative order still matches the generalization
- * keeps order inheritance; everything from the first mismatch onward does not.
+ * Every maximal increasing subsequence of `pos`. A step i→j is allowed only
+ * when nothing could be inserted between them — no k with i<k<j and
+ * pos[i]<pos[k]<pos[j] — which is what makes the results maximal.
  */
-export const computeOrderInheritanceForGen = (
-  resolvedParts: ILinkNode[],
-  genId: string,
-  _genTitle: string,
-  resolvedOf: (id: string) => ILinkNode[],
+function maximalIncreasingRuns(pos: number[]): number[][] {
+  const n = pos.length;
+  const canStart = (i: number) => !pos.some((p, k) => k < i && p < pos[i]);
+  const successors = (i: number) => {
+    const out: number[] = [];
+    for (let j = i + 1; j < n; j++) {
+      if (pos[j] <= pos[i]) continue;
+      let insertable = false;
+      for (let k = i + 1; k < j; k++) {
+        if (pos[k] > pos[i] && pos[k] < pos[j]) {
+          insertable = true;
+          break;
+        }
+      }
+      if (!insertable) out.push(j);
+    }
+    return out;
+  };
+
+  const runs: number[][] = [];
+  const walk = (path: number[]) => {
+    if (runs.length >= MAX_RAILS) return;
+    const next = successors(path[path.length - 1]);
+    if (next.length === 0) {
+      runs.push([...path]);
+      return;
+    }
+    for (const j of next) {
+      walk([...path, j]);
+      if (runs.length >= MAX_RAILS) return;
+    }
+  };
+  for (let i = 0; i < n; i++) if (canStart(i)) walk([i]);
+  return runs;
+}
+
+/** The rails a row list forms against its generalization's order. */
+export const computeOrderRuns = (
   detailEntries: OrderInheritanceDetail[],
-): OrderInheritanceSummary => {
-  const parentOrder = resolvedOf(genId).map((p) => p.id);
-  const parentSet = new Set(parentOrder);
+  genPartOrder: string[],
+): OrderRuns => {
+  const posInGen = new Map(genPartOrder.map((id, i) => [id, i]));
+  // Only parts the generalization provides can be in its order.
+  const seq: { row: number; pos: number }[] = [];
+  detailEntries.forEach((entry, row) => {
+    if (entry.symbol === "x") return;
+    const genPartId = genPartIdFromDetail(entry);
+    const pos = genPartId === undefined ? undefined : posInGen.get(genPartId);
+    if (pos !== undefined) seq.push({ row, pos });
+  });
 
-  const childToGenPart = new Map<string, string>();
-  for (const entry of detailEntries) {
-    if (entry.symbol !== "=" && entry.symbol !== ">") continue;
-    childToGenPart.set(entry.to, entry.from);
-  }
+  const runs = seq.length
+    ? maximalIncreasingRuns(seq.map((s) => s.pos)).filter((r) => r.length >= 2)
+    : [];
 
-  const childGenSequence: string[] = [];
-  for (const part of resolvedParts) {
-    if (parentSet.has(part.id)) {
-      childGenSequence.push(part.id);
-    } else {
-      const genPartId = childToGenPart.get(part.id);
-      if (genPartId) childGenSequence.push(genPartId);
+  // Overlapping rails get separate columns: lowest depth that does not clash.
+  const brackets: OrderBracket[] = runs
+    .map((run) => {
+      const rows = run.map((i) => seq[i].row);
+      return {
+        from: rows[0],
+        to: rows[rows.length - 1],
+        depth: 0,
+        members: rows,
+      };
+    })
+    .sort((a, b) => b.to - b.from - (a.to - a.from));
+
+  for (let i = 0; i < brackets.length; i++) {
+    let depth = 0;
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      const clash = brackets
+        .slice(0, i)
+        .some(
+          (o) =>
+            o.depth === depth &&
+            o.from <= brackets[i].to &&
+            o.to >= brackets[i].from,
+        );
+      if (!clash) break;
+      depth += 1;
     }
+    brackets[i].depth = depth;
   }
 
-  let breakIndex = childGenSequence.length;
-  for (let i = 0; i < childGenSequence.length; i++) {
-    if (i >= parentOrder.length || childGenSequence[i] !== parentOrder[i]) {
-      breakIndex = i;
-      break;
-    }
-  }
-
-  return { childGenSequence, breakIndex };
+  return { brackets };
 };
+
+/** Keyed by the pair, so it survives reordering. */
+export const orderLinkKey = (upperId: string, lowerId: string): string =>
+  `${upperId}|${lowerId}`;
+
+/** The rail segments crossing a row, innermost column first. */
+export const orderBracketsAt = (runs: OrderRuns, index: number) =>
+  runs.brackets
+    .filter((b) => index >= b.from && index <= b.to)
+    .sort((a, b) => a.depth - b.depth)
+    .map((b) => ({
+      depth: b.depth,
+      isFirst: index === b.from,
+      isLast: index === b.to,
+      // A row a rail only spans is a pass-through.
+      isMember: b.members.includes(index),
+    }));
 
 /**
  * Get all generalizations for a node

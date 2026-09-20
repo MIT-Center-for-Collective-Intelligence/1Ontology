@@ -12,6 +12,7 @@ import {
   Link,
   Button,
   TextField,
+  useTheme,
   alpha,
 } from "@mui/material";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
@@ -23,9 +24,6 @@ import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import DragHandleIcon from "@mui/icons-material/DragHandle";
 import CloseIcon from "@mui/icons-material/Close";
 import InheritedPartsLegend from "../Common/InheritedPartsLegend";
-import PartOrderSeparator, {
-  ORDER_INHERITANCE_ICON_GUTTER,
-} from "../Common/PartOrderSeparator";
 import {
   ILinkNode,
   INode,
@@ -33,10 +31,15 @@ import {
 } from "@components/types/INode";
 import SyncedSpinner from "@components/components/SyncedSpinner";
 import {
-  computeOrderInheritanceForGen,
+  computeOrderRuns,
   getPartGeneralizationSources,
-  separatorInheritsOrder,
+  orderBracketsAt,
 } from "@components/lib/utils/partsHelper";
+import {
+  orderRunBracketSx,
+  orderRunBracketWrapperSx,
+  orderRunRowSx,
+} from "@components/lib/utils/partsOrderStyles";
 import { makeResolvedOf } from "@components/lib/hooks/useResolvedParts";
 
 const SYMBOL_COL_SX = {
@@ -93,8 +96,11 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
   removePart,
   navigateToNode,
 }) => {
+  const isDarkMode = useTheme().palette.mode === "dark";
   const [activeTab, setActiveTab] = React.useState<string | null>(null);
-  const [hoveredPartIndex, setHoveredPartIndex] = React.useState<number | null>(null);
+  const [hoveredPartIndex, setHoveredPartIndex] = React.useState<number | null>(
+    null,
+  );
   // Exclude the current node itself — a root node should not appear as its
   // own generalization on the left side of the inheritance viewer.
   const generalizations: GeneralizationNode[] = getAllGeneralizations().filter(
@@ -198,7 +204,7 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
         <Box component="span" sx={{ display: "inline" }}>
           {title}{" "}
           <Box component="span" sx={{ color: "#ff9500", fontWeight: "bold" }}>
-            +O
+            +?
           </Box>
         </Box>
       );
@@ -214,7 +220,7 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
               fontWeight: "bold",
             }}
           >
-            O
+            ?
           </Box>
         </Box>
       );
@@ -223,7 +229,7 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
         <Box component="span" sx={{ display: "inline" }}>
           {title}{" "}
           <Box component="span" sx={{ color: "#ff9500", fontWeight: "bold" }}>
-            O
+            ?
           </Box>
         </Box>
       );
@@ -297,12 +303,9 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
     }
 
     const details = cachedGeneralizationData.details || [];
-    const orderInheritance = computeOrderInheritanceForGen(
-      resolvedParts,
-      generalizationId,
-      genTitle,
-      resolvedOf,
+    const orderRuns = computeOrderRuns(
       details,
+      resolvedOf(generalizationId).map((p: ILinkNode) => p.id),
     );
 
     return (
@@ -329,15 +332,8 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
           }}
         >
           {details.map((entry, index) => {
-            const prevEntry = index > 0 ? details[index - 1] : null;
-            const inheritsOrder =
-              index !== 0 &&
-              separatorInheritsOrder(prevEntry, entry, orderInheritance);
-            // A missing part ("x") is not actually in this node, so order
-            // separators touching it are meaningless — skip them.
+            const brackets = orderBracketsAt(orderRuns, index);
             const isMissing = entry.symbol === "x";
-            const prevIsMissing = prevEntry?.symbol === "x";
-            const showSeparator = index !== 0 && !isMissing && !prevIsMissing;
             // Read the part's optional state live from parts (details is just
             // the reference), so the badge updates on toggle without a recompute.
             const liveToOptional = entry.to
@@ -353,46 +349,6 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                 : "none";
             return (
               <React.Fragment key={`${entry.from}-${entry.to}`}>
-                {showSeparator ? (
-                  <Box
-                    component="li"
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      width: "100%",
-                      minHeight: 0,
-                      height: "auto",
-                      py: 0,
-                      my: 0,
-                      listStyle: "none",
-                      overflow: "visible",
-                    }}
-                  >
-                    <PartOrderSeparator
-                      inheritsOrder={inheritsOrder}
-                      forceShowIcons={
-                        hoveredPartIndex === index ||
-                        hoveredPartIndex === index - 1
-                      }
-                    />
-                  </Box>
-                ) : index !== 0 ? (
-                  // Thin neutral divider before/after missing-part rows
-                  <Box
-                    component="li"
-                    sx={{
-                      listStyle: "none",
-                      height: "1px",
-                      mx: 1,
-                      my: "3px",
-                      backgroundColor: (theme) =>
-                        alpha(
-                          theme.palette.divider,
-                          theme.palette.mode === "dark" ? 0.25 : 0.4,
-                        ),
-                    }}
-                  />
-                ) : null}
                 <ListItem
                   dense
                   disableGutters
@@ -402,36 +358,34 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                     display: "flex",
                     alignItems: "center",
                     gap: 0.5,
-                    pl: 0,
                     pr: 0,
-                    py: 0.25,
                     minHeight: 0,
                     boxSizing: "border-box",
+                    ...orderRunRowSx(isDarkMode, index === details.length - 1),
                     // Missing parts (gen has it, node doesn't) — de-emphasised
                     ...(isMissing && {
                       opacity: 0.5,
-                      borderLeft: (theme: any) =>
-                        `2px dashed ${alpha(
-                          theme.palette.divider,
-                          theme.palette.mode === "dark" ? 0.6 : 0.8,
-                        )}`,
-                      pl: "6px",
-                      borderRadius: "2px",
                       fontStyle: "italic",
                     }),
-                    // Node-only parts ("+") — indent so they sit apart from
-                    // the matched/inherited rows
-                    ...(entry.symbol === "+" && {
-                      pl: "12px",
-                    }),
-                    "&:hover .part-remove-button, &:focus-within .part-remove-button": {
-                      opacity: 1,
-                      pointerEvents: "auto",
-                    },
+                    "&:hover .part-remove-button, &:focus-within .part-remove-button":
+                      {
+                        opacity: 1,
+                        pointerEvents: "auto",
+                      },
                     // Restore full opacity on hover so the add-button is easy to click
                     ...(isMissing && { "&:hover": { opacity: 0.8 } }),
                   }}
                 >
+                  {brackets.length > 0 && (
+                    <Box sx={orderRunBracketWrapperSx()}>
+                      {brackets.map((seg) => (
+                        <Box
+                          key={seg.depth}
+                          sx={orderRunBracketSx(seg, isDarkMode)}
+                        />
+                      ))}
+                    </Box>
+                  )}
                   <Box
                     sx={{
                       display: "flex",
@@ -482,7 +436,9 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                             sx={{
                               cursor: !!navigateToNode ? "pointer" : "",
                               color: (them) =>
-                                them.palette.mode === "dark" ? "white" : "black",
+                                them.palette.mode === "dark"
+                                  ? "white"
+                                  : "black",
                               fontSize: "0.9rem",
                             }}
                           >
@@ -598,7 +554,8 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                                   fontSize: 20,
                                   color: "orange",
                                   visibility:
-                                    src === undefined || src === generalizationId
+                                    src === undefined ||
+                                    src === generalizationId
                                       ? "visible"
                                       : "hidden",
                                 }}
@@ -629,7 +586,12 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                       primary={
                         entry.to ? (
                           <Box
-                            sx={{ display: "flex", alignItems: "center", gap: 1, width: "100%" }}
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 1,
+                              width: "100%",
+                            }}
                           >
                             <Link
                               underline={!!navigateToNode ? "hover" : "none"}
