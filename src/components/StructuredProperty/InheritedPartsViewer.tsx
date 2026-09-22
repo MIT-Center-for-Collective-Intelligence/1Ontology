@@ -314,21 +314,13 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
           dense
           disablePadding
           sx={{
-            border: (theme) =>
-              details.length > 0
-                ? `1px dashed ${alpha(theme.palette.divider, theme.palette.mode === "dark" ? 0.55 : 0.85)}`
-                : "none",
             borderRadius: "16px",
-            backgroundColor: (theme) =>
-              details.length > 0
-                ? alpha(
-                    theme.palette.common.white,
-                    theme.palette.mode === "dark" ? 0.02 : 0.4,
-                  )
-                : "transparent",
-            py: 1,
+            position: "relative",
+            zIndex: 1,
+            backgroundColor: "transparent",
+            py: 0.5,
             px: 1.5,
-            my: 1.5,
+            my: 0.5,
           }}
         >
           {details.map((entry, index) => {
@@ -361,19 +353,41 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                     pr: 0,
                     minHeight: 0,
                     boxSizing: "border-box",
-                    ...orderRunRowSx(isDarkMode, index === details.length - 1),
+                    position: "relative",
+                    pl: "26px",
+                    py: "4px",
                     // Missing parts (gen has it, node doesn't) — de-emphasised
                     ...(isMissing && {
                       opacity: 0.5,
                       fontStyle: "italic",
                     }),
+                    borderRadius: "50px",
+                    transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                    "&:hover": {
+                      backgroundColor: isDarkMode
+                        ? "rgba(255,255,255,0.06)"
+                        : "rgba(0,0,0,0.04)",
+                      boxShadow: isDarkMode
+                        ? "0 4px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.05)"
+                        : "0 4px 12px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.8)",
+                    },
                     "&:hover .part-remove-button, &:focus-within .part-remove-button":
                       {
                         opacity: 1,
                         pointerEvents: "auto",
                       },
                     // Restore full opacity on hover so the add-button is easy to click
-                    ...(isMissing && { "&:hover": { opacity: 0.8 } }),
+                    ...(isMissing && {
+                      "&:hover": {
+                        opacity: 0.8,
+                        backgroundColor: isDarkMode
+                          ? "rgba(255,255,255,0.06)"
+                          : "rgba(0,0,0,0.04)",
+                        boxShadow: isDarkMode
+                          ? "0 4px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.05)"
+                          : "0 4px 12px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.8)",
+                      },
+                    }),
                   }}
                 >
                   {brackets.length > 0 && (
@@ -460,7 +474,7 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                       justifyContent: "center",
                       gap: 0.5,
                       flexShrink: 0,
-                      px: 0.5,
+                      width: "70px",
                     }}
                   >
                     {!readOnly && entry.symbol === "=" && !!removePart && (
@@ -728,7 +742,51 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
           </Box>
 
           {activeGenId && activeGenTitle && (
-            <Box key={activeGenId} sx={{ px: "10px" }}>
+            <Box key={activeGenId} sx={{ px: "10px", position: "relative" }}>
+              {/* Visual Boxes for Left and Right Panels */}
+              <Box
+                sx={{
+                  position: "absolute",
+                  top: 0,
+                  bottom: 12, // account for mb on list
+                  left: "10px",
+                  width: "calc(50% - 35px)",
+                  border: (theme) =>
+                    `1px solid ${alpha(theme.palette.divider, theme.palette.mode === "dark" ? 0.15 : 0.2)}`,
+                  backgroundColor: (theme) =>
+                    alpha(theme.palette.background.paper, theme.palette.mode === "dark" ? 0.4 : 0.7),
+                  backdropFilter: "blur(12px)",
+                  boxShadow: (theme) =>
+                    theme.palette.mode === "dark"
+                      ? `0 8px 32px ${alpha(theme.palette.common.black, 0.2)}`
+                      : `0 8px 32px ${alpha(theme.palette.common.black, 0.05)}`,
+                  borderRadius: "16px",
+                  pointerEvents: "none",
+                  zIndex: 0,
+                }}
+              />
+              <Box
+                sx={{
+                  position: "absolute",
+                  top: 0,
+                  bottom: 12, // account for mb on list
+                  right: "10px",
+                  width: "calc(50% - 35px)",
+                  border: (theme) =>
+                    `1px solid ${alpha(theme.palette.divider, theme.palette.mode === "dark" ? 0.15 : 0.2)}`,
+                  backgroundColor: (theme) =>
+                    alpha(theme.palette.background.paper, theme.palette.mode === "dark" ? 0.4 : 0.7),
+                  backdropFilter: "blur(12px)",
+                  boxShadow: (theme) =>
+                    theme.palette.mode === "dark"
+                      ? `0 8px 32px ${alpha(theme.palette.common.black, 0.2)}`
+                      : `0 8px 32px ${alpha(theme.palette.common.black, 0.05)}`,
+                  borderRadius: "16px",
+                  pointerEvents: "none",
+                  zIndex: 0,
+                }}
+              />
+
               <Box
                 sx={{
                   display: "flex",
@@ -738,6 +796,7 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                   mx: 2,
                   mt: 2,
                   mb: inheritedPartsRepairing ? 4 : 2.5,
+                  zIndex: 1,
                 }}
               >
                 {/* Left Text */}
@@ -749,6 +808,7 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                     alignItems: "center",
                     gap: 1,
                     pr: "30px", // space to avoid overlap with center icon
+                    pl: "14px", // space to align with list
                   }}
                 >
                   {generalizations.length > 1 ? (
@@ -873,9 +933,9 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                   sx={{
                     flex: 1,
                     minWidth: 0,
-                    pl: "30px",
+                    pl: "60px",
                     display: "flex",
-                    justifyContent: "flex-end",
+                    justifyContent: "flex-start",
                   }}
                 >
                   <Tooltip title={currentVisibleNode.title}>
