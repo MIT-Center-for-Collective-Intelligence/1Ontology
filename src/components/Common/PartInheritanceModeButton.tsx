@@ -53,11 +53,13 @@ const PartInheritanceModeButton = ({
   onChange,
   disabled = false,
   onOpenChange,
+  hoverBorderColor,
 }: {
   value: InheritanceMode;
   onChange: (next: InheritanceMode) => void;
   disabled?: boolean;
   onOpenChange?: (open: boolean) => void;
+  hoverBorderColor?: string;
 }) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
@@ -83,9 +85,16 @@ const PartInheritanceModeButton = ({
               width: 28,
               height: 28,
               p: 0,
-              color: open ? current.color : current.color,
+              color: current.color,
               opacity: open ? 1 : 0.9,
-              "&:hover": { opacity: 1, color: current.color },
+              border: "1.5px solid transparent",
+              borderRadius: "6px",
+              transition: "border-color 0.15s ease, opacity 0.15s ease",
+              "&:hover": {
+                opacity: 1,
+                color: current.color,
+                borderColor: hoverBorderColor ?? current.color,
+              },
             }}
             aria-label="Manage Inheritance"
           >

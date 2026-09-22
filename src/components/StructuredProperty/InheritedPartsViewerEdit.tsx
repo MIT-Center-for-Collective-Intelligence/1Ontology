@@ -243,6 +243,22 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
     setPartInheritanceModes((prev) => ({ ...prev, [partId]: mode }));
   };
 
+  const savePartInheritanceMode = async (
+    partId: string,
+    mode: InheritanceMode,
+  ) => {
+    setPartInheritanceMode(partId, mode);
+    try {
+      await Post("/nodes/parts/set-inheritance-mode", {
+        nodeId: currentVisibleNode.id,
+        partId,
+        mode,
+      });
+    } catch (err) {
+      console.error("Failed to save inheritance mode", err);
+    }
+  };
+
   const [approvingPendingIds, setApprovingPendingIds] = useState<Set<string>>(
     new Set(),
   );
@@ -1216,7 +1232,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                               alignItems: "center",
                               width: "100%",
                               py: 0.25,
-                              pr: 1,
+                              px: 1,
                               minHeight: 0,
                               boxSizing: "border-box",
                               cursor: "grab",
@@ -1298,9 +1314,14 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                   }}
                                 >
                                   {entry.to ? (
-                                    <Tooltip title="Inherit Unless Overridden" placement="top">
-                                      <AccountTreeOutlinedIcon sx={{ fontSize: 20, color: "#f2a43a" }} />
-                                    </Tooltip>
+                                    <PartInheritanceModeButton
+                                      value={getPartInheritanceMode(entry.to)}
+                                      onChange={(mode) =>
+                                        savePartInheritanceMode(entry.to, mode)
+                                      }
+                                      disabled={savingPartIds.has(entry.to)}
+                                      hoverBorderColor="orange"
+                                    />
                                   ) : null}
                                 </Box>
                                 {savingPartIds.has(entry.to) ? (
@@ -1488,8 +1509,8 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                               : "#797b7dff",
                                       width: 23,
                                       height: 23,
-                                      ml: "-5px",
-                                      mr: "8px",
+                                      ml: "5px",
+                                      mr: "4px",
                                       flexShrink: 0,
                                       display: "flex",
                                       alignItems: "center",
@@ -1545,6 +1566,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                       sx={{
                                         display: "flex",
                                         flex: 1,
+                                        width: "100%",
                                         minWidth: 0,
                                       }}
                                     >
@@ -1588,6 +1610,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                               : "black",
                                           fontSize: "0.9rem",
                                           flex: 1,
+                                          width: "100%",
                                           minWidth: 0,
                                           borderRadius: "15px",
                                           backgroundColor: (theme) =>
@@ -1969,7 +1992,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                     alignItems: "center",
                     width: "100%",
                     py: 0.25,
-                    pr: 1,
+                    px: 1,
                     minHeight: 0,
                     boxSizing: "border-box",
                   }}
@@ -2443,9 +2466,9 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                 minWidth: 0,
                 display: "flex",
                 alignItems: "center",
+                justifyContent: "center",
                 gap: 1,
-                pr: "30px", // space to avoid overlap with center icon
-                pl: "14px", // space to align with list
+                px: "14px",
               }}
             >
               {!isRootNode &&
@@ -2461,7 +2484,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                         sx: {
                           height: "40px",
                           borderRadius: "18px",
-                          color: "orange",
+                          color: "text.primary",
                           fontWeight: 700,
                           fontSize: "1.15rem",
                           backgroundColor: (theme) =>
@@ -2515,7 +2538,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                   <Tooltip title={activeGenTitle}>
                     <Typography
                       sx={{
-                        color: "orange",
+                        color: "text.primary",
                         fontWeight: 700,
                         fontSize: "1.15rem",
                         overflow: "hidden",
@@ -2573,12 +2596,13 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                 minWidth: 0,
                 pl: "60px",
                 display: "flex",
-                justifyContent: "flex-start",
+                justifyContent: "center",
               }}
             >
               <Tooltip title={currentVisibleNode.title}>
                 <Typography
                   sx={{
+                    color: "orange",
                     fontWeight: 700,
                     fontSize: "1.15rem",
                     overflow: "hidden",

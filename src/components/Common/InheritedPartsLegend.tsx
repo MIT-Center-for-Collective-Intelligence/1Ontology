@@ -54,11 +54,23 @@ export const getDefaultInheritedPartsLegendItems = (): LegendItem[] => [
     color: "orange",
     description: "Inherit Unless Overridden",
   },
+  {
+    icon: <SyncIcon sx={{ fontSize: 20 }} />,
+    color: "green",
+    description: "Always Inherit",
+  },
+  {
+    icon: <BlockIcon sx={{ fontSize: 20 }} />,
+    color: "red",
+    description: "Never Inherit",
+  },
 ];
 
 const RIGHT_COLUMN_DESCRIPTIONS = new Set([
   "Inherited Order",
   "Inherit Unless Overridden",
+  "Always Inherit",
+  "Never Inherit",
 ]);
 
 /** Wide enough for `(o)`; all symbol chips share this width so the column lines up. */

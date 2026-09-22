@@ -118,6 +118,7 @@ export const orderRunRowSx = (isDark: boolean, isLastRow = false) =>
   ({
     position: "relative",
     pl: ORDER_RUN_ROW_INSET,
+    pr: ORDER_RUN_ROW_INSET,
     py: ORDER_RUN_ROW_GAP,
     // Starts past the bracket so the two never cross.
     ...(isLastRow
