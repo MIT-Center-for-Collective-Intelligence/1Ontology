@@ -11,11 +11,11 @@ const ORDER_RAIL_COLOR = { dark: "#52d68a", light: "#22a558" };
 const partRowSeparator = (isDark: boolean) =>
   `1px dashed ${isDark ? "rgba(255,255,255,0.14)" : "rgba(0,0,0,0.16)"}`;
 
-/** First rail column at 2px, each further one 9px in. */
+/** First rail column at 2px, each further one 6px in. */
 export const ORDER_RUN_BRACKET_LEFT = 2;
-const ORDER_RUN_BRACKET_STEP = 9;
+const ORDER_RUN_BRACKET_STEP = 6;
 
-const ORDER_RUN_ROW_INSET_PX = 26;
+export const ORDER_RUN_ROW_INSET_PX = 18;
 const ORDER_RUN_ROW_INSET = `${ORDER_RUN_ROW_INSET_PX}px`;
 const ORDER_RUN_ROW_GAP = "5px";
 
@@ -117,8 +117,8 @@ export const descendantRailHalfSx = (opts: {
 export const orderRunRowSx = (isDark: boolean, isLastRow = false) =>
   ({
     position: "relative",
-    pl: ORDER_RUN_ROW_INSET,
-    pr: ORDER_RUN_ROW_INSET,
+    pl: 0,
+    pr: 0,
     py: ORDER_RUN_ROW_GAP,
     // Starts past the bracket so the two never cross.
     ...(isLastRow
@@ -144,7 +144,7 @@ export const orderRunBracketWrapperSx = (mirrored = false) =>
     ...(mirrored ? { right: 0, pointerEvents: "none" } : { left: 0 }),
     top: 0,
     bottom: 0,
-    width: mirrored ? `${DESCENDANT_RAIL_DASH + 6}px` : "24px",
+    width: mirrored ? `${DESCENDANT_RAIL_DASH + 6}px` : `${ORDER_RUN_ROW_INSET_PX}px`,
   }) as const;
 
 /** One rail segment: runs title-to-title, with a dash into each member's
@@ -163,7 +163,7 @@ export const orderRunBracketSx = (
   const style = seg.isMember ? "solid" : "dashed";
   const left = ORDER_RUN_BRACKET_LEFT + seg.depth * ORDER_RUN_BRACKET_STEP;
   // Every dash stops at the same x, just short of the title.
-  const dash = ORDER_RUN_ROW_INSET_PX - left - 6;
+  const dash = ORDER_RUN_ROW_INSET_PX - left - 3;
   const radius = "7px";
   return {
     position: "absolute",

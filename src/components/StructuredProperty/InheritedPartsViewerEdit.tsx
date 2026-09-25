@@ -63,11 +63,12 @@ const SYMBOL_GRID_COLUMNS = "calc(50% - 35px) 70px calc(50% - 35px)";
 /** Fixed width for = / > / x / + so symbols stay in one column. */
 const SYMBOL_COL_SX = {
   position: "relative",
-  minWidth: 28,
-  width: 28,
+  minWidth: "auto",
+  mr: 0,
   justifyContent: "center",
   display: "flex",
   alignItems: "center",
+  gap: "2px",
 } as const;
 
 import { Timestamp } from "firebase/firestore";
@@ -84,6 +85,7 @@ import {
   descendantBaseRailSx,
   descendantRailHalfSx,
   ORDER_RUN_BRACKET_LEFT,
+  ORDER_RUN_ROW_INSET_PX,
   orderLinkColor,
   orderRunBracketSx,
   orderRunBracketWrapperSx,
@@ -92,6 +94,7 @@ import {
 import { makeResolvedOf } from "@components/lib/hooks/useResolvedParts";
 import SyncedSpinner from "@components/components/SyncedSpinner";
 import { DESIGN_SYSTEM_COLORS } from "@components/lib/theme/colors";
+import { OPTIONAL_PART_SYMBOL } from "@components/lib/CONSTANTS";
 
 interface GeneralizationNode {
   id: string;
@@ -366,7 +369,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
         <Box component="span" sx={{ display: "inline" }}>
           {title}{" "}
           <Box component="span" sx={{ color: "#ff9500", fontWeight: "bold" }}>
-            +*
+            {`+${OPTIONAL_PART_SYMBOL}`}
           </Box>
         </Box>
       );
@@ -382,7 +385,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
               fontWeight: "bold",
             }}
           >
-            ?
+            {OPTIONAL_PART_SYMBOL}
           </Box>
         </Box>
       );
@@ -391,7 +394,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
         <Box component="span" sx={{ display: "inline" }}>
           {title}{" "}
           <Box component="span" sx={{ color: "#ff9500", fontWeight: "bold" }}>
-            ?
+            {OPTIONAL_PART_SYMBOL}
           </Box>
         </Box>
       );
@@ -910,7 +913,6 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
         toOptional: liveOptional,
         optionalChange: "none",
         hops: 0,
-        pending: Boolean(inheritedPartsRepairing),
         inheritedFrom: partNode.inheritedFrom,
         via: partNode.via,
       };
@@ -1135,9 +1137,11 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
           position: "relative",
           zIndex: 1,
           backgroundColor: "transparent",
-          py: 0.5,
-          px: 1.5,
-          my: 0.5,
+          pt: 1,
+          pb: 3.5,
+          px: 0,
+          mt: 0.5,
+          mb: 1,
         }}
       >
         <Droppable droppableId={`droppable-${generalizationId}`}>
@@ -1148,7 +1152,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
               ref={provided.innerRef}
               {...provided.droppableProps}
               sx={{
-                px: 1,
+                px: 0,
                 py: 0,
                 pb: hasTrailingXRows ? 0 : undefined,
               }}
@@ -1185,7 +1189,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                               index === draggableItems.length - 1 &&
                                 !hasTrailingXRows,
                             ),
-                            borderRadius: "50px",
+                            borderRadius: "12px",
                             transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                             "&:hover .part-optional-toggle": {
                               opacity: 1,
@@ -1193,7 +1197,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                               borderColor: entry.toOptional
                                 ? "#f2a43a"
                                 : isDarkMode
-                                  ? "rgba(255, 255, 255, 0.45)"
+                                  ? "rgba(255, 255, 255, 0.35)"
                                   : "#9ca3af",
                             },
                             "&:hover": {
@@ -1223,7 +1227,6 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                             </Box>
                           )}
 
-
                           <Box
                             {...providedDraggable.dragHandleProps}
                             sx={{
@@ -1232,7 +1235,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                               alignItems: "center",
                               width: "100%",
                               py: 0.25,
-                              px: 1,
+                              px: 0,
                               minHeight: 0,
                               boxSizing: "border-box",
                               cursor: "grab",
@@ -1246,6 +1249,9 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                 gap: 0.5,
                                 flex: 1,
                                 minWidth: 0,
+                                pl: `${ORDER_RUN_ROW_INSET_PX}px`,
+                                pr: 1,
+                                boxSizing: "border-box",
                               }}
                             >
                               {!readOnly &&
@@ -1302,7 +1308,8 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                 alignItems: "center",
                                 justifyContent: "center",
                                 flexShrink: 0,
-                                width: "70px",
+                                width: "100%",
+                                gap: 0.25,
                               }}
                             >
                               <ListItemIcon sx={SYMBOL_COL_SX}>
@@ -1310,7 +1317,6 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                   sx={{
                                     display: "flex",
                                     alignItems: "center",
-                                    mr: "2px",
                                   }}
                                 >
                                   {entry.to ? (
@@ -1457,10 +1463,12 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                               sx={{
                                 display: "flex",
                                 alignItems: "center",
-                                gap: 0.5,
+                                gap: 0.75,
                                 flex: 1,
                                 minWidth: 0,
-                                pr: "20px",
+                                pl: 1.25,
+                                pr: 1.5,
+                                boxSizing: "border-box",
                               }}
                             >
                               {entry.to ? (
@@ -1495,51 +1503,46 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                         : "none",
                                       "&:disabled": { opacity: 0.5 },
                                       textTransform: "none",
-                                      fontSize: "1.1rem",
-                                      fontFamily:
-                                        "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
-                                      letterSpacing: "-0.03em",
+                                      fontSize: "1rem",
+                                      fontWeight: 800,
                                       lineHeight: 1,
-                                      fontWeight: 700,
                                       color: entry.toOptional
                                         ? DESIGN_SYSTEM_COLORS.orange250
-                                        : (theme) =>
-                                            theme.palette.mode === "light"
-                                              ? "#111827"
-                                              : "#797b7dff",
-                                      width: 23,
-                                      height: 23,
-                                      ml: "5px",
-                                      mr: "4px",
+                                        : isDarkMode
+                                          ? "rgba(255, 255, 255, 0.7)"
+                                          : "#4b5563",
+                                      width: 27,
+                                      height: 27,
                                       flexShrink: 0,
                                       display: "flex",
                                       alignItems: "center",
                                       justifyContent: "center",
-                                      borderRadius: "50%",
-                                      border: "1.5px solid transparent",
-                                      background: "transparent",
-                                      boxShadow: "none",
-                                      transition: "all 0.2s ease",
+                                      borderRadius: "9px",
+                                      border: "1.5px solid transparent", // Hidden by default (prevents layout shift on hover)
+                                      backgroundColor: "transparent",
+
+                                      transition:
+                                        "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                                       "&:hover": {
-                                        background: entry.toOptional
-                                          ? "#e0942e"
-                                          : (theme) =>
-                                              theme.palette.mode === "light"
-                                                ? "rgba(15, 23, 42, 0.06)"
-                                                : "rgba(255, 255, 255, 0.08)",
+                                        backgroundColor: entry.toOptional
+                                          ? "#f2a43a"
+                                          : isDarkMode
+                                            ? "rgba(255, 255, 255, 0.12)"
+                                            : "rgba(0, 0, 0, 0.08)",
                                         borderColor: entry.toOptional
-                                          ? "#e0942e"
-                                          : (theme) =>
-                                              theme.palette.mode === "light"
-                                                ? "#6b7280"
-                                                : "rgba(255, 255, 255, 0.7)",
-                                        ...(entry.toOptional && {
-                                          color: "#fff",
-                                        }),
+                                          ? "#f2a43a"
+                                          : isDarkMode
+                                            ? "rgba(255, 255, 255, 0.6)"
+                                            : "#6b7280", // Border appears only on hover
+                                        color: entry.toOptional
+                                          ? "#fff"
+                                          : isDarkMode
+                                            ? "#fff"
+                                            : "#111827",
                                       },
                                     }}
                                   >
-                                    ?
+                                    {OPTIONAL_PART_SYMBOL}
                                   </Box>
                                 </Tooltip>
                               ) : null}
@@ -1548,6 +1551,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                   sx={{
                                     display: "flex",
                                     alignItems: "center",
+                                    flex: 1,
                                     width: "100%",
                                     minWidth: 0,
                                   }}
@@ -1558,7 +1562,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                         ? allNodes[entry.to]?.title || ""
                                         : ""
                                     }
-                                    placement="top"
+                                    placement="bottom"
                                     disableHoverListener={isSelectOpen}
                                   >
                                     <Box
@@ -1608,19 +1612,51 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                             theme.palette.mode === "dark"
                                               ? "white"
                                               : "black",
-                                          fontSize: "0.9rem",
+                                          fontSize: "0.88rem",
+                                          fontWeight: 500,
                                           flex: 1,
                                           width: "100%",
                                           minWidth: 0,
-                                          borderRadius: "15px",
+                                          borderRadius: "12px",
                                           backgroundColor: (theme) =>
-                                            theme.palette.background.paper,
+                                            theme.palette.mode === "dark"
+                                              ? "rgba(255, 255, 255, 0.04)"
+                                              : theme.palette.background.paper,
+                                          transition: "all 0.2s ease",
+                                          "& .MuiOutlinedInput-notchedOutline":
+                                            {
+                                              borderColor: isDarkMode
+                                                ? "rgba(255, 255, 255, 0.12)"
+                                                : "rgba(0, 0, 0, 0.12)",
+                                              transition:
+                                                "border-color 0.2s ease",
+                                            },
+                                          "&:hover .MuiOutlinedInput-notchedOutline":
+                                            {
+                                              borderColor: isDarkMode
+                                                ? "rgba(242, 164, 58, 0.5)"
+                                                : "rgba(242, 164, 58, 0.7)",
+                                            },
+                                          "&.Mui-focused .MuiOutlinedInput-notchedOutline":
+                                            {
+                                              borderColor: "#f2a43a",
+                                            },
                                           overflow: "hidden",
                                           textOverflow: "ellipsis",
                                           whiteSpace: "nowrap",
                                           "& .MuiSelect-select": {
                                             display: "flex",
                                             alignItems: "center",
+                                            py: "7px",
+                                          },
+                                          "& .MuiSelect-icon": {
+                                            color: isDarkMode
+                                              ? "rgba(255, 255, 255, 0.45)"
+                                              : "rgba(0, 0, 0, 0.45)",
+                                            transition: "color 0.2s ease",
+                                          },
+                                          "&:hover .MuiSelect-icon": {
+                                            color: "#f2a43a",
                                           },
                                         }}
                                         MenuProps={{
@@ -1780,7 +1816,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                               minWidth: 0,
                                               color: "#f2a43a",
                                               fontWeight: "bold",
-                                              borderRadius: "15px",
+                                              borderRadius: "12px",
                                               backgroundColor: (theme) =>
                                                 theme.palette.background.paper,
                                               "& .MuiOutlinedInput-notchedOutline":
@@ -1910,13 +1946,13 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                     className="part-remove-button"
                                     sx={{
                                       position: "absolute",
-                                      right: "-2px",
+                                      right: "4px",
                                       top: "50%",
                                       transform: "translateY(-50%)",
                                       display: "inline-flex",
                                       opacity: 0,
                                       pointerEvents: "none",
-                                      transition: "opacity 0.15s ease-in-out",
+                                      transition: "opacity 0.18s ease-in-out",
                                       zIndex: 5,
                                       "&:focus-within": {
                                         opacity: 1,
@@ -1925,6 +1961,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                     }}
                                   >
                                     <IconButton
+                                      size="small"
                                       disabled={savingPartIds.has(entry.to)}
                                       onClick={(e) => {
                                         e.stopPropagation();
@@ -1933,21 +1970,28 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                       sx={{
                                         width: 28,
                                         height: 28,
-                                        borderRadius: "50%",
+                                        borderRadius: "8px",
                                         color: isDarkMode
-                                          ? "rgba(255,255,255,0.25)"
-                                          : "rgba(0,0,0,0.25)",
-                                        background: "transparent",
+                                          ? "rgba(255,255,255,0.4)"
+                                          : "rgba(0,0,0,0.4)",
+                                        background: isDarkMode
+                                          ? "rgba(0,0,0,0.55)"
+                                          : "rgba(255,255,255,0.85)",
+                                        backdropFilter: "blur(4px)",
                                         border: "none",
                                         p: 0,
-                                        transition: "color 0.15s ease",
+                                        transition: "all 0.15s ease",
                                         "&:hover": {
-                                          color: isDarkMode ? "#ff6b6b" : "#dc2626",
-                                          background: "transparent",
+                                          color: "#ff5252",
+                                          backgroundColor: isDarkMode
+                                            ? "rgba(255, 82, 82, 0.2)"
+                                            : "rgba(255, 82, 82, 0.12)",
                                         },
                                       }}
                                     >
-                                      <DeleteOutlineIcon sx={{ fontSize: 20 }} />
+                                      <DeleteOutlineIcon
+                                        sx={{ fontSize: 18 }}
+                                      />
                                     </IconButton>
                                   </Box>
                                 </Tooltip>
@@ -1965,7 +2009,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
           )}
         </Droppable>
         {notInheritedItems.length > 0 && (
-          <List sx={{ px: 1, pt: 0, pb: 1 }}>
+          <List dense disablePadding sx={{ px: 0, pt: 0, pb: 1 }}>
             {notInheritedItems.map((entry: any, index: number) => (
               <ListItem
                 key={`not-inherited-${entry.from || index}`}
@@ -1992,7 +2036,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                     alignItems: "center",
                     width: "100%",
                     py: 0.25,
-                    px: 1,
+                    px: 0,
                     minHeight: 0,
                     boxSizing: "border-box",
                   }}
@@ -2004,6 +2048,9 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                       gap: 0.5,
                       flex: 1,
                       minWidth: 0,
+                      pl: `${ORDER_RUN_ROW_INSET_PX}px`,
+                      pr: 1,
+                      boxSizing: "border-box",
                     }}
                   >
                     {!readOnly && (
@@ -2050,23 +2097,12 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      gap: 0.5,
                       flexShrink: 0,
-                      px: 0.5,
+                      width: "100%",
+                      gap: 0.25,
                     }}
                   >
                     <ListItemIcon sx={SYMBOL_COL_SX}>
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          mr: "2px",
-                        }}
-                      >
-                        <AccountTreeOutlinedIcon
-                          sx={{ fontSize: 20, visibility: "hidden" }}
-                        />
-                      </Box>
                       <Tooltip
                         title={`"${genTitle}" has this part, but this node does not inherit it.`}
                         placement="top"
@@ -2080,25 +2116,28 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                     sx={{
                       display: "flex",
                       alignItems: "center",
-                      gap: 0.5,
+                      gap: 0.75,
                       flex: 1,
                       minWidth: 0,
-                      pr: "20px",
+                      pl: 1.25,
+                      pr: 1.5,
+                      boxSizing: "border-box",
                     }}
                   >
                     <Box aria-hidden sx={{ width: 0, overflow: "hidden" }}>
                       {rowHeightSpacer}
                     </Box>
-                    
+
                     {/* Spacer to match the width of the optional toggle (?) */}
-                    <Box sx={{ width: 23, ml: "-5px", mr: "8px", flexShrink: 0 }} />
-                    
+                    <Box sx={{ width: 24, flexShrink: 0 }} />
+
                     <Box
                       sx={{
                         display: "flex",
                         alignItems: "center",
-                        gap: 1,
+                        flex: 1,
                         width: "100%",
+                        minWidth: 0,
                       }}
                     >
                       {!!addPartFromGen && (
@@ -2109,21 +2148,39 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                           <Button
                             size="small"
                             variant="outlined"
-                            color="success"
                             disableElevation
                             fullWidth
                             startIcon={<AddIcon sx={{ fontSize: 18 }} />}
                             onClick={async () => {
-                              await addPartFromGen(entry.from, generalizationId);
+                              await addPartFromGen(
+                                entry.from,
+                                generalizationId,
+                              );
                             }}
                             sx={{
                               textTransform: "none",
-                              borderRadius: "15px",
-                              fontSize: "0.82rem",
-                              py: "3px",
+                              borderRadius: "12px",
+                              fontSize: "0.85rem",
+                              fontWeight: 600,
+                              py: "4px",
+                              color: isDarkMode ? "#4ade80" : "#16a34a",
+                              borderColor: isDarkMode
+                                ? "rgba(74, 222, 128, 0.35)"
+                                : "rgba(22, 163, 74, 0.35)",
+                              backgroundColor: isDarkMode
+                                ? "rgba(74, 222, 128, 0.06)"
+                                : "rgba(22, 163, 74, 0.04)",
+                              transition: "all 0.2s ease",
+                              "&:hover": {
+                                borderColor: isDarkMode ? "#4ade80" : "#16a34a",
+                                backgroundColor: isDarkMode
+                                  ? "rgba(74, 222, 128, 0.16)"
+                                  : "rgba(22, 163, 74, 0.1)",
+                                boxShadow: "0 0 12px rgba(74, 222, 128, 0.2)",
+                              },
                             }}
                           >
-                            Inherit
+                            Inherit {allNodes[entry.from]?.title || ""}
                           </Button>
                         </Tooltip>
                       )}
@@ -2187,7 +2244,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
           </List>
         </Popover>
         {nonDraggableItems.length > 0 && (
-          <List sx={{ px: 1, py: 0 }}>
+          <List dense disablePadding sx={{ px: 0, py: 0 }}>
             {nonDraggableItems.map((entryFrom: string, index: number) => (
               <ListItem
                 key={`non-draggable-${entryFrom || index}`}
@@ -2403,19 +2460,51 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
       </Box>
 
       {activeGeneralization && activeGenId && activeGenTitle && (
-        <Box key={activeGenId} sx={{ position: "relative" }}>
+        <Box key={activeGenId} sx={{ position: "relative", pt: 4 }}>
+          {inheritedPartsRepairing && (
+            <Box
+              sx={{
+                position: "absolute",
+                top: 8,
+                left: "50%",
+                transform: "translateX(-50%)",
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+                zIndex: 2,
+                pointerEvents: "none",
+                whiteSpace: "nowrap",
+              }}
+            >
+              <SyncedSpinner size={16} />
+              <Typography
+                sx={{
+                  fontSize: "0.75rem",
+                  fontWeight: "bold",
+                  fontStyle: "italic",
+                  color: "orange",
+                  lineHeight: 1,
+                }}
+              >
+                Calculating inheritance…
+              </Typography>
+            </Box>
+          )}
           {/* Visual Boxes for Left and Right Panels */}
           <Box
             sx={{
               position: "absolute",
               top: 0,
-              bottom: 12, // account for mb on list
+              bottom: 4,
               left: 0, // no outer px padding here, so left 0
               width: "calc(50% - 35px)",
               border: (theme) =>
                 `1px solid ${alpha(theme.palette.divider, theme.palette.mode === "dark" ? 0.15 : 0.2)}`,
               backgroundColor: (theme) =>
-                alpha(theme.palette.background.paper, theme.palette.mode === "dark" ? 0.4 : 0.7),
+                alpha(
+                  theme.palette.background.paper,
+                  theme.palette.mode === "dark" ? 0.4 : 0.7,
+                ),
               backdropFilter: "blur(12px)",
               boxShadow: (theme) =>
                 theme.palette.mode === "dark"
@@ -2430,13 +2519,16 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
             sx={{
               position: "absolute",
               top: 0,
-              bottom: 12, // account for mb on list
+              bottom: 4,
               right: 0,
               width: "calc(50% - 35px)",
               border: (theme) =>
                 `1px solid ${alpha(theme.palette.divider, theme.palette.mode === "dark" ? 0.15 : 0.2)}`,
               backgroundColor: (theme) =>
-                alpha(theme.palette.background.paper, theme.palette.mode === "dark" ? 0.4 : 0.7),
+                alpha(
+                  theme.palette.background.paper,
+                  theme.palette.mode === "dark" ? 0.4 : 0.7,
+                ),
               backdropFilter: "blur(12px)",
               boxShadow: (theme) =>
                 theme.palette.mode === "dark"
@@ -2451,39 +2543,55 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
             sx={{
               display: "flex",
               alignItems: "center",
+              justifyContent: "space-between",
               height: 40,
               position: "relative",
-              mx: 2,
-              mt: 2,
-              mb: 2.5,
+              width: "100%",
+              mt: 0,
+              mb: 3.5,
               zIndex: 1,
             }}
           >
             {/* Left Text — hidden for root nodes (no real generalizations) */}
             <Box
               sx={{
-                flex: 1,
-                minWidth: 0,
+                width: "calc(50% - 35px)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                gap: 1,
-                px: "14px",
+                px: 2,
+                boxSizing: "border-box",
               }}
             >
               {!isRootNode &&
                 (generalizations.length > 1 ? (
                   <TextField
+                    size="small"
                     value={activeGenId}
                     onChange={(e) => setActiveTab(e.target.value)}
                     select
                     label="Generalizations"
-                    sx={{ flex: 1, minWidth: 0 }}
+                    sx={{
+                      width: "100%",
+                      maxWidth: "100%",
+                      "& .MuiInputLabel-outlined.MuiInputLabel-shrink": {
+                        backgroundColor: (theme) =>
+                          theme.palette.background.paper,
+                        px: "6px",
+                        borderRadius: "4px",
+                      },
+                      "& .MuiSelect-select": {
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        textAlign: "center",
+                      },
+                    }}
                     slotProps={{
                       input: {
                         sx: {
                           height: "40px",
-                          borderRadius: "18px",
+                          borderRadius: "12px",
                           color: "text.primary",
                           fontWeight: 700,
                           fontSize: "1.15rem",
@@ -2491,7 +2599,14 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                             theme.palette.background.paper,
                         },
                       },
-                      inputLabel: { style: { color: "grey" } },
+                      inputLabel: {
+                        sx: {
+                          color: "grey",
+                          "&.Mui-focused": {
+                            color: "#f2a43a",
+                          },
+                        },
+                      },
                       select: {
                         MenuProps: {
                           PaperProps: {
@@ -2511,6 +2626,8 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                               overflow: "hidden",
                               textOverflow: "ellipsis",
                               whiteSpace: "nowrap",
+                              textAlign: "center",
+                              width: "100%",
                             }}
                           >
                             {activeGenTitle}
@@ -2544,6 +2661,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                         overflow: "hidden",
                         textOverflow: "ellipsis",
                         whiteSpace: "nowrap",
+                        textAlign: "center",
                       }}
                     >
                       {activeGenTitle}
@@ -2558,45 +2676,23 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                 left: "50%",
                 transform: "translateX(-50%)",
                 display: "flex",
-                flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "center",
-                gap: 0.5,
                 height: "40px",
                 whiteSpace: "nowrap",
               }}
             >
-              {/* Rows keep rendering from the resolved view; only the arrow
-                  hints that the annotation is recomputing. */}
-              {inheritedPartsRepairing ? (
-                <>
-                  <SyncedSpinner size={20} />
-                  <Typography
-                    sx={{
-                      fontSize: "0.7rem",
-                      fontWeight: "bold",
-                      fontStyle: "italic",
-                      color: "orange",
-                      whiteSpace: "nowrap",
-                      pointerEvents: "none",
-                      lineHeight: 1,
-                    }}
-                  >
-                    Calculating inheritance…
-                  </Typography>
-                </>
-              ) : (
-                <ArrowRightAltIcon sx={{ color: "orange", fontSize: "50px" }} />
-              )}
+              <ArrowRightAltIcon sx={{ color: "orange", fontSize: "50px" }} />
             </Box>
 
             <Box
               sx={{
-                flex: 1,
-                minWidth: 0,
-                pl: "60px",
+                width: "calc(50% - 35px)",
                 display: "flex",
+                alignItems: "center",
                 justifyContent: "center",
+                px: 2,
+                boxSizing: "border-box",
               }}
             >
               <Tooltip title={currentVisibleNode.title}>
@@ -2609,6 +2705,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                     textOverflow: "ellipsis",
                     whiteSpace: "nowrap",
                     cursor: "default",
+                    textAlign: "center",
                   }}
                 >
                   {currentVisibleNode.title}
@@ -2801,7 +2898,9 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                 border: `1px solid ${alpha("#9ca3af", isDarkMode ? 0.5 : 0.4)}`,
                               }}
                             >
-                              {PART_INHERITANCE_MODE_OPTIONS.filter((opt) => opt.value !== "neverInherit").map((option) => {
+                              {PART_INHERITANCE_MODE_OPTIONS.filter(
+                                (opt) => opt.value !== "neverInherit",
+                              ).map((option) => {
                                 const selected = option.value === mode;
                                 return (
                                   <Box

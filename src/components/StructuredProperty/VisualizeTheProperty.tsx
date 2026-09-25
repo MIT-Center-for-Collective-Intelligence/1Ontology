@@ -1,4 +1,4 @@
-import { DISPLAY } from "@components/lib/CONSTANTS";
+import { DISPLAY, OPTIONAL_PART_SYMBOL } from "@components/lib/CONSTANTS";
 import {
   capitalizeFirstLetter,
   getTooltipHelper,
@@ -205,7 +205,9 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
                               : "",
                           marginLeft: "9px",
                         }}
-                      >{`(O)`}</Typography>
+                      >
+                        {OPTIONAL_PART_SYMBOL}
+                      </Typography>
                     </Tooltip>
                   )}
                 </ListItem>
@@ -232,7 +234,7 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
                               <Tooltip title={"optional"}>
                                 <Typography
                                   sx={{ color: "orange", marginLeft: "9px" }}
-                                >{`(O)`}</Typography>
+                                >{OPTIONAL_PART_SYMBOL}</Typography>
                               </Tooltip>
                             )}
                         </ListItem>

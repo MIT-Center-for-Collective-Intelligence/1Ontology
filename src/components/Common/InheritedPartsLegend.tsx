@@ -8,6 +8,7 @@ import SyncIcon from "@mui/icons-material/Sync";
 import AccountTreeIcon from "@mui/icons-material/AccountTree";
 import BlockIcon from "@mui/icons-material/Block";
 import AccountTreeOutlinedIcon from "@mui/icons-material/AccountTreeOutlined";
+import { OPTIONAL_PART_SYMBOL } from "@components/lib/CONSTANTS";
 
 export interface LegendItem {
   symbol?: string;
@@ -19,7 +20,7 @@ export interface LegendItem {
 }
 
 export const getDefaultInheritedPartsLegendItems = (): LegendItem[] => [
-  { symbol: "?", description: "Optional" },
+  { symbol: OPTIONAL_PART_SYMBOL, description: "Optional" },
   {
     icon: <DragHandleIcon sx={{ fontSize: 20 }} />,
     symbol: "=",
@@ -73,7 +74,7 @@ const RIGHT_COLUMN_DESCRIPTIONS = new Set([
   "Never Inherit",
 ]);
 
-/** Wide enough for `(o)`; all symbol chips share this width so the column lines up. */
+/** Wide enough for the optional marker; all symbol chips share this width so the column lines up. */
 const SYMBOL_COL = "2.75rem";
 
 const InheritedPartsLegend = ({

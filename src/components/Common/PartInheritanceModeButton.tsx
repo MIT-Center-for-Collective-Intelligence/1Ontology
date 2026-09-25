@@ -10,8 +10,8 @@ import {
   SvgIconProps,
 } from "@mui/material";
 import AccountTreeIcon from "@mui/icons-material/AccountTree";
-import AccountTreeRoundedIcon from '@mui/icons-material/AccountTreeRounded';
-import AccountTreeOutlinedIcon from '@mui/icons-material/AccountTreeOutlined';
+import AccountTreeRoundedIcon from "@mui/icons-material/AccountTreeRounded";
+import AccountTreeOutlinedIcon from "@mui/icons-material/AccountTreeOutlined";
 
 import SyncIcon from "@mui/icons-material/Sync";
 import BlockIcon from "@mui/icons-material/Block";
@@ -82,13 +82,13 @@ const PartInheritanceModeButton = ({
               onOpenChange?.(true);
             }}
             sx={{
-              width: 28,
-              height: 28,
+              width: 27,
+              height: 27,
               p: 0,
               color: current.color,
               opacity: open ? 1 : 0.9,
               border: "1.5px solid transparent",
-              borderRadius: "6px",
+              borderRadius: "9px",
               transition: "border-color 0.15s ease, opacity 0.15s ease",
               "&:hover": {
                 opacity: 1,

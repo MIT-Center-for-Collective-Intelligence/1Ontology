@@ -43,7 +43,7 @@ import {
   toPartsNode,
   PartsGraph,
 } from "@components/lib/server/partsModel";
-import { DISPLAY, UNCLASSIFIED } from "@components/lib/CONSTANTS";
+import { DISPLAY, UNCLASSIFIED, OPTIONAL_PART_SYMBOL } from "@components/lib/CONSTANTS";
 import {
   collection,
   doc,
@@ -1889,7 +1889,9 @@ const StructuredProperty = ({
           showTopOptionalLegend && (
             <InheritedPartsLegend
               sx={{ ml: 2 }}
-              legendItems={[{ symbol: "?", description: "Optional" }]}
+              legendItems={[
+                { symbol: OPTIONAL_PART_SYMBOL, description: "Optional" },
+              ]}
             />
           )}
         {property === "parts" && !selectedDiffNode && !currentImprovement && (

@@ -36,11 +36,13 @@ import {
   orderBracketsAt,
 } from "@components/lib/utils/partsHelper";
 import {
+  ORDER_RUN_ROW_INSET_PX,
   orderRunBracketSx,
   orderRunBracketWrapperSx,
   orderRunRowSx,
 } from "@components/lib/utils/partsOrderStyles";
 import { makeResolvedOf } from "@components/lib/hooks/useResolvedParts";
+import { OPTIONAL_PART_SYMBOL } from "@components/lib/CONSTANTS";
 
 const SYMBOL_COL_SX = {
   minWidth: 28,
@@ -204,7 +206,7 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
         <Box component="span" sx={{ display: "inline" }}>
           {title}{" "}
           <Box component="span" sx={{ color: "#ff9500", fontWeight: "bold" }}>
-            +?
+            {`+${OPTIONAL_PART_SYMBOL}`}
           </Box>
         </Box>
       );
@@ -220,7 +222,7 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
               fontWeight: "bold",
             }}
           >
-            ?
+            {OPTIONAL_PART_SYMBOL}
           </Box>
         </Box>
       );
@@ -229,7 +231,7 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
         <Box component="span" sx={{ display: "inline" }}>
           {title}{" "}
           <Box component="span" sx={{ color: "#ff9500", fontWeight: "bold" }}>
-            ?
+            {OPTIONAL_PART_SYMBOL}
           </Box>
         </Box>
       );
@@ -318,9 +320,12 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
             position: "relative",
             zIndex: 1,
             backgroundColor: "transparent",
-            py: 0.5,
-            px: 1.5,
-            my: 0.5,
+            pt: 1,
+            pb: 3.5,
+            pl: 0.5,
+            pr: 1.5,
+            mt: 0.5,
+            mb: 1,
           }}
         >
           {details.map((entry, index) => {
@@ -354,7 +359,7 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                     minHeight: 0,
                     boxSizing: "border-box",
                     position: "relative",
-                    pl: "26px",
+                    pl: `${ORDER_RUN_ROW_INSET_PX}px`,
                     py: "4px",
                     // Missing parts (gen has it, node doesn't) — de-emphasised
                     ...(isMissing && {
@@ -742,14 +747,43 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
           </Box>
 
           {activeGenId && activeGenTitle && (
-            <Box key={activeGenId} sx={{ px: "10px", position: "relative" }}>
+            <Box key={activeGenId} sx={{ position: "relative", pt: 4 }}>
+              {inheritedPartsRepairing && (
+                <Box
+                  sx={{
+                    position: "absolute",
+                    top: 8,
+                    left: "50%",
+                    transform: "translateX(-50%)",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                    zIndex: 2,
+                    pointerEvents: "none",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  <SyncedSpinner size={16} />
+                  <Typography
+                    sx={{
+                      fontSize: "0.75rem",
+                      fontWeight: "bold",
+                      fontStyle: "italic",
+                      color: "orange",
+                      lineHeight: 1,
+                    }}
+                  >
+                    Calculating inheritance…
+                  </Typography>
+                </Box>
+              )}
               {/* Visual Boxes for Left and Right Panels */}
               <Box
                 sx={{
                   position: "absolute",
                   top: 0,
-                  bottom: 12, // account for mb on list
-                  left: "10px",
+                  bottom: 4,
+                  left: 0,
                   width: "calc(50% - 35px)",
                   border: (theme) =>
                     `1px solid ${alpha(theme.palette.divider, theme.palette.mode === "dark" ? 0.15 : 0.2)}`,
@@ -769,8 +803,8 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                 sx={{
                   position: "absolute",
                   top: 0,
-                  bottom: 12, // account for mb on list
-                  right: "10px",
+                  bottom: 4,
+                  right: 0,
                   width: "calc(50% - 35px)",
                   border: (theme) =>
                     `1px solid ${alpha(theme.palette.divider, theme.palette.mode === "dark" ? 0.15 : 0.2)}`,
@@ -791,46 +825,69 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                 sx={{
                   display: "flex",
                   alignItems: "center",
+                  justifyContent: "space-between",
                   height: 40,
                   position: "relative",
-                  mx: 2,
-                  mt: 2,
-                  mb: inheritedPartsRepairing ? 4 : 2.5,
+                  width: "100%",
+                  mt: 0,
+                  mb: 3.5,
                   zIndex: 1,
                 }}
               >
                 {/* Left Text */}
                 <Box
                   sx={{
-                    flex: 1,
-                    minWidth: 0,
+                    width: "calc(50% - 35px)",
                     display: "flex",
                     alignItems: "center",
-                    gap: 1,
-                    pr: "30px", // space to avoid overlap with center icon
-                    pl: "14px", // space to align with list
+                    justifyContent: "center",
+                    px: 2,
+                    boxSizing: "border-box",
                   }}
                 >
                   {generalizations.length > 1 ? (
                     <TextField
+                      size="small"
                       value={activeGenId}
                       onChange={(e) => setActiveTab(e.target.value)}
                       select
                       label="Generalizations"
-                      sx={{ flex: 1, minWidth: 0 }}
+                      sx={{
+                        width: "100%",
+                        maxWidth: "100%",
+                        "& .MuiInputLabel-outlined.MuiInputLabel-shrink": {
+                          backgroundColor: (theme) =>
+                            theme.palette.background.paper,
+                          px: "6px",
+                          borderRadius: "4px",
+                        },
+                        "& .MuiSelect-select": {
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          textAlign: "center",
+                        },
+                      }}
                       slotProps={{
                         input: {
                           sx: {
                             height: "40px",
-                            borderRadius: "18px",
-                            color: "orange",
+                            borderRadius: "12px",
+                            color: "text.primary",
                             fontWeight: 700,
                             fontSize: "1.15rem",
                             backgroundColor: (theme) =>
                               theme.palette.background.paper,
                           },
                         },
-                        inputLabel: { style: { color: "grey" } },
+                        inputLabel: {
+                          sx: {
+                            color: "grey",
+                            "&.Mui-focused": {
+                              color: "#f2a43a",
+                            },
+                          },
+                        },
                         select: {
                           MenuProps: {
                             PaperProps: {
@@ -850,6 +907,8 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                                 overflow: "hidden",
                                 textOverflow: "ellipsis",
                                 whiteSpace: "nowrap",
+                                textAlign: "center",
+                                width: "100%",
                               }}
                             >
                               {activeGenTitle}
@@ -867,9 +926,10 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                             borderRadius: "25px",
                             my: "4px",
                             mx: "8px",
+                            justifyContent: "center",
                           }}
                         >
-                          <Typography>{gen.title}</Typography>
+                          <Typography sx={{ textAlign: "center" }}>{gen.title}</Typography>
                         </MenuItem>
                       ))}
                     </TextField>
@@ -883,6 +943,7 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                           overflow: "hidden",
                           textOverflow: "ellipsis",
                           whiteSpace: "nowrap",
+                          textAlign: "center",
                         }}
                       >
                         {activeGenTitle}
@@ -896,57 +957,39 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                     position: "absolute",
                     left: "50%",
                     transform: "translateX(-50%)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    height: "40px",
+                    whiteSpace: "nowrap",
                   }}
                 >
-                  {/* Rows keep rendering; only the arrow hints that the
-                      annotation is recomputing. */}
-                  {inheritedPartsRepairing ? (
-                    <SyncedSpinner size={20} />
-                  ) : (
-                    <ArrowRightAltIcon
-                      sx={{ color: "orange", fontSize: "50px" }}
-                    />
-                  )}
+                  <ArrowRightAltIcon
+                    sx={{ color: "orange", fontSize: "50px" }}
+                  />
                 </Box>
-
-                {inheritedPartsRepairing && (
-                  <Typography
-                    sx={{
-                      position: "absolute",
-                      top: "100%",
-                      left: "50%",
-                      transform: "translateX(-50%)",
-                      mt: "1px",
-                      fontSize: "0.75rem",
-                      fontWeight: "bold",
-                      fontStyle: "italic",
-                      color: "orange",
-                      whiteSpace: "nowrap",
-                      pointerEvents: "none",
-                    }}
-                  >
-                    Calculating inheritance…
-                  </Typography>
-                )}
 
                 <Box
                   sx={{
-                    flex: 1,
-                    minWidth: 0,
-                    pl: "60px",
+                    width: "calc(50% - 35px)",
                     display: "flex",
-                    justifyContent: "flex-start",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    px: 2,
+                    boxSizing: "border-box",
                   }}
                 >
                   <Tooltip title={currentVisibleNode.title}>
                     <Typography
                       sx={{
+                        color: "orange",
                         fontWeight: 700,
                         fontSize: "1.15rem",
                         overflow: "hidden",
                         textOverflow: "ellipsis",
                         whiteSpace: "nowrap",
                         cursor: "default",
+                        textAlign: "center",
                       }}
                     >
                       {currentVisibleNode.title}

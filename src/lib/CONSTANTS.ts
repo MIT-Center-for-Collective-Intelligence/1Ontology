@@ -289,3 +289,6 @@ export const performerColors: Record<string, string> = {
   "Collaboration of humans and AI": "#734946",
   AI: "#4caf50",
 };
+
+/** Marker shown next to a part that is optional. */
+export const OPTIONAL_PART_SYMBOL = "?";

@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Box, Link, Tooltip, Typography } from "@mui/material";
 import { INode, ILinkNode } from "@components/types/INode";
+import { OPTIONAL_PART_SYMBOL } from "@components/lib/CONSTANTS";
 
 interface LinkNodeTitleProps {
   title: string;
@@ -58,7 +59,9 @@ const LinkNodeTitle = ({
       >
         {title}{" "}
         {link.optional && selectedProperty !== property && (
-          <span style={{ color: "orange", marginLeft: "2px" }}>{`O`}</span>
+          <span style={{ color: "orange", marginLeft: "2px" }}>
+            {OPTIONAL_PART_SYMBOL}
+          </span>
         )}
       </Link>
     </Box>
