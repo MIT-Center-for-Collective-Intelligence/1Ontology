@@ -4,7 +4,7 @@
  * Write entry points that trigger this (via HTTP `POST /api/nodes/update-derived-paths`):
  * - `src/components/OntologyComponents/Node.tsx` — handleSaveLinkChanges (specializations / generalizations)
  * - `src/components/Improvements/Improvements.tsx` — handleSaveLinkChanges
- * - `src/components/OntologyComponents/DraggableTree.tsx` — tree reparent (cross-parent move)
+ * - `src/components/OntologyComponents/OutlineView.tsx` — tree reparent (cross-parent move)
  * - `src/components/LinkNode/LinkNode.tsx` — unlink specialization / generalization
  *
  * Same `updateDerivedPaths` function can be invoked from Cloud Functions / batch jobs by importing
