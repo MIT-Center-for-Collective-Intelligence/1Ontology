@@ -291,4 +291,4 @@ export const performerColors: Record<string, string> = {
 };
 
 /** Marker shown next to a part that is optional. */
-export const OPTIONAL_PART_SYMBOL = "?";
+export const OPTIONAL_PART_SYMBOL = "O";

@@ -688,6 +688,11 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
       generalizations.find((g) => g.id === generalizationId)?.title ?? "";
     // Check if node has any parts at all
     const hasParts = resolvedParts.length > 0;
+    // The generalization can still have parts when this node has none. Those
+    // belong in the left box, as parts this node has not inherited.
+    const generalizationParts = (resolvedOf(generalizationId) ?? []).filter(
+      (part: ILinkNode) => !!part?.id,
+    );
 
     // Computed first so the nodes with no parts can render pending rows too
     const pendingQueuedParts = Object.entries(clonedNodesQueue || {})
@@ -816,31 +821,38 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
         </List>
       ) : null;
 
-    if (!hasParts) {
+    if (!hasParts && generalizationParts.length === 0) {
       if (pendingRowsList) {
         return <Box>{pendingRowsList}</Box>;
       }
       return (
         <Box
           sx={{
-            display: "flex",
+            display: "grid",
+            gridTemplateColumns: SYMBOL_GRID_COLUMNS,
             alignItems: "center",
-            justifyContent: "center",
-            gap: 1,
-            py: 2,
+            position: "relative",
+            zIndex: 1,
+            py: 2.5,
           }}
         >
-          <Typography
-            variant="body2"
-            sx={{
-              color: (theme) =>
-                theme.palette.mode === "light" ? "#95a5a6" : "#7f8c8d",
-              fontStyle: "italic",
-              fontSize: "0.75rem",
-            }}
-          >
-            No parts available
-          </Typography>
+          {["generalization", "node"].map((side) => (
+            <Typography
+              key={side}
+              sx={{
+                gridColumn: side === "generalization" ? 1 : 3,
+                px: 2,
+                textAlign: "center",
+                color: "text.secondary",
+                fontStyle: "italic",
+                fontSize: "0.95rem",
+                fontWeight: 500,
+                lineHeight: 1.4,
+              }}
+            >
+              No parts available
+            </Typography>
+          ))}
         </Box>
       );
     }
@@ -1021,10 +1033,30 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
     });
 
     // Parts the generalization has but this node did not inherit.
-    // They have no own-part row, so the draggable list above skips them
-    const notInheritedItems = details.filter(
+    // They have no own-part row, so the draggable list above skips them.
+    // When this node has no parts, every generalization part is one of these,
+    // read live so they show before the annotation has listed them.
+    const notInheritedFromAnnotation = details.filter(
       (d: any) => d.symbol === "x" && !currentNodePartIdsSet.has(d.from),
     );
+    const notInheritedItems = hasParts
+      ? notInheritedFromAnnotation
+      : generalizationParts.map((part: ILinkNode) => {
+          const annotated = notInheritedFromAnnotation.find(
+            (entry: any) => entry.from === part.id,
+          );
+          return {
+            from: part.id,
+            to: "",
+            symbol: "x",
+            fromTitle:
+              allNodes[part.id]?.title ||
+              part.title ||
+              annotated?.fromTitle ||
+              "",
+            fromOptional: part.optional ?? annotated?.fromOptional,
+          };
+        });
 
     // "x" rows render in their own lists right below the draggable one; the
     // draggable list drops its bottom padding then so they read as one list.

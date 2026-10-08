@@ -245,29 +245,40 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
       generalizations.find((g) => g.id === generalizationId)?.title ?? "";
     // Check if node has any parts at all
     const hasParts = resolvedParts.length > 0;
+    // The generalization can still have parts when this node has none.
+    const generalizationParts = (resolvedOf(generalizationId) ?? []).filter(
+      (part: ILinkNode) => !!part?.id,
+    );
 
-    if (!hasParts) {
+    if (!hasParts && generalizationParts.length === 0) {
       return (
         <Box
           sx={{
-            display: "flex",
+            display: "grid",
+            gridTemplateColumns: "calc(50% - 35px) 70px calc(50% - 35px)",
             alignItems: "center",
-            justifyContent: "center",
-            gap: 1,
-            py: 2,
+            position: "relative",
+            zIndex: 1,
+            py: 2.5,
           }}
         >
-          <Typography
-            variant="body2"
-            sx={{
-              color: (theme) =>
-                theme.palette.mode === "light" ? "#95a5a6" : "#7f8c8d",
-              fontStyle: "italic",
-              fontSize: "0.75rem",
-            }}
-          >
-            No parts available
-          </Typography>
+          {["generalization", "node"].map((side) => (
+            <Typography
+              key={side}
+              sx={{
+                gridColumn: side === "generalization" ? 1 : 3,
+                px: 2,
+                textAlign: "center",
+                color: "text.secondary",
+                fontStyle: "italic",
+                fontSize: "0.95rem",
+                fontWeight: 500,
+                lineHeight: 1.4,
+              }}
+            >
+              No parts available
+            </Typography>
+          ))}
         </Box>
       );
     }
@@ -277,7 +288,7 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
       (calc) => calc.generalizationId === generalizationId,
     );
 
-    if (!inheritedPartsDetails || !cachedGeneralizationData) {
+    if (hasParts && (!inheritedPartsDetails || !cachedGeneralizationData)) {
       return (
         <Box
           sx={{
@@ -304,7 +315,27 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
       );
     }
 
-    const details = cachedGeneralizationData.details || [];
+    const annotatedDetails = cachedGeneralizationData?.details || [];
+    // No parts on this node: show each generalization part in the left box.
+    const details = hasParts
+      ? annotatedDetails
+      : generalizationParts.map((part: ILinkNode) => {
+          const annotated = annotatedDetails.find(
+            (entry: any) => entry.from === part.id,
+          );
+          return {
+            from: part.id,
+            to: "",
+            symbol: "x",
+            fromTitle:
+              nodes[part.id]?.title || part.title || annotated?.fromTitle || "",
+            fromOptional: !!(part.optional ?? annotated?.fromOptional),
+            toTitle: "",
+            toOptional: false,
+            optionalChange: "none" as const,
+            hops: -1,
+          };
+        });
     const orderRuns = computeOrderRuns(
       details,
       resolvedOf(generalizationId).map((p: ILinkNode) => p.id),
