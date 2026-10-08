@@ -9,6 +9,10 @@ import {
 import { Box, Paper, Tooltip, Typography } from "@mui/material";
 import { DISPLAY } from "@components/lib/CONSTANTS";
 import SelectInheritance from "../SelectInheritance/SelectInheritance";
+import PartInheritanceModeButton, {
+  InheritanceMode,
+} from "../Common/PartInheritanceModeButton";
+import { setPropertyInheritanceMode } from "@components/lib/utils/propertyInheritanceMode";
 import PropertyContributors from "./PropertyContributors";
 import InheritanceDetailsPanel from "./InheritanceDetailsPanel";
 import { Post } from "@components/lib/utils/Post";
@@ -163,19 +167,41 @@ const ChipsProperty = ({
               : "",
         }}
       >
-        <Tooltip title={getTooltipHelper(property)}>
-          <Typography
-            sx={{
-              fontSize: "20px",
-              fontWeight: 500,
-              fontFamily: "Roboto, sans-serif",
-            }}
-          >
-            {capitalizeFirstLetter(
-              DISPLAY[property] ? DISPLAY[property] : property,
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Tooltip title={getTooltipHelper(property)}>
+            <Typography
+              sx={{
+                fontSize: "20px",
+                fontWeight: 500,
+                fontFamily: "Roboto, sans-serif",
+              }}
+            >
+              {capitalizeFirstLetter(
+                DISPLAY[property] ? DISPLAY[property] : property,
+              )}
+            </Typography>
+          </Tooltip>
+          {!!currentVisibleNode.inheritance?.[property] &&
+            !currentVisibleNode.unclassified && (
+              <PartInheritanceModeButton
+                value={
+                  (currentVisibleNode.inheritance[property]
+                    .inheritanceType as InheritanceMode) ||
+                  "inheritUnlessAlreadyOverRidden"
+                }
+                disabled={!enableEdit || locked}
+                onChange={(mode) => {
+                  void setPropertyInheritanceMode({
+                    nodeId: currentVisibleNode.id,
+                    property,
+                    mode,
+                    nodes: relatedNodes,
+                    fetchNode,
+                  });
+                }}
+              />
             )}
-          </Typography>
-        </Tooltip>
+        </Box>
 
         <Box sx={{ display: "flex", ml: "auto", gap: "14px" }}>
           <PropertyContributors

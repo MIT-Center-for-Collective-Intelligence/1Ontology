@@ -43,7 +43,7 @@ interface PaginatedTreeData extends TreeData {
   loadDirection?: "top" | "bottom";
 }
 
-function DraggableTree({
+function OutlineView({
   treeViewData,
   setSnackbarMessage,
   nodes,
@@ -1466,7 +1466,7 @@ function DraggableTree({
     </Box>
   );
 }
-export default DraggableTree;
+export default OutlineView;
 
 function Input({
   node,

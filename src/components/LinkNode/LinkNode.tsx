@@ -115,6 +115,7 @@ import LinkOffIcon from "@mui/icons-material/LinkOff";
 import {
   UNCLASSIFIED,
   UNCLASSIFIED_COLLECTION,
+  OPTIONAL_PART_SYMBOL,
 } from "@components/lib/CONSTANTS";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import LinkNodeTitle from "./LinkNodeTitle";
@@ -755,7 +756,7 @@ const LinkNode = ({
                   variant={link.optional ? "contained" : "outlined"}
                   onClick={makeLinkOptional}
                 >
-                  O
+                  {OPTIONAL_PART_SYMBOL}
                 </Button>
               </Tooltip>
             )}

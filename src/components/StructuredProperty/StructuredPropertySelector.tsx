@@ -924,7 +924,7 @@ const StructuredPropertySelector = ({
                 ml: "4px",
               }}
             >
-              <Box sx={{ flexGrow: 1 }}>
+              <Box sx={{ flexGrow: 1, minWidth: 0 }}>
                 <SearchBox
                   setSearch={setSearchValue}
                   search={searchValue}
@@ -961,10 +961,12 @@ const StructuredPropertySelector = ({
                   }
                   sx={{
                     borderRadius: "30px",
-                    px: "24px",
+                    px: "20px",
                     height: "40px",
                     textTransform: "none",
                     fontWeight: 600,
+                    whiteSpace: "nowrap",
+                    flexShrink: 0,
                     boxShadow: "none",
                     "&:hover": {
                       boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
@@ -972,10 +974,7 @@ const StructuredPropertySelector = ({
                     py: 0,
                   }}
                 >
-                  Create{" "}
-                  {selectedProperty !== "specializations"
-                    ? "New Specialization"
-                    : "Specialization"}
+                  Create New Specialization
                 </Button>
               </Tooltip>
             </Box>

@@ -714,3 +714,113 @@ export async function absorbDescendantOwnership(
     }
   }
 }
+
+/**
+ * Automatically propagates newly added parts from a parent to all of its descendants
+ * that do not inherit it dynamically (e.g. customized descendants or those following
+ * a different primary generalization).
+ */
+export async function propagateAddedParts(
+  addedNodeId: string,
+  additions: ILinkNode[],
+  cache: NodeCache,
+  parentLog: NodeChange["triggeredBy"],
+  uname: string | undefined,
+  appName: string | undefined,
+  childLogs: NodeChange[],
+): Promise<void> {
+  const descendantsSnap = await db
+    .collection(NODES)
+    .where("pathIds", "array-contains", addedNodeId)
+    .get();
+
+  let batch = db.batch();
+  let pending = 0;
+
+  const chainGraphFor = async (nodeId: string): Promise<PartsGraph> => {
+    const graph: PartsGraph = new Map();
+    let cursor: string | null | undefined = nodeId;
+    while (cursor && !graph.has(cursor)) {
+      const d = await getNode(cursor, cache);
+      if (!d) break;
+      const partsNode = toPartsNode({ ...d, id: cursor });
+      graph.set(cursor, partsNode);
+      cursor = partsNode.partsInheritance.source;
+    }
+    return graph;
+  };
+
+  for (const doc of descendantsSnap.docs) {
+    if (doc.id === addedNodeId) continue;
+
+    const descendant = { ...doc.data(), id: doc.id } as INode;
+    if (descendant.deleted) continue;
+
+    const graph = await chainGraphFor(descendant.id);
+    const resolvedIds = new Set(
+      resolveParts(descendant.id, graph).map((p) => p.id),
+    );
+
+    const missingAdditions = additions.filter((a) => !resolvedIds.has(a.id));
+    if (missingAdditions.length === 0) continue;
+
+    const beforeCol = asPartsCollections(descendant.properties?.parts);
+    const entries = partsNodes(beforeCol);
+    const existingIds = new Set(entries.map((e) => e.id));
+
+    const toAppend: ILinkNode[] = [];
+    for (const a of missingAdditions) {
+      if (existingIds.has(a.id)) continue;
+      const owner = a.inheritedFrom ?? addedNodeId;
+      const copy: ILinkNode = {
+        id: a.id,
+        title: a.title,
+        inheritedFrom: owner,
+      };
+      if (a.optional) copy.optional = true;
+      toAppend.push(copy);
+    }
+
+    if (toAppend.length === 0) continue;
+
+    const nextEntries = [...entries, ...toAppend];
+    const side = toParts(nextEntries);
+
+    batch.update(db.collection(NODES).doc(descendant.id), {
+      "properties.parts": side,
+      partSources: partSourcesOf(
+        nextEntries,
+        Object.keys(descendant.partsInheritance?.overrides ?? {}),
+      ),
+    });
+
+    cache.set(descendant.id, {
+      ...descendant,
+      properties: { ...descendant.properties, parts: side },
+    } as INode);
+
+    if (uname) {
+      childLogs.push({
+        nodeId: descendant.id,
+        modifiedBy: uname,
+        modifiedProperty: "parts",
+        previousValue: beforeCol,
+        newValue: side,
+        modifiedAt: new Date(),
+        changeType: "modify elements",
+        fullNode: descendant,
+        triggeredBy: parentLog,
+        ...(appName ? { appName } : {}),
+      } as NodeChange);
+    }
+
+    pending += 1;
+    if (pending >= MAX_TRANSACTION_WRITES) {
+      await batch.commit();
+      batch = db.batch();
+      pending = 0;
+    }
+  }
+
+  if (pending > 0) await batch.commit();
+}

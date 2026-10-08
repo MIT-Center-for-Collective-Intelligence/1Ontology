@@ -29,6 +29,7 @@ import {
   OpenInNew,
   AccountTree as AccountTreeIcon,
 } from "@mui/icons-material";
+import { OPTIONAL_PART_SYMBOL } from "@components/lib/CONSTANTS";
 
 // Modern Tooltip Component
 type FeatureType =
@@ -1591,7 +1592,7 @@ export const PlatformLandingSection = ({
                                       '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
                                   }}
                                 >
-                                  Pack (O)
+                                  Pack {OPTIONAL_PART_SYMBOL}
                                 </Typography>
                               </Box>
                               <Box
@@ -1609,7 +1610,7 @@ export const PlatformLandingSection = ({
                                       '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
                                   }}
                                 >
-                                  Load (O)
+                                  Load {OPTIONAL_PART_SYMBOL}
                                 </Typography>
                               </Box>
                               <Box
@@ -1645,7 +1646,7 @@ export const PlatformLandingSection = ({
                                       '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
                                   }}
                                 >
-                                  Unload (O)
+                                  Unload {OPTIONAL_PART_SYMBOL}
                                 </Typography>
                               </Box>
                               <Box
@@ -1663,7 +1664,7 @@ export const PlatformLandingSection = ({
                                       '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
                                   }}
                                 >
-                                  Unpack (O)
+                                  Unpack {OPTIONAL_PART_SYMBOL}
                                 </Typography>
                               </Box>
                               <Box
@@ -1865,7 +1866,7 @@ export const PlatformLandingSection = ({
                                             '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
                                         }}
                                       >
-                                        Pack (O)
+                                        Pack {OPTIONAL_PART_SYMBOL}
                                       </Typography>
                                     </Box>
 
@@ -1904,7 +1905,7 @@ export const PlatformLandingSection = ({
                                             '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
                                         }}
                                       >
-                                        Load (O)
+                                        Load {OPTIONAL_PART_SYMBOL}
                                       </Typography>
                                     </Box>
 
@@ -1999,7 +2000,7 @@ export const PlatformLandingSection = ({
                                             '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
                                         }}
                                       >
-                                        Unload (O)
+                                        Unload {OPTIONAL_PART_SYMBOL}
                                       </Typography>
                                     </Box>
 
@@ -2038,7 +2039,7 @@ export const PlatformLandingSection = ({
                                             '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
                                         }}
                                       >
-                                        Unpack (O)
+                                        Unpack {OPTIONAL_PART_SYMBOL}
                                       </Typography>
                                     </Box>
 
@@ -2126,7 +2127,7 @@ export const PlatformLandingSection = ({
                                       }}
                                     >
                                       <span style={{ color: "#f57c00" }}>
-                                        (O)
+                                        {OPTIONAL_PART_SYMBOL}
                                       </span>
                                       <Typography
                                         variant="caption"
