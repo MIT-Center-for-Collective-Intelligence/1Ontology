@@ -1036,11 +1036,40 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
     // They have no own-part row, so the draggable list above skips them.
     // When this node has no parts, every generalization part is one of these,
     // read live so they show before the annotation has listed them.
+    const coveredFromIds = new Set(
+      draggableItems.map((item: any) => item.from).filter(Boolean),
+    );
     const notInheritedFromAnnotation = details.filter(
       (d: any) => d.symbol === "x" && !currentNodePartIdsSet.has(d.from),
     );
+    const annotatedXFromIds = new Set(
+      notInheritedFromAnnotation.map((d: any) => d.from),
+    );
+    const seenRemovedFrom = new Set<string>();
+    const removedStillOnGen = details.flatMap((d: any) => {
+      if (!d.from || d.symbol === "x" || d.symbol === "+") return [];
+      if (coveredFromIds.has(d.from) || annotatedXFromIds.has(d.from)) {
+        return [];
+      }
+      if (currentNodePartIdsSet.has(d.from)) return [];
+      if (d.to && currentNodePartIdsSet.has(d.to)) return [];
+      const genPart = generalizationParts.find(
+        (part: ILinkNode) => part.id === d.from,
+      );
+      if (!genPart || seenRemovedFrom.has(d.from)) return [];
+      seenRemovedFrom.add(d.from);
+      return [
+        {
+          from: d.from,
+          to: "",
+          symbol: "x",
+          fromTitle: allNodes[d.from]?.title || genPart.title || d.fromTitle || "",
+          fromOptional: !!(genPart.optional ?? d.fromOptional),
+        },
+      ];
+    });
     const notInheritedItems = hasParts
-      ? notInheritedFromAnnotation
+      ? [...notInheritedFromAnnotation, ...removedStillOnGen]
       : generalizationParts.map((part: ILinkNode) => {
           const annotated = notInheritedFromAnnotation.find(
             (entry: any) => entry.from === part.id,
@@ -2286,7 +2315,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                   display: "flex",
                   alignItems: "center",
                   gap: 0.5,
-                  pr: 1,
+                  // pr: 1,
                   minHeight: 0,
                   boxSizing: "border-box",
                   ...orderRunRowSx(
