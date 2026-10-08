@@ -1,26 +1,18 @@
 import React, { useEffect, useState } from "react";
 import { ReactFlowProvider } from "@xyflow/react";
 import {
-  Paper,
   Box,
+  Button,
   Typography,
   Tabs,
   Tab,
   Divider,
   CircularProgress,
   useTheme,
-  IconButton,
-  Tooltip,
 } from "@mui/material";
 import { INode, IAlgorithm } from "@components/types/INode";
 import AlgorithmFlowVisualizer from "./AlgorithmFlowVisualizer";
-import {
-  collection,
-  getFirestore,
-  onSnapshot,
-  query,
-  where,
-} from "firebase/firestore";
+import { doc, getFirestore, onSnapshot } from "firebase/firestore";
 import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
 import { Post } from "@components/lib/utils/Post";
 import { ALGORITHMS } from "@components/lib/firestoreClient/collections";
@@ -359,66 +351,65 @@ const sampleAlgorithmsData = {
  */
 interface NodeActivityFlowProps {
   node: INode;
-  confirmIt: any;
-  relatedNodes: { [id: string]: INode };
-  fetchNode: (nodeId: string) => Promise<INode | null>;
-  onNodeAdd?: (parentId: string, newNodeData: Partial<INode>) => void;
 }
 
 /**
  * NodeActivityFlow - Displays algorithm flow visualizations for a node
  *
- * This component shows algorithm flowcharts related to a specific node
- * and allows switching between different algorithms using tabs.
+ * Rendered inside the parts card, below the inherited parts details. Reads
+ * the stored flows from algorithms/{nodeId} and can (re)generate them.
  */
-const NodeActivityFlow: React.FC<NodeActivityFlowProps> = ({
-  node,
-  confirmIt,
-}) => {
+const NodeActivityFlow: React.FC<NodeActivityFlowProps> = ({ node }) => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
   const db = getFirestore();
   const [activeTab, setActiveTab] = useState<number>(0);
   const [algorithms, setAlgorithms] = useState<IAlgorithm[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
   const [openAiRequestLoading, setOpenAiRequestLoading] = useState(false);
+  const [generateError, setGenerateError] = useState<string | null>(null);
 
   useEffect(() => {
-    const algorithmsCollection = query(
-      collection(db, ALGORITHMS),
-      where("__name__", "==", node.id),
-    );
     setAlgorithms([]);
-    const fetchAlgorithms = async () => {
-      if (development) {
-        setAlgorithms(sampleAlgorithmsData.algorithms as any);
-        return;
-      }
-      setLoading(true);
-      const unsubscribe = onSnapshot(algorithmsCollection, (snapshot) => {
-        const fetchedAlgorithms: any = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        setAlgorithms(fetchedAlgorithms[0]?.algorithms || []);
-      });
-      setLoading(false);
-
-      return () => unsubscribe();
-    };
-
-    fetchAlgorithms();
+    setActiveTab(0);
+    setGenerateError(null);
+    setLoading(true);
+    const unsubscribe = onSnapshot(
+      doc(db, ALGORITHMS, node.id),
+      (snapshot) => {
+        const stored: IAlgorithm[] = snapshot.data()?.algorithms || [];
+        // Dev fallback so the visualizer has something to show locally.
+        setAlgorithms(
+          stored.length === 0 && development
+            ? (sampleAlgorithmsData.algorithms as any)
+            : stored,
+        );
+        setLoading(false);
+      },
+      (error) => {
+        console.error(error);
+        setLoading(false);
+      },
+    );
+    return () => unsubscribe();
   }, [node.id, db]);
+
+  useEffect(() => {
+    if (activeTab >= algorithms.length) setActiveTab(0);
+  }, [algorithms, activeTab]);
 
   const generateFlowCharts = async () => {
     try {
+      setGenerateError(null);
       setOpenAiRequestLoading(true);
-      await Post("/flowchart", { nodeId: node.id });
-    } catch (error) {
-      /*       confirmIt(
-        "The was an error generating Activity Flows, please try again!",
-      ); */
+      // No automatic retry: each call is a full (slow, billed) model run.
+      await Post("/flowchart", { nodeId: node.id }, false);
+    } catch (error: any) {
       console.error(error);
+      setGenerateError(
+        error?.response?.data?.error ||
+          "There was an error generating activity flows, please try again.",
+      );
     } finally {
       setOpenAiRequestLoading(false);
     }
@@ -429,20 +420,11 @@ const NodeActivityFlow: React.FC<NodeActivityFlowProps> = ({
   };
 
   return (
-    <Paper
-      elevation={9}
+    <Box
       sx={{
-        borderRadius: "30px",
-        borderBottomRightRadius: "18px",
-        borderBottomLeftRadius: "18px",
-        width: "100%",
-        minHeight: "500px",
-        overflow: "auto",
-        position: "relative",
-        display: "flex",
-        flexDirection: "column",
-        bgcolor: (theme) =>
-          theme.palette.mode === "dark" ? "#1a1a1a" : "#ffffff",
+        mt: 2,
+        borderTop: (theme) =>
+          `1.5px solid ${theme.palette.mode === "light" ? "#f0f0f0" : "#333"}`,
       }}
     >
       {/* Header */}
@@ -451,38 +433,40 @@ const NodeActivityFlow: React.FC<NodeActivityFlowProps> = ({
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          background: (theme) =>
-            theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
-          p: 3,
+          px: 2,
+          py: 1.5,
         }}
       >
-        <Typography
-          sx={{
-            fontSize: "20px",
-            fontWeight: 500,
-            fontFamily: "Roboto, sans-serif",
-            color: (theme) =>
-              theme.palette.mode === "dark" ? "#ffffff" : "#000000",
-          }}
-        >
+        <Typography sx={{ ml: "7px", fontSize: "19px", fontWeight: "bold" }}>
           Activity Flow
         </Typography>
-        {!development && (
-          <Tooltip
-            title={`Generate ${algorithms.length > 0 ? "New" : ""} Activity Flows`}
-          >
-            {openAiRequestLoading ? (
-              <CircularProgress />
+        <Button
+          variant="outlined"
+          onClick={generateFlowCharts}
+          disabled={openAiRequestLoading}
+          startIcon={
+            openAiRequestLoading ? (
+              <CircularProgress size={16} />
             ) : (
-              <IconButton onClick={generateFlowCharts}>
-                <AutoFixHighIcon />
-              </IconButton>
-            )}
-          </Tooltip>
-        )}
+              <AutoFixHighIcon />
+            )
+          }
+          sx={{ borderRadius: "25px" }}
+        >
+          {openAiRequestLoading
+            ? "Generating…"
+            : algorithms.length > 0
+              ? "Regenerate flows"
+              : "Generate flows"}
+        </Button>
       </Box>
+      {generateError && (
+        <Typography sx={{ px: 3, pb: 1, color: "error.main", fontSize: "14px" }}>
+          {generateError}
+        </Typography>
+      )}
 
-      <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
+      <Box sx={{ display: "flex", flexDirection: "column" }}>
         {algorithms.length > 0 ? (
           <>
             {/* Algorithm tabs */}
@@ -492,7 +476,7 @@ const NodeActivityFlow: React.FC<NodeActivityFlowProps> = ({
                 justifyContent: "space-between",
                 alignItems: "center",
                 px: 2,
-                py: 1,
+                pb: 1,
               }}
             >
               <Tabs
@@ -530,19 +514,8 @@ const NodeActivityFlow: React.FC<NodeActivityFlowProps> = ({
             </Box>
 
             {/* Algorithm flowchart */}
-            <Box sx={{ flex: 1, overflow: "hidden" }}>
-              {loading ? (
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    height: "100%",
-                  }}
-                >
-                  <CircularProgress />
-                </Box>
-              ) : (
+            <Box sx={{ overflow: "hidden" }}>
+              {algorithms[activeTab] && (
                 <ReactFlowProvider>
                   <AlgorithmFlowVisualizer
                     algorithm={algorithms[activeTab]}
@@ -572,38 +545,27 @@ const NodeActivityFlow: React.FC<NodeActivityFlowProps> = ({
           <NoAlgorithmsMessage loading={loading} />
         )}
       </Box>
-    </Paper>
+    </Box>
   );
 };
 
 const NoAlgorithmsMessage: React.FC<{ loading: boolean }> = ({ loading }) => {
-  if (loading) {
-    return (
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100%",
-        }}
-      >
-        <CircularProgress />
-      </Box>
-    );
-  }
-
   return (
     <Box
       sx={{
-        flexGrow: 1,
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
+        py: 4,
       }}
     >
-      <Typography variant="body1" color="text.secondary">
-        No algorithms available for this node.
-      </Typography>
+      {loading ? (
+        <CircularProgress size={24} />
+      ) : (
+        <Typography variant="body1" color="text.secondary">
+          {'No activity flows yet. Use "Generate flows" to create them.'}
+        </Typography>
+      )}
     </Box>
   );
 };

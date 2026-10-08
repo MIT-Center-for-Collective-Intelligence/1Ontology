@@ -132,8 +132,6 @@ import StructuredProperty from "../StructuredProperty/StructuredProperty";
 import { NodeChange } from "@components/types/INode";
 import { User } from "@components/types/IAuth";
 import { getStorage } from "firebase/storage";
-import NodeActivityFlow from "../NodBody/NodeActivityFlow";
-import { development } from "@components/lib/CONSTANTS";
 import { Post } from "@components/lib/utils/Post";
 import { pendingWrites } from "@components/lib/utils/pendingWrites";
 import ChipsProperty from "../StructuredProperty/ChipsProperty";
@@ -350,7 +348,7 @@ const NodeLoadingSkeleton = ({ width }: { width: number }) => {
 
       {/* IsPartOf & Parts Skeletons */}
       <Stack
-        direction={width < 1050 ? "column" : "row"}
+        direction="column"
         spacing={3}
         sx={{ mb: 2 }}
       >
@@ -2277,10 +2275,10 @@ const Node = ({
                 />
               ))}
             </Stack>
-            {/* isPartOf and isPartOf*/}
+            {/* isPartOf and parts, each full width */}
             <Stack
               mt={1}
-              direction={width < 1050 ? "column" : "row"}
+              direction="column"
               sx={{
                 gap: 3,
               }}
@@ -2345,17 +2343,6 @@ const Node = ({
                 />
               ))}
             </Stack>
-
-            {(user.claims.flowChart || development) &&
-              currentVisibleNode.nodeType === "activity" &&
-              !appName && (
-                <NodeActivityFlow
-                  node={currentVisibleNode}
-                  relatedNodes={relatedNodes}
-                  fetchNode={fetchNode}
-                  confirmIt={confirmIt}
-                />
-              )}
 
             {/* rest of the properties in the NodeBody*/}
             <NodeBody

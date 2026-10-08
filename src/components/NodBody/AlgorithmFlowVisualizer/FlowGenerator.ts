@@ -56,6 +56,13 @@ const NODE_TYPES = {
   MERGE: "merge",
 } as const;
 
+// Stored as { "<expr>": true }, but the model sometimes returns a plain string.
+const conditionText = (condition: unknown): string | undefined => {
+  if (!condition) return undefined;
+  if (typeof condition === "string") return condition;
+  return Object.keys(condition as object)[0];
+};
+
 /**
  * FlowGenerator - Transforms algorithm data into a visual flowchart representation
  *
@@ -565,11 +572,7 @@ export class FlowGenerator {
           activity.sub_activities && activity.sub_activities.length > 0,
         isConditionTrue: isConditionPath,
         variables: activity.variables,
-        condition: activity.condition
-          ? Object.keys(activity.condition)[0]
-          : activity.loop_condition
-            ? Object.keys(activity.loop_condition)[0]
-            : undefined,
+        condition: conditionText(activity.condition ?? activity.loop_condition),
       },
     });
   }

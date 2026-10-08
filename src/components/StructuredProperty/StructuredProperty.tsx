@@ -43,7 +43,11 @@ import {
   toPartsNode,
   PartsGraph,
 } from "@components/lib/server/partsModel";
-import { DISPLAY, UNCLASSIFIED } from "@components/lib/CONSTANTS";
+import {
+  DISPLAY,
+  UNCLASSIFIED,
+  development,
+} from "@components/lib/CONSTANTS";
 import {
   collection,
   doc,
@@ -75,6 +79,7 @@ import InheritedPartsLegend from "../Common/InheritedPartsLegend";
 import EditProperty from "../AddPropertyForm/EditProperty";
 import StructuredPropertySelector from "./StructuredPropertySelector";
 import PartViewer from "./PartViewer";
+import NodeActivityFlow from "../NodBody/NodeActivityFlow";
 
 const INITIAL_LOAD_COUNT = 20;
 const LOAD_MORE_COUNT = 20;
@@ -1908,6 +1913,11 @@ const StructuredProperty = ({
           Add new Part
         </Button>
       )}
+      {property === "parts" &&
+        (user?.claims?.flowChart || development) &&
+        currentVisibleNode.nodeType === "activity" &&
+        !selectedDiffNode &&
+        !currentImprovement && <NodeActivityFlow node={currentVisibleNode} />}
       {handleCloseAddLinksModel &&
         selectedProperty === property &&
         !selectedCollection && (

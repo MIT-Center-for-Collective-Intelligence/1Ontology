@@ -70,7 +70,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
   const { uname, claims } = user?.userData;
 
   try {
-    if (!claims.flowChart) {
+    if (!claims?.flowChart) {
       throw new Error("Access denied!");
     }
 
@@ -184,7 +184,7 @@ Where:
           "id": "CheckFlightDistance",
           "type": "condition",
           "variables": ["FlightType"],
-          "condition": {FlightType == "Short-haul Flight"},
+          "condition": {"FlightType == 'Short-haul Flight'": true},
           "sub_activities": [
             {
               "name": "Perform Quick Cleaning",
@@ -220,7 +220,7 @@ Where:
           "id": "LoadCargoRepeatedly",
           "type": "loop",
           "variables": ["RemainingCargoBatchesNum"],
-          "loop_condition": {RemainingCargoUnitsNum != 0},
+          "loop_condition": {"RemainingCargoBatchesNum != 0": true},
           "sub_activities": [
             {
               "name": "Load Cargo Batch",
@@ -240,7 +240,7 @@ Where:
           "type": "task"
         }
       ],
-      "performance_model": "T = t_{DeboardPassengers} + (FlightType == "Short-haul Flight" ? t_{PerformQuickCleaning} : t_{SkipDeepCabinCleaning}) + max(t_{RefuelAircraft}, t_{OffloadLuggage}) + (CargoBatchesNum * t_{LoadCargoBatch}) + t_{BoardPassengers} + t_{FinalSafetyCheck}",
+      "performance_model": "T = t_{DeboardPassengers} + (FlightType == 'Short-haul Flight' ? t_{PerformQuickCleaning} : t_{SkipDeepCabinCleaning}) + max(t_{RefuelAircraft}, t_{OffloadLuggage}) + (CargoBatchesNum * t_{LoadCargoBatch}) + t_{BoardPassengers} + t_{FinalSafetyCheck}",
       "advantages": "This approach is straightforward and less prone to mistakes, as steps are organized in a clear, mostly sequential flow with only one parallel sub-process. Ground crew coordination is relatively simple.",
       "disadvantages": "Since most steps are performed sequentially, the turnaround time can be longer. The parallelization only covers refueling and offloading, limiting potential time savings."
     },
@@ -270,7 +270,7 @@ Where:
           "id": "CabinCleanlinessCheck",
           "type": "condition",
           "variables": ["CabinRequiresCleaning"],
-          "condition": {CabinRequiresCleaning == true},
+          "condition": {"CabinRequiresCleaning == true": true},
           "sub_activities": [
             {
               "name": "Conduct Full Cabin Clean",
@@ -306,7 +306,7 @@ Where:
           "id": "LoopCargoLoading",
           "type": "loop",
           "variables": ["RemainingCargoBatchesNum"],
-          "loop_condition": {RemainingCargoUnitsNum != 0},
+          "loop_condition": {"RemainingCargoBatchesNum != 0": true},
           "sub_activities": [
             {
               "name": "Load Cargo Batch",
@@ -355,7 +355,7 @@ ${description}
     }
     const algorithms = isJSONObject.jsonObject.algorithms;
     const algorithmRef = db.collection(ALGORITHMS).doc(nodeId);
-    algorithmRef.set({
+    await algorithmRef.set({
       algorithms,
       nodeId,
       createdAt: new Date(),
