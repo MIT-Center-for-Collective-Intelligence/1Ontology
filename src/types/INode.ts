@@ -334,6 +334,8 @@ export interface IActivity {
   condition?: Record<string, boolean>;
   loop_condition?: Record<string, boolean>;
   sub_activities?: IActivity[];
+  /** For a task step picked from the node's parts: the part node id. */
+  partId?: string;
 }
 
 export interface ISequentialActivity extends IActivity {

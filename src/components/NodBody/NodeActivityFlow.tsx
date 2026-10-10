@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { ReactFlowProvider } from "@xyflow/react";
 import {
   Box,
@@ -10,10 +10,13 @@ import {
   CircularProgress,
   useTheme,
 } from "@mui/material";
-import { INode, IAlgorithm } from "@components/types/INode";
+import { INode, IAlgorithm, ILinkNode } from "@components/types/INode";
 import AlgorithmFlowVisualizer from "./AlgorithmFlowVisualizer";
-import { doc, getFirestore, onSnapshot } from "firebase/firestore";
+import { doc, getFirestore, onSnapshot, setDoc } from "firebase/firestore";
 import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
+import DoneIcon from "@mui/icons-material/Done";
+import { useAuth } from "../context/AuthContext";
 import { Post } from "@components/lib/utils/Post";
 import { ALGORITHMS } from "@components/lib/firestoreClient/collections";
 import { development } from "@components/lib/CONSTANTS";
@@ -351,6 +354,8 @@ const sampleAlgorithmsData = {
  */
 interface NodeActivityFlowProps {
   node: INode;
+  /** The node's resolved parts (owned + inherited); offered as task steps. */
+  resolvedParts?: ILinkNode[];
 }
 
 /**
@@ -359,15 +364,48 @@ interface NodeActivityFlowProps {
  * Rendered inside the parts card, below the inherited parts details. Reads
  * the stored flows from algorithms/{nodeId} and can (re)generate them.
  */
-const NodeActivityFlow: React.FC<NodeActivityFlowProps> = ({ node }) => {
+const NodeActivityFlow: React.FC<NodeActivityFlowProps> = ({
+  node,
+  resolvedParts = [],
+}) => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
   const db = getFirestore();
+  const [{ user }] = useAuth();
   const [activeTab, setActiveTab] = useState<number>(0);
   const [algorithms, setAlgorithms] = useState<IAlgorithm[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [openAiRequestLoading, setOpenAiRequestLoading] = useState(false);
   const [generateError, setGenerateError] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
+
+  const parts = useMemo(
+    () => resolvedParts.map((p) => ({ id: p.id, title: p.title || p.id })),
+    [resolvedParts],
+  );
+
+  // Instant: the chart re-renders from local state; the snapshot confirms.
+  const saveAlgorithm = async (next: IAlgorithm) => {
+    const nextAlgorithms = algorithms.map((a, i) =>
+      i === activeTab ? next : a,
+    );
+    setAlgorithms(nextAlgorithms);
+    try {
+      await setDoc(
+        doc(db, ALGORITHMS, node.id),
+        {
+          nodeId: node.id,
+          algorithms: JSON.parse(JSON.stringify(nextAlgorithms)),
+          updatedAt: new Date(),
+          updatedBy: user?.uname ?? "",
+        },
+        { merge: true },
+      );
+    } catch (error) {
+      console.error(error);
+      setGenerateError("Saving the flow failed, please try again.");
+    }
+  };
 
   useEffect(() => {
     setAlgorithms([]);
@@ -440,28 +478,43 @@ const NodeActivityFlow: React.FC<NodeActivityFlowProps> = ({ node }) => {
         <Typography sx={{ ml: "7px", fontSize: "19px", fontWeight: "bold" }}>
           Activity Flow
         </Typography>
-        <Button
-          variant="outlined"
-          onClick={generateFlowCharts}
-          disabled={openAiRequestLoading}
-          startIcon={
-            openAiRequestLoading ? (
-              <CircularProgress size={16} />
-            ) : (
-              <AutoFixHighIcon />
-            )
-          }
-          sx={{ borderRadius: "25px" }}
-        >
-          {openAiRequestLoading
-            ? "Generating…"
-            : algorithms.length > 0
-              ? "Regenerate flows"
-              : "Generate flows"}
-        </Button>
+        <Box sx={{ display: "flex", gap: 1 }}>
+          {algorithms.length > 0 && (
+            <Button
+              variant={editing ? "contained" : "outlined"}
+              disableElevation
+              onClick={() => setEditing((v) => !v)}
+              startIcon={editing ? <DoneIcon /> : <EditOutlinedIcon />}
+              sx={{ borderRadius: "25px" }}
+            >
+              {editing ? "Done" : "Edit flow"}
+            </Button>
+          )}
+          <Button
+            variant="outlined"
+            onClick={generateFlowCharts}
+            disabled={openAiRequestLoading}
+            startIcon={
+              openAiRequestLoading ? (
+                <CircularProgress size={16} />
+              ) : (
+                <AutoFixHighIcon />
+              )
+            }
+            sx={{ borderRadius: "25px" }}
+          >
+            {openAiRequestLoading
+              ? "Generating…"
+              : algorithms.length > 0
+                ? "Regenerate flows"
+                : "Generate flows"}
+          </Button>
+        </Box>
       </Box>
       {generateError && (
-        <Typography sx={{ px: 3, pb: 1, color: "error.main", fontSize: "14px" }}>
+        <Typography
+          sx={{ px: 3, pb: 1, color: "error.main", fontSize: "14px" }}
+        >
           {generateError}
         </Typography>
       )}
@@ -520,6 +573,9 @@ const NodeActivityFlow: React.FC<NodeActivityFlowProps> = ({ node }) => {
                   <AlgorithmFlowVisualizer
                     algorithm={algorithms[activeTab]}
                     isDarkMode={isDarkMode}
+                    editing={editing}
+                    parts={parts}
+                    onChange={saveAlgorithm}
                   />
                 </ReactFlowProvider>
               )}

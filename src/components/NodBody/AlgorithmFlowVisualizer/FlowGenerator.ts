@@ -1,935 +1,705 @@
-import { Node as ReactFlowNode, Edge, MarkerType } from "@xyflow/react";
+import type { Edge, MarkerType, Node } from "@xyflow/react";
 import { IActivity, IAlgorithm } from "@components/types/INode";
-import { NodeData } from "./NodeComponent";
 
 /**
- * Result of the flow generation process containing positioned nodes and edges
+ * Pure top-to-bottom layout for an algorithm flowchart. Every activity becomes
+ * a block with one entry on top and one exit at the bottom, both on the
+ * block's axis. Blocks are measured bottom-up, placed top-down, and every edge
+ * is a precomputed orthogonal polyline (drawn by OrthoEdge), so nothing
+ * depends on React Flow handle positions and uneven branches stay aligned.
+ * In edit mode the chart also carries "+" affordances: `add` nodes at the end
+ * of every chain and an `insert` hint on every edge between steps.
  */
-export interface FlowGenerationResult {
-  nodes: ReactFlowNode<any>[];
-  edges: Edge[];
-}
 
-/**
- * Dimensions for a node in the flowchart
- */
-interface NodeDimensions {
-  width: number;
-  height: number;
-}
+export type Kind = "task" | "sequential" | "parallel" | "condition" | "loop";
 
-/**
- * Activity subtree dimensions used for layout calculations
- */
-interface SubtreeDimensions {
-  width: number;
-  height: number;
-}
+export type FlowNodeType =
+  | "task"
+  | "decision"
+  | "frame"
+  | "bar"
+  | "merge"
+  | "terminal"
+  | "add"
+  | "placeholder";
 
-/**
- * Position tracking for the last node in a subtree
- */
-interface NodePosition {
-  lastX: number;
-  lastY: number;
-  lastId: string;
-}
+export type Placement = "before" | "after" | "inside" | "true" | "false";
 
-/**
- * Edge styles configuration
- */
-interface EdgeStyle {
-  stroke: string;
-  strokeWidth: number;
-}
+/** Where a new step goes when a "+" is clicked. */
+export type Insert = { target: IActivity | IAlgorithm; placement: Placement };
 
-/**
- * Node type constants
- */
-const NODE_TYPES = {
-  SEQUENTIAL: "sequential",
-  PARALLEL: "parallel",
-  CONDITION: "condition",
-  LOOP: "loop",
-  TASK: "task",
-  JOIN: "join",
-  MERGE: "merge",
-} as const;
-
-// Stored as { "<expr>": true }, but the model sometimes returns a plain string.
-const conditionText = (condition: unknown): string | undefined => {
-  if (!condition) return undefined;
-  if (typeof condition === "string") return condition;
-  return Object.keys(condition as object)[0];
+export type FlowNodeData = {
+  kind: Kind;
+  label?: string;
+  condition?: string;
+  activityId?: string;
+  variant?: "start" | "end";
+  /** The tree node this element stands for (the algorithm itself for the root fork). */
+  activity?: IActivity | IAlgorithm;
+  insert?: Insert;
+  needsSetup?: boolean;
 };
 
-/**
- * FlowGenerator - Transforms algorithm data into a visual flowchart representation
- *
- * Handles the complex layout calculation to generate visually appealing flowcharts
- * from nested activity structures. The layout algorithm works in multiple passes:
- * 1. Calculate dimensions of all subtrees
- * 2. Assign positions to nodes based on these dimensions
- * 3. Optimize edge routing for better visualization
- * 4. Center the entire layout
- */
-export class FlowGenerator {
-  private nodes: ReactFlowNode<any>[] = [];
-  private edges: Edge[] = [];
-  private nodeId = 1;
-  private joinId = 1000;
-  private isDarkMode: boolean;
+export type Pt = { x: number; y: number };
 
-  /** Default node dimensions by type */
-  private readonly nodeDimensions: Record<string, NodeDimensions> = {
-    [NODE_TYPES.SEQUENTIAL]: { width: 180, height: 60 },
-    [NODE_TYPES.PARALLEL]: { width: 180, height: 60 },
-    [NODE_TYPES.CONDITION]: { width: 160, height: 160 },
-    [NODE_TYPES.LOOP]: { width: 180, height: 80 },
-    [NODE_TYPES.TASK]: { width: 160, height: 40 },
-    [NODE_TYPES.JOIN]: { width: 60, height: 30 },
-    [NODE_TYPES.MERGE]: { width: 60, height: 30 },
-  };
+export type OrthoEdgeData = {
+  points: Pt[];
+  color: string;
+  dashed?: boolean;
+  insert?: Insert;
+};
 
-  /** Layout spacing configuration */
-  private readonly spacing = {
-    horizontal: 60,
-    vertical: 120,
-    branch: 220,
-    parallelBranch: 240,
-    edgeBuffer: 40,
-  };
+export type FlowNode = Node<FlowNodeData, FlowNodeType>;
+export type FlowEdge = Edge<OrthoEdgeData, "ortho">;
 
-  constructor(isDarkMode: boolean) {
-    this.isDarkMode = isDarkMode;
+export interface FlowGenerationResult {
+  nodes: FlowNode[];
+  edges: FlowEdge[];
+  width: number;
+  height: number;
+}
+
+export const SIZE = {
+  task: { w: 224, h: 60 },
+  decision: { w: 240, h: 96 },
+  terminal: { w: 116, h: 38 },
+  placeholder: { w: 168, h: 40 },
+  add: 28,
+  merge: 8,
+  barH: 6,
+  barCap: 20,
+  // Room for the name chip that sits on the fork bar's entry point.
+  barLabel: 24,
+};
+
+/** Horizontal offset of the If / Else tabs from the decision card's axis. */
+export const TAB_DX = 60;
+
+const GAP_V = 44;
+const GAP_H = 56;
+const FRAME_PAD = 24;
+// Space under a frame's top edge for its header chip.
+const FRAME_HEAD = 40;
+// A condition fans out below its tabs: a short drop, a horizontal run to
+// each branch axis, then down into the branch.
+const SPLIT_DROP = 26;
+const COND_GAP = 72;
+const MIN_SPLIT = TAB_DX + 12;
+const BYPASS_GAP = 48;
+
+/** Shared palette: node fills/strokes, legend chips and minimap. */
+export const kindColor = (kind: Kind, dark: boolean): string => {
+  switch (kind) {
+    case "sequential":
+      return dark ? "#90caf9" : "#1976d2";
+    case "parallel":
+      return dark ? "#ce93d8" : "#9c27b0";
+    case "condition":
+      return dark ? "#ffb74d" : "#f57c00";
+    case "loop":
+      return dark ? "#81c784" : "#43a047";
+    case "task":
+    default:
+      return dark ? "#b0bec5" : "#607d8b";
   }
+};
 
-  /**
-   * Generates a flow representation of an algorithm
-   * @param algorithm The algorithm to visualize
-   * @returns Positioned nodes and edges ready for rendering
-   */
+export const edgeColor = (dark: boolean): string =>
+  dark ? "#6b7682" : "#9aa4b0";
+
+// Stored as { "<expr>": true }, but the model sometimes returns a plain string.
+export const conditionText = (condition: unknown): string | undefined => {
+  if (!condition) return undefined;
+  if (typeof condition === "string") return condition;
+  const keys = Object.keys(condition as object);
+  return keys.length ? keys[0] : undefined;
+};
+
+/** A step that still needs a name or an expression; shown as a chip in edit mode. */
+export const needsSetup = (a: IActivity): boolean => {
+  if (!a.name?.trim()) return true;
+  if (a.type === "condition") return !conditionText(a.condition);
+  if (a.type === "loop") return !conditionText(a.loop_condition ?? a.condition);
+  return false;
+};
+
+type Block = { w: number; h: number; axis: number };
+
+type ParallelMeasure = Block & {
+  colAxes: number[];
+  barLeft: number;
+  barRight: number;
+  labelH: number;
+};
+
+type ConditionMeasure = Block & {
+  dL: number;
+  dR: number;
+  branchH: number;
+};
+
+/** Where an edge attaches; `step` is the activity the port stands for. */
+type Port = { nodeId: string; x: number; y: number; step?: IActivity };
+
+type Placed = { entry: Port; exit: Port };
+
+/** One element of a vertical chain: a step, a "+" button, or an empty hint. */
+type Elem = { step: IActivity } | { add: Insert } | { placeholder: true };
+
+const KINDS: Kind[] = ["task", "sequential", "parallel", "condition", "loop"];
+const kindOf = (a: IActivity): Kind =>
+  KINDS.includes(a.type as Kind) ? (a.type as Kind) : "task";
+const children = (a: IActivity | IAlgorithm): IActivity[] =>
+  Array.isArray(a.sub_activities) ? a.sub_activities.filter(Boolean) : [];
+
+/** Drops repeated consecutive points so rounded corners never see a zero-length segment. */
+const dedupe = (pts: Pt[]): Pt[] =>
+  pts.filter((p, i) => i === 0 || p.x !== pts[i - 1].x || p.y !== pts[i - 1].y);
+
+export class FlowGenerator {
+  private nodes: FlowNode[] = [];
+  private edges: FlowEdge[] = [];
+  private counter = 0;
+  private measured = new WeakMap<IActivity, Block>();
+  private falseBranches = new WeakMap<IActivity, IActivity | null>();
+  private branchElems = new WeakMap<IActivity, (Elem[] | null)[]>();
+
+  constructor(
+    private dark: boolean,
+    private editing = false,
+  ) {}
+
   public generateFlow(algorithm: IAlgorithm): FlowGenerationResult {
-    this.reset();
+    this.nodes = [];
+    this.edges = [];
+    this.counter = 0;
 
-    const rootId = algorithm.id || `algorithm-${this.nodeId++}`;
+    const kids = children(algorithm);
+    const T = SIZE.terminal;
+    const rootParallel = algorithm.type === "parallel" && kids.length > 0;
+    const rootElems = this.chainElems(kids, {
+      target: algorithm,
+      placement: "inside",
+    });
+    const body = rootParallel
+      ? this.measureParallel(this.parallelBranches(kids, algorithm), false)
+      : this.measureChain(rootElems);
+    const axis = Math.max(body.axis, T.w / 2);
+    const width = Math.max(body.w, T.w);
 
-    // Three-pass layout algorithm
-    const dimensions = this.calculateDimensions(algorithm);
-    this.assignPositions(
-      algorithm,
-      rootId,
-      0,
-      -dimensions.height / 2,
-      null,
-      true,
-    );
-    this.optimizeEdgeRouting();
-    this.centerLayout();
+    const startId = this.addNode("terminal", axis - T.w / 2, 0, T.w, T.h, {
+      kind: "task",
+      label: "Start",
+      variant: "start",
+    });
+    const top = T.h + GAP_V;
+    const placed = rootParallel
+      ? this.placeParallel(
+          this.parallelBranches(kids, algorithm),
+          axis,
+          top,
+          undefined,
+          algorithm,
+        )
+      : this.placeChain(rootElems, axis, top);
+    this.connect({ nodeId: startId, x: axis, y: T.h }, placed.entry);
+
+    const endY = top + body.h + GAP_V;
+    const endId = this.addNode("terminal", axis - T.w / 2, endY, T.w, T.h, {
+      kind: "task",
+      label: "End",
+      variant: "end",
+    });
+    this.connect(placed.exit, { nodeId: endId, x: axis, y: endY });
 
     return {
       nodes: this.nodes,
       edges: this.edges,
+      width,
+      height: endY + T.h,
     };
   }
 
-  /**
-   * Resets the internal state for a new flow generation
-   */
-  private reset(): void {
-    this.nodes = [];
-    this.edges = [];
-    this.nodeId = 1;
-    this.joinId = 1000;
+  /** Steps of a container, plus a trailing "+" in edit mode or a hint when empty. */
+  private chainElems(kids: IActivity[], trailing: Insert): Elem[] {
+    const elems: Elem[] = kids.map((step) => ({ step }));
+    if (this.editing) elems.push({ add: trailing });
+    else if (elems.length === 0) elems.push({ placeholder: true });
+    return elems;
   }
 
-  /**
-   * Generates a unique node ID with a prefix
-   */
-  private getNodeId(prefix: string): string {
-    return `${prefix}-${this.nodeId++}`;
+  /** One single-element chain per branch, plus an "add branch" row in edit mode. */
+  private parallelBranches(
+    kids: IActivity[],
+    container: IActivity | IAlgorithm,
+  ): Elem[][] {
+    const branches: Elem[][] = kids.map((step) => [{ step }]);
+    if (this.editing) {
+      branches.push([{ add: { target: container, placement: "inside" } }]);
+    }
+    return branches;
   }
 
-  /**
-   * Generates a unique join/merge node ID
-   */
-  private getJoinId(): string {
-    return `join-${this.joinId++}`;
+  /** children[0] is the true branch; children[1..] collapse into one false branch. */
+  private falseBranchOf(a: IActivity): IActivity | null {
+    if (this.falseBranches.has(a)) return this.falseBranches.get(a)!;
+    const kids = children(a);
+    let result: IActivity | null = null;
+    if (kids.length === 2) result = kids[1];
+    else if (kids.length > 2) {
+      result = {
+        name: "",
+        id: "",
+        type: "sequential",
+        sub_activities: kids.slice(1),
+      };
+    }
+    this.falseBranches.set(a, result);
+    return result;
   }
 
-  /**
-   * Gets appropriate color for a node type based on theme
-   */
-  private getNodeColor(type: string): string {
-    switch (type) {
-      case NODE_TYPES.SEQUENTIAL:
-        return this.isDarkMode ? "#90caf9" : "#1976d2";
-      case NODE_TYPES.PARALLEL:
-        return this.isDarkMode ? "#ce93d8" : "#9c27b0";
-      case NODE_TYPES.CONDITION:
-        return this.isDarkMode ? "#ffb74d" : "#f57c00";
-      case NODE_TYPES.LOOP:
-        return this.isDarkMode ? "#81c784" : "#43a047";
-      case NODE_TYPES.TASK:
+  /** Chain for a condition branch; null means "no branch" (a bypass line). */
+  private conditionBranch(a: IActivity, slot: 0 | 1): Elem[] | null {
+    let cached = this.branchElems.get(a);
+    if (!cached) {
+      const kids = children(a);
+      const build = (step: IActivity | null, placement: "true" | "false") => {
+        const elems: Elem[] = step ? [{ step }] : [];
+        if (this.editing) elems.push({ add: { target: a, placement } });
+        return elems.length ? elems : null;
+      };
+      cached = [
+        build(kids[0] ?? null, "true"),
+        build(this.falseBranchOf(a), "false"),
+      ];
+      this.branchElems.set(a, cached);
+    }
+    return cached[slot];
+  }
+
+  private measureElem(e: Elem): Block {
+    if ("step" in e) return this.measure(e.step);
+    if ("add" in e) return this.boxBlock({ w: SIZE.add, h: SIZE.add });
+    return this.boxBlock(SIZE.placeholder);
+  }
+
+  private measure(a: IActivity): Block {
+    const cached = this.measured.get(a);
+    if (cached) return cached;
+    const kids = children(a);
+    let block: Block;
+    switch (kindOf(a)) {
+      case "sequential":
+      case "loop":
+        block = this.measureChain(
+          this.chainElems(kids, { target: a, placement: "inside" }),
+          true,
+        );
+        break;
+      case "parallel":
+        block = kids.length
+          ? this.measureParallel(this.parallelBranches(kids, a), !!a.name)
+          : this.boxBlock(SIZE.task);
+        break;
+      case "condition":
+        block = this.measureCondition(a);
+        break;
       default:
-        return this.isDarkMode ? "#b0bec5" : "#607d8b";
+        block = this.boxBlock(SIZE.task);
     }
+    this.measured.set(a, block);
+    return block;
   }
 
-  /**
-   * Gets the width of a node based on its type
-   */
-  private getNodeWidth(type: string): number {
-    return (
-      this.nodeDimensions[type]?.width ||
-      this.nodeDimensions[NODE_TYPES.TASK].width
-    );
+  private boxBlock(size: { w: number; h: number }): Block {
+    return { w: size.w, h: size.h, axis: size.w / 2 };
   }
 
-  /**
-   * Gets the height of a node based on its type
-   */
-  private getNodeHeight(type: string): number {
-    return (
-      this.nodeDimensions[type]?.height ||
-      this.nodeDimensions[NODE_TYPES.TASK].height
-    );
-  }
-
-  /**
-   * Calculates dimensions of a subtree rooted at the given activity
-   * @returns Object containing width and height of the subtree
-   */
-  private calculateDimensions(activity: any): SubtreeDimensions {
-    const nodeWidth = this.getNodeWidth(activity.type);
-    const nodeHeight = this.getNodeHeight(activity.type);
-
-    // Base case: no sub-activities
-    if (!activity.sub_activities || activity.sub_activities.length === 0) {
-      return { width: nodeWidth, height: nodeHeight };
-    }
-
-    // Calculate dimensions based on activity type
-    switch (activity.type) {
-      case NODE_TYPES.SEQUENTIAL:
-        return this.calculateSequentialDimensions(
-          activity,
-          nodeWidth,
-          nodeHeight,
-        );
-
-      case NODE_TYPES.PARALLEL:
-        return this.calculateParallelDimensions(
-          activity,
-          nodeWidth,
-          nodeHeight,
-        );
-
-      case NODE_TYPES.CONDITION:
-        return this.calculateConditionDimensions(
-          activity,
-          nodeWidth,
-          nodeHeight,
-        );
-
-      case NODE_TYPES.LOOP:
-        return this.calculateLoopDimensions(activity, nodeWidth, nodeHeight);
-
-      default:
-        return { width: nodeWidth, height: nodeHeight };
-    }
-  }
-
-  /**
-   * Calculates dimensions for sequential activities
-   */
-  private calculateSequentialDimensions(
-    activity: IActivity,
-    nodeWidth: number,
-    nodeHeight: number,
-  ): SubtreeDimensions {
-    let width = 0;
-    let height = nodeHeight;
-
-    for (const subActivity of activity.sub_activities!) {
-      const subDimensions = this.calculateDimensions(subActivity);
-      width = Math.max(width, subDimensions.width);
-      height += this.spacing.vertical + subDimensions.height;
-    }
-
-    // Add padding for readability
-    width = Math.max(nodeWidth, width + 20);
-
-    return { width, height };
-  }
-
-  /**
-   * Calculates dimensions for parallel activities
-   */
-  private calculateParallelDimensions(
-    activity: IActivity,
-    nodeWidth: number,
-    nodeHeight: number,
-  ): SubtreeDimensions {
-    let width = 0;
-    let height = 0;
-
-    // Calculate total width and max height of branches
-    for (const subActivity of activity.sub_activities!) {
-      const subDimensions = this.calculateDimensions(subActivity);
-      width += subDimensions.width;
-      height = Math.max(height, subDimensions.height);
-
-      // Add spacing between branches except for the last one
-      if (
-        subActivity !==
-        activity.sub_activities![activity.sub_activities!.length - 1]
-      ) {
-        width += this.spacing.parallelBranch;
-      }
-    }
-
-    // Account for join node
-    height += this.spacing.vertical + this.getNodeHeight(NODE_TYPES.JOIN);
-
-    // Extra padding for branches
-    if (activity.sub_activities!.length > 2) {
-      width += this.spacing.parallelBranch * 0.5;
-    }
-
+  private measureChain(elems: Elem[], framed = false): Block {
+    let leftExt = 0;
+    let rightExt = 0;
+    let h = 0;
+    elems.forEach((e, i) => {
+      const b = this.measureElem(e);
+      leftExt = Math.max(leftExt, b.axis);
+      rightExt = Math.max(rightExt, b.w - b.axis);
+      h += b.h + (i > 0 ? GAP_V : 0);
+    });
+    if (!framed) return { w: leftExt + rightExt, h, axis: leftExt };
     return {
-      width: Math.max(nodeWidth, width),
-      height: nodeHeight + this.spacing.vertical + height,
+      w: leftExt + rightExt + 2 * FRAME_PAD,
+      h: h + FRAME_HEAD + 2 * FRAME_PAD,
+      axis: leftExt + FRAME_PAD,
     };
   }
 
-  /**
-   * Calculates dimensions for condition activities
-   */
-  private calculateConditionDimensions(
-    activity: IActivity,
-    nodeWidth: number,
-    nodeHeight: number,
-  ): SubtreeDimensions {
-    const trueActivity = activity.sub_activities![0];
-    const falseActivity = activity.sub_activities![1];
-
-    let trueWidth = 0,
-      trueHeight = 0;
-    let falseWidth = 0,
-      falseHeight = 0;
-
-    if (trueActivity) {
-      const trueDimensions = this.calculateDimensions(trueActivity);
-      trueWidth = trueDimensions.width;
-      trueHeight = trueDimensions.height;
-    }
-
-    if (falseActivity) {
-      const falseDimensions = this.calculateDimensions(falseActivity);
-      falseWidth = falseDimensions.width;
-      falseHeight = falseDimensions.height;
-    }
-
-    // Calculate total width with spacing
-    const totalWidth =
-      trueWidth + falseWidth + this.spacing.branch + this.spacing.edgeBuffer;
-
-    // Account for merge node
-    const maxBranchHeight = Math.max(trueHeight, falseHeight);
-    const totalHeight =
-      nodeHeight +
-      this.spacing.vertical +
-      maxBranchHeight +
-      this.spacing.vertical +
-      this.getNodeHeight(NODE_TYPES.MERGE);
-
+  private measureParallel(
+    branches: Elem[][],
+    labeled: boolean,
+  ): ParallelMeasure {
+    const colAxes: number[] = [];
+    let x = 0;
+    let maxH = 0;
+    branches.forEach((chain, i) => {
+      const b = this.measureChain(chain);
+      if (i > 0) x += GAP_H;
+      colAxes.push(x + b.axis);
+      x += b.w;
+      maxH = Math.max(maxH, b.h);
+    });
+    const first = colAxes[0];
+    const lastAxis = colAxes[colAxes.length - 1];
+    const cap = branches.length === 1 ? 40 : SIZE.barCap;
+    let barLeft = first - cap;
+    let barRight = lastAxis + cap;
+    const minX = Math.min(0, barLeft);
+    const maxX = Math.max(x, barRight);
+    const shift = -minX;
+    barLeft += shift;
+    barRight += shift;
+    const axes = colAxes.map((c) => c + shift);
+    const labelH = labeled ? SIZE.barLabel : 0;
     return {
-      width: Math.max(nodeWidth, totalWidth),
-      height: totalHeight,
+      w: maxX - minX,
+      h: labelH + SIZE.barH + GAP_V + maxH + GAP_V + SIZE.barH,
+      axis: (axes[0] + axes[axes.length - 1]) / 2,
+      colAxes: axes,
+      barLeft,
+      barRight,
+      labelH,
     };
   }
 
-  /**
-   * Calculates dimensions for loop activities
-   */
-  private calculateLoopDimensions(
-    activity: IActivity,
-    nodeWidth: number,
-    nodeHeight: number,
-  ): SubtreeDimensions {
-    let width = 0;
-    let height = nodeHeight;
-
-    for (const subActivity of activity.sub_activities!) {
-      const subDimensions = this.calculateDimensions(subActivity);
-      width = Math.max(width, subDimensions.width);
-      height += this.spacing.vertical + subDimensions.height;
-    }
-
-    // Add extra width for the feedback loop
-    width = Math.max(width, nodeWidth + 80);
-
-    return { width, height };
+  private measureCondition(a: IActivity): ConditionMeasure {
+    const D = SIZE.decision;
+    const ifE = this.conditionBranch(a, 0);
+    const elseE = this.conditionBranch(a, 1);
+    const ifB = ifE ? this.measureChain(ifE) : null;
+    const elseB = elseE ? this.measureChain(elseE) : null;
+    const dL = ifB
+      ? Math.max(GAP_H / 2 + (ifB.w - ifB.axis), MIN_SPLIT)
+      : D.w / 2 + BYPASS_GAP;
+    const dR = elseB
+      ? Math.max(GAP_H / 2 + elseB.axis, MIN_SPLIT)
+      : D.w / 2 + BYPASS_GAP;
+    const leftExt = Math.max(dL + (ifB ? ifB.axis : 0), D.w / 2);
+    const rightExt = Math.max(dR + (elseB ? elseB.w - elseB.axis : 0), D.w / 2);
+    const branchH = Math.max(ifB?.h ?? 0, elseB?.h ?? 0);
+    return {
+      w: leftExt + rightExt,
+      h: D.h + COND_GAP + branchH + GAP_V + SIZE.merge,
+      axis: leftExt,
+      dL,
+      dR,
+      branchH,
+    };
   }
 
-  /**
-   * Centers the entire layout for better visualization
-   */
-  private centerLayout(): void {
-    if (this.nodes.length === 0) return;
-
-    // Calculate bounding box
-    let minX = Infinity,
-      maxX = -Infinity,
-      minY = Infinity,
-      maxY = -Infinity;
-
-    this.nodes.forEach((node) => {
-      const nodeWidth = this.getNodeWidth(node.type as string);
-      const nodeHeight = this.getNodeHeight(node.type as string);
-
-      minX = Math.min(minX, node.position.x);
-      maxX = Math.max(maxX, node.position.x + nodeWidth);
-      minY = Math.min(minY, node.position.y);
-      maxY = Math.max(maxY, node.position.y + nodeHeight);
-    });
-
-    // Calculate center offset
-    const centerX = (minX + maxX) / 2;
-    const desiredCenterX = 400; // Centered position X
-    const offsetX = desiredCenterX - centerX;
-
-    // Apply offset to all nodes
-    this.nodes.forEach((node) => {
-      node.position.x += offsetX;
-
-      // Update data.position to match node position
-      if (node.data) {
-        node.data.position = { ...node.position };
-      }
-    });
-  }
-
-  /**
-   * Optimizes edge routing for better visualization
-   */
-  private optimizeEdgeRouting(): void {
-    // Create node position map for lookup
-    const nodePositionMap = new Map<
-      string,
-      {
-        x: number;
-        y: number;
-        width: number;
-        height: number;
-        type: string;
-      }
-    >();
-
-    this.nodes.forEach((node) => {
-      nodePositionMap.set(node.id, {
-        x: node.position.x,
-        y: node.position.y,
-        width: this.getNodeWidth(node.type as string),
-        height: this.getNodeHeight(node.type as string),
-        type: node.type as string,
+  private placeElem(e: Elem, axis: number, top: number): Placed {
+    if ("step" in e) return this.placeBlock(e.step, axis, top);
+    if ("add" in e) {
+      const s = SIZE.add;
+      const id = this.addNode("add", axis - s / 2, top, s, s, {
+        kind: "task",
+        insert: e.add,
       });
+      return {
+        entry: { nodeId: id, x: axis, y: top },
+        exit: { nodeId: id, x: axis, y: top + s },
+      };
+    }
+    const P = SIZE.placeholder;
+    const id = this.addNode("placeholder", axis - P.w / 2, top, P.w, P.h, {
+      kind: "task",
+      label: "No steps",
+    });
+    return {
+      entry: { nodeId: id, x: axis, y: top },
+      exit: { nodeId: id, x: axis, y: top + P.h },
+    };
+  }
+
+  /** Places a step and tags both ports with it, so edges around it know what they border. */
+  private placeBlock(a: IActivity, axis: number, top: number): Placed {
+    const kids = children(a);
+    let placed: Placed;
+    switch (kindOf(a)) {
+      case "sequential":
+      case "loop":
+        placed = this.placeFrame(a, axis, top);
+        break;
+      case "parallel":
+        placed = kids.length
+          ? this.placeParallel(
+              this.parallelBranches(kids, a),
+              axis,
+              top,
+              a.name ? a : undefined,
+              a,
+            )
+          : this.placeBox(a, axis, top);
+        break;
+      case "condition":
+        placed = this.placeCondition(a, axis, top);
+        break;
+      default:
+        placed = this.placeBox(a, axis, top);
+    }
+    return {
+      entry: { ...placed.entry, step: a },
+      exit: { ...placed.exit, step: a },
+    };
+  }
+
+  private placeBox(a: IActivity, axis: number, top: number): Placed {
+    const size = SIZE.task;
+    const id = this.addNode("task", axis - size.w / 2, top, size.w, size.h, {
+      kind: kindOf(a),
+      label: a.name,
+      activityId: a.id,
+      activity: a,
+      needsSetup: this.editing && needsSetup(a),
+    });
+    return {
+      entry: { nodeId: id, x: axis, y: top },
+      exit: { nodeId: id, x: axis, y: top + size.h },
+    };
+  }
+
+  private placeChain(elems: Elem[], axis: number, top: number): Placed {
+    let y = top;
+    let entry: Port | null = null;
+    let prev: Port | null = null;
+    for (const e of elems) {
+      const placed = this.placeElem(e, axis, y);
+      if (prev) this.connect(prev, placed.entry);
+      else entry = placed.entry;
+      prev = placed.exit;
+      y += this.measureElem(e).h + GAP_V;
+    }
+    return { entry: entry!, exit: prev! };
+  }
+
+  /** Loop body or nested sequence: a tinted region with a header chip. */
+  private placeFrame(a: IActivity, axis: number, top: number): Placed {
+    const kind = kindOf(a) === "loop" ? "loop" : "sequential";
+    const elems = this.chainElems(children(a), {
+      target: a,
+      placement: "inside",
+    });
+    const m = this.measureChain(elems, true);
+    this.addNode(
+      "frame",
+      axis - m.axis,
+      top,
+      m.w,
+      m.h,
+      {
+        kind,
+        label: a.name,
+        activityId: a.id,
+        activity: a,
+        condition:
+          kind === "loop"
+            ? conditionText(a.loop_condition ?? a.condition)
+            : undefined,
+        needsSetup: this.editing && needsSetup(a),
+      },
+      -1,
+    );
+    return this.placeChain(elems, axis, top + FRAME_HEAD + FRAME_PAD);
+  }
+
+  private placeParallel(
+    branches: Elem[][],
+    axis: number,
+    top: number,
+    labelOf: IActivity | undefined,
+    container: IActivity | IAlgorithm,
+  ): Placed {
+    const m = this.measureParallel(branches, !!labelOf);
+    const left = axis - m.axis;
+    const barX = left + m.barLeft;
+    const barW = m.barRight - m.barLeft;
+    const forkY = top + m.labelH;
+    const forkId = this.addNode("bar", barX, forkY, barW, SIZE.barH, {
+      kind: "parallel",
+      label: labelOf?.name,
+      activityId: labelOf?.id,
+      activity: container,
     });
 
-    // Identify condition path edges
-    const conditionTrueEdges = new Set<string>();
-    const conditionFalseEdges = new Set<string>();
-
-    this.edges.forEach((edge) => {
-      if (edge.sourceHandle === "true") {
-        conditionTrueEdges.add(edge.id);
-      } else if (edge.sourceHandle === "false") {
-        conditionFalseEdges.add(edge.id);
-      }
+    const kidTop = forkY + SIZE.barH + GAP_V;
+    let maxBottom = kidTop;
+    const exits: { port: Port; axis: number }[] = [];
+    branches.forEach((chain, i) => {
+      const kAxis = left + m.colAxes[i];
+      const placed = this.placeChain(chain, kAxis, kidTop);
+      this.connect(
+        { nodeId: forkId, x: kAxis, y: forkY + SIZE.barH },
+        placed.entry,
+      );
+      exits.push({ port: placed.exit, axis: kAxis });
+      maxBottom = Math.max(maxBottom, kidTop + this.measureChain(chain).h);
     });
 
-    // Apply optimized edge routing
-    this.edges = this.edges.map((edge) => {
-      const sourceNode = nodePositionMap.get(edge.source);
-      const targetNode = nodePositionMap.get(edge.target);
+    const joinY = maxBottom + GAP_V;
+    const joinId = this.addNode("bar", barX, joinY, barW, SIZE.barH, {
+      kind: "parallel",
+    });
+    for (const { port, axis: kAxis } of exits) {
+      this.connect(
+        port,
+        { nodeId: joinId, x: kAxis, y: joinY },
+        { arrow: false },
+      );
+    }
+    return {
+      entry: { nodeId: forkId, x: axis, y: forkY },
+      exit: { nodeId: joinId, x: axis, y: joinY + SIZE.barH },
+    };
+  }
 
-      if (!sourceNode || !targetNode) {
-        return edge;
+  private placeCondition(a: IActivity, axis: number, top: number): Placed {
+    const m = this.measureCondition(a);
+    const D = SIZE.decision;
+    const M = SIZE.merge;
+    const decisionId = this.addNode("decision", axis - D.w / 2, top, D.w, D.h, {
+      kind: "condition",
+      label: a.name,
+      activityId: a.id,
+      condition: conditionText(a.condition),
+      activity: a,
+      needsSetup: this.editing && needsSetup(a),
+    });
+    const bottom = top + D.h;
+    const splitY = bottom + SPLIT_DROP;
+    const branchTop = bottom + COND_GAP;
+    const mergeY = branchTop + m.branchH + GAP_V;
+    const joinY = mergeY - SPLIT_DROP;
+    const mergeId = this.addNode("merge", axis - M / 2, mergeY, M, M, {
+      kind: "condition",
+    });
+
+    const branch = (elems: Elem[] | null, bAxis: number, tabX: number) => {
+      const fan: Pt[] = [
+        { x: tabX, y: bottom },
+        { x: tabX, y: splitY },
+        { x: bAxis, y: splitY },
+      ];
+      const toMerge = (from: Pt): Pt[] => [
+        from,
+        { x: bAxis, y: joinY },
+        { x: axis, y: joinY },
+        { x: axis, y: mergeY },
+      ];
+      if (!elems) {
+        this.addEdge(
+          decisionId,
+          mergeId,
+          dedupe([...fan, ...toMerge({ x: bAxis, y: splitY })]),
+          { arrow: false },
+        );
+        return;
       }
+      const placed = this.placeChain(elems, bAxis, branchTop);
+      this.addEdge(
+        decisionId,
+        placed.entry.nodeId,
+        dedupe([...fan, { x: bAxis, y: placed.entry.y }]),
+        { insert: this.insertFor(undefined, placed.entry) },
+      );
+      this.addEdge(
+        placed.exit.nodeId,
+        mergeId,
+        dedupe(toMerge({ x: bAxis, y: placed.exit.y })),
+        { arrow: false, insert: this.insertFor(placed.exit, undefined) },
+      );
+    };
 
-      const newEdge = { ...edge };
+    branch(this.conditionBranch(a, 0), axis - m.dL, axis - TAB_DX);
+    branch(this.conditionBranch(a, 1), axis + m.dR, axis + TAB_DX);
 
-      // Apply edge styling based on type
-      if (conditionTrueEdges.has(edge.id) || conditionFalseEdges.has(edge.id)) {
-        // Condition branch edges
-        newEdge.type = "smoothstep";
-      } else if (
-        sourceNode.type !== NODE_TYPES.CONDITION &&
-        targetNode.type === "default" &&
-        targetNode.width === this.getNodeWidth(NODE_TYPES.MERGE)
-      ) {
-        // Branch-to-merge edges
-        newEdge.type = "smoothstep";
-      } else if (
-        sourceNode.type === NODE_TYPES.LOOP &&
-        edge.sourceHandle === "loop"
-      ) {
-        // Loop feedback edges
-        newEdge.type = "bezier";
-        newEdge.style = {
-          ...newEdge.style,
-        };
-      } else if (
-        sourceNode.type === NODE_TYPES.PARALLEL ||
-        targetNode.type === NODE_TYPES.JOIN
-      ) {
-        // Parallel branch edges
-        newEdge.type = "smoothstep";
-      } else {
-        // Default edges
-        newEdge.type = "default";
-      }
+    return {
+      entry: { nodeId: decisionId, x: axis, y: top },
+      exit: { nodeId: mergeId, x: axis, y: mergeY + M },
+    };
+  }
 
-      return newEdge;
+  /** "+" on an edge inserts before the step it enters, else after the one it leaves. */
+  private insertFor(from?: Port, to?: Port): Insert | undefined {
+    if (!this.editing) return undefined;
+    if (to?.step) return { target: to.step, placement: "before" };
+    if (from?.step) return { target: from.step, placement: "after" };
+    return undefined;
+  }
+
+  /** Straight when both ports share an axis, otherwise one horizontal jog. */
+  private connect(from: Port, to: Port, opts: { arrow?: boolean } = {}): void {
+    const pts: Pt[] = [{ x: from.x, y: from.y }];
+    if (from.x !== to.x) {
+      const midY = (from.y + to.y) / 2;
+      pts.push({ x: from.x, y: midY }, { x: to.x, y: midY });
+    }
+    pts.push({ x: to.x, y: to.y });
+    this.addEdge(from.nodeId, to.nodeId, pts, {
+      arrow: opts.arrow,
+      insert: this.insertFor(from, to),
     });
   }
 
-  /**
-   * Assigns positions to nodes based on calculated dimensions
-   * @returns Position of the last node in the subtree
-   */
-  private assignPositions(
-    activity: any,
-    parentId: string,
-    x: number,
-    y: number,
-    isConditionPath: boolean | null = null,
-    isRoot: boolean = false,
-  ): NodePosition {
-    const currentId = activity.id ? activity.id : this.getNodeId(activity.type);
-    const nodeWidth = this.getNodeWidth(activity.type);
-    const nodeHeight = this.getNodeHeight(activity.type);
-
-    // Center node at the given position
-    const nodeX = x - nodeWidth / 2;
-
-    // Add the current node
-    this.addNode(activity, currentId, nodeX, y, isConditionPath, isRoot);
-
-    // Connect from parent to this node (if not root)
-    if (!isRoot) {
-      this.addEdge(parentId, currentId, isConditionPath, activity.type);
-    }
-
-    let lastNodeId = currentId;
-    let lastX = x;
-    let lastY = y + nodeHeight;
-
-    // Process sub-activities based on activity type
-    if (activity.sub_activities && activity.sub_activities.length > 0) {
-      switch (activity.type) {
-        case NODE_TYPES.SEQUENTIAL:
-          return this.layoutSequentialActivity(activity, currentId, x, lastY);
-
-        case NODE_TYPES.PARALLEL:
-          return this.layoutParallelActivity(activity, currentId, x, lastY);
-
-        case NODE_TYPES.CONDITION:
-          return this.layoutConditionActivity(activity, currentId, x, lastY);
-
-        case NODE_TYPES.LOOP:
-          return this.layoutLoopActivity(activity, currentId, x, lastY);
-      }
-    }
-
-    return { lastX, lastY, lastId: lastNodeId };
-  }
-
-  /**
-   * Creates a node and adds it to the nodes array
-   */
   private addNode(
-    activity: IActivity,
-    id: string,
+    type: FlowNodeType,
     x: number,
     y: number,
-    isConditionPath: boolean | null = null,
-    isRoot: boolean = false,
-  ): void {
+    w: number,
+    h: number,
+    data: FlowNodeData,
+    zIndex?: number,
+  ): string {
+    const id = `n${++this.counter}`;
     this.nodes.push({
       id,
-      type: activity.type,
+      type,
       position: { x, y },
-      data: {
-        id,
-        position: { x, y },
-        data: null,
-        label: activity.name,
-        type: activity.type,
-        activityId: isRoot ? activity.id || "root" : activity.id,
-        hasSubActivities:
-          activity.sub_activities && activity.sub_activities.length > 0,
-        isConditionTrue: isConditionPath,
-        variables: activity.variables,
-        condition: conditionText(activity.condition ?? activity.loop_condition),
-      },
+      data,
+      // Explicit dimensions so fitView and the minimap know sizes before measuring.
+      width: w,
+      height: h,
+      draggable: false,
+      selectable: false,
+      connectable: false,
+      ...(zIndex !== undefined ? { zIndex } : {}),
     });
+    return id;
   }
 
-  /**
-   * Creates an edge and adds it to the edges array
-   */
   private addEdge(
-    sourceId: string,
-    targetId: string,
-    isConditionPath: boolean | null = null,
-    activityType: string,
+    source: string,
+    target: string,
+    points: Pt[],
+    opts: { arrow?: boolean; dashed?: boolean; insert?: Insert },
   ): void {
-    if (isConditionPath === true) {
-      // True condition path
-      this.edges.push({
-        id: `${sourceId}-${targetId}`,
-        source: sourceId,
-        target: targetId,
-        sourceHandle: "true",
-        animated: false,
-        type: "smoothstep",
-        style: {
-          stroke: "#4caf50",
-          strokeWidth: 2,
-        },
-        markerEnd: { type: MarkerType.ArrowClosed, color: "#4caf50" },
-        label: "True",
-        labelStyle: { fill: "#4caf50", fontWeight: 500, fontSize: 12 },
-        labelBgStyle: {
-          fill: this.isDarkMode ? "#1e1e1e" : "#ffffff",
-          fillOpacity: 0.7,
-        },
-      });
-    } else if (isConditionPath === false) {
-      // False condition path
-      this.edges.push({
-        id: `${sourceId}-${targetId}`,
-        source: sourceId,
-        target: targetId,
-        sourceHandle: "false",
-        animated: false,
-        type: "smoothstep",
-        style: {
-          stroke: "#f44336",
-          strokeWidth: 2,
-        },
-        markerEnd: { type: MarkerType.ArrowClosed, color: "#f44336" },
-        label: "False",
-        labelStyle: { fill: "#f44336", fontWeight: 500, fontSize: 12 },
-        labelBgStyle: {
-          fill: this.isDarkMode ? "#1e1e1e" : "#ffffff",
-          fillOpacity: 0.7,
-        },
-      });
-    } else {
-      // Normal connection
-      this.edges.push({
-        id: `${sourceId}-${targetId}`,
-        source: sourceId,
-        target: targetId,
-        animated: false,
-        style: { stroke: this.getNodeColor(activityType), strokeWidth: 2 },
-        markerEnd: {
-          type: MarkerType.ArrowClosed,
-          color: this.getNodeColor(activityType),
-        },
-      });
-    }
-  }
-
-  /**
-   * Layouts sequential activities in a vertical arrangement
-   */
-  private layoutSequentialActivity(
-    activity: IActivity,
-    parentId: string,
-    x: number,
-    startY: number,
-  ): NodePosition {
-    let currentY = startY + this.spacing.vertical;
-    let lastNodeId = parentId;
-    let lastX = x;
-
-    for (const subActivity of activity.sub_activities!) {
-      const result = this.assignPositions(subActivity, lastNodeId, x, currentY);
-      lastNodeId = result.lastId;
-      lastX = result.lastX;
-      currentY = result.lastY + this.spacing.vertical;
-    }
-
-    return {
-      lastX,
-      lastY: currentY - this.spacing.vertical,
-      lastId: lastNodeId,
-    };
-  }
-
-  /**
-   * Layouts parallel activities with branches side by side
-   */
-  private layoutParallelActivity(
-    activity: IActivity,
-    parentId: string,
-    x: number,
-    startY: number,
-  ): NodePosition {
-    const subActivities = activity.sub_activities!;
-    const branchResults: NodePosition[] = [];
-
-    // Calculate total width and branch dimensions
-    let totalWidth = 0;
-    const branchDimensions: SubtreeDimensions[] = [];
-
-    for (const subActivity of subActivities) {
-      const dimensions = this.calculateDimensions(subActivity);
-      branchDimensions.push(dimensions);
-      totalWidth += dimensions.width;
-    }
-
-    // Add spacing between branches
-    totalWidth += (subActivities.length - 1) * this.spacing.parallelBranch;
-
-    // Calculate starting X position
-    let branchX = x - totalWidth / 2;
-    let maxY = startY;
-
-    // Process each branch
-    for (let i = 0; i < subActivities.length; i++) {
-      const dimensions = branchDimensions[i];
-
-      // Add spacing for subsequent branches
-      if (i > 0) {
-        branchX += this.spacing.parallelBranch;
-      }
-
-      // Center branch on its allocated space
-      branchX += dimensions.width / 2;
-
-      const result = this.assignPositions(
-        subActivities[i],
-        parentId,
-        branchX,
-        startY + this.spacing.vertical,
-      );
-
-      branchResults.push(result);
-      maxY = Math.max(maxY, result.lastY);
-
-      // Move to next branch position
-      branchX += dimensions.width / 2;
-    }
-
-    // Create a join node to merge parallel branches
-    const joinNodeId = this.createJoinNode(
-      x,
-      maxY + this.spacing.vertical,
-      NODE_TYPES.PARALLEL,
-    );
-
-    // Connect branch endpoints to join node
-    branchResults.forEach((result) => {
-      this.addEdge(result.lastId, joinNodeId, null, NODE_TYPES.PARALLEL);
-    });
-
-    return {
-      lastX: x,
-      lastY: maxY + this.spacing.vertical + this.getNodeHeight(NODE_TYPES.JOIN),
-      lastId: joinNodeId,
-    };
-  }
-
-  /**
-   * Creates a join or merge node
-   */
-  private createJoinNode(x: number, y: number, parentType: string): string {
-    const joinNodeId = this.getJoinId();
-    const isJoin = parentType === NODE_TYPES.PARALLEL;
-    const nodeType = isJoin ? NODE_TYPES.JOIN : NODE_TYPES.MERGE;
-    const label = isJoin ? "Join" : "Merge";
-    const color = this.getNodeColor(parentType);
-    const bgColor = this.isDarkMode
-      ? `rgba(${isJoin ? "156, 39, 176" : "245, 124, 0"}, 0.15)`
-      : `rgba(${isJoin ? "156, 39, 176" : "245, 124, 0"}, 0.05)`;
-    const borderColor = this.isDarkMode
-      ? `rgba(${isJoin ? "156, 39, 176" : "245, 124, 0"}, 0.5)`
-      : `rgba(${isJoin ? "156, 39, 176" : "245, 124, 0"}, 0.3)`;
-
-    this.nodes.push({
-      id: joinNodeId,
-      type: "default",
-      position: { x: x - this.getNodeWidth(nodeType) / 2, y },
-      data: {
-        id: joinNodeId,
-        position: { x: x - this.getNodeWidth(nodeType) / 2, y },
-        data: null,
-        label,
-        type: NODE_TYPES.TASK, // For consistent typing
-      },
-      style: {
-        width: 60,
-        height: 30,
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        backgroundColor: bgColor,
-        border: `1px solid ${borderColor}`,
-        borderRadius: "50%",
-        fontSize: "11px",
-        color,
-      },
-    });
-
-    return joinNodeId;
-  }
-
-  /**
-   * Layouts condition activity with true/false branches
-   */
-  private layoutConditionActivity(
-    activity: IActivity,
-    parentId: string,
-    x: number,
-    startY: number,
-  ): NodePosition {
-    const trueActivity = activity.sub_activities![0];
-    const falseActivity = activity.sub_activities![1];
-
-    const nextY = startY + this.spacing.vertical;
-
-    // Position branches symmetrically from center
-    const branchOffset = this.spacing.branch / 2;
-    const trueX = x + branchOffset; // True path on right
-    const falseX = x - branchOffset; // False path on left
-
-    // Process the "true" branch
-    let trueResult: NodePosition = { lastX: x, lastY: nextY, lastId: parentId };
-    if (trueActivity) {
-      trueResult = this.assignPositions(
-        trueActivity,
-        parentId,
-        trueX,
-        nextY,
-        true,
-      );
-    }
-
-    // Process the "false" branch
-    let falseResult: NodePosition = {
-      lastX: x,
-      lastY: nextY,
-      lastId: parentId,
-    };
-    if (falseActivity) {
-      falseResult = this.assignPositions(
-        falseActivity,
-        parentId,
-        falseX,
-        nextY,
-        false,
-      );
-    }
-
-    // Find furthest Y position
-    const maxY = Math.max(trueResult.lastY, falseResult.lastY);
-
-    // Create merge node
-    const mergeNodeId = this.createJoinNode(
-      x,
-      maxY + this.spacing.vertical,
-      NODE_TYPES.CONDITION,
-    );
-
-    // Connect branches to merge node
-    if (trueActivity) {
-      this.edges.push({
-        id: `${trueResult.lastId}-${mergeNodeId}`,
-        source: trueResult.lastId,
-        target: mergeNodeId,
-        type: "smoothstep",
-        style: {
-          stroke: "#4caf50",
-          strokeWidth: 2,
-        },
-        markerEnd: { type: MarkerType.ArrowClosed, color: "#4caf50" },
-      });
-    }
-
-    if (falseActivity) {
-      this.edges.push({
-        id: `${falseResult.lastId}-${mergeNodeId}`,
-        source: falseResult.lastId,
-        target: mergeNodeId,
-        type: "smoothstep",
-        style: {
-          stroke: "#f44336",
-          strokeWidth: 2,
-        },
-        markerEnd: { type: MarkerType.ArrowClosed, color: "#f44336" },
-      });
-    }
-
-    return {
-      lastX: x,
-      lastY:
-        maxY + this.spacing.vertical + this.getNodeHeight(NODE_TYPES.MERGE),
-      lastId: mergeNodeId,
-    };
-  }
-
-  /**
-   * Layouts loop activity with feedback connection
-   */
-  private layoutLoopActivity(
-    activity: IActivity,
-    parentId: string,
-    x: number,
-    startY: number,
-  ): NodePosition {
-    let currentY = startY + this.spacing.vertical;
-    let lastSubNodeId = parentId;
-
-    // Process all activities inside the loop
-    for (const subActivity of activity.sub_activities!) {
-      const result = this.assignPositions(
-        subActivity,
-        lastSubNodeId,
-        x,
-        currentY,
-      );
-      lastSubNodeId = result.lastId;
-      currentY = result.lastY + this.spacing.vertical;
-    }
-
-    // Create feedback loop edge
+    const color = edgeColor(this.dark);
+    const arrow = opts.arrow !== false;
     this.edges.push({
-      id: `${lastSubNodeId}-${parentId}-loop`,
-      source: lastSubNodeId,
-      target: parentId,
-      sourceHandle: "loop",
-      targetHandle: "target",
-      type: "bezier",
-      animated: false,
-      style: {
-        stroke: this.getNodeColor(NODE_TYPES.LOOP),
-        strokeWidth: 2,
-      },
-      markerEnd: {
-        type: MarkerType.ArrowClosed,
-        color: this.getNodeColor(NODE_TYPES.LOOP),
-      },
+      id: `e${++this.counter}`,
+      source,
+      target,
+      type: "ortho",
+      selectable: false,
+      data: { points, color, dashed: opts.dashed, insert: opts.insert },
+      ...(arrow
+        ? {
+            markerEnd: {
+              // Type-only import keeps this file free of runtime React Flow deps.
+              type: "arrowclosed" as unknown as MarkerType,
+              color,
+              width: 14,
+              height: 14,
+            },
+          }
+        : {}),
     });
-
-    return {
-      lastX: x,
-      lastY: currentY - this.spacing.vertical,
-      lastId: lastSubNodeId,
-    };
   }
 }

@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import AddIcon from "@mui/icons-material/Add";
 import {
   Box,
@@ -43,11 +49,7 @@ import {
   toPartsNode,
   PartsGraph,
 } from "@components/lib/server/partsModel";
-import {
-  DISPLAY,
-  UNCLASSIFIED,
-  development,
-} from "@components/lib/CONSTANTS";
+import { DISPLAY, UNCLASSIFIED, development } from "@components/lib/CONSTANTS";
 import {
   collection,
   doc,
@@ -1917,7 +1919,12 @@ const StructuredProperty = ({
         (user?.claims?.flowChart || development) &&
         currentVisibleNode.nodeType === "activity" &&
         !selectedDiffNode &&
-        !currentImprovement && <NodeActivityFlow node={currentVisibleNode} />}
+        !currentImprovement && (
+          <NodeActivityFlow
+            node={currentVisibleNode}
+            resolvedParts={resolvedParts}
+          />
+        )}
       {handleCloseAddLinksModel &&
         selectedProperty === property &&
         !selectedCollection && (
