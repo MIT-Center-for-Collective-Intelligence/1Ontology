@@ -1,0 +1,79 @@
+{
+  "schemaVersion": "public-review-privacy-transformation-v1",
+  "source": "genuine local review publication store, read-only model projection",
+  "baselineSha256": "dab5464a577fe0c040beddcdc480ca4eb031de208b5c665a8205414646677711",
+  "sourceSnapshotCapturedAt": "2026-10-10T17:27:05.035Z",
+  "sourceRecordCount": 52280,
+  "latestPublicationReceiptSha256": "9024081080b63389cb41c2a146ea5d189f75faaa4f9e19c86fd3308660afabb6",
+  "latestCoverageCheckpointSha256": "5fc3868d8cc7762c6c4d547ecbdba7941165d39607d9261ed1f7b1149d33929e",
+  "validationMeaning": "Captured mechanical and two independent research critiques; empirical occupational validation unverified. Portable projection does not revalidate private native receipts or full frozen corpus.",
+  "canonicalHashAlgorithm": "SHA-256 recursively key-sorted compact UTF-8 JSON",
+  "privacyTransformation": "Omitted identity/native attempt records, host/account/session/process metadata, absolute paths, raw logs, raw database and unrelated full frozen records. Included canonical procedures unchanged.",
+  "publicContextIsPartial": true,
+  "canonicalProcedureCountUnchanged": 8,
+  "canonicalTransformations": [],
+  "omittedCategories": [
+    "credentials",
+    "author/person metadata",
+    "email addresses",
+    "native task/thread/session identifiers",
+    "account/host auth",
+    "PIDs",
+    "absolute machine paths",
+    "cache/raw logs",
+    "raw SQLite data",
+    "full frozen corpus"
+  ],
+  "procedureHashComparisons": [
+    {
+      "proposalId": "algorithm-0ULGpOCstwdDvJFuH6zF-v1",
+      "procedureHash": "b321fc5facbb1472529118f1ce4ab38ffa5b0ea968359e9020541b6d9c5c9ef2",
+      "sourceCandidateHash": "b321fc5facbb1472529118f1ce4ab38ffa5b0ea968359e9020541b6d9c5c9ef2",
+      "unchanged": true
+    },
+    {
+      "proposalId": "algorithm-0TadmZfmqCFFKNZUyPJF-v1",
+      "procedureHash": "6ea5d0c37c0dc70bc47c17a6dcb623fe44eab5fb5f39b07805d903feffe31f48",
+      "sourceCandidateHash": "6ea5d0c37c0dc70bc47c17a6dcb623fe44eab5fb5f39b07805d903feffe31f48",
+      "unchanged": true
+    },
+    {
+      "proposalId": "algorithm-05wTiYXl9N7L8JogElG0-v2",
+      "procedureHash": "c7d7fa5e41e0a270320b98caa8f5f8d5f0bc87075cba7d51908672a80b668634",
+      "sourceCandidateHash": "c7d7fa5e41e0a270320b98caa8f5f8d5f0bc87075cba7d51908672a80b668634",
+      "unchanged": true
+    },
+    {
+      "proposalId": "algorithm-05cJlz498lLfsI5KSy5g-v2",
+      "procedureHash": "d2ffe0844d182f02a164b8588f3c352c55e6bd82e0cae51c3202440c75ccca65",
+      "sourceCandidateHash": "d2ffe0844d182f02a164b8588f3c352c55e6bd82e0cae51c3202440c75ccca65",
+      "unchanged": true
+    },
+    {
+      "proposalId": "algorithm-06rlBcrLzJ4xnPR5Le4X-v2",
+      "procedureHash": "b8aabdc0664e405119edc29c0d7f8f4361d12bdd17269aac71559764eed8cbfc",
+      "sourceCandidateHash": "b8aabdc0664e405119edc29c0d7f8f4361d12bdd17269aac71559764eed8cbfc",
+      "unchanged": true
+    },
+    {
+      "proposalId": "algorithm-06Q20XKwJhM4zSpUwKuJ-v2",
+      "procedureHash": "6b8cc5db622f2637234c816a1c01abb7ca6de5abd267f40d7d8cf8524a4bf3f7",
+      "sourceCandidateHash": "6b8cc5db622f2637234c816a1c01abb7ca6de5abd267f40d7d8cf8524a4bf3f7",
+      "unchanged": true
+    },
+    {
+      "proposalId": "algorithm-06MGPWZDxwzYxBWU8kv1-v2",
+      "procedureHash": "97071819c587bfb1269fa279dcb9f0b48e8ced9c5ad372cc2fff4328401c321b",
+      "sourceCandidateHash": "97071819c587bfb1269fa279dcb9f0b48e8ced9c5ad372cc2fff4328401c321b",
+      "unchanged": true
+    },
+    {
+      "proposalId": "algorithm-05DzrgSt8n72w572TvtT-v2",
+      "procedureHash": "e76acae52f97f4b24d3fb68b0b4781d9b51ba007f2cbfa6f97f60b512ed594b5",
+      "sourceCandidateHash": "e76acae52f97f4b24d3fb68b0b4781d9b51ba007f2cbfa6f97f60b512ed594b5",
+      "unchanged": true
+    }
+  ],
+  "outputSha256": "277e715c9962775e23dc326a7c785cb4567e6b72b7975221a025014082ba109f",
+  "liveVerifiedAt": "2026-10-12T13:37:39.278516+00:00"
+}

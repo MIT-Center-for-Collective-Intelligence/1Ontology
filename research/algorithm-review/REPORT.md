@@ -1,0 +1,13 @@
+# Research review for Rob and Tom
+
+Eight source-current activity algorithms as captured on 2026-10-12 at 13:37:39 UTC are available to inspect in this separate review app. They are genuine captured research algorithm candidates with the two recorded independent research critiques and unchanged canonical procedures. Their assumptions are visible and unproven. Usefulness and occupational correctness have not been measured.
+
+The refreshed capture observed 291 historical algorithm versions for 208 distinct subjects. The app tracked 130 current subjects, with eight current algorithms carrying its historical validated status. The separate pipeline had accepted 47 subjects at its checkpoint; that is a different system, stage and denominator, not 47 current algorithms displayed here. There were zero ontology change versions. None of these counts means full generation is complete.
+
+The frozen scope has 20,995 terminal activities. The full leaf barrier remains held, so parent generation is not permitted. The public app contains eight algorithms and 68 reference/context nodes; the remaining corpus and histories are not reproduced. It includes the exact 35-child Collect information branch and the Compile Evidence descendant required for review. Other context may be omitted and is labeled as such.
+
+Readers can inspect the flow of each algorithm, its existing activity bindings, source claims, hypothesized relations, objections and version history summaries. Their own critique is stored separately in the browser and can be exported. It cannot accept a candidate, alter captured reviews or update the production ontology.
+
+The source app was queried read-only and the captured pending feed matched all eight algorithm record identities and canonical procedures. This is a capture consistency check, not a revalidation of original native execution or a full corpus proof. The privacy manifest and supporting capture receipts describe exactly what was retained and removed.
+
+The portable tests check actual procedure hashes, node references, meaningful tree/control/version invariants and read-only service behavior. A bounded isolated headless Chrome pass on 2026-10-12 verified the expanded 35-child hierarchy, Compile Evidence descendant, real algorithm selection, exact critiques, flow inspection, browser-local note saving and an actual annotation export download. It does not establish comprehensive usability, empirical algorithm correctness, full provenance replay, live deployment or research convergence. Continued generation requires the complete frozen source and controlled writer/review/level gates described in METHOD.md.

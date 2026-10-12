@@ -1,0 +1,4322 @@
+{
+  "schemaVersion": "algorithm-review-public-snapshot-v1",
+  "capturedAt": "2026-10-12T13:36:06.546Z",
+  "provenance": {
+    "source": "genuine local review publication store, read-only model projection",
+    "baselineSha256": "dab5464a577fe0c040beddcdc480ca4eb031de208b5c665a8205414646677711",
+    "sourceSnapshotCapturedAt": "2026-10-10T17:27:05.035Z",
+    "sourceRecordCount": 52280,
+    "latestPublicationReceiptSha256": "9024081080b63389cb41c2a146ea5d189f75faaa4f9e19c86fd3308660afabb6",
+    "latestCoverageCheckpointSha256": "5fc3868d8cc7762c6c4d547ecbdba7941165d39607d9261ed1f7b1149d33929e",
+    "validationMeaning": "Captured mechanical and two independent research critiques; empirical occupational validation unverified. Portable projection does not revalidate private native receipts or full frozen corpus.",
+    "canonicalHashAlgorithm": "SHA-256 recursively key-sorted compact UTF-8 JSON",
+    "privacyTransformation": "Omitted identity/native attempt records, host/account/session/process metadata, absolute paths, raw logs, raw database and unrelated full frozen records. Included canonical procedures unchanged.",
+    "publicContextIsPartial": true,
+    "liveVerifiedAt": "2026-10-12T13:37:39.278516+00:00",
+    "liveEndpointsVerified": [
+      "/api/meta",
+      "/api/algorithms?status=pending&pageSize=100",
+      "/api/node?id=05DzrgSt8n72w572TvtT"
+    ],
+    "liveCapturedSetAndCanonicalProceduresMatch": true
+  },
+  "coverage": {
+    "generatedProposals": 291,
+    "algorithmVersions": 291,
+    "changeProposalVersions": 0,
+    "ontologyChangeVersions": 0,
+    "algorithms": {
+      "versions": 291,
+      "uniqueSubjects": 208,
+      "currentSubjects": 130,
+      "validatedCurrent": 8,
+      "statuses": {
+        "pending": 8,
+        "blocked": 200,
+        "reviewed": 0,
+        "invalidated": 83
+      }
+    },
+    "ontologyChanges": {
+      "versions": 0,
+      "statuses": {
+        "pending": 0,
+        "blocked": 0,
+        "reviewed": 0,
+        "invalidated": 0
+      }
+    },
+    "uniqueAlgorithmSubjects": 208,
+    "currentAlgorithmSubjects": 130,
+    "validatedCurrentAlgorithms": 8,
+    "pipelineWorkRows": 39610,
+    "pendingWorkRows": 39294,
+    "algorithmSubjects": 208,
+    "awaitingGeneration": 39402,
+    "pending": 8,
+    "blocked": 200,
+    "reviewed": 0,
+    "invalidated": 83,
+    "scope": "captured local app; historical pipeline status observations are not full completion",
+    "capturedAlgorithms": 8,
+    "capturedNodes": 68,
+    "fullLeafBarrier": 20995,
+    "parentGenerationPermitted": false,
+    "complete": false
+  },
+  "algorithms": [
+    {
+      "nodeId": "0ULGpOCstwdDvJFuH6zF",
+      "title": "(O*Net) 19593 - Design structures that incorporate environmentally friendly building practices or concepts, such as Leadership in Energy and Environmental Design (LEED) standards.",
+      "version": 1,
+      "proposalId": "algorithm-0ULGpOCstwdDvJFuH6zF-v1",
+      "procedureHash": "b321fc5facbb1472529118f1ce4ab38ffa5b0ea968359e9020541b6d9c5c9ef2",
+      "procedure": {
+        "baselineSha256": "dab5464a577fe0c040beddcdc480ca4eb031de208b5c665a8205414646677711",
+        "changeProposals": [],
+        "childVariants": [],
+        "commonCoreMappings": [],
+        "concisePublicRationale": "This proposes identifying relevant practices, incorporating them into a structural design, and checking the result. The step roles, required review, and order remain research hypotheses.",
+        "dependencies": [],
+        "evidenceRefs": [],
+        "flow": {
+          "evidenceRefs": [
+            {
+              "hypothesisId": "h-o0",
+              "relationRationale": "Selected practices are proposed inputs to the design; direct workflow evidence is needed.",
+              "supportLevel": "hypothesis"
+            },
+            {
+              "hypothesisId": "h-o1",
+              "relationRationale": "The proposed criteria review needs an existing design artifact; direct review-timing evidence is needed.",
+              "supportLevel": "hypothesis"
+            }
+          ],
+          "items": [
+            {
+              "stepId": "s1",
+              "type": "step"
+            },
+            {
+              "stepId": "s2",
+              "type": "step"
+            },
+            {
+              "stepId": "s3",
+              "type": "step"
+            }
+          ],
+          "type": "sequence"
+        },
+        "hypotheses": [
+          {
+            "claim": "Identify environmentally friendly practices relevant to the proposed structure.",
+            "id": "h-r0",
+            "neededEvidence": "Project criteria or observed practice-identification work.",
+            "rationale": "The design needs candidate practices to incorporate, but their selection method is not in the title."
+          },
+          {
+            "claim": "Practice identification is proposed as required before incorporation.",
+            "id": "h-n0",
+            "neededEvidence": "Design procedures showing how applicable practices are established.",
+            "rationale": "The proposed design cannot intentionally incorporate an unspecified practice."
+          },
+          {
+            "claim": "Develop a structural design that embeds the selected practices.",
+            "id": "h-r1",
+            "neededEvidence": "Design artifacts showing incorporation decisions.",
+            "rationale": "This proposes how the subject's design objective is realized within the broad Design Structure activity."
+          },
+          {
+            "claim": "Structural design work is proposed as required to produce the requested design.",
+            "id": "h-n1",
+            "neededEvidence": "Project workflow establishing the design deliverable.",
+            "rationale": "The proposed procedure needs a design artifact carrying the selected practices."
+          },
+          {
+            "claim": "Check the design against the selected environmental criteria.",
+            "id": "h-r2",
+            "neededEvidence": "Design review checklists or observed environmental review.",
+            "rationale": "This proposes a distinct verification function absent from the frozen subject title."
+          },
+          {
+            "claim": "A design check is proposed as required to establish incorporation.",
+            "id": "h-n2",
+            "neededEvidence": "Workflow evidence establishing a required review.",
+            "rationale": "Without a check, the proposed process has no verification of the selected criteria."
+          },
+          {
+            "claim": "Identify applicable practices before developing the structural design.",
+            "id": "h-o0",
+            "neededEvidence": "Observed design workflow or project records showing this order.",
+            "rationale": "The proposed practices serve as design inputs; the dependency is not stated in the title."
+          },
+          {
+            "claim": "Evaluate the design after a design artifact exists.",
+            "id": "h-o1",
+            "neededEvidence": "Observed review timing and design records.",
+            "rationale": "The proposed review needs an artifact to compare against the selected criteria."
+          }
+        ],
+        "nodeId": "0ULGpOCstwdDvJFuH6zF",
+        "objectionDispositions": [],
+        "proposalVersion": 1,
+        "reviewVersions": {
+          "evidenceReference": null,
+          "flowTaxonomy": null
+        },
+        "schemaVersion": "algorithm-candidate-v1",
+        "searchReceiptIds": [],
+        "sourceClaims": [
+          {
+            "claim": "(O*Net) 19593 - Design structures that incorporate environmentally friendly building practices or concepts, such as Leadership in Energy and Environmental Design (LEED) standards.",
+            "evidenceRefs": [
+              {
+                "field": "title",
+                "nodeId": "0ULGpOCstwdDvJFuH6zF",
+                "quote": "(O*Net) 19593 - Design structures that incorporate environmentally friendly building practices or concepts, such as Leadership in Energy and Environmental Design (LEED) standards.",
+                "supportLevel": "direct_title"
+              }
+            ],
+            "supportLevel": "direct_title"
+          }
+        ],
+        "stage": "leaf",
+        "status": "candidate",
+        "steps": [
+          {
+            "activityNodeId": "T2oHnDIwPsTKp6qX97Lq",
+            "evidenceRefs": [
+              {
+                "field": "title",
+                "nodeId": "T2oHnDIwPsTKp6qX97Lq",
+                "quote": "Identify Practice",
+                "supportLevel": "direct_title"
+              }
+            ],
+            "hypothesisRefs": [
+              {
+                "claim": "Identify environmentally friendly practices relevant to the proposed structure.",
+                "fieldPath": "steps[0].role",
+                "id": "h-r0",
+                "neededEvidence": "Project criteria or observed practice-identification work.",
+                "rationale": "The design needs candidate practices to incorporate, but their selection method is not in the title."
+              },
+              {
+                "claim": "Practice identification is proposed as required before incorporation.",
+                "fieldPath": "steps[0].necessity",
+                "id": "h-n0",
+                "neededEvidence": "Design procedures showing how applicable practices are established.",
+                "rationale": "The proposed design cannot intentionally incorporate an unspecified practice."
+              }
+            ],
+            "necessity": "required",
+            "necessitySupport": {
+              "fieldPath": "steps[0].necessity",
+              "hypothesisId": "h-n0",
+              "kind": "hypothesis"
+            },
+            "role": "Identify environmentally friendly practices relevant to the proposed structure",
+            "roleSupport": {
+              "fieldPath": "steps[0].role",
+              "hypothesisId": "h-r0",
+              "kind": "hypothesis"
+            },
+            "stepId": "s1"
+          },
+          {
+            "activityNodeId": "geX8ZNajexsGTr6Q1Xdc",
+            "evidenceRefs": [
+              {
+                "field": "title",
+                "nodeId": "geX8ZNajexsGTr6Q1Xdc",
+                "quote": "Design Structure",
+                "supportLevel": "direct_title"
+              }
+            ],
+            "hypothesisRefs": [
+              {
+                "claim": "Develop a structural design that embeds the selected practices.",
+                "fieldPath": "steps[1].role",
+                "id": "h-r1",
+                "neededEvidence": "Design artifacts showing incorporation decisions.",
+                "rationale": "This proposes how the subject's design objective is realized within the broad Design Structure activity."
+              },
+              {
+                "claim": "Structural design work is proposed as required to produce the requested design.",
+                "fieldPath": "steps[1].necessity",
+                "id": "h-n1",
+                "neededEvidence": "Project workflow establishing the design deliverable.",
+                "rationale": "The proposed procedure needs a design artifact carrying the selected practices."
+              }
+            ],
+            "necessity": "required",
+            "necessitySupport": {
+              "fieldPath": "steps[1].necessity",
+              "hypothesisId": "h-n1",
+              "kind": "hypothesis"
+            },
+            "role": "Develop a structural design that embeds the selected practices",
+            "roleSupport": {
+              "fieldPath": "steps[1].role",
+              "hypothesisId": "h-r1",
+              "kind": "hypothesis"
+            },
+            "stepId": "s2"
+          },
+          {
+            "activityNodeId": "McrQYHgl62mVsN5jVHZk",
+            "evidenceRefs": [
+              {
+                "field": "title",
+                "nodeId": "McrQYHgl62mVsN5jVHZk",
+                "quote": "Evaluate Design",
+                "supportLevel": "direct_title"
+              }
+            ],
+            "hypothesisRefs": [
+              {
+                "claim": "Check the design against the selected environmental criteria.",
+                "fieldPath": "steps[2].role",
+                "id": "h-r2",
+                "neededEvidence": "Design review checklists or observed environmental review.",
+                "rationale": "This proposes a distinct verification function absent from the frozen subject title."
+              },
+              {
+                "claim": "A design check is proposed as required to establish incorporation.",
+                "fieldPath": "steps[2].necessity",
+                "id": "h-n2",
+                "neededEvidence": "Workflow evidence establishing a required review.",
+                "rationale": "Without a check, the proposed process has no verification of the selected criteria."
+              }
+            ],
+            "necessity": "required",
+            "necessitySupport": {
+              "fieldPath": "steps[2].necessity",
+              "hypothesisId": "h-n2",
+              "kind": "hypothesis"
+            },
+            "role": "Check the design against the selected environmental criteria",
+            "roleSupport": {
+              "fieldPath": "steps[2].role",
+              "hypothesisId": "h-r2",
+              "kind": "hypothesis"
+            },
+            "stepId": "s3"
+          }
+        ],
+        "unsupportedFlowClaims": []
+      },
+      "rationale": "This proposes identifying relevant practices, incorporating them into a structural design, and checking the result. The step roles, required review, and order remain research hypotheses.",
+      "reviews": [
+        {
+          "role": "algorithmTaxonomy",
+          "notes": "The leaf has no child ledger to cover. Identifying practices, designing the structure, and evaluating the design serve distinct functions; their sequence and necessity are explicitly proposed with matching hypotheses. Using the existing Design Structure parent as a step introduces no taxonomy cycle. The review step remains an unverified proposal.",
+          "objections": [],
+          "verdict": "pass"
+        },
+        {
+          "role": "evidenceMapping",
+          "notes": "The source quote and all three activity IDs match the frozen records. Practice selection, design, review, and their order are coherent, explicitly labeled proposals; the title alone does not establish that workflow or make review mandatory.",
+          "objections": [],
+          "verdict": "pass"
+        }
+      ],
+      "critiques": [
+        {
+          "finding": "The leaf has no child ledger to cover. Identifying practices, designing the structure, and evaluating the design serve distinct functions; their sequence and necessity are explicitly proposed with matching hypotheses. Using the existing Design Structure parent as a step introduces no taxonomy cycle. The review step remains an unverified proposal.",
+          "objections": [],
+          "role": "algorithm_taxonomy",
+          "verdict": "pass"
+        },
+        {
+          "finding": "The source quote and all three activity IDs match the frozen records. Practice selection, design, review, and their order are coherent, explicitly labeled proposals; the title alone does not establish that workflow or make review mandatory.",
+          "objections": [],
+          "role": "evidence_mapping",
+          "verdict": "pass"
+        }
+      ],
+      "sourceSupportStatus": "research_hypothesis",
+      "pipelineReviewStatus": "independently_critiqued",
+      "capturedReviewStatus": "pending",
+      "sourcePublicationKey": "47fd6a7dbc60d3f6582be66b6d13761c40dea5c5e4bd0a95b1553233eee098ae",
+      "sourceCandidateHash": "b321fc5facbb1472529118f1ce4ab38ffa5b0ea968359e9020541b6d9c5c9ef2",
+      "sourcePublicationFileSha256": "cf81335722864d25d833cb434b2de22f6c718227928ba7a906dedff4caf42117",
+      "canonicalCoreUnchanged": true,
+      "history": [
+        {
+          "proposalId": "algorithm-0ULGpOCstwdDvJFuH6zF-v1",
+          "version": 1,
+          "reviewStatus": "pending",
+          "candidateHash": "b321fc5facbb1472529118f1ce4ab38ffa5b0ea968359e9020541b6d9c5c9ef2"
+        }
+      ]
+    },
+    {
+      "nodeId": "0TadmZfmqCFFKNZUyPJF",
+      "title": "(O*Net) 1590 - Compare objects, such as tools, with impression marks to determine whether a specific object is responsible for a specific mark.",
+      "version": 1,
+      "proposalId": "algorithm-0TadmZfmqCFFKNZUyPJF-v1",
+      "procedureHash": "6ea5d0c37c0dc70bc47c17a6dcb623fe44eab5fb5f39b07805d903feffe31f48",
+      "procedure": {
+        "baselineSha256": "dab5464a577fe0c040beddcdc480ca4eb031de208b5c665a8205414646677711",
+        "changeProposals": [],
+        "childVariants": [],
+        "commonCoreMappings": [],
+        "concisePublicRationale": "This proposes distinct examination of the mark and candidate object followed by a source decision. The feature-recording method and order are hypotheses awaiting procedural evidence.",
+        "dependencies": [],
+        "evidenceRefs": [],
+        "flow": {
+          "evidenceRefs": [
+            {
+              "hypothesisId": "h-o0",
+              "relationRationale": "A proposed mark profile guides subsequent object inspection; direct order evidence is needed.",
+              "supportLevel": "hypothesis"
+            },
+            {
+              "hypothesisId": "h-o1",
+              "relationRationale": "The proposed source decision needs observations from both artifacts; direct dependency evidence is needed.",
+              "supportLevel": "hypothesis"
+            }
+          ],
+          "items": [
+            {
+              "stepId": "s1",
+              "type": "step"
+            },
+            {
+              "stepId": "s2",
+              "type": "step"
+            },
+            {
+              "stepId": "s3",
+              "type": "step"
+            }
+          ],
+          "type": "sequence"
+        },
+        "hypotheses": [
+          {
+            "claim": "Record observable features of the questioned impression for comparison.",
+            "id": "h-r0",
+            "neededEvidence": "A comparison protocol or observed mark-feature recording.",
+            "rationale": "A feature record is proposed as an input to the comparison; the activity title establishes identity only."
+          },
+          {
+            "claim": "Mark-feature examination is proposed as required for this comparison.",
+            "id": "h-n0",
+            "neededEvidence": "Procedure showing when mark examination is mandatory.",
+            "rationale": "The proposed attribution needs observations of the mark being explained."
+          },
+          {
+            "claim": "Record features of the candidate object that could correspond to the mark.",
+            "id": "h-r1",
+            "neededEvidence": "A comparison protocol or observed object-feature recording.",
+            "rationale": "This proposes a second, distinct input to the comparison."
+          },
+          {
+            "claim": "Candidate-object examination is proposed as required for this comparison.",
+            "id": "h-n1",
+            "neededEvidence": "Procedure showing when candidate-object examination is mandatory.",
+            "rationale": "The proposed attribution needs observations of the object being assessed."
+          },
+          {
+            "claim": "Compare the two feature records and decide whether the object caused the mark.",
+            "id": "h-r2",
+            "neededEvidence": "Observed attribution criteria and decision records.",
+            "rationale": "The subject specifies a responsibility determination, while the proposed comparison method remains unverified."
+          },
+          {
+            "claim": "A responsibility decision is proposed as required to complete this task.",
+            "id": "h-n2",
+            "neededEvidence": "Procedure establishing the required decision output.",
+            "rationale": "The proposed workflow must produce the determination named in the subject."
+          },
+          {
+            "claim": "Examine the impression before examining the candidate object.",
+            "id": "h-o0",
+            "neededEvidence": "Direct evidence of examination order.",
+            "rationale": "A mark profile could guide which object features to inspect; this order is proposed, not observed."
+          },
+          {
+            "claim": "Complete both examinations before making the source determination.",
+            "id": "h-o1",
+            "neededEvidence": "Comparison records showing this dependency.",
+            "rationale": "The proposed determination compares information from both artifacts."
+          }
+        ],
+        "nodeId": "0TadmZfmqCFFKNZUyPJF",
+        "objectionDispositions": [],
+        "proposalVersion": 1,
+        "reviewVersions": {
+          "evidenceReference": null,
+          "flowTaxonomy": null
+        },
+        "schemaVersion": "algorithm-candidate-v1",
+        "searchReceiptIds": [],
+        "sourceClaims": [
+          {
+            "claim": "(O*Net) 1590 - Compare objects, such as tools, with impression marks to determine whether a specific object is responsible for a specific mark.",
+            "evidenceRefs": [
+              {
+                "field": "title",
+                "nodeId": "0TadmZfmqCFFKNZUyPJF",
+                "quote": "(O*Net) 1590 - Compare objects, such as tools, with impression marks to determine whether a specific object is responsible for a specific mark.",
+                "supportLevel": "direct_title"
+              }
+            ],
+            "supportLevel": "direct_title"
+          }
+        ],
+        "stage": "leaf",
+        "status": "candidate",
+        "steps": [
+          {
+            "activityNodeId": "NdwdpFbbU8a2BGzhC84e",
+            "evidenceRefs": [
+              {
+                "field": "title",
+                "nodeId": "NdwdpFbbU8a2BGzhC84e",
+                "quote": "Examine Impression",
+                "supportLevel": "direct_title"
+              }
+            ],
+            "hypothesisRefs": [
+              {
+                "claim": "Record observable features of the questioned impression for comparison.",
+                "fieldPath": "steps[0].role",
+                "id": "h-r0",
+                "neededEvidence": "A comparison protocol or observed mark-feature recording.",
+                "rationale": "A feature record is proposed as an input to the comparison; the activity title establishes identity only."
+              },
+              {
+                "claim": "Mark-feature examination is proposed as required for this comparison.",
+                "fieldPath": "steps[0].necessity",
+                "id": "h-n0",
+                "neededEvidence": "Procedure showing when mark examination is mandatory.",
+                "rationale": "The proposed attribution needs observations of the mark being explained."
+              }
+            ],
+            "necessity": "required",
+            "necessitySupport": {
+              "fieldPath": "steps[0].necessity",
+              "hypothesisId": "h-n0",
+              "kind": "hypothesis"
+            },
+            "role": "Record observable features of the questioned impression",
+            "roleSupport": {
+              "fieldPath": "steps[0].role",
+              "hypothesisId": "h-r0",
+              "kind": "hypothesis"
+            },
+            "stepId": "s1"
+          },
+          {
+            "activityNodeId": "zBZZNVawyCOlbazChqNm",
+            "evidenceRefs": [
+              {
+                "field": "title",
+                "nodeId": "zBZZNVawyCOlbazChqNm",
+                "quote": "Examine Object",
+                "supportLevel": "direct_title"
+              }
+            ],
+            "hypothesisRefs": [
+              {
+                "claim": "Record features of the candidate object that could correspond to the mark.",
+                "fieldPath": "steps[1].role",
+                "id": "h-r1",
+                "neededEvidence": "A comparison protocol or observed object-feature recording.",
+                "rationale": "This proposes a second, distinct input to the comparison."
+              },
+              {
+                "claim": "Candidate-object examination is proposed as required for this comparison.",
+                "fieldPath": "steps[1].necessity",
+                "id": "h-n1",
+                "neededEvidence": "Procedure showing when candidate-object examination is mandatory.",
+                "rationale": "The proposed attribution needs observations of the object being assessed."
+              }
+            ],
+            "necessity": "required",
+            "necessitySupport": {
+              "fieldPath": "steps[1].necessity",
+              "hypothesisId": "h-n1",
+              "kind": "hypothesis"
+            },
+            "role": "Record features of the candidate object that could correspond to the mark",
+            "roleSupport": {
+              "fieldPath": "steps[1].role",
+              "hypothesisId": "h-r1",
+              "kind": "hypothesis"
+            },
+            "stepId": "s2"
+          },
+          {
+            "activityNodeId": "p7kgEHakRPc1rykQ9Rcv",
+            "evidenceRefs": [
+              {
+                "field": "title",
+                "nodeId": "p7kgEHakRPc1rykQ9Rcv",
+                "quote": "Determine Source",
+                "supportLevel": "direct_title"
+              }
+            ],
+            "hypothesisRefs": [
+              {
+                "claim": "Compare the two feature records and decide whether the object caused the mark.",
+                "fieldPath": "steps[2].role",
+                "id": "h-r2",
+                "neededEvidence": "Observed attribution criteria and decision records.",
+                "rationale": "The subject specifies a responsibility determination, while the proposed comparison method remains unverified."
+              },
+              {
+                "claim": "A responsibility decision is proposed as required to complete this task.",
+                "fieldPath": "steps[2].necessity",
+                "id": "h-n2",
+                "neededEvidence": "Procedure establishing the required decision output.",
+                "rationale": "The proposed workflow must produce the determination named in the subject."
+              }
+            ],
+            "necessity": "required",
+            "necessitySupport": {
+              "fieldPath": "steps[2].necessity",
+              "hypothesisId": "h-n2",
+              "kind": "hypothesis"
+            },
+            "role": "Compare the two feature records and decide whether the object caused the mark",
+            "roleSupport": {
+              "fieldPath": "steps[2].role",
+              "hypothesisId": "h-r2",
+              "kind": "hypothesis"
+            },
+            "stepId": "s3"
+          }
+        ],
+        "unsupportedFlowClaims": []
+      },
+      "rationale": "This proposes distinct examination of the mark and candidate object followed by a source decision. The feature-recording method and order are hypotheses awaiting procedural evidence.",
+      "reviews": [
+        {
+          "role": "algorithmTaxonomy",
+          "notes": "The leaf has no child ledger to cover. The three step roles are functionally distinct, the cited titles match live frozen nodes, and the proposed order and necessity have matching hypothesis support. Feature recording and examination order remain research proposals, not established practice.",
+          "objections": [],
+          "verdict": "pass"
+        },
+        {
+          "role": "evidenceMapping",
+          "notes": "The source quote and all three activity IDs match the frozen records. Each step role, necessity claim, and ordering relation has a coherent, explicitly labeled hypothesis. The proposed method and order remain unproven.",
+          "objections": [],
+          "verdict": "pass"
+        }
+      ],
+      "critiques": [
+        {
+          "finding": "The leaf has no child ledger to cover. The three step roles are functionally distinct, the cited titles match live frozen nodes, and the proposed order and necessity have matching hypothesis support. Feature recording and examination order remain research proposals, not established practice.",
+          "objections": [],
+          "role": "algorithm_taxonomy",
+          "verdict": "pass"
+        },
+        {
+          "finding": "The source quote and all three activity IDs match the frozen records. Each step role, necessity claim, and ordering relation has a coherent, explicitly labeled hypothesis. The proposed method and order remain unproven.",
+          "objections": [],
+          "role": "evidence_mapping",
+          "verdict": "pass"
+        }
+      ],
+      "sourceSupportStatus": "research_hypothesis",
+      "pipelineReviewStatus": "independently_critiqued",
+      "capturedReviewStatus": "pending",
+      "sourcePublicationKey": "726d602f3918b3ee047b405b56078abe667d822632f0a4b64108493bd342a9fa",
+      "sourceCandidateHash": "6ea5d0c37c0dc70bc47c17a6dcb623fe44eab5fb5f39b07805d903feffe31f48",
+      "sourcePublicationFileSha256": "7dc243e65f8ce2aa096ad4eab71b53c2ac389b73cb31cd5183760124e02826df",
+      "canonicalCoreUnchanged": true,
+      "history": [
+        {
+          "proposalId": "algorithm-0TadmZfmqCFFKNZUyPJF-v1",
+          "version": 1,
+          "reviewStatus": "pending",
+          "candidateHash": "6ea5d0c37c0dc70bc47c17a6dcb623fe44eab5fb5f39b07805d903feffe31f48"
+        }
+      ]
+    },
+    {
+      "nodeId": "05wTiYXl9N7L8JogElG0",
+      "title": "(O*Net) 19142 - Communicate client assessment findings and recommendations in oral, written, audio, video, or other forms.",
+      "version": 2,
+      "proposalId": "algorithm-05wTiYXl9N7L8JogElG0-v2",
+      "procedureHash": "c7d7fa5e41e0a270320b98caa8f5f8d5f0bc87075cba7d51908672a80b668634",
+      "procedure": {
+        "baselineSha256": "dab5464a577fe0c040beddcdc480ca4eb031de208b5c665a8205414646677711",
+        "changeProposals": [],
+        "childVariants": [],
+        "commonCoreMappings": [],
+        "concisePublicRationale": "Findings and recommendations are separate communication contents. The selected medium and findings-first order are proposals pending direct procedure evidence.",
+        "dependencies": [],
+        "evidenceRefs": [],
+        "flow": {
+          "evidenceRefs": [
+            {
+              "hypothesisId": "h-order",
+              "relationRationale": "The audience can use findings as context for recommendations, but this presentation order is not source-proven",
+              "supportLevel": "hypothesis"
+            }
+          ],
+          "items": [
+            {
+              "stepId": "s1",
+              "type": "step"
+            },
+            {
+              "stepId": "s2",
+              "type": "step"
+            }
+          ],
+          "type": "sequence"
+        },
+        "hypotheses": [
+          {
+            "claim": "Proposed role: convey the client's assessment findings through a selected communication form.",
+            "id": "h-s1-role",
+            "neededEvidence": "Observed task use of Communicate Finding for this function.",
+            "rationale": "This function serves a distinct intermediate result; the title proves identity only."
+          },
+          {
+            "claim": "Proposed required: The proposed communication needs the assessment findings delivered to its audience.",
+            "id": "h-s1-necessity",
+            "neededEvidence": "Observed cases establishing when Communicate Finding is required.",
+            "rationale": "The proposed communication needs the assessment findings delivered to its audience; this necessity is unverified."
+          },
+          {
+            "claim": "Proposed role: convey the recommendations derived from that assessment through a selected communication form.",
+            "id": "h-s2-role",
+            "neededEvidence": "Observed task use of Communicate Recommendation for this function.",
+            "rationale": "This function serves a distinct intermediate result; the title proves identity only."
+          },
+          {
+            "claim": "Proposed required: The proposed communication also needs its actionable recommendations delivered.",
+            "id": "h-s2-necessity",
+            "neededEvidence": "Observed cases establishing when Communicate Recommendation is required.",
+            "rationale": "The proposed communication also needs its actionable recommendations delivered; this necessity is unverified."
+          },
+          {
+            "claim": "The proposed communication conveys assessment findings before recommendations",
+            "id": "h-order",
+            "neededEvidence": "Direct communication examples establishing order",
+            "rationale": "The audience can use findings as context for recommendations, but this presentation order is not source-proven"
+          }
+        ],
+        "nodeId": "05wTiYXl9N7L8JogElG0",
+        "objectionDispositions": [
+          {
+            "candidatePaths": [
+              "sourceClaims[0]"
+            ],
+            "objection": "sourceClaims[0] malformed or unclassified",
+            "objectionId": "7cb9424c0f893b898160080510927ad43b4d46dd72b525cdf38757705b15ec30",
+            "occurrence": 0,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Exact subject title cited as direct_title.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[0].evidenceRefs[0]"
+            ],
+            "objection": "steps[0] lacks exact frozen evidence for its bound activity",
+            "objectionId": "d262c6b76710cdb1a9f293d7fab376b01c52976e52c3a5a9d839b76f963e6b90",
+            "occurrence": 1,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Exact active activity title now cited.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[0].evidenceRefs[0]"
+            ],
+            "objection": "steps[0].evidenceRefs[0] lacks classified supportLevel",
+            "objectionId": "e184ac23612ad3ade6087a1a31fad71ce390a8f36d908b05c6a547e44feb8485",
+            "occurrence": 2,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Title citation now classified direct_title.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[0].evidenceRefs[0]"
+            ],
+            "objection": "steps[0].evidenceRefs[0] title supportLevel mismatch",
+            "objectionId": "3970ea66a6c4dd469ec81b695d53a3a1d782aafddd0d84a5f62ace801897cc22",
+            "occurrence": 3,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Title citation now classified direct_title.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[0].roleSupport",
+              "steps[0].hypothesisRefs[0]"
+            ],
+            "objection": "steps[0].role needs a declared, substantive per-step hypothesisRefs entry",
+            "objectionId": "b6cd3910f776d2bd7661578a012819651b8810699bd463a0785e3e6c3afcc04c",
+            "occurrence": 4,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Task-specific role now has a bound hypothesis.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[0].necessitySupport",
+              "steps[0].hypothesisRefs[1]"
+            ],
+            "objection": "steps[0].necessity source claim must exactly support this field from the subject source",
+            "objectionId": "498fd146ee52a7ae0021b8ae5e593e4ec53d81356ef111be6fc575848cee194b",
+            "occurrence": 5,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Necessity now has a bound hypothesis, not title proof.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[1].evidenceRefs[0]"
+            ],
+            "objection": "steps[1] lacks exact frozen evidence for its bound activity",
+            "objectionId": "0f571b13835e377ed40140c6459353240cdf7ddb6b4261ba07dcba3a19219751",
+            "occurrence": 6,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Exact active activity title now cited.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[1].evidenceRefs[0]"
+            ],
+            "objection": "steps[1].evidenceRefs[0] lacks classified supportLevel",
+            "objectionId": "e72624760b29b422d46cff9a3fbd2e6b2512f848654ccd586b4345a102cd2836",
+            "occurrence": 7,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Title citation now classified direct_title.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[1].evidenceRefs[0]"
+            ],
+            "objection": "steps[1].evidenceRefs[0] title supportLevel mismatch",
+            "objectionId": "0bb8e5050cb8ce859bb894897a3d46b2df88731a5e9290d4245dfdd77b48b69a",
+            "occurrence": 8,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Title citation now classified direct_title.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[1].roleSupport",
+              "steps[1].hypothesisRefs[0]"
+            ],
+            "objection": "steps[1].role needs a declared, substantive per-step hypothesisRefs entry",
+            "objectionId": "3734559b20c697b04d76473c26d1d5f398445f46698378169662dc3c535133a8",
+            "occurrence": 9,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Task-specific role now has a bound hypothesis.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[1].necessitySupport",
+              "steps[1].hypothesisRefs[1]"
+            ],
+            "objection": "steps[1].necessity source claim must exactly support this field from the subject source",
+            "objectionId": "da9f7af32f2bc061361afcdddd56588c3018ae344cb33453a4d9c481ab5113f4",
+            "occurrence": 10,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Necessity now has a bound hypothesis, not title proof.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "hypotheses",
+              "flow"
+            ],
+            "objection": "declared hypotheses must each bind an exact step field or flow relation",
+            "objectionId": "9b360f48952ff242e3e5a8a306946487fe35e4db1d217fb7442f2e2257aab81d",
+            "occurrence": 11,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "All hypotheses now bind a step field or flow relation.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          }
+        ],
+        "proposalVersion": 2,
+        "reviewVersions": {
+          "evidenceReference": null,
+          "flowTaxonomy": null
+        },
+        "schemaVersion": "algorithm-candidate-v1",
+        "searchReceiptIds": [],
+        "sourceClaims": [
+          {
+            "claim": "(O*Net) 19142 - Communicate client assessment findings and recommendations in oral, written, audio, video, or other forms.",
+            "evidenceRefs": [
+              {
+                "field": "title",
+                "nodeId": "05wTiYXl9N7L8JogElG0",
+                "quote": "(O*Net) 19142 - Communicate client assessment findings and recommendations in oral, written, audio, video, or other forms.",
+                "supportLevel": "direct_title"
+              }
+            ],
+            "supportLevel": "direct_title"
+          }
+        ],
+        "stage": "leaf",
+        "status": "candidate",
+        "steps": [
+          {
+            "activityNodeId": "bf8xsWkNI7xmLmCnLrZD",
+            "evidenceRefs": [
+              {
+                "field": "title",
+                "nodeId": "bf8xsWkNI7xmLmCnLrZD",
+                "quote": "Communicate Finding",
+                "supportLevel": "direct_title"
+              }
+            ],
+            "hypothesisRefs": [
+              {
+                "claim": "Proposed role: convey the client's assessment findings through a selected communication form.",
+                "fieldPath": "steps[0].role",
+                "id": "h-s1-role",
+                "neededEvidence": "Observed task use of Communicate Finding for this function.",
+                "rationale": "This function serves a distinct intermediate result; the title proves identity only."
+              },
+              {
+                "claim": "Proposed required: The proposed communication needs the assessment findings delivered to its audience.",
+                "fieldPath": "steps[0].necessity",
+                "id": "h-s1-necessity",
+                "neededEvidence": "Observed cases establishing when Communicate Finding is required.",
+                "rationale": "The proposed communication needs the assessment findings delivered to its audience; this necessity is unverified."
+              }
+            ],
+            "necessity": "required",
+            "necessitySupport": {
+              "fieldPath": "steps[0].necessity",
+              "hypothesisId": "h-s1-necessity",
+              "kind": "hypothesis"
+            },
+            "role": "convey the client's assessment findings through a selected communication form",
+            "roleSupport": {
+              "fieldPath": "steps[0].role",
+              "hypothesisId": "h-s1-role",
+              "kind": "hypothesis"
+            },
+            "stepId": "s1"
+          },
+          {
+            "activityNodeId": "7RU2tIBrv8nskeqwSRi3",
+            "evidenceRefs": [
+              {
+                "field": "title",
+                "nodeId": "7RU2tIBrv8nskeqwSRi3",
+                "quote": "Communicate Recommendation",
+                "supportLevel": "direct_title"
+              }
+            ],
+            "hypothesisRefs": [
+              {
+                "claim": "Proposed role: convey the recommendations derived from that assessment through a selected communication form.",
+                "fieldPath": "steps[1].role",
+                "id": "h-s2-role",
+                "neededEvidence": "Observed task use of Communicate Recommendation for this function.",
+                "rationale": "This function serves a distinct intermediate result; the title proves identity only."
+              },
+              {
+                "claim": "Proposed required: The proposed communication also needs its actionable recommendations delivered.",
+                "fieldPath": "steps[1].necessity",
+                "id": "h-s2-necessity",
+                "neededEvidence": "Observed cases establishing when Communicate Recommendation is required.",
+                "rationale": "The proposed communication also needs its actionable recommendations delivered; this necessity is unverified."
+              }
+            ],
+            "necessity": "required",
+            "necessitySupport": {
+              "fieldPath": "steps[1].necessity",
+              "hypothesisId": "h-s2-necessity",
+              "kind": "hypothesis"
+            },
+            "role": "convey the recommendations derived from that assessment through a selected communication form",
+            "roleSupport": {
+              "fieldPath": "steps[1].role",
+              "hypothesisId": "h-s2-role",
+              "kind": "hypothesis"
+            },
+            "stepId": "s2"
+          }
+        ],
+        "unsupportedFlowClaims": []
+      },
+      "rationale": "Findings and recommendations are separate communication contents. The selected medium and findings-first order are proposals pending direct procedure evidence.",
+      "reviews": [
+        {
+          "role": "algorithmTaxonomy",
+          "notes": "Frozen titles match. Findings and recommendations are distinct communication contents; findings-first presentation remains a hypothesis.",
+          "objections": [],
+          "verdict": "pass"
+        },
+        {
+          "role": "evidenceMapping",
+          "notes": "The findings and recommendations activities match active frozen records. The source names both contents and possible forms, but does not establish the proposed presentation order.",
+          "objections": [],
+          "verdict": "pass"
+        }
+      ],
+      "critiques": [
+        {
+          "finding": "Frozen titles match. Findings and recommendations are distinct communication contents; findings-first presentation remains a hypothesis.",
+          "objections": [],
+          "role": "algorithm_taxonomy",
+          "verdict": "pass"
+        },
+        {
+          "finding": "The findings and recommendations activities match active frozen records. The source names both contents and possible forms, but does not establish the proposed presentation order.",
+          "objections": [],
+          "role": "evidence_mapping",
+          "verdict": "pass"
+        }
+      ],
+      "sourceSupportStatus": "research_hypothesis",
+      "pipelineReviewStatus": "independently_critiqued",
+      "capturedReviewStatus": "pending",
+      "sourcePublicationKey": "0bc4f40cf012b6b7530c92f75a0b2ede93674801a6a5ba8c88af7cec35ab1f9f",
+      "sourceCandidateHash": "c7d7fa5e41e0a270320b98caa8f5f8d5f0bc87075cba7d51908672a80b668634",
+      "sourcePublicationFileSha256": "4f294ddda7a3a8aeee583d04ba1a36159ec451b3584fe6b70fcf40ce64958214",
+      "canonicalCoreUnchanged": true,
+      "history": [
+        {
+          "proposalId": "algorithm-05wTiYXl9N7L8JogElG0-v1",
+          "version": 1,
+          "reviewStatus": "invalidated",
+          "candidateHash": "37d964efc58e344d524cd8db23f576b3e02857a4f492d947a4e3a3a97f996b37"
+        },
+        {
+          "proposalId": "algorithm-05wTiYXl9N7L8JogElG0-v2",
+          "version": 2,
+          "reviewStatus": "pending",
+          "candidateHash": "c7d7fa5e41e0a270320b98caa8f5f8d5f0bc87075cba7d51908672a80b668634"
+        }
+      ]
+    },
+    {
+      "nodeId": "05cJlz498lLfsI5KSy5g",
+      "title": "(O*Net) 19965 - Analyze changes designed to improve the environmental performance of complex systems and avoid unintended negative consequences.",
+      "version": 2,
+      "proposalId": "algorithm-05cJlz498lLfsI5KSy5g-v2",
+      "procedureHash": "d2ffe0844d182f02a164b8588f3c352c55e6bd82e0cae51c3202440c75ccca65",
+      "procedure": {
+        "baselineSha256": "dab5464a577fe0c040beddcdc480ca4eb031de208b5c665a8205414646677711",
+        "changeProposals": [],
+        "childVariants": [],
+        "commonCoreMappings": [],
+        "concisePublicRationale": "Intended environmental benefit and unintended adverse effects are distinct proposed analysis functions. The title gives aims, while the proposed roles and order need procedure evidence.",
+        "dependencies": [],
+        "evidenceRefs": [],
+        "flow": {
+          "evidenceRefs": [
+            {
+              "hypothesisId": "h-order",
+              "relationRationale": "Both assessments examine the same change and serve different criteria; their order is a research proposal",
+              "supportLevel": "hypothesis"
+            }
+          ],
+          "items": [
+            {
+              "stepId": "s1",
+              "type": "step"
+            },
+            {
+              "stepId": "s2",
+              "type": "step"
+            }
+          ],
+          "type": "sequence"
+        },
+        "hypotheses": [
+          {
+            "claim": "Proposed role: assess whether a proposed system change improves the intended environmental performance measure.",
+            "id": "h-s1-role",
+            "neededEvidence": "Observed task use of Analyze Performance for this function.",
+            "rationale": "This function serves a distinct intermediate result; the title proves identity only."
+          },
+          {
+            "claim": "Proposed required: The proposed analysis needs an intended-benefit assessment to test the change's stated aim.",
+            "id": "h-s1-necessity",
+            "neededEvidence": "Observed cases establishing when Analyze Performance is required.",
+            "rationale": "The proposed analysis needs an intended-benefit assessment to test the change's stated aim; this necessity is unverified."
+          },
+          {
+            "claim": "Proposed role: assess possible unintended adverse effects of the same proposed change.",
+            "id": "h-s2-role",
+            "neededEvidence": "Observed task use of Evaluate Consequence for this function.",
+            "rationale": "This function serves a distinct intermediate result; the title proves identity only."
+          },
+          {
+            "claim": "Proposed required: The proposed analysis needs a separate adverse-effect assessment to examine the avoidance aim.",
+            "id": "h-s2-necessity",
+            "neededEvidence": "Observed cases establishing when Evaluate Consequence is required.",
+            "rationale": "The proposed analysis needs a separate adverse-effect assessment to examine the avoidance aim; this necessity is unverified."
+          },
+          {
+            "claim": "The proposed analysis assesses intended environmental performance before checking unintended adverse consequences",
+            "id": "h-order",
+            "neededEvidence": "Direct change-analysis records showing evaluation order",
+            "rationale": "Both assessments examine the same change and serve different criteria; their order is a research proposal"
+          }
+        ],
+        "nodeId": "05cJlz498lLfsI5KSy5g",
+        "objectionDispositions": [
+          {
+            "candidatePaths": [
+              "sourceClaims[0]"
+            ],
+            "objection": "sourceClaims[0] malformed or unclassified",
+            "objectionId": "7cb9424c0f893b898160080510927ad43b4d46dd72b525cdf38757705b15ec30",
+            "occurrence": 0,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Exact subject title cited as direct_title.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[0].evidenceRefs[0]"
+            ],
+            "objection": "steps[0] lacks exact frozen evidence for its bound activity",
+            "objectionId": "d262c6b76710cdb1a9f293d7fab376b01c52976e52c3a5a9d839b76f963e6b90",
+            "occurrence": 1,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Exact active activity title now cited.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[0].evidenceRefs[0]"
+            ],
+            "objection": "steps[0].evidenceRefs[0] lacks classified supportLevel",
+            "objectionId": "e184ac23612ad3ade6087a1a31fad71ce390a8f36d908b05c6a547e44feb8485",
+            "occurrence": 2,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Title citation now classified direct_title.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[0].evidenceRefs[0]"
+            ],
+            "objection": "steps[0].evidenceRefs[0] title supportLevel mismatch",
+            "objectionId": "3970ea66a6c4dd469ec81b695d53a3a1d782aafddd0d84a5f62ace801897cc22",
+            "occurrence": 3,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Title citation now classified direct_title.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[0].roleSupport",
+              "steps[0].hypothesisRefs[0]"
+            ],
+            "objection": "steps[0].role needs a declared, substantive per-step hypothesisRefs entry",
+            "objectionId": "b6cd3910f776d2bd7661578a012819651b8810699bd463a0785e3e6c3afcc04c",
+            "occurrence": 4,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Task-specific role now has a bound hypothesis.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[1].evidenceRefs[0]"
+            ],
+            "objection": "steps[1] lacks exact frozen evidence for its bound activity",
+            "objectionId": "025f5dcab65c93beef98555a670b50ad7a25259cae3a21d5e0e2b1b86f397181",
+            "occurrence": 5,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Exact active activity title now cited.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[1].evidenceRefs[0]"
+            ],
+            "objection": "steps[1].evidenceRefs[0] lacks classified supportLevel",
+            "objectionId": "6c134282e30a9245ff01be3bf0c37af3b89d7b705564e40ccbb2e5c412fe0b65",
+            "occurrence": 6,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Title citation now classified direct_title.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[1].evidenceRefs[0]"
+            ],
+            "objection": "steps[1].evidenceRefs[0] title supportLevel mismatch",
+            "objectionId": "450dec82394122d42dee4ca4f206898db51231c0584a6277d68fb64d7e351305",
+            "occurrence": 7,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Title citation now classified direct_title.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[1].roleSupport",
+              "steps[1].hypothesisRefs[0]"
+            ],
+            "objection": "steps[1].role needs a declared, substantive per-step hypothesisRefs entry",
+            "objectionId": "fb5114e99f1741126d56a3af89cdf5d6a0828eb3645870bc4050b7da87f995e6",
+            "occurrence": 8,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Task-specific role now has a bound hypothesis.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps",
+              "flow"
+            ],
+            "objection": "steps[2] lacks exact frozen evidence for its bound activity",
+            "objectionId": "8c897c7fcf7750b1feb9f4d2e4a89495c2390c9674e2a89f358888f1963c3f80",
+            "occurrence": 9,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Old unsupported step removed; two distinct evaluations remain.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps",
+              "flow"
+            ],
+            "objection": "steps[2].evidenceRefs[0] lacks classified supportLevel",
+            "objectionId": "b3855e9169d32f341d6910deffd05e363262892a96fa7cb85b2d3385b885b658",
+            "occurrence": 10,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Old unsupported step removed; two distinct evaluations remain.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps",
+              "flow"
+            ],
+            "objection": "steps[2].evidenceRefs[0] title supportLevel mismatch",
+            "objectionId": "ba3a996072433dfc0dd93283c5ed8fef1cdf3b19b9b9d63810cc57e5e0519435",
+            "occurrence": 11,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Old unsupported step removed; two distinct evaluations remain.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps",
+              "flow"
+            ],
+            "objection": "steps[2].role needs a declared, substantive per-step hypothesisRefs entry",
+            "objectionId": "09e7bb20168e157fd5efb5fb066f77a3b0f65e899503e137519ea458257d011f",
+            "occurrence": 12,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Old unsupported step removed; two distinct evaluations remain.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          }
+        ],
+        "proposalVersion": 2,
+        "reviewVersions": {
+          "evidenceReference": null,
+          "flowTaxonomy": null
+        },
+        "schemaVersion": "algorithm-candidate-v1",
+        "searchReceiptIds": [],
+        "sourceClaims": [
+          {
+            "claim": "(O*Net) 19965 - Analyze changes designed to improve the environmental performance of complex systems and avoid unintended negative consequences.",
+            "evidenceRefs": [
+              {
+                "field": "title",
+                "nodeId": "05cJlz498lLfsI5KSy5g",
+                "quote": "(O*Net) 19965 - Analyze changes designed to improve the environmental performance of complex systems and avoid unintended negative consequences.",
+                "supportLevel": "direct_title"
+              }
+            ],
+            "supportLevel": "direct_title"
+          }
+        ],
+        "stage": "leaf",
+        "status": "candidate",
+        "steps": [
+          {
+            "activityNodeId": "mxbzVpORdAkwLZaeFOtq",
+            "evidenceRefs": [
+              {
+                "field": "title",
+                "nodeId": "mxbzVpORdAkwLZaeFOtq",
+                "quote": "Analyze Performance",
+                "supportLevel": "direct_title"
+              }
+            ],
+            "hypothesisRefs": [
+              {
+                "claim": "Proposed role: assess whether a proposed system change improves the intended environmental performance measure.",
+                "fieldPath": "steps[0].role",
+                "id": "h-s1-role",
+                "neededEvidence": "Observed task use of Analyze Performance for this function.",
+                "rationale": "This function serves a distinct intermediate result; the title proves identity only."
+              },
+              {
+                "claim": "Proposed required: The proposed analysis needs an intended-benefit assessment to test the change's stated aim.",
+                "fieldPath": "steps[0].necessity",
+                "id": "h-s1-necessity",
+                "neededEvidence": "Observed cases establishing when Analyze Performance is required.",
+                "rationale": "The proposed analysis needs an intended-benefit assessment to test the change's stated aim; this necessity is unverified."
+              }
+            ],
+            "necessity": "required",
+            "necessitySupport": {
+              "fieldPath": "steps[0].necessity",
+              "hypothesisId": "h-s1-necessity",
+              "kind": "hypothesis"
+            },
+            "role": "assess whether a proposed system change improves the intended environmental performance measure",
+            "roleSupport": {
+              "fieldPath": "steps[0].role",
+              "hypothesisId": "h-s1-role",
+              "kind": "hypothesis"
+            },
+            "stepId": "s1"
+          },
+          {
+            "activityNodeId": "11FlA7TqetDUaGdugtY1",
+            "evidenceRefs": [
+              {
+                "field": "title",
+                "nodeId": "11FlA7TqetDUaGdugtY1",
+                "quote": "Evaluate Consequence",
+                "supportLevel": "direct_title"
+              }
+            ],
+            "hypothesisRefs": [
+              {
+                "claim": "Proposed role: assess possible unintended adverse effects of the same proposed change.",
+                "fieldPath": "steps[1].role",
+                "id": "h-s2-role",
+                "neededEvidence": "Observed task use of Evaluate Consequence for this function.",
+                "rationale": "This function serves a distinct intermediate result; the title proves identity only."
+              },
+              {
+                "claim": "Proposed required: The proposed analysis needs a separate adverse-effect assessment to examine the avoidance aim.",
+                "fieldPath": "steps[1].necessity",
+                "id": "h-s2-necessity",
+                "neededEvidence": "Observed cases establishing when Evaluate Consequence is required.",
+                "rationale": "The proposed analysis needs a separate adverse-effect assessment to examine the avoidance aim; this necessity is unverified."
+              }
+            ],
+            "necessity": "required",
+            "necessitySupport": {
+              "fieldPath": "steps[1].necessity",
+              "hypothesisId": "h-s2-necessity",
+              "kind": "hypothesis"
+            },
+            "role": "assess possible unintended adverse effects of the same proposed change",
+            "roleSupport": {
+              "fieldPath": "steps[1].role",
+              "hypothesisId": "h-s2-role",
+              "kind": "hypothesis"
+            },
+            "stepId": "s2"
+          }
+        ],
+        "unsupportedFlowClaims": []
+      },
+      "rationale": "Intended environmental benefit and unintended adverse effects are distinct proposed analysis functions. The title gives aims, while the proposed roles and order need procedure evidence.",
+      "reviews": [
+        {
+          "role": "algorithmTaxonomy",
+          "notes": "Frozen titles match. Intended performance and unintended consequences are distinct assessments; their proposed order remains unverified.",
+          "objections": [],
+          "verdict": "pass"
+        },
+        {
+          "role": "evidenceMapping",
+          "notes": "Both activity mappings match active frozen records. Assessing intended performance and adverse consequences is a coherent proposal; the performance-first order remains a hypothesis.",
+          "objections": [],
+          "verdict": "pass"
+        }
+      ],
+      "critiques": [
+        {
+          "finding": "Frozen titles match. Intended performance and unintended consequences are distinct assessments; their proposed order remains unverified.",
+          "objections": [],
+          "role": "algorithm_taxonomy",
+          "verdict": "pass"
+        },
+        {
+          "finding": "Both activity mappings match active frozen records. Assessing intended performance and adverse consequences is a coherent proposal; the performance-first order remains a hypothesis.",
+          "objections": [],
+          "role": "evidence_mapping",
+          "verdict": "pass"
+        }
+      ],
+      "sourceSupportStatus": "research_hypothesis",
+      "pipelineReviewStatus": "independently_critiqued",
+      "capturedReviewStatus": "pending",
+      "sourcePublicationKey": "2eccc4319ca4450008d3c9753dc2ba0211aeaf23b24f7b536c6694f5d3066153",
+      "sourceCandidateHash": "d2ffe0844d182f02a164b8588f3c352c55e6bd82e0cae51c3202440c75ccca65",
+      "sourcePublicationFileSha256": "d7bed5c95b80839fa55521b4285890764e489b8cbe90fa79b13ddf4edde7290e",
+      "canonicalCoreUnchanged": true,
+      "history": [
+        {
+          "proposalId": "algorithm-05cJlz498lLfsI5KSy5g-v1",
+          "version": 1,
+          "reviewStatus": "invalidated",
+          "candidateHash": "0c75cb6f5a6401758624e7b075c2ee72a85082b3e51f2a6197c31c35c24d998d"
+        },
+        {
+          "proposalId": "algorithm-05cJlz498lLfsI5KSy5g-v2",
+          "version": 2,
+          "reviewStatus": "pending",
+          "candidateHash": "d2ffe0844d182f02a164b8588f3c352c55e6bd82e0cae51c3202440c75ccca65"
+        }
+      ]
+    },
+    {
+      "nodeId": "06rlBcrLzJ4xnPR5Le4X",
+      "title": "(O*Net) 21172 - Supervise students' research on celestial and astronomical phenomena.",
+      "version": 2,
+      "proposalId": "algorithm-06rlBcrLzJ4xnPR5Le4X-v2",
+      "procedureHash": "b8aabdc0664e405119edc29c0d7f8f4361d12bdd17269aac71559764eed8cbfc",
+      "procedure": {
+        "baselineSha256": "dab5464a577fe0c040beddcdc480ca4eb031de208b5c665a8205414646677711",
+        "changeProposals": [],
+        "childVariants": [],
+        "commonCoreMappings": [],
+        "concisePublicRationale": "Research review and student advice are distinct proposed supervision functions. The frozen title does not establish either as an observed supervision procedure.",
+        "dependencies": [],
+        "evidenceRefs": [],
+        "flow": {
+          "evidenceRefs": [
+            {
+              "hypothesisId": "h-order",
+              "relationRationale": "The review is proposed to supply context for student advice; this order is not established by the task title",
+              "supportLevel": "hypothesis"
+            }
+          ],
+          "items": [
+            {
+              "stepId": "s1",
+              "type": "step"
+            },
+            {
+              "stepId": "s2",
+              "type": "step"
+            }
+          ],
+          "type": "sequence"
+        },
+        "hypotheses": [
+          {
+            "claim": "Proposed role: inspect the student's current celestial or astronomical investigation against its stated research question.",
+            "id": "h-s1-role",
+            "neededEvidence": "Observed task use of Review Research for this function.",
+            "rationale": "This function serves a distinct intermediate result; the title proves identity only."
+          },
+          {
+            "claim": "Proposed required: The proposed supervision cycle needs an appraisal of current research work.",
+            "id": "h-s1-necessity",
+            "neededEvidence": "Observed cases establishing when Review Research is required.",
+            "rationale": "The proposed supervision cycle needs an appraisal of current research work; this necessity is unverified."
+          },
+          {
+            "claim": "Proposed role: give the student feedback to guide the next research action.",
+            "id": "h-s2-role",
+            "neededEvidence": "Observed task use of Advise Student for this function.",
+            "rationale": "This function serves a distinct intermediate result; the title proves identity only."
+          },
+          {
+            "claim": "Proposed required: The proposed supervision cycle needs guidance based on the appraisal.",
+            "id": "h-s2-necessity",
+            "neededEvidence": "Observed cases establishing when Advise Student is required.",
+            "rationale": "The proposed supervision cycle needs guidance based on the appraisal; this necessity is unverified."
+          },
+          {
+            "claim": "The proposed supervision reviews current student research before giving guidance",
+            "id": "h-order",
+            "neededEvidence": "Observed astronomy-research supervision interactions",
+            "rationale": "The review is proposed to supply context for student advice; this order is not established by the task title"
+          }
+        ],
+        "nodeId": "06rlBcrLzJ4xnPR5Le4X",
+        "objectionDispositions": [
+          {
+            "candidatePaths": [
+              "sourceClaims[0]"
+            ],
+            "objection": "sourceClaims[0] malformed or unclassified",
+            "objectionId": "7cb9424c0f893b898160080510927ad43b4d46dd72b525cdf38757705b15ec30",
+            "occurrence": 0,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Exact subject title cited as direct_title.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[0].evidenceRefs[0]"
+            ],
+            "objection": "steps[0] lacks exact frozen evidence for its bound activity",
+            "objectionId": "d262c6b76710cdb1a9f293d7fab376b01c52976e52c3a5a9d839b76f963e6b90",
+            "occurrence": 1,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Exact active activity title now cited.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[0].evidenceRefs[0]"
+            ],
+            "objection": "steps[0].evidenceRefs[0] lacks classified supportLevel",
+            "objectionId": "e184ac23612ad3ade6087a1a31fad71ce390a8f36d908b05c6a547e44feb8485",
+            "occurrence": 2,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Title citation now classified direct_title.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[0].evidenceRefs[0]"
+            ],
+            "objection": "steps[0].evidenceRefs[0] title supportLevel mismatch",
+            "objectionId": "3970ea66a6c4dd469ec81b695d53a3a1d782aafddd0d84a5f62ace801897cc22",
+            "occurrence": 3,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Title citation now classified direct_title.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[0].roleSupport",
+              "steps[0].hypothesisRefs[0]"
+            ],
+            "objection": "steps[0].role needs a declared, substantive per-step hypothesisRefs entry",
+            "objectionId": "b6cd3910f776d2bd7661578a012819651b8810699bd463a0785e3e6c3afcc04c",
+            "occurrence": 4,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Task-specific role now has a bound hypothesis.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[1].evidenceRefs[0]"
+            ],
+            "objection": "steps[1] lacks exact frozen evidence for its bound activity",
+            "objectionId": "025f5dcab65c93beef98555a670b50ad7a25259cae3a21d5e0e2b1b86f397181",
+            "occurrence": 5,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Exact active activity title now cited.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[1].evidenceRefs[0]"
+            ],
+            "objection": "steps[1].evidenceRefs[0] lacks classified supportLevel",
+            "objectionId": "6c134282e30a9245ff01be3bf0c37af3b89d7b705564e40ccbb2e5c412fe0b65",
+            "occurrence": 6,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Title citation now classified direct_title.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[1].evidenceRefs[0]"
+            ],
+            "objection": "steps[1].evidenceRefs[0] title supportLevel mismatch",
+            "objectionId": "450dec82394122d42dee4ca4f206898db51231c0584a6277d68fb64d7e351305",
+            "occurrence": 7,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Title citation now classified direct_title.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[1].roleSupport",
+              "steps[1].hypothesisRefs[0]"
+            ],
+            "objection": "steps[1].role needs a declared, substantive per-step hypothesisRefs entry",
+            "objectionId": "fb5114e99f1741126d56a3af89cdf5d6a0828eb3645870bc4050b7da87f995e6",
+            "occurrence": 8,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Task-specific role now has a bound hypothesis.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          }
+        ],
+        "proposalVersion": 2,
+        "reviewVersions": {
+          "evidenceReference": null,
+          "flowTaxonomy": null
+        },
+        "schemaVersion": "algorithm-candidate-v1",
+        "searchReceiptIds": [],
+        "sourceClaims": [
+          {
+            "claim": "(O*Net) 21172 - Supervise students' research on celestial and astronomical phenomena.",
+            "evidenceRefs": [
+              {
+                "field": "title",
+                "nodeId": "06rlBcrLzJ4xnPR5Le4X",
+                "quote": "(O*Net) 21172 - Supervise students' research on celestial and astronomical phenomena.",
+                "supportLevel": "direct_title"
+              }
+            ],
+            "supportLevel": "direct_title"
+          }
+        ],
+        "stage": "leaf",
+        "status": "candidate",
+        "steps": [
+          {
+            "activityNodeId": "DILtYfvGhsXmMNRCUDUB",
+            "evidenceRefs": [
+              {
+                "field": "title",
+                "nodeId": "DILtYfvGhsXmMNRCUDUB",
+                "quote": "Review Research",
+                "supportLevel": "direct_title"
+              }
+            ],
+            "hypothesisRefs": [
+              {
+                "claim": "Proposed role: inspect the student's current celestial or astronomical investigation against its stated research question.",
+                "fieldPath": "steps[0].role",
+                "id": "h-s1-role",
+                "neededEvidence": "Observed task use of Review Research for this function.",
+                "rationale": "This function serves a distinct intermediate result; the title proves identity only."
+              },
+              {
+                "claim": "Proposed required: The proposed supervision cycle needs an appraisal of current research work.",
+                "fieldPath": "steps[0].necessity",
+                "id": "h-s1-necessity",
+                "neededEvidence": "Observed cases establishing when Review Research is required.",
+                "rationale": "The proposed supervision cycle needs an appraisal of current research work; this necessity is unverified."
+              }
+            ],
+            "necessity": "required",
+            "necessitySupport": {
+              "fieldPath": "steps[0].necessity",
+              "hypothesisId": "h-s1-necessity",
+              "kind": "hypothesis"
+            },
+            "role": "inspect the student's current celestial or astronomical investigation against its stated research question",
+            "roleSupport": {
+              "fieldPath": "steps[0].role",
+              "hypothesisId": "h-s1-role",
+              "kind": "hypothesis"
+            },
+            "stepId": "s1"
+          },
+          {
+            "activityNodeId": "F1SrhhoN7Qg2lhQ9G43w",
+            "evidenceRefs": [
+              {
+                "field": "title",
+                "nodeId": "F1SrhhoN7Qg2lhQ9G43w",
+                "quote": "Advise Student",
+                "supportLevel": "direct_title"
+              }
+            ],
+            "hypothesisRefs": [
+              {
+                "claim": "Proposed role: give the student feedback to guide the next research action.",
+                "fieldPath": "steps[1].role",
+                "id": "h-s2-role",
+                "neededEvidence": "Observed task use of Advise Student for this function.",
+                "rationale": "This function serves a distinct intermediate result; the title proves identity only."
+              },
+              {
+                "claim": "Proposed required: The proposed supervision cycle needs guidance based on the appraisal.",
+                "fieldPath": "steps[1].necessity",
+                "id": "h-s2-necessity",
+                "neededEvidence": "Observed cases establishing when Advise Student is required.",
+                "rationale": "The proposed supervision cycle needs guidance based on the appraisal; this necessity is unverified."
+              }
+            ],
+            "necessity": "required",
+            "necessitySupport": {
+              "fieldPath": "steps[1].necessity",
+              "hypothesisId": "h-s2-necessity",
+              "kind": "hypothesis"
+            },
+            "role": "give the student feedback to guide the next research action",
+            "roleSupport": {
+              "fieldPath": "steps[1].role",
+              "hypothesisId": "h-s2-role",
+              "kind": "hypothesis"
+            },
+            "stepId": "s2"
+          }
+        ],
+        "unsupportedFlowClaims": []
+      },
+      "rationale": "Research review and student advice are distinct proposed supervision functions. The frozen title does not establish either as an observed supervision procedure.",
+      "reviews": [
+        {
+          "role": "algorithmTaxonomy",
+          "notes": "Frozen titles match. Reviewing research before advising a student is a coherent proposed supervision episode, pending observed evidence.",
+          "objections": [],
+          "verdict": "pass"
+        },
+        {
+          "role": "evidenceMapping",
+          "notes": "Review Research and Advise Student match active frozen records. Appraisal followed by guidance is a coherent proposed supervision cycle, not an observed procedure established by the title.",
+          "objections": [],
+          "verdict": "pass"
+        }
+      ],
+      "critiques": [
+        {
+          "finding": "Frozen titles match. Reviewing research before advising a student is a coherent proposed supervision episode, pending observed evidence.",
+          "objections": [],
+          "role": "algorithm_taxonomy",
+          "verdict": "pass"
+        },
+        {
+          "finding": "Review Research and Advise Student match active frozen records. Appraisal followed by guidance is a coherent proposed supervision cycle, not an observed procedure established by the title.",
+          "objections": [],
+          "role": "evidence_mapping",
+          "verdict": "pass"
+        }
+      ],
+      "sourceSupportStatus": "research_hypothesis",
+      "pipelineReviewStatus": "independently_critiqued",
+      "capturedReviewStatus": "pending",
+      "sourcePublicationKey": "5ec482b2951dff3a8f81380b367cc349de664cc67091582ad7f4e2a38f9e6c8e",
+      "sourceCandidateHash": "b8aabdc0664e405119edc29c0d7f8f4361d12bdd17269aac71559764eed8cbfc",
+      "sourcePublicationFileSha256": "0ea2b7a9779d66f89a0e08ab0f72dd834b7bf28f52a2271df71e8ff895ede2e1",
+      "canonicalCoreUnchanged": true,
+      "history": [
+        {
+          "proposalId": "algorithm-06rlBcrLzJ4xnPR5Le4X-v1",
+          "version": 1,
+          "reviewStatus": "invalidated",
+          "candidateHash": "04e322da46e7092dcb5efc2a100adeb44e15dccc0ef658d96d9ab6d84c786810"
+        },
+        {
+          "proposalId": "algorithm-06rlBcrLzJ4xnPR5Le4X-v2",
+          "version": 2,
+          "reviewStatus": "pending",
+          "candidateHash": "b8aabdc0664e405119edc29c0d7f8f4361d12bdd17269aac71559764eed8cbfc"
+        }
+      ]
+    },
+    {
+      "nodeId": "06Q20XKwJhM4zSpUwKuJ",
+      "title": "(O*Net) 15713 - Collaborate with search engine shopping specialists to place marketing content in desired online locations.",
+      "version": 2,
+      "proposalId": "algorithm-06Q20XKwJhM4zSpUwKuJ-v2",
+      "procedureHash": "6b8cc5db622f2637234c816a1c01abb7ca6de5abd267f40d7d8cf8524a4bf3f7",
+      "procedure": {
+        "baselineSha256": "dab5464a577fe0c040beddcdc480ca4eb031de208b5c665a8205414646677711",
+        "changeProposals": [],
+        "childVariants": [],
+        "commonCoreMappings": [],
+        "concisePublicRationale": "Specialist coordination, destination choice, and content posting are distinct proposed functions. Responsibility for posting and execution order need direct evidence.",
+        "dependencies": [],
+        "evidenceRefs": [],
+        "flow": {
+          "evidenceRefs": [
+            {
+              "hypothesisId": "h-order",
+              "relationRationale": "The proposed posting depends on an agreed destination; the source states a goal, not this execution order",
+              "supportLevel": "hypothesis"
+            }
+          ],
+          "items": [
+            {
+              "stepId": "s1",
+              "type": "step"
+            },
+            {
+              "stepId": "s2",
+              "type": "step"
+            },
+            {
+              "stepId": "s3",
+              "type": "step"
+            }
+          ],
+          "type": "sequence"
+        },
+        "hypotheses": [
+          {
+            "claim": "Proposed role: agree with a search engine shopping specialist on placement constraints and responsibilities.",
+            "id": "h-s1-role",
+            "neededEvidence": "Observed task use of Collaborate Specialist for this function.",
+            "rationale": "This function serves a distinct intermediate result; the title proves identity only."
+          },
+          {
+            "claim": "Proposed required: The proposed placement process relies on specialist coordination.",
+            "id": "h-s1-necessity",
+            "neededEvidence": "Observed cases establishing when Collaborate Specialist is required.",
+            "rationale": "The proposed placement process relies on specialist coordination; this necessity is unverified."
+          },
+          {
+            "claim": "Proposed role: choose an online destination consistent with the desired placement.",
+            "id": "h-s2-role",
+            "neededEvidence": "Observed task use of Select Location for this function.",
+            "rationale": "This function serves a distinct intermediate result; the title proves identity only."
+          },
+          {
+            "claim": "Proposed required: A destination must be selected for the proposed posting action.",
+            "id": "h-s2-necessity",
+            "neededEvidence": "Observed cases establishing when Select Location is required.",
+            "rationale": "A destination must be selected for the proposed posting action; this necessity is unverified."
+          },
+          {
+            "claim": "Proposed role: publish the marketing content at the selected online destination.",
+            "id": "h-s3-role",
+            "neededEvidence": "Observed task use of Post Content for this function.",
+            "rationale": "This function serves a distinct intermediate result; the title proves identity only."
+          },
+          {
+            "claim": "Proposed required: The proposed placement objective requires the content to appear at that destination.",
+            "id": "h-s3-necessity",
+            "neededEvidence": "Observed cases establishing when Post Content is required.",
+            "rationale": "The proposed placement objective requires the content to appear at that destination; this necessity is unverified."
+          },
+          {
+            "claim": "The proposed procedure coordinates with specialists, selects a destination, then posts content there",
+            "id": "h-order",
+            "neededEvidence": "Observed marketing-content placement workflow",
+            "rationale": "The proposed posting depends on an agreed destination; the source states a goal, not this execution order"
+          }
+        ],
+        "nodeId": "06Q20XKwJhM4zSpUwKuJ",
+        "objectionDispositions": [
+          {
+            "candidatePaths": [
+              "sourceClaims[0]"
+            ],
+            "objection": "sourceClaims[0] malformed or unclassified",
+            "objectionId": "7cb9424c0f893b898160080510927ad43b4d46dd72b525cdf38757705b15ec30",
+            "occurrence": 0,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Exact subject title cited as direct_title.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[0].evidenceRefs[0]"
+            ],
+            "objection": "steps[0] lacks exact frozen evidence for its bound activity",
+            "objectionId": "d262c6b76710cdb1a9f293d7fab376b01c52976e52c3a5a9d839b76f963e6b90",
+            "occurrence": 1,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Exact active activity title now cited.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[0].evidenceRefs[0]"
+            ],
+            "objection": "steps[0].evidenceRefs[0] lacks classified supportLevel",
+            "objectionId": "e184ac23612ad3ade6087a1a31fad71ce390a8f36d908b05c6a547e44feb8485",
+            "occurrence": 2,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Title citation now classified direct_title.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[0].evidenceRefs[0]"
+            ],
+            "objection": "steps[0].evidenceRefs[0] title supportLevel mismatch",
+            "objectionId": "3970ea66a6c4dd469ec81b695d53a3a1d782aafddd0d84a5f62ace801897cc22",
+            "occurrence": 3,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Title citation now classified direct_title.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[0].roleSupport",
+              "steps[0].hypothesisRefs[0]"
+            ],
+            "objection": "steps[0].role source claim must exactly support this field from the subject source",
+            "objectionId": "9da3ca5f5d40cd1a4c0063e2b877f4a13539fe0e5874f8880e5c5ca5f7899de3",
+            "occurrence": 4,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Task-specific role now has a bound hypothesis.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[0].necessitySupport",
+              "steps[0].hypothesisRefs[1]"
+            ],
+            "objection": "steps[0].necessity source claim must exactly support this field from the subject source",
+            "objectionId": "498fd146ee52a7ae0021b8ae5e593e4ec53d81356ef111be6fc575848cee194b",
+            "occurrence": 5,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Necessity now has a bound hypothesis, not title proof.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[1].evidenceRefs[0]"
+            ],
+            "objection": "steps[1] lacks exact frozen evidence for its bound activity",
+            "objectionId": "0f571b13835e377ed40140c6459353240cdf7ddb6b4261ba07dcba3a19219751",
+            "occurrence": 6,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Exact active activity title now cited.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[1].evidenceRefs[0]"
+            ],
+            "objection": "steps[1].evidenceRefs[0] lacks classified supportLevel",
+            "objectionId": "e72624760b29b422d46cff9a3fbd2e6b2512f848654ccd586b4345a102cd2836",
+            "occurrence": 7,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Title citation now classified direct_title.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[1].evidenceRefs[0]"
+            ],
+            "objection": "steps[1].evidenceRefs[0] title supportLevel mismatch",
+            "objectionId": "0bb8e5050cb8ce859bb894897a3d46b2df88731a5e9290d4245dfdd77b48b69a",
+            "occurrence": 8,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Title citation now classified direct_title.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[1].roleSupport",
+              "steps[1].hypothesisRefs[0]"
+            ],
+            "objection": "steps[1].role needs a declared, substantive per-step hypothesisRefs entry",
+            "objectionId": "3734559b20c697b04d76473c26d1d5f398445f46698378169662dc3c535133a8",
+            "occurrence": 9,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Task-specific role now has a bound hypothesis.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "hypotheses",
+              "flow"
+            ],
+            "objection": "declared hypotheses must each bind an exact step field or flow relation",
+            "objectionId": "662e624c8263da32d9691904c579a71737332301de26b39279938af5bfe96aff",
+            "occurrence": 10,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "All hypotheses now bind a step field or flow relation.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          }
+        ],
+        "proposalVersion": 2,
+        "reviewVersions": {
+          "evidenceReference": null,
+          "flowTaxonomy": null
+        },
+        "schemaVersion": "algorithm-candidate-v1",
+        "searchReceiptIds": [],
+        "sourceClaims": [
+          {
+            "claim": "(O*Net) 15713 - Collaborate with search engine shopping specialists to place marketing content in desired online locations.",
+            "evidenceRefs": [
+              {
+                "field": "title",
+                "nodeId": "06Q20XKwJhM4zSpUwKuJ",
+                "quote": "(O*Net) 15713 - Collaborate with search engine shopping specialists to place marketing content in desired online locations.",
+                "supportLevel": "direct_title"
+              }
+            ],
+            "supportLevel": "direct_title"
+          }
+        ],
+        "stage": "leaf",
+        "status": "candidate",
+        "steps": [
+          {
+            "activityNodeId": "m83M4PiRAjHKNvBbmRvF",
+            "evidenceRefs": [
+              {
+                "field": "title",
+                "nodeId": "m83M4PiRAjHKNvBbmRvF",
+                "quote": "Collaborate Specialist",
+                "supportLevel": "direct_title"
+              }
+            ],
+            "hypothesisRefs": [
+              {
+                "claim": "Proposed role: agree with a search engine shopping specialist on placement constraints and responsibilities.",
+                "fieldPath": "steps[0].role",
+                "id": "h-s1-role",
+                "neededEvidence": "Observed task use of Collaborate Specialist for this function.",
+                "rationale": "This function serves a distinct intermediate result; the title proves identity only."
+              },
+              {
+                "claim": "Proposed required: The proposed placement process relies on specialist coordination.",
+                "fieldPath": "steps[0].necessity",
+                "id": "h-s1-necessity",
+                "neededEvidence": "Observed cases establishing when Collaborate Specialist is required.",
+                "rationale": "The proposed placement process relies on specialist coordination; this necessity is unverified."
+              }
+            ],
+            "necessity": "required",
+            "necessitySupport": {
+              "fieldPath": "steps[0].necessity",
+              "hypothesisId": "h-s1-necessity",
+              "kind": "hypothesis"
+            },
+            "role": "agree with a search engine shopping specialist on placement constraints and responsibilities",
+            "roleSupport": {
+              "fieldPath": "steps[0].role",
+              "hypothesisId": "h-s1-role",
+              "kind": "hypothesis"
+            },
+            "stepId": "s1"
+          },
+          {
+            "activityNodeId": "Ic5Fe8fYgqw4R7u439SZ",
+            "evidenceRefs": [
+              {
+                "field": "title",
+                "nodeId": "Ic5Fe8fYgqw4R7u439SZ",
+                "quote": "Select Location",
+                "supportLevel": "direct_title"
+              }
+            ],
+            "hypothesisRefs": [
+              {
+                "claim": "Proposed role: choose an online destination consistent with the desired placement.",
+                "fieldPath": "steps[1].role",
+                "id": "h-s2-role",
+                "neededEvidence": "Observed task use of Select Location for this function.",
+                "rationale": "This function serves a distinct intermediate result; the title proves identity only."
+              },
+              {
+                "claim": "Proposed required: A destination must be selected for the proposed posting action.",
+                "fieldPath": "steps[1].necessity",
+                "id": "h-s2-necessity",
+                "neededEvidence": "Observed cases establishing when Select Location is required.",
+                "rationale": "A destination must be selected for the proposed posting action; this necessity is unverified."
+              }
+            ],
+            "necessity": "required",
+            "necessitySupport": {
+              "fieldPath": "steps[1].necessity",
+              "hypothesisId": "h-s2-necessity",
+              "kind": "hypothesis"
+            },
+            "role": "choose an online destination consistent with the desired placement",
+            "roleSupport": {
+              "fieldPath": "steps[1].role",
+              "hypothesisId": "h-s2-role",
+              "kind": "hypothesis"
+            },
+            "stepId": "s2"
+          },
+          {
+            "activityNodeId": "Pwwo44ap99N3NMGNXp0v",
+            "evidenceRefs": [
+              {
+                "field": "title",
+                "nodeId": "Pwwo44ap99N3NMGNXp0v",
+                "quote": "Post Content",
+                "supportLevel": "direct_title"
+              }
+            ],
+            "hypothesisRefs": [
+              {
+                "claim": "Proposed role: publish the marketing content at the selected online destination.",
+                "fieldPath": "steps[2].role",
+                "id": "h-s3-role",
+                "neededEvidence": "Observed task use of Post Content for this function.",
+                "rationale": "This function serves a distinct intermediate result; the title proves identity only."
+              },
+              {
+                "claim": "Proposed required: The proposed placement objective requires the content to appear at that destination.",
+                "fieldPath": "steps[2].necessity",
+                "id": "h-s3-necessity",
+                "neededEvidence": "Observed cases establishing when Post Content is required.",
+                "rationale": "The proposed placement objective requires the content to appear at that destination; this necessity is unverified."
+              }
+            ],
+            "necessity": "required",
+            "necessitySupport": {
+              "fieldPath": "steps[2].necessity",
+              "hypothesisId": "h-s3-necessity",
+              "kind": "hypothesis"
+            },
+            "role": "publish the marketing content at the selected online destination",
+            "roleSupport": {
+              "fieldPath": "steps[2].role",
+              "hypothesisId": "h-s3-role",
+              "kind": "hypothesis"
+            },
+            "stepId": "s3"
+          }
+        ],
+        "unsupportedFlowClaims": []
+      },
+      "rationale": "Specialist coordination, destination choice, and content posting are distinct proposed functions. Responsibility for posting and execution order need direct evidence.",
+      "reviews": [
+        {
+          "role": "algorithmTaxonomy",
+          "notes": "Frozen titles match. Coordination, destination selection, and posting form a coherent proposal; who selects and posts remains unverified.",
+          "objections": [],
+          "verdict": "pass"
+        },
+        {
+          "role": "evidenceMapping",
+          "notes": "The three activity mappings match active frozen records. Destination selection, posting responsibility, and execution order are coherent proposals, but the source title does not establish who performs them.",
+          "objections": [],
+          "verdict": "pass"
+        }
+      ],
+      "critiques": [
+        {
+          "finding": "Frozen titles match. Coordination, destination selection, and posting form a coherent proposal; who selects and posts remains unverified.",
+          "objections": [],
+          "role": "algorithm_taxonomy",
+          "verdict": "pass"
+        },
+        {
+          "finding": "The three activity mappings match active frozen records. Destination selection, posting responsibility, and execution order are coherent proposals, but the source title does not establish who performs them.",
+          "objections": [],
+          "role": "evidence_mapping",
+          "verdict": "pass"
+        }
+      ],
+      "sourceSupportStatus": "research_hypothesis",
+      "pipelineReviewStatus": "independently_critiqued",
+      "capturedReviewStatus": "pending",
+      "sourcePublicationKey": "67ab66694b13381423f90ed96373d16599fd139351b8c010724615a821c074a9",
+      "sourceCandidateHash": "6b8cc5db622f2637234c816a1c01abb7ca6de5abd267f40d7d8cf8524a4bf3f7",
+      "sourcePublicationFileSha256": "2ad46f69acbe6186740edd958085af539f175d28f9481a7c49ccf9721498153d",
+      "canonicalCoreUnchanged": true,
+      "history": [
+        {
+          "proposalId": "algorithm-06Q20XKwJhM4zSpUwKuJ-v1",
+          "version": 1,
+          "reviewStatus": "invalidated",
+          "candidateHash": "0ba5d761facf7ab278670f712abc827da9b03752f700704e157fb58fbac047e6"
+        },
+        {
+          "proposalId": "algorithm-06Q20XKwJhM4zSpUwKuJ-v2",
+          "version": 2,
+          "reviewStatus": "pending",
+          "candidateHash": "6b8cc5db622f2637234c816a1c01abb7ca6de5abd267f40d7d8cf8524a4bf3f7"
+        }
+      ]
+    },
+    {
+      "nodeId": "06MGPWZDxwzYxBWU8kv1",
+      "title": "(O*Net) 2717 - Read and effectively interpret small-scale maps and information from a computer screen to determine locations and provide directions.",
+      "version": 2,
+      "proposalId": "algorithm-06MGPWZDxwzYxBWU8kv1-v2",
+      "procedureHash": "97071819c587bfb1269fa279dcb9f0b48e8ced9c5ad372cc2fff4328401c321b",
+      "procedure": {
+        "baselineSha256": "dab5464a577fe0c040beddcdc480ca4eb031de208b5c665a8205414646677711",
+        "changeProposals": [],
+        "childVariants": [],
+        "commonCoreMappings": [],
+        "concisePublicRationale": "Map reading, screen reading, interpretation, location finding, and giving directions are distinct proposed functions. Their serial order remains unverified.",
+        "dependencies": [],
+        "evidenceRefs": [],
+        "flow": {
+          "evidenceRefs": [
+            {
+              "hypothesisId": "h-order",
+              "relationRationale": "Each proposed output supplies information used by the following function; the exact serial order remains unverified",
+              "supportLevel": "hypothesis"
+            }
+          ],
+          "items": [
+            {
+              "stepId": "s1",
+              "type": "step"
+            },
+            {
+              "stepId": "s2",
+              "type": "step"
+            },
+            {
+              "stepId": "s3",
+              "type": "step"
+            },
+            {
+              "stepId": "s4",
+              "type": "step"
+            },
+            {
+              "stepId": "s5",
+              "type": "step"
+            }
+          ],
+          "type": "sequence"
+        },
+        "hypotheses": [
+          {
+            "claim": "Proposed role: extract geographic cues from a small-scale map.",
+            "id": "h-s1-role",
+            "neededEvidence": "Observed task use of Read Map for this function.",
+            "rationale": "This function serves a distinct intermediate result; the title proves identity only."
+          },
+          {
+            "claim": "Proposed required: The proposed location-finding process needs map information.",
+            "id": "h-s1-necessity",
+            "neededEvidence": "Observed cases establishing when Read Map is required.",
+            "rationale": "The proposed location-finding process needs map information; this necessity is unverified."
+          },
+          {
+            "claim": "Proposed role: extract relevant location data shown on a computer screen.",
+            "id": "h-s2-role",
+            "neededEvidence": "Observed task use of Read Information for this function.",
+            "rationale": "This function serves a distinct intermediate result; the title proves identity only."
+          },
+          {
+            "claim": "Proposed required: The proposed process also needs screen information.",
+            "id": "h-s2-necessity",
+            "neededEvidence": "Observed cases establishing when Read Information is required.",
+            "rationale": "The proposed process also needs screen information; this necessity is unverified."
+          },
+          {
+            "claim": "Proposed role: interpret the gathered map and screen cues as usable location information.",
+            "id": "h-s3-role",
+            "neededEvidence": "Observed task use of Explain Information for this function.",
+            "rationale": "This function serves a distinct intermediate result; the title proves identity only."
+          },
+          {
+            "claim": "Proposed required: The proposed process must turn the read cues into a usable interpretation.",
+            "id": "h-s3-necessity",
+            "neededEvidence": "Observed cases establishing when Explain Information is required.",
+            "rationale": "The proposed process must turn the read cues into a usable interpretation; this necessity is unverified."
+          },
+          {
+            "claim": "Proposed role: identify the location sought using the interpreted cues.",
+            "id": "h-s4-role",
+            "neededEvidence": "Observed task use of Determine Location for this function.",
+            "rationale": "This function serves a distinct intermediate result; the title proves identity only."
+          },
+          {
+            "claim": "Proposed required: The proposed direction output requires a resolved location.",
+            "id": "h-s4-necessity",
+            "neededEvidence": "Observed cases establishing when Determine Location is required.",
+            "rationale": "The proposed direction output requires a resolved location; this necessity is unverified."
+          },
+          {
+            "claim": "Proposed role: give directions based on the resolved location.",
+            "id": "h-s5-role",
+            "neededEvidence": "Observed task use of Supply Direction for this function.",
+            "rationale": "This function serves a distinct intermediate result; the title proves identity only."
+          },
+          {
+            "claim": "Proposed required: The proposed process needs a direction output.",
+            "id": "h-s5-necessity",
+            "neededEvidence": "Observed cases establishing when Supply Direction is required.",
+            "rationale": "The proposed process needs a direction output; this necessity is unverified."
+          },
+          {
+            "claim": "The proposed procedure reads map and screen data, interprets it, determines the location, then gives directions",
+            "id": "h-order",
+            "neededEvidence": "Observed direction-giving workflows using map and screen data",
+            "rationale": "Each proposed output supplies information used by the following function; the exact serial order remains unverified"
+          }
+        ],
+        "nodeId": "06MGPWZDxwzYxBWU8kv1",
+        "objectionDispositions": [
+          {
+            "candidatePaths": [
+              "sourceClaims[0]"
+            ],
+            "objection": "sourceClaims[0] malformed or unclassified",
+            "objectionId": "7cb9424c0f893b898160080510927ad43b4d46dd72b525cdf38757705b15ec30",
+            "occurrence": 0,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Exact subject title cited as direct_title.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[0].evidenceRefs[0]"
+            ],
+            "objection": "steps[0] lacks exact frozen evidence for its bound activity",
+            "objectionId": "d262c6b76710cdb1a9f293d7fab376b01c52976e52c3a5a9d839b76f963e6b90",
+            "occurrence": 1,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Exact active activity title now cited.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[0].evidenceRefs[0]"
+            ],
+            "objection": "steps[0].evidenceRefs[0] lacks classified supportLevel",
+            "objectionId": "e184ac23612ad3ade6087a1a31fad71ce390a8f36d908b05c6a547e44feb8485",
+            "occurrence": 2,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Title citation now classified direct_title.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[0].evidenceRefs[0]"
+            ],
+            "objection": "steps[0].evidenceRefs[0] title supportLevel mismatch",
+            "objectionId": "3970ea66a6c4dd469ec81b695d53a3a1d782aafddd0d84a5f62ace801897cc22",
+            "occurrence": 3,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Title citation now classified direct_title.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[0].roleSupport",
+              "steps[0].hypothesisRefs[0]"
+            ],
+            "objection": "steps[0].role source claim must exactly support this field from the subject source",
+            "objectionId": "9da3ca5f5d40cd1a4c0063e2b877f4a13539fe0e5874f8880e5c5ca5f7899de3",
+            "occurrence": 4,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Task-specific role now has a bound hypothesis.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[0].necessitySupport",
+              "steps[0].hypothesisRefs[1]"
+            ],
+            "objection": "steps[0].necessity source claim must exactly support this field from the subject source",
+            "objectionId": "498fd146ee52a7ae0021b8ae5e593e4ec53d81356ef111be6fc575848cee194b",
+            "occurrence": 5,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Necessity now has a bound hypothesis, not title proof.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[1].evidenceRefs[0]"
+            ],
+            "objection": "steps[1] lacks exact frozen evidence for its bound activity",
+            "objectionId": "0f571b13835e377ed40140c6459353240cdf7ddb6b4261ba07dcba3a19219751",
+            "occurrence": 6,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Exact active activity title now cited.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[1].evidenceRefs[0]"
+            ],
+            "objection": "steps[1].evidenceRefs[0] lacks classified supportLevel",
+            "objectionId": "e72624760b29b422d46cff9a3fbd2e6b2512f848654ccd586b4345a102cd2836",
+            "occurrence": 7,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Title citation now classified direct_title.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[1].evidenceRefs[0]"
+            ],
+            "objection": "steps[1].evidenceRefs[0] title supportLevel mismatch",
+            "objectionId": "0bb8e5050cb8ce859bb894897a3d46b2df88731a5e9290d4245dfdd77b48b69a",
+            "occurrence": 8,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Title citation now classified direct_title.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[1].roleSupport",
+              "steps[1].hypothesisRefs[0]"
+            ],
+            "objection": "steps[1].role source claim must exactly support this field from the subject source",
+            "objectionId": "e388197f822c58bf52c936ae0d1d81237c5feb6d9f81998e9314d5cf5668732c",
+            "occurrence": 9,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Task-specific role now has a bound hypothesis.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[1].necessitySupport",
+              "steps[1].hypothesisRefs[1]"
+            ],
+            "objection": "steps[1].necessity source claim must exactly support this field from the subject source",
+            "objectionId": "da9f7af32f2bc061361afcdddd56588c3018ae344cb33453a4d9c481ab5113f4",
+            "occurrence": 10,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Necessity now has a bound hypothesis, not title proof.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[2].evidenceRefs[0]"
+            ],
+            "objection": "steps[2] lacks exact frozen evidence for its bound activity",
+            "objectionId": "65abda2af0aa6bf7ebd6907cab93e1deeaf338649fa630e4c89eb8bc7a7768ec",
+            "occurrence": 11,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Exact active activity title now cited.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[2].evidenceRefs[0]"
+            ],
+            "objection": "steps[2].evidenceRefs[0] lacks classified supportLevel",
+            "objectionId": "dc68b99bfefb5e5d5c343d4cb93c7d9e36a15d6f1113903f7498d33726152c8b",
+            "occurrence": 12,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Title citation now classified direct_title.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[2].evidenceRefs[0]"
+            ],
+            "objection": "steps[2].evidenceRefs[0] title supportLevel mismatch",
+            "objectionId": "6a392a5ac211eb04bd0aee8fb8272422989b972e5a9f3f49abe8028d18656505",
+            "occurrence": 13,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Title citation now classified direct_title.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[2].roleSupport",
+              "steps[2].hypothesisRefs[0]"
+            ],
+            "objection": "steps[2].role source claim must exactly support this field from the subject source",
+            "objectionId": "4095ecfa820c3f04214d3636c335a705f343383bfc0850892884fdf35fc00f4d",
+            "occurrence": 14,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Task-specific role now has a bound hypothesis.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[2].necessitySupport",
+              "steps[2].hypothesisRefs[1]"
+            ],
+            "objection": "steps[2].necessity source claim must exactly support this field from the subject source",
+            "objectionId": "42760bf409fb5e5ac8b9bad38412c931fc5eadd0645e8824453c8901985ecb9b",
+            "occurrence": 15,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Necessity now has a bound hypothesis, not title proof.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[3].evidenceRefs[0]"
+            ],
+            "objection": "steps[3] lacks exact frozen evidence for its bound activity",
+            "objectionId": "923d87c6942e3b976823c7d7cb6057222668b90ed4f7ed27f6f6d0989a34c1db",
+            "occurrence": 16,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Exact active activity title now cited.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[3].evidenceRefs[0]"
+            ],
+            "objection": "steps[3].evidenceRefs[0] lacks classified supportLevel",
+            "objectionId": "333c7d7adc331204c0becf857efaf4d7c3258fffe738141406e7f8ddbce7002d",
+            "occurrence": 17,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Title citation now classified direct_title.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[3].evidenceRefs[0]"
+            ],
+            "objection": "steps[3].evidenceRefs[0] title supportLevel mismatch",
+            "objectionId": "7c7905e3a24e96fec2decafa8ba37a39bdf915ab9e921b88b08b6d29819e9cca",
+            "occurrence": 18,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Title citation now classified direct_title.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[3].roleSupport",
+              "steps[3].hypothesisRefs[0]"
+            ],
+            "objection": "steps[3].role source claim must exactly support this field from the subject source",
+            "objectionId": "fb8e36ac5183bb9c4d994935b3e6c3a9966b615cca4c42a38d8d63324401c8a1",
+            "occurrence": 19,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Task-specific role now has a bound hypothesis.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[3].necessitySupport",
+              "steps[3].hypothesisRefs[1]"
+            ],
+            "objection": "steps[3].necessity source claim must exactly support this field from the subject source",
+            "objectionId": "0ac47b48a4b2503fe7509fec717a8920ea5bb4cbf6d864c4ff13128653e33017",
+            "occurrence": 20,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Necessity now has a bound hypothesis, not title proof.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          }
+        ],
+        "proposalVersion": 2,
+        "reviewVersions": {
+          "evidenceReference": null,
+          "flowTaxonomy": null
+        },
+        "schemaVersion": "algorithm-candidate-v1",
+        "searchReceiptIds": [],
+        "sourceClaims": [
+          {
+            "claim": "(O*Net) 2717 - Read and effectively interpret small-scale maps and information from a computer screen to determine locations and provide directions.",
+            "evidenceRefs": [
+              {
+                "field": "title",
+                "nodeId": "06MGPWZDxwzYxBWU8kv1",
+                "quote": "(O*Net) 2717 - Read and effectively interpret small-scale maps and information from a computer screen to determine locations and provide directions.",
+                "supportLevel": "direct_title"
+              }
+            ],
+            "supportLevel": "direct_title"
+          }
+        ],
+        "stage": "leaf",
+        "status": "candidate",
+        "steps": [
+          {
+            "activityNodeId": "HWKFFdxQvbLDkJ5Q9T5G",
+            "evidenceRefs": [
+              {
+                "field": "title",
+                "nodeId": "HWKFFdxQvbLDkJ5Q9T5G",
+                "quote": "Read Map",
+                "supportLevel": "direct_title"
+              }
+            ],
+            "hypothesisRefs": [
+              {
+                "claim": "Proposed role: extract geographic cues from a small-scale map.",
+                "fieldPath": "steps[0].role",
+                "id": "h-s1-role",
+                "neededEvidence": "Observed task use of Read Map for this function.",
+                "rationale": "This function serves a distinct intermediate result; the title proves identity only."
+              },
+              {
+                "claim": "Proposed required: The proposed location-finding process needs map information.",
+                "fieldPath": "steps[0].necessity",
+                "id": "h-s1-necessity",
+                "neededEvidence": "Observed cases establishing when Read Map is required.",
+                "rationale": "The proposed location-finding process needs map information; this necessity is unverified."
+              }
+            ],
+            "necessity": "required",
+            "necessitySupport": {
+              "fieldPath": "steps[0].necessity",
+              "hypothesisId": "h-s1-necessity",
+              "kind": "hypothesis"
+            },
+            "role": "extract geographic cues from a small-scale map",
+            "roleSupport": {
+              "fieldPath": "steps[0].role",
+              "hypothesisId": "h-s1-role",
+              "kind": "hypothesis"
+            },
+            "stepId": "s1"
+          },
+          {
+            "activityNodeId": "LnGYFzOuQVifc6Eu29P2",
+            "evidenceRefs": [
+              {
+                "field": "title",
+                "nodeId": "LnGYFzOuQVifc6Eu29P2",
+                "quote": "Read Information",
+                "supportLevel": "direct_title"
+              }
+            ],
+            "hypothesisRefs": [
+              {
+                "claim": "Proposed role: extract relevant location data shown on a computer screen.",
+                "fieldPath": "steps[1].role",
+                "id": "h-s2-role",
+                "neededEvidence": "Observed task use of Read Information for this function.",
+                "rationale": "This function serves a distinct intermediate result; the title proves identity only."
+              },
+              {
+                "claim": "Proposed required: The proposed process also needs screen information.",
+                "fieldPath": "steps[1].necessity",
+                "id": "h-s2-necessity",
+                "neededEvidence": "Observed cases establishing when Read Information is required.",
+                "rationale": "The proposed process also needs screen information; this necessity is unverified."
+              }
+            ],
+            "necessity": "required",
+            "necessitySupport": {
+              "fieldPath": "steps[1].necessity",
+              "hypothesisId": "h-s2-necessity",
+              "kind": "hypothesis"
+            },
+            "role": "extract relevant location data shown on a computer screen",
+            "roleSupport": {
+              "fieldPath": "steps[1].role",
+              "hypothesisId": "h-s2-role",
+              "kind": "hypothesis"
+            },
+            "stepId": "s2"
+          },
+          {
+            "activityNodeId": "MdWqbGa5hJ4BjVKsiQIK",
+            "evidenceRefs": [
+              {
+                "field": "title",
+                "nodeId": "MdWqbGa5hJ4BjVKsiQIK",
+                "quote": "Explain Information",
+                "supportLevel": "direct_title"
+              },
+              {
+                "field": "properties.description",
+                "nodeId": "MdWqbGa5hJ4BjVKsiQIK",
+                "quote": "Synonyms: Interpret Information",
+                "supportLevel": "description"
+              }
+            ],
+            "hypothesisRefs": [
+              {
+                "claim": "Proposed role: interpret the gathered map and screen cues as usable location information.",
+                "fieldPath": "steps[2].role",
+                "id": "h-s3-role",
+                "neededEvidence": "Observed task use of Explain Information for this function.",
+                "rationale": "This function serves a distinct intermediate result; the title proves identity only."
+              },
+              {
+                "claim": "Proposed required: The proposed process must turn the read cues into a usable interpretation.",
+                "fieldPath": "steps[2].necessity",
+                "id": "h-s3-necessity",
+                "neededEvidence": "Observed cases establishing when Explain Information is required.",
+                "rationale": "The proposed process must turn the read cues into a usable interpretation; this necessity is unverified."
+              }
+            ],
+            "necessity": "required",
+            "necessitySupport": {
+              "fieldPath": "steps[2].necessity",
+              "hypothesisId": "h-s3-necessity",
+              "kind": "hypothesis"
+            },
+            "role": "interpret the gathered map and screen cues as usable location information",
+            "roleSupport": {
+              "fieldPath": "steps[2].role",
+              "hypothesisId": "h-s3-role",
+              "kind": "hypothesis"
+            },
+            "stepId": "s3"
+          },
+          {
+            "activityNodeId": "mQG7rq7ftiEddzkHBdBu",
+            "evidenceRefs": [
+              {
+                "field": "title",
+                "nodeId": "mQG7rq7ftiEddzkHBdBu",
+                "quote": "Determine Location",
+                "supportLevel": "direct_title"
+              }
+            ],
+            "hypothesisRefs": [
+              {
+                "claim": "Proposed role: identify the location sought using the interpreted cues.",
+                "fieldPath": "steps[3].role",
+                "id": "h-s4-role",
+                "neededEvidence": "Observed task use of Determine Location for this function.",
+                "rationale": "This function serves a distinct intermediate result; the title proves identity only."
+              },
+              {
+                "claim": "Proposed required: The proposed direction output requires a resolved location.",
+                "fieldPath": "steps[3].necessity",
+                "id": "h-s4-necessity",
+                "neededEvidence": "Observed cases establishing when Determine Location is required.",
+                "rationale": "The proposed direction output requires a resolved location; this necessity is unverified."
+              }
+            ],
+            "necessity": "required",
+            "necessitySupport": {
+              "fieldPath": "steps[3].necessity",
+              "hypothesisId": "h-s4-necessity",
+              "kind": "hypothesis"
+            },
+            "role": "identify the location sought using the interpreted cues",
+            "roleSupport": {
+              "fieldPath": "steps[3].role",
+              "hypothesisId": "h-s4-role",
+              "kind": "hypothesis"
+            },
+            "stepId": "s4"
+          },
+          {
+            "activityNodeId": "Wezak5rFlOTYDI70gxIM",
+            "evidenceRefs": [
+              {
+                "field": "title",
+                "nodeId": "Wezak5rFlOTYDI70gxIM",
+                "quote": "Supply Direction",
+                "supportLevel": "direct_title"
+              },
+              {
+                "field": "properties.description",
+                "nodeId": "Wezak5rFlOTYDI70gxIM",
+                "quote": "Synonyms: Issue Direction, Provide Direction",
+                "supportLevel": "description"
+              }
+            ],
+            "hypothesisRefs": [
+              {
+                "claim": "Proposed role: give directions based on the resolved location.",
+                "fieldPath": "steps[4].role",
+                "id": "h-s5-role",
+                "neededEvidence": "Observed task use of Supply Direction for this function.",
+                "rationale": "This function serves a distinct intermediate result; the title proves identity only."
+              },
+              {
+                "claim": "Proposed required: The proposed process needs a direction output.",
+                "fieldPath": "steps[4].necessity",
+                "id": "h-s5-necessity",
+                "neededEvidence": "Observed cases establishing when Supply Direction is required.",
+                "rationale": "The proposed process needs a direction output; this necessity is unverified."
+              }
+            ],
+            "necessity": "required",
+            "necessitySupport": {
+              "fieldPath": "steps[4].necessity",
+              "hypothesisId": "h-s5-necessity",
+              "kind": "hypothesis"
+            },
+            "role": "give directions based on the resolved location",
+            "roleSupport": {
+              "fieldPath": "steps[4].role",
+              "hypothesisId": "h-s5-role",
+              "kind": "hypothesis"
+            },
+            "stepId": "s5"
+          }
+        ],
+        "unsupportedFlowClaims": []
+      },
+      "rationale": "Map reading, screen reading, interpretation, location finding, and giving directions are distinct proposed functions. Their serial order remains unverified.",
+      "reviews": [
+        {
+          "role": "algorithmTaxonomy",
+          "notes": "Frozen titles and cited synonyms match. The five roles are distinct; the proposed order of map and screen reading needs observed workflow evidence.",
+          "objections": [],
+          "verdict": "pass"
+        },
+        {
+          "role": "evidenceMapping",
+          "notes": "All five activity quotes match active frozen records; Explain Information has the cited Interpret Information synonym. The serial reading order and required use of each input remain labeled hypotheses.",
+          "objections": [],
+          "verdict": "pass"
+        }
+      ],
+      "critiques": [
+        {
+          "finding": "Frozen titles and cited synonyms match. The five roles are distinct; the proposed order of map and screen reading needs observed workflow evidence.",
+          "objections": [],
+          "role": "algorithm_taxonomy",
+          "verdict": "pass"
+        },
+        {
+          "finding": "All five activity quotes match active frozen records; Explain Information has the cited Interpret Information synonym. The serial reading order and required use of each input remain labeled hypotheses.",
+          "objections": [],
+          "role": "evidence_mapping",
+          "verdict": "pass"
+        }
+      ],
+      "sourceSupportStatus": "research_hypothesis",
+      "pipelineReviewStatus": "independently_critiqued",
+      "capturedReviewStatus": "pending",
+      "sourcePublicationKey": "c78201f201ce4b9a6f4cd2924dcc95625cc8b796e2d8115ce85e77a720061bb7",
+      "sourceCandidateHash": "97071819c587bfb1269fa279dcb9f0b48e8ced9c5ad372cc2fff4328401c321b",
+      "sourcePublicationFileSha256": "c0f5226352522f135a729fb0fd748545474dc975067fac42891316251b5f09a3",
+      "canonicalCoreUnchanged": true,
+      "history": [
+        {
+          "proposalId": "algorithm-06MGPWZDxwzYxBWU8kv1-v1",
+          "version": 1,
+          "reviewStatus": "invalidated",
+          "candidateHash": "170bb618efc501c5a01dd185101064c015c04aea685b8019dd30fdbaa1b88173"
+        },
+        {
+          "proposalId": "algorithm-06MGPWZDxwzYxBWU8kv1-v2",
+          "version": 2,
+          "reviewStatus": "pending",
+          "candidateHash": "97071819c587bfb1269fa279dcb9f0b48e8ced9c5ad372cc2fff4328401c321b"
+        }
+      ]
+    },
+    {
+      "nodeId": "05DzrgSt8n72w572TvtT",
+      "title": "(O*Net) 5081 - Order, unload, and store feed and supplies.",
+      "version": 2,
+      "proposalId": "algorithm-05DzrgSt8n72w572TvtT-v2",
+      "procedureHash": "e76acae52f97f4b24d3fb68b0b4781d9b51ba007f2cbfa6f97f60b512ed594b5",
+      "procedure": {
+        "baselineSha256": "dab5464a577fe0c040beddcdc480ca4eb031de208b5c665a8205414646677711",
+        "changeProposals": [],
+        "childVariants": [],
+        "commonCoreMappings": [],
+        "concisePublicRationale": "Ordering, unloading, and storage are distinct activities. Treating feed as part of the supply handling chain and the proposed sequence require direct workflow evidence.",
+        "dependencies": [],
+        "evidenceRefs": [],
+        "flow": {
+          "evidenceRefs": [
+            {
+              "hypothesisId": "h-order",
+              "relationRationale": "Each proposed stage supplies material for the next; the frozen title lists actions without proving their execution order",
+              "supportLevel": "hypothesis"
+            }
+          ],
+          "items": [
+            {
+              "stepId": "s1",
+              "type": "step"
+            },
+            {
+              "stepId": "s2",
+              "type": "step"
+            },
+            {
+              "stepId": "s3",
+              "type": "step"
+            }
+          ],
+          "type": "sequence"
+        },
+        "hypotheses": [
+          {
+            "claim": "Proposed role: initiate procurement of feed and other supplies for a later delivery.",
+            "id": "h-s1-role",
+            "neededEvidence": "Observed task use of Order Supply for this function.",
+            "rationale": "This function serves a distinct intermediate result; the title proves identity only."
+          },
+          {
+            "claim": "Proposed required: Without a procurement action the proposed delivery-handling chain has no requested stock.",
+            "id": "h-s1-necessity",
+            "neededEvidence": "Observed cases establishing when Order Supply is required.",
+            "rationale": "Without a procurement action the proposed delivery-handling chain has no requested stock; this necessity is unverified."
+          },
+          {
+            "claim": "Proposed role: take delivered feed and other supplies out of incoming transport.",
+            "id": "h-s2-role",
+            "neededEvidence": "Observed task use of Unload Supply for this function.",
+            "rationale": "This function serves a distinct intermediate result; the title proves identity only."
+          },
+          {
+            "claim": "Proposed required: The proposed handling chain requires receipt of the delivered stock before it can be stored.",
+            "id": "h-s2-necessity",
+            "neededEvidence": "Observed cases establishing when Unload Supply is required.",
+            "rationale": "The proposed handling chain requires receipt of the delivered stock before it can be stored; this necessity is unverified."
+          },
+          {
+            "claim": "Proposed role: put received feed and other supplies into storage.",
+            "id": "h-s3-role",
+            "neededEvidence": "Observed task use of Store Supply for this function.",
+            "rationale": "This function serves a distinct intermediate result; the title proves identity only."
+          },
+          {
+            "claim": "Proposed required: The proposed chain must end by placing received stock into storage.",
+            "id": "h-s3-necessity",
+            "neededEvidence": "Observed cases establishing when Store Supply is required.",
+            "rationale": "The proposed chain must end by placing received stock into storage; this necessity is unverified."
+          },
+          {
+            "claim": "The proposed procedure orders feed and supplies, unloads the resulting delivery, then stores the received stock",
+            "id": "h-order",
+            "neededEvidence": "Observed order, unload, and storage traces for the same stock",
+            "rationale": "Each proposed stage supplies material for the next; the frozen title lists actions without proving their execution order"
+          }
+        ],
+        "nodeId": "05DzrgSt8n72w572TvtT",
+        "objectionDispositions": [
+          {
+            "candidatePaths": [
+              "sourceClaims[0]"
+            ],
+            "objection": "sourceClaims[0] malformed or unclassified",
+            "objectionId": "7cb9424c0f893b898160080510927ad43b4d46dd72b525cdf38757705b15ec30",
+            "occurrence": 0,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Exact subject title cited as direct_title.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[0].evidenceRefs[0]"
+            ],
+            "objection": "steps[0] lacks exact frozen evidence for its bound activity",
+            "objectionId": "d262c6b76710cdb1a9f293d7fab376b01c52976e52c3a5a9d839b76f963e6b90",
+            "occurrence": 1,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Exact active activity title now cited.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[0].evidenceRefs[0]"
+            ],
+            "objection": "steps[0].evidenceRefs[0] lacks classified supportLevel",
+            "objectionId": "e184ac23612ad3ade6087a1a31fad71ce390a8f36d908b05c6a547e44feb8485",
+            "occurrence": 2,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Title citation now classified direct_title.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[0].evidenceRefs[0]"
+            ],
+            "objection": "steps[0].evidenceRefs[0] title supportLevel mismatch",
+            "objectionId": "3970ea66a6c4dd469ec81b695d53a3a1d782aafddd0d84a5f62ace801897cc22",
+            "occurrence": 3,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Title citation now classified direct_title.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[0].roleSupport",
+              "steps[0].hypothesisRefs[0]"
+            ],
+            "objection": "steps[0].role needs a declared, substantive per-step hypothesisRefs entry",
+            "objectionId": "b6cd3910f776d2bd7661578a012819651b8810699bd463a0785e3e6c3afcc04c",
+            "occurrence": 4,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Task-specific role now has a bound hypothesis.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[0].necessitySupport",
+              "steps[0].hypothesisRefs[1]"
+            ],
+            "objection": "steps[0].necessity source claim must exactly support this field from the subject source",
+            "objectionId": "498fd146ee52a7ae0021b8ae5e593e4ec53d81356ef111be6fc575848cee194b",
+            "occurrence": 5,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Necessity now has a bound hypothesis, not title proof.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[1].evidenceRefs[0]"
+            ],
+            "objection": "steps[1] lacks exact frozen evidence for its bound activity",
+            "objectionId": "0f571b13835e377ed40140c6459353240cdf7ddb6b4261ba07dcba3a19219751",
+            "occurrence": 6,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Exact active activity title now cited.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[1].evidenceRefs[0]"
+            ],
+            "objection": "steps[1].evidenceRefs[0] lacks classified supportLevel",
+            "objectionId": "e72624760b29b422d46cff9a3fbd2e6b2512f848654ccd586b4345a102cd2836",
+            "occurrence": 7,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Title citation now classified direct_title.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[1].evidenceRefs[0]"
+            ],
+            "objection": "steps[1].evidenceRefs[0] title supportLevel mismatch",
+            "objectionId": "0bb8e5050cb8ce859bb894897a3d46b2df88731a5e9290d4245dfdd77b48b69a",
+            "occurrence": 8,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Title citation now classified direct_title.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[1].roleSupport",
+              "steps[1].hypothesisRefs[0]"
+            ],
+            "objection": "steps[1].role needs a declared, substantive per-step hypothesisRefs entry",
+            "objectionId": "3734559b20c697b04d76473c26d1d5f398445f46698378169662dc3c535133a8",
+            "occurrence": 9,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Task-specific role now has a bound hypothesis.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[1].necessitySupport",
+              "steps[1].hypothesisRefs[1]"
+            ],
+            "objection": "steps[1].necessity source claim must exactly support this field from the subject source",
+            "objectionId": "da9f7af32f2bc061361afcdddd56588c3018ae344cb33453a4d9c481ab5113f4",
+            "occurrence": 10,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Necessity now has a bound hypothesis, not title proof.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[2].evidenceRefs[0]"
+            ],
+            "objection": "steps[2] lacks exact frozen evidence for its bound activity",
+            "objectionId": "65abda2af0aa6bf7ebd6907cab93e1deeaf338649fa630e4c89eb8bc7a7768ec",
+            "occurrence": 11,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Exact active activity title now cited.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[2].evidenceRefs[0]"
+            ],
+            "objection": "steps[2].evidenceRefs[0] lacks classified supportLevel",
+            "objectionId": "dc68b99bfefb5e5d5c343d4cb93c7d9e36a15d6f1113903f7498d33726152c8b",
+            "occurrence": 12,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Title citation now classified direct_title.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[2].evidenceRefs[0]"
+            ],
+            "objection": "steps[2].evidenceRefs[0] title supportLevel mismatch",
+            "objectionId": "6a392a5ac211eb04bd0aee8fb8272422989b972e5a9f3f49abe8028d18656505",
+            "occurrence": 13,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Title citation now classified direct_title.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[2].roleSupport",
+              "steps[2].hypothesisRefs[0]"
+            ],
+            "objection": "steps[2].role needs a declared, substantive per-step hypothesisRefs entry",
+            "objectionId": "5f8bc8216a03830bd432607b1244de9683366ba55c9c17fc8f177ca143e04079",
+            "occurrence": 14,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Task-specific role now has a bound hypothesis.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "steps[2].necessitySupport",
+              "steps[2].hypothesisRefs[1]"
+            ],
+            "objection": "steps[2].necessity source claim must exactly support this field from the subject source",
+            "objectionId": "42760bf409fb5e5ac8b9bad38412c931fc5eadd0645e8824453c8901985ecb9b",
+            "occurrence": 15,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "Necessity now has a bound hypothesis, not title proof.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          },
+          {
+            "candidatePaths": [
+              "hypotheses",
+              "flow"
+            ],
+            "objection": "declared hypotheses must each bind an exact step field or flow relation",
+            "objectionId": "1b70cfab7b8339fb011a757cf6ca04fe14d1508042cd036daa71ed2e92d5b296",
+            "occurrence": 16,
+            "priorRole": "mechanical",
+            "priorVersion": 1,
+            "rationale": "All hypotheses now bind a step field or flow relation.",
+            "resolution": "addressed",
+            "reviewer": "mechanical"
+          }
+        ],
+        "proposalVersion": 2,
+        "reviewVersions": {
+          "evidenceReference": null,
+          "flowTaxonomy": null
+        },
+        "schemaVersion": "algorithm-candidate-v1",
+        "searchReceiptIds": [],
+        "sourceClaims": [
+          {
+            "claim": "(O*Net) 5081 - Order, unload, and store feed and supplies.",
+            "evidenceRefs": [
+              {
+                "field": "title",
+                "nodeId": "05DzrgSt8n72w572TvtT",
+                "quote": "(O*Net) 5081 - Order, unload, and store feed and supplies.",
+                "supportLevel": "direct_title"
+              }
+            ],
+            "supportLevel": "direct_title"
+          }
+        ],
+        "stage": "leaf",
+        "status": "candidate",
+        "steps": [
+          {
+            "activityNodeId": "fpiDgi3Xj6WaaSav2yFG",
+            "evidenceRefs": [
+              {
+                "field": "title",
+                "nodeId": "fpiDgi3Xj6WaaSav2yFG",
+                "quote": "Order Supply",
+                "supportLevel": "direct_title"
+              }
+            ],
+            "hypothesisRefs": [
+              {
+                "claim": "Proposed role: initiate procurement of feed and other supplies for a later delivery.",
+                "fieldPath": "steps[0].role",
+                "id": "h-s1-role",
+                "neededEvidence": "Observed task use of Order Supply for this function.",
+                "rationale": "This function serves a distinct intermediate result; the title proves identity only."
+              },
+              {
+                "claim": "Proposed required: Without a procurement action the proposed delivery-handling chain has no requested stock.",
+                "fieldPath": "steps[0].necessity",
+                "id": "h-s1-necessity",
+                "neededEvidence": "Observed cases establishing when Order Supply is required.",
+                "rationale": "Without a procurement action the proposed delivery-handling chain has no requested stock; this necessity is unverified."
+              }
+            ],
+            "necessity": "required",
+            "necessitySupport": {
+              "fieldPath": "steps[0].necessity",
+              "hypothesisId": "h-s1-necessity",
+              "kind": "hypothesis"
+            },
+            "role": "initiate procurement of feed and other supplies for a later delivery",
+            "roleSupport": {
+              "fieldPath": "steps[0].role",
+              "hypothesisId": "h-s1-role",
+              "kind": "hypothesis"
+            },
+            "stepId": "s1"
+          },
+          {
+            "activityNodeId": "zUyqj6DxDvEYbL92sqll",
+            "evidenceRefs": [
+              {
+                "field": "title",
+                "nodeId": "zUyqj6DxDvEYbL92sqll",
+                "quote": "Unload Supply",
+                "supportLevel": "direct_title"
+              }
+            ],
+            "hypothesisRefs": [
+              {
+                "claim": "Proposed role: take delivered feed and other supplies out of incoming transport.",
+                "fieldPath": "steps[1].role",
+                "id": "h-s2-role",
+                "neededEvidence": "Observed task use of Unload Supply for this function.",
+                "rationale": "This function serves a distinct intermediate result; the title proves identity only."
+              },
+              {
+                "claim": "Proposed required: The proposed handling chain requires receipt of the delivered stock before it can be stored.",
+                "fieldPath": "steps[1].necessity",
+                "id": "h-s2-necessity",
+                "neededEvidence": "Observed cases establishing when Unload Supply is required.",
+                "rationale": "The proposed handling chain requires receipt of the delivered stock before it can be stored; this necessity is unverified."
+              }
+            ],
+            "necessity": "required",
+            "necessitySupport": {
+              "fieldPath": "steps[1].necessity",
+              "hypothesisId": "h-s2-necessity",
+              "kind": "hypothesis"
+            },
+            "role": "take delivered feed and other supplies out of incoming transport",
+            "roleSupport": {
+              "fieldPath": "steps[1].role",
+              "hypothesisId": "h-s2-role",
+              "kind": "hypothesis"
+            },
+            "stepId": "s2"
+          },
+          {
+            "activityNodeId": "HhPu0eDnnrWkjKlGrlA2",
+            "evidenceRefs": [
+              {
+                "field": "title",
+                "nodeId": "HhPu0eDnnrWkjKlGrlA2",
+                "quote": "Store Supply",
+                "supportLevel": "direct_title"
+              }
+            ],
+            "hypothesisRefs": [
+              {
+                "claim": "Proposed role: put received feed and other supplies into storage.",
+                "fieldPath": "steps[2].role",
+                "id": "h-s3-role",
+                "neededEvidence": "Observed task use of Store Supply for this function.",
+                "rationale": "This function serves a distinct intermediate result; the title proves identity only."
+              },
+              {
+                "claim": "Proposed required: The proposed chain must end by placing received stock into storage.",
+                "fieldPath": "steps[2].necessity",
+                "id": "h-s3-necessity",
+                "neededEvidence": "Observed cases establishing when Store Supply is required.",
+                "rationale": "The proposed chain must end by placing received stock into storage; this necessity is unverified."
+              }
+            ],
+            "necessity": "required",
+            "necessitySupport": {
+              "fieldPath": "steps[2].necessity",
+              "hypothesisId": "h-s3-necessity",
+              "kind": "hypothesis"
+            },
+            "role": "put received feed and other supplies into storage",
+            "roleSupport": {
+              "fieldPath": "steps[2].role",
+              "hypothesisId": "h-s3-role",
+              "kind": "hypothesis"
+            },
+            "stepId": "s3"
+          }
+        ],
+        "unsupportedFlowClaims": []
+      },
+      "rationale": "Ordering, unloading, and storage are distinct activities. Treating feed as part of the supply handling chain and the proposed sequence require direct workflow evidence.",
+      "reviews": [
+        {
+          "role": "algorithmTaxonomy",
+          "notes": "Frozen titles match. Ordering, unloading, and storage are distinct; the same-stock sequence and feed-specific roles remain explicit hypotheses needing workflow evidence.",
+          "objections": [],
+          "verdict": "pass"
+        },
+        {
+          "role": "evidenceMapping",
+          "notes": "The three activity IDs and quoted titles match active frozen records. Their required roles and same-stock sequence are coherent, explicitly labeled hypotheses; the source title does not establish that workflow.",
+          "objections": [],
+          "verdict": "pass"
+        }
+      ],
+      "critiques": [
+        {
+          "finding": "Frozen titles match. Ordering, unloading, and storage are distinct; the same-stock sequence and feed-specific roles remain explicit hypotheses needing workflow evidence.",
+          "objections": [],
+          "role": "algorithm_taxonomy",
+          "verdict": "pass"
+        },
+        {
+          "finding": "The three activity IDs and quoted titles match active frozen records. Their required roles and same-stock sequence are coherent, explicitly labeled hypotheses; the source title does not establish that workflow.",
+          "objections": [],
+          "role": "evidence_mapping",
+          "verdict": "pass"
+        }
+      ],
+      "sourceSupportStatus": "research_hypothesis",
+      "pipelineReviewStatus": "independently_critiqued",
+      "capturedReviewStatus": "pending",
+      "sourcePublicationKey": "ef339bebbd0e3531b37f7e6fc8a308f182d5a9b5252cb2d80bef280e770fcd98",
+      "sourceCandidateHash": "e76acae52f97f4b24d3fb68b0b4781d9b51ba007f2cbfa6f97f60b512ed594b5",
+      "sourcePublicationFileSha256": "4cf2587e04899f21e69f70b62809d0519205456120c1ecb92c8bfc3f7ab927ea",
+      "canonicalCoreUnchanged": true,
+      "history": [
+        {
+          "proposalId": "algorithm-05DzrgSt8n72w572TvtT-v1",
+          "version": 1,
+          "reviewStatus": "invalidated",
+          "candidateHash": "b74f4296cdb43884f01a86c90d7b4d58b326d2a6bf0fb06f400f6c3ee1d7018c"
+        },
+        {
+          "proposalId": "algorithm-05DzrgSt8n72w572TvtT-v2",
+          "version": 2,
+          "reviewStatus": "pending",
+          "candidateHash": "e76acae52f97f4b24d3fb68b0b4781d9b51ba007f2cbfa6f97f60b512ed594b5"
+        }
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "id": "000aRVtToaPLr06l4FAR",
+      "title": "Compile Evidence",
+      "children": [
+        "GAR0BjmWnmnSu4nrJGrj"
+      ],
+      "parents": [
+        "ZgoEENFoUmX4K3pxenZl"
+      ],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 1
+    },
+    {
+      "id": "05DzrgSt8n72w572TvtT",
+      "title": "(O*Net) 5081 - Order, unload, and store feed and supplies.",
+      "children": [],
+      "parents": [
+        "zUyqj6DxDvEYbL92sqll",
+        "HhPu0eDnnrWkjKlGrlA2",
+        "fpiDgi3Xj6WaaSav2yFG"
+      ],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 0
+    },
+    {
+      "id": "05cJlz498lLfsI5KSy5g",
+      "title": "(O*Net) 19965 - Analyze changes designed to improve the environmental performance of complex systems and avoid unintended negative consequences.",
+      "children": [],
+      "parents": [],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 0
+    },
+    {
+      "id": "05wTiYXl9N7L8JogElG0",
+      "title": "(O*Net) 19142 - Communicate client assessment findings and recommendations in oral, written, audio, video, or other forms.",
+      "children": [],
+      "parents": [
+        "bf8xsWkNI7xmLmCnLrZD",
+        "7RU2tIBrv8nskeqwSRi3"
+      ],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 0
+    },
+    {
+      "id": "06MGPWZDxwzYxBWU8kv1",
+      "title": "(O*Net) 2717 - Read and effectively interpret small-scale maps and information from a computer screen to determine locations and provide directions.",
+      "children": [],
+      "parents": [
+        "HWKFFdxQvbLDkJ5Q9T5G",
+        "MdWqbGa5hJ4BjVKsiQIK"
+      ],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 0
+    },
+    {
+      "id": "06Q20XKwJhM4zSpUwKuJ",
+      "title": "(O*Net) 15713 - Collaborate with search engine shopping specialists to place marketing content in desired online locations.",
+      "children": [],
+      "parents": [],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 0
+    },
+    {
+      "id": "06rlBcrLzJ4xnPR5Le4X",
+      "title": "(O*Net) 21172 - Supervise students' research on celestial and astronomical phenomena.",
+      "children": [],
+      "parents": [],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 0
+    },
+    {
+      "id": "0TadmZfmqCFFKNZUyPJF",
+      "title": "(O*Net) 1590 - Compare objects, such as tools, with impression marks to determine whether a specific object is responsible for a specific mark.",
+      "children": [],
+      "parents": [],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 0
+    },
+    {
+      "id": "0ULGpOCstwdDvJFuH6zF",
+      "title": "(O*Net) 19593 - Design structures that incorporate environmentally friendly building practices or concepts, such as Leadership in Energy and Environmental Design (LEED) standards.",
+      "children": [],
+      "parents": [
+        "geX8ZNajexsGTr6Q1Xdc"
+      ],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 0
+    },
+    {
+      "id": "11FlA7TqetDUaGdugtY1",
+      "title": "Evaluate Consequence",
+      "children": [],
+      "parents": [],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 1
+    },
+    {
+      "id": "1ykOGb15sE4u62dCxUSl",
+      "title": "Collect Bet",
+      "children": [],
+      "parents": [
+        "ZgoEENFoUmX4K3pxenZl"
+      ],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 1
+    },
+    {
+      "id": "2dyCIf0wOHhRaFHeVqPq",
+      "title": "Collect Intelligence",
+      "children": [],
+      "parents": [
+        "ZgoEENFoUmX4K3pxenZl"
+      ],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 1
+    },
+    {
+      "id": "2rdMY7fxeiT0nlNzJSjz",
+      "title": "Collect Periodical",
+      "children": [],
+      "parents": [
+        "ZgoEENFoUmX4K3pxenZl"
+      ],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 1
+    },
+    {
+      "id": "3CgZsfNi06lD4iy5E1g9",
+      "title": "Collect Fare",
+      "children": [],
+      "parents": [
+        "ZgoEENFoUmX4K3pxenZl"
+      ],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 1
+    },
+    {
+      "id": "5a6ApjosY5x1Sj5fbw4z",
+      "title": "Collect Charge",
+      "children": [],
+      "parents": [
+        "ZgoEENFoUmX4K3pxenZl"
+      ],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 1
+    },
+    {
+      "id": "5diE2OV2pCvO2qtnavHA",
+      "title": "Compile Listing",
+      "children": [],
+      "parents": [
+        "ZgoEENFoUmX4K3pxenZl"
+      ],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 1
+    },
+    {
+      "id": "5vTTD6krD8LhUTkPG1f9",
+      "title": "Collect Membership",
+      "children": [],
+      "parents": [
+        "ZgoEENFoUmX4K3pxenZl"
+      ],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 1
+    },
+    {
+      "id": "7RU2tIBrv8nskeqwSRi3",
+      "title": "Communicate Recommendation",
+      "children": [
+        "05wTiYXl9N7L8JogElG0"
+      ],
+      "parents": [],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 1
+    },
+    {
+      "id": "99IQ6IK2SsBJ47xBQBzB",
+      "title": "Collect Payment",
+      "children": [],
+      "parents": [
+        "ZgoEENFoUmX4K3pxenZl"
+      ],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 1
+    },
+    {
+      "id": "AIg2bsaMWWAtxdFiPAcX",
+      "title": "Compile Record",
+      "children": [],
+      "parents": [
+        "ZgoEENFoUmX4K3pxenZl"
+      ],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 1
+    },
+    {
+      "id": "An8c04HeIFrKFYzjZd4A",
+      "title": "Collect History",
+      "children": [],
+      "parents": [
+        "ZgoEENFoUmX4K3pxenZl"
+      ],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 1
+    },
+    {
+      "id": "DILtYfvGhsXmMNRCUDUB",
+      "title": "Review Research",
+      "children": [],
+      "parents": [],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 1
+    },
+    {
+      "id": "F1SrhhoN7Qg2lhQ9G43w",
+      "title": "Advise Student",
+      "children": [],
+      "parents": [],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 1
+    },
+    {
+      "id": "G8myygzriuSfeIrEjLxb",
+      "title": "Collect Rent",
+      "children": [],
+      "parents": [
+        "ZgoEENFoUmX4K3pxenZl"
+      ],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 1
+    },
+    {
+      "id": "GAR0BjmWnmnSu4nrJGrj",
+      "title": "(O*Net) 20582 - Compile and present evidence for court actions.",
+      "children": [],
+      "parents": [
+        "000aRVtToaPLr06l4FAR"
+      ],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 0
+    },
+    {
+      "id": "GCP5t8F9K3C9kR02mSrB",
+      "title": "Collect Metric",
+      "children": [],
+      "parents": [
+        "ZgoEENFoUmX4K3pxenZl"
+      ],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 1
+    },
+    {
+      "id": "Gnz8AjI1zoZGz77kIk24",
+      "title": "Collect Sheet",
+      "children": [],
+      "parents": [
+        "ZgoEENFoUmX4K3pxenZl"
+      ],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 1
+    },
+    {
+      "id": "HWKFFdxQvbLDkJ5Q9T5G",
+      "title": "Read Map",
+      "children": [
+        "06MGPWZDxwzYxBWU8kv1"
+      ],
+      "parents": [],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 1
+    },
+    {
+      "id": "HhPu0eDnnrWkjKlGrlA2",
+      "title": "Store Supply",
+      "children": [
+        "05DzrgSt8n72w572TvtT"
+      ],
+      "parents": [],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 1
+    },
+    {
+      "id": "Ic5Fe8fYgqw4R7u439SZ",
+      "title": "Select Location",
+      "children": [],
+      "parents": [],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 1
+    },
+    {
+      "id": "KRItNg3IKTRd6b5AiYTR",
+      "title": "Collect Message",
+      "children": [],
+      "parents": [
+        "ZgoEENFoUmX4K3pxenZl"
+      ],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 1
+    },
+    {
+      "id": "LkaZgxazZttOWgSjUJZh",
+      "title": "Collect Commission",
+      "children": [],
+      "parents": [
+        "ZgoEENFoUmX4K3pxenZl"
+      ],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 1
+    },
+    {
+      "id": "LnGYFzOuQVifc6Eu29P2",
+      "title": "Read Information",
+      "children": [],
+      "parents": [],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 1
+    },
+    {
+      "id": "MQkA3IHNk7E4OF6Wjvs9",
+      "title": "Collect Datum",
+      "children": [],
+      "parents": [
+        "ZgoEENFoUmX4K3pxenZl"
+      ],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 1
+    },
+    {
+      "id": "McrQYHgl62mVsN5jVHZk",
+      "title": "Evaluate Design",
+      "children": [],
+      "parents": [],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 1
+    },
+    {
+      "id": "MdWqbGa5hJ4BjVKsiQIK",
+      "title": "Explain Information",
+      "children": [
+        "06MGPWZDxwzYxBWU8kv1"
+      ],
+      "parents": [],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 1
+    },
+    {
+      "id": "NdwdpFbbU8a2BGzhC84e",
+      "title": "Examine Impression",
+      "children": [],
+      "parents": [],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 1
+    },
+    {
+      "id": "P9RjF6lWFpNzepsB2JMc",
+      "title": "Compile Figure",
+      "children": [],
+      "parents": [
+        "ZgoEENFoUmX4K3pxenZl"
+      ],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 1
+    },
+    {
+      "id": "Pwwo44ap99N3NMGNXp0v",
+      "title": "Post Content",
+      "children": [],
+      "parents": [],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 1
+    },
+    {
+      "id": "T2oHnDIwPsTKp6qX97Lq",
+      "title": "Identify Practice",
+      "children": [],
+      "parents": [],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 1
+    },
+    {
+      "id": "Wezak5rFlOTYDI70gxIM",
+      "title": "Supply Direction",
+      "children": [],
+      "parents": [],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 1
+    },
+    {
+      "id": "WmDUTH4qgPzrP848kzUE",
+      "title": "Collect Information",
+      "children": [],
+      "parents": [
+        "ZgoEENFoUmX4K3pxenZl"
+      ],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 1
+    },
+    {
+      "id": "XwHSAj4DzJsfiE4RxfcH",
+      "title": "Compile Receipt",
+      "children": [],
+      "parents": [
+        "ZgoEENFoUmX4K3pxenZl"
+      ],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 1
+    },
+    {
+      "id": "ZA4Cgaz1TSncFfmzQR8v",
+      "title": "Collect Instruction",
+      "children": [],
+      "parents": [
+        "ZgoEENFoUmX4K3pxenZl"
+      ],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 1
+    },
+    {
+      "id": "ZgoEENFoUmX4K3pxenZl",
+      "title": "Collect (information) (Information)",
+      "children": [
+        "1ykOGb15sE4u62dCxUSl",
+        "5a6ApjosY5x1Sj5fbw4z",
+        "LkaZgxazZttOWgSjUJZh",
+        "MQkA3IHNk7E4OF6Wjvs9",
+        "qoFumml1C3XO2MOYeCbb",
+        "nv0Mzqg9v6SaAJ6M1rq1",
+        "3CgZsfNi06lD4iy5E1g9",
+        "q122Y32J8gVW7UB8BdUf",
+        "An8c04HeIFrKFYzjZd4A",
+        "WmDUTH4qgPzrP848kzUE",
+        "ZA4Cgaz1TSncFfmzQR8v",
+        "2dyCIf0wOHhRaFHeVqPq",
+        "g5Fz9zAc0gj6XcaG9DJh",
+        "5vTTD6krD8LhUTkPG1f9",
+        "KRItNg3IKTRd6b5AiYTR",
+        "GCP5t8F9K3C9kR02mSrB",
+        "cLNX3PBBhsXFRQnwE3YD",
+        "99IQ6IK2SsBJ47xBQBzB",
+        "2rdMY7fxeiT0nlNzJSjz",
+        "n0baqregqzwgIqQKCtgi",
+        "G8myygzriuSfeIrEjLxb",
+        "puXc3q5dBZOG9rDdPuXB",
+        "Gnz8AjI1zoZGz77kIk24",
+        "yjLCVjJno5zaMpJeNwEL",
+        "yays5FIgr6lSEzjZkIyB",
+        "000aRVtToaPLr06l4FAR",
+        "P9RjF6lWFpNzepsB2JMc",
+        "i0ZHXcuqXhaAzWCIjacP",
+        "yjWefbIe9PRDap202Cg0",
+        "5diE2OV2pCvO2qtnavHA",
+        "XwHSAj4DzJsfiE4RxfcH",
+        "AIg2bsaMWWAtxdFiPAcX",
+        "gfQGihP3G7FBSpK7pGf1",
+        "cvtGA18WktS4Pe0pYN9Q",
+        "r4o38NF8FkkOhSq1fScl"
+      ],
+      "parents": [],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 2
+    },
+    {
+      "id": "bf8xsWkNI7xmLmCnLrZD",
+      "title": "Communicate Finding",
+      "children": [
+        "05wTiYXl9N7L8JogElG0"
+      ],
+      "parents": [],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 1
+    },
+    {
+      "id": "cLNX3PBBhsXFRQnwE3YD",
+      "title": "Collect Pattern",
+      "children": [],
+      "parents": [
+        "ZgoEENFoUmX4K3pxenZl"
+      ],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 1
+    },
+    {
+      "id": "cvtGA18WktS4Pe0pYN9Q",
+      "title": "Compile Statement",
+      "children": [],
+      "parents": [
+        "ZgoEENFoUmX4K3pxenZl"
+      ],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 1
+    },
+    {
+      "id": "fpiDgi3Xj6WaaSav2yFG",
+      "title": "Order Supply",
+      "children": [
+        "05DzrgSt8n72w572TvtT"
+      ],
+      "parents": [],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 1
+    },
+    {
+      "id": "g5Fz9zAc0gj6XcaG9DJh",
+      "title": "Collect Measurement",
+      "children": [],
+      "parents": [
+        "ZgoEENFoUmX4K3pxenZl"
+      ],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 1
+    },
+    {
+      "id": "geX8ZNajexsGTr6Q1Xdc",
+      "title": "Design Structure",
+      "children": [
+        "0ULGpOCstwdDvJFuH6zF"
+      ],
+      "parents": [],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 1
+    },
+    {
+      "id": "gfQGihP3G7FBSpK7pGf1",
+      "title": "Compile Score",
+      "children": [],
+      "parents": [
+        "ZgoEENFoUmX4K3pxenZl"
+      ],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 1
+    },
+    {
+      "id": "i0ZHXcuqXhaAzWCIjacP",
+      "title": "Compile File",
+      "children": [],
+      "parents": [
+        "ZgoEENFoUmX4K3pxenZl"
+      ],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 1
+    },
+    {
+      "id": "m83M4PiRAjHKNvBbmRvF",
+      "title": "Collaborate Specialist",
+      "children": [],
+      "parents": [],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 1
+    },
+    {
+      "id": "mQG7rq7ftiEddzkHBdBu",
+      "title": "Determine Location",
+      "children": [],
+      "parents": [],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 1
+    },
+    {
+      "id": "mxbzVpORdAkwLZaeFOtq",
+      "title": "Analyze Performance",
+      "children": [],
+      "parents": [],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 1
+    },
+    {
+      "id": "n0baqregqzwgIqQKCtgi",
+      "title": "Collect Premium",
+      "children": [],
+      "parents": [
+        "ZgoEENFoUmX4K3pxenZl"
+      ],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 1
+    },
+    {
+      "id": "nv0Mzqg9v6SaAJ6M1rq1",
+      "title": "Collect Documentation",
+      "children": [],
+      "parents": [
+        "ZgoEENFoUmX4K3pxenZl"
+      ],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 1
+    },
+    {
+      "id": "p7kgEHakRPc1rykQ9Rcv",
+      "title": "Determine Source",
+      "children": [],
+      "parents": [],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 1
+    },
+    {
+      "id": "puXc3q5dBZOG9rDdPuXB",
+      "title": "Collect Research",
+      "children": [],
+      "parents": [
+        "ZgoEENFoUmX4K3pxenZl"
+      ],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 1
+    },
+    {
+      "id": "q122Y32J8gVW7UB8BdUf",
+      "title": "Collect Fee",
+      "children": [],
+      "parents": [
+        "ZgoEENFoUmX4K3pxenZl"
+      ],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 1
+    },
+    {
+      "id": "qoFumml1C3XO2MOYeCbb",
+      "title": "Collect Deposit",
+      "children": [],
+      "parents": [
+        "ZgoEENFoUmX4K3pxenZl"
+      ],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 1
+    },
+    {
+      "id": "r4o38NF8FkkOhSq1fScl",
+      "title": "Compile Statistic",
+      "children": [],
+      "parents": [
+        "ZgoEENFoUmX4K3pxenZl"
+      ],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 1
+    },
+    {
+      "id": "yays5FIgr6lSEzjZkIyB",
+      "title": "Collect Will",
+      "children": [],
+      "parents": [
+        "ZgoEENFoUmX4K3pxenZl"
+      ],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 1
+    },
+    {
+      "id": "yjLCVjJno5zaMpJeNwEL",
+      "title": "Collect Tax",
+      "children": [],
+      "parents": [
+        "ZgoEENFoUmX4K3pxenZl"
+      ],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 1
+    },
+    {
+      "id": "yjWefbIe9PRDap202Cg0",
+      "title": "Compile List",
+      "children": [],
+      "parents": [
+        "ZgoEENFoUmX4K3pxenZl"
+      ],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 1
+    },
+    {
+      "id": "zBZZNVawyCOlbazChqNm",
+      "title": "Examine Object",
+      "children": [],
+      "parents": [],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 1
+    },
+    {
+      "id": "zUyqj6DxDvEYbL92sqll",
+      "title": "Unload Supply",
+      "children": [
+        "05DzrgSt8n72w572TvtT"
+      ],
+      "parents": [],
+      "contextComplete": false,
+      "activityEligible": true,
+      "level": 1
+    }
+  ],
+  "hierarchy": {
+    "parent": {
+      "id": "ZgoEENFoUmX4K3pxenZl",
+      "title": "Collect (information) (Information)"
+    },
+    "children": [
+      {
+        "id": "1ykOGb15sE4u62dCxUSl",
+        "title": "Collect Bet"
+      },
+      {
+        "id": "5a6ApjosY5x1Sj5fbw4z",
+        "title": "Collect Charge"
+      },
+      {
+        "id": "LkaZgxazZttOWgSjUJZh",
+        "title": "Collect Commission"
+      },
+      {
+        "id": "MQkA3IHNk7E4OF6Wjvs9",
+        "title": "Collect Datum"
+      },
+      {
+        "id": "qoFumml1C3XO2MOYeCbb",
+        "title": "Collect Deposit"
+      },
+      {
+        "id": "nv0Mzqg9v6SaAJ6M1rq1",
+        "title": "Collect Documentation"
+      },
+      {
+        "id": "3CgZsfNi06lD4iy5E1g9",
+        "title": "Collect Fare"
+      },
+      {
+        "id": "q122Y32J8gVW7UB8BdUf",
+        "title": "Collect Fee"
+      },
+      {
+        "id": "An8c04HeIFrKFYzjZd4A",
+        "title": "Collect History"
+      },
+      {
+        "id": "WmDUTH4qgPzrP848kzUE",
+        "title": "Collect Information"
+      },
+      {
+        "id": "ZA4Cgaz1TSncFfmzQR8v",
+        "title": "Collect Instruction"
+      },
+      {
+        "id": "2dyCIf0wOHhRaFHeVqPq",
+        "title": "Collect Intelligence"
+      },
+      {
+        "id": "g5Fz9zAc0gj6XcaG9DJh",
+        "title": "Collect Measurement"
+      },
+      {
+        "id": "5vTTD6krD8LhUTkPG1f9",
+        "title": "Collect Membership"
+      },
+      {
+        "id": "KRItNg3IKTRd6b5AiYTR",
+        "title": "Collect Message"
+      },
+      {
+        "id": "GCP5t8F9K3C9kR02mSrB",
+        "title": "Collect Metric"
+      },
+      {
+        "id": "cLNX3PBBhsXFRQnwE3YD",
+        "title": "Collect Pattern"
+      },
+      {
+        "id": "99IQ6IK2SsBJ47xBQBzB",
+        "title": "Collect Payment"
+      },
+      {
+        "id": "2rdMY7fxeiT0nlNzJSjz",
+        "title": "Collect Periodical"
+      },
+      {
+        "id": "n0baqregqzwgIqQKCtgi",
+        "title": "Collect Premium"
+      },
+      {
+        "id": "G8myygzriuSfeIrEjLxb",
+        "title": "Collect Rent"
+      },
+      {
+        "id": "puXc3q5dBZOG9rDdPuXB",
+        "title": "Collect Research"
+      },
+      {
+        "id": "Gnz8AjI1zoZGz77kIk24",
+        "title": "Collect Sheet"
+      },
+      {
+        "id": "yjLCVjJno5zaMpJeNwEL",
+        "title": "Collect Tax"
+      },
+      {
+        "id": "yays5FIgr6lSEzjZkIyB",
+        "title": "Collect Will"
+      },
+      {
+        "id": "000aRVtToaPLr06l4FAR",
+        "title": "Compile Evidence"
+      },
+      {
+        "id": "P9RjF6lWFpNzepsB2JMc",
+        "title": "Compile Figure"
+      },
+      {
+        "id": "i0ZHXcuqXhaAzWCIjacP",
+        "title": "Compile File"
+      },
+      {
+        "id": "yjWefbIe9PRDap202Cg0",
+        "title": "Compile List"
+      },
+      {
+        "id": "5diE2OV2pCvO2qtnavHA",
+        "title": "Compile Listing"
+      },
+      {
+        "id": "XwHSAj4DzJsfiE4RxfcH",
+        "title": "Compile Receipt"
+      },
+      {
+        "id": "AIg2bsaMWWAtxdFiPAcX",
+        "title": "Compile Record"
+      },
+      {
+        "id": "gfQGihP3G7FBSpK7pGf1",
+        "title": "Compile Score"
+      },
+      {
+        "id": "cvtGA18WktS4Pe0pYN9Q",
+        "title": "Compile Statement"
+      },
+      {
+        "id": "r4o38NF8FkkOhSq1fScl",
+        "title": "Compile Statistic"
+      }
+    ],
+    "compileBranches": [
+      {
+        "id": "000aRVtToaPLr06l4FAR",
+        "title": "Compile Evidence",
+        "children": [
+          {
+            "id": "GAR0BjmWnmnSu4nrJGrj",
+            "title": "(O*Net) 20582 - Compile and present evidence for court actions."
+          }
+        ]
+      }
+    ],
+    "allRecordedChildCount": 35,
+    "exactFrozenTitles": true
+  }
+}
