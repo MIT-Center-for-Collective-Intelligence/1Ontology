@@ -1063,7 +1063,8 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
           from: d.from,
           to: "",
           symbol: "x",
-          fromTitle: allNodes[d.from]?.title || genPart.title || d.fromTitle || "",
+          fromTitle:
+            allNodes[d.from]?.title || genPart.title || d.fromTitle || "",
           fromOptional: !!(genPart.optional ?? d.fromOptional),
         },
       ];
@@ -1490,7 +1491,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                   </Tooltip>
                                 ) : entry.symbol === "=" ? (
                                   <Tooltip
-                                    title={`This part is inherited from "${genTitle}". If it changes there, it changes here too.`}
+                                    title={`This part is inherited from "${genTitle}". If it changes in the generalization, it changes in this node too.`}
                                     placement="top"
                                   >
                                     <DragHandleIcon
@@ -2521,7 +2522,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
       </Box>
 
       {activeGeneralization && activeGenId && activeGenTitle && (
-        <Box key={activeGenId} sx={{ position: "relative", pt: 4 }}>
+        <Box key={activeGenId} sx={{ position: "relative", pt: 4, mx: 1.5 }}>
           {inheritedPartsRepairing && (
             <Box
               sx={{

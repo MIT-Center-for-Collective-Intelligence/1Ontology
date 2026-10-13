@@ -596,7 +596,7 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                           const src = getPartCurrentSourceGenId(entry.to);
                           return (
                             <Tooltip
-                              title={`This part is inherited from "${genTitle}". If it changes there, it changes here too.`}
+                              title={`This part is inherited from "${genTitle}". If it changes in the generalization, it changes in this node too.`}
                               placement="top"
                             >
                               <DragHandleIcon
@@ -778,7 +778,7 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
           </Box>
 
           {activeGenId && activeGenTitle && (
-            <Box key={activeGenId} sx={{ position: "relative", pt: 4 }}>
+            <Box key={activeGenId} sx={{ position: "relative", pt: 4, mx: 1.5 }}>
               {inheritedPartsRepairing && (
                 <Box
                   sx={{
@@ -819,7 +819,10 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                   border: (theme) =>
                     `1px solid ${alpha(theme.palette.divider, theme.palette.mode === "dark" ? 0.15 : 0.2)}`,
                   backgroundColor: (theme) =>
-                    alpha(theme.palette.background.paper, theme.palette.mode === "dark" ? 0.4 : 0.7),
+                    alpha(
+                      theme.palette.background.paper,
+                      theme.palette.mode === "dark" ? 0.4 : 0.7,
+                    ),
                   backdropFilter: "blur(12px)",
                   boxShadow: (theme) =>
                     theme.palette.mode === "dark"
@@ -840,7 +843,10 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                   border: (theme) =>
                     `1px solid ${alpha(theme.palette.divider, theme.palette.mode === "dark" ? 0.15 : 0.2)}`,
                   backgroundColor: (theme) =>
-                    alpha(theme.palette.background.paper, theme.palette.mode === "dark" ? 0.4 : 0.7),
+                    alpha(
+                      theme.palette.background.paper,
+                      theme.palette.mode === "dark" ? 0.4 : 0.7,
+                    ),
                   backdropFilter: "blur(12px)",
                   boxShadow: (theme) =>
                     theme.palette.mode === "dark"
@@ -960,7 +966,9 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                             justifyContent: "center",
                           }}
                         >
-                          <Typography sx={{ textAlign: "center" }}>{gen.title}</Typography>
+                          <Typography sx={{ textAlign: "center" }}>
+                            {gen.title}
+                          </Typography>
                         </MenuItem>
                       ))}
                     </TextField>
