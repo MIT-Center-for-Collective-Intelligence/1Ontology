@@ -1,0 +1,190 @@
+{
+  "schemaVersion": "algorithm-review-findings-v1",
+  "reviewedAt": "2026-10-13",
+  "reviewer": "Cursor agent (Claude), reviewing the PR #389 handoff. This is a model review layered on top of the capture; it is not domain-expert or empirical evidence.",
+  "captureSha256": "277e715c9962775e23dc326a7c785cb4567e6b72b7975221a025014082ba109f",
+  "status": "proposed, not accepted; to be reviewed together before anything changes",
+  "general": [
+    {
+      "id": "only-sequences",
+      "title": "Every captured algorithm is a plain sequence",
+      "finding": "All eight flows are a single sequence of steps. Parallel steps, conditions, loops and recursion never occur in real data, so the part of the method that distinguishes it from a step list has only been exercised by synthetic tests. At least four of the eight are better described with another construct (see the per-algorithm findings). Before scaling, check the distribution of flow types across the 47 accepted and 200 blocked pipeline candidates; if they are also almost all sequences, the generator is likely defaulting to sequence."
+    },
+    {
+      "id": "title-only-evidence",
+      "title": "The only evidence is the task title",
+      "finding": "Every source claim quotes the O*NET task title, and every step role, order and necessity is a hypothesis. The capture does not record which occupation each task belongs to, although that changes what the procedure looks like (21172 is an astronomer's task, 1590 a forensic technician's). O*NET also links tasks to detailed work activities. Attaching occupation and detailed-work-activity links would give the generator and reviewers real context at little cost."
+    },
+    {
+      "id": "critiques-check-form",
+      "title": "The captured critiques check form, not substance",
+      "finding": "All 16 captured critiques pass with zero objections. They confirm that node IDs and quoted titles match and that hypotheses are labeled, but none questions whether a sequence is the right control relation, whether a step is missing, or whether a step binding is apt. Two agreeing reviews therefore show conformance, not algorithm quality. A review role that must argue for an alternative flow, or must name the weakest step, would make the gate meaningful."
+    },
+    {
+      "id": "compound-task-circularity",
+      "title": "Four leaves use their own parents as steps",
+      "finding": "Three of the eight leaves are compound O*NET tasks (\"Order, unload, and store...\", \"Communicate findings and recommendations...\", \"Read maps ... and provide directions\"). Each is placed under the activity for each verb and then uses those same parent activities as its steps. A fourth, \"Design structures that incorporate...\", uses its only parent, Design Structure, as its middle step. When parents are later derived from their children, Order Supply would be derived from a child whose procedure contains Order Supply. This has to be decided before parent generation: either treat such leaves as compositions and exclude them from the children used to derive a parent's common flow, or require steps to avoid the subject's ancestors. The validator now reports this as a step-is-ancestor finding."
+    },
+    {
+      "id": "context-gaps",
+      "title": "Missing parents look like roots",
+      "finding": "Four of the eight subjects have no recorded parent and every node is marked context-incomplete. The previous tree view drew such subjects as roots. The view now says the parent was not captured. Recorded levels also do not match captured children (for example Review Research is level 1 with no captured children), so levels cannot be used to reason about the hierarchy inside this projection."
+    },
+    {
+      "id": "unverifiable-claims",
+      "title": "Some evidence cannot be checked from the repository",
+      "finding": "Browser screenshots, the live API check, the pipeline counts and the private receipts are described but not included. The tests and procedure hashes can be rerun; the rest has to be taken on trust."
+    }
+  ],
+  "algorithms": [
+    {
+      "nodeId": "0ULGpOCstwdDvJFuH6zF",
+      "version": 1,
+      "procedureHash": "b321fc5facbb1472529118f1ce4ab38ffa5b0ea968359e9020541b6d9c5c9ef2",
+      "verdict": "revise",
+      "findings": [
+        "Checking the design against the criteria only has a purpose if a failed check leads back to revision. As a one-pass sequence the evaluation changes nothing.",
+        "Design Structure is both this task's only parent and its middle step, so a Design Structure algorithm derived from its children would contain itself. A more specific design activity, or the parent's own sub-activities, would avoid this; the projection has no candidate."
+      ],
+      "proposedRationale": "Identify the applicable practices once, then design and evaluate repeatedly until the criteria are met or remaining gaps are explicitly accepted.",
+      "proposedFlow": {
+        "type": "sequence",
+        "items": [
+          {"type": "step", "stepId": "s1"},
+          {
+            "type": "loop",
+            "guard": {"description": "The current design does not yet meet the selected environmental criteria"},
+            "body": {"type": "sequence", "items": [{"type": "step", "stepId": "s2"}, {"type": "step", "stepId": "s3"}]},
+            "progressMeasure": {"description": "Fewer selected criteria remain unmet after each revision, or an unmet criterion is explicitly traded off"},
+            "termination": {"description": "All selected criteria are met, or the remaining gaps are accepted and recorded"}
+          }
+        ]
+      }
+    },
+    {
+      "nodeId": "0TadmZfmqCFFKNZUyPJF",
+      "version": 1,
+      "procedureHash": "6ea5d0c37c0dc70bc47c17a6dcb623fe44eab5fb5f39b07805d903feffe31f48",
+      "verdict": "keep as hypothesis",
+      "findings": [
+        "Examining the questioned mark before the candidate object is defensible: forensic practice examines questioned evidence first to limit bias. That is a stronger justification than the captured rationale gives, but it is still not cited in the capture.",
+        "Toolmark comparison usually involves making test marks with the candidate tool and comparing those with the questioned mark. No such activity is in this projection; deciding whether one exists needs the full corpus.",
+        "Determine Source normally has three outcomes (identification, elimination, inconclusive). The step role describes it as a yes/no decision."
+      ],
+      "proposedFlow": null
+    },
+    {
+      "nodeId": "05wTiYXl9N7L8JogElG0",
+      "version": 2,
+      "procedureHash": "c7d7fa5e41e0a270320b98caa8f5f8d5f0bc87075cba7d51908672a80b668634",
+      "verdict": "keep as hypothesis",
+      "findings": [
+        "Findings before recommendations is a reasonable order because recommendations are justified by findings.",
+        "\"In oral, written, audio, video, or other forms\" is a how-dimension of communicating. It belongs in a [Communicate how?] grouping of specializations, not in the steps, so leaving it out of the flow is right; the step roles' \"selected communication form\" is not backed by any choice in the flow.",
+        "Both steps are this task's own parents (compound-task circularity)."
+      ],
+      "proposedFlow": null
+    },
+    {
+      "nodeId": "05cJlz498lLfsI5KSy5g",
+      "version": 2,
+      "procedureHash": "d2ffe0844d182f02a164b8588f3c352c55e6bd82e0cae51c3202440c75ccca65",
+      "verdict": "revise",
+      "findings": [
+        "The two assessments examine the same proposed change against different criteria, and neither output feeds the other. The captured critiques agree the order is unsupported; a sequence still asserts one.",
+        "\"Avoid unintended negative consequences\" implies that adverse findings lead to revising or rejecting the change. No such activity is in the projection, so the proposal does not invent one."
+      ],
+      "proposedRationale": "Assess intended performance and unintended consequences independently; both are needed before the analysis is complete.",
+      "proposedFlow": {
+        "type": "parallel",
+        "branches": [{"flow": {"type": "step", "stepId": "s1"}}, {"flow": {"type": "step", "stepId": "s2"}}],
+        "join": {"completionCondition": {"description": "Both the intended-performance assessment and the adverse-effect assessment are complete"}}
+      }
+    },
+    {
+      "nodeId": "06rlBcrLzJ4xnPR5Le4X",
+      "version": 2,
+      "procedureHash": "b8aabdc0664e405119edc29c0d7f8f4361d12bdd17269aac71559764eed8cbfc",
+      "verdict": "revise",
+      "findings": [
+        "Supervision is recurring. A single review followed by advice describes one meeting, not supervising a student's research."
+      ],
+      "proposedRationale": "Review the student's work and advise them, repeatedly, for as long as the research continues.",
+      "proposedFlow": {
+        "type": "loop",
+        "guard": {"description": "The student's research is ongoing"},
+        "body": {"type": "sequence", "items": [{"type": "step", "stepId": "s1"}, {"type": "step", "stepId": "s2"}]},
+        "progressMeasure": {"description": "The research moves to a later stage (question, method, data, analysis, write-up) between iterations"},
+        "termination": {"description": "The research is completed or submitted, or supervision ends"}
+      }
+    },
+    {
+      "nodeId": "06Q20XKwJhM4zSpUwKuJ",
+      "version": 2,
+      "procedureHash": "6b8cc5db622f2637234c816a1c01abb7ca6de5abd267f40d7d8cf8524a4bf3f7",
+      "verdict": "keep as hypothesis",
+      "findings": [
+        "Collaborating is the task itself, not just its first step: coordination with the specialist likely continues while locations are chosen and content is placed.",
+        "The task does not say who selects locations and posts content. The specialist may do both, which is a [by whom?] question the flow cannot express; as written it implies the worker does all three."
+      ],
+      "proposedFlow": null
+    },
+    {
+      "nodeId": "06MGPWZDxwzYxBWU8kv1",
+      "version": 2,
+      "procedureHash": "97071819c587bfb1269fa279dcb9f0b48e8ced9c5ad372cc2fff4328401c321b",
+      "verdict": "revise",
+      "findings": [
+        "Reading the map and reading the screen are independent inputs; the captured critique itself says their order needs evidence.",
+        "Explain Information is bound to the role \"interpret\". Explaining is telling someone else; the captured review accepted it through the synonym Interpret Information. Whether a closer activity exists needs the full corpus.",
+        "Read Map and Explain Information are this task's own parents (compound-task circularity)."
+      ],
+      "proposedRationale": "Gather map and screen information independently, then interpret them, determine the location and give directions.",
+      "proposedFlow": {
+        "type": "sequence",
+        "items": [
+          {
+            "type": "parallel",
+            "branches": [{"flow": {"type": "step", "stepId": "s1"}}, {"flow": {"type": "step", "stepId": "s2"}}],
+            "join": {"completionCondition": {"description": "The needed map and screen information has been read"}}
+          },
+          {"type": "step", "stepId": "s3"},
+          {"type": "step", "stepId": "s4"},
+          {"type": "step", "stepId": "s5"}
+        ]
+      }
+    },
+    {
+      "nodeId": "05DzrgSt8n72w572TvtT",
+      "version": 2,
+      "procedureHash": "e76acae52f97f4b24d3fb68b0b4781d9b51ba007f2cbfa6f97f60b512ed594b5",
+      "verdict": "keep as hypothesis",
+      "findings": [
+        "Order, unload, store is the natural order for one replenishment cycle. In practice ordering and unloading are separated by a delivery wait and the cycle repeats whenever stock runs low; the procedure should say it describes one cycle.",
+        "All three steps are this task's own parents (compound-task circularity)."
+      ],
+      "proposedFlow": null
+    }
+  ],
+  "structureProposals": [
+    {
+      "id": "collect-information-regroup",
+      "kind": "regroup",
+      "summary": "\"Collect (information) (Information)\" mixes collecting money, collecting information, collecting items and compiling. Grouping its children with a [Collect what?] collection would make the shared algorithm of each group much clearer than one common flow for all 35. The \"unclear\" group needs its own task titles before it can be placed.",
+      "nodeIds": ["ZgoEENFoUmX4K3pxenZl"],
+      "groups": [
+        {"title": "[Collect what?] money or payments", "nodeIds": ["1ykOGb15sE4u62dCxUSl", "5a6ApjosY5x1Sj5fbw4z", "LkaZgxazZttOWgSjUJZh", "qoFumml1C3XO2MOYeCbb", "3CgZsfNi06lD4iy5E1g9", "q122Y32J8gVW7UB8BdUf", "99IQ6IK2SsBJ47xBQBzB", "n0baqregqzwgIqQKCtgi", "G8myygzriuSfeIrEjLxb", "yjLCVjJno5zaMpJeNwEL"]},
+        {"title": "[Collect what?] information or data", "nodeIds": ["MQkA3IHNk7E4OF6Wjvs9", "nv0Mzqg9v6SaAJ6M1rq1", "An8c04HeIFrKFYzjZd4A", "WmDUTH4qgPzrP848kzUE", "2dyCIf0wOHhRaFHeVqPq", "g5Fz9zAc0gj6XcaG9DJh", "KRItNg3IKTRd6b5AiYTR", "GCP5t8F9K3C9kR02mSrB", "puXc3q5dBZOG9rDdPuXB"]},
+        {"title": "Unclear: needs the underlying task titles", "nodeIds": ["ZA4Cgaz1TSncFfmzQR8v", "5vTTD6krD8LhUTkPG1f9", "cLNX3PBBhsXFRQnwE3YD", "2rdMY7fxeiT0nlNzJSjz", "Gnz8AjI1zoZGz77kIk24", "yays5FIgr6lSEzjZkIyB"]},
+        {"title": "Compile (assemble collected material into a product); possibly a sibling activity rather than a kind of collecting", "nodeIds": ["000aRVtToaPLr06l4FAR", "P9RjF6lWFpNzepsB2JMc", "i0ZHXcuqXhaAzWCIjacP", "yjWefbIe9PRDap202Cg0", "5diE2OV2pCvO2qtnavHA", "XwHSAj4DzJsfiE4RxfcH", "AIg2bsaMWWAtxdFiPAcX", "gfQGihP3G7FBSpK7pGf1", "cvtGA18WktS4Pe0pYN9Q", "r4o38NF8FkkOhSq1fScl"]}
+      ],
+      "notes": "\"Collect Information\" is itself a child of \"Collect (information) (Information)\", a near-duplicate of its parent's title."
+    },
+    {
+      "id": "compound-task-placement",
+      "kind": "placement",
+      "summary": "Decide whether a task that uses its own parent as a step is placed correctly. For compound O*NET tasks (\"do X and Y\") the question is whether the task is a specialization of X and of Y, or a composition of them; the current placement under every verb makes upward derivation circular. The LEED design task raises the same question for its single parent.",
+      "nodeIds": ["05DzrgSt8n72w572TvtT", "05wTiYXl9N7L8JogElG0", "06MGPWZDxwzYxBWU8kv1", "0ULGpOCstwdDvJFuH6zF"]
+    }
+  ]
+}

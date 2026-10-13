@@ -1,0 +1,91 @@
+{
+  "schemaVersion": "algorithm-review-public-evidence-summary-v1",
+  "observedAt": "2026-10-12T13:36:54.191327+00:00",
+  "baselineSha256": "dab5464a577fe0c040beddcdc480ca4eb031de208b5c665a8205414646677711",
+  "appProjection": {
+    "source": "genuine actual live GETs and independently matching read-only current-source model",
+    "algorithmVersions": 291,
+    "ontologyChangeVersions": 0,
+    "validatedCurrentAlgorithms": 8,
+    "uniqueSubjects": 208,
+    "statuses": {
+      "pending": 8,
+      "blocked": 200,
+      "reviewed": 0,
+      "invalidated": 83
+    },
+    "latestCoverageCheckpointSha256": "5fc3868d8cc7762c6c4d547ecbdba7941165d39607d9261ed1f7b1149d33929e",
+    "liveVerifiedAt": "2026-10-12T13:37:39.278516+00:00",
+    "liveCapturedSetAndCanonicalProceduresMatch": true
+  },
+  "pipelineReadonlyTransaction": {
+    "statusCounts": {
+      "accepted": 47,
+      "pending": 39236,
+      "uncertain": 6,
+      "unresolved": 321
+    },
+    "versionCount": 897,
+    "critiqueCount": 126,
+    "complete": false,
+    "leafTotal": 20995
+  },
+  "progress": {
+    "asOfUtc": "2026-10-11T18:59:58.064323+00:00",
+    "sha256": "c4f7bd483e78a1c7c5a04358a09ea330df8aff75533834c98cc3e2e0f5c653fc",
+    "statusCounts": {
+      "accepted": 47,
+      "pending": 39247,
+      "uncertain": 6,
+      "unresolved": 310
+    },
+    "complete": false
+  },
+  "cumulativeExport": {
+    "generatedAt": "2026-10-11T18:59:38.007074+00:00",
+    "manifestSha256": "104c653fc7b75f7b2bda6d3bf60c321ae39333e015a09b1918db8cc43a27e607",
+    "proposalCount": null,
+    "recordCount": 889
+  },
+  "observerCommittedSnapshot": {
+    "checkpoint_id": "dfa4161b46337332680b812da3cfa30388372de486e244d328f873050230b90a",
+    "manifest_sha": "4811896edf08a637a5f1464762ba9e4bcd5337df17167f8f6aadf5e4b9f46bd6",
+    "progress_sha": "f7662364d48a355f4566df301c95d97265b36e9948aada1931e16fa8c1857a8f",
+    "checkpoint_sha": "c21465b07a933d5266c1a96cc868e79e93b34c339b621e26e9fd487a11fd9fe3",
+    "at_utc": "2026-10-11T18:22:08.010338+00:00"
+  },
+  "knownLimitations": [
+    "App exposes eight reviewed research versions whereas pipeline records 47 accepted leaves; app is stale with respect to pipeline acceptance.",
+    "Progress and cumulative exports are frozen historical observations; not a current complete corpus.",
+    "Portable snapshot contains only eight genuine algorithms and 68 exact frozen node contexts; full-snapshot missing-node searches and private native receipt verification are outside this projection.",
+    "No parent-generation barrier was relaxed; 20,995 leaf barrier remains incomplete.",
+    "Independent critique acceptance does not establish occupational truth; empirical validation is unverified.",
+    "Browser UI validation is owned by package engineer; this capture does not attest browser success."
+  ],
+  "snapshotSha256": "277e715c9962775e23dc326a7c785cb4567e6b72b7975221a025014082ba109f",
+  "actualFeedNode": {
+    "id": "05DzrgSt8n72w572TvtT",
+    "title": "(O*Net) 5081 - Order, unload, and store feed and supplies.",
+    "algorithmVersionCount": 2,
+    "ontologyChangeVersionCount": 0,
+    "pipelineStatus": "accepted",
+    "reviewStatus": "pending"
+  },
+  "historicalIndependentFindings": {
+    "observedAt": "2026-10-11T19:31:34.921684+00:00",
+    "sourceReceiptSha256": "76c9f4f73b131a56d494d58476225a3d0475ea311c60d537788d46a8bc9ba6d5",
+    "fullReviewSuite": {
+      "passed": 82,
+      "failed": 4,
+      "total": 86
+    },
+    "remainingAreas": [
+      "UI ordering and research-review labels",
+      "Generator role/necessity prompts and feedback omissions",
+      "Completed-owner verification pointer coupling",
+      "Export ledger and observer delivery hold",
+      "Fresh full report and live browser verification"
+    ],
+    "disposition": "Portable review displays genuine captured flows and explicit status meanings; it does not repair or claim readiness of the historical full pipeline or private importer."
+  }
+}
