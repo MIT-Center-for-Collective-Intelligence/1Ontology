@@ -172,6 +172,11 @@ export const GEMINI_MODEL = "gemini-3.1-pro-preview";
 export const ONTOLOGY_APPS: any = development
   ? [
       {
+        id: "test-ontology",
+        name: "Test Ontology",
+        group: "main",
+      },
+      {
         id: "final-hierarchy-with-o*net",
         name: "Final Hierarchy with O*Net",
         group: "main",
@@ -284,3 +289,6 @@ export const performerColors: Record<string, string> = {
   "Collaboration of humans and AI": "#734946",
   AI: "#4caf50",
 };
+
+/** Marker shown next to a part that is optional. */
+export const OPTIONAL_PART_SYMBOL = "O";

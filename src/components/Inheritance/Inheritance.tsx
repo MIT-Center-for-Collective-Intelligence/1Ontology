@@ -229,7 +229,7 @@ const Inheritance: React.FC<InheritanceProps> = ({ selectedNode, nodes, fetchNod
                     { value: "alwaysInherit", label: "Always Inherit" },
                     {
                       value: "inheritUnlessAlreadyOverRidden",
-                      label: "Inherit Unless Already Overridden",
+                      label: "Inherit Unless Overridden",
                     },
                   ].map(({ value, label }) => (
                     <FormControlLabel

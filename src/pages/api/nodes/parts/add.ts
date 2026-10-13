@@ -19,6 +19,7 @@ import {
   applyIsPartOfOwnerOnly,
   asPartsCollections,
   partsNodes,
+  propagateAddedParts,
   toParts,
 } from "@components/lib/server/parts";
 import {
@@ -46,7 +47,12 @@ async function applyAdd(ctx: {
   genId?: string;
   uname?: string;
   appName?: string;
-}): Promise<{ ok: true; parts: ICollection[] }> {
+}): Promise<{
+  ok: true;
+  parts: ICollection[];
+  inheritedPartsDetails?: any[];
+  resolvedParts?: ILinkNode[];
+}> {
   const { nodeId, nodeData, partIds, genId, uname, appName } = ctx;
   const cache: NodeCache = new Map([[nodeId, nodeData]]);
 
@@ -109,6 +115,13 @@ async function applyAdd(ctx: {
   const updatedRelated = { ...relatedNodes, [nodeId]: updatedNode };
   const resolvedOfUpdated = makeResolvedOf(updatedRelated);
 
+  const calculations = computeInheritedPartsDetails({
+    currentNode: updatedNode,
+    relatedNodes: updatedRelated,
+    resolvedOf: resolvedOfUpdated,
+  });
+  const resolved = resolvedOfUpdated(nodeId);
+
   await db
     .collection(NODES)
     .doc(nodeId)
@@ -118,12 +131,8 @@ async function applyAdd(ctx: {
         nextEntries,
         Object.keys(nodeData.partsInheritance?.overrides ?? {}),
       ),
-      inheritedPartsDetails: computeInheritedPartsDetails({
-        currentNode: updatedNode,
-        relatedNodes: updatedRelated,
-        resolvedOf: resolvedOfUpdated,
-      }),
-      resolvedParts: resolvedOfUpdated(nodeId),
+      inheritedPartsDetails: calculations,
+      resolvedParts: resolved,
     });
   cache.set(nodeId, updatedNode);
 
@@ -162,6 +171,18 @@ async function applyAdd(ctx: {
     childLogs,
   );
 
+  // Propagate the newly added parts down to descendants that do not dynamically
+  // inherit them (e.g. customized/broken descendants or those following a different source).
+  await propagateAddedParts(
+    nodeId,
+    additions,
+    cache,
+    parentLog,
+    uname,
+    appName,
+    childLogs,
+  );
+
   if (uname) {
     await writeChangeLog(
       {
@@ -180,7 +201,12 @@ async function applyAdd(ctx: {
   }
   for (const log of childLogs) await writeChangeLog(log);
 
-  return { ok: true, parts: side };
+  return {
+    ok: true,
+    parts: side,
+    inheritedPartsDetails: calculations,
+    resolvedParts: resolved,
+  };
 }
 
 function fail(res: NextApiResponse, status: number, msg: string) {

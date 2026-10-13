@@ -21,6 +21,11 @@ export type INodePath = {
   title: string;
   category?: boolean;
 };
+export type InheritanceMode =
+  | "neverInherit"
+  | "alwaysInherit"
+  | "inheritUnlessAlreadyOverRidden";
+
 export type InheritanceType = {
   ref: string | null;
   title: string;
@@ -97,6 +102,8 @@ export type INode = {
   };
   inheritance: IInheritance;
   inheritedPartsDetails: InheritedPartsDetail[];
+  /** Per-part inheritance mode overrides: neverInherit, alwaysInherit, inheritUnlessAlreadyOverRidden */
+  partInheritanceModes?: { [partId: string]: InheritanceMode };
   /** Ref-based parts inheritance state — see {@link IPartsInheritance}. */
   partsInheritance?: IPartsInheritance;
   /**

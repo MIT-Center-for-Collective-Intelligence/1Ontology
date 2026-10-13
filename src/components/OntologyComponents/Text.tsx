@@ -60,6 +60,10 @@ import EditProperty from "../AddPropertyForm/EditProperty";
 import { Post } from "@components/lib/utils/Post";
 import InheritanceDetailsPanel from "../StructuredProperty/InheritanceDetailsPanel";
 import { updateNodeInTree } from "@components/lib/utils/instantTreeUpdate";
+import PartInheritanceModeButton, {
+  InheritanceMode,
+} from "../Common/PartInheritanceModeButton";
+import { setPropertyInheritanceMode } from "@components/lib/utils/propertyInheritanceMode";
 // import YjsEditor from "../YJSEditor/YjsEditor";
 
 type ITextProps = {
@@ -453,127 +457,151 @@ const Text = ({
             borderTopLeftRadius: property !== "title" ? "18px" : "",
           }}
         >
-          {editProperty === property ? (
-            <EditProperty
-              value={newPropertyValue}
-              onChange={setNewPropertyValue}
-              onSave={() => {
-                if (modifyProperty) {
-                  modifyProperty({
-                    newValue: newPropertyValue,
-                    previousValue: property,
-                  });
-                }
-                setEditProperty("");
-                setNewPropertyValue("");
-              }}
-              onCancel={() => {
-                setEditProperty("");
-                setNewPropertyValue("");
-              }}
-              property={property}
-            />
-          ) : (
-            <Tooltip title={getTooltipHelper(lowercaseFirstLetter(property))}>
-              <Box
-                sx={{
-                  position: "relative",
-                  display: "inline-block",
-                  pl: "1px",
-                  "&:hover":
-                    enableEdit &&
-                    modifyProperty &&
-                    property !== "reason_for_most_efficiently_performed_by"
-                      ? {
-                          border: "2px solid orange",
-                          borderRadius: "15px",
-                          pr: "15px",
-                          cursor: "pointer",
-                          backgroundColor: "gray",
-                        }
-                      : {},
-                  "&:hover .edit-icon":
-                    enableEdit &&
-                    modifyProperty &&
-                    property !== "reason_for_most_efficiently_performed_by"
-                      ? {
-                          display: "block",
-                        }
-                      : {},
-                }}
-                onClick={() => {
-                  if (enableEdit && modifyProperty) {
-                    setEditProperty(property);
-                    setNewPropertyValue(property);
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            {editProperty === property ? (
+              <EditProperty
+                value={newPropertyValue}
+                onChange={setNewPropertyValue}
+                onSave={() => {
+                  if (modifyProperty) {
+                    modifyProperty({
+                      newValue: newPropertyValue,
+                      previousValue: property,
+                    });
                   }
+                  setEditProperty("");
+                  setNewPropertyValue("");
                 }}
-              >
-                {selectedDiffNode?.modifiedProperty === property &&
-                selectedDiffNode.changeType === "edit property" ? (
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      background: (theme: any) =>
-                        theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
-                      p: 3,
-                      gap: "10px",
-                    }}
-                  >
-                    {" "}
-                    <Typography
-                      sx={{
-                        fontSize: "20px",
-                        fontWeight: 500,
-                        fontFamily: "Roboto, sans-serif",
-                        color: "red",
-                        textDecoration: "line-through",
-                      }}
-                    >
-                      {selectedDiffNode.previousValue}
-                    </Typography>
-                    <Typography
-                      sx={{
-                        fontSize: "20px",
-                        fontWeight: 500,
-                        fontFamily: "Roboto, sans-serif",
-                        color: "green",
-                      }}
-                    >
-                      {selectedDiffNode.newValue}
-                    </Typography>
-                  </Box>
-                ) : (
-                  <Typography
-                    sx={{
-                      fontSize: "20px",
-                      fontWeight: 500,
-                      fontFamily: "Roboto, sans-serif",
-                      padding: "4px",
-                    }}
-                  >
-                    {capitalizeFirstLetter(
-                      DISPLAY[property] ? DISPLAY[property] : property,
-                    )}
-                  </Typography>
-                )}
-
-                <EditIcon
-                  className="edit-icon"
+                onCancel={() => {
+                  setEditProperty("");
+                  setNewPropertyValue("");
+                }}
+                property={property}
+              />
+            ) : (
+              <Tooltip title={getTooltipHelper(lowercaseFirstLetter(property))}>
+                <Box
                   sx={{
-                    position: "absolute",
-                    top: "-8px",
-                    right: "-8px",
-                    color: "orange",
-                    backgroundColor: "white",
-                    borderRadius: "50%",
-                    fontSize: "16px",
-                    display: "none",
+                    position: "relative",
+                    display: "inline-block",
+                    pl: "1px",
+                    "&:hover":
+                      enableEdit &&
+                      modifyProperty &&
+                      property !== "reason_for_most_efficiently_performed_by"
+                        ? {
+                            border: "2px solid orange",
+                            borderRadius: "15px",
+                            pr: "15px",
+                            cursor: "pointer",
+                            backgroundColor: "gray",
+                          }
+                        : {},
+                    "&:hover .edit-icon":
+                      enableEdit &&
+                      modifyProperty &&
+                      property !== "reason_for_most_efficiently_performed_by"
+                        ? {
+                            display: "block",
+                          }
+                        : {},
+                  }}
+                  onClick={() => {
+                    if (enableEdit && modifyProperty) {
+                      setEditProperty(property);
+                      setNewPropertyValue(property);
+                    }
+                  }}
+                >
+                  {selectedDiffNode?.modifiedProperty === property &&
+                  selectedDiffNode.changeType === "edit property" ? (
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        background: (theme: any) =>
+                          theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
+                        p: 3,
+                        gap: "10px",
+                      }}
+                    >
+                      {" "}
+                      <Typography
+                        sx={{
+                          fontSize: "20px",
+                          fontWeight: 500,
+                          fontFamily: "Roboto, sans-serif",
+                          color: "red",
+                          textDecoration: "line-through",
+                        }}
+                      >
+                        {selectedDiffNode.previousValue}
+                      </Typography>
+                      <Typography
+                        sx={{
+                          fontSize: "20px",
+                          fontWeight: 500,
+                          fontFamily: "Roboto, sans-serif",
+                          color: "green",
+                        }}
+                      >
+                        {selectedDiffNode.newValue}
+                      </Typography>
+                    </Box>
+                  ) : (
+                    <Typography
+                      sx={{
+                        fontSize: "20px",
+                        fontWeight: 500,
+                        fontFamily: "Roboto, sans-serif",
+                        padding: "4px",
+                      }}
+                    >
+                      {capitalizeFirstLetter(
+                        DISPLAY[property] ? DISPLAY[property] : property,
+                      )}
+                    </Typography>
+                  )}
+
+                  <EditIcon
+                    className="edit-icon"
+                    sx={{
+                      position: "absolute",
+                      top: "-8px",
+                      right: "-8px",
+                      color: "orange",
+                      backgroundColor: "white",
+                      borderRadius: "50%",
+                      fontSize: "16px",
+                      display: "none",
+                    }}
+                  />
+                </Box>
+              </Tooltip>
+            )}
+            {!!currentVisibleNode.inheritance?.[property] &&
+              property !== "title" &&
+              property !== "ONetID" &&
+              !currentVisibleNode.unclassified && (
+                <PartInheritanceModeButton
+                  value={
+                    (currentVisibleNode.inheritance[property]
+                      .inheritanceType as InheritanceMode) ||
+                    "inheritUnlessAlreadyOverRidden"
+                  }
+                  disabled={!enableEdit || locked}
+                  onChange={(mode) => {
+                    void setPropertyInheritanceMode({
+                      nodeId: currentVisibleNode.id,
+                      property,
+                      mode,
+                      nodes: relatedNodes,
+                      fetchNode,
+                    });
                   }}
                 />
-              </Box>
-            </Tooltip>
-          )}
+              )}
+          </Box>
 
           <Box
             sx={{

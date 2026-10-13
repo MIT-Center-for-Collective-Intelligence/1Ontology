@@ -15,7 +15,7 @@ import {
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import { TreeApi } from "react-arborist";
 import { INode, TreeData } from "@components/types/INode";
-import DraggableTree from "@components/components/OntologyComponents/DraggableTree";
+import DraggableTree from "@components/components/OntologyComponents/OutlineView";
 const NODES_ONET = "oNetNodesDecomposed";
 type TreeNode = {
   title: string;

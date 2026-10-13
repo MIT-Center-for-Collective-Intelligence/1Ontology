@@ -87,6 +87,7 @@ const PartViewer: React.FC<PartViewerProps> = ({
     resolvedParts,
     resolvedPartsLoading,
     relatedNodes,
+    appName,
   );
 
   useEffect(() => {

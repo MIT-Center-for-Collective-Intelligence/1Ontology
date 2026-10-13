@@ -39,6 +39,7 @@ export const useInheritedPartsDetails = (
   resolvedParts?: ILinkNode[],
   resolvedPartsLoading?: boolean,
   nodes?: { [id: string]: INode },
+  appName?: string,
 ): {
   data: InheritedPartsDetail[] | null;
   repairing: boolean;
@@ -73,7 +74,7 @@ export const useInheritedPartsDetails = (
 
     const db = getFirestore();
     const nodeId = currentVisibleNode.id;
-    const appName = currentVisibleNode.appName;
+    const effectiveAppName = appName || currentVisibleNode.appName;
     activeNodeIdRef.current = nodeId;
     initialSnapshotFired.current = new Set();
     lastRepairKeyRef.current = null;
@@ -88,7 +89,7 @@ export const useInheritedPartsDetails = (
       setRepairing(true);
       Post<{ success: boolean; data: InheritedPartsDetail[] }>(
         "/generate-inheritance-part-details",
-        { nodeId, appName },
+        { nodeId, ...(effectiveAppName ? { appName: effectiveAppName } : {}) },
       )
         .then((result) => {
           if (activeNodeIdRef.current !== nodeId) return;
@@ -97,6 +98,7 @@ export const useInheritedPartsDetails = (
         .catch((err) => {
           if (activeNodeIdRef.current !== nodeId) return;
           console.error("Error repairing inherited parts:", err);
+          lastRepairKeyRef.current = null;
         })
         .finally(() => {
           inFlightRef.current = false;

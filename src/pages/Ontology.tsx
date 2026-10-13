@@ -137,7 +137,7 @@ import { MemoizedToolbarSidebar } from "@components/components/Sidebar/ToolbarSi
 import { NodeChange } from "@components/types/INode";
 import GuidLines from "@components/components/Guidelines/GuideLines";
 import SearchSideBar from "@components/components/SearchSideBar/SearchSideBar";
-import DraggableTree from "@components/components/OntologyComponents/DraggableTree";
+import OutlineView from "@components/components/OntologyComponents/OutlineView";
 import { TreeApi } from "react-arborist";
 import { capitalizeFirstLetter } from "@components/lib/utils/string.utils";
 import ROUTES from "@components/lib/utils/routes";
@@ -476,8 +476,7 @@ const Ontology = ({
       const otherRoots = rootNodes
         .filter((r) => r.id !== pathRootId)
         .map((r) => {
-          const hasKids =
-            !r.unclassified && nodeHasNonEmptySpecializations(r);
+          const hasKids = !r.unclassified && nodeHasNonEmptySpecializations(r);
           return {
             id: r.id,
             nodeId: r.id,
@@ -536,10 +535,7 @@ const Ontology = ({
         ),
       };
       const childIds = collectSpecializationChildIds(withoutUnclassifiedBucket);
-      if (
-        currentVisibleNode?.id &&
-        !childIds.includes(currentVisibleNode.id)
-      ) {
+      if (currentVisibleNode?.id && !childIds.includes(currentVisibleNode.id)) {
         childIds.push(currentVisibleNode.id);
       }
       const childDocs = await batchGetNodesByIds(db, childIds, appName);
@@ -552,12 +548,7 @@ const Ontology = ({
               withoutUnclassifiedBucket,
               merged,
             )
-          : replaceWithOneLevel(
-              prev,
-              d.id,
-              withoutUnclassifiedBucket,
-              merged,
-            );
+          : replaceWithOneLevel(prev, d.id, withoutUnclassifiedBucket, merged);
         return currentVisibleNode
           ? filterTreeForTargetNode(next, currentVisibleNode.id)
           : next;
@@ -1725,7 +1716,7 @@ const Ontology = ({
         } as any;
         setIsLoadingNodeDetails(true);
       } else {
-        setIsLoadingNodeDetails(false);
+        setIsLoadingNodeDetails(false); 
       }
 
       if (node && !node.category) {
@@ -2343,7 +2334,7 @@ const Ontology = ({
                           theme.palette.mode === "dark"
                             ? "rgba(255,255,255,0.12)"
                             : "rgba(0,0,0,0.1)",
-                        mx: "8px",
+                        mx: "8px",  
                         px: "4px",
                       }}
                     >
@@ -2420,7 +2411,7 @@ const Ontology = ({
                 {isLoadingOutline && currentNodeTreeData.length === 0 ? (
                   <TreeOutlineSkeleton />
                 ) : (
-                  <DraggableTree
+                  <OutlineView
                     treeViewData={currentNodeTreeData}
                     setSnackbarMessage={setSnackbarMessage}
                     treeRef={treeRef}
@@ -2961,7 +2952,7 @@ const Ontology = ({
                   {isLoadingOutline && currentNodeTreeData.length === 0 ? (
                     <TreeOutlineSkeleton />
                   ) : (
-                    <DraggableTree
+                    <OutlineView
                       treeViewData={currentNodeTreeData}
                       setSnackbarMessage={setSnackbarMessage}
                       treeRef={treeRef}
