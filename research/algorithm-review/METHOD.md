@@ -16,6 +16,8 @@ Any future generation continuation needs a separately authorized, source-held en
 
 Generate and validate every one of the 20,995 terminal activities before any parent generation. Whole-level gates remain mandatory. Each current candidate must pass meaningful mechanical checks and two independent review roles. Preserve atomic/evidence-poor/missing-reference blockers. Do not replace them with generic scaffolds, force acceptance, or count synthetic UI fixtures as research coverage.
 
+Before parent generation, decide how leaves that use their own ancestors as steps are handled (the validator reports them as step-is-ancestor findings). Otherwise a parent's algorithm is derived from a child whose procedure already contains that parent. Also check the distribution of flow constructs in accepted leaves; a leaf stage made only of sequences gives the upward stage nothing to generalize beyond order.
+
 Parents derive common flow from child algorithms, with version-bound step/control mappings and specialization exceptions; taxonomy child IDs are not automatically execution steps. On descendant or research graph changes invalidate changed versions and old/new ancestor closures through all parent paths, then rerun affected checks and both reviews. Changes to ontology structure remain separate research proposals, with no production writes or automatic acceptance.
 
 ## Known source limitations
