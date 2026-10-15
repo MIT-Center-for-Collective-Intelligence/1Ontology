@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": { "incremental": false },
+  "include": [
+    "next-env.d.ts",
+    "src/types/ITitleValidation.ts",
+    "src/lib/titleValidation/**/*.ts",
+    "src/components/SomReview/HumanTitleValidation.tsx",
+    "src/pages/review/title-validation.tsx",
+    "src/pages/api/som-review/title-validation/*.ts",
+    "__tests__/lib/titleValidation/**/*.ts",
+    "__tests__/components/SomReview/HumanTitleValidation.test.tsx"
+  ],
+  "exclude": ["node_modules", "scripts"]
+}

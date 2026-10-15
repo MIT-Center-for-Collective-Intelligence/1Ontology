@@ -1,0 +1,122 @@
+HUMAN TITLE REVIEW — FIVE-CASE STAFF TRY-OUT
+Implementation date: 2026-10-15
+
+Purpose
+This is the small usability try-out discussed in the October 15 meeting, not
+the final validation study. It reuses completed GPT-6.1 Sol title proposals.
+The app makes no model requests and has no operation that changes ontology
+content or existing review datasets, answers, or event histories.
+
+Reviewer workflow
+1. Each case has one assigned human creator. The creator sees the original
+   title and full single O*NET description, without model output or siblings.
+2. All creators finish their independent titles before any comparisons open.
+3. Other reviewers assess and rank original/model/human alternatives. Creators
+   never evaluate their own cases. Model and human source labels are hidden;
+   alternative order rotates reproducibly. Exact matching title sets appear
+   once, including sets whose title order differs. Ties and uncertainty differ.
+4. Confidence, comments, active browser time, and elapsed server time are kept.
+   Drafts survive refresh; pausing hides the task and stops the active timer.
+   Submitted answers are immutable. Delivery retries reuse one frozen payload.
+5. Coordinators see progress. A participating coordinator cannot see team
+   answers, source comparisons, or exports until all evaluations finish or the
+   study closes. A coordinator outside the reviewer roster can monitor interim
+   patterns. Exports preserve individual answers, prompt, source provenance,
+   dataset version, and original/model/human identity.
+
+Scientific limits and open decisions
+- The original title remains visible to identify the target activity inside
+  a multi-activity source sentence. The original alternative is recognizable;
+  this is source-blinding of human/model answers, not full three-way blinding.
+- The five cases are deterministic examples: 2 Keep, 2 Clarify, 1 Split. They
+  are deliberately not a representative sample. Prior staff exposure to some
+  model outputs prevents interpreting this try-out as independent accuracy.
+- Adequate/needs work/unsure, preference ranks with ties, overall confidence
+  1–5, and optional comments (required for concerns) are provisional settings.
+  Final questions, sample design, sample size, reviewer roster, acceptance
+  criteria, adjudication, and any time limits require the team's agreement.
+- Human titles are comparators, not gold labels. Identical alternatives share
+  judgments attributed to every matching source; source columns are dependent.
+  Counts are not population accuracy estimates. No significance-driven stop,
+  automatic ontology approval, or semantic-correctness claim is implemented.
+- The engine supports up to 200 cases. Only the five-case package is supplied.
+  A 99-case/3-reviewer plan assigns each reviewer 33 creations and 66 evaluations.
+
+Sources
+Meeting: Xinru _ Rob_ Iman's transcript.txt, October 15, 2026.
+00:12:18–00:12:32: original title + O*NET evidence; no sibling context.
+00:51–01:04: independent creation, alternatives, confidence, time, and ties.
+01:25–01:32: five-case staff try-out before the larger UROP review;
+             33 creations + 66 non-creator evaluations for three reviewers.
+01:32:43–01:33:19: behind-the-scenes coordinator monitoring.
+Some suggestions remained proposals; the app does not silently finalize them.
+
+Frozen data
+Version: human-title-prepilot-20261015-v1
+Files: src/lib/titleValidation/data/prepilot-v1.json
+Source cohort SHA-256:
+bd06d1dcb000b2ff36b93fde5f960180d36ccfbaa93c487ef0fd12eb5227579e
+Prompt SHA-256:
+e91ac67ba14a088131acb4d681f4a57a983b6f6e26d7ce655971bc0719f556b4
+Package SHA-256:
+a759be0d165c2bca67c7729f518cf0f14b325cf9c1604442659d378dae3677ee
+Usable single-description cohort: 10,820 (657 Keep / 9,579 Clarify / 584 Split).
+The source also retains 25 excluded records separately (10,845 total).
+Historical inference: GPT-6.1 Sol, native ChatGPT on oneman@mit.edu, personally
+funded allocation as stated by the user; not ACCESS/MIT-funded inference.
+The exact prompt and provenance are server-only during review. After closure,
+assigned reviewers can expand "Agents and prompts used for this pilot."
+The builder is exclusive-write and checks pinned source/prompt hashes; it
+cannot overwrite an existing package. A revised sample needs a new version.
+
+Local preview
+Install isolated dependencies with npm ci --legacy-peer-deps --ignore-scripts.
+Use an existing ignored environment file; never print or commit its contents.
+Set TITLE_VALIDATION_ENV_FILE to that file, then run:
+  node scripts/som-review/run-title-validation-local.cjs dev
+Open http://127.0.0.1:3105/review/title-validation
+Three preview identities share local development-only study data; switch the
+identity selector to exercise assignments. Do not use it for human research.
+Storage: ignored .title-validation-preview/ with append-only event journal.
+To prepare a clean try-out after software QA, stop the server and MOVE the
+entire preview directory to a dated archive; never overwrite research answers.
+The next launch creates a fresh development study. Saved browser drafts use
+separate opaque reviewer keys. Production never accepts preview identities.
+Loopback preview requires development mode, explicit flag, loopback Host AND
+TCP peer, and same-origin requests. Local writes use process and file locks.
+
+Verification
+  npm run test:title-validation
+  npm run typecheck:title-validation
+  node node_modules/jest/bin/jest.js --runInBand --watch=false --coverage=false \
+    __tests__/components/SomReview __tests__/lib/somReview __tests__/lib/titleValidation
+  node scripts/som-review/run-title-validation-local.cjs build
+The build uses .next-title-validation-build to avoid interrupting the preview.
+Repository-wide TypeScript has existing unrelated failures; the scoped check
+includes this feature and its tests. Existing Next configuration ignores
+repository-wide type errors during build; this change does not introduce that.
+
+Production release requirements — not performed by this implementation
+1. Agree the provisional pilot procedure and reviewer roster. Present the
+   five-case package before publishing/activating this new semantic dataset.
+2. Verify deployed Firestore client rules deny direct client read/write of
+   titleValidationStudiesV1/{study} and all answers/events subcollections.
+   Rules are not versioned in this repository. Admin API uses verified Firebase
+   bearer tokens, revoked-token checks, coordinator authorization, and isolated
+   transactions; broad client rules would bypass that API protection.
+3. Merge the reviewed, tested source through main using the existing deployment
+   process. Do not deploy uncommitted code or from the older dirty checkout.
+   Retain the existing review dataset-selection and prompt-trace tests/fixes.
+4. Keep TITLE_VALIDATION_RELEASED unset until the above checks pass. To release
+   the staff pilot only, set it to 1 on the intended server and configure the
+   coordinator allowlist as needed. There is no automatic reviewer enrollment.
+5. Coordinator opens /review/title-validation, enters 3–10 existing ontology
+   account emails and display names, creates a DRAFT study, then opens it.
+   Production collection: titleValidationStudiesV1, separate from legacy reviews.
+6. Verify real production login, roster access, assignment, source hiding,
+   immutable saves, prompt disclosure after closure, and preserved legacy data
+   on desktop and compact widths. Record main SHA, Cloud Run revision, dataset
+   version, results, and rollback revision before inviting reviewers.
+Rollback: disable TITLE_VALIDATION_RELEASED and restore the previous committed
+Cloud Run revision if necessary. Never delete the new study collection or old
+review history as a rollback mechanism.

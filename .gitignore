@@ -39,3 +39,5 @@ firebase-debug.log
 **/.stage-cache/
 
 .env
+.title-validation-preview/
+.next-title-validation-build/
