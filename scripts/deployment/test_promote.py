@@ -9,9 +9,37 @@ import io
 import urllib.error
 from promote import (MANIFESTS, SERVICE, TITLE_PROMPT_STUDY, LATEST_TITLE_PROMPT_STUDY, TITLE_MODEL_COMPARISON,
                      TITLE_MODEL_COMPARISON_JUDGE_RESULTS, title_model_comparison_release, validate_release,
-                     promote_if_current, verify_title_review_route, verify_relationship_review_route)
+                     promote_if_current, verify_title_review_route, verify_relationship_review_route, read_release)
 
 ROOT = Path(__file__).resolve().parents[2]
+
+
+class CandidateReadinessTests(unittest.TestCase):
+    def test_tag_propagation_retries_the_same_read_without_changing_validation(self):
+        errors=[urllib.error.HTTPError('https://candidate/api/deployment',status,'not ready',None,None) for status in [404,503]]
+        with patch('promote.urllib.request.urlopen',side_effect=[*errors,io.BytesIO(b'{"commit":"expected"}')]) as get,patch('promote.time.sleep') as sleep:
+            self.assertEqual(read_release('https://candidate'),{'commit':'expected'})
+            self.assertEqual(get.call_count,3)
+            self.assertTrue(all(c.args[0]=='https://candidate/api/deployment' for c in get.call_args_list))
+            self.assertEqual([c.args[0] for c in sleep.call_args_list],[1,2])
+
+    def test_permanent_or_security_errors_are_not_retried(self):
+        for status in [400,401,403,429,500]:
+            with self.subTest(status=status),patch('promote.urllib.request.urlopen',side_effect=urllib.error.HTTPError('url',status,'stop',None,None)) as get,patch('promote.time.sleep') as sleep:
+                with self.assertRaises(urllib.error.HTTPError):read_release('https://candidate')
+                self.assertEqual(get.call_count,1);sleep.assert_not_called()
+
+    def test_readiness_retries_are_bounded(self):
+        with patch('promote.urllib.request.urlopen',side_effect=urllib.error.HTTPError('url',404,'not ready',None,None)) as get,patch('promote.time.sleep') as sleep:
+            with self.assertRaises(urllib.error.HTTPError):read_release('https://candidate')
+            self.assertEqual(get.call_count,6);self.assertEqual(sleep.call_count,5)
+
+    def test_transport_errors_retry_but_invalid_json_does_not(self):
+        with patch('promote.urllib.request.urlopen',side_effect=[urllib.error.URLError('temporary'),io.BytesIO(b'{"ok":true}')]),patch('promote.time.sleep'):
+            self.assertEqual(read_release('https://candidate'),{'ok':True})
+        with patch('promote.urllib.request.urlopen',return_value=io.BytesIO(b'not JSON')) as get,patch('promote.time.sleep') as sleep:
+            with self.assertRaises(json.JSONDecodeError):read_release('https://candidate')
+            self.assertEqual(get.call_count,1);sleep.assert_not_called()
 
 
 class ReleaseVerificationTests(unittest.TestCase):
