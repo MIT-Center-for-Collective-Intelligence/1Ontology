@@ -48,3 +48,26 @@ test("idempotency fingerprints distinguish changed content", () => {
     feedbackHash({ ...r, decision: "disagree" }),
   );
 });
+test("evidence presentation is retained on new feedback without rewriting historical feedback", () => {
+  const r = parseFeedback(body, "v1", "sha", ["reason"]);
+  const old = nextFeedback(r, null, "before");
+  expect(old).not.toHaveProperty("presentationVersion");
+  const updated = nextFeedback(
+    {
+      ...r,
+      revision: 1,
+      presentationSha256: "p-sha",
+      presentationVersion: "p1",
+    },
+    old,
+    "after",
+  );
+  expect(updated).toMatchObject({
+    presentationSha256: "p-sha",
+    presentationVersion: "p1",
+  });
+  expect(old).not.toHaveProperty("presentationVersion");
+  expect(feedbackHash(r)).not.toBe(
+    feedbackHash({ ...r, presentationSha256: "p-sha" }),
+  );
+});

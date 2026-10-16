@@ -89,6 +89,25 @@ describe("public deployment identity", () => {
         bundleSha256: expect.stringMatching(/^[a-f0-9]{64}$/),
         judgeResultsSha256: expect.stringMatching(/^[a-f0-9]{64}$/),
       });
+      const relationshipManifest = JSON.parse(
+        fs.readFileSync(
+          path.join(
+            process.cwd(),
+            "scripts/deployment/relationship-review-package.json",
+          ),
+          "utf8",
+        ),
+      );
+      expect(info.relationshipReview).toEqual(
+        expect.objectContaining({
+          version: relationshipManifest.version,
+          cases: 68,
+          bundleSha256: relationshipManifest.bundleSha256,
+          presentationVersion: "relationship-selected-changes-20261016-v1",
+          selectedProposals: 1,
+          presentationSha256: relationshipManifest.presentationSha256,
+        }),
+      );
       expect(Object.keys(info).sort()).toEqual([
         "buildId",
         "commit",

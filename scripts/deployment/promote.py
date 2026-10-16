@@ -120,6 +120,9 @@ def validate_release(info, commit, build_id, revision):
     expected_relation = {"version": relation["version"], "cases": len(relation["cases"]),
         "model": relation["model"], "reasoning": relation["reasoning"],
         "bundleSha256": hashlib.sha256(relation_bytes).hexdigest(), "sourceSha256": relation["sourceSha256"]}
+    presentation_bytes = (Path(__file__).resolve().parents[2] / "src/lib/relationshipReview/data/presentation.json").read_bytes()
+    presentation = json.loads(presentation_bytes)
+    expected_relation.update({"presentationVersion":presentation["version"],"selectedProposals":len(presentation["selectedCaseIds"]),"presentationSha256":hashlib.sha256(presentation_bytes).hexdigest()})
     if len(relation["cases"]) != 68 or info.get("relationshipReview") != expected_relation:
         raise ValueError("The relationship review proposals are missing, incomplete, or changed")
 

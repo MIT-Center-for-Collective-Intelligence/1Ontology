@@ -18,6 +18,8 @@ export interface FeedbackRequest {
   correction: string;
   revision: number;
   requestId: string;
+  presentationSha256?: string;
+  presentationVersion?: string;
 }
 export function parseFeedback(
   body: Record<string, unknown>,
@@ -81,5 +83,11 @@ export function nextFeedback(
     correction: request.correction,
     revision: request.revision + 1,
     savedAt,
+    ...(request.presentationSha256
+      ? {
+          presentationSha256: request.presentationSha256,
+          presentationVersion: request.presentationVersion,
+        }
+      : {}),
   };
 }

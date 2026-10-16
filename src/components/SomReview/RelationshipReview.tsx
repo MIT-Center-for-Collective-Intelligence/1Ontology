@@ -26,6 +26,10 @@ import { ThemeProvider } from "@mui/material/styles";
 import { titleValidationTheme } from "./titleValidationDesign";
 import { getIdToken } from "../../lib/firestoreClient/auth";
 import { reconcileSession } from "../../lib/relationshipReview/clientState";
+import {
+  generalizationChanges,
+  selectedReviewCases,
+} from "../../lib/relationshipReview/selection";
 import type {
   RelationshipCase,
   RelationshipDecision,
@@ -121,7 +125,7 @@ function FeedbackForm({
     (!latestSaved.current || saved.revision > latestSaved.current.revision)
   )
     latestSaved.current = saved;
-  const key = `relationship-review:${session.reviewerKey}:${session.dataset.version}:${session.datasetSha256}:${item.id}`;
+  const key = `relationship-review:${session.reviewerKey}:${session.dataset.version}:${session.datasetSha256}${session.presentationSha256 ? ":" + session.presentationSha256 : ""}:${item.id}`;
   const [draft, setDraft] = useState<Draft>(() => {
     const base: Draft = {
       decision: saved?.decision || "",
@@ -186,6 +190,9 @@ function FeedbackForm({
       revision: draft.revision,
       requestId: crypto.randomUUID(),
       reviewerKey: session.reviewerKey,
+      ...(session.presentationSha256
+        ? { presentationSha256: session.presentationSha256 }
+        : {}),
     };
     setDraft((d) => ({ ...d, pending, dirty: true }));
     setBusy(true);
@@ -249,7 +256,7 @@ function FeedbackForm({
           Your judgment
         </Typography>
         <Typography sx={{ mb: 2 }}>
-          Do you agree with the complete proposed placement above? Your answer
+          Do you agree with the proposed generalizations above? Your answer
           records feedback; it does not change the ontology.
         </Typography>
         {draft.pending && !busy && (
@@ -308,12 +315,12 @@ function FeedbackForm({
             <FormControlLabel
               value="agree"
               control={<Radio />}
-              label="Agree with the proposed placement"
+              label="Agree with the proposed generalizations"
             />
             <FormControlLabel
               value="disagree"
               control={<Radio />}
-              label="Disagree — I would use a different placement"
+              label="Disagree — I would use different generalizations"
             />
             <FormControlLabel
               value="discuss"
@@ -324,7 +331,7 @@ function FeedbackForm({
         </FormControl>
         <Stack spacing={2} sx={{ mt: 2 }}>
           <TextField
-            label="Suggested placement (optional)"
+            label="Suggested generalizations (optional)"
             helperText="Use activity names; this is a suggestion, not an automatic change."
             value={draft.correction}
             disabled={busy || !!draft.pending}
@@ -394,8 +401,10 @@ export default function RelationshipReview({
     navigationRequested = useRef(false);
   const [session, setSession] = useState<RelationshipSession | null>(null),
     [error, setError] = useState(""),
+    [selectionNotice, setSelectionNotice] = useState(""),
     [index, setIndex] = useState(0),
     [filter, setFilter] = useState("all"),
+    [archive, setArchive] = useState(false),
     [queueIds, setQueueIds] = useState<string[] | null>(null),
     [tomFeedback, setTomFeedback] = useState<Record<
       string,
@@ -409,12 +418,29 @@ export default function RelationshipReview({
       const wanted = new URLSearchParams(window.location.search).get(
         "activity",
       );
-      const selected = loaded.dataset.cases.findIndex(
+      const showArchive =
+        (loaded.preview || loaded.canViewTomFeedback) &&
+        new URLSearchParams(window.location.search).get("view") === "analysis";
+      setArchive(showArchive);
+      const available = showArchive
+        ? loaded.dataset.cases
+        : selectedReviewCases(loaded.dataset, loaded.presentation);
+      const selected = available.findIndex(
         (c: RelationshipCase) => c.id === wanted,
+      );
+      setSelectionNotice(
+        wanted &&
+          selected < 0 &&
+          loaded.dataset.cases.some((c: RelationshipCase) => c.id === wanted)
+          ? "This activity is not included in the selected changes. The recommendations ready for review are shown below."
+          : "",
       );
       setSession((current) => reconcileSession(current, loaded));
       if (selected >= 0) setIndex(selected);
-      else if (wanted)
+      else if (
+        wanted &&
+        !loaded.dataset.cases.some((c: RelationshipCase) => c.id === wanted)
+      )
         setError(
           "That activity is not in this review set. Choose an activity below.",
         );
@@ -426,10 +452,13 @@ export default function RelationshipReview({
     void load();
   }, []);
   const data = session?.dataset;
+  const selectedCases = data
+    ? selectedReviewCases(data, session?.presentation)
+    : [];
+  const baseCases = archive ? data?.cases || [] : selectedCases;
   // Freeze a selected queue so saving never advances or hides the current card.
   const items =
-    data?.cases.filter((c) => queueIds === null || queueIds.includes(c.id)) ||
-    [];
+    baseCases.filter((c) => queueIds === null || queueIds.includes(c.id)) || [];
   function chooseFilter(value: string) {
     navigationRequested.current = true;
     setFilter(value);
@@ -437,7 +466,7 @@ export default function RelationshipReview({
     setQueueIds(
       value === "all"
         ? null
-        : (data?.cases || [])
+        : baseCases
             .filter(
               (c) =>
                 (value === "unreviewed" && !session?.feedback[c.id]) ||
@@ -459,6 +488,8 @@ export default function RelationshipReview({
     if (item) {
       const url = new URL(window.location.href);
       url.searchParams.set("activity", item.id);
+      if (archive) url.searchParams.set("view", "analysis");
+      else url.searchParams.delete("view");
       window.history.replaceState(window.history.state, "", url);
     }
     if (item && navigationRequested.current) {
@@ -466,7 +497,7 @@ export default function RelationshipReview({
       activityHeading.current?.focus({ preventScroll: true });
       activityHeading.current?.scrollIntoView?.({ block: "start" });
     }
-  }, [item?.id]);
+  }, [item?.id, archive]);
   async function loadTomFeedback() {
     setTomError("");
     try {
@@ -479,12 +510,20 @@ export default function RelationshipReview({
   for (const n of item?.currentParents || []) names.set(n.id, n.title);
   const title = (id: string) =>
     names.get(id) || "Unresolved activity reference";
-  const completed = session ? Object.keys(session.feedback).length : 0;
+  const completed = session
+    ? baseCases.filter((c) => session.feedback[c.id]).length
+    : 0;
+  const selectedCard =
+    !archive && session?.presentation?.cards.find((c) => c.caseId === item?.id);
+  const delta = item
+    ? generalizationChanges(item)
+    : { added: [], removed: [], retained: [] };
+  const hasChange = delta.added.length > 0 || delta.removed.length > 0;
   return (
     <ThemeProvider theme={titleValidationTheme}>
       <ScopedCssBaseline>
         <Head>
-          <title>Review activity relationships</title>
+          <title>Review generalization changes</title>
           <meta name="robots" content="noindex,nofollow" />
         </Head>
         <Box
@@ -502,13 +541,14 @@ export default function RelationshipReview({
               Society of Mind · Ontology review
             </Typography>
             <Typography component="h1" variant="h4" sx={{ mt: 1, mb: 2 }}>
-              Where does this activity belong?
+              Review proposed generalization changes
             </Typography>
             <Typography sx={{ maxWidth: 850, mb: 3 }}>
-              Review one activity at a time. A more specific activity should
-              always be a kind of its broader activity. Consider whether the
-              suggested placement fits that meaning and would make the hierarchy
-              useful.
+              Every specialization should be a kind of its generalization.
+              Review the proposed change, the reason for it, and the source
+              evidence. An activity may have multiple generalizations; each link
+              is assessed separately. Your judgment is needed before any
+              ontology change is made.
             </Typography>
             {error && (
               <Alert
@@ -523,6 +563,11 @@ export default function RelationshipReview({
             )}
             {session && data && (
               <>
+                {selectionNotice && (
+                  <Alert severity="info" sx={{ mb: 3 }}>
+                    {selectionNotice}
+                  </Alert>
+                )}
                 {session.canViewTomFeedback && (
                   <Accordion sx={{ mb: 3 }}>
                     <AccordionSummary
@@ -554,7 +599,7 @@ export default function RelationshipReview({
                             </Typography>
                             <Button
                               href={
-                                "/review/relationships?activity=" +
+                                "/review/relationships?view=analysis&activity=" +
                                 encodeURIComponent(c.id)
                               }
                             >
@@ -578,14 +623,17 @@ export default function RelationshipReview({
                   sx={{ mb: 1 }}
                 >
                   <Typography>
-                    {completed} of {data.cases.length} reviewed
+                    {completed} of {baseCases.length}{" "}
+                    {archive ? "analyses" : "selected proposals"} reviewed
                   </Typography>
                   <Typography color="text.secondary">
                     Reviewing as {session.reviewerLabel}
                   </Typography>
                 </Stack>
                 <LinearProgress
-                  value={(completed / data.cases.length) * 100}
+                  value={
+                    baseCases.length ? (completed / baseCases.length) * 100 : 0
+                  }
                   variant="determinate"
                   aria-label="Activities reviewed"
                   sx={{ mb: 3, height: 6, borderRadius: 3 }}
@@ -595,19 +643,21 @@ export default function RelationshipReview({
                   spacing={2}
                   sx={{ mb: 3 }}
                 >
-                  <TextField
-                    select
-                    label="Show"
-                    value={filter}
-                    onChange={(e) => chooseFilter(e.target.value)}
-                    sx={{ minWidth: 210 }}
-                  >
-                    <MenuItem value="all">All activities</MenuItem>
-                    <MenuItem value="unreviewed">Not reviewed yet</MenuItem>
-                    <MenuItem value="changes">Suggested changes</MenuItem>
-                    <MenuItem value="discussion">Needs discussion</MenuItem>
-                  </TextField>
-                  {items.length > 0 && (
+                  {archive && (
+                    <TextField
+                      select
+                      label="Show"
+                      value={filter}
+                      onChange={(e) => chooseFilter(e.target.value)}
+                      sx={{ minWidth: 210 }}
+                    >
+                      <MenuItem value="all">All analyses</MenuItem>
+                      <MenuItem value="unreviewed">Not reviewed yet</MenuItem>
+                      <MenuItem value="changes">Suggested changes</MenuItem>
+                      <MenuItem value="discussion">Needs discussion</MenuItem>
+                    </TextField>
+                  )}
+                  {items.length > 1 && (
                     <TextField
                       select
                       fullWidth
@@ -628,10 +678,35 @@ export default function RelationshipReview({
                     </TextField>
                   )}
                 </Stack>
+                {(session.canViewTomFeedback || session.preview) && (
+                  <Button
+                    sx={{ mb: 2 }}
+                    onClick={() => {
+                      setArchive(!archive);
+                      setIndex(0);
+                      setQueueIds(null);
+                      setFilter("all");
+                      setSelectionNotice("");
+                      navigationRequested.current = true;
+                    }}
+                  >
+                    {archive
+                      ? "Return to selected changes"
+                      : "View research archive"}
+                  </Button>
+                )}
+                {archive && (
+                  <Alert severity="info" sx={{ mb: 3 }}>
+                    Research archive. These analyses include unchanged
+                    placements and unresolved questions; they are excluded from
+                    the selected proposals.
+                  </Alert>
+                )}
                 {!item && (
-                  <Alert severity="success">
-                    There are no activities in this view. Choose “All
-                    activities” to continue.
+                  <Alert severity="info">
+                    {archive
+                      ? "There are no analyses in this view."
+                      : "No changes currently meet the evidence standard for this review. Unresolved analyses are held for further work."}
                   </Alert>
                 )}
                 {item && (
@@ -658,11 +733,13 @@ export default function RelationshipReview({
                                 : "default"
                             }
                             label={
-                              item.analysis.judgment === "keep"
-                                ? "Keep placement"
-                                : item.analysis.judgment === "change"
-                                  ? "Suggested change"
-                                  : "For discussion"
+                              selectedCard
+                                ? "Selected change"
+                                : item.analysis.judgment === "keep"
+                                  ? "No change proposed"
+                                  : item.analysis.judgment === "change"
+                                    ? "Suggested change"
+                                    : "For discussion"
                             }
                             size="small"
                           />
@@ -676,81 +753,182 @@ export default function RelationshipReview({
                         >
                           {item.title}
                         </Typography>
-                        <Typography sx={{ fontSize: "1.125rem", mb: 3 }}>
-                          {item.analysis.summary}
-                        </Typography>
-                        <Box
-                          sx={{
-                            display: "grid",
-                            gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
-                            gap: 2,
-                            mb: 3,
-                          }}
-                        >
-                          <Box
-                            sx={{ p: 2.5, bgcolor: "#F2F3EF", borderRadius: 2 }}
-                          >
-                            <Typography component="h3" variant="h6">
-                              Current broader activities
-                            </Typography>
-                            <Box component="ul" sx={{ pl: 3, mb: 0 }}>
-                              {item.currentParents.map((p) => (
-                                <Typography component="li" key={p.id}>
-                                  {p.title}
-                                </Typography>
-                              ))}
-                            </Box>
-                          </Box>
-                          <Box
-                            sx={{
-                              p: 2.5,
-                              bgcolor: "#EAF3F0",
-                              border: "1px solid #BDD5CD",
-                              borderRadius: 2,
-                            }}
-                          >
-                            <Typography component="h3" variant="h6">
-                              Proposed broader activities
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                              Complete suggested placement
-                            </Typography>
-                            <Box component="ul" sx={{ pl: 3, mb: 0 }}>
-                              {item.analysis.proposedParents.map((p) => (
-                                <Typography component="li" key={p.nodeId}>
-                                  {title(p.nodeId)}
-                                  {item.currentParents.some(
-                                    (n) => n.id === p.nodeId,
-                                  )
-                                    ? " (retain)"
-                                    : " (add)"}
-                                </Typography>
-                              ))}
-                            </Box>
-                          </Box>
-                        </Box>
-                        {(item.challenge.verdict === "needs-discussion" ||
-                          item.mechanicalIssues.length > 0) && (
-                          <Alert severity="warning" sx={{ mb: 3 }}>
-                            This case needs discussion. {item.challenge.reason}{" "}
-                            {item.mechanicalIssues.length > 0
-                              ? "A structural check also flagged this recommendation; treat it as unresolved."
-                              : ""}
+                        {!selectedCard && (
+                          <Typography sx={{ fontSize: "1.125rem", mb: 3 }}>
+                            {item.analysis.summary}
+                          </Typography>
+                        )}
+                        {!hasChange && (
+                          <Alert severity="info" sx={{ mb: 3 }}>
+                            No change is proposed. Current generalizations:{" "}
+                            {item.currentParents.map((p) => p.title).join("; ")}
+                            . This analysis is not included in the selected
+                            changes.
                           </Alert>
                         )}
+                        {hasChange && (
+                          <>
+                            <Box
+                              sx={{
+                                display: "grid",
+                                gridTemplateColumns: {
+                                  xs: "1fr",
+                                  md: "1fr 1fr",
+                                },
+                                gap: 2,
+                                mb: 3,
+                              }}
+                            >
+                              <Box
+                                sx={{
+                                  p: 2.5,
+                                  bgcolor: "#F2F3EF",
+                                  borderRadius: 2,
+                                }}
+                              >
+                                <Typography component="h3" variant="h6">
+                                  Current generalizations
+                                </Typography>
+                                <Box component="ul" sx={{ pl: 3, mb: 0 }}>
+                                  {item.currentParents.map((p) => (
+                                    <Typography component="li" key={p.id}>
+                                      {p.title}
+                                    </Typography>
+                                  ))}
+                                </Box>
+                              </Box>
+                              <Box
+                                sx={{
+                                  p: 2.5,
+                                  bgcolor: "#EAF3F0",
+                                  border: "1px solid #BDD5CD",
+                                  borderRadius: 2,
+                                }}
+                              >
+                                <Typography component="h3" variant="h6">
+                                  Proposed generalizations
+                                </Typography>
+                                <Typography
+                                  variant="body2"
+                                  color="text.secondary"
+                                >
+                                  All generalizations after the proposed change
+                                </Typography>
+                                <Box component="ul" sx={{ pl: 3, mb: 0 }}>
+                                  {item.analysis.proposedParents.map((p) => (
+                                    <Typography component="li" key={p.nodeId}>
+                                      {title(p.nodeId)}
+                                      {item.currentParents.some(
+                                        (n) => n.id === p.nodeId,
+                                      )
+                                        ? " (keep this link)"
+                                        : ""}
+                                    </Typography>
+                                  ))}
+                                </Box>
+                              </Box>
+                            </Box>
+                            <Typography sx={{ mb: 3 }}>
+                              <strong>What changes:</strong>{" "}
+                              {delta.removed.length > 0 && (
+                                <>
+                                  Remove the generalization link to{" "}
+                                  {delta.removed.map(title).join("; ")}.{" "}
+                                </>
+                              )}
+                              {delta.added.length > 0 && (
+                                <>
+                                  Add the generalization link to{" "}
+                                  {delta.added.map(title).join("; ")}.{" "}
+                                </>
+                              )}
+                              {delta.retained.length > 0 && (
+                                <>
+                                  Keep {delta.retained.map(title).join("; ")}.
+                                </>
+                              )}
+                            </Typography>
+                          </>
+                        )}
+                        {selectedCard && (
+                          <Box sx={{ mb: 3 }}>
+                            <Typography
+                              component="h3"
+                              variant="h6"
+                              sx={{ mb: 1 }}
+                            >
+                              Why make this change?
+                            </Typography>
+                            <Typography>{selectedCard.reason}</Typography>
+                            <Typography
+                              component="h3"
+                              variant="h6"
+                              sx={{ mt: 2, mb: 1 }}
+                            >
+                              Evidence from the current definitions
+                            </Typography>
+                            {selectedCard.quotes
+                              .filter(
+                                (q) =>
+                                  q.nodeId === item.id ||
+                                  item.currentParents.some(
+                                    (p) => p.id === q.nodeId,
+                                  ) ||
+                                  item.analysis.proposedParents.some(
+                                    (p) => p.nodeId === q.nodeId,
+                                  ),
+                              )
+                              .map((q, i) => (
+                                <Box
+                                  component="blockquote"
+                                  key={i}
+                                  sx={{
+                                    ml: 0,
+                                    pl: 2,
+                                    borderLeft: "3px solid #BDD5CD",
+                                  }}
+                                >
+                                  <Typography>
+                                    <strong>{title(q.nodeId)}:</strong> “
+                                    {q.quote}”
+                                  </Typography>
+                                </Box>
+                              ))}
+                          </Box>
+                        )}
+                        {!selectedCard &&
+                          (item.challenge.verdict === "needs-discussion" ||
+                            item.mechanicalIssues.length > 0) && (
+                            <Alert severity="warning" sx={{ mb: 3 }}>
+                              This case needs discussion.{" "}
+                              {item.challenge.reason}{" "}
+                              {item.mechanicalIssues.length > 0
+                                ? "A structural check also flagged this recommendation; treat it as unresolved."
+                                : ""}
+                            </Alert>
+                          )}
                         {!!item.interProposalIssues?.length && (
                           <Alert severity="warning" sx={{ mb: 3 }}>
                             {item.interProposalIssues.join(" ")}
                           </Alert>
                         )}
                         <Typography sx={{ mb: 2 }}>
-                          <strong>Example:</strong> {item.analysis.example}
+                          <strong>
+                            {selectedCard
+                              ? "Illustrative example:"
+                              : "Example:"}
+                          </strong>{" "}
+                          {selectedCard
+                            ? selectedCard.example
+                            : item.analysis.example}
                         </Typography>
-                        <Typography sx={{ mb: 2 }}>
-                          <strong>Reason to be cautious:</strong>{" "}
-                          {item.analysis.caution ||
-                            "No additional concern was supplied by the model."}
-                        </Typography>
+                        {!selectedCard && (
+                          <Typography sx={{ mb: 2 }}>
+                            <strong>Reason to be cautious:</strong>{" "}
+                            {item.analysis.caution ||
+                              "No additional concern was supplied by the model."}
+                          </Typography>
+                        )}
                         <Accordion>
                           <AccordionSummary
                             expandIcon={<span aria-hidden="true">＋</span>}
@@ -758,18 +936,32 @@ export default function RelationshipReview({
                             Reasoning and alternatives
                           </AccordionSummary>
                           <AccordionDetails>
-                            {item.analysis.proposedParents.map((p) => (
-                              <Typography key={p.nodeId} sx={{ mb: 1.5 }}>
-                                <strong>{title(p.nodeId)}:</strong> {p.reason}{" "}
-                                {p.whyCloser}
-                              </Typography>
-                            ))}
-                            {item.analysis.alternatives.map((p) => (
-                              <Typography key={p.nodeId} sx={{ mb: 1 }}>
-                                <strong>Why not {title(p.nodeId)}?</strong>{" "}
-                                {p.whyNotPreferred}
-                              </Typography>
-                            ))}
+                            {selectedCard && (
+                              <>
+                                <Typography sx={{ mb: 2 }}>
+                                  {selectedCard.whyChange}
+                                </Typography>
+                                <Typography sx={{ mb: 2 }}>
+                                  {selectedCard.alternativeAssessment}
+                                </Typography>
+                              </>
+                            )}
+                            {!selectedCard && (
+                              <>
+                                {item.analysis.proposedParents.map((p) => (
+                                  <Typography key={p.nodeId} sx={{ mb: 1.5 }}>
+                                    <strong>{title(p.nodeId)}:</strong>{" "}
+                                    {p.reason} {p.whyCloser}
+                                  </Typography>
+                                ))}
+                                {item.analysis.alternatives.map((p) => (
+                                  <Typography key={p.nodeId} sx={{ mb: 1 }}>
+                                    <strong>Why not {title(p.nodeId)}?</strong>{" "}
+                                    {p.whyNotPreferred}
+                                  </Typography>
+                                ))}
+                              </>
+                            )}
                           </AccordionDetails>
                         </Accordion>
                       </CardContent>
@@ -796,25 +988,27 @@ export default function RelationshipReview({
                         )
                       }
                     />
-                    <Stack direction="row" justifyContent="space-between">
-                      <Button
-                        variant="outlined"
-                        disabled={index <= 0}
-                        onClick={() => navigate(index - 1)}
-                      >
-                        Previous
-                      </Button>
-                      <Typography sx={{ alignSelf: "center" }}>
-                        {Math.min(index + 1, items.length)} / {items.length}
-                      </Typography>
-                      <Button
-                        variant="outlined"
-                        disabled={index >= items.length - 1}
-                        onClick={() => navigate(index + 1)}
-                      >
-                        Next
-                      </Button>
-                    </Stack>
+                    {items.length > 1 && (
+                      <Stack direction="row" justifyContent="space-between">
+                        <Button
+                          variant="outlined"
+                          disabled={index <= 0}
+                          onClick={() => navigate(index - 1)}
+                        >
+                          Previous
+                        </Button>
+                        <Typography sx={{ alignSelf: "center" }}>
+                          {Math.min(index + 1, items.length)} / {items.length}
+                        </Typography>
+                        <Button
+                          variant="outlined"
+                          disabled={index >= items.length - 1}
+                          onClick={() => navigate(index + 1)}
+                        >
+                          Next
+                        </Button>
+                      </Stack>
+                    )}
                     <Accordion>
                       <AccordionSummary
                         expandIcon={<span aria-hidden="true">＋</span>}
@@ -930,7 +1124,9 @@ export default function RelationshipReview({
                           {data.candidateLimit}
                         </Typography>
                         <Typography sx={{ mt: 2 }}>
-                          <strong>Challenge pass:</strong>{" "}
+                          <strong>
+                            Original challenge, retained for provenance:
+                          </strong>{" "}
                           {item.challenge.reason}{" "}
                           {item.challenge.issues.join(" ")}
                         </Typography>

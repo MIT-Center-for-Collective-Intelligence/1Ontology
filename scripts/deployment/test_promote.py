@@ -51,6 +51,11 @@ class ReleaseVerificationTests(unittest.TestCase):
         self.info["relationshipReview"] = {"version":relation["version"],"cases":len(relation["cases"]),
             "model":relation["model"],"reasoning":relation["reasoning"],
             "bundleSha256":hashlib.sha256(relation_bytes).hexdigest(),"sourceSha256":relation["sourceSha256"]}
+        presentation_path=ROOT / "src/lib/relationshipReview/data/presentation.json"
+        if presentation_path.exists():
+            presentation_bytes=presentation_path.read_bytes()
+            presentation=json.loads(presentation_bytes)
+            self.info["relationshipReview"].update({"presentationVersion":presentation["version"],"selectedProposals":len(presentation["selectedCaseIds"]),"presentationSha256":hashlib.sha256(presentation_bytes).hexdigest()})
 
     def test_accepts_exact_release(self):
         validate_release(self.info, "a" * 40, "build-1", "revision-1")
