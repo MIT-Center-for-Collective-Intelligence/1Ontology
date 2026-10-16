@@ -404,18 +404,33 @@ test("moving to another task does not copy the previous answer into its draft", 
       .every(([, value]) => !value.includes("Old draft must not leak")),
   ).toBe(true);
 });
-test("pausing hides the task content", async () => {
+test("taking a break preserves the draft across reload without changing the team study", async () => {
   global.fetch = jest.fn(() => respond(session())) as jest.Mock;
-  render(<HumanTitleValidation preview />);
+  const view = render(<HumanTitleValidation preview />);
   await screen.findByText("Write Report");
-  fireEvent.click(screen.getByRole("button", { name: "Pause review" }));
+  fireEvent.change(screen.getByRole("textbox", { name: "Comments" }), {
+    target: { value: "Working note" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Take a break" }));
   expect(
     screen.queryByText("Write annual reports for the committee."),
   ).not.toBeInTheDocument();
-  fireEvent.click(screen.getByRole("button", { name: "Resume review" }));
+  expect(screen.getByText(/This break affects only you/)).toBeVisible();
+  view.unmount();
+  render(<HumanTitleValidation preview />);
+  await screen.findByRole("button", { name: "Continue reviewing" });
+  expect(
+    jest
+      .mocked(global.fetch)
+      .mock.calls.some(([url]) => String(url).endsWith("manage")),
+  ).toBe(false);
+  fireEvent.click(screen.getByRole("button", { name: "Continue reviewing" }));
   expect(
     screen.getByText("Write annual reports for the committee."),
   ).toBeVisible();
+  expect(screen.getByRole("textbox", { name: "Comments" })).toHaveValue(
+    "Working note",
+  );
 });
 test("an unavailable draft store is visible without blocking review", async () => {
   jest.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
@@ -530,54 +545,56 @@ test("removing a split row preserves neighboring titles and keyboard focus", asy
   expect(screen.getByLabelText("Title 2")).toHaveValue("Third title");
   await waitFor(() => expect(screen.getByLabelText("Title 2")).toHaveFocus());
 });
-test("closing requires an in-page confirmation and cancellation leaves the pilot open", async () => {
-  const coordinator = {
-    ...session(),
-    canManage: true,
-    task: undefined,
-    phase: "complete",
-  };
-  const fetch = jest.fn((url: string) =>
-    respond(
-      url.endsWith("dashboard")
-        ? {
-            studyId: "study",
-            status: "active",
-            caseCount: 5,
-            reviewerCount: 3,
-            completedCreations: 5,
-            completedEvaluations: 10,
-            expectedEvaluations: 10,
-            byReviewer: [],
-            byOutcome: [],
-            comparisons: [],
-            notes: [],
-            activityDetails: [],
-            medianCreationActiveSeconds: null,
-            medianEvaluationActiveSeconds: null,
-            disagreementCases: 0,
-            caution: "Software test",
-          }
-        : coordinator,
-    ),
-  );
-  global.fetch = fetch as jest.Mock;
-  render(<HumanTitleValidation preview />);
-  fireEvent.click(
-    await screen.findByRole("button", { name: "Coordinator overview" }),
-  );
-  fireEvent.click(await screen.findByRole("button", { name: "Close study" }));
-  expect(
-    screen.getByRole("dialog", { name: "Close this pilot?" }),
-  ).toBeVisible();
-  expect(fetch.mock.calls.some(([url]) => url.endsWith("manage"))).toBe(false);
-  fireEvent.click(screen.getByRole("button", { name: "Keep pilot open" }));
-  await waitFor(() =>
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
-  );
-  fireEvent.click(screen.getByRole("button", { name: "Close study" }));
-  fireEvent.click(screen.getByRole("button", { name: "Close pilot" }));
-  await waitFor(() =>
-    expect(fetch.mock.calls.some(([url]) => url.endsWith("manage"))).toBe(true),
-  );
-});
+test.each(["draft", "active", "paused", "closed"] as const)(
+  "the coordinator overview omits study pause and close controls (status=%s)",
+  async (status) => {
+    const coordinator = {
+      ...session(),
+      canManage: true,
+      task: undefined,
+      phase: "complete",
+      studyStatus: status,
+    };
+    const fetch = jest.fn((url: string) =>
+      respond(
+        url.endsWith("dashboard")
+          ? {
+              studyId: "study",
+              status,
+              caseCount: 5,
+              reviewerCount: 3,
+              completedCreations: 5,
+              completedEvaluations: 10,
+              expectedEvaluations: 10,
+              byReviewer: [],
+              byOutcome: [],
+              comparisons: [],
+              notes: [],
+              activityDetails: [],
+              medianCreationActiveSeconds: null,
+              medianEvaluationActiveSeconds: null,
+              disagreementCases: 0,
+              caution: "Software test",
+            }
+          : coordinator,
+      ),
+    );
+    global.fetch = fetch as jest.Mock;
+    render(<HumanTitleValidation preview />);
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Coordinator overview" }),
+    );
+    await screen.findByRole("button", { name: "Refresh overview" });
+    for (const name of [
+      "Pause study",
+      "Resume study",
+      "Close study",
+      "Close pilot",
+    ])
+      expect(screen.queryByRole("button", { name })).not.toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(fetch.mock.calls.some(([url]) => url.endsWith("manage"))).toBe(
+      false,
+    );
+  },
+);

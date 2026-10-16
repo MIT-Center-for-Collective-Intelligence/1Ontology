@@ -15,11 +15,6 @@ import {
   LinearProgress,
   ScopedCssBaseline,
   Divider,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
   FormControl,
   FormControlLabel,
   FormLabel,
@@ -210,7 +205,6 @@ export default function HumanTitleValidation({
   const [lastCheckedAt, setLastCheckedAt] = useState<number | null>(null);
   const [reviewerLines, setReviewerLines] = useState("");
   const [manageBusy, setManageBusy] = useState(false);
-  const [confirmClose, setConfirmClose] = useState(false);
   const [dashboardOpen, setDashboardOpen] = useState(false);
   const [dashboard, setDashboard] = useState<TitleValidationDashboard | null>(
     null,
@@ -597,9 +591,7 @@ export default function HumanTitleValidation({
     }
   }
 
-  async function manage(
-    operation: "create" | "start" | "pause" | "resume" | "close" | "join",
-  ): Promise<void> {
+  async function manage(operation: "create" | "start" | "join"): Promise<void> {
     if (!session?.canManage || manageBusy) return;
     let reviewers: { reviewerId: string; label: string }[] | undefined;
     if (operation === "create") {
@@ -643,14 +635,10 @@ export default function HumanTitleValidation({
         },
         preview,
       );
-      setConfirmClose(false);
       setManagementStatus(
         {
           create: "Pilot created as a draft.",
           start: "Pilot opened.",
-          pause: "Pilot paused.",
-          resume: "Pilot resumed.",
-          close: "Pilot closed. Saved answers are preserved.",
           join: "You have joined as a reviewer. Your answers will be saved with the team’s reviews.",
         }[operation],
       );
@@ -1036,7 +1024,7 @@ export default function HumanTitleValidation({
                         tabIndex={-1}
                       >
                         {draft.paused
-                          ? "Review paused"
+                          ? "Taking a break"
                           : task.stage === "create"
                             ? "Write your title"
                             : "Compare the titles"}
@@ -1046,12 +1034,13 @@ export default function HumanTitleValidation({
                         disabled={locked}
                         onClick={() => changeDraft({ paused: !draft.paused })}
                       >
-                        {draft.paused ? "Resume review" : "Pause review"}
+                        {draft.paused ? "Continue reviewing" : "Take a break"}
                       </Button>
                     </Stack>
                     {draft.paused ? (
                       <Typography>
-                        Your review is hidden and the active timer is stopped.
+                        Your review timer is stopped. This break affects only
+                        you. Continue when you’re ready.
                       </Typography>
                     ) : (
                       <>
@@ -1760,31 +1749,6 @@ export default function HumanTitleValidation({
                           Open pilot
                         </Button>
                       )}
-                      {session.studyStatus === "active" && (
-                        <Button
-                          disabled={manageBusy}
-                          onClick={() => void manage("pause")}
-                        >
-                          Pause study
-                        </Button>
-                      )}
-                      {session.studyStatus === "paused" && (
-                        <Button
-                          disabled={manageBusy}
-                          onClick={() => void manage("resume")}
-                        >
-                          Resume study
-                        </Button>
-                      )}
-                      {session.studyStatus !== "closed" && (
-                        <Button
-                          color="error"
-                          disabled={manageBusy}
-                          onClick={() => setConfirmClose(true)}
-                        >
-                          Close study
-                        </Button>
-                      )}
                     </Stack>
                     <Typography
                       role="status"
@@ -2108,40 +2072,6 @@ export default function HumanTitleValidation({
             )}
           </Box>
         </Box>
-        <Dialog
-          open={confirmClose}
-          onClose={() => !manageBusy && setConfirmClose(false)}
-          aria-labelledby="close-pilot-title"
-        >
-          <DialogTitle id="close-pilot-title">Close this pilot?</DialogTitle>
-          <DialogContent>
-            {error && (
-              <Alert severity="error" sx={{ mb: 2 }}>
-                {error}
-              </Alert>
-            )}
-            <DialogContentText>
-              Saved answers will remain available. Reviewers will no longer be
-              able to submit answers, and this pilot cannot be reopened. Closing
-              also makes the source disclosure available to its reviewers.
-            </DialogContentText>
-          </DialogContent>
-          <DialogActions>
-            <Button
-              disabled={manageBusy}
-              onClick={() => setConfirmClose(false)}
-            >
-              Keep pilot open
-            </Button>
-            <Button
-              color="error"
-              disabled={manageBusy}
-              onClick={() => void manage("close")}
-            >
-              Close pilot
-            </Button>
-          </DialogActions>
-        </Dialog>
       </ScopedCssBaseline>
     </ThemeProvider>
   );
