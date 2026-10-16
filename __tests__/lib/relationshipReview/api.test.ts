@@ -14,9 +14,15 @@ jest.mock("../../../src/lib/relationshipReview/repository", () => ({
   readFeedback: (...a: any[]) => readFeedback(...a),
   saveFeedback: (...a: any[]) => saveFeedback(...a),
 }));
+jest.mock("../../../src/lib/relationshipReview/package", () => ({
+  relationshipPackages: () => [
+    { version: "v2", directory: "sibling-v2" },
+    { version: "v1" },
+  ],
+}));
 jest.mock("../../../src/lib/relationshipReview/dataset", () => ({
-  getRelationshipDataset: () => ({
-    dataset: { version: "v1", cases: [{ id: "reason" }] },
+  getRelationshipDataset: (version?: string) => ({
+    dataset: { version: version || "v1", cases: [{ id: "reason" }] },
     sha256: "sha",
   }),
   getRelationshipTrace: (id: string) => ({ caseId: id, exactPrompt: "audit" }),
@@ -61,6 +67,16 @@ test("verified Tom reads without creating answers", async () => {
   expect(readFeedback).toHaveBeenCalledWith("tom", "v1", false, "sha");
   expect(saveFeedback).not.toHaveBeenCalled();
   expect(r.headers).toHaveBeenCalledWith("Cache-Control", "private, no-store");
+});
+test("an earlier review version remains independently readable", async () => {
+  expect((await call("session", { datasetVersion: "v2" })).code).toBe(200);
+  expect(readFeedback).toHaveBeenCalledWith("tom", "v2", false, "sha");
+  expect((await call("session", { datasetVersion: "v1" })).code).toBe(200);
+  expect(readFeedback).toHaveBeenCalledWith("tom", "v1", false, "sha");
+  expect((await call("session", { datasetVersion: "../../escape" })).code).toBe(
+    409,
+  );
+  expect(saveFeedback).not.toHaveBeenCalled();
 });
 test("the pinned public HTTPS origin works through the Cloud Run proxy", async () => {
   const r = await call("session", {}, undefined, {

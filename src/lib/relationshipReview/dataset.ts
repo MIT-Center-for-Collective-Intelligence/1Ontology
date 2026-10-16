@@ -2,11 +2,13 @@ import fs from "fs";
 import path from "path";
 import { createHash } from "crypto";
 import type { RelationshipDataset } from "../../types/IRelationshipReview";
+import { relationshipPackage } from "./package";
 
-export function getRelationshipDataset() {
+export function getRelationshipDataset(version?: string) {
+  const { entry: committed, dir } = relationshipPackage(version);
   const file = path.join(
-    process.cwd(),
-    "src/lib/relationshipReview/data/top-level-v1.json",
+    dir,
+    committed.directory ? "dataset.json" : "top-level-v1.json",
   );
   const bytes = fs.readFileSync(file);
   const dataset = JSON.parse(bytes.toString("utf8")) as RelationshipDataset;
@@ -15,15 +17,6 @@ export function getRelationshipDataset() {
   );
   const sha256 = createHash("sha256").update(bytes).digest("hex");
   if (!(process.env.NODE_ENV === "development" && lock.previewOnly)) {
-    const committed = JSON.parse(
-      fs.readFileSync(
-        path.join(
-          process.cwd(),
-          "scripts/deployment/relationship-review-package.json",
-        ),
-        "utf8",
-      ),
-    );
     if (
       committed.bundleSha256 !== sha256 ||
       committed.version !== dataset.version ||
@@ -38,7 +31,7 @@ export function getRelationshipDataset() {
       throw Error("Relationship package differs from committed source");
   }
   if (
-    dataset.version !== "top-level-relationships-20261016-v1" ||
+    dataset.version !== committed.version ||
     !dataset.cases.length ||
     new Set(dataset.cases.map((c) => c.id)).size !== dataset.cases.length ||
     lock.datasetSha256 !== sha256 ||
@@ -48,14 +41,14 @@ export function getRelationshipDataset() {
     throw Error("Invalid frozen relationship dataset");
   return { dataset, sha256 };
 }
-export function getRelationshipTrace(caseId: string) {
-  const { dataset } = getRelationshipDataset();
+export function getRelationshipTrace(caseId: string, version?: string) {
+  const { dataset } = getRelationshipDataset(version);
   if (
     !/^[A-Za-z0-9_-]+$/.test(caseId) ||
     !dataset.cases.some((c) => c.id === caseId)
   )
     throw Error("Unknown case");
-  const dir = path.join(process.cwd(), "src/lib/relationshipReview/data");
+  const { dir } = relationshipPackage(dataset.version);
   const lock = JSON.parse(
     fs.readFileSync(path.join(dir, "release-lock.json"), "utf8"),
   );

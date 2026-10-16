@@ -46,12 +46,14 @@ class ReleaseVerificationTests(unittest.TestCase):
         self.info["humanTitleReview"] = {"version":staff["version"],"cases":len(staff["cases"]),
             "model":staff["provenance"]["model"],"promptSha256":staff["provenance"]["scientificPromptSha256"],
             "bundleSha256":hashlib.sha256(staff_bytes).hexdigest(),"released":True}
-        relation_bytes = (ROOT / "src/lib/relationshipReview/data/top-level-v1.json").read_bytes()
+        relationship_manifest=json.loads((ROOT / "scripts/deployment/relationship-review-package.json").read_bytes())
+        relationship_root=ROOT / "src/lib/relationshipReview/data" / relationship_manifest.get("directory", "")
+        relation_bytes = (relationship_root / ("dataset.json" if relationship_manifest.get("directory") else "top-level-v1.json")).read_bytes()
         relation = json.loads(relation_bytes)
         self.info["relationshipReview"] = {"version":relation["version"],"cases":len(relation["cases"]),
             "model":relation["model"],"reasoning":relation["reasoning"],
             "bundleSha256":hashlib.sha256(relation_bytes).hexdigest(),"sourceSha256":relation["sourceSha256"]}
-        presentation_path=ROOT / "src/lib/relationshipReview/data/presentation.json"
+        presentation_path=relationship_root / "presentation.json"
         if presentation_path.exists():
             presentation_bytes=presentation_path.read_bytes()
             presentation=json.loads(presentation_bytes)

@@ -79,6 +79,7 @@ export interface RelationshipFeedback {
   presentationVersion?: string;
 }
 export interface RelationshipSession {
+  availableVersions?: { version: string; current: boolean }[];
   dataset: RelationshipDataset;
   datasetSha256: string;
   reviewerKey: string;

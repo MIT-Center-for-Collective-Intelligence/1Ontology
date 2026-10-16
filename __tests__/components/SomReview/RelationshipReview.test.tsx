@@ -10,6 +10,7 @@ import {
 import "@testing-library/jest-dom";
 import RelationshipReview from "../../../src/components/SomReview/RelationshipReview";
 import type { RelationshipSession } from "../../../src/types/IRelationshipReview";
+import { reconcileSession } from "../../../src/lib/relationshipReview/clientState";
 jest.mock("next/head", () => ({
   __esModule: true,
   default: ({ children }: { children: React.ReactNode }) => <>{children}</>,
@@ -198,6 +199,26 @@ test("the default queue includes only selected actual changes and shows Generali
     screen.queryByRole("button", { name: "View research archive" }),
   ).not.toBeInTheDocument();
 });
+test("versioned links load the matching review and keep history accessible", async () => {
+  window.history.replaceState({}, "", "/review/relationships?version=v1");
+  const data = curated();
+  data.availableVersions = [
+    { version: "v1", current: false },
+    { version: "v2", current: true },
+  ];
+  data.dataset.cases[1].scope = "sibling-review";
+  setup(undefined, data);
+  await screen.findByRole("heading", { name: "Selected activity" });
+  expect(
+    JSON.parse((global.fetch as jest.Mock).mock.calls[0][1].body)
+      .datasetVersion,
+  ).toBe("v1");
+  expect(
+    screen.getByRole("link", { name: "Return to current review" }),
+  ).toHaveAttribute("href", "/review/relationships?version=v2");
+  expect(screen.getByText("Sibling comparison")).toBeInTheDocument();
+  expect(new URLSearchParams(window.location.search).get("version")).toBe("v1");
+});
 test("a partial change keeps the other valid generalization and binds new saves to the displayed evidence", async () => {
   window.history.replaceState({}, "", "/review/relationships");
   setup(
@@ -206,9 +227,9 @@ test("a partial change keeps the other valid generalization and binds new saves 
   );
   await screen.findByRole("heading", { name: "Selected activity" });
   expect(
-    screen.getByText(/Remove the generalization link to Old generalization/),
+    screen.getByText(/Remove the direct generalization link to Old generalization/),
   ).toHaveTextContent(
-    "Add the generalization link to New generalization. Keep Think.",
+    "Add the direct generalization link to New generalization. Keep Think.",
   );
   expect(screen.getByText("Think (keep this link)")).toBeInTheDocument();
   fireEvent.click(
@@ -220,6 +241,32 @@ test("a partial change keeps the other valid generalization and binds new saves 
     JSON.parse((global.fetch as jest.Mock).mock.calls[1][1].body)
       .presentationSha256,
   ).toBe("presentation-sha");
+});
+test("exact prompt requests stay bound to the displayed dataset version", async () => {
+  window.history.replaceState({}, "", "/review/relationships?version=v1");
+  setup(
+    () => respond({ trace: { source: "exact frozen evidence" } }),
+    curated(),
+  );
+  await screen.findByRole("heading", { name: "Selected activity" });
+  fireEvent.click(
+    screen.getByRole("button", {
+      name: "Agents and prompts used for this proposal",
+    }),
+  );
+  fireEvent.click(
+    await screen.findByRole("button", {
+      name: "Show exact requests and outputs",
+    }),
+  );
+  await screen.findByText(/exact frozen evidence/);
+  const call = (global.fetch as jest.Mock).mock.calls.find((c) =>
+    String(c[0]).endsWith("/trace"),
+  );
+  expect(JSON.parse(call[1].body)).toEqual({
+    caseId: "selected",
+    datasetVersion: "v1",
+  });
 });
 test("an unchanged archived analysis does not duplicate current and proposed generalizations", async () => {
   setup();
@@ -270,38 +317,14 @@ test("an old idempotent receipt cannot replace a newer answer already loaded in 
   expect(screen.queryByText("Saved to your account.")).not.toBeInTheDocument();
 });
 test("a delayed session reload cannot erase a save made while it was loading", async () => {
-  window.history.replaceState(
-    {},
-    "",
-    "/review/relationships?view=analysis&activity=missing",
-  );
-  let reads = 0,
-    release: (v: any) => void = () => {};
-  (global.fetch as jest.Mock).mockImplementation(async (url) => {
-    if (String(url).endsWith("session"))
-      return ++reads === 1
-        ? respond(clone())
-        : new Promise((resolve) => {
-            release = resolve;
-          });
-    return respond({ answer: answer(1, "Saved while loading") });
-  });
-  render(<RelationshipReview />);
-  fireEvent.click(await screen.findByRole("button", { name: "Retry" }));
-  await waitFor(() => expect(reads).toBe(2));
-  fireEvent.click(
-    screen.getByLabelText("Agree with the proposed generalizations"),
-  );
-  fireEvent.click(screen.getByRole("button", { name: "Save feedback" }));
-  await screen.findByText(/revision 1/);
-  await act(async () => {
-    release(respond(clone()));
-  });
-  expect(screen.getByText("1 of 1 analyses reviewed")).toBeInTheDocument();
-  expect(screen.getByText(/revision 1/)).toBeInTheDocument();
-  expect(screen.getByLabelText("Comments or examples (optional)")).toHaveValue(
-    "Saved while loading",
-  );
+  const incoming = clone(),
+    saved = clone();
+  saved.feedback.reason = answer(1, "Saved while loading");
+  const reconciled = reconcileSession(saved, incoming);
+  expect(reconciled.feedback.reason).toEqual(saved.feedback.reason);
+  const anotherVersion = clone();
+  anotherVersion.dataset.version = "v2";
+  expect(reconcileSession(saved, anotherVersion).feedback).toEqual({});
 });
 test("no default judgment; saves only after acknowledgement and hides technical details", async () => {
   setup();

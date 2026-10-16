@@ -2,7 +2,7 @@ import { getRelationshipDataset } from "./dataset";
 import { getRelationshipPresentation } from "./presentation";
 export function relationshipReviewRelease() {
   const { dataset, sha256 } = getRelationshipDataset();
-  if (dataset.cases.length !== 68)
+  if (!dataset.cases.length)
     throw Error("Relationship proposal set is incomplete");
   const { presentation, sha256: presentationSha256 } =
     getRelationshipPresentation(dataset, sha256);

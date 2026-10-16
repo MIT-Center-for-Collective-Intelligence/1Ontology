@@ -76,3 +76,43 @@ test("two individually safe sibling moves are flagged if their combination creat
     [],
   );
 });
+import { siblingFamilies } from "./relationship-graph-lib.mjs";
+test("sibling review includes children beyond the parent level band without changing their source", () => {
+  const link = (ids) => [{ nodes: ids.map((id) => ({ id })) }];
+  const nodes = [
+    {
+      id: "root",
+      title: "Act",
+      root: true,
+      specializations: link(["heading"]),
+    },
+    {
+      id: "heading",
+      title: "[What]",
+      generalizations: link(["root"]),
+      specializations: link(["think"]),
+    },
+    {
+      id: "think",
+      title: "Think",
+      generalizations: link(["heading"]),
+      specializations: link(["decide"]),
+    },
+    {
+      id: "decide",
+      title: "Decide",
+      generalizations: link(["think"]),
+      specializations: link(["accept", "reject", "select"]),
+    },
+    ...["accept", "reject", "select"].map((id) => ({
+      id,
+      title: id,
+      generalizations: link(["decide"]),
+    })),
+  ];
+  const before = JSON.stringify(nodes);
+  assert.deepEqual(siblingFamilies(nodes), [
+    { parentId: "decide", childIds: ["accept", "reject", "select"] },
+  ]);
+  assert.equal(JSON.stringify(nodes), before);
+});

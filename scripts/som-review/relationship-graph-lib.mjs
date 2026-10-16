@@ -63,6 +63,22 @@ export function descendants(id, byId) {
       }
   return result;
 }
+/** Include siblings one level beyond the reviewed parent band, even when
+ * their common parent's own placement needs no change. Never mutate nodes. */
+export function siblingFamilies(nodes, maximumParentLevel = 4) {
+  const graph = graphInventory(nodes);
+  return nodes
+    .filter(
+      (n) => graph.levels.get(n.id) <= maximumParentLevel && !isHeading(n),
+    )
+    .map((parent) => ({
+      parentId: parent.id,
+      childIds: childIds(parent).filter(
+        (id) => graph.byId.has(id) && !isHeading(graph.byId.get(id)),
+      ),
+    }))
+    .filter((f) => f.childIds.length >= 2);
+}
 export function inspectRecommendation(subjectId, proposedParentIds, graph) {
   const issues = [];
   if (!graph.byId.has(subjectId)) return ["Unknown subject"];

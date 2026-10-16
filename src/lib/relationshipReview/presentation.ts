@@ -6,20 +6,12 @@ import type {
   RelationshipPresentation,
 } from "../../types/IRelationshipReview";
 import { selectedReviewCases } from "./selection";
+import { relationshipPackage } from "./package";
 export function getRelationshipPresentation(
   dataset: RelationshipDataset,
   datasetSha256: string,
 ) {
-  const dir = path.join(process.cwd(), "src/lib/relationshipReview/data");
-  const manifest = JSON.parse(
-    fs.readFileSync(
-      path.join(
-        process.cwd(),
-        "scripts/deployment/relationship-review-package.json",
-      ),
-      "utf8",
-    ),
-  );
+  const { dir, entry: manifest } = relationshipPackage(dataset.version);
   const bytes = fs.readFileSync(path.join(dir, "presentation.json"));
   const sha256 = createHash("sha256").update(bytes).digest("hex");
   const presentation = JSON.parse(
@@ -36,22 +28,9 @@ export function getRelationshipPresentation(
     throw Error("Invalid selected generalization changes");
   return { presentation, sha256 };
 }
-export function getPresentationTrace() {
-  const bytes = fs.readFileSync(
-    path.join(
-      process.cwd(),
-      "src/lib/relationshipReview/data/presentation-trace.json",
-    ),
-  );
-  const manifest = JSON.parse(
-    fs.readFileSync(
-      path.join(
-        process.cwd(),
-        "scripts/deployment/relationship-review-package.json",
-      ),
-      "utf8",
-    ),
-  );
+export function getPresentationTrace(version?: string) {
+  const { dir, entry: manifest } = relationshipPackage(version);
+  const bytes = fs.readFileSync(path.join(dir, "presentation-trace.json"));
   if (
     createHash("sha256").update(bytes).digest("hex") !==
     manifest.presentationTraceSha256

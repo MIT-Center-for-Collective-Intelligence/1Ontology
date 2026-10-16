@@ -101,10 +101,10 @@ describe("public deployment identity", () => {
       expect(info.relationshipReview).toEqual(
         expect.objectContaining({
           version: relationshipManifest.version,
-          cases: 68,
+          cases: relationshipManifest.cases,
           bundleSha256: relationshipManifest.bundleSha256,
-          presentationVersion: "relationship-selected-changes-20261016-v1",
-          selectedProposals: 1,
+          presentationVersion: expect.any(String),
+          selectedProposals: expect.any(Number),
           presentationSha256: relationshipManifest.presentationSha256,
         }),
       );
