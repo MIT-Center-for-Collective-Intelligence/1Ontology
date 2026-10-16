@@ -55,6 +55,34 @@ test("verified Tom reads without creating answers", async () => {
   expect(saveFeedback).not.toHaveBeenCalled();
   expect(r.headers).toHaveBeenCalledWith("Cache-Control", "private, no-store");
 });
+test("the pinned public HTTPS origin works through the Cloud Run proxy", async () => {
+  const r = await call("session", {}, undefined, {
+    authorization: "Bearer test",
+    host: "ontology-r5kaknwqbq-uc.a.run.app",
+    origin: "https://ontology.mit.edu",
+  });
+  expect(r.code).toBe(200);
+  expect(saveFeedback).not.toHaveBeenCalled();
+  expect((await call("session", {}, {}, {
+    host: "ontology-r5kaknwqbq-uc.a.run.app",
+    origin: "https://ontology.mit.edu",
+  })).code).toBe(401);
+});
+test.each([
+  "http://ontology.mit.edu",
+  "https://ontology.mit.edu.evil.example",
+  "https://ontology.mit.edu@evil.example",
+  "https://ontology.mit.edu/extra",
+])("invalid or downgraded public origins stay rejected: %s", async (origin) => {
+  const r = await call("session", {}, undefined, {
+    authorization: "Bearer test",
+    host: "ontology-r5kaknwqbq-uc.a.run.app",
+    origin,
+    "x-forwarded-host": "ontology.mit.edu",
+  });
+  expect(r.code).toBe(403);
+  expect(readFeedback).not.toHaveBeenCalled();
+});
 test("anonymous access cannot obtain proposals or impersonate preview", async () => {
   expect(
     (

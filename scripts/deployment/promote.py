@@ -185,7 +185,7 @@ def verify_relationship_review_route(origin):
         raise ValueError("Relationship review page is missing or exposes preview mode")
     for action in ("session", "save", "trace", "tom-feedback"):
         request = urllib.request.Request(origin + "/api/som-review/relationships/" + action,
-            data=b'{"previewReviewer":"tom"}', method="POST", headers={"Content-Type":"application/json"})
+            data=b'{"previewReviewer":"tom"}', method="POST", headers={"Content-Type":"application/json", "Origin":"https://ontology.mit.edu"})
         try:
             urllib.request.urlopen(request, timeout=60)
         except urllib.error.HTTPError as error:
