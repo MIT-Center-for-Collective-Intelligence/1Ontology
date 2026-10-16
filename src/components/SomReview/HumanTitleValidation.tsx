@@ -166,10 +166,14 @@ const sourceLabels: Record<string, string> = {
 
 export default function HumanTitleValidation({
   preview,
+  practice = false,
 }: {
   preview: boolean;
+  practice?: boolean;
 }) {
-  const [previewReviewer, setPreviewReviewer] = useState("preview-a");
+  const [previewReviewer, setPreviewReviewer] = useState(
+    practice ? "practice-a" : "preview-a",
+  );
   const [session, setSession] = useState<TitleValidationSession | null>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
   const [loadingSession, setLoadingSession] = useState(true);
@@ -201,6 +205,12 @@ export default function HumanTitleValidation({
     task && session
       ? `human-title-validation/${encodeURIComponent(session.studyId)}/${encodeURIComponent(session.reviewerKey)}/${task.stage}/${encodeURIComponent(task.caseId)}`
       : "";
+  const identityFor = (reviewer = previewReviewer) =>
+    preview
+      ? { previewReviewer: reviewer }
+      : practice
+        ? { workspace: "practice", practiceReviewer: reviewer }
+        : {};
 
   async function refreshSession(
     reviewer = previewReviewer,
@@ -211,7 +221,7 @@ export default function HumanTitleValidation({
     try {
       const next = await request<TitleValidationSession>(
         "/som-review/title-validation/session",
-        preview ? { previewReviewer: reviewer } : {},
+        identityFor(reviewer),
         preview,
       );
       if (number === requestNumber.current) {
@@ -238,7 +248,7 @@ export default function HumanTitleValidation({
     void refreshSession(previewReviewer);
     // A changed reviewer starts a separate session and draft.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [preview, previewReviewer]);
+  }, [preview, practice, previewReviewer]);
 
   useEffect(() => {
     const next = task && taskKey ? readDraft(taskKey, task) : null;
@@ -355,7 +365,7 @@ export default function HumanTitleValidation({
         {
           studyId: session.studyId,
           submission: payload,
-          ...(preview ? { previewReviewer } : {}),
+          ...identityFor(),
         },
         preview,
       );
@@ -545,7 +555,7 @@ export default function HumanTitleValidation({
           "/som-review/title-validation/dashboard",
           {
             studyId: session.studyId,
-            ...(preview ? { previewReviewer } : {}),
+            ...identityFor(),
           },
           preview,
         ),
@@ -599,7 +609,7 @@ export default function HumanTitleValidation({
           ...(operation === "create"
             ? { operation, reviewers }
             : { studyId: session.studyId, operation }),
-          ...(preview ? { previewReviewer } : {}),
+          ...identityFor(),
         },
         preview,
       );
@@ -633,7 +643,7 @@ export default function HumanTitleValidation({
         "/som-review/title-validation/export",
         {
           studyId: session.studyId,
-          ...(preview ? { previewReviewer } : {}),
+          ...identityFor(),
         },
         preview,
       );
@@ -666,7 +676,11 @@ export default function HumanTitleValidation({
     <ThemeProvider theme={titleValidationTheme}>
       <ScopedCssBaseline>
         <Head>
-          <title>Human title review</title>
+          <title>
+            {practice
+              ? "Human title review · Private practice"
+              : "Human title review"}
+          </title>
           <meta name="robots" content="noindex,nofollow" />
         </Head>
         <Box sx={design.page}>
@@ -690,11 +704,16 @@ export default function HumanTitleValidation({
                   Clearer activity titles begin with your judgment.
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Five-activity staff try-out. Read the source, create your
-                  titles, then compare alternatives for other activities.
+                  {practice
+                    ? "Your private copy of the five-activity review. Try writing titles and comparing alternatives using the practice roles."
+                    : "Five-activity staff try-out. Read the source, create your titles, then compare alternatives for other activities."}
                 </Typography>
                 <Chip
-                  label="Staff pilot · questions are provisional"
+                  label={
+                    practice
+                      ? "Private practice · separate answers and progress"
+                      : "Staff pilot · questions are provisional"
+                  }
                   size="small"
                   variant="outlined"
                   sx={{
@@ -713,19 +732,31 @@ export default function HumanTitleValidation({
                     Local preview · practice responses stay on this computer.
                   </Typography>
                 )}
-                {preview && (
+                {(preview || practice) && (
                   <TextField
                     select
                     size="small"
-                    label="Preview reviewer"
+                    label={practice ? "Practice role" : "Preview reviewer"}
                     value={previewReviewer}
-                    disabled={saving || manageBusy || loadingSession}
-                    onChange={(event) => setPreviewReviewer(event.target.value)}
+                    disabled={locked || manageBusy || loadingSession}
+                    onChange={(event) => {
+                      requestNumber.current += 1;
+                      setSession(null);
+                      setDraft(null);
+                      setDashboard(null);
+                      setNotice("");
+                      setPreviewReviewer(event.target.value);
+                    }}
                     fullWidth
                   >
-                    {["preview-a", "preview-b", "preview-c"].map((value) => (
+                    {(practice
+                      ? ["practice-a", "practice-b", "practice-c"]
+                      : ["preview-a", "preview-b", "preview-c"]
+                    ).map((value, index) => (
                       <MenuItem key={value} value={value}>
-                        {value}
+                        {practice
+                          ? `Practice role ${String.fromCharCode(65 + index)}`
+                          : value}
                       </MenuItem>
                     ))}
                   </TextField>
@@ -773,6 +804,42 @@ export default function HumanTitleValidation({
                 )}
               </Stack>
             </Box>
+
+            {practice && (
+              <Alert severity="info" sx={{ mb: 3 }}>
+                <Typography sx={{ fontWeight: 650 }}>
+                  Your private practice copy
+                </Typography>
+                <Typography>
+                  These are the same five activities, with separate saved
+                  answers and progress. Switch between roles A, B, and C to
+                  finish all five title-writing tasks, then try the comparisons.
+                  Role switching is for trying the interface; these answers are
+                  excluded from the team’s pilot.
+                </Typography>
+                <Button href="/review/title-validation" sx={{ mt: 1 }}>
+                  Return to team pilot
+                </Button>
+              </Alert>
+            )}
+            {!practice && !preview && session?.canManage && (
+              <Box sx={{ mb: 3 }}>
+                <Button
+                  variant="outlined"
+                  href="/review/title-validation?workspace=practice"
+                >
+                  Try the reviewer workflow privately
+                </Button>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ mt: 1 }}
+                >
+                  Your practice copy has separate answers and progress from the
+                  team’s pilot.
+                </Typography>
+              </Box>
+            )}
 
             {error && (
               <Alert
@@ -871,20 +938,24 @@ export default function HumanTitleValidation({
                           : session.studyStatus === "closed"
                             ? "Pilot closed"
                             : waiting
-                              ? "Waiting for everyone to finish"
+                              ? practice
+                                ? "Try the other practice roles"
+                                : "Waiting for everyone to finish"
                               : session.phase === "complete"
                                 ? "Your reviews are complete"
                                 : "No review assigned"}
                     </Typography>
                     <Typography>
-                      {session.message ||
-                        (waiting
-                          ? "Comparisons open after every reviewer finishes their independent titles. This page checks for updates while it is visible."
-                          : session.phase === "unassigned"
-                            ? "You are not assigned to this study."
-                            : session.studyStatus === "paused"
-                              ? "The study is paused by the coordinator."
-                              : "There is no task to review right now.")}
+                      {practice && waiting
+                        ? "Switch to another practice role above and finish its title-writing tasks. Once all five titles are saved across the three roles, comparisons will open."
+                        : session.message ||
+                          (waiting
+                            ? "Comparisons open after every reviewer finishes their independent titles. This page checks for updates while it is visible."
+                            : session.phase === "unassigned"
+                              ? "You are not assigned to this study."
+                              : session.studyStatus === "paused"
+                                ? "The study is paused by the coordinator."
+                                : "There is no task to review right now.")}
                     </Typography>
                     {waiting && lastCheckedAt && (
                       <Typography

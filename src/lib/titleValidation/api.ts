@@ -13,6 +13,13 @@ import {
   ValidationState,
 } from "./engine";
 import { localPreviewEnabled, withStudy } from "./repository";
+import {
+  newPracticeState,
+  practiceRole,
+  practiceStudyId,
+  PRACTICE_PREFIX,
+  verifyPracticeOwner,
+} from "./practice";
 
 const defaultStudyId = () =>
   process.env.TITLE_VALIDATION_STUDY_ID ||
@@ -147,12 +154,32 @@ export async function titleValidationHandler(
         ? (req.body as Record<string, unknown>)
         : {};
     const actor = await actorFor(req, body);
+    const practice = body.workspace === "practice";
+    if (body.workspace !== undefined && !practice)
+      throw new TitleValidationError(400, "Unknown review workspace.");
+    if (practice && (actor.preview || !actor.canManage))
+      throw new TitleValidationError(
+        403,
+        "Sign in as a coordinator to use your private practice copy.",
+      );
+    const reviewerId = practice
+      ? practiceRole(body.practiceReviewer)
+      : actor.uid;
+    const eventActor = {
+      actorId: actor.uid,
+      ...(practice ? { practice: true, practiceReviewer: reviewerId } : {}),
+    };
     if (!actor.preview && process.env.TITLE_VALIDATION_RELEASED !== "1")
       throw new TitleValidationError(
         503,
         "This staff try-out has not been opened on this server yet.",
       );
     const action = String(req.query.action || "");
+    if (practice && !["session", "respond"].includes(action))
+      throw new TitleValidationError(
+        403,
+        "Your private copy supports reviewer tasks only.",
+      );
     let resolvedReviewers: { reviewerId: string; label: string }[] | undefined;
     if (
       action === "manage" &&
@@ -184,16 +211,36 @@ export async function titleValidationHandler(
         }),
       );
     }
-    const id = actor.preview
-      ? "preview-title-validation-v1"
-      : String(body.studyId || defaultStudyId());
+    const id = practice
+      ? practiceStudyId(actor.uid)
+      : actor.preview
+        ? "preview-title-validation-v1"
+        : String(body.studyId || defaultStudyId());
+    if (!practice && id.startsWith(PRACTICE_PREFIX))
+      throw new TitleValidationError(
+        403,
+        "Open your private copy through the practice link.",
+      );
     if (
       !["session", "respond", "dashboard", "manage", "export"].includes(action)
     )
       throw new TitleValidationError(404, "Unknown review action.");
     const data = getTitleValidationDataset();
     const result = await withStudy<unknown>(id, actor.preview, (current) => {
-      let state = current || (actor.preview ? newPreviewState() : null);
+      const practiceCreated = !current && practice && action === "session";
+      let state =
+        current ||
+        (practiceCreated
+          ? newPracticeState(actor.uid, data)
+          : actor.preview
+            ? newPreviewState()
+            : null);
+      if (state && practice) verifyPracticeOwner(state, actor.uid);
+      if (state?.study.practice && !practice)
+        throw new TitleValidationError(
+          403,
+          "Open your private copy through the practice link.",
+        );
       if (action === "manage") {
         if (!actor.canManage)
           throw new TitleValidationError(
@@ -284,13 +331,14 @@ export async function titleValidationHandler(
       }
       validateStudy(state.study, data);
       if (action === "session") {
-        const next = presentTask(state, data, actor.uid, Date.now());
+        const next = presentTask(state, data, reviewerId, Date.now());
         return {
           state: next,
           result: {
-            ...sessionFor(next, data, actor.uid),
-            canManage: actor.canManage,
+            ...sessionFor(next, data, reviewerId),
+            canManage: actor.canManage && !practice,
             preview: actor.preview,
+            ...(practice ? { practice: true } : {}),
             ...(next.study.status === "closed" &&
             (actor.canManage ||
               next.study.roster.some((r) => r.reviewerId === actor.uid))
@@ -312,12 +360,12 @@ export async function titleValidationHandler(
                 }
               : {}),
           },
-          ...(next !== state
+          ...(next !== state || practiceCreated
             ? {
                 event: {
-                  kind: "task-presented",
-                  actorId: actor.uid,
-                  caseId: sessionFor(next, data, actor.uid).task?.caseId,
+                  kind: practiceCreated ? "practice-created" : "task-presented",
+                  ...eventActor,
+                  caseId: sessionFor(next, data, reviewerId).task?.caseId,
                 },
               }
             : {}),
@@ -327,25 +375,26 @@ export async function titleValidationHandler(
         const change = submitAnswer(
           state,
           data,
-          actor.uid,
+          reviewerId,
           body.submission,
           Date.now(),
         );
-        const next = presentTask(change.state, data, actor.uid, Date.now());
+        const next = presentTask(change.state, data, reviewerId, Date.now());
         return {
           state: next,
           answer: change.duplicate ? undefined : change.answer,
           result: {
-            ...sessionFor(next, data, actor.uid),
-            canManage: actor.canManage,
+            ...sessionFor(next, data, reviewerId),
+            canManage: actor.canManage && !practice,
             preview: actor.preview,
+            ...(practice ? { practice: true } : {}),
           },
           ...(change.duplicate
             ? {}
             : {
                 event: {
                   kind: "answer-submitted",
-                  actorId: actor.uid,
+                  ...eventActor,
                   caseId: change.answer.caseId,
                   stage: change.answer.kind,
                   answerId: change.answer.id,

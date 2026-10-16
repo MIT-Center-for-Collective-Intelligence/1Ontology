@@ -4,7 +4,7 @@ import withAuthUser from "@components/components/hoc/withAuthUser";
 import { useAuth } from "@components/components/context/AuthContext";
 import { localPreviewEnabled } from "@components/lib/titleValidation/repository";
 
-function AuthReadyReview() {
+function AuthReadyReview({ practice = false }: { practice?: boolean }) {
   const [{ isAuthInitialized, isAuthenticated }] = useAuth();
   // The shared redirect wrapper renders its child during Firebase startup.
   // Mount this review only once its first request can carry the user's token.
@@ -15,15 +15,31 @@ function AuthReadyReview() {
         <p role="status">Loading your account…</p>
       </main>
     );
-  return <HumanTitleValidation preview={false} />;
+  return (
+    <HumanTitleValidation
+      key={practice ? "practice" : "pilot"}
+      preview={false}
+      practice={practice}
+    />
+  );
 }
 
 const SignedInReview = withAuthUser({
   shouldRedirectToHomeIfAuthenticated: false,
   shouldRedirectToLogin: true,
 })(AuthReadyReview);
-export default function TitleValidationPage({ preview }: { preview: boolean }) {
-  return preview ? <HumanTitleValidation preview /> : <SignedInReview />;
+export default function TitleValidationPage({
+  preview,
+  practice = false,
+}: {
+  preview: boolean;
+  practice?: boolean;
+}) {
+  return preview ? (
+    <HumanTitleValidation preview />
+  ) : (
+    <SignedInReview practice={practice} />
+  );
 }
 export const getServerSideProps: GetServerSideProps = async (context) => ({
   props: {
@@ -31,5 +47,6 @@ export const getServerSideProps: GetServerSideProps = async (context) => ({
       context.req.headers.host,
       context.req.socket.remoteAddress,
     ),
+    practice: context.query.workspace === "practice",
   },
 });

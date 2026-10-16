@@ -27,6 +27,7 @@ export interface TitleValidationSession {
   task?: TitleValidationTask;
   canManage: boolean;
   preview: boolean;
+  practice?: boolean;
   message?: string;
   disclosure?: {
     model: string;

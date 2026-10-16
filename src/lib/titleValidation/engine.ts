@@ -30,6 +30,7 @@ export interface ValidationStudy {
   roster: { reviewerId: string; label: string }[];
   caseIds: string[];
   createdAt: number;
+  practice?: { ownerUid: string; purpose: "interface-practice" };
 }
 export interface ValidationAnswer {
   id: string;
