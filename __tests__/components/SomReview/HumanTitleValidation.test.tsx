@@ -1,6 +1,12 @@
 /** @jest-environment jsdom */
 import React from "react";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import "@testing-library/jest-dom";
 import HumanTitleValidation from "../../../src/components/SomReview/HumanTitleValidation";
 import TitleValidationPage, {
@@ -257,7 +263,7 @@ test.each([false, true])(
       confidence: 4,
       notes: "My earlier comparison",
       activeTimeMs: 20000,
-      paused: false,
+      paused: true,
       ...(pending ? { pendingSubmission: submission } : {}),
     });
     localStorage.setItem(oldKey, saved);
@@ -404,33 +410,97 @@ test("moving to another task does not copy the previous answer into its draft", 
       .every(([, value]) => !value.includes("Old draft must not leak")),
   ).toBe(true);
 });
-test("taking a break preserves the draft across reload without changing the team study", async () => {
+test("a legacy paused draft reopens with its answers intact and no pause controls", async () => {
+  const key = "human-title-validation/study/unique-reviewer-a/create/c1";
+  localStorage.setItem(
+    key,
+    JSON.stringify({
+      key,
+      paused: true,
+      decision: "clarify",
+      titles: ["Write Annual Report"],
+      confidence: 3,
+      notes: "Working note",
+      activeTimeMs: 12300,
+    }),
+  );
   global.fetch = jest.fn(() => respond(session())) as jest.Mock;
   const view = render(<HumanTitleValidation preview />);
   await screen.findByText("Write Report");
-  fireEvent.change(screen.getByRole("textbox", { name: "Comments" }), {
-    target: { value: "Working note" },
-  });
-  fireEvent.click(screen.getByRole("button", { name: "Take a break" }));
-  expect(
-    screen.queryByText("Write annual reports for the committee."),
-  ).not.toBeInTheDocument();
-  expect(screen.getByText(/This break affects only you/)).toBeVisible();
+  expect(screen.getByLabelText("Your title")).toHaveValue(
+    "Write Annual Report",
+  );
+  expect(screen.getByRole("radio", { name: "3" })).toBeChecked();
+  expect(screen.getByRole("textbox", { name: "Comments" })).toHaveValue(
+    "Working note",
+  );
+  expect(JSON.parse(localStorage.getItem(key)!).activeTimeMs).toBe(12300);
+  expect(JSON.parse(localStorage.getItem(key)!)).not.toHaveProperty("paused");
   view.unmount();
   render(<HumanTitleValidation preview />);
-  await screen.findByRole("button", { name: "Continue reviewing" });
+  await screen.findByDisplayValue("Write Annual Report");
+  for (const name of [
+    "Pause review",
+    "Resume review",
+    "Take a break",
+    "Continue reviewing",
+  ])
+    expect(screen.queryByRole("button", { name })).not.toBeInTheDocument();
   expect(
     jest
       .mocked(global.fetch)
       .mock.calls.some(([url]) => String(url).endsWith("manage")),
   ).toBe(false);
-  fireEvent.click(screen.getByRole("button", { name: "Continue reviewing" }));
   expect(
     screen.getByText("Write annual reports for the committee."),
   ).toBeVisible();
   expect(screen.getByRole("textbox", { name: "Comments" })).toHaveValue(
     "Working note",
   );
+});
+test("the review timer automatically stops while the page is hidden or unfocused", async () => {
+  jest.useFakeTimers();
+  const hidden = jest.spyOn(document, "hidden", "get").mockReturnValue(false);
+  const focused = jest.spyOn(document, "hasFocus").mockReturnValue(true);
+  global.fetch = jest.fn(() => respond(session())) as jest.Mock;
+  const view = render(<HumanTitleValidation preview />);
+  try {
+    await screen.findByText("Write Report");
+    const key = "human-title-validation/study/unique-reviewer-a/create/c1";
+    const time = () => JSON.parse(localStorage.getItem(key)!).activeTimeMs;
+    act(() => {
+      jest.advanceTimersByTime(1000);
+    });
+    const active = time();
+    expect(active).toBeGreaterThan(0);
+    hidden.mockReturnValue(true);
+    act(() => {
+      document.dispatchEvent(new Event("visibilitychange"));
+      jest.advanceTimersByTime(3000);
+    });
+    expect(time()).toBe(active);
+    hidden.mockReturnValue(false);
+    focused.mockReturnValue(false);
+    act(() => {
+      window.dispatchEvent(new Event("blur"));
+      jest.advanceTimersByTime(3000);
+    });
+    expect(time()).toBe(active);
+    focused.mockReturnValue(true);
+    act(() => {
+      window.dispatchEvent(new Event("focus"));
+      jest.advanceTimersByTime(1000);
+    });
+    expect(time()).toBeGreaterThan(active);
+    expect(
+      jest
+        .mocked(global.fetch)
+        .mock.calls.every(([url]) => String(url).endsWith("session")),
+    ).toBe(true);
+  } finally {
+    view.unmount();
+    jest.useRealTimers();
+  }
 });
 test("an unavailable draft store is visible without blocking review", async () => {
   jest.spyOn(Storage.prototype, "setItem").mockImplementation(() => {

@@ -50,7 +50,6 @@ type Draft = {
   confidence: number | null;
   notes: string;
   activeTimeMs: number;
-  paused: boolean;
   pendingSubmission?: TitleValidationSubmission;
 };
 
@@ -69,7 +68,6 @@ function initialDraft(task: TitleValidationTask, key: string): Draft {
     confidence: null,
     notes: "",
     activeTimeMs: 0,
-    paused: false,
   };
 }
 
@@ -105,9 +103,14 @@ function readDraft(
       ) ||
       savedDrafts[0];
     if (!saved || typeof saved !== "object") return base;
+    // Older versions let a reviewer pause manually. Restore their answers,
+    // but discard that retired UI flag so a paused draft cannot hide the form.
+    const { paused: _legacyPause, ...savedFields } = saved as Partial<Draft> & {
+      paused?: unknown;
+    };
     return {
       ...base,
-      ...saved,
+      ...savedFields,
       key,
       titles: Array.isArray(saved.titles) ? saved.titles : base.titles,
       ratings: Object.fromEntries(
@@ -330,7 +333,6 @@ export default function HumanTitleValidation({
       !taskKey ||
       !draft ||
       draft.key !== taskKey ||
-      draft.paused ||
       draft.pendingSubmission ||
       saving
     )
@@ -345,7 +347,7 @@ export default function HumanTitleValidation({
       lastTick.current = now;
       if (!document.hidden && document.hasFocus() && !savingRef.current) {
         setDraft((previous) =>
-          previous && !previous.paused && !previous.pendingSubmission
+          previous && !previous.pendingSubmission
             ? { ...previous, activeTimeMs: previous.activeTimeMs + elapsed }
             : previous,
         );
@@ -360,7 +362,7 @@ export default function HumanTitleValidation({
       window.removeEventListener("focus", resetClock);
       window.removeEventListener("blur", resetClock);
     };
-  }, [taskKey, draft?.paused, draft?.pendingSubmission, saving]);
+  }, [taskKey, draft?.key, draft?.pendingSubmission, saving]);
 
   useEffect(() => {
     if (session?.phase !== "waiting") return;
@@ -1023,630 +1025,595 @@ export default function HumanTitleValidation({
                         ref={taskHeading}
                         tabIndex={-1}
                       >
-                        {draft.paused
-                          ? "Taking a break"
-                          : task.stage === "create"
-                            ? "Write your title"
-                            : "Compare the titles"}
+                        {task.stage === "create"
+                          ? "Write your title"
+                          : "Compare the titles"}
                       </Typography>
-                      <Button
-                        variant="outlined"
-                        disabled={locked}
-                        onClick={() => changeDraft({ paused: !draft.paused })}
-                      >
-                        {draft.paused ? "Continue reviewing" : "Take a break"}
-                      </Button>
                     </Stack>
-                    {draft.paused ? (
-                      <Typography>
-                        Your review timer is stopped. This break affects only
-                        you. Continue when you’re ready.
-                      </Typography>
-                    ) : (
-                      <>
+                    <>
+                      <Box
+                        sx={{
+                          display: "grid",
+                          gridTemplateColumns: {
+                            xs: "minmax(0,1fr)",
+                            md: "minmax(0,5fr) minmax(0,7fr)",
+                          },
+                          gap: { xs: 3, md: 5 },
+                          alignItems: "start",
+                        }}
+                      >
                         <Box
+                          component="aside"
                           sx={{
-                            display: "grid",
-                            gridTemplateColumns: {
-                              xs: "minmax(0,1fr)",
-                              md: "minmax(0,5fr) minmax(0,7fr)",
-                            },
-                            gap: { xs: 3, md: 5 },
-                            alignItems: "start",
+                            position: { md: "sticky" },
+                            top: { md: 24 },
+                            minWidth: 0,
                           }}
                         >
-                          <Box
-                            component="aside"
-                            sx={{
-                              position: { md: "sticky" },
-                              top: { md: 24 },
-                              minWidth: 0,
-                            }}
-                          >
-                            <Box sx={design.evidence}>
-                              <Typography
-                                variant="overline"
-                                sx={{
-                                  color: "primary.main",
-                                  fontWeight: 700,
-                                  letterSpacing: ".1em",
-                                }}
-                              >
-                                Source evidence
-                              </Typography>
-                              <Typography
-                                variant="subtitle2"
-                                color="text.secondary"
-                              >
-                                Current title
-                              </Typography>
-                              <Typography
-                                variant="h6"
-                                sx={{
-                                  overflowWrap: "anywhere",
-                                  mb: 3,
-                                  fontSize: "1.5rem",
-                                  lineHeight: 1.35,
-                                }}
-                              >
-                                {task.currentTitle}
-                              </Typography>
-                              <Typography
-                                variant="subtitle2"
-                                color="text.secondary"
-                              >
-                                Full activity description
-                              </Typography>
-                              <Typography
-                                sx={{
-                                  whiteSpace: "pre-wrap",
-                                  overflowWrap: "anywhere",
-                                }}
-                              >
-                                {task.description}
-                              </Typography>
-                            </Box>
+                          <Box sx={design.evidence}>
                             <Typography
-                              variant="caption"
-                              color="text.secondary"
-                              sx={{ display: "block", mt: 2, px: 1 }}
+                              variant="overline"
+                              sx={{
+                                color: "primary.main",
+                                fontWeight: 700,
+                                letterSpacing: ".1em",
+                              }}
                             >
-                              Judge only the activity named in the current
-                              title. Use the complete description as your
-                              evidence.
+                              Source evidence
+                            </Typography>
+                            <Typography
+                              variant="subtitle2"
+                              color="text.secondary"
+                            >
+                              Current title
+                            </Typography>
+                            <Typography
+                              variant="h6"
+                              sx={{
+                                overflowWrap: "anywhere",
+                                mb: 3,
+                                fontSize: "1.5rem",
+                                lineHeight: 1.35,
+                              }}
+                            >
+                              {task.currentTitle}
+                            </Typography>
+                            <Typography
+                              variant="subtitle2"
+                              color="text.secondary"
+                            >
+                              Full activity description
+                            </Typography>
+                            <Typography
+                              sx={{
+                                whiteSpace: "pre-wrap",
+                                overflowWrap: "anywhere",
+                              }}
+                            >
+                              {task.description}
                             </Typography>
                           </Box>
-                          <Stack
-                            spacing={3}
-                            ref={reviewArea}
-                            sx={{
-                              minWidth: 0,
-                              "& .MuiFormLabel-root": {
-                                fontWeight: 650,
-                                color: "text.primary",
-                              },
-                            }}
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{ display: "block", mt: 2, px: 1 }}
                           >
-                            {!draftStored && (
-                              <Alert severity="warning">
-                                This browser could not save your draft. Keep
-                                this page open until you submit your answer.
-                              </Alert>
-                            )}
-                            {draftStored && (
-                              <Typography
-                                variant="caption"
-                                role="status"
-                                color="text.secondary"
+                            Judge only the activity named in the current title.
+                            Use the complete description as your evidence.
+                          </Typography>
+                        </Box>
+                        <Stack
+                          spacing={3}
+                          ref={reviewArea}
+                          sx={{
+                            minWidth: 0,
+                            "& .MuiFormLabel-root": {
+                              fontWeight: 650,
+                              color: "text.primary",
+                            },
+                          }}
+                        >
+                          {!draftStored && (
+                            <Alert severity="warning">
+                              This browser could not save your draft. Keep this
+                              page open until you submit your answer.
+                            </Alert>
+                          )}
+                          {draftStored && (
+                            <Typography
+                              variant="caption"
+                              role="status"
+                              color="text.secondary"
+                            >
+                              {draftRecovered
+                                ? "Your draft was restored. "
+                                : ""}
+                              Draft saved on this device. Submit to save it to
+                              the study.
+                            </Typography>
+                          )}
+                          {task.stage === "create" ? (
+                            <>
+                              <Accordion
+                                disableGutters
+                                elevation={0}
+                                sx={{
+                                  border: 1,
+                                  borderColor: "divider",
+                                  borderRadius: "8px !important",
+                                }}
                               >
-                                {draftRecovered
-                                  ? "Your draft was restored. "
-                                  : ""}
-                                Draft saved on this device. Submit to save it to
-                                the study.
-                              </Typography>
-                            )}
-                            {task.stage === "create" ? (
-                              <>
-                                <Accordion
-                                  disableGutters
-                                  elevation={0}
+                                <AccordionSummary
+                                  expandIcon={<span aria-hidden="true">⌄</span>}
+                                >
+                                  How to write a useful title
+                                </AccordionSummary>
+                                <AccordionDetails>
+                                  <Stack spacing={1.5}>
+                                    <Typography>
+                                      Keep the title if it clearly and
+                                      accurately conveys the relevant activity
+                                      to someone unfamiliar with the occupation.
+                                      We need adequate wording, not perfect
+                                      wording.
+                                    </Typography>
+                                    <Typography>
+                                      Focus only on the original activity.
+                                      Preserve its verb and object, allowing
+                                      ordinary grammatical changes. Add only
+                                      useful details supported by the
+                                      description, including how, why, or
+                                      context. Do not add other activities
+                                      mentioned in the same sentence.
+                                    </Typography>
+                                    <Typography>
+                                      If the description distinguishes different
+                                      types of the same object, you may propose
+                                      a title for each. Do not split just
+                                      because several methods, purposes, or
+                                      tools are listed.
+                                    </Typography>
+                                    <Typography>
+                                      Keep titles compact. Aim for about seven
+                                      words, but use more when needed for
+                                      clarity or essential details. If evidence
+                                      is unclear, give your best tentative title
+                                      and explain the uncertainty in a comment.
+                                    </Typography>
+                                  </Stack>
+                                </AccordionDetails>
+                              </Accordion>
+                              <FormControl
+                                component="fieldset"
+                                disabled={locked}
+                                data-review-field="decision"
+                                error={invalidField === "decision"}
+                                aria-describedby={
+                                  invalidField === "decision"
+                                    ? "review-form-error"
+                                    : undefined
+                                }
+                              >
+                                <FormLabel component="legend">
+                                  What would you do with the current title?
+                                </FormLabel>
+                                <RadioGroup
                                   sx={{
-                                    border: 1,
-                                    borderColor: "divider",
-                                    borderRadius: "8px !important",
+                                    gap: 1,
+                                    "& .MuiFormControlLabel-root": {
+                                      m: 0,
+                                      px: 1.5,
+                                      py: 1,
+                                      border: "1px solid",
+                                      borderColor: "divider",
+                                      borderRadius: 2,
+                                      alignItems: "center",
+                                      transition: "background-color 120ms ease",
+                                      "&:hover": { bgcolor: "#F5F8F5" },
+                                      '&[data-selected="true"]': {
+                                        borderColor: "primary.main",
+                                        bgcolor: "#EDF5F1",
+                                      },
+                                    },
+                                  }}
+                                  value={draft.decision}
+                                  onChange={(event) => {
+                                    const decision = event.target
+                                      .value as TitleCreationDecision;
+                                    changeDraft({
+                                      decision,
+                                      titles:
+                                        decision === "split"
+                                          ? ["", ""]
+                                          : decision === "clarify"
+                                            ? [""]
+                                            : [task.currentTitle],
+                                    });
                                   }}
                                 >
-                                  <AccordionSummary
-                                    expandIcon={
-                                      <span aria-hidden="true">⌄</span>
-                                    }
-                                  >
-                                    How to write a useful title
-                                  </AccordionSummary>
-                                  <AccordionDetails>
-                                    <Stack spacing={1.5}>
-                                      <Typography>
-                                        Keep the title if it clearly and
-                                        accurately conveys the relevant activity
-                                        to someone unfamiliar with the
-                                        occupation. We need adequate wording,
-                                        not perfect wording.
-                                      </Typography>
-                                      <Typography>
-                                        Focus only on the original activity.
-                                        Preserve its verb and object, allowing
-                                        ordinary grammatical changes. Add only
-                                        useful details supported by the
-                                        description, including how, why, or
-                                        context. Do not add other activities
-                                        mentioned in the same sentence.
-                                      </Typography>
-                                      <Typography>
-                                        If the description distinguishes
-                                        different types of the same object, you
-                                        may propose a title for each. Do not
-                                        split just because several methods,
-                                        purposes, or tools are listed.
-                                      </Typography>
-                                      <Typography>
-                                        Keep titles compact. Aim for about seven
-                                        words, but use more when needed for
-                                        clarity or essential details. If
-                                        evidence is unclear, give your best
-                                        tentative title and explain the
-                                        uncertainty in a comment.
-                                      </Typography>
-                                    </Stack>
-                                  </AccordionDetails>
-                                </Accordion>
-                                <FormControl
-                                  component="fieldset"
-                                  disabled={locked}
-                                  data-review-field="decision"
-                                  error={invalidField === "decision"}
-                                  aria-describedby={
-                                    invalidField === "decision"
-                                      ? "review-form-error"
-                                      : undefined
-                                  }
-                                >
-                                  <FormLabel component="legend">
-                                    What would you do with the current title?
-                                  </FormLabel>
-                                  <RadioGroup
-                                    sx={{
-                                      gap: 1,
-                                      "& .MuiFormControlLabel-root": {
-                                        m: 0,
-                                        px: 1.5,
-                                        py: 1,
-                                        border: "1px solid",
-                                        borderColor: "divider",
-                                        borderRadius: 2,
-                                        alignItems: "center",
-                                        transition:
-                                          "background-color 120ms ease",
-                                        "&:hover": { bgcolor: "#F5F8F5" },
-                                        '&[data-selected="true"]': {
-                                          borderColor: "primary.main",
-                                          bgcolor: "#EDF5F1",
-                                        },
-                                      },
-                                    }}
-                                    value={draft.decision}
-                                    onChange={(event) => {
-                                      const decision = event.target
-                                        .value as TitleCreationDecision;
-                                      changeDraft({
-                                        decision,
-                                        titles:
-                                          decision === "split"
-                                            ? ["", ""]
-                                            : decision === "clarify"
-                                              ? [""]
-                                              : [task.currentTitle],
-                                      });
-                                    }}
-                                  >
-                                    <FormControlLabel
-                                      data-selected={draft.decision === "keep"}
-                                      value="keep"
-                                      control={<Radio />}
-                                      label="Keep it"
-                                    />
-                                    <FormControlLabel
-                                      data-selected={
-                                        draft.decision === "clarify"
-                                      }
-                                      value="clarify"
-                                      control={<Radio />}
-                                      label="Use one clearer title"
-                                    />
-                                    <FormControlLabel
-                                      data-selected={draft.decision === "split"}
-                                      value="split"
-                                      control={<Radio />}
-                                      label="Use several titles"
-                                    />
-                                  </RadioGroup>
-                                </FormControl>
-                                {draft.decision === "keep" && (
-                                  <Typography>
-                                    Title to save:{" "}
-                                    <strong>{task.currentTitle}</strong>
-                                  </Typography>
-                                )}
-                                {(draft.decision === "clarify" ||
-                                  draft.decision === "split") && (
-                                  <Stack spacing={2} data-review-field="titles">
-                                    {draft.titles.map((title, index) => (
-                                      <Stack
-                                        key={index}
-                                        direction={{ xs: "column", sm: "row" }}
-                                        spacing={1}
-                                        alignItems={{ sm: "flex-start" }}
-                                      >
-                                        <TextField
-                                          id={`review-title-${index}`}
-                                          error={
-                                            invalidField === "titles" &&
-                                            (!title.trim() ||
-                                              title.length > 400 ||
-                                              draft.titles.findIndex(
-                                                (t) =>
-                                                  t.trim() === title.trim(),
-                                              ) !== index)
-                                          }
-                                          inputProps={{
-                                            "aria-describedby":
-                                              invalidField === "titles"
-                                                ? "review-form-error"
-                                                : undefined,
-                                          }}
-                                          fullWidth
-                                          label={
-                                            draft.decision === "split"
-                                              ? `Title ${index + 1}`
-                                              : "Your title"
-                                          }
-                                          value={title}
-                                          disabled={locked}
-                                          onChange={(event) =>
-                                            changeDraft({
-                                              titles: draft.titles.map(
-                                                (value, row) =>
-                                                  row === index
-                                                    ? event.target.value
-                                                    : value,
-                                              ),
-                                            })
-                                          }
-                                        />
-                                        {draft.decision === "split" && (
-                                          <Button
-                                            disabled={
-                                              locked || draft.titles.length <= 2
-                                            }
-                                            aria-label={`Remove title ${index + 1}`}
-                                            onClick={() => {
-                                              changeDraft({
-                                                titles: draft.titles.filter(
-                                                  (_, row) => row !== index,
-                                                ),
-                                              });
-                                              window.setTimeout(
-                                                () =>
-                                                  document
-                                                    .getElementById(
-                                                      `review-title-${Math.min(index, draft.titles.length - 2)}`,
-                                                    )
-                                                    ?.focus(),
-                                                0,
-                                              );
-                                            }}
-                                            sx={{
-                                              alignSelf: {
-                                                xs: "flex-start",
-                                                sm: "center",
-                                              },
-                                            }}
-                                          >
-                                            Remove
-                                          </Button>
-                                        )}
-                                      </Stack>
-                                    ))}
-                                    {draft.decision === "split" && (
-                                      <Box>
+                                  <FormControlLabel
+                                    data-selected={draft.decision === "keep"}
+                                    value="keep"
+                                    control={<Radio />}
+                                    label="Keep it"
+                                  />
+                                  <FormControlLabel
+                                    data-selected={draft.decision === "clarify"}
+                                    value="clarify"
+                                    control={<Radio />}
+                                    label="Use one clearer title"
+                                  />
+                                  <FormControlLabel
+                                    data-selected={draft.decision === "split"}
+                                    value="split"
+                                    control={<Radio />}
+                                    label="Use several titles"
+                                  />
+                                </RadioGroup>
+                              </FormControl>
+                              {draft.decision === "keep" && (
+                                <Typography>
+                                  Title to save:{" "}
+                                  <strong>{task.currentTitle}</strong>
+                                </Typography>
+                              )}
+                              {(draft.decision === "clarify" ||
+                                draft.decision === "split") && (
+                                <Stack spacing={2} data-review-field="titles">
+                                  {draft.titles.map((title, index) => (
+                                    <Stack
+                                      key={index}
+                                      direction={{ xs: "column", sm: "row" }}
+                                      spacing={1}
+                                      alignItems={{ sm: "flex-start" }}
+                                    >
+                                      <TextField
+                                        id={`review-title-${index}`}
+                                        error={
+                                          invalidField === "titles" &&
+                                          (!title.trim() ||
+                                            title.length > 400 ||
+                                            draft.titles.findIndex(
+                                              (t) => t.trim() === title.trim(),
+                                            ) !== index)
+                                        }
+                                        inputProps={{
+                                          "aria-describedby":
+                                            invalidField === "titles"
+                                              ? "review-form-error"
+                                              : undefined,
+                                        }}
+                                        fullWidth
+                                        label={
+                                          draft.decision === "split"
+                                            ? `Title ${index + 1}`
+                                            : "Your title"
+                                        }
+                                        value={title}
+                                        disabled={locked}
+                                        onChange={(event) =>
+                                          changeDraft({
+                                            titles: draft.titles.map(
+                                              (value, row) =>
+                                                row === index
+                                                  ? event.target.value
+                                                  : value,
+                                            ),
+                                          })
+                                        }
+                                      />
+                                      {draft.decision === "split" && (
                                         <Button
                                           disabled={
-                                            locked || draft.titles.length >= 20
+                                            locked || draft.titles.length <= 2
                                           }
-                                          onClick={() =>
+                                          aria-label={`Remove title ${index + 1}`}
+                                          onClick={() => {
                                             changeDraft({
-                                              titles: [...draft.titles, ""],
-                                            })
-                                          }
+                                              titles: draft.titles.filter(
+                                                (_, row) => row !== index,
+                                              ),
+                                            });
+                                            window.setTimeout(
+                                              () =>
+                                                document
+                                                  .getElementById(
+                                                    `review-title-${Math.min(index, draft.titles.length - 2)}`,
+                                                  )
+                                                  ?.focus(),
+                                              0,
+                                            );
+                                          }}
+                                          sx={{
+                                            alignSelf: {
+                                              xs: "flex-start",
+                                              sm: "center",
+                                            },
+                                          }}
                                         >
-                                          Add another title
+                                          Remove
                                         </Button>
-                                      </Box>
-                                    )}
-                                  </Stack>
-                                )}
-                              </>
-                            ) : (
-                              <>
-                                <Typography>
-                                  Does each alternative clearly and accurately
-                                  convey the relevant activity? It needs to be
-                                  adequate, not perfectly worded. Then rank your
-                                  preference. Alternatives may contain one title
-                                  or several. Identical alternatives are shown
-                                  once. Equal ranks mean equally preferred; use
-                                  “Unsure” or “I cannot rank these” for
-                                  uncertainty.
-                                </Typography>
-                                {(task.options ?? []).map((option, index) => {
-                                  const rating = draft.ratings[option.id] ?? {
-                                    adequacy: "",
-                                    rank: null,
-                                  };
-                                  return (
-                                    <Box key={option.id} sx={design.optionCard}>
-                                      <Stack spacing={2}>
-                                        <Typography variant="h6" component="h3">
-                                          Alternative {optionLetter(index)}
-                                        </Typography>
-                                        <Box
-                                          component="ul"
-                                          sx={{ m: 0, pl: 3 }}
-                                        >
-                                          {option.titles.map((title, row) => (
-                                            <Typography
-                                              component="li"
-                                              key={row}
-                                              sx={{
-                                                whiteSpace: "pre-wrap",
-                                                overflowWrap: "anywhere",
-                                              }}
-                                            >
-                                              {title}
-                                            </Typography>
-                                          ))}
-                                        </Box>
-                                        <FormControl
-                                          component="fieldset"
-                                          disabled={locked}
-                                          data-review-field={
-                                            !rating.adequacy
-                                              ? "ratings"
-                                              : undefined
-                                          }
-                                          error={
-                                            invalidField === "ratings" &&
-                                            !rating.adequacy
-                                          }
-                                          aria-describedby={
-                                            invalidField === "ratings"
-                                              ? "review-form-error"
-                                              : undefined
-                                          }
-                                        >
-                                          <FormLabel component="legend">
-                                            How well does alternative{" "}
-                                            {optionLetter(index)} describe the
-                                            activity?
-                                          </FormLabel>
-                                          <RadioGroup
-                                            name={`adequacy-${task.caseId}-${option.id}`}
-                                            value={rating.adequacy}
-                                            onChange={(event) =>
-                                              changeDraft({
-                                                ratings: {
-                                                  ...draft.ratings,
-                                                  [option.id]: {
-                                                    ...rating,
-                                                    adequacy: event.target
-                                                      .value as TitleAdequacy,
-                                                  },
-                                                },
-                                              })
-                                            }
+                                      )}
+                                    </Stack>
+                                  ))}
+                                  {draft.decision === "split" && (
+                                    <Box>
+                                      <Button
+                                        disabled={
+                                          locked || draft.titles.length >= 20
+                                        }
+                                        onClick={() =>
+                                          changeDraft({
+                                            titles: [...draft.titles, ""],
+                                          })
+                                        }
+                                      >
+                                        Add another title
+                                      </Button>
+                                    </Box>
+                                  )}
+                                </Stack>
+                              )}
+                            </>
+                          ) : (
+                            <>
+                              <Typography>
+                                Does each alternative clearly and accurately
+                                convey the relevant activity? It needs to be
+                                adequate, not perfectly worded. Then rank your
+                                preference. Alternatives may contain one title
+                                or several. Identical alternatives are shown
+                                once. Equal ranks mean equally preferred; use
+                                “Unsure” or “I cannot rank these” for
+                                uncertainty.
+                              </Typography>
+                              {(task.options ?? []).map((option, index) => {
+                                const rating = draft.ratings[option.id] ?? {
+                                  adequacy: "",
+                                  rank: null,
+                                };
+                                return (
+                                  <Box key={option.id} sx={design.optionCard}>
+                                    <Stack spacing={2}>
+                                      <Typography variant="h6" component="h3">
+                                        Alternative {optionLetter(index)}
+                                      </Typography>
+                                      <Box component="ul" sx={{ m: 0, pl: 3 }}>
+                                        {option.titles.map((title, row) => (
+                                          <Typography
+                                            component="li"
+                                            key={row}
+                                            sx={{
+                                              whiteSpace: "pre-wrap",
+                                              overflowWrap: "anywhere",
+                                            }}
                                           >
-                                            <FormControlLabel
-                                              value="adequate"
-                                              control={<Radio />}
-                                              label="Adequate"
-                                            />
-                                            <FormControlLabel
-                                              value="needs_work"
-                                              control={<Radio />}
-                                              label="Needs work"
-                                            />
-                                            <FormControlLabel
-                                              value="unsure"
-                                              control={<Radio />}
-                                              label="Unsure"
-                                            />
-                                          </RadioGroup>
-                                        </FormControl>
-                                        <TextField
-                                          data-review-field={
-                                            rating.rank === null ||
-                                            invalidField === "ranks"
-                                              ? "ranks"
-                                              : undefined
-                                          }
-                                          error={invalidField === "ranks"}
-                                          helperText="1 = most preferred. Equal ranks are allowed."
-                                          select
-                                          label={`Preference rank for alternative ${optionLetter(index)}`}
-                                          value={rating.rank ?? ""}
-                                          disabled={locked || draft.cannotRank}
-                                          fullWidth
+                                            {title}
+                                          </Typography>
+                                        ))}
+                                      </Box>
+                                      <FormControl
+                                        component="fieldset"
+                                        disabled={locked}
+                                        data-review-field={
+                                          !rating.adequacy
+                                            ? "ratings"
+                                            : undefined
+                                        }
+                                        error={
+                                          invalidField === "ratings" &&
+                                          !rating.adequacy
+                                        }
+                                        aria-describedby={
+                                          invalidField === "ratings"
+                                            ? "review-form-error"
+                                            : undefined
+                                        }
+                                      >
+                                        <FormLabel component="legend">
+                                          How well does alternative{" "}
+                                          {optionLetter(index)} describe the
+                                          activity?
+                                        </FormLabel>
+                                        <RadioGroup
+                                          name={`adequacy-${task.caseId}-${option.id}`}
+                                          value={rating.adequacy}
                                           onChange={(event) =>
                                             changeDraft({
                                               ratings: {
                                                 ...draft.ratings,
                                                 [option.id]: {
                                                   ...rating,
-                                                  rank:
-                                                    event.target.value === ""
-                                                      ? null
-                                                      : Number(
-                                                          event.target.value,
-                                                        ),
+                                                  adequacy: event.target
+                                                    .value as TitleAdequacy,
                                                 },
                                               },
                                             })
                                           }
                                         >
-                                          <MenuItem value="">
-                                            Choose a rank
+                                          <FormControlLabel
+                                            value="adequate"
+                                            control={<Radio />}
+                                            label="Adequate"
+                                          />
+                                          <FormControlLabel
+                                            value="needs_work"
+                                            control={<Radio />}
+                                            label="Needs work"
+                                          />
+                                          <FormControlLabel
+                                            value="unsure"
+                                            control={<Radio />}
+                                            label="Unsure"
+                                          />
+                                        </RadioGroup>
+                                      </FormControl>
+                                      <TextField
+                                        data-review-field={
+                                          rating.rank === null ||
+                                          invalidField === "ranks"
+                                            ? "ranks"
+                                            : undefined
+                                        }
+                                        error={invalidField === "ranks"}
+                                        helperText="1 = most preferred. Equal ranks are allowed."
+                                        select
+                                        label={`Preference rank for alternative ${optionLetter(index)}`}
+                                        value={rating.rank ?? ""}
+                                        disabled={locked || draft.cannotRank}
+                                        fullWidth
+                                        onChange={(event) =>
+                                          changeDraft({
+                                            ratings: {
+                                              ...draft.ratings,
+                                              [option.id]: {
+                                                ...rating,
+                                                rank:
+                                                  event.target.value === ""
+                                                    ? null
+                                                    : Number(
+                                                        event.target.value,
+                                                      ),
+                                              },
+                                            },
+                                          })
+                                        }
+                                      >
+                                        <MenuItem value="">
+                                          Choose a rank
+                                        </MenuItem>
+                                        {(task.options ?? []).map((_, rank) => (
+                                          <MenuItem key={rank} value={rank + 1}>
+                                            {rank + 1}
                                           </MenuItem>
-                                          {(task.options ?? []).map(
-                                            (_, rank) => (
-                                              <MenuItem
-                                                key={rank}
-                                                value={rank + 1}
-                                              >
-                                                {rank + 1}
-                                              </MenuItem>
-                                            ),
-                                          )}
-                                        </TextField>
-                                      </Stack>
-                                    </Box>
-                                  );
-                                })}
-                                <FormControlLabel
-                                  control={
-                                    <Checkbox
-                                      checked={draft.cannotRank}
-                                      disabled={locked}
-                                      onChange={(event) => {
-                                        const cannotRank = event.target.checked;
-                                        changeDraft({
-                                          cannotRank,
-                                          ratings: cannotRank
-                                            ? Object.fromEntries(
-                                                Object.entries(
-                                                  draft.ratings,
-                                                ).map(([id, rating]) => [
+                                        ))}
+                                      </TextField>
+                                    </Stack>
+                                  </Box>
+                                );
+                              })}
+                              <FormControlLabel
+                                control={
+                                  <Checkbox
+                                    checked={draft.cannotRank}
+                                    disabled={locked}
+                                    onChange={(event) => {
+                                      const cannotRank = event.target.checked;
+                                      changeDraft({
+                                        cannotRank,
+                                        ratings: cannotRank
+                                          ? Object.fromEntries(
+                                              Object.entries(draft.ratings).map(
+                                                ([id, rating]) => [
                                                   id,
                                                   { ...rating, rank: null },
-                                                ]),
-                                              )
-                                            : draft.ratings,
-                                        });
-                                      }}
-                                    />
-                                  }
-                                  label="I cannot rank these alternatives"
-                                />
-                              </>
-                            )}
-                            <Divider />
-                            <FormControl
-                              component="fieldset"
-                              disabled={locked}
-                              sx={design.confidenceGroup}
-                              data-review-field="confidence"
-                              error={invalidField === "confidence"}
-                              aria-describedby={
-                                invalidField === "confidence"
-                                  ? "review-form-error"
-                                  : undefined
+                                                ],
+                                              ),
+                                            )
+                                          : draft.ratings,
+                                      });
+                                    }}
+                                  />
+                                }
+                                label="I cannot rank these alternatives"
+                              />
+                            </>
+                          )}
+                          <Divider />
+                          <FormControl
+                            component="fieldset"
+                            disabled={locked}
+                            sx={design.confidenceGroup}
+                            data-review-field="confidence"
+                            error={invalidField === "confidence"}
+                            aria-describedby={
+                              invalidField === "confidence"
+                                ? "review-form-error"
+                                : undefined
+                            }
+                          >
+                            <FormLabel component="legend">
+                              How confident are you overall? 1 is low; 5 is
+                              high.
+                            </FormLabel>
+                            <RadioGroup
+                              row
+                              name={`confidence-${task.caseId}-${task.stage}`}
+                              value={draft.confidence ?? ""}
+                              onChange={(event) =>
+                                changeDraft({
+                                  confidence: Number(event.target.value),
+                                })
                               }
                             >
-                              <FormLabel component="legend">
-                                How confident are you overall? 1 is low; 5 is
-                                high.
-                              </FormLabel>
-                              <RadioGroup
-                                row
-                                name={`confidence-${task.caseId}-${task.stage}`}
-                                value={draft.confidence ?? ""}
-                                onChange={(event) =>
-                                  changeDraft({
-                                    confidence: Number(event.target.value),
-                                  })
-                                }
-                              >
-                                {[1, 2, 3, 4, 5].map((value) => (
-                                  <FormControlLabel
-                                    key={value}
-                                    data-selected={draft.confidence === value}
-                                    value={value}
-                                    control={<Radio />}
-                                    label={String(value)}
-                                  />
-                                ))}
-                              </RadioGroup>
-                            </FormControl>
-                            <TextField
-                              data-review-field="notes"
-                              error={invalidField === "notes"}
-                              fullWidth
-                              multiline
-                              minRows={3}
-                              label="Comments"
-                              value={draft.notes}
-                              disabled={locked}
-                              onChange={(event) =>
-                                changeDraft({ notes: event.target.value })
+                              {[1, 2, 3, 4, 5].map((value) => (
+                                <FormControlLabel
+                                  key={value}
+                                  data-selected={draft.confidence === value}
+                                  value={value}
+                                  control={<Radio />}
+                                  label={String(value)}
+                                />
+                              ))}
+                            </RadioGroup>
+                          </FormControl>
+                          <TextField
+                            data-review-field="notes"
+                            error={invalidField === "notes"}
+                            fullWidth
+                            multiline
+                            minRows={3}
+                            label="Comments"
+                            value={draft.notes}
+                            disabled={locked}
+                            onChange={(event) =>
+                              changeDraft({ notes: event.target.value })
+                            }
+                            helperText={
+                              task.stage === "evaluate"
+                                ? "Required if anything needs work, you are unsure, or you cannot rank. Otherwise optional."
+                                : "Optional. Explain any choice or uncertainty in your own words."
+                            }
+                          />
+                          <Stack sx={design.saveBar}>
+                            <Button
+                              variant="contained"
+                              disabled={saving}
+                              onClick={
+                                draft.pendingSubmission
+                                  ? () =>
+                                      void submit(
+                                        draft.pendingSubmission as TitleValidationSubmission,
+                                      )
+                                  : save
                               }
-                              helperText={
-                                task.stage === "evaluate"
-                                  ? "Required if anything needs work, you are unsure, or you cannot rank. Otherwise optional."
-                                  : "Optional. Explain any choice or uncertainty in your own words."
-                              }
-                            />
-                            <Stack sx={design.saveBar}>
-                              <Button
-                                variant="contained"
-                                disabled={saving}
-                                onClick={
-                                  draft.pendingSubmission
-                                    ? () =>
-                                        void submit(
-                                          draft.pendingSubmission as TitleValidationSubmission,
-                                        )
-                                    : save
-                                }
-                              >
-                                {saving
-                                  ? "Saving…"
-                                  : draft.pendingSubmission
-                                    ? "Retry the same answer"
-                                    : "Save and continue"}
-                              </Button>
-                              {draft.pendingSubmission && (
-                                <Button
-                                  variant="outlined"
-                                  disabled={loadingSession || saving}
-                                  onClick={() => void checkCurrentTask()}
-                                >
-                                  Check current task
-                                </Button>
-                              )}
-                            </Stack>
+                            >
+                              {saving
+                                ? "Saving…"
+                                : draft.pendingSubmission
+                                  ? "Retry the same answer"
+                                  : "Save and continue"}
+                            </Button>
                             {draft.pendingSubmission && (
-                              <Typography
-                                variant="body2"
-                                color="text.secondary"
+                              <Button
+                                variant="outlined"
+                                disabled={loadingSession || saving}
+                                onClick={() => void checkCurrentTask()}
                               >
-                                Receipt of this answer is still unconfirmed.
-                                Retry sends the same answer safely, or check the
-                                current task.
-                              </Typography>
+                                Check current task
+                              </Button>
                             )}
                           </Stack>
-                        </Box>
-                      </>
-                    )}
+                          {draft.pendingSubmission && (
+                            <Typography variant="body2" color="text.secondary">
+                              Receipt of this answer is still unconfirmed. Retry
+                              sends the same answer safely, or check the current
+                              task.
+                            </Typography>
+                          )}
+                        </Stack>
+                      </Box>
+                    </>
                   </Stack>
                 </CardContent>
               </Card>
