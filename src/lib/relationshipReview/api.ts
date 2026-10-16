@@ -4,6 +4,7 @@ import { localPreviewEnabled } from "../titleValidation/repository";
 import { getRelationshipDataset, getRelationshipTrace } from "./dataset";
 import { parseFeedback, RelationshipError } from "./feedback";
 import { readFeedback, saveFeedback } from "./repository";
+import { relationshipPackages } from "./package";
 import {
   getRelationshipPresentation,
   getPresentationTrace,
@@ -81,7 +82,23 @@ export async function relationshipReviewHandler(
       canViewTomFeedback =
         String(user.email).toLowerCase() !== "malone@mit.edu";
     }
-    const { dataset, sha256 } = getRelationshipDataset();
+    // Cached v1 clients did not send a version for these read-only actions.
+    // New clients always bind them explicitly to the displayed dataset.
+    const requestedVersion =
+      req.body?.datasetVersion ??
+      (["trace", "tom-feedback"].includes(action)
+        ? relationshipPackages().find((e) => !e.directory)?.version
+        : undefined);
+    if (
+      requestedVersion !== undefined &&
+      (typeof requestedVersion !== "string" ||
+        !relationshipPackages().some((e) => e.version === requestedVersion))
+    )
+      throw new RelationshipError(
+        409,
+        "This review version is unavailable. Reload to continue.",
+      );
+    const { dataset, sha256 } = getRelationshipDataset(requestedVersion);
     const { presentation, sha256: presentationSha256 } =
       getRelationshipPresentation(dataset, sha256);
     if (action === "tom-feedback") {
@@ -97,14 +114,12 @@ export async function relationshipReviewHandler(
       const caseId = String(req.body?.caseId || "");
       if (!dataset.cases.some((c) => c.id === caseId))
         throw new RelationshipError(404, "Unknown activity.");
-      return res
-        .status(200)
-        .json({
-          trace: {
-            original: getRelationshipTrace(caseId),
-            selectedChangesReview: getPresentationTrace(),
-          },
-        });
+      return res.status(200).json({
+        trace: {
+          original: getRelationshipTrace(caseId, dataset.version),
+          selectedChangesReview: getPresentationTrace(dataset.version),
+        },
+      });
     }
     if (action === "save") {
       if (
@@ -144,6 +159,10 @@ export async function relationshipReviewHandler(
       feedback: await readFeedback(uid, dataset.version, preview, sha256),
       preview,
       canViewTomFeedback,
+      availableVersions: relationshipPackages().map((e) => ({
+        version: e.version,
+        current: e.version === relationshipPackages()[0].version,
+      })),
     });
   } catch (e: any) {
     return res.status(e instanceof RelationshipError ? e.status : 500).json({

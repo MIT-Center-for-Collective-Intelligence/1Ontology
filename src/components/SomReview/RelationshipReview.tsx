@@ -68,7 +68,15 @@ type Draft = {
   pending?: Record<string, unknown>;
   dirty: boolean;
 };
-function ExactTrace({ caseId, preview }: { caseId: string; preview: boolean }) {
+function ExactTrace({
+  caseId,
+  preview,
+  version,
+}: {
+  caseId: string;
+  preview: boolean;
+  version: string;
+}) {
   const [trace, setTrace] = useState<unknown>(null),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false);
@@ -76,7 +84,10 @@ function ExactTrace({ caseId, preview }: { caseId: string; preview: boolean }) {
     setBusy(true);
     setError("");
     try {
-      setTrace((await request("trace", { caseId }, preview)).trace);
+      setTrace(
+        (await request("trace", { caseId, datasetVersion: version }, preview))
+          .trace,
+      );
     } catch (e: any) {
       setError(e.message);
     } finally {
@@ -238,7 +249,11 @@ function FeedbackForm({
       if (e.status === 400 || e.status === 413) setRejected(true);
       if (e.code === "revision_conflict")
         try {
-          const latest = await request("session", {}, session.preview);
+          const latest = await request(
+            "session",
+            { datasetVersion: session.dataset.version },
+            session.preview,
+          );
           const current = latest.feedback[item.id];
           if (current) {
             onSaved(current);
@@ -414,7 +429,14 @@ export default function RelationshipReview({
   async function load() {
     setError("");
     try {
-      const loaded = await request("session", {}, preview);
+      const version = new URLSearchParams(window.location.search).get(
+        "version",
+      );
+      const loaded = await request(
+        "session",
+        version ? { datasetVersion: version } : {},
+        preview,
+      );
       const wanted = new URLSearchParams(window.location.search).get(
         "activity",
       );
@@ -441,8 +463,8 @@ export default function RelationshipReview({
         wanted &&
         !loaded.dataset.cases.some((c: RelationshipCase) => c.id === wanted)
       )
-        setError(
-          "That activity is not in this review set. Choose an activity below.",
+        setSelectionNotice(
+          "That activity is not in this review set. The current proposals are shown below; earlier proposals and saved answers remain available through the Earlier review link.",
         );
     } catch (e: any) {
       setError(e.message);
@@ -488,6 +510,7 @@ export default function RelationshipReview({
     if (item) {
       const url = new URL(window.location.href);
       url.searchParams.set("activity", item.id);
+      if (data) url.searchParams.set("version", data.version);
       if (archive) url.searchParams.set("view", "analysis");
       else url.searchParams.delete("view");
       window.history.replaceState(window.history.state, "", url);
@@ -497,11 +520,17 @@ export default function RelationshipReview({
       activityHeading.current?.focus({ preventScroll: true });
       activityHeading.current?.scrollIntoView?.({ block: "start" });
     }
-  }, [item?.id, archive]);
+  }, [item?.id, archive, data?.version]);
   async function loadTomFeedback() {
     setTomError("");
     try {
-      setTomFeedback((await request("tom-feedback")).feedback);
+      setTomFeedback(
+        (
+          await request("tom-feedback", {
+            datasetVersion: session?.dataset.version,
+          })
+        ).feedback,
+      );
     } catch (e: any) {
       setTomError(e.message);
     }
@@ -549,6 +578,8 @@ export default function RelationshipReview({
               evidence. An activity may have multiple generalizations; each link
               is assessed separately. Your judgment is needed before any
               ontology change is made.
+              {data?.cases.some((c) => c.scope === "sibling-review") &&
+                " This review compares siblings to find closer generalizations, even where the existing generalization is valid."}
             </Typography>
             {error && (
               <Alert
@@ -722,7 +753,11 @@ export default function RelationshipReview({
                           <Chip label={`Level ${item.level}`} size="small" />
                           {item.scope !== "top-four-levels" && (
                             <Chip
-                              label="Reason’s immediate child"
+                              label={
+                                item.scope === "sibling-review"
+                                  ? "Sibling comparison"
+                                  : "Reason’s immediate child"
+                              }
                               size="small"
                             />
                           )}
@@ -812,7 +847,7 @@ export default function RelationshipReview({
                                   variant="body2"
                                   color="text.secondary"
                                 >
-                                  All generalizations after the proposed change
+                              All direct generalizations after the proposed change
                                 </Typography>
                                 <Box component="ul" sx={{ pl: 3, mb: 0 }}>
                                   {item.analysis.proposedParents.map((p) => (
@@ -832,13 +867,13 @@ export default function RelationshipReview({
                               <strong>What changes:</strong>{" "}
                               {delta.removed.length > 0 && (
                                 <>
-                                  Remove the generalization link to{" "}
+                                  Remove the direct generalization link to{" "}
                                   {delta.removed.map(title).join("; ")}.{" "}
                                 </>
                               )}
                               {delta.added.length > 0 && (
                                 <>
-                                  Add the generalization link to{" "}
+                                  Add the direct generalization link to{" "}
                                   {delta.added.map(title).join("; ")}.{" "}
                                 </>
                               )}
@@ -859,14 +894,24 @@ export default function RelationshipReview({
                             >
                               Why make this change?
                             </Typography>
-                            <Typography>{selectedCard.reason}</Typography>
+                            <Typography>
+                              {selectedCard.whyChange || selectedCard.reason}
+                            </Typography>
                             <Typography
                               component="h3"
                               variant="h6"
                               sx={{ mt: 2, mb: 1 }}
                             >
-                              Evidence from the current definitions
+                              Evidence from the recorded descriptions
                             </Typography>
+                            {!selectedCard.quotes.length && (
+                              <Typography>
+                                No recorded definition establishes this
+                                relationship. The proposal uses the ordinary
+                                meaning of the activity names and their current
+                                context; you can inspect that context below.
+                              </Typography>
+                            )}
                             {selectedCard.quotes
                               .filter(
                                 (q) =>
@@ -939,7 +984,7 @@ export default function RelationshipReview({
                             {selectedCard && (
                               <>
                                 <Typography sx={{ mb: 2 }}>
-                                  {selectedCard.whyChange}
+                                  {selectedCard.reason}
                                 </Typography>
                                 <Typography sx={{ mb: 2 }}>
                                   {selectedCard.alternativeAssessment}
@@ -1172,6 +1217,7 @@ export default function RelationshipReview({
                           key={item.id}
                           caseId={item.id}
                           preview={session.preview}
+                          version={data.version}
                         />
                       </AccordionDetails>
                     </Accordion>
@@ -1185,6 +1231,22 @@ export default function RelationshipReview({
                   All suggestions await expert review. Saving an answer never
                   changes an ontology node or relationship.
                 </Typography>
+                {(session.availableVersions || [])
+                  .filter((v) => v.version !== data.version)
+                  .map((v) => (
+                    <Button
+                      key={v.version}
+                      href={
+                        "/review/relationships?version=" +
+                        encodeURIComponent(v.version)
+                      }
+                      sx={{ mt: 1 }}
+                    >
+                      {v.current
+                        ? "Return to current review"
+                        : "Earlier review and saved answers"}
+                    </Button>
+                  ))}
               </>
             )}
           </Box>

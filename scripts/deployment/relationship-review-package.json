@@ -1,14 +1,31 @@
 {
-  "schemaVersion": "private-relationship-review-package-v1",
-  "version": "top-level-relationships-20261016-v1",
-  "cases": 68,
+  "schemaVersion": "private-relationship-review-package-v2",
+  "version": "sibling-relationships-20261016-v2",
+  "directory": "sibling-v2",
+  "cases": 22,
   "model": "GPT-6.1 Sol",
   "reasoning": "high",
-  "bundleSha256": "df7e2ef5fe2a6c0a43c1d8bb3b8567852c2f514fa41fcdc2140fd727ee0dc34e",
-  "sourceSha256": "f8df2bfefd87ae238763cc79b50d0488fa248c39edc74ac14b38adcc9a97c563",
-  "archiveSha256": "393e5beb7417d407a62aa64859a187cf4705cd56d88f1f635c03cfb810d999e0",
-  "releaseLockSha256": "ea46db227e60e1d1b81c196b50896c298fbe12aa575bb5ac37a90dec6df13577",
-  "gcsUri": "gs://ontology-41607_cloudbuild/relationship-review/393e5beb7417d407a62aa64859a187cf4705cd56d88f1f635c03cfb810d999e0.tar.gz",
-  "presentationSha256": "803840473349351df753e658bf8b4edeae2a161a33d337af2f8e109e5acc8684",
-  "presentationTraceSha256": "94180deab8d737d63a2fb9fb20a11a83f69ab741b741314f3eecc14ca79cd4b4"
+  "bundleSha256": "edc994d273f4ca605903f1e76aba456400cd354cd75f257d499f07eb683e6d65",
+  "sourceSha256": "74896f65d593ad135a0894fa52d172781c8731d3f75d2c0d295deccd71eda2be",
+  "releaseLockSha256": "65be2fa44bdab6f913d8605ead641defb815ef050dcc1868754429bb1f299510",
+  "presentationSha256": "2f887e390dad111de0b0522e806eba56469fac41e6cbd1ec10890e7c783575fc",
+  "presentationTraceSha256": "a87d7fb659b9be6dc2c85c28c4607b2d317148c71408a61e3ef87494714d23a5",
+  "history": [
+    {
+      "schemaVersion": "private-relationship-review-package-v1",
+      "version": "top-level-relationships-20261016-v1",
+      "cases": 68,
+      "model": "GPT-6.1 Sol",
+      "reasoning": "high",
+      "bundleSha256": "df7e2ef5fe2a6c0a43c1d8bb3b8567852c2f514fa41fcdc2140fd727ee0dc34e",
+      "sourceSha256": "f8df2bfefd87ae238763cc79b50d0488fa248c39edc74ac14b38adcc9a97c563",
+      "archiveSha256": "393e5beb7417d407a62aa64859a187cf4705cd56d88f1f635c03cfb810d999e0",
+      "releaseLockSha256": "ea46db227e60e1d1b81c196b50896c298fbe12aa575bb5ac37a90dec6df13577",
+      "gcsUri": "gs://ontology-41607_cloudbuild/relationship-review/393e5beb7417d407a62aa64859a187cf4705cd56d88f1f635c03cfb810d999e0.tar.gz",
+      "presentationSha256": "803840473349351df753e658bf8b4edeae2a161a33d337af2f8e109e5acc8684",
+      "presentationTraceSha256": "94180deab8d737d63a2fb9fb20a11a83f69ab741b741314f3eecc14ca79cd4b4"
+    }
+  ],
+  "archiveSha256": "6d0f9f8dd1a096f75425b68a04f0d63a7a54fbec012151e08b9308f430fad25f",
+  "gcsUri": "gs://ontology-41607_cloudbuild/relationship-review/6d0f9f8dd1a096f75425b68a04f0d63a7a54fbec012151e08b9308f430fad25f.tar.gz"
 }

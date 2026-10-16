@@ -31,7 +31,8 @@ function changedTrace(mutate, check) {
     mutate(trace);
     const raw = JSON.stringify(trace);
     fs.writeFileSync(filename, raw);
-    manifest.presentationTraceSha256 = crypto
+    const entry = manifest.history?.find((e) => !e.directory) || manifest;
+    entry.presentationTraceSha256 = crypto
       .createHash("sha256")
       .update(raw)
       .digest("hex");

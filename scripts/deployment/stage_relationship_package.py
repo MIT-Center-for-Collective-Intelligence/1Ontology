@@ -11,19 +11,30 @@ ROOT = Path(__file__).resolve().parents[2]
 MANIFEST = Path(__file__).with_name("relationship-review-package.json")
 
 
-def verify_directory(directory, manifest):
+def package_entries(manifest):
+    entries = [manifest, *manifest.get("history", [])]
+    if len({e["version"] for e in entries}) != len(entries):
+        raise ValueError("Duplicate evidence version")
+    for entry in entries:
+        if entry.get("directory") and not re.fullmatch(r"[a-z0-9-]+", entry["directory"]):
+            raise ValueError("Unsafe evidence directory")
+    return entries
+
+
+def verify_entry(directory, manifest):
     lock_bytes = (directory / "release-lock.json").read_bytes()
     if hashlib.sha256(lock_bytes).hexdigest() != manifest["releaseLockSha256"]:
         raise ValueError("Private evidence lock differs from committed hash")
     lock = json.loads(lock_bytes)
-    data = (directory / "top-level-v1.json").read_bytes()
+    filename = "dataset.json" if manifest.get("directory") else "top-level-v1.json"
+    data = (directory / filename).read_bytes()
     dataset = json.loads(data)
     digest = hashlib.sha256(data).hexdigest()
     if (lock.get("previewOnly") or digest != manifest["bundleSha256"]
             or digest != lock["datasetSha256"] or dataset["version"] != manifest["version"]
-            or len(dataset["cases"]) != 68 or lock["caseCount"] != 68):
+            or len(dataset["cases"]) != manifest["cases"] or lock["caseCount"] != manifest["cases"]):
         raise ValueError("Private relationship package does not match committed release")
-    expected = {"top-level-v1.json", "release-lock.json"}
+    expected = {filename, "release-lock.json"}
     for filename, key in [("presentation.json", "presentationSha256"), ("presentation-trace.json", "presentationTraceSha256")]:
         if key in manifest:
             raw = (directory / filename).read_bytes()
@@ -40,6 +51,26 @@ def verify_directory(directory, manifest):
         if hashlib.sha256(raw).hexdigest() != lock["traceHashes"][case["id"]]:
             raise ValueError("Private trace hash mismatch")
         json.loads(raw)
+    return expected
+
+
+def expected_members(manifest):
+    result = set()
+    for entry in package_entries(manifest):
+        prefix = entry.get("directory", "")
+        names = {"dataset.json" if prefix else "top-level-v1.json", "release-lock.json"}
+        if "presentationSha256" in entry:
+            names.update({"presentation.json", "presentation-trace.json"})
+        # Case identifiers are checked after extraction; count remains bounded.
+        result.update(str(Path(prefix) / name) for name in names)
+    return result
+
+
+def verify_directory(directory, manifest):
+    expected = set()
+    for entry in package_entries(manifest):
+        prefix = entry.get("directory", "")
+        expected.update(str(Path(prefix) / p) for p in verify_entry(directory / prefix, entry))
     actual = {str(p.relative_to(directory)) for p in directory.rglob("*") if p.is_file()}
     if actual != expected:
         raise ValueError("Unexpected evidence files in relationship package")
@@ -54,18 +85,19 @@ def stage_archive(archive, manifest, destination):
         total = 0
         with tarfile.open(archive, "r:gz") as package:
             members = package.getmembers()
-            if len(members) != (72 if "presentationSha256" in manifest else 70):
+            expected_count = sum(e["cases"] + (4 if "presentationSha256" in e else 2) for e in package_entries(manifest))
+            if len(members) != expected_count:
                 raise ValueError("Unexpected private evidence member count")
             for member in members:
                 if (not member.isfile() or member.name in seen or
-                        not re.fullmatch(r"(?:top-level-v1\.json|release-lock\.json|presentation\.json|presentation-trace\.json|traces/[A-Za-z0-9_-]+\.json)", member.name)):
+                        not re.fullmatch(r"(?:[a-z0-9-]+/)?(?:dataset\.json|top-level-v1\.json|release-lock\.json|presentation\.json|presentation-trace\.json|traces/[A-Za-z0-9_-]+\.json)", member.name)):
                     raise ValueError("Unsafe or duplicate private archive member")
                 seen.add(member.name)
                 total += member.size
                 if member.size > 4 * 1024 * 1024 or total > 32 * 1024 * 1024:
                     raise ValueError("Private evidence archive exceeds bounded size")
                 target = staging / member.name
-                target.parent.mkdir(exist_ok=True)
+                target.parent.mkdir(parents=True, exist_ok=True)
                 content = package.extractfile(member).read()
                 json.loads(content)
                 target.write_bytes(content)

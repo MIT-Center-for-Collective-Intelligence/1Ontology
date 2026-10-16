@@ -25,6 +25,7 @@ COPY scripts/som-review/title-prompt-study-lib.mjs scripts/som-review/title-prom
 COPY scripts/som-review/latest-title-prompt-study-lib.mjs scripts/som-review/latest-title-prompt-study-lib.test.mjs ./scripts/som-review/
 COPY scripts/som-review/title-clarification-judge-lib.mjs scripts/som-review/title-clarification-judge-lib.test.mjs ./scripts/som-review/
 COPY scripts/som-review/relationship-graph-lib.mjs scripts/som-review/relationship-graph-lib.test.mjs scripts/som-review/validate-relationship-release.mjs scripts/som-review/validate-relationship-release.test.mjs ./scripts/som-review/
+COPY scripts/som-review/relationship-discovery-lib.mjs scripts/som-review/relationship-discovery-lib.test.mjs ./scripts/som-review/
 COPY __tests__ ./__tests__
 COPY artifacts/rob-sell-followup-2026-07-28/followup-audit.json ./artifacts/rob-sell-followup-2026-07-28/followup-audit.json
 COPY Buy_Society_of_Mind_Exploratory_2026-07-25 ./Buy_Society_of_Mind_Exploratory_2026-07-25
@@ -71,7 +72,7 @@ RUN node --test scripts/som-review/title-prompt-study-lib.test.mjs scripts/som-r
 RUN npm run build
 RUN npm run typecheck:title-validation
 RUN npx tsc --project tsconfig.relationship-review.json
-RUN node --test scripts/som-review/relationship-graph-lib.test.mjs scripts/som-review/validate-relationship-release.test.mjs
+RUN node --test scripts/som-review/relationship-graph-lib.test.mjs scripts/som-review/relationship-discovery-lib.test.mjs scripts/som-review/validate-relationship-release.test.mjs
 RUN node scripts/som-review/validate-relationship-release.mjs
 
 # Step 2. Production image (Runner)

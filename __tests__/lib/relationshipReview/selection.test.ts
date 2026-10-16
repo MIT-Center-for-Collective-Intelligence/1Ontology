@@ -45,6 +45,32 @@ test("compares every generalization independently and retains multiple valid lin
     retained: ["keep-two", "keep-one"],
   });
 });
+test("a valid but broad current parent can be replaced by a closer sibling", () => {
+  const c = activity(
+    "accept",
+    ["decide", "independent"],
+    ["select", "independent"],
+  );
+  c.analysis.currentLinks = [
+    {
+      parentId: "decide",
+      assessment: "valid",
+      reason: "Select still inherits Decide",
+      counterexample: "",
+    },
+  ];
+  expect(
+    selectedReviewCases(
+      { version: "v1", cases: [c] } as RelationshipDataset,
+      presentation(["accept"]),
+    ),
+  ).toEqual([c]);
+  expect(generalizationChanges(c)).toEqual({
+    added: ["select"],
+    removed: ["decide"],
+    retained: ["independent"],
+  });
+});
 test("keeps pinned selection order and excludes unchanged, uncertain and structurally flagged cases", () => {
   const cases = [
     activity("a", ["old"], ["new"]),

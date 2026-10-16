@@ -1,18 +1,20 @@
 import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
-export function validateRelationshipRelease(root = process.cwd()) {
-  const dir = path.join(root, "src/lib/relationshipReview/data");
+import { completeDiscoveryPrefix } from "./relationship-discovery-lib.mjs";
+function validateEntry(root, committed) {
+  const dir = path.join(
+    root,
+    "src/lib/relationshipReview/data",
+    committed.directory || "",
+  );
   const read = (file) => fs.readFileSync(path.join(dir, file));
   const sha = (x) => crypto.createHash("sha256").update(x).digest("hex");
-  const bytes = read("top-level-v1.json"),
+  const bytes = read(
+      committed.directory ? "dataset.json" : "top-level-v1.json",
+    ),
     dataset = JSON.parse(bytes),
     lock = JSON.parse(read("release-lock.json"));
-  const committed = JSON.parse(
-    fs.readFileSync(
-      path.join(root, "scripts/deployment/relationship-review-package.json"),
-    ),
-  );
   if (
     sha(read("release-lock.json")) !== committed.releaseLockSha256 ||
     sha(bytes) !== committed.bundleSha256
@@ -23,14 +25,14 @@ export function validateRelationshipRelease(root = process.cwd()) {
   };
   if (
     lock.previewOnly ||
-    lock.caseCount !== 68 ||
-    dataset.cases.length !== 68 ||
-    new Set(dataset.cases.map((c) => c.id)).size !== 68 ||
+    lock.caseCount !== committed.cases ||
+    dataset.cases.length !== committed.cases ||
+    new Set(dataset.cases.map((c) => c.id)).size !== committed.cases ||
     sha(bytes) !== lock.datasetSha256
   )
     fail("incomplete or unpinned dataset");
   if (
-    dataset.version !== "top-level-relationships-20261016-v1" ||
+    dataset.version !== committed.version ||
     dataset.model !== "GPT-6.1 Sol" ||
     dataset.reasoning !== "high" ||
     dataset.modelVersion !== "2026-09-29" ||
@@ -38,9 +40,10 @@ export function validateRelationshipRelease(root = process.cwd()) {
   )
     fail("wrong model, version or funding route");
   if (
-    dataset.cases.filter((c) => c.scope === "top-four-levels").length !== 64 ||
-    dataset.cases.filter((c) => c.scope === "Reason immediate child").length !==
-      4
+    !committed.directory &&
+    (dataset.cases.filter((c) => c.scope === "top-four-levels").length !== 64 ||
+      dataset.cases.filter((c) => c.scope === "Reason immediate child")
+        .length !== 4)
   )
     fail("wrong scope");
   const sourceIds = new Set(dataset.candidates.map((n) => n.id));
@@ -109,7 +112,57 @@ export function validateRelationshipRelease(root = process.cwd()) {
       fail("selection evidence hash mismatch");
     const presentation = JSON.parse(presentationBytes),
       trace = JSON.parse(traceBytes);
-    const reviews = [trace.editor, ...trace.critiques];
+    if (committed.directory) {
+      const discovery = trace.discovery;
+      const families = discovery.plan.packets.flatMap((p) => p.families);
+      if (
+        new Set(families.map((f) => f.parent.id)).size !==
+          discovery.plan.families ||
+        new Set(families.flatMap((f) => f.siblings.map((n) => n.id))).size !==
+          discovery.plan.distinctChildren ||
+        discovery.results.length !== discovery.plan.packets.length ||
+        discovery.plan.sourceSha256 !== dataset.sourceSha256
+      )
+        fail("sibling discovery coverage mismatch");
+      for (const r of discovery.results) {
+        const packet = discovery.plan.packets.find((p) => p.id === r.packetId);
+        const exact = discovery.exactRequests.find(
+          (x) => x.jobId === r.result.jobId,
+        );
+        const raw = discovery.responses.find(
+          (x) => x.jobId === r.result.jobId,
+        )?.payload;
+        if (
+          !packet ||
+          !exact ||
+          !raw ||
+          JSON.stringify(JSON.parse(exact.body.input).families) !==
+            JSON.stringify(packet.families) ||
+          sha(JSON.stringify(exact.body)) !== r.result.requestSha256 ||
+          JSON.stringify(
+            r.result.value.familyAssessments.map((f) => f.parentId).sort(),
+          ) !== JSON.stringify(packet.families.map((f) => f.parent.id).sort())
+        )
+          fail("sibling discovery provenance mismatch");
+        const text = raw.output
+          .flatMap((o) => o.content || [])
+          .filter((c) => c.type === "output_text")
+          .map((c) => c.text)
+          .join("\n");
+        const parsed =
+          raw.status === "completed"
+            ? JSON.parse(text)
+            : completeDiscoveryPrefix(text);
+        if (
+          JSON.stringify(parsed) !== JSON.stringify(r.result.value) ||
+          (raw.status !== "completed" &&
+            (raw.status !== "incomplete" ||
+              r.result.recovery?.kind !== "fully-emitted-prefix-only"))
+        )
+          fail("invalid partial discovery recovery");
+      }
+    }
+    const reviews = [...(trace.authors || [trace.editor]), ...trace.critiques];
     if (
       !Array.isArray(trace.exactRequests) ||
       trace.exactRequests.length !== reviews.length
@@ -121,6 +174,8 @@ export function validateRelationshipRelease(root = process.cwd()) {
       );
       if (
         requests.length !== 1 ||
+        requests[0].body.model !== "gpt-6-1-sol-society-of-mind" ||
+        requests[0].body.reasoning?.effort !== "high" ||
         requests[0].requestSha256 !== review.requestSha256 ||
         sha(JSON.stringify(requests[0].body)) !== review.requestSha256 ||
         typeof requests[0].body.instructions !== "string" ||
@@ -135,7 +190,9 @@ export function validateRelationshipRelease(root = process.cwd()) {
       presentation.datasetVersion !== dataset.version ||
       new Set(presentation.selectedCaseIds).size !==
         presentation.selectedCaseIds.length ||
-      trace.critiques.length !== 2
+      (committed.directory
+        ? trace.critiques.length < 2
+        : trace.critiques.length !== 2)
     )
       fail("invalid selected review set");
     const sources = new Map(
@@ -157,8 +214,12 @@ export function validateRelationshipRelease(root = process.cwd()) {
           JSON.stringify(c.analysis.proposedParents.map((n) => n.nodeId).sort())
       )
         fail("non-actionable selected proposal");
+      const applicableCritiques = trace.critiques.filter((r) =>
+        r.value.assessments.some((a) => a.caseId === id),
+      );
       if (
-        !trace.critiques.every((r) =>
+        applicableCritiques.length !== 2 ||
+        !applicableCritiques.every((r) =>
           r.value.assessments.some(
             (a) =>
               a.caseId === id &&
@@ -175,12 +236,27 @@ export function validateRelationshipRelease(root = process.cwd()) {
   }
   return {
     version: dataset.version,
-    cases: 68,
+    cases: dataset.cases.length,
     model: dataset.model,
     reasoning: dataset.reasoning,
     bundleSha256: sha(bytes),
     sourceSha256: dataset.sourceSha256,
   };
+}
+export function validateRelationshipRelease(root = process.cwd()) {
+  const manifest = JSON.parse(
+    fs.readFileSync(
+      path.join(root, "scripts/deployment/relationship-review-package.json"),
+    ),
+  );
+  const entries = [manifest, ...(manifest.history || [])];
+  if (new Set(entries.map((e) => e.version)).size !== entries.length)
+    throw Error("Duplicate relationship version");
+  for (const e of entries)
+    if (e.directory && !/^[a-z0-9-]+$/.test(e.directory))
+      throw Error("Unsafe relationship directory");
+  const results = entries.map((e) => validateEntry(root, e));
+  return results[0];
 }
 if (process.argv[1] === new URL(import.meta.url).pathname)
   console.log(JSON.stringify(validateRelationshipRelease()));

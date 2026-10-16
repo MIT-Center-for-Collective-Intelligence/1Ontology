@@ -115,15 +115,20 @@ def validate_release(info, commit, build_id, revision):
         "bundleSha256": hashlib.sha256(staff_bytes).hexdigest(), "released": True}
     if info.get("humanTitleReview") != expected_staff:
         raise ValueError("The staff title-review pilot is missing, changed, or not enabled")
-    relation_bytes = (Path(__file__).resolve().parents[2] / RELATIONSHIP_REVIEW_PACKAGE).read_bytes()
+    relation_manifest = json.loads(Path(__file__).with_name("relationship-review-package.json").read_bytes())
+    directory = relation_manifest.get("directory", "")
+    if directory and not re.fullmatch(r"[a-z0-9-]+", directory):
+        raise ValueError("Unsafe relationship package directory")
+    relation_root = Path(__file__).resolve().parents[2] / "src/lib/relationshipReview/data" / directory
+    relation_bytes = (relation_root / ("dataset.json" if directory else "top-level-v1.json")).read_bytes()
     relation = json.loads(relation_bytes)
     expected_relation = {"version": relation["version"], "cases": len(relation["cases"]),
         "model": relation["model"], "reasoning": relation["reasoning"],
         "bundleSha256": hashlib.sha256(relation_bytes).hexdigest(), "sourceSha256": relation["sourceSha256"]}
-    presentation_bytes = (Path(__file__).resolve().parents[2] / "src/lib/relationshipReview/data/presentation.json").read_bytes()
+    presentation_bytes = (relation_root / "presentation.json").read_bytes()
     presentation = json.loads(presentation_bytes)
     expected_relation.update({"presentationVersion":presentation["version"],"selectedProposals":len(presentation["selectedCaseIds"]),"presentationSha256":hashlib.sha256(presentation_bytes).hexdigest()})
-    if len(relation["cases"]) != 68 or info.get("relationshipReview") != expected_relation:
+    if len(relation["cases"]) != relation_manifest["cases"] or info.get("relationshipReview") != expected_relation:
         raise ValueError("The relationship review proposals are missing, incomplete, or changed")
 
 
