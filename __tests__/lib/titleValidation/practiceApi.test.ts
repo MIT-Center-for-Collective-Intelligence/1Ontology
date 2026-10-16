@@ -5,7 +5,11 @@ import {
   practiceStudyId,
 } from "../../../src/lib/titleValidation/practice";
 import {
+  answerKey,
   creatorFor,
+  presentTask,
+  sessionFor,
+  submitAnswer,
   ValidationState,
 } from "../../../src/lib/titleValidation/engine";
 import { getTitleValidationDataset } from "../../../src/lib/titleValidation/dataset";
@@ -58,9 +62,33 @@ async function call(
   );
   return { code, data };
 }
-const context = (role = "practice-a") => ({
+const context = (role?: string) => ({
   workspace: "practice",
-  practiceReviewer: role,
+  ...(role ? { practiceReviewer: role } : {}),
+});
+const creation = (caseId: string) => ({
+  kind: "create" as const,
+  caseId,
+  decision: "keep" as const,
+  titles: [],
+  confidence: 3,
+  notes: "Software test",
+  activeTimeMs: 0,
+  submissionId: randomUUID(),
+});
+const evaluation = (task: any) => ({
+  kind: "evaluate" as const,
+  caseId: task.caseId,
+  ratings: task.options.map((option: any) => ({
+    optionId: option.id,
+    adequacy: "unsure" as const,
+    rank: null,
+  })),
+  cannotRank: true,
+  confidence: 3,
+  notes: "Software test",
+  activeTimeMs: 0,
+  submissionId: randomUUID(),
 });
 beforeEach(() => {
   states.clear();
@@ -107,6 +135,13 @@ test("practice derives ownership from login and ignores forged study and owner f
     preview: false,
     canManage: false,
     phase: "create",
+    reviewerLabel: "Your review",
+    progress: {
+      creationDone: 0,
+      creationTotal: 5,
+      evaluationDone: 0,
+      evaluationTotal: 5,
+    },
   });
   expect(first.data.task.options).toBeUndefined();
   expect(first.data.disclosure).toBeUndefined();
@@ -126,6 +161,9 @@ test("practice derives ownership from login and ignores forged study and owner f
     practiceReviewer: "practice-a",
   });
   expect((await call("session", context("rob"))).code).toBe(400);
+  expect((await call("session", context("practice-c"))).data.task).toEqual(
+    first.data.task,
+  );
   expect(states.size).toBe(1);
 });
 
@@ -174,7 +212,7 @@ test("repeated and concurrent session requests retain one frozen copy", async ()
   ).toHaveLength(1);
 });
 
-test("all three roles can complete the workflow without changing real pilot state or progress", async () => {
+test("one owner completes five creations then five distinct comparisons without changing the real pilot", async () => {
   const data = getTitleValidationDataset();
   const real = newPracticeState("unused-fixture", data);
   real.study.id = "human-title-review-prepilot-20261015-v1";
@@ -190,68 +228,222 @@ test("all three roles can complete the workflow without changing real pilot stat
     state: real,
     events: journals.get(real.study.id),
   });
-  for (const role of ["practice-a", "practice-b", "practice-c"]) {
-    let session = (await call("session", context(role))).data;
-    while (session.phase === "create") {
-      session = (
-        await call("respond", {
-          ...context(role),
-          studyId: real.study.id,
-          submission: {
-            kind: "create",
-            caseId: session.task.caseId,
-            decision: "keep",
-            titles: [],
-            confidence: 3,
-            notes: "Software test",
-            activeTimeMs: 0,
-            submissionId: randomUUID(),
-          },
-        })
-      ).data;
-    }
-    if (role !== "practice-c") expect(session.phase).toBe("waiting");
+  let session = (await call("session", context())).data;
+  for (let i = 0; i < data.cases.length; i++) {
+    expect(session.phase).toBe("create");
+    expect(session.task.caseId).toBe(data.cases[i].id);
+    expect(session.task.options).toBeUndefined();
+    const body = {
+      ...context(),
+      studyId: real.study.id,
+      submission: creation(session.task.caseId),
+    };
+    const next = await call("respond", body);
+    expect(next.code).toBe(200);
+    expect((await call("respond", body)).code).toBe(200);
+    session = next.data;
+    expect(session.progress.creationDone).toBe(i + 1);
   }
   const id = practiceStudyId("owner");
   expect(Object.keys(states.get(id)!.answers)).toHaveLength(5);
-  for (const role of ["practice-a", "practice-b", "practice-c"]) {
-    let session = (await call("session", context(role))).data;
-    while (session.phase === "evaluate") {
-      expect(creatorFor(states.get(id)!.study, session.task.caseId)).not.toBe(
-        role,
-      );
-      expect(session.task.options.every((option: any) => !option.sources)).toBe(
-        true,
-      );
-      const submission = {
-        kind: "evaluate",
-        caseId: session.task.caseId,
-        ratings: session.task.options.map((option: any) => ({
-          optionId: option.id,
-          adequacy: "unsure",
-          rank: null,
-        })),
-        cannotRank: true,
-        confidence: 3,
-        notes: "Software test",
-        activeTimeMs: 0,
-        submissionId: randomUUID(),
-      };
-      const body = { ...context(role), studyId: real.study.id, submission };
-      const next = await call("respond", body);
-      expect(next.code).toBe(200);
-      const count = Object.keys(states.get(id)!.answers).length;
-      expect((await call("respond", body)).code).toBe(200);
-      expect(Object.keys(states.get(id)!.answers)).toHaveLength(count);
-      session = next.data;
-    }
-    expect(session.phase).toBe("complete");
+  const seen = new Set<string>();
+  for (let i = 0; i < data.cases.length; i++) {
+    expect(session.phase).toBe("evaluate");
+    expect(session.task.caseId).toBe(data.cases[i].id);
+    expect(seen.has(session.task.caseId)).toBe(false);
+    seen.add(session.task.caseId);
+    expect((await call("session", context())).data.task).toEqual(session.task);
+    expect(session.task.options.every((option: any) => !option.sources)).toBe(
+      true,
+    );
+    const body = {
+      ...context(),
+      studyId: real.study.id,
+      submission: evaluation(session.task),
+    };
+    const next = await call("respond", body);
+    expect(next.code).toBe(200);
+    const count = Object.keys(states.get(id)!.answers).length;
+    expect((await call("respond", body)).code).toBe(200);
+    expect(Object.keys(states.get(id)!.answers)).toHaveLength(count);
+    session = next.data;
+    expect(session.progress.evaluationDone).toBe(i + 1);
   }
-  expect(Object.keys(states.get(id)!.answers)).toHaveLength(15);
+  expect(session.phase).toBe("complete");
+  expect(session.task).toBeUndefined();
+  expect(Object.keys(states.get(id)!.answers)).toHaveLength(10);
+  for (const answer of Object.values(states.get(id)!.answers)) {
+    if (answer.kind === "evaluate")
+      expect(answer.reviewerId).not.toBe(
+        creatorFor(states.get(id)!.study, answer.caseId),
+      );
+  }
   expect(
     JSON.stringify({
       state: states.get(real.study.id),
       events: journals.get(real.study.id),
     }),
   ).toBe(before);
+});
+
+test("forged roles cannot select tasks, skip ahead, reveal alternatives early, or change saved answers", async () => {
+  const first = (await call("session", context())).data;
+  const id = first.studyId;
+  const secondId = getTitleValidationDataset().cases[1].id;
+  expect(
+    (
+      await call("respond", {
+        ...context("practice-c"),
+        submission: creation(secondId),
+      })
+    ).code,
+  ).toBe(409);
+  expect(
+    (
+      await call("respond", {
+        ...context(),
+        submission: { ...creation(first.task.caseId), kind: "evaluate" },
+      })
+    ).code,
+  ).toBe(400);
+  expect(
+    (await call("respond", { ...context(), submission: creation("unknown") }))
+      .code,
+  ).toBe(400);
+  expect(Object.keys(states.get(id)!.answers)).toHaveLength(0);
+  const input = creation(first.task.caseId);
+  expect(
+    (await call("respond", { ...context(), submission: input })).code,
+  ).toBe(200);
+  const before = JSON.stringify(states.get(id));
+  expect(
+    (
+      await call("respond", {
+        ...context(),
+        submission: { ...input, notes: "Changed" },
+      })
+    ).code,
+  ).toBe(409);
+  expect(JSON.stringify(states.get(id))).toBe(before);
+});
+
+function seedLegacyCreations() {
+  const data = getTitleValidationDataset();
+  let state = newPracticeState("owner", data);
+  for (const role of state.study.roster.map((row) => row.reviewerId)) {
+    let task = sessionFor(state, data, role).task;
+    while (task?.stage === "create") {
+      state = presentTask(state, data, role, Date.now());
+      state = submitAnswer(
+        state,
+        data,
+        role,
+        creation(task.caseId),
+        Date.now(),
+      ).state;
+      task = sessionFor(state, data, role).task;
+    }
+  }
+  return { data, state };
+}
+
+test("existing work across old roles is retained and multiple comparisons count once per activity", async () => {
+  let { data, state } = seedLegacyCreations();
+  const originalStudy = JSON.stringify(state.study);
+  const firstId = data.cases[0].id;
+  let retry: any;
+  for (const role of ["practice-b", "practice-c"]) {
+    state = presentTask(state, data, role, Date.now());
+    const task = sessionFor(state, data, role).task!;
+    expect(task.caseId).toBe(firstId);
+    retry = { ...evaluation(task), submissionId: ` ${randomUUID()} ` };
+    state = submitAnswer(state, data, role, retry, Date.now()).state;
+  }
+  const oldAnswers = JSON.parse(JSON.stringify(state.answers));
+  states.set(state.study.id, state);
+  journals.set(state.study.id, [{ kind: "retained-legacy-event" }]);
+  let session = (await call("session", context())).data;
+  expect(session.progress).toEqual({
+    creationDone: 5,
+    creationTotal: 5,
+    evaluationDone: 1,
+    evaluationTotal: 5,
+  });
+  expect(session.task.caseId).toBe(data.cases[1].id);
+  expect(
+    (await call("respond", { ...context("practice-c"), submission: retry }))
+      .code,
+  ).toBe(200);
+  expect(
+    (
+      await call("respond", {
+        ...context(),
+        submission: { ...retry, notes: "Changed" },
+      })
+    ).code,
+  ).toBe(409);
+  while (session.phase === "evaluate") {
+    const next = await call("respond", {
+      ...context(),
+      submission: evaluation(session.task),
+    });
+    expect(next.code).toBe(200);
+    session = next.data;
+  }
+  expect(session.phase).toBe("complete");
+  const stored = states.get(state.study.id)!;
+  expect(JSON.stringify(stored.study)).toBe(originalStudy);
+  expect(Object.keys(stored.answers)).toHaveLength(11);
+  for (const [key, answer] of Object.entries(oldAnswers))
+    expect(stored.answers[key]).toEqual(answer);
+  expect(journals.get(state.study.id)![0]).toEqual({
+    kind: "retained-legacy-event",
+  });
+});
+
+test("a partially completed old role resumes at the first unfinished activity and retains its draft identity", async () => {
+  const data = getTitleValidationDataset();
+  let state = newPracticeState("owner", data);
+  const role = "practice-b";
+  state = presentTask(state, data, role, Date.now());
+  const oldSession = sessionFor(state, data, role);
+  const submitted = creation(oldSession.task!.caseId);
+  state = submitAnswer(state, data, role, submitted, Date.now()).state;
+  states.set(state.study.id, state);
+  const first = (await call("session", context())).data;
+  expect(first.task.caseId).toBe(data.cases[0].id);
+  expect(first.progress.creationDone).toBe(1);
+  const next = await call("respond", {
+    ...context(),
+    submission: creation(first.task.caseId),
+  });
+  expect(next.code).toBe(200);
+  expect(next.data.task.caseId).toBe(data.cases[2].id);
+  expect(
+    states.get(state.study.id)!.answers[
+      answerKey("create", oldSession.task!.caseId, role)
+    ].payload,
+  ).toEqual(submitted);
+});
+
+test("earlier comparison presentations retain their timing identity and expose old draft aliases only in the owner copy", async () => {
+  let { data, state } = seedLegacyCreations();
+  state = presentTask(state, data, "practice-c", Date.now() - 60000);
+  state = presentTask(state, data, "practice-b", Date.now() - 30000);
+  const earlierKey = sessionFor(state, data, "practice-c").reviewerKey;
+  const otherKey = sessionFor(state, data, "practice-b").reviewerKey;
+  states.set(state.study.id, state);
+  const first = (await call("session", context())).data;
+  expect(first.reviewerKey).toBe(earlierKey);
+  expect(first.draftReviewerKeys).toEqual(
+    expect.arrayContaining([earlierKey, otherKey]),
+  );
+  const input = { ...evaluation(first.task), activeTimeMs: 40000 };
+  const saved = await call("respond", { ...context(), submission: input });
+  expect(saved.code).toBe(200);
+  const answer = states.get(state.study.id)!.answers[
+    answerKey("evaluate", first.task.caseId, "practice-c")
+  ];
+  expect(answer.firstPresentedAt).toBe(state.presentations[answer.id]);
+  expect(answer.elapsedTimeMs).toBeGreaterThanOrEqual(60000);
 });

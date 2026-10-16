@@ -16,8 +16,11 @@ import { localPreviewEnabled, withStudy } from "./repository";
 import {
   newPracticeState,
   practiceRole,
+  practiceSessionFor,
   practiceStudyId,
   PRACTICE_PREFIX,
+  presentPracticeTask,
+  submitPracticeAnswer,
   verifyPracticeOwner,
 } from "./practice";
 
@@ -162,13 +165,16 @@ export async function titleValidationHandler(
         403,
         "Sign in as a coordinator to use your private practice copy.",
       );
-    const reviewerId = practice
-      ? practiceRole(body.practiceReviewer)
-      : actor.uid;
-    const eventActor = {
+    // Older open tabs may still send a synthetic role. It no longer selects tasks.
+    if (practice && body.practiceReviewer !== undefined)
+      practiceRole(body.practiceReviewer);
+    const reviewerId = actor.uid;
+    const eventActor = (storedReviewerId: string) => ({
       actorId: actor.uid,
-      ...(practice ? { practice: true, practiceReviewer: reviewerId } : {}),
-    };
+      ...(practice
+        ? { practice: true, practiceReviewer: storedReviewerId }
+        : {}),
+    });
     if (!actor.preview && process.env.TITLE_VALIDATION_RELEASED !== "1")
       throw new TitleValidationError(
         503,
@@ -331,11 +337,20 @@ export async function titleValidationHandler(
       }
       validateStudy(state.study, data);
       if (action === "session") {
-        const next = presentTask(state, data, reviewerId, Date.now());
+        const presented = practice
+          ? presentPracticeTask(state, data, Date.now())
+          : {
+              state: presentTask(state, data, reviewerId, Date.now()),
+              reviewerId,
+            };
+        const next = presented.state;
+        const session = practice
+          ? practiceSessionFor(next, data)
+          : sessionFor(next, data, reviewerId);
         return {
           state: next,
           result: {
-            ...sessionFor(next, data, reviewerId),
+            ...session,
             canManage: actor.canManage && !practice,
             preview: actor.preview,
             ...(practice ? { practice: true } : {}),
@@ -364,27 +379,27 @@ export async function titleValidationHandler(
             ? {
                 event: {
                   kind: practiceCreated ? "practice-created" : "task-presented",
-                  ...eventActor,
-                  caseId: sessionFor(next, data, reviewerId).task?.caseId,
+                  ...eventActor(presented.reviewerId),
+                  caseId: session.task?.caseId,
                 },
               }
             : {}),
         };
       }
       if (action === "respond") {
-        const change = submitAnswer(
-          state,
-          data,
-          reviewerId,
-          body.submission,
-          Date.now(),
-        );
-        const next = presentTask(change.state, data, reviewerId, Date.now());
+        const change = practice
+          ? submitPracticeAnswer(state, data, body.submission, Date.now())
+          : submitAnswer(state, data, reviewerId, body.submission, Date.now());
+        const next = practice
+          ? presentPracticeTask(change.state, data, Date.now()).state
+          : presentTask(change.state, data, reviewerId, Date.now());
         return {
           state: next,
           answer: change.duplicate ? undefined : change.answer,
           result: {
-            ...sessionFor(next, data, reviewerId),
+            ...(practice
+              ? practiceSessionFor(next, data)
+              : sessionFor(next, data, reviewerId)),
             canManage: actor.canManage && !practice,
             preview: actor.preview,
             ...(practice ? { practice: true } : {}),
@@ -394,7 +409,7 @@ export async function titleValidationHandler(
             : {
                 event: {
                   kind: "answer-submitted",
-                  ...eventActor,
+                  ...eventActor(change.answer.reviewerId),
                   caseId: change.answer.caseId,
                   stage: change.answer.kind,
                   answerId: change.answer.id,

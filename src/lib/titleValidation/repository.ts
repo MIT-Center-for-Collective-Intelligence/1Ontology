@@ -44,21 +44,8 @@ async function previewLock(
       return () => fs.rm(lock, { recursive: true });
     } catch (error: any) {
       if (error.code !== "EEXIST") throw error;
-      try {
-        const owner = JSON.parse(
-          await fs.readFile(path.join(lock, "owner.json"), "utf8"),
-        );
-        try {
-          process.kill(owner.pid, 0);
-        } catch (probe: any) {
-          if (probe.code === "ESRCH") {
-            await fs.rename(lock, lock + ".stale-" + randomUUID());
-            continue;
-          }
-        }
-      } catch (probe: any) {
-        if (!["ENOENT", "EEXIST"].includes(probe.code)) throw probe;
-      }
+      // Never rename another process's lock: the owner may change between reads.
+      // An abandoned local lock fails closed instead of risking lost answers.
       await new Promise((resolve) => setTimeout(resolve, 25));
     }
   }

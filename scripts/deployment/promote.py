@@ -124,6 +124,7 @@ def verify_title_review_route(origin):
                 or ('"practice":true' if practice else '"practice":false') not in html):
             raise ValueError("Title review workspace is missing, mismatched, or exposes development mode")
     for payload in (b'{"previewReviewer":"preview-a"}',
+                    b'{"workspace":"practice"}',
                     b'{"workspace":"practice","practiceReviewer":"practice-a"}'):
         request = urllib.request.Request(origin + "/api/som-review/title-validation/session",
             data=payload, method="POST", headers={"Content-Type": "application/json"})

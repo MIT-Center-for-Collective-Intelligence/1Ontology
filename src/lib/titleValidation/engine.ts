@@ -395,6 +395,25 @@ export function submitAnswer(
   raw: unknown,
   now: number,
 ): { state: ValidationState; answer: ValidationAnswer; duplicate: boolean } {
+  return submitAnswerForTask(
+    state,
+    data,
+    reviewerId,
+    raw,
+    now,
+    () => sessionFor(state, data, reviewerId).task,
+  );
+}
+
+// Both flows share validation and storage; only the server selects task order.
+export function submitAnswerForTask(
+  state: ValidationState,
+  data: ValidationDataset,
+  reviewerId: string,
+  raw: unknown,
+  now: number,
+  expectedTask: () => TitleValidationTask | undefined,
+): { state: ValidationState; answer: ValidationAnswer; duplicate: boolean } {
   ensureReviewer(state, reviewerId);
   validateStudy(state.study, data);
   const payload = normalizeSubmission(raw);
@@ -415,7 +434,7 @@ export function submitAnswer(
   const creator = creatorFor(state.study, payload.caseId);
   if ((payload.kind === "create") !== (creator === reviewerId))
     fail(403, "This task is not assigned to you.");
-  const current = sessionFor(state, data, reviewerId).task;
+  const current = expectedTask();
   if (
     !current ||
     current.caseId !== payload.caseId ||

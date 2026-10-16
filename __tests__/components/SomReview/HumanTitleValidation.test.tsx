@@ -96,42 +96,43 @@ test("a failed production session shows the server message and can recover witho
   ).not.toBeInTheDocument();
   expect(Post).toHaveBeenCalledTimes(2);
 });
-test("practice switches role-specific drafts and sends only its scoped identity", async () => {
-  jest.mocked(Post).mockImplementation(async (_path, body) => {
-    const role = body.practiceReviewer;
-    return {
-      ...session(role === "practice-b" ? "c2" : "c1"),
-      studyId: "human-title-practice-own",
-      reviewerKey: role,
-      reviewerLabel: role === "practice-b" ? "Role B" : "Role A",
-      preview: false,
-      practice: true,
-    } as never;
+test("the owner's copy is one five-activity flow with no role selection and isolated drafts", async () => {
+  jest.mocked(Post).mockResolvedValue({
+    ...session(),
+    studyId: "human-title-practice-own",
+    reviewerLabel: "Your review",
+    preview: false,
+    practice: true,
+    progress: {
+      creationDone: 0,
+      creationTotal: 5,
+      evaluationDone: 0,
+      evaluationTotal: 5,
+    },
   });
-  render(<HumanTitleValidation preview={false} practice />);
+  const view = render(<HumanTitleValidation preview={false} practice />);
   await screen.findByText("Write Report");
-  expect(screen.getByText("Your private practice copy")).toBeVisible();
+  expect(screen.getByText("Your review copy")).toBeVisible();
+  expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+  expect(screen.getByText(/Titles 0\/5/)).toBeVisible();
+  expect(screen.getByText(/Comparisons 0\/5/)).toBeVisible();
   expect(
     screen.queryByRole("button", { name: "Coordinator overview" }),
   ).not.toBeInTheDocument();
   expect(Post).toHaveBeenCalledWith(
     "/som-review/title-validation/session",
-    { workspace: "practice", practiceReviewer: "practice-a" },
+    { workspace: "practice" },
     false,
   );
   fireEvent.click(screen.getByLabelText("Use one clearer title"));
   fireEvent.change(screen.getByLabelText("Your title"), {
-    target: { value: "Private role A draft" },
+    target: { value: "My saved draft" },
   });
-  fireEvent.mouseDown(screen.getByLabelText("Practice role"));
-  fireEvent.click(screen.getByRole("option", { name: "Practice role B" }));
-  await screen.findByText("Role B");
-  expect(screen.queryByLabelText("Your title")).not.toBeInTheDocument();
-  fireEvent.mouseDown(screen.getByLabelText("Practice role"));
-  fireEvent.click(screen.getByRole("option", { name: "Practice role A" }));
-  await screen.findByDisplayValue("Private role A draft");
+  view.unmount();
+  render(<HumanTitleValidation preview={false} practice />);
+  await screen.findByDisplayValue("My saved draft");
 });
-test("practice submission and uncertain-delivery retries keep the same role and payload", async () => {
+test("own-copy submissions advance automatically and uncertain-delivery retries retain the exact payload", async () => {
   jest
     .mocked(Post)
     .mockResolvedValueOnce({ ...session(), preview: false, practice: true })
@@ -147,10 +148,7 @@ test("practice submission and uncertain-delivery retries keep the same role and 
   fireEvent.click(screen.getByRole("radio", { name: "3" }));
   fireEvent.click(screen.getByRole("button", { name: "Save and continue" }));
   await screen.findByRole("button", { name: "Retry the same answer" });
-  expect(screen.getByLabelText("Practice role")).toHaveAttribute(
-    "aria-disabled",
-    "true",
-  );
+  expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
   fireEvent.click(
     screen.getByRole("button", { name: "Retry the same answer" }),
   );
@@ -158,31 +156,108 @@ test("practice submission and uncertain-delivery retries keep the same role and 
   expect(jest.mocked(Post).mock.calls[1][1]).toEqual(
     expect.objectContaining({
       workspace: "practice",
-      practiceReviewer: "practice-a",
     }),
   );
   expect(jest.mocked(Post).mock.calls[1][1]).toEqual(
     jest.mocked(Post).mock.calls[2][1],
   );
+  await screen.findByText("Write Report");
+  expect(screen.getByLabelText("Keep it")).not.toBeChecked();
 });
 test("the coordinator has a link to a separate practice copy without becoming a reviewer", async () => {
-  jest
-    .mocked(Post)
-    .mockResolvedValue({
-      ...session(),
-      phase: "unassigned",
-      task: undefined,
-      canManage: true,
-      preview: false,
-    });
+  jest.mocked(Post).mockResolvedValue({
+    ...session(),
+    phase: "unassigned",
+    task: undefined,
+    canManage: true,
+    preview: false,
+  });
   render(<HumanTitleValidation preview={false} />);
   expect(
     await screen.findByRole("link", {
-      name: "Try the reviewer workflow privately",
+      name: "Review the five activities yourself",
     }),
   ).toHaveAttribute("href", "/review/title-validation?workspace=practice");
   expect(screen.queryByLabelText("Practice role")).not.toBeInTheDocument();
 });
+
+test.each([false, true])(
+  "the simplified copy recovers a prior comparison draft (pending=%s) without exposing roles",
+  async (pending) => {
+    const options = [{ id: "option-a", titles: ["Write Annual Reports"] }];
+    const submission = {
+      kind: "evaluate",
+      caseId: "c1",
+      ratings: [{ optionId: "option-a", adequacy: "adequate", rank: 1 }],
+      cannotRank: false,
+      confidence: 4,
+      notes: "My earlier comparison",
+      activeTimeMs: 20000,
+      submissionId: "retained-submission",
+    };
+    const oldKey =
+      "human-title-validation/human-title-practice-own/earlier-key/evaluate/c1";
+    const saved = JSON.stringify({
+      key: oldKey,
+      decision: "",
+      titles: [""],
+      ratings: { "option-a": { adequacy: "adequate", rank: 1 } },
+      cannotRank: false,
+      confidence: 4,
+      notes: "My earlier comparison",
+      activeTimeMs: 20000,
+      paused: false,
+      ...(pending ? { pendingSubmission: submission } : {}),
+    });
+    localStorage.setItem(oldKey, saved);
+    const currentKey =
+      "human-title-validation/human-title-practice-own/current-key/evaluate/c1";
+    localStorage.setItem(
+      currentKey,
+      JSON.stringify({
+        key: currentKey,
+        decision: "",
+        confidence: null,
+        notes: "",
+        ratings: {},
+      }),
+    );
+    jest
+      .mocked(Post)
+      .mockResolvedValue({
+        ...session(),
+        studyId: "human-title-practice-own",
+        reviewerKey: "current-key",
+        draftReviewerKeys: ["current-key", "earlier-key"],
+        preview: false,
+        practice: true,
+        phase: "evaluate",
+        progress: {
+          creationDone: 5,
+          creationTotal: 5,
+          evaluationDone: 0,
+          evaluationTotal: 5,
+        },
+        task: { ...session().task!, stage: "evaluate", options },
+      });
+    render(<HumanTitleValidation preview={false} practice />);
+    await screen.findByDisplayValue("My earlier comparison");
+    expect(screen.getByText("2. Compare alternatives")).toBeVisible();
+    expect(
+      screen.queryByRole("combobox", { name: /role|reviewer/i }),
+    ).not.toBeInTheDocument();
+    expect(localStorage.getItem(oldKey)).toBe(saved);
+    if (pending) {
+      fireEvent.click(
+        screen.getByRole("button", { name: "Retry the same answer" }),
+      );
+      await waitFor(() => expect(Post).toHaveBeenCalledTimes(2));
+      expect(jest.mocked(Post).mock.calls[1][1]).toEqual(
+        expect.objectContaining({ workspace: "practice", submission }),
+      );
+    }
+  },
+);
 test("first screen has no preselected decision or confidence, and no model answer", async () => {
   global.fetch = jest.fn(() => respond(session())) as jest.Mock;
   render(<HumanTitleValidation preview />);
