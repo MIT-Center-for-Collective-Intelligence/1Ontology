@@ -7,14 +7,35 @@ import unittest
 from unittest.mock import patch
 import io
 import urllib.error
+import urllib.request
 from promote import (MANIFESTS, SERVICE, TITLE_PROMPT_STUDY, LATEST_TITLE_PROMPT_STUDY, TITLE_MODEL_COMPARISON,
                      TITLE_MODEL_COMPARISON_JUDGE_RESULTS, title_model_comparison_release, validate_release,
-                     promote_if_current, verify_title_review_route, verify_relationship_review_route, read_release)
+                     promote_if_current, verify_title_review_route, verify_relationship_review_route, read_release, read_bytes)
 
 ROOT = Path(__file__).resolve().parents[2]
 
 
 class CandidateReadinessTests(unittest.TestCase):
+    def test_only_get_url_strings_can_use_the_readiness_helper(self):
+        with patch('promote.urllib.request.urlopen') as get:
+            with self.assertRaises(ValueError):read_bytes(urllib.request.Request('https://candidate',data=b'{}',method='POST'))
+            get.assert_not_called()
+
+    def test_timeout_reading_a_body_retries_without_accepting_invalid_contents(self):
+        class SlowBody(io.BytesIO):
+            def read(self,*args):raise TimeoutError('temporary body timeout')
+        with patch('promote.urllib.request.urlopen',side_effect=[SlowBody(),io.BytesIO(b'complete')]) as get,patch('promote.time.sleep'):
+            self.assertEqual(read_bytes('https://candidate/page'),b'complete')
+            self.assertEqual(get.call_count,2)
+
+    def test_custom_no_redirect_get_retries_transport_but_preserves_redirect_error(self):
+        from unittest.mock import Mock
+        redirect=urllib.error.HTTPError('url',307,'redirect',{'Location':'/review/title-validation'},None)
+        opener=Mock(side_effect=[TimeoutError('temporary'),redirect])
+        with patch('promote.time.sleep'):
+            with self.assertRaises(urllib.error.HTTPError) as result:read_bytes('https://candidate/legacy',opener)
+            self.assertIs(result.exception,redirect);self.assertEqual(opener.call_count,2)
+
     def test_tag_propagation_retries_the_same_read_without_changing_validation(self):
         errors=[urllib.error.HTTPError('https://candidate/api/deployment',status,'not ready',None,None) for status in [404,503]]
         with patch('promote.urllib.request.urlopen',side_effect=[*errors,io.BytesIO(b'{"commit":"expected"}')]) as get,patch('promote.time.sleep') as sleep:
