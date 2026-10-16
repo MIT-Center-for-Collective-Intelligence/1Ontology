@@ -33,14 +33,17 @@ def gcloud(*args):
     return subprocess.check_output(["gcloud", *args, "--project", PROJECT, "--region", REGION], text=True)
 
 
-def read_release(origin):
-    # A newly assigned Cloud Run tag can briefly return 404 before routing
-    # reaches the ready revision. Retry only this read; identity/hash checks
-    # and the conditional traffic update are never relaxed or retried here.
+def read_bytes(url, open_url=None):
+    # New Cloud Run routes can briefly return 404 or time out during a read.
+    # Only GET reads use this helper; identity/hash checks and the conditional
+    # traffic update are never relaxed or retried here.
+    if not isinstance(url, str):
+        raise ValueError("Read-only readiness checks require a URL string")
+    opener = open_url or urllib.request.urlopen
     for attempt in range(6):
         try:
-            with urllib.request.urlopen(origin + "/api/deployment", timeout=60) as response:
-                return json.load(response)
+            with opener(url, timeout=60) as response:
+                return response.read()
         except urllib.error.HTTPError as error:
             if error.code not in (404, 502, 503, 504) or attempt == 5:
                 raise
@@ -48,6 +51,10 @@ def read_release(origin):
             if attempt == 5:
                 raise
         time.sleep(min(15, 2 ** attempt))
+
+
+def read_release(origin):
+    return json.loads(read_bytes(origin + "/api/deployment"))
 
 
 def title_model_comparison_release(root):
@@ -152,8 +159,7 @@ def verify_title_review_route(origin):
 
     legacy = origin + "/review/title-validation?workspace=practice"
     try:
-        with urllib.request.build_opener(NoRedirect()).open(legacy, timeout=60):
-            pass
+        read_bytes(legacy, urllib.request.build_opener(NoRedirect()).open)
     except urllib.error.HTTPError as error:
         if (error.code != 307 or urllib.parse.urljoin(legacy, error.headers.get("Location", ""))
                 != origin + "/review/title-validation"):
@@ -161,8 +167,7 @@ def verify_title_review_route(origin):
     else:
         raise ValueError("The earlier review link must redirect to the team review")
     for suffix in ("", "?workspace=practice"):
-        with urllib.request.urlopen(origin + "/review/title-validation" + suffix, timeout=60) as response:
-            html = response.read().decode("utf-8")
+        html = read_bytes(origin + "/review/title-validation" + suffix).decode("utf-8")
         if ("Human title review" not in html or '"preview":false' not in html
                 or '"practice":false' not in html):
             raise ValueError("Title review workspace is missing, mismatched, or exposes development mode")
@@ -199,8 +204,7 @@ def promote_if_current(commit, revision, api, main_head):
 
 
 def verify_relationship_review_route(origin):
-    with urllib.request.urlopen(origin + "/review/relationships", timeout=60) as response:
-        html = response.read().decode("utf-8")
+    html = read_bytes(origin + "/review/relationships").decode("utf-8")
     if "Activity relationship review" not in html or '"preview":false' not in html:
         raise ValueError("Relationship review page is missing or exposes preview mode")
     for action in ("session", "save", "trace", "tom-feedback"):
