@@ -4,9 +4,12 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
+import io
+import urllib.error
 from promote import (MANIFESTS, SERVICE, TITLE_PROMPT_STUDY, LATEST_TITLE_PROMPT_STUDY, TITLE_MODEL_COMPARISON,
                      TITLE_MODEL_COMPARISON_JUDGE_RESULTS, title_model_comparison_release, validate_release,
-                     promote_if_current)
+                     promote_if_current, verify_title_review_route)
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -127,6 +130,38 @@ class TitleModelComparisonReleaseTests(unittest.TestCase):
                 mutate(comparison, judge)
                 with self.assertRaises(ValueError):
                     self.release(comparison, judge)
+
+
+class TitleReviewRouteTests(unittest.TestCase):
+    def opener(self, bad_practice=None, accept_practice=False):
+        def open_url(request, timeout):
+            if isinstance(request, str):
+                practice = "?workspace=practice" in request
+                html = ('Human title review {"preview":false,"practice":' + ("true" if practice else "false") + '}')
+                if practice and bad_practice is not None:
+                    html = bad_practice
+                return io.BytesIO(html.encode())
+            if accept_practice and b'"workspace":"practice"' in request.data:
+                return io.BytesIO(b'{}')
+            raise urllib.error.HTTPError(request.full_url, 401, "Sign in", {}, None)
+        return open_url
+
+    def test_checks_both_workspaces_and_denies_anonymous(self):
+        with patch("promote.urllib.request.urlopen", side_effect=self.opener()) as open_url:
+            verify_title_review_route("https://example.org")
+            self.assertEqual(open_url.call_count, 4)
+
+    def test_rejects_missing_mismatched_or_development_practice_page(self):
+        for html in ("missing", 'Human title review {"preview":true,"practice":true}',
+                     'Human title review {"preview":false,"practice":false}'):
+            with self.subTest(html=html), patch("promote.urllib.request.urlopen", side_effect=self.opener(bad_practice=html)):
+                with self.assertRaises(ValueError):
+                    verify_title_review_route("https://example.org")
+
+    def test_rejects_anonymous_practice_access(self):
+        with patch("promote.urllib.request.urlopen", side_effect=self.opener(accept_practice=True)):
+            with self.assertRaises(ValueError):
+                verify_title_review_route("https://example.org")
 
 
 class ConcurrentPromotionTests(unittest.TestCase):

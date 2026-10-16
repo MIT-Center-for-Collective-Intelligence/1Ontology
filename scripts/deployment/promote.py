@@ -116,21 +116,24 @@ def validate_release(info, commit, build_id, revision):
 
 
 def verify_title_review_route(origin):
-    """Smoke-test the new route and its anonymous access boundary, without writes."""
-    with urllib.request.urlopen(origin + "/review/title-validation", timeout=60) as response:
-        html = response.read().decode("utf-8")
-    if "Human title review" not in html or '"preview":false' not in html:
-        raise ValueError("Staff pilot page is missing or exposes development mode")
-    request = urllib.request.Request(origin + "/api/som-review/title-validation/session",
-        data=b'{"previewReviewer":"preview-a"}', method="POST",
-        headers={"Content-Type": "application/json"})
-    try:
-        urllib.request.urlopen(request, timeout=60)
-    except urllib.error.HTTPError as error:
-        if error.code == 401:
-            return
-        raise ValueError("Unexpected anonymous staff pilot response") from error
-    raise ValueError("Anonymous staff pilot access was accepted")
+    """Smoke-test both workspaces and their anonymous boundary, without writes."""
+    for suffix, practice in (("", False), ("?workspace=practice", True)):
+        with urllib.request.urlopen(origin + "/review/title-validation" + suffix, timeout=60) as response:
+            html = response.read().decode("utf-8")
+        if ("Human title review" not in html or '"preview":false' not in html
+                or ('"practice":true' if practice else '"practice":false') not in html):
+            raise ValueError("Title review workspace is missing, mismatched, or exposes development mode")
+    for payload in (b'{"previewReviewer":"preview-a"}',
+                    b'{"workspace":"practice","practiceReviewer":"practice-a"}'):
+        request = urllib.request.Request(origin + "/api/som-review/title-validation/session",
+            data=payload, method="POST", headers={"Content-Type": "application/json"})
+        try:
+            urllib.request.urlopen(request, timeout=60)
+        except urllib.error.HTTPError as error:
+            if error.code == 401:
+                continue
+            raise ValueError("Unexpected anonymous title review response") from error
+        raise ValueError("Anonymous title review access was accepted")
 
 
 def promote_if_current(commit, revision, api, main_head):

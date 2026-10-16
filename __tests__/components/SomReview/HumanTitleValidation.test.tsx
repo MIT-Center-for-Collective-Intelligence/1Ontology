@@ -96,6 +96,93 @@ test("a failed production session shows the server message and can recover witho
   ).not.toBeInTheDocument();
   expect(Post).toHaveBeenCalledTimes(2);
 });
+test("practice switches role-specific drafts and sends only its scoped identity", async () => {
+  jest.mocked(Post).mockImplementation(async (_path, body) => {
+    const role = body.practiceReviewer;
+    return {
+      ...session(role === "practice-b" ? "c2" : "c1"),
+      studyId: "human-title-practice-own",
+      reviewerKey: role,
+      reviewerLabel: role === "practice-b" ? "Role B" : "Role A",
+      preview: false,
+      practice: true,
+    } as never;
+  });
+  render(<HumanTitleValidation preview={false} practice />);
+  await screen.findByText("Write Report");
+  expect(screen.getByText("Your private practice copy")).toBeVisible();
+  expect(
+    screen.queryByRole("button", { name: "Coordinator overview" }),
+  ).not.toBeInTheDocument();
+  expect(Post).toHaveBeenCalledWith(
+    "/som-review/title-validation/session",
+    { workspace: "practice", practiceReviewer: "practice-a" },
+    false,
+  );
+  fireEvent.click(screen.getByLabelText("Use one clearer title"));
+  fireEvent.change(screen.getByLabelText("Your title"), {
+    target: { value: "Private role A draft" },
+  });
+  fireEvent.mouseDown(screen.getByLabelText("Practice role"));
+  fireEvent.click(screen.getByRole("option", { name: "Practice role B" }));
+  await screen.findByText("Role B");
+  expect(screen.queryByLabelText("Your title")).not.toBeInTheDocument();
+  fireEvent.mouseDown(screen.getByLabelText("Practice role"));
+  fireEvent.click(screen.getByRole("option", { name: "Practice role A" }));
+  await screen.findByDisplayValue("Private role A draft");
+});
+test("practice submission and uncertain-delivery retries keep the same role and payload", async () => {
+  jest
+    .mocked(Post)
+    .mockResolvedValueOnce({ ...session(), preview: false, practice: true })
+    .mockRejectedValueOnce(Error("Network lost"))
+    .mockResolvedValueOnce({
+      ...session("c2"),
+      preview: false,
+      practice: true,
+    });
+  render(<HumanTitleValidation preview={false} practice />);
+  await screen.findByText("Write Report");
+  fireEvent.click(screen.getByLabelText("Keep it"));
+  fireEvent.click(screen.getByRole("radio", { name: "3" }));
+  fireEvent.click(screen.getByRole("button", { name: "Save and continue" }));
+  await screen.findByRole("button", { name: "Retry the same answer" });
+  expect(screen.getByLabelText("Practice role")).toHaveAttribute(
+    "aria-disabled",
+    "true",
+  );
+  fireEvent.click(
+    screen.getByRole("button", { name: "Retry the same answer" }),
+  );
+  await waitFor(() => expect(Post).toHaveBeenCalledTimes(3));
+  expect(jest.mocked(Post).mock.calls[1][1]).toEqual(
+    expect.objectContaining({
+      workspace: "practice",
+      practiceReviewer: "practice-a",
+    }),
+  );
+  expect(jest.mocked(Post).mock.calls[1][1]).toEqual(
+    jest.mocked(Post).mock.calls[2][1],
+  );
+});
+test("the coordinator has a link to a separate practice copy without becoming a reviewer", async () => {
+  jest
+    .mocked(Post)
+    .mockResolvedValue({
+      ...session(),
+      phase: "unassigned",
+      task: undefined,
+      canManage: true,
+      preview: false,
+    });
+  render(<HumanTitleValidation preview={false} />);
+  expect(
+    await screen.findByRole("link", {
+      name: "Try the reviewer workflow privately",
+    }),
+  ).toHaveAttribute("href", "/review/title-validation?workspace=practice");
+  expect(screen.queryByLabelText("Practice role")).not.toBeInTheDocument();
+});
 test("first screen has no preselected decision or confidence, and no model answer", async () => {
   global.fetch = jest.fn(() => respond(session())) as jest.Mock;
   render(<HumanTitleValidation preview />);
