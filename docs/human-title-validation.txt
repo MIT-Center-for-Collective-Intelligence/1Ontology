@@ -96,7 +96,7 @@ Repository-wide TypeScript has existing unrelated failures; the scoped check
 includes this feature and its tests. Existing Next configuration ignores
 repository-wide type errors during build; this change does not introduce that.
 
-Production release requirements — not performed by this implementation
+Production release procedure
 1. Agree the provisional pilot procedure and reviewer roster. Present the
    five-case package before publishing/activating this new semantic dataset.
 2. Verify deployed Firestore client rules deny direct client read/write of
@@ -104,12 +104,18 @@ Production release requirements — not performed by this implementation
    Rules are not versioned in this repository. Admin API uses verified Firebase
    bearer tokens, revoked-token checks, coordinator authorization, and isolated
    transactions; broad client rules would bypass that API protection.
+   The October 15 release checked ruleset
+   986c6e5d-f1b8-46c7-814c-e0da893a0e8b using 46 simulated requests:
+   all 45 study/answer/event access attempts were denied, including signed-in
+   reviewers and coordinators; the allowed positive control also passed.
+   This evaluation did not write documents or change rules/permissions.
 3. Merge the reviewed, tested source through main using the existing deployment
    process. Do not deploy uncommitted code or from the older dirty checkout.
    Retain the existing review dataset-selection and prompt-trace tests/fixes.
-4. Keep TITLE_VALIDATION_RELEASED unset until the above checks pass. To release
-   the staff pilot only, set it to 1 on the intended server and configure the
-   coordinator allowlist as needed. There is no automatic reviewer enrollment.
+4. The reviewed Cloud Build configuration enables TITLE_VALIDATION_RELEASED=1
+   for this five-case staff pilot. The release identity and promotion checks
+   verify its exact package hash and flag, page route, and anonymous API denial
+   before and after promotion. There is no automatic reviewer enrollment.
 5. Coordinator opens /review/title-validation, enters 3–10 existing ontology
    account emails and display names, creates a DRAFT study, then opens it.
    Production collection: titleValidationStudiesV1, separate from legacy reviews.
@@ -117,6 +123,21 @@ Production release requirements — not performed by this implementation
    immutable saves, prompt disclosure after closure, and preserved legacy data
    on desktop and compact widths. Record main SHA, Cloud Run revision, dataset
    version, results, and rollback revision before inviting reviewers.
+   The existing verified oneweb@umich.edu ontology account has coordinator
+   access. A coordinator creates a draft using the agreed existing accounts;
+   deployment itself neither creates a study nor assigns anyone to it.
+
+Interface and accessibility
+The review route has its own light theme; the ontology platform and legacy
+review pages retain their existing theme. Desktop uses a sticky source panel
+beside the form; compact screens use one column. Choice styling is identical
+for every alternative. Draft recovery/storage failure, successful saves,
+uncertain delivery, and coordinator actions have visible status messages.
+Validation focuses the relevant visible control. Split-row removal preserves
+neighboring values and focus. The close action uses an accessible confirmation.
+No scientific instructions, output data, or saved responses were revised by
+the visual redesign.
+
 Rollback: disable TITLE_VALIDATION_RELEASED and restore the previous committed
 Cloud Run revision if necessary. Never delete the new study collection or old
 review history as a rollback mechanism.

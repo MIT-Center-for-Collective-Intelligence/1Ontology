@@ -41,3 +41,4 @@ firebase-debug.log
 .env
 .title-validation-preview/
 .next-title-validation-build/
+.next-title-validation-qa/

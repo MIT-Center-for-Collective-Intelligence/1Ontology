@@ -41,6 +41,16 @@ describe("public deployment identity", () => {
         }),
       ]);
       expect(info.packageSha256).toMatch(/^[a-f0-9]{64}$/);
+      expect(info.humanTitleReview).toEqual({
+        version: "human-title-prepilot-20261015-v1",
+        cases: 5,
+        model: "gpt-6.1-sol",
+        promptSha256:
+          "e91ac67ba14a088131acb4d681f4a57a983b6f6e26d7ce655971bc0719f556b4",
+        bundleSha256:
+          "a759be0d165c2bca67c7729f518cf0f14b325cf9c1604442659d378dae3677ee",
+        released: process.env.TITLE_VALIDATION_RELEASED === "1",
+      });
       expect(info.titlePromptStudy).toEqual(
         expect.objectContaining({
           version: "rob-simple-title-prompt-2026-09-13-development-v1",
@@ -83,6 +93,7 @@ describe("public deployment identity", () => {
         "buildId",
         "commit",
         "datasets",
+        "humanTitleReview",
         "latestTitlePromptStudy",
         "packageSha256",
         "revision",
