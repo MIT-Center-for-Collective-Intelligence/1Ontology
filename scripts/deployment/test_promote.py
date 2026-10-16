@@ -9,7 +9,7 @@ import io
 import urllib.error
 from promote import (MANIFESTS, SERVICE, TITLE_PROMPT_STUDY, LATEST_TITLE_PROMPT_STUDY, TITLE_MODEL_COMPARISON,
                      TITLE_MODEL_COMPARISON_JUDGE_RESULTS, title_model_comparison_release, validate_release,
-                     promote_if_current, verify_title_review_route)
+                     promote_if_current, verify_title_review_route, verify_relationship_review_route)
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -46,13 +46,18 @@ class ReleaseVerificationTests(unittest.TestCase):
         self.info["humanTitleReview"] = {"version":staff["version"],"cases":len(staff["cases"]),
             "model":staff["provenance"]["model"],"promptSha256":staff["provenance"]["scientificPromptSha256"],
             "bundleSha256":hashlib.sha256(staff_bytes).hexdigest(),"released":True}
+        relation_bytes = (ROOT / "src/lib/relationshipReview/data/top-level-v1.json").read_bytes()
+        relation = json.loads(relation_bytes)
+        self.info["relationshipReview"] = {"version":relation["version"],"cases":len(relation["cases"]),
+            "model":relation["model"],"reasoning":relation["reasoning"],
+            "bundleSha256":hashlib.sha256(relation_bytes).hexdigest(),"sourceSha256":relation["sourceSha256"]}
 
     def test_accepts_exact_release(self):
         validate_release(self.info, "a" * 40, "build-1", "revision-1")
 
     def test_rejects_stale_or_mispackaged_release(self):
         for field in ("commit", "buildId", "revision", "packageSha256", "titlePromptStudy", "latestTitlePromptStudy",
-                      "titleModelComparison", "humanTitleReview"):
+                      "titleModelComparison", "humanTitleReview", "relationshipReview"):
             with self.subTest(field=field):
                 broken = copy.deepcopy(self.info)
                 broken[field] = "stale"
@@ -184,6 +189,29 @@ class TitleReviewRouteTests(unittest.TestCase):
                 "Redirect", {"Location": location}, None)
             with self.subTest(code=code, location=location), self.assertRaises(ValueError):
                 verify_title_review_route("https://example.org")
+
+
+class RelationshipReviewRouteTests(unittest.TestCase):
+    def opener(self, preview=False, accepted=None):
+        def open_url(request, timeout):
+            if isinstance(request, str):
+                return io.BytesIO(('Activity relationship review {"preview":' + ('true' if preview else 'false') + '}').encode())
+            if request.full_url.endswith('/' + str(accepted)):
+                return io.BytesIO(b'{}')
+            raise urllib.error.HTTPError(request.full_url,401,"Sign in",{},None)
+        return open_url
+
+    def test_page_and_all_anonymous_boundaries(self):
+        with patch("promote.urllib.request.urlopen",side_effect=self.opener()) as call:
+            verify_relationship_review_route("https://example.org")
+            self.assertEqual(call.call_count,5)
+
+    def test_no_preview_or_anonymous_data_in_production(self):
+        for accepted in ('session','save','trace','tom-feedback'):
+            with self.subTest(action=accepted), patch("promote.urllib.request.urlopen",side_effect=self.opener(accepted=accepted)):
+                with self.assertRaises(ValueError): verify_relationship_review_route("https://example.org")
+        with patch("promote.urllib.request.urlopen",side_effect=self.opener(preview=True)):
+            with self.assertRaises(ValueError): verify_relationship_review_route("https://example.org")
 
 
 class ConcurrentPromotionTests(unittest.TestCase):

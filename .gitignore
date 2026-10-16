@@ -42,3 +42,5 @@ firebase-debug.log
 .title-validation-preview/
 .next-title-validation-build/
 .next-title-validation-qa/
+.relationship-review-preview/
+/src/lib/relationshipReview/data/

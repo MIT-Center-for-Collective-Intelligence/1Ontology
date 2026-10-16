@@ -96,6 +96,7 @@ describe("public deployment identity", () => {
         "humanTitleReview",
         "latestTitlePromptStudy",
         "packageSha256",
+        "relationshipReview",
         "revision",
         "titleModelComparison",
         "titlePromptStudy",

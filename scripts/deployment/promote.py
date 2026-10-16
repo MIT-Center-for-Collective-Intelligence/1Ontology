@@ -20,6 +20,7 @@ TITLE_MODEL_COMPARISON = "Ontology_Title_Clarity_Testbed_2026-08-28/model-compar
 TITLE_MODEL_COMPARISON_JUDGE_RESULTS = "Ontology_Title_Clarity_Testbed_2026-08-28/model-comparison-2026-09-16/judge-results.json"
 TITLE_MODEL_COMPARISON_VERSION = "rob-very-short-prompt-model-comparison-2026-09-16-v1"
 TITLE_VALIDATION_PACKAGE = "src/lib/titleValidation/data/prepilot-v1.json"
+RELATIONSHIP_REVIEW_PACKAGE = "src/lib/relationshipReview/data/top-level-v1.json"
 MANIFESTS = {
     "ontology-title-testbed": ("ontology-title-two-route-testbed-2026-09-02-v6", 18, False,
         "d37949667f4efce3d7a16fec9ec04c95774aea8789cedba4d8a19d3d753f91ea"),
@@ -114,6 +115,13 @@ def validate_release(info, commit, build_id, revision):
         "bundleSha256": hashlib.sha256(staff_bytes).hexdigest(), "released": True}
     if info.get("humanTitleReview") != expected_staff:
         raise ValueError("The staff title-review pilot is missing, changed, or not enabled")
+    relation_bytes = (Path(__file__).resolve().parents[2] / RELATIONSHIP_REVIEW_PACKAGE).read_bytes()
+    relation = json.loads(relation_bytes)
+    expected_relation = {"version": relation["version"], "cases": len(relation["cases"]),
+        "model": relation["model"], "reasoning": relation["reasoning"],
+        "bundleSha256": hashlib.sha256(relation_bytes).hexdigest(), "sourceSha256": relation["sourceSha256"]}
+    if len(relation["cases"]) != 68 or info.get("relationshipReview") != expected_relation:
+        raise ValueError("The relationship review proposals are missing, incomplete, or changed")
 
 
 def verify_title_review_route(origin):
@@ -170,6 +178,23 @@ def promote_if_current(commit, revision, api, main_head):
                body={"name": SERVICE, "etag": service["etag"], "traffic": traffic})
 
 
+def verify_relationship_review_route(origin):
+    with urllib.request.urlopen(origin + "/review/relationships", timeout=60) as response:
+        html = response.read().decode("utf-8")
+    if "Activity relationship review" not in html or '"preview":false' not in html:
+        raise ValueError("Relationship review page is missing or exposes preview mode")
+    for action in ("session", "save", "trace", "tom-feedback"):
+        request = urllib.request.Request(origin + "/api/som-review/relationships/" + action,
+            data=b'{"previewReviewer":"tom"}', method="POST", headers={"Content-Type":"application/json"})
+        try:
+            urllib.request.urlopen(request, timeout=60)
+        except urllib.error.HTTPError as error:
+            if error.code == 401:
+                continue
+            raise ValueError("Unexpected anonymous relationship review response") from error
+        raise ValueError("Anonymous relationship review access was accepted")
+
+
 def main():
     commit, build_id, revision = sys.argv[1:]
     if not re.fullmatch(r"[a-f0-9]{40}", commit):
@@ -181,6 +206,7 @@ def main():
         raise ValueError("The candidate tag no longer targets this build; do not promote")
     validate_release(read_release(candidates[0]["url"]), commit, build_id, revision)
     verify_title_review_route(candidates[0]["url"])
+    verify_relationship_review_route(candidates[0]["url"])
     token = subprocess.check_output(["gcloud", "auth", "print-access-token"], text=True).strip()
     def api(resource, method="GET", body=None):
         request = urllib.request.Request("https://run.googleapis.com/v2/" + resource,
@@ -203,6 +229,7 @@ def main():
         raise RuntimeError("Conditional traffic promotion failed: " + str(operation["error"].get("code")))
     validate_release(read_release(service["status"]["url"]), commit, build_id, revision)
     verify_title_review_route(service["status"]["url"])
+    verify_relationship_review_route(service["status"]["url"])
     print(json.dumps({"productionVerified": True, "commit": commit, "revision": revision}), flush=True)
 
 
