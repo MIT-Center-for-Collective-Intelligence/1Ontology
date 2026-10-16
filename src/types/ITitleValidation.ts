@@ -28,6 +28,8 @@ export interface TitleValidationSession {
   canManage: boolean;
   preview: boolean;
   practice?: boolean;
+  // Owner-copy compatibility: recover device drafts from the earlier role UI.
+  draftReviewerKeys?: string[];
   message?: string;
   disclosure?: {
     model: string;

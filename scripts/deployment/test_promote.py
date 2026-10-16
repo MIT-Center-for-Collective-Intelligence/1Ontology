@@ -149,7 +149,7 @@ class TitleReviewRouteTests(unittest.TestCase):
     def test_checks_both_workspaces_and_denies_anonymous(self):
         with patch("promote.urllib.request.urlopen", side_effect=self.opener()) as open_url:
             verify_title_review_route("https://example.org")
-            self.assertEqual(open_url.call_count, 4)
+            self.assertEqual(open_url.call_count, 5)
 
     def test_rejects_missing_mismatched_or_development_practice_page(self):
         for html in ("missing", 'Human title review {"preview":true,"practice":true}',

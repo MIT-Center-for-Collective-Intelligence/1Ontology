@@ -138,19 +138,24 @@ neighboring values and focus. The close action uses an accessible confirmation.
 No scientific instructions, output data, or saved responses were revised by
 the visual redesign.
 
-Private production practice
+The coordinator's own review copy
 The coordinator can open /review/title-validation?workspace=practice using
 normal ontology sign-in. This creates a separate owner-scoped practice study
 with the same five frozen examples. It does not enroll the coordinator in the
-staff pilot or read/copy the staff's answers. Switch among practice roles A,
-B, and C to complete the five title-writing tasks, then try the non-creator
-comparisons. These are one person's interface-testing responses, not independent
+staff pilot or read/copy the staff's answers. The coordinator writes titles for
+all five activities, then compares alternatives for all five, with no role
+selection or waiting for other people. These are interface-testing responses, not independent
 human judgments or validation results. Practice keeps separate drafts, answers,
 presentation timestamps, and event history; it never resets saved progress.
 
 The API verifies the existing token and coordinator permission, derives the
-practice ID from the authenticated owner, and accepts only the three synthetic
-role IDs. Each practice study carries purpose=interface-practice and its owner.
+practice ID from the authenticated owner. The three historical synthetic role
+keys remain internal storage identities so all earlier answers, drafts, seeds,
+and events are preserved. The server chooses the next task and its storage key;
+clients cannot select an internal role. Valid legacy synthetic role fields are
+ignored and invalid ones rejected. Progress counts completed activities once,
+including when an older copy has multiple evaluations for one activity.
+Each practice study carries purpose=interface-practice and its owner.
 Normal endpoints reject practice-prefixed studies; practice requests ignore
 client-supplied study IDs, reject mismatched ownership, and deny management,
 dashboard, and export operations. Synthetic roles are not Firebase accounts.
