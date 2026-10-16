@@ -1,5 +1,7 @@
 # Activity relationship review
 
+The exact-request API returns the discovery, author and two critical reviews participating in the current proposal. It derives this small view from the verified immutable evidence files; it does not render the entire run's request/response archive inside every card. The complete archive and its pinned hashes remain privately preserved, and the v1 disclosure remains readable.
+
 The current review also compares sibling activities. Discovery covers each sibling family with at least two non-heading children under a non-heading parent in the first four source levels: 51 families and 626 distinct children in the frozen October 16 snapshot. This includes the level-five Accept, Reject and Select activities under Decide. An existing Generalization may be valid yet have a useful closer Generalization; invalidity of the old link is not required. The opening queue starts with Accept and Reject if their complete source-context assessment and both separate critical reviews support them.
 
 Versions are additive. The active manifest selects a private dataset directory and retains the original pinned package in `history`; `?version=…` loads that version's evidence, traces and saved answers. Saves, retries, drafts, trace requests and Tom's feedback view bind to the loaded version. Earlier answers are never copied into a new dataset or overwritten during deployment. The private archive includes every unchanged original evidence file, and staging validates all retained versions.
