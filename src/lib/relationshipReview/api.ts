@@ -5,6 +5,7 @@ import { getRelationshipDataset, getRelationshipTrace } from "./dataset";
 import { parseFeedback, RelationshipError } from "./feedback";
 import { readFeedback, saveFeedback } from "./repository";
 import { relationshipPackages } from "./package";
+import { proposalReviewTrace } from "./trace";
 import {
   getRelationshipPresentation,
   getPresentationTrace,
@@ -117,7 +118,10 @@ export async function relationshipReviewHandler(
       return res.status(200).json({
         trace: {
           original: getRelationshipTrace(caseId, dataset.version),
-          selectedChangesReview: getPresentationTrace(dataset.version),
+          selectedChangesReview: proposalReviewTrace(
+            getPresentationTrace(dataset.version),
+            caseId,
+          ),
         },
       });
     }
