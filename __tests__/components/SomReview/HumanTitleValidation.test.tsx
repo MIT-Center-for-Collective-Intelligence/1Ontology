@@ -96,6 +96,7 @@ test("a network failure retries exactly the same payload", async () => {
   expect(fetch.mock.calls[1][1].body).toEqual(fetch.mock.calls[2][1].body);
 });
 test("moving to another task does not copy the previous answer into its draft", async () => {
+  const store = jest.spyOn(Storage.prototype, "setItem");
   global.fetch = jest
     .fn()
     .mockImplementationOnce(() => respond(session()))
@@ -116,10 +117,26 @@ test("moving to another task does not copy the previous answer into its draft", 
   await waitFor(() =>
     expect(screen.queryByLabelText("Your title")).not.toBeInTheDocument(),
   );
-  const next = localStorage.getItem(
-    "human-title-validation/study/unique-reviewer-a/create/c2",
-  );
-  expect(next).not.toContain("Old draft must not leak");
+  const nextKey = "human-title-validation/study/unique-reviewer-a/create/c2";
+  // The old form disappears before the next draft's storage effect commits.
+  // Wait for that effect, then verify both the retained draft and every write.
+  await waitFor(() => {
+    const next = localStorage.getItem(nextKey);
+    expect(next).not.toBeNull();
+    expect(JSON.parse(next!)).toEqual(
+      expect.objectContaining({
+        decision: "",
+        titles: [""],
+        confidence: null,
+        notes: "",
+      }),
+    );
+  });
+  expect(
+    store.mock.calls
+      .filter(([key]) => key === nextKey)
+      .every(([, value]) => !value.includes("Old draft must not leak")),
+  ).toBe(true);
 });
 test("pausing hides the task content", async () => {
   global.fetch = jest.fn(() => respond(session())) as jest.Mock;
