@@ -3,6 +3,8 @@ import {
   answerKey,
   creatorFor,
   dashboardFor,
+  createsCase,
+  joinAsReviewer,
   privateOptions,
   presentTask,
   progressFor,
@@ -77,11 +79,16 @@ function createdAll(keep = false) {
   }
   return state;
 }
-function evalPayload(state: ValidationState, caseId = "c2", uid = "a") {
+function evalPayload(
+  state: ValidationState,
+  caseId = "c2",
+  uid = "a",
+  fixture = data,
+) {
   return {
     kind: "evaluate",
     caseId,
-    ratings: privateOptions(state, data, caseId, uid).map((o) => ({
+    ratings: privateOptions(state, fixture, caseId, uid).map((o) => ({
       optionId: o.id,
       adequacy: "adequate",
       rank: 1,
@@ -371,4 +378,192 @@ test("duplicate reviewer IDs, missing cases and changed dataset versions are rej
   expect(() =>
     validateStudy({ ...state.study, datasetVersion: "other" }, data),
   ).toThrow();
+});
+
+const fiveData: ValidationDataset = {
+  ...data,
+  cases: Array.from({ length: 5 }, (_, i) => ({
+    ...data.cases[i % 3],
+    id: `c${i + 1}`,
+  })),
+};
+function fiveCreated() {
+  let state = initial();
+  state.study.caseIds = fiveData.cases.map((c) => c.id);
+  for (const r of state.study.roster) {
+    while (sessionFor(state, fiveData, r.reviewerId).phase === "create") {
+      const id = sessionFor(state, fiveData, r.reviewerId).task!.caseId;
+      state = presentTask(state, fiveData, r.reviewerId, 1000);
+      state = submitAnswer(
+        state,
+        fiveData,
+        r.reviewerId,
+        creation(id),
+        2000,
+      ).state;
+    }
+  }
+  return state;
+}
+test("joining freezes all old task assignments, displayed options, drafts and pending submissions", () => {
+  let before = fiveCreated();
+  const pending = sessionFor(before, fiveData, "a").task!;
+  before = presentTask(before, fiveData, "a", 3000);
+  const payload = {
+    ...evalPayload(before, pending.caseId),
+    ratings: privateOptions(before, fiveData, pending.caseId, "a").map((o) => ({
+      optionId: o.id,
+      adequacy: "adequate",
+      rank: 1,
+    })),
+  };
+  const snapshots = before.study.roster.map((r) => ({
+    session: sessionFor(before, fiveData, r.reviewerId),
+    options: before.study.caseIds
+      .filter((id) => !createsCase(before.study, id, r.reviewerId))
+      .map((id) => privateOptions(before, fiveData, id, r.reviewerId)),
+  }));
+  const after = joinAsReviewer(before, fiveData, "iman", "Iman").state;
+  expect(after.answers).toBe(before.answers);
+  expect(after.presentations).toBe(before.presentations);
+  expect(after.study.roster.slice(0, 3)).toEqual(before.study.roster);
+  expect(after.study.seed).toBe(before.study.seed);
+  expect(after.study.caseIds).toBe(before.study.caseIds);
+  expect(after.study.caseIds.map((id) => creatorFor(after.study, id))).toEqual([
+    "a",
+    "b",
+    "c",
+    "a",
+    "b",
+  ]);
+  for (let i = 0; i < 3; i++) {
+    const uid = before.study.roster[i].reviewerId;
+    expect(sessionFor(after, fiveData, uid)).toEqual(snapshots[i].session);
+    expect(
+      after.study.caseIds
+        .filter((id) => !createsCase(after.study, id, uid))
+        .map((id) => privateOptions(after, fiveData, id, uid)),
+    ).toEqual(snapshots[i].options);
+  }
+  expect(allCreationsDone(after)).toBe(true);
+  const saved = submitAnswer(after, fiveData, "a", payload, 4000);
+  expect(saved.duplicate).toBe(false);
+  expect(
+    submitAnswer(saved.state, fiveData, "a", payload, 5000).duplicate,
+  ).toBe(true);
+});
+test("the fourth reviewer creates two, compares the other three, and all answers reach team results", () => {
+  let state = joinAsReviewer(fiveCreated(), fiveData, "iman", "Iman").state;
+  expect(progressFor(state, "iman")).toEqual({
+    creationDone: 0,
+    creationTotal: 2,
+    evaluationDone: 0,
+    evaluationTotal: 3,
+  });
+  expect(dashboardFor(state, fiveData).expectedEvaluations).toBe(13);
+  for (const id of ["c1", "c2"]) {
+    expect(sessionFor(state, fiveData, "iman").task).toMatchObject({
+      caseId: id,
+      stage: "create",
+    });
+    expect(() => privateOptions(state, fiveData, id, "iman")).toThrow(
+      "cannot evaluate",
+    );
+    state = presentTask(state, fiveData, "iman", 3000);
+    const p = { ...creation(id), titles: ["Iman additional " + id] };
+    const saved = submitAnswer(state, fiveData, "iman", p, 4000);
+    expect(saved.answer.reviewerId).toBe("iman");
+    expect(submitAnswer(saved.state, fiveData, "iman", p, 5000).duplicate).toBe(
+      true,
+    );
+    state = saved.state;
+  }
+  for (const id of ["c3", "c4", "c5"]) {
+    expect(sessionFor(state, fiveData, "iman").task).toMatchObject({
+      caseId: id,
+      stage: "evaluate",
+    });
+    state = presentTask(state, fiveData, "iman", 5000);
+    state = submitAnswer(
+      state,
+      fiveData,
+      "iman",
+      evalPayload(state, id, "iman", fiveData),
+      6000,
+    ).state;
+  }
+  expect(sessionFor(state, fiveData, "iman").phase).toBe("complete");
+  expect(() =>
+    submitAnswer(state, fiveData, "iman", creation("c3"), 7000),
+  ).toThrow("not assigned");
+  expect(() =>
+    submitAnswer(state, fiveData, "iman", evalPayload(state, "c1", "b"), 7000),
+  ).toThrow("not assigned");
+  const dashboard = dashboardFor(state, fiveData);
+  expect(dashboard.completedCreations).toBe(7);
+  expect(dashboard.activityDetails[0].additionalHumans).toEqual([
+    { reviewerLabel: "Iman", titles: ["Iman additional c1"], confidence: 3 },
+  ]);
+  expect(dashboard.activityDetails[0].human?.reviewerLabel).toBe("a");
+  expect(
+    privateOptions(state, fiveData, "c1", "b").flatMap((o) => o.titles),
+  ).not.toContain("Iman additional c1");
+});
+test("joining is idempotent, validates frozen assignments, and rejects practice, closed and full studies", () => {
+  const before = fiveCreated();
+  const joined = joinAsReviewer(before, fiveData, "iman", "Iman");
+  expect(joinAsReviewer(joined.state, fiveData, "iman", "New name")).toEqual({
+    state: joined.state,
+    joined: false,
+  });
+  expect(() =>
+    joinAsReviewer(
+      { ...before, study: { ...before.study, status: "closed" } },
+      fiveData,
+      "iman",
+      "Iman",
+    ),
+  ).toThrow("open");
+  expect(() =>
+    joinAsReviewer(
+      {
+        ...before,
+        study: {
+          ...before.study,
+          practice: { ownerUid: "owner", purpose: "interface-practice" },
+        },
+      },
+      fiveData,
+      "iman",
+      "Iman",
+    ),
+  ).toThrow("team review");
+  expect(() =>
+    validateStudy(
+      { ...joined.state.study, primaryCreators: { c1: "a" } },
+      fiveData,
+    ),
+  ).toThrow("primary");
+  expect(() =>
+    validateStudy(
+      { ...joined.state.study, additionalCreations: { iman: ["c1", "c1"] } },
+      fiveData,
+    ),
+  ).toThrow("additional");
+  const full = {
+    ...before,
+    study: {
+      ...before.study,
+      roster: Array.from({ length: 10 }, (_, i) => ({
+        reviewerId: `r${i}`,
+        label: `R${i}`,
+      })),
+    },
+  };
+  expect(() => joinAsReviewer(full, fiveData, "iman", "Iman")).toThrow(
+    "fourth reviewer",
+  );
+  expect(() =>
+    joinAsReviewer(joined.state, fiveData, "second-coordinator", "Second"),
+  ).toThrow("fourth reviewer");
 });

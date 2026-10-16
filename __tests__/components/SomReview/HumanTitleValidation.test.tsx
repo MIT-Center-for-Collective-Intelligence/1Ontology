@@ -3,7 +3,9 @@ import React from "react";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import HumanTitleValidation from "../../../src/components/SomReview/HumanTitleValidation";
-import TitleValidationPage from "../../../src/pages/review/title-validation";
+import TitleValidationPage, {
+  getServerSideProps,
+} from "../../../src/pages/review/title-validation";
 import { Post } from "../../../src/lib/utils/Post";
 import { useAuth } from "../../../src/components/context/AuthContext";
 import type { TitleValidationSession } from "../../../src/types/ITitleValidation";
@@ -56,6 +58,22 @@ const respond = (data: unknown, status = 200) =>
     status,
     json: async () => data,
   });
+test("the old practice bookmark redirects to the team flow without carrying old answers", async () => {
+  expect(
+    await getServerSideProps({ query: { workspace: "practice" } } as never),
+  ).toEqual({
+    redirect: { destination: "/review/title-validation", permanent: false },
+  });
+  expect(
+    await getServerSideProps({
+      query: {},
+      req: {
+        headers: { host: "ontology.mit.edu" },
+        socket: { remoteAddress: "127.0.0.1" },
+      },
+    } as never),
+  ).toEqual({ props: { preview: false, practice: false } });
+});
 test("the signed-in page waits for restored authentication before requesting a session", async () => {
   jest
     .mocked(useAuth)
@@ -112,7 +130,10 @@ test("the owner's copy is one five-activity flow with no role selection and isol
   });
   const view = render(<HumanTitleValidation preview={false} practice />);
   await screen.findByText("Write Report");
-  expect(screen.getByText("Your review copy")).toBeVisible();
+  expect(screen.getByText("Earlier review copy")).toBeVisible();
+  expect(
+    screen.queryByText(/not included in the team/),
+  ).not.toBeInTheDocument();
   expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
   expect(screen.getByText(/Titles 0\/5/)).toBeVisible();
   expect(screen.getByText(/Comparisons 0\/5/)).toBeVisible();
@@ -164,20 +185,50 @@ test("own-copy submissions advance automatically and uncertain-delivery retries 
   await screen.findByText("Write Report");
   expect(screen.getByLabelText("Keep it")).not.toBeChecked();
 });
-test("the coordinator has a link to a separate practice copy without becoming a reviewer", async () => {
-  jest.mocked(Post).mockResolvedValue({
-    ...session(),
-    phase: "unassigned",
-    task: undefined,
-    canManage: true,
-    preview: false,
-  });
+test("the coordinator joins the team under their own account using the normal reviewer flow", async () => {
+  jest
+    .mocked(Post)
+    .mockResolvedValueOnce({
+      ...session(),
+      studyId: "team-study",
+      phase: "unassigned",
+      task: undefined,
+      canManage: true,
+      preview: false,
+    })
+    .mockResolvedValueOnce({ joined: true })
+    .mockResolvedValueOnce({
+      ...session(),
+      preview: false,
+      canManage: true,
+      progress: {
+        creationDone: 0,
+        creationTotal: 2,
+        evaluationDone: 0,
+        evaluationTotal: 3,
+      },
+    });
   render(<HumanTitleValidation preview={false} />);
+  fireEvent.click(
+    await screen.findByRole("button", { name: "Join as reviewer" }),
+  );
+  await screen.findByText("Write Report");
+  expect(Post).toHaveBeenCalledWith(
+    "/som-review/title-validation/manage",
+    {
+      studyId: "team-study",
+      operation: "join",
+    },
+    false,
+  );
+  expect(screen.getByText(/Titles 0\/2/)).toBeVisible();
+  expect(screen.getByText(/Comparisons 0\/3/)).toBeVisible();
   expect(
-    await screen.findByRole("link", {
-      name: "Review the five activities yourself",
-    }),
-  ).toHaveAttribute("href", "/review/title-validation?workspace=practice");
+    screen.queryByRole("button", { name: "Join as reviewer" }),
+  ).not.toBeInTheDocument();
+  expect(
+    screen.queryByText(/not included in the team/),
+  ).not.toBeInTheDocument();
   expect(screen.queryByLabelText("Practice role")).not.toBeInTheDocument();
 });
 
@@ -222,24 +273,22 @@ test.each([false, true])(
         ratings: {},
       }),
     );
-    jest
-      .mocked(Post)
-      .mockResolvedValue({
-        ...session(),
-        studyId: "human-title-practice-own",
-        reviewerKey: "current-key",
-        draftReviewerKeys: ["current-key", "earlier-key"],
-        preview: false,
-        practice: true,
-        phase: "evaluate",
-        progress: {
-          creationDone: 5,
-          creationTotal: 5,
-          evaluationDone: 0,
-          evaluationTotal: 5,
-        },
-        task: { ...session().task!, stage: "evaluate", options },
-      });
+    jest.mocked(Post).mockResolvedValue({
+      ...session(),
+      studyId: "human-title-practice-own",
+      reviewerKey: "current-key",
+      draftReviewerKeys: ["current-key", "earlier-key"],
+      preview: false,
+      practice: true,
+      phase: "evaluate",
+      progress: {
+        creationDone: 5,
+        creationTotal: 5,
+        evaluationDone: 0,
+        evaluationTotal: 5,
+      },
+      task: { ...session().task!, stage: "evaluate", options },
+    });
     render(<HumanTitleValidation preview={false} practice />);
     await screen.findByDisplayValue("My earlier comparison");
     expect(screen.getByText("2. Compare alternatives")).toBeVisible();

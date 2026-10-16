@@ -41,12 +41,18 @@ export default function TitleValidationPage({
     <SignedInReview practice={practice} />
   );
 }
-export const getServerSideProps: GetServerSideProps = async (context) => ({
-  props: {
-    preview: localPreviewEnabled(
-      context.req.headers.host,
-      context.req.socket.remoteAddress,
-    ),
-    practice: context.query.workspace === "practice",
-  },
-});
+export const getServerSideProps: GetServerSideProps = async (context) => {
+  if (context.query.workspace === "practice")
+    return {
+      redirect: { destination: "/review/title-validation", permanent: false },
+    };
+  return {
+    props: {
+      preview: localPreviewEnabled(
+        context.req.headers.host,
+        context.req.socket.remoteAddress,
+      ),
+      practice: false,
+    },
+  };
+};
