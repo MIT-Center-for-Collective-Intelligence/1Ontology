@@ -109,6 +109,27 @@ export function validateRelationshipRelease(root = process.cwd()) {
       fail("selection evidence hash mismatch");
     const presentation = JSON.parse(presentationBytes),
       trace = JSON.parse(traceBytes);
+    const reviews = [trace.editor, ...trace.critiques];
+    if (
+      !Array.isArray(trace.exactRequests) ||
+      trace.exactRequests.length !== reviews.length
+    )
+      fail("missing exact selection review requests");
+    for (const review of reviews) {
+      const requests = trace.exactRequests.filter(
+        (r) => r.jobId === review.jobId,
+      );
+      if (
+        requests.length !== 1 ||
+        requests[0].requestSha256 !== review.requestSha256 ||
+        sha(JSON.stringify(requests[0].body)) !== review.requestSha256 ||
+        typeof requests[0].body.instructions !== "string" ||
+        !requests[0].body.instructions ||
+        typeof requests[0].body.input !== "string" ||
+        !requests[0].body.input
+      )
+        fail("selection review request provenance mismatch");
+    }
     if (
       presentation.datasetSha256 !== sha(bytes) ||
       presentation.datasetVersion !== dataset.version ||
