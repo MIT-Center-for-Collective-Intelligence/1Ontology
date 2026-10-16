@@ -1,12 +1,27 @@
 import type { GetServerSideProps } from "next";
 import HumanTitleValidation from "@components/components/SomReview/HumanTitleValidation";
 import withAuthUser from "@components/components/hoc/withAuthUser";
+import { useAuth } from "@components/components/context/AuthContext";
 import { localPreviewEnabled } from "@components/lib/titleValidation/repository";
+
+function AuthReadyReview() {
+  const [{ isAuthInitialized, isAuthenticated }] = useAuth();
+  // The shared redirect wrapper renders its child during Firebase startup.
+  // Mount this review only once its first request can carry the user's token.
+  if (!isAuthInitialized || !isAuthenticated)
+    return (
+      <main aria-busy="true">
+        <h1>Human title review</h1>
+        <p role="status">Loading your account…</p>
+      </main>
+    );
+  return <HumanTitleValidation preview={false} />;
+}
 
 const SignedInReview = withAuthUser({
   shouldRedirectToHomeIfAuthenticated: false,
   shouldRedirectToLogin: true,
-})(() => <HumanTitleValidation preview={false} />);
+})(AuthReadyReview);
 export default function TitleValidationPage({ preview }: { preview: boolean }) {
   return preview ? <HumanTitleValidation preview /> : <SignedInReview />;
 }

@@ -125,6 +125,7 @@ function removeDraft(key: string): void {
 }
 
 function errorText(error: unknown): string {
+  if (typeof error === "string" && error.trim()) return error;
   const serverError = (error as { response?: { data?: { error?: unknown } } })
     ?.response?.data?.error;
   if (typeof serverError === "string") return serverError;
@@ -781,6 +782,18 @@ export default function HumanTitleValidation({
                 role="alert"
               >
                 {error}
+                {!session && (
+                  <Box sx={{ mt: 1 }}>
+                    <Button
+                      color="inherit"
+                      variant="outlined"
+                      disabled={loadingSession}
+                      onClick={() => void refreshSession()}
+                    >
+                      Try loading again
+                    </Button>
+                  </Box>
+                )}
               </Alert>
             )}
             <Typography

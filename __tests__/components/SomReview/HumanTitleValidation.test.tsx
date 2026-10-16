@@ -3,12 +3,25 @@ import React from "react";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import HumanTitleValidation from "../../../src/components/SomReview/HumanTitleValidation";
+import TitleValidationPage from "../../../src/pages/review/title-validation";
+import { Post } from "../../../src/lib/utils/Post";
+import { useAuth } from "../../../src/components/context/AuthContext";
 import type { TitleValidationSession } from "../../../src/types/ITitleValidation";
 jest.mock("next/head", () => ({
   __esModule: true,
   default: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 jest.mock("../../../src/lib/utils/Post", () => ({ Post: jest.fn() }));
+jest.mock("../../../src/components/context/AuthContext", () => ({
+  useAuth: jest.fn(),
+}));
+jest.mock("../../../src/components/hoc/withAuthUser", () => ({
+  __esModule: true,
+  default: () => (Component: React.ComponentType) => Component,
+}));
+jest.mock("../../../src/lib/titleValidation/repository", () => ({
+  localPreviewEnabled: jest.fn(() => false),
+}));
 const session = (caseId = "c1"): TitleValidationSession => ({
   studyId: "study",
   datasetVersion: "v1",
@@ -34,6 +47,8 @@ const session = (caseId = "c1"): TitleValidationSession => ({
 beforeEach(() => {
   localStorage.clear();
   jest.restoreAllMocks();
+  jest.mocked(Post).mockReset();
+  jest.mocked(useAuth).mockReset();
 });
 const respond = (data: unknown, status = 200) =>
   Promise.resolve({
@@ -41,6 +56,46 @@ const respond = (data: unknown, status = 200) =>
     status,
     json: async () => data,
   });
+test("the signed-in page waits for restored authentication before requesting a session", async () => {
+  jest
+    .mocked(useAuth)
+    .mockReturnValue([
+      { isAuthInitialized: false, isAuthenticated: false },
+    ] as never);
+  jest.mocked(Post).mockResolvedValue({ ...session(), preview: false });
+  const view = render(<TitleValidationPage preview={false} />);
+  expect(screen.getByRole("status")).toHaveTextContent("Loading your account");
+  expect(Post).not.toHaveBeenCalled();
+  jest
+    .mocked(useAuth)
+    .mockReturnValue([
+      { isAuthInitialized: true, isAuthenticated: false },
+    ] as never);
+  view.rerender(<TitleValidationPage preview={false} />);
+  expect(Post).not.toHaveBeenCalled();
+  jest
+    .mocked(useAuth)
+    .mockReturnValue([
+      { isAuthInitialized: true, isAuthenticated: true },
+    ] as never);
+  view.rerender(<TitleValidationPage preview={false} />);
+  await screen.findByText("Write Report");
+  expect(Post).toHaveBeenCalledTimes(1);
+});
+test("a failed production session shows the server message and can recover without reloading", async () => {
+  jest
+    .mocked(Post)
+    .mockRejectedValueOnce("Sign in again to continue.")
+    .mockResolvedValueOnce({ ...session(), preview: false });
+  render(<HumanTitleValidation preview={false} />);
+  await screen.findByText("Sign in again to continue.");
+  fireEvent.click(screen.getByRole("button", { name: "Try loading again" }));
+  await screen.findByText("Write Report");
+  expect(
+    screen.queryByText("Sign in again to continue."),
+  ).not.toBeInTheDocument();
+  expect(Post).toHaveBeenCalledTimes(2);
+});
 test("first screen has no preselected decision or confidence, and no model answer", async () => {
   global.fetch = jest.fn(() => respond(session())) as jest.Mock;
   render(<HumanTitleValidation preview />);
