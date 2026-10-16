@@ -34,8 +34,20 @@ def gcloud(*args):
 
 
 def read_release(origin):
-    with urllib.request.urlopen(origin + "/api/deployment", timeout=60) as response:
-        return json.load(response)
+    # A newly assigned Cloud Run tag can briefly return 404 before routing
+    # reaches the ready revision. Retry only this read; identity/hash checks
+    # and the conditional traffic update are never relaxed or retried here.
+    for attempt in range(6):
+        try:
+            with urllib.request.urlopen(origin + "/api/deployment", timeout=60) as response:
+                return json.load(response)
+        except urllib.error.HTTPError as error:
+            if error.code not in (404, 502, 503, 504) or attempt == 5:
+                raise
+        except (urllib.error.URLError, TimeoutError):
+            if attempt == 5:
+                raise
+        time.sleep(min(15, 2 ** attempt))
 
 
 def title_model_comparison_release(root):
