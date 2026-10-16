@@ -1,0 +1,88 @@
+{
+  "version": "human-title-prepilot-20261015-v1",
+  "cases": [
+    {
+      "id": "XiGo1tm3pPtBOey5DBOj",
+      "nodeId": "XiGo1tm3pPtBOey5DBOj",
+      "currentTitle": "Show Appliance",
+      "description": "Show and explain orthopedic and prosthetic appliances to healthcare workers.",
+      "sourceId": "9395",
+      "outcome": "Split",
+      "modelTitles": [
+        "Show orthopedic appliances to healthcare workers",
+        "Show prosthetic appliances to healthcare workers"
+      ],
+      "modelReason": "The description explicitly distinguishes orthopedic and prosthetic appliance types, requiring two titles. Both reference the sole supporting description, so each group necessarily contains one description. The separate activity of explaining appliances is excluded."
+    },
+    {
+      "id": "gro84wSeP7xoJIEE9rMa",
+      "nodeId": "gro84wSeP7xoJIEE9rMa",
+      "currentTitle": "Recycle Refrigerant",
+      "description": "Conserve, recover, and recycle refrigerants used in cooling systems.",
+      "sourceId": "13805",
+      "outcome": "Keep",
+      "modelTitles": [
+        "Recycle Refrigerant"
+      ],
+      "modelReason": "Keep the original title. Only one description is supplied, so a single-description group is appropriate."
+    },
+    {
+      "id": "WeLyxFSwMTDfuHgd0jKL",
+      "nodeId": "WeLyxFSwMTDfuHgd0jKL",
+      "currentTitle": "Lift Unit",
+      "description": "Lift units or parts such as motors or generators, using cranes or chain hoists, or signal crane operators to lift heavy parts or subassemblies.",
+      "sourceId": "11702",
+      "outcome": "Clarify",
+      "modelTitles": [
+        "Lift units using cranes or chain hoists"
+      ],
+      "modelReason": "One group covers the unit-lifting activity in the sole description; no supported object-type split is needed."
+    },
+    {
+      "id": "yC8rK6KQ4VSHSHGxKT8n",
+      "nodeId": "yC8rK6KQ4VSHSHGxKT8n",
+      "currentTitle": "Arrange Billing",
+      "description": "Determine charges for services requested, collect deposits or payments, or arrange for billing.",
+      "sourceId": "2583",
+      "outcome": "Keep",
+      "modelTitles": [
+        "Arrange Billing"
+      ],
+      "modelReason": "One description supports one clear billing activity; no split is warranted."
+    },
+    {
+      "id": "bLIUspQ7eE0qCldu0gwc",
+      "nodeId": "bLIUspQ7eE0qCldu0gwc",
+      "currentTitle": "Secure Offender",
+      "description": "Restrain, secure, or control offenders, using chemical agents, firearms, or other weapons of force as necessary.",
+      "sourceId": "9433",
+      "outcome": "Clarify",
+      "modelTitles": [
+        "Secure offenders using chemical agents, firearms, or other weapons of force as necessary"
+      ],
+      "modelReason": "One group covers the securing activity in the sole description; alternative methods do not warrant separate groups."
+    }
+  ],
+  "scientificPrompt": "INPUTS\n\n1. A current activity title, originally extracted as a verb–object pair from an O*NET work activity description.\n\n2. The complete O*NET description or descriptions supporting that title, each numbered within this input. The software retains the original O*NET source identifiers separately.\n\nTASK\n\nMake the title clearly and accurately describe its supporting work activity for a reader unfamiliar with the occupation. Focus on the activity represented by the verb-direct object pair that makes up the current title; do not add other verbs or direct objects that appear in the description, as these will be addressed elsewhere. When multiple modifiers appear before a direct object, indicating that an activity is being enacted on multiple direct objects, replace the original title with multiple new, distinct titles that depict those multiple direct objects. Do not create separate titles or groups based on multiple methods, purposes, or tools.\n\nRULES FOR BOTH ROUTES\n\nKeep the original verb or verb phrase unchanged, except for ordinary grammatical adjustments, such as inserting a preposition between the verb and direct object if warranted.\n\nKeep the direct object represented by the original title. Do not add other direct objects from the description or use a broader replacement term that includes them. These additional direct objects will be addressed elsewhere. You may clarify the original object or activity using supported wording about its type, methods, purpose, or context, but doing this must not add another object or activity. Ordinary grammatical adjustments are allowed, such as changing a noun from singular to plural to make the title more idiomatic.\n\nMake a proposed title as compact as possible while remaining clear, natural, and accurate to a non-expert. Aim for seven words or fewer, but use more when needed for clarity or to retain the stated method, purpose, or other relevant information. Do not omit these details or combine distinct activities just to shorten a title. Briefly explain longer titles. Use only supported details; do not invent them or treat an example as the only possible case. If the activity or a description’s placement is unclear from the evidence, propose your best tentative title and placement, explain the uncertainty, and flag it for human review. In all instances, provide a brief rationale explaining the outputs.\n\nA. ONE O*NET DESCRIPTION\n\nFor titles linked to only one O*NET description, assess whether the current title clearly and accurately describes the relevant activity. If so, keep it. If not, propose a new title using the rules above. Give a brief reason for keeping or changing the title, or proposing it tentatively for human review.\n\nIn some cases, multiple modifiers explicitly distinguish between different types of that same object. For example, the description, “Deliver advertising or illustration proofs to customers for approval” could involve two distinct tasks: “Deliver advertising proofs to customers for approval” and “Deliver illustrative proofs to customers for approval.” In such a case, it is appropriate to replace the original title and propose two new titles in its place. The rule against adding another activity does not apply in such a case. If this description is numbered 1, both titles list 1 and explain the corresponding proof type in their reasons.\n\nWhen changing titles, if needed, clarify the original object or activity with useful modifiers drawn from the description, such as its type (what?), method (how? often expressed with terms like “using” or “through”), purpose (why? often expressed with terms like “for” or “to achieve”), or context (where or when?). Also include any other relevant information, such as what materials involved or who the activity is being undertaken for.\n\nB. MULTIPLE O*NET DESCRIPTIONS\n\nIdentify the relevant activity in each of the multiple descriptions linked to the title. If the descriptions all represent the same basic activity, keep them together in a group. If this is the case, next assess whether the current title accurately depicts the activities covered by the descriptions. If so, keep the original title. If not, propose a new title, based on the guidance set out in A.\n\nIf the multiple descriptions do not all represent the same basic activity, create separate groups, each of which includes only activities that are similar. Each group’s title must fit the relevant activity in every description linked to it.\n\nAim to assign approximately 5–9 descriptions per newly proposed group (not 5–9 groups in total). If larger or smaller groups are proposed, provide a strong reason. If descriptions are identical, keep them in the same group. Do not split a coherent group, combine different activities, or omit a supported activity merely to meet the size target. If the same proofs description appears as descriptions 1 and 2, both proof titles list [1,2]. Do not put one identical copy only under advertising proofs and the other only under illustrative proofs.\n\nIf the original title can be applied to one of these new groups, indicate as much, and create new titles for the other groups, based on the guidance set out in A. When proposing a new title, list the description numbers it includes and a brief reason.\n\nIf an original title does not apply to any newly created groups, propose new titles for all of the groups, using the guidance set out in A. As above, along with the title, list the relevant description numbers and a brief reason.\n\nThese are proposals for title clarification and grouping only.\n\nOUTPUT FORMAT FOR THE SOFTWARE\n\nReturn only JSON using the format below, including kept, changed, and tentative titles. Account for every input description, including uncertain or nonspecific ones. Explain uncertainty and the need for human review in the reason fields.\n\nUse only these fields. Each title and reason is a text string. Each description number is an integer identifying a description in this input, not a group number. Original O*NET source identifiers are retained by the software and are not returned in this JSON.\n\n{\"groups\":[{\"title\":\"Proposed activity title\",\"descriptionNumbers\":[1,2],\"reason\":\"Why this title fits these descriptions\"}],\"reason\":\"Explanation of the overall grouping\"}\n",
+  "provenance": {
+    "purpose": "Five-case staff usability try-out. Not a finalized validation sample or authorization to apply proposals.",
+    "selection": "Deterministic hash selection within model-output types: 2 Keep, 2 Clarify, 1 Split. Intentionally unrepresentative proportions.",
+    "sourceSha256": "bd06d1dcb000b2ff36b93fde5f960180d36ccfbaa93c487ef0fd12eb5227579e",
+    "scientificPromptSha256": "e91ac67ba14a088131acb4d681f4a57a983b6f6e26d7ce655971bc0719f556b4",
+    "model": "gpt-6.1-sol",
+    "modelReasoningEffort": "high",
+    "fundingRoute": "Native ChatGPT on oneman@mit.edu; user states personally funded allocation. Not ACCESS or MIT-funded inference.",
+    "cohort": {
+      "singleDescriptionPopulation": 10845,
+      "usable": 10820,
+      "excluded": 25,
+      "keep": 657,
+      "clarify": 9579,
+      "split": 584
+    },
+    "generation": "Retained completed title proposals; no new model inference or ontology change. Original artifacts and reviews remain unchanged.",
+    "originalSourceSnapshotSha256": "c67761cfc3bfe00483b98e4d302eda7b6007db8163fe59ea86827e90773cd3b2",
+    "fullProposalCsvSha256": "e6aadf45a8032e20d1eb52730362cdcbc1fec1a8f04ce912c566e74c85166a39",
+    "preExposure": "Some team members have seen prior outputs. This try-out must not be described as an unbiased, independent accuracy evaluation."
+  }
+}

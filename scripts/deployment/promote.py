@@ -7,6 +7,7 @@ import subprocess
 import sys
 import time
 import urllib.request
+import urllib.error
 
 PROJECT = "ontology-41607"
 REGION = "us-central1"
@@ -17,6 +18,7 @@ LATEST_TITLE_PROMPT_STUDY = "Ontology_Title_Clarity_Testbed_2026-08-28/prompt-st
 TITLE_MODEL_COMPARISON = "Ontology_Title_Clarity_Testbed_2026-08-28/model-comparison-2026-09-16/comparison.json"
 TITLE_MODEL_COMPARISON_JUDGE_RESULTS = "Ontology_Title_Clarity_Testbed_2026-08-28/model-comparison-2026-09-16/judge-results.json"
 TITLE_MODEL_COMPARISON_VERSION = "rob-very-short-prompt-model-comparison-2026-09-16-v1"
+TITLE_VALIDATION_PACKAGE = "src/lib/titleValidation/data/prepilot-v1.json"
 MANIFESTS = {
     "ontology-title-testbed": ("ontology-title-two-route-testbed-2026-09-02-v6", 18, False,
         "d37949667f4efce3d7a16fec9ec04c95774aea8789cedba4d8a19d3d753f91ea"),
@@ -103,6 +105,32 @@ def validate_release(info, commit, build_id, revision):
             raise ValueError("The candidate does not contain the exact committed title prompt pilot: " + field)
     if info.get("titleModelComparison") != title_model_comparison_release(Path(__file__).resolve().parents[2]):
         raise ValueError("The candidate does not contain the exact committed title model comparison")
+    staff_bytes = (Path(__file__).resolve().parents[2] / TITLE_VALIDATION_PACKAGE).read_bytes()
+    staff = json.loads(staff_bytes)
+    expected_staff = {"version": staff["version"], "cases": len(staff["cases"]),
+        "model": staff["provenance"]["model"],
+        "promptSha256": staff["provenance"]["scientificPromptSha256"],
+        "bundleSha256": hashlib.sha256(staff_bytes).hexdigest(), "released": True}
+    if info.get("humanTitleReview") != expected_staff:
+        raise ValueError("The staff title-review pilot is missing, changed, or not enabled")
+
+
+def verify_title_review_route(origin):
+    """Smoke-test the new route and its anonymous access boundary, without writes."""
+    with urllib.request.urlopen(origin + "/review/title-validation", timeout=60) as response:
+        html = response.read().decode("utf-8")
+    if "Human title review" not in html or '"preview":false' not in html:
+        raise ValueError("Staff pilot page is missing or exposes development mode")
+    request = urllib.request.Request(origin + "/api/som-review/title-validation/session",
+        data=b'{"previewReviewer":"preview-a"}', method="POST",
+        headers={"Content-Type": "application/json"})
+    try:
+        urllib.request.urlopen(request, timeout=60)
+    except urllib.error.HTTPError as error:
+        if error.code == 401:
+            return
+        raise ValueError("Unexpected anonymous staff pilot response") from error
+    raise ValueError("Anonymous staff pilot access was accepted")
 
 
 def promote_if_current(commit, revision, api, main_head):
@@ -133,6 +161,7 @@ def main():
     if len(candidates) != 1:
         raise ValueError("The candidate tag no longer targets this build; do not promote")
     validate_release(read_release(candidates[0]["url"]), commit, build_id, revision)
+    verify_title_review_route(candidates[0]["url"])
     token = subprocess.check_output(["gcloud", "auth", "print-access-token"], text=True).strip()
     def api(resource, method="GET", body=None):
         request = urllib.request.Request("https://run.googleapis.com/v2/" + resource,
@@ -154,6 +183,7 @@ def main():
     if operation.get("error"):
         raise RuntimeError("Conditional traffic promotion failed: " + str(operation["error"].get("code")))
     validate_release(read_release(service["status"]["url"]), commit, build_id, revision)
+    verify_title_review_route(service["status"]["url"])
     print(json.dumps({"productionVerified": True, "commit": commit, "revision": revision}), flush=True)
 
 

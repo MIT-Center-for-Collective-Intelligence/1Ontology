@@ -63,6 +63,22 @@ relax the check merely to get a build through. These files contain proposals,
 not instructions to apply changes to the ontology. Deployment does not write
 to the ontology or review collections.
 
+The five-case human title-review staff pilot is available at
+`/review/title-validation`. Its light theme and reviewer state are scoped to
+that route. A coordinator must create a draft roster and explicitly open it;
+deployment does not enroll reviewers or apply ontology proposals. The full
+validation sample and acceptance procedure remain separate team decisions.
+
+The `humanTitleReview` field of `/api/deployment` reports the exact staff
+package version, case count, model, prompt SHA256, package SHA256, and runtime
+release flag. The runner image explicitly includes the pinned package, and
+the main build runs the title-review engine/API/storage/UI tests and scoped
+type check. Promotion checks this metadata, the page route, and rejection of
+anonymous preview impersonation on the candidate and again after promotion.
+Existing v6/v7 packages, prompt transparency, and historical reviews remain
+covered by the original guards. See `docs/human-title-validation.txt` for
+workflow, privacy, data provenance, and pilot setup.
+
 Cloud Build logs record the prior traffic allocation before promotion. To
 roll back, use `gcloud run services update-traffic ontology --project
 ontology-41607 --region us-central1 --to-revisions=PREVIOUS_REVISION=100` with

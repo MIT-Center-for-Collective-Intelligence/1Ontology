@@ -1,5 +1,6 @@
 module.exports = {
   output: "standalone",
+  distDir: process.env.TITLE_VALIDATION_DIST_DIR || ".next",
   reactStrictMode: false,
   eslint: {
     ignoreDuringBuilds: true,

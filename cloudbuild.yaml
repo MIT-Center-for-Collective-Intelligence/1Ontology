@@ -112,6 +112,7 @@ steps:
       - "--project"
       - "ontology-41607"
       - "--allow-unauthenticated"
+      - "--update-env-vars=TITLE_VALIDATION_RELEASED=1"
       - "--remove-env-vars=PROD_ONTOLOGY_CRED_TYPE,\
         PROD_ONTOLOGY_CRED_PROJECT_ID,\
         PROD_ONTOLOGY_CRED_PRIVATE_KEY_ID,\

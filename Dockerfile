@@ -15,6 +15,7 @@ COPY src ./src
 COPY public ./public
 COPY next.config.js ./
 COPY tsconfig.json ./
+COPY tsconfig.title-validation.json ./
 COPY jest.config.js ./
 COPY Dockerfile ./
 COPY scripts/deployment/review-package-lock.json ./scripts/deployment/review-package-lock.json
@@ -62,9 +63,10 @@ ENV NEXT_PUBLIC_DEV_APP_ID=${NEXT_PUBLIC_DEV_APP_ID}
 
 ENV NODE_ENV=production
 
-RUN NODE_ENV=test npx jest --runInBand --watch=false --coverage=false __tests__/lib/somReview __tests__/components/SomReview __tests__/pages/api/deployment.test.ts
+RUN NODE_ENV=test npx jest --runInBand --watch=false --coverage=false __tests__/lib/somReview __tests__/lib/titleValidation __tests__/components/SomReview __tests__/pages/api/deployment.test.ts
 RUN node --test scripts/som-review/title-prompt-study-lib.test.mjs scripts/som-review/latest-title-prompt-study-lib.test.mjs scripts/som-review/title-clarification-judge-lib.test.mjs
 RUN npm run build
+RUN npm run typecheck:title-validation
 
 # Step 2. Production image (Runner)
 FROM node:18-alpine AS runner
@@ -93,6 +95,7 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/next.config.js .
 COPY --from=builder /app/package.json .
 COPY --from=builder /app/scripts/deployment/review-package-lock.json ./scripts/deployment/review-package-lock.json
+COPY --from=builder /app/src/lib/titleValidation/data/prepilot-v1.json ./src/lib/titleValidation/data/prepilot-v1.json
 
 # Automatically leverage output traces to reduce image size 
 # https://nextjs.org/docs/advanced-features/output-file-tracing

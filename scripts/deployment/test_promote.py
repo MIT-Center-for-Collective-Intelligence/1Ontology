@@ -38,13 +38,18 @@ class ReleaseVerificationTests(unittest.TestCase):
             "bundleSha256": hashlib.sha256(comparison_bytes).hexdigest(),
             "judgeResultsSha256": hashlib.sha256(judge_bytes).hexdigest()}
         self.assertEqual(comparison["version"], judge["studyVersion"])
+        staff_bytes = (ROOT / "src/lib/titleValidation/data/prepilot-v1.json").read_bytes()
+        staff = json.loads(staff_bytes)
+        self.info["humanTitleReview"] = {"version":staff["version"],"cases":len(staff["cases"]),
+            "model":staff["provenance"]["model"],"promptSha256":staff["provenance"]["scientificPromptSha256"],
+            "bundleSha256":hashlib.sha256(staff_bytes).hexdigest(),"released":True}
 
     def test_accepts_exact_release(self):
         validate_release(self.info, "a" * 40, "build-1", "revision-1")
 
     def test_rejects_stale_or_mispackaged_release(self):
         for field in ("commit", "buildId", "revision", "packageSha256", "titlePromptStudy", "latestTitlePromptStudy",
-                      "titleModelComparison"):
+                      "titleModelComparison", "humanTitleReview"):
             with self.subTest(field=field):
                 broken = copy.deepcopy(self.info)
                 broken[field] = "stale"
@@ -67,6 +72,14 @@ class ReleaseVerificationTests(unittest.TestCase):
         del broken["titleModelComparison"]
         with self.assertRaises(ValueError):
             validate_release(broken, "a" * 40, "build-1", "revision-1")
+
+    def test_rejects_unreleased_or_changed_staff_pilot(self):
+        for field in self.info["humanTitleReview"]:
+            with self.subTest(field=field):
+                broken = copy.deepcopy(self.info)
+                broken["humanTitleReview"][field] = False if field == "released" else "changed"
+                with self.assertRaises(ValueError):
+                    validate_release(broken, "a" * 40, "build-1", "revision-1")
 
 
 class TitleModelComparisonReleaseTests(unittest.TestCase):
