@@ -4,6 +4,10 @@ import { localPreviewEnabled } from "../titleValidation/repository";
 import { getRelationshipDataset, getRelationshipTrace } from "./dataset";
 import { parseFeedback, RelationshipError } from "./feedback";
 import { readFeedback, saveFeedback } from "./repository";
+import {
+  getRelationshipPresentation,
+  getPresentationTrace,
+} from "./presentation";
 
 export const relationshipReviewAllowed = (user: {
   email?: string;
@@ -78,22 +82,29 @@ export async function relationshipReviewHandler(
         String(user.email).toLowerCase() !== "malone@mit.edu";
     }
     const { dataset, sha256 } = getRelationshipDataset();
+    const { presentation, sha256: presentationSha256 } =
+      getRelationshipPresentation(dataset, sha256);
     if (action === "tom-feedback") {
       if (!canViewTomFeedback || preview)
         throw new RelationshipError(403, "This overview is available to Iman.");
       const { admin } = await import("../firestoreServer/admin");
       const tom = await admin.auth().getUserByEmail("malone@mit.edu");
-      return res
-        .status(200)
-        .json({
-          feedback: await readFeedback(tom.uid, dataset.version, false, sha256),
-        });
+      return res.status(200).json({
+        feedback: await readFeedback(tom.uid, dataset.version, false, sha256),
+      });
     }
     if (action === "trace") {
       const caseId = String(req.body?.caseId || "");
       if (!dataset.cases.some((c) => c.id === caseId))
         throw new RelationshipError(404, "Unknown activity.");
-      return res.status(200).json({ trace: getRelationshipTrace(caseId) });
+      return res
+        .status(200)
+        .json({
+          trace: {
+            original: getRelationshipTrace(caseId),
+            selectedChangesReview: getPresentationTrace(),
+          },
+        });
     }
     if (action === "save") {
       if (
@@ -110,6 +121,15 @@ export async function relationshipReviewHandler(
         sha256,
         dataset.cases.map((c) => c.id),
       );
+      if (req.body.presentationSha256 !== undefined) {
+        if (req.body.presentationSha256 !== presentationSha256)
+          throw new RelationshipError(
+            409,
+            "The evidence presentation changed. Your draft is preserved; reload before saving.",
+          );
+        request.presentationSha256 = presentationSha256;
+        request.presentationVersion = presentation.version;
+      }
       return res
         .status(200)
         .json({ answer: await saveFeedback(uid, request, preview) });
@@ -117,6 +137,8 @@ export async function relationshipReviewHandler(
     return res.status(200).json({
       dataset,
       datasetSha256: sha256,
+      presentation,
+      presentationSha256,
       reviewerKey: createHash("sha256").update(uid).digest("hex"),
       reviewerLabel: label,
       feedback: await readFeedback(uid, dataset.version, preview, sha256),

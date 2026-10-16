@@ -24,6 +24,13 @@ def verify_directory(directory, manifest):
             or len(dataset["cases"]) != 68 or lock["caseCount"] != 68):
         raise ValueError("Private relationship package does not match committed release")
     expected = {"top-level-v1.json", "release-lock.json"}
+    for filename, key in [("presentation.json", "presentationSha256"), ("presentation-trace.json", "presentationTraceSha256")]:
+        if key in manifest:
+            raw = (directory / filename).read_bytes()
+            if hashlib.sha256(raw).hexdigest() != manifest[key]:
+                raise ValueError("Selected-change evidence differs from committed hash")
+            json.loads(raw)
+            expected.add(filename)
     for case in dataset["cases"]:
         name = "traces/" + case["id"] + ".json"
         if not re.fullmatch(r"traces/[A-Za-z0-9_-]+\.json", name):
@@ -47,11 +54,11 @@ def stage_archive(archive, manifest, destination):
         total = 0
         with tarfile.open(archive, "r:gz") as package:
             members = package.getmembers()
-            if len(members) != 70:
-                raise ValueError("Expected exactly two manifests and 68 traces")
+            if len(members) != (72 if "presentationSha256" in manifest else 70):
+                raise ValueError("Unexpected private evidence member count")
             for member in members:
                 if (not member.isfile() or member.name in seen or
-                        not re.fullmatch(r"(?:top-level-v1\.json|release-lock\.json|traces/[A-Za-z0-9_-]+\.json)", member.name)):
+                        not re.fullmatch(r"(?:top-level-v1\.json|release-lock\.json|presentation\.json|presentation-trace\.json|traces/[A-Za-z0-9_-]+\.json)", member.name)):
                     raise ValueError("Unsafe or duplicate private archive member")
                 seen.add(member.name)
                 total += member.size

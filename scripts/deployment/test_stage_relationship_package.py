@@ -9,7 +9,7 @@ from stage_relationship_package import stage_archive, verify_directory
 
 
 class PrivateRelationshipPackageTests(unittest.TestCase):
-    def package(self, root, extra=None):
+    def package(self, root, extra=None, presentation=False):
         cases = [{"id":"case"+str(i)} for i in range(68)]
         data = json.dumps({"version":"v1","cases":cases}).encode()
         hashes = {c["id"]: hashlib.sha256(b'{}').hexdigest() for c in cases}
@@ -17,6 +17,8 @@ class PrivateRelationshipPackageTests(unittest.TestCase):
         files = [("top-level-v1.json",data),("release-lock.json",lock)] + [("traces/"+c["id"]+".json",b'{}') for c in cases]
         if extra:
             files[-1] = extra
+        if presentation:
+            files += [("presentation.json",b'{"selectedCaseIds":[]}'),("presentation-trace.json",b'{"audits":[]}')]
         archive = root / "test.tar.gz"
         with tarfile.open(archive,"w:gz") as out:
             for name, content in files:
@@ -28,7 +30,19 @@ class PrivateRelationshipPackageTests(unittest.TestCase):
                 else:
                     item.size = len(content)
                     out.addfile(item,io.BytesIO(content))
-        return archive,{"version":"v1","bundleSha256":hashlib.sha256(data).hexdigest(),"releaseLockSha256":hashlib.sha256(lock).hexdigest(),"archiveSha256":hashlib.sha256(archive.read_bytes()).hexdigest()}
+        manifest={"version":"v1","bundleSha256":hashlib.sha256(data).hexdigest(),"releaseLockSha256":hashlib.sha256(lock).hexdigest(),"archiveSha256":hashlib.sha256(archive.read_bytes()).hexdigest()}
+        if presentation:
+            manifest.update({"presentationSha256":hashlib.sha256(files[-2][1]).hexdigest(),"presentationTraceSha256":hashlib.sha256(files[-1][1]).hexdigest()})
+        return archive,manifest
+
+    def test_additive_presentation_is_pinned_without_changing_original_data(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root=Path(temporary)
+            archive,manifest=self.package(root,presentation=True)
+            stage_archive(archive,manifest,root/'data')
+            verify_directory(root/'data',manifest)
+            (root/'data/presentation.json').write_text('{"changed":true}')
+            with self.assertRaises(ValueError):verify_directory(root/'data',manifest)
 
     def test_exact_package_stages_idempotently(self):
         with tempfile.TemporaryDirectory() as temporary:

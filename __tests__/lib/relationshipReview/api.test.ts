@@ -21,6 +21,13 @@ jest.mock("../../../src/lib/relationshipReview/dataset", () => ({
   }),
   getRelationshipTrace: (id: string) => ({ caseId: id, exactPrompt: "audit" }),
 }));
+jest.mock("../../../src/lib/relationshipReview/presentation", () => ({
+  getRelationshipPresentation: () => ({
+    presentation: { version: "p1", selectedCaseIds: [] },
+    sha256: "presentation-sha",
+  }),
+  getPresentationTrace: () => ({ exactCurationPrompt: "curation audit" }),
+}));
 async function call(
   action = "session",
   body: any = {},
@@ -63,10 +70,19 @@ test("the pinned public HTTPS origin works through the Cloud Run proxy", async (
   });
   expect(r.code).toBe(200);
   expect(saveFeedback).not.toHaveBeenCalled();
-  expect((await call("session", {}, {}, {
-    host: "ontology-r5kaknwqbq-uc.a.run.app",
-    origin: "https://ontology.mit.edu",
-  })).code).toBe(401);
+  expect(
+    (
+      await call(
+        "session",
+        {},
+        {},
+        {
+          host: "ontology-r5kaknwqbq-uc.a.run.app",
+          origin: "https://ontology.mit.edu",
+        },
+      )
+    ).code,
+  ).toBe(401);
 });
 test.each([
   "http://ontology.mit.edu",
@@ -128,6 +144,28 @@ test("an account switch cannot save a draft under a different reviewer's identit
   expect(r.data.code).toBe("account_changed");
   expect(saveFeedback).not.toHaveBeenCalled();
 });
+test("new evidence provenance is bound server-side while historical saves remain compatible", async () => {
+  const body = {
+    caseId: "reason",
+    datasetVersion: "v1",
+    datasetSha256: "sha",
+    decision: "agree",
+    revision: 0,
+    requestId: "0123456789abcdef",
+    note: "",
+    correction: "",
+    reviewerKey: createHash("sha256").update("tom").digest("hex"),
+    presentationSha256: "presentation-sha",
+  };
+  expect((await call("save", body)).code).toBe(200);
+  expect(saveFeedback.mock.calls[0][1]).toMatchObject({
+    presentationSha256: "presentation-sha",
+    presentationVersion: "p1",
+  });
+  expect(
+    (await call("save", { ...body, presentationSha256: "different" })).code,
+  ).toBe(409);
+});
 test("cross-origin saves and ontology mutation actions fail before repository access", async () => {
   expect(
     (
@@ -143,7 +181,10 @@ test("cross-origin saves and ontology mutation actions fail before repository ac
 });
 test("exact traces have the same authorization boundary and reject unknown case IDs", async () => {
   expect((await call("trace", { caseId: "reason" })).data).toEqual({
-    trace: { caseId: "reason", exactPrompt: "audit" },
+    trace: {
+      original: { caseId: "reason", exactPrompt: "audit" },
+      selectedChangesReview: { exactCurationPrompt: "curation audit" },
+    },
   });
   expect((await call("trace", { caseId: "../../nodes" })).code).toBe(404);
   expect(

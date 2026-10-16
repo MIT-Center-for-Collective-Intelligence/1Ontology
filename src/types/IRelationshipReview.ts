@@ -75,6 +75,8 @@ export interface RelationshipFeedback {
   correction: string;
   revision: number;
   savedAt: string;
+  presentationSha256?: string;
+  presentationVersion?: string;
 }
 export interface RelationshipSession {
   dataset: RelationshipDataset;
@@ -84,4 +86,28 @@ export interface RelationshipSession {
   feedback: Record<string, RelationshipFeedback>;
   preview: boolean;
   canViewTomFeedback?: boolean;
+  presentation?: RelationshipPresentation;
+  presentationSha256?: string;
+}
+export interface RelationshipPresentation {
+  version: string;
+  datasetVersion: string;
+  datasetSha256: string;
+  selectedCaseIds: string[];
+  cards: {
+    caseId: string;
+    eligible: boolean;
+    reason: string;
+    headline: string;
+    whyChange: string;
+    example: string;
+    exampleIsIllustrative: boolean;
+    quotes: { nodeId: string; quote: string }[];
+    alternativeAssessment: string;
+    remainingMaterialObjections: string[];
+  }[];
+  selectionRule: string;
+  model: string;
+  reasoning: string;
+  fundingRoute: string;
 }

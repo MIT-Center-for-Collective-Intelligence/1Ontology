@@ -99,6 +99,59 @@ export function validateRelationshipRelease(root = process.cwd()) {
     if (/\bn\d{3}\b/.test(prose))
       fail("unresolved source alias in reviewer prose");
   }
+  if (committed.presentationSha256) {
+    const presentationBytes = read("presentation.json"),
+      traceBytes = read("presentation-trace.json");
+    if (
+      sha(presentationBytes) !== committed.presentationSha256 ||
+      sha(traceBytes) !== committed.presentationTraceSha256
+    )
+      fail("selection evidence hash mismatch");
+    const presentation = JSON.parse(presentationBytes),
+      trace = JSON.parse(traceBytes);
+    if (
+      presentation.datasetSha256 !== sha(bytes) ||
+      presentation.datasetVersion !== dataset.version ||
+      new Set(presentation.selectedCaseIds).size !==
+        presentation.selectedCaseIds.length ||
+      trace.critiques.length !== 2
+    )
+      fail("invalid selected review set");
+    const sources = new Map(
+      [
+        ...dataset.candidates,
+        ...dataset.cases.flatMap((c) => c.currentParents),
+      ].map((n) => [n.id, n]),
+    );
+    for (const id of presentation.selectedCaseIds) {
+      const c = dataset.cases.find((c) => c.id === id),
+        card = presentation.cards.find((c) => c.caseId === id);
+      if (
+        !c ||
+        !card?.eligible ||
+        card.remainingMaterialObjections.length ||
+        c.mechanicalIssues.length ||
+        c.interProposalIssues?.length ||
+        JSON.stringify(c.currentParents.map((n) => n.id).sort()) ===
+          JSON.stringify(c.analysis.proposedParents.map((n) => n.nodeId).sort())
+      )
+        fail("non-actionable selected proposal");
+      if (
+        !trace.critiques.every((r) =>
+          r.value.assessments.some(
+            (a) =>
+              a.caseId === id &&
+              a.acceptForOpeningQueue &&
+              !a.materialObjections.length,
+          ),
+        )
+      )
+        fail("unresolved selected proposal");
+      for (const q of card.quotes)
+        if (!q.quote || !sources.get(q.nodeId)?.description?.includes(q.quote))
+          fail("unverified displayed quote");
+    }
+  }
   return {
     version: dataset.version,
     cases: 68,

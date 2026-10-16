@@ -21,6 +21,7 @@ const session: RelationshipSession = {
   reviewerKey: "tom-hash",
   reviewerLabel: "Tom",
   preview: false,
+  canViewTomFeedback: true,
   datasetSha256: "sha",
   feedback: {},
   dataset: {
@@ -91,6 +92,49 @@ const session: RelationshipSession = {
   },
 };
 const clone = () => JSON.parse(JSON.stringify(session));
+const curated = () => {
+  const data = clone();
+  data.canViewTomFeedback = false;
+  const item = JSON.parse(JSON.stringify(data.dataset.cases[0]));
+  item.id = "selected";
+  item.title = "Selected activity";
+  item.analysis.nodeId = item.id;
+  item.currentParents = [
+    { id: "old", title: "Old generalization" },
+    { id: "think", title: "Think" },
+  ];
+  item.analysis.judgment = "change";
+  item.analysis.proposedParents = [
+    { nodeId: "think", reason: "Keep this valid link", whyCloser: "" },
+    { nodeId: "new", reason: "Add a suitable generalization", whyCloser: "" },
+  ];
+  data.dataset.candidates.push(
+    { id: "old", title: "Old generalization" },
+    { id: "new", title: "New generalization" },
+  );
+  data.dataset.cases.push(item);
+  data.presentationSha256 = "presentation-sha";
+  data.presentation = {
+    version: "p1",
+    datasetVersion: "v1",
+    datasetSha256: "sha",
+    selectedCaseIds: ["selected"],
+    cards: [
+      {
+        caseId: "selected",
+        eligible: true,
+        remainingMaterialObjections: [],
+        headline: "Replace only the unsupported generalization",
+        reason: "The current definition excludes the stated example.",
+        whyChange: "A detailed argument",
+        example: "An illustrative example",
+        quotes: [{ nodeId: "think", quote: "Think about things" }],
+        alternativeAssessment: "The other valid generalization remains.",
+      },
+    ],
+  };
+  return data;
+};
 const respond = (data: any, status = 200) => ({
   ok: status === 200,
   status,
@@ -117,7 +161,7 @@ const setup = (
   return render(<RelationshipReview />);
 };
 beforeEach(() => {
-  window.history.replaceState({}, "", "/review/relationships");
+  window.history.replaceState({}, "", "/review/relationships?view=analysis");
   sessionStorage.clear();
   localStorage.clear();
   jest.restoreAllMocks();
@@ -127,6 +171,68 @@ beforeEach(() => {
     configurable: true,
     value: () => "aaaaaaaa-bbbb-cccc-dddd-" + String(++id).padStart(12, "0"),
   });
+});
+test("the default queue includes only selected actual changes and shows Generalizations", async () => {
+  window.history.replaceState({}, "", "/review/relationships?activity=reason");
+  setup(undefined, curated());
+  await screen.findByRole("heading", { name: "Selected activity" });
+  expect(
+    screen.queryByRole("heading", { name: "Reason" }),
+  ).not.toBeInTheDocument();
+  expect(
+    screen.getByText("0 of 1 selected proposals reviewed"),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByRole("heading", { name: "Current generalizations" }),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByRole("heading", { name: "Proposed generalizations" }),
+  ).toBeInTheDocument();
+  expect(
+    screen.queryByText("Current broader activities"),
+  ).not.toBeInTheDocument();
+  expect(
+    screen.getByText("The current definition excludes the stated example."),
+  ).toBeInTheDocument();
+  expect(
+    screen.queryByRole("button", { name: "View research archive" }),
+  ).not.toBeInTheDocument();
+});
+test("a partial change keeps the other valid generalization and binds new saves to the displayed evidence", async () => {
+  window.history.replaceState({}, "", "/review/relationships");
+  setup(
+    () => respond({ answer: { ...answer(), caseId: "selected" } }),
+    curated(),
+  );
+  await screen.findByRole("heading", { name: "Selected activity" });
+  expect(
+    screen.getByText(/Remove the generalization link to Old generalization/),
+  ).toHaveTextContent(
+    "Add the generalization link to New generalization. Keep Think.",
+  );
+  expect(screen.getByText("Think (keep this link)")).toBeInTheDocument();
+  fireEvent.click(
+    screen.getByLabelText("Agree with the proposed generalizations"),
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Save feedback" }));
+  await screen.findByText("Saved to your account.");
+  expect(
+    JSON.parse((global.fetch as jest.Mock).mock.calls[1][1].body)
+      .presentationSha256,
+  ).toBe("presentation-sha");
+});
+test("an unchanged archived analysis does not duplicate current and proposed generalizations", async () => {
+  setup();
+  await screen.findByRole("heading", { name: "Reason" });
+  expect(
+    screen.getByText(/No change is proposed. Current generalizations: Think/),
+  ).toBeInTheDocument();
+  expect(
+    screen.queryByRole("heading", { name: "Current generalizations" }),
+  ).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole("heading", { name: "Proposed generalizations" }),
+  ).not.toBeInTheDocument();
 });
 test("an old idempotent receipt cannot replace a newer answer already loaded in this tab", async () => {
   const data = clone();
@@ -164,7 +270,11 @@ test("an old idempotent receipt cannot replace a newer answer already loaded in 
   expect(screen.queryByText("Saved to your account.")).not.toBeInTheDocument();
 });
 test("a delayed session reload cannot erase a save made while it was loading", async () => {
-  window.history.replaceState({}, "", "/review/relationships?activity=missing");
+  window.history.replaceState(
+    {},
+    "",
+    "/review/relationships?view=analysis&activity=missing",
+  );
   let reads = 0,
     release: (v: any) => void = () => {};
   (global.fetch as jest.Mock).mockImplementation(async (url) => {
@@ -179,13 +289,15 @@ test("a delayed session reload cannot erase a save made while it was loading", a
   render(<RelationshipReview />);
   fireEvent.click(await screen.findByRole("button", { name: "Retry" }));
   await waitFor(() => expect(reads).toBe(2));
-  fireEvent.click(screen.getByLabelText("Agree with the proposed placement"));
+  fireEvent.click(
+    screen.getByLabelText("Agree with the proposed generalizations"),
+  );
   fireEvent.click(screen.getByRole("button", { name: "Save feedback" }));
   await screen.findByText(/revision 1/);
   await act(async () => {
     release(respond(clone()));
   });
-  expect(screen.getByText("1 of 1 reviewed")).toBeInTheDocument();
+  expect(screen.getByText("1 of 1 analyses reviewed")).toBeInTheDocument();
   expect(screen.getByText(/revision 1/)).toBeInTheDocument();
   expect(screen.getByLabelText("Comments or examples (optional)")).toHaveValue(
     "Saved while loading",
@@ -203,10 +315,12 @@ test("no default judgment; saves only after acknowledgement and hides technical 
       name: "Agents and prompts used for this proposal",
     }),
   ).toHaveAttribute("aria-expanded", "false");
-  fireEvent.click(screen.getByLabelText("Agree with the proposed placement"));
+  fireEvent.click(
+    screen.getByLabelText("Agree with the proposed generalizations"),
+  );
   fireEvent.click(screen.getByRole("button", { name: "Save feedback" }));
   await screen.findByText("Saved to your account.");
-  expect(screen.getByText("1 of 1 reviewed")).toBeInTheDocument();
+  expect(screen.getByText("1 of 1 analyses reviewed")).toBeInTheDocument();
   const call = (global.fetch as jest.Mock).mock.calls[1];
   expect(call[0]).toBe("/api/som-review/relationships/save");
   expect(call[1].headers.Authorization).toBe("Bearer test-token");
@@ -331,7 +445,9 @@ test("a delayed old acknowledgement cannot downgrade a newer saved revision", as
         });
   }, data);
   await screen.findByRole("heading", { name: "Reason" });
-  fireEvent.click(screen.getByLabelText("Agree with the proposed placement"));
+  fireEvent.click(
+    screen.getByLabelText("Agree with the proposed generalizations"),
+  );
   fireEvent.click(screen.getByRole("button", { name: "Save feedback" }));
   await screen.findByRole("button", { name: "Saving…" });
   fireEvent.click(screen.getByRole("button", { name: "Next" }));

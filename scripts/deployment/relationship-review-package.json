@@ -6,7 +6,9 @@
   "reasoning": "high",
   "bundleSha256": "df7e2ef5fe2a6c0a43c1d8bb3b8567852c2f514fa41fcdc2140fd727ee0dc34e",
   "sourceSha256": "f8df2bfefd87ae238763cc79b50d0488fa248c39edc74ac14b38adcc9a97c563",
-  "archiveSha256": "52e890b313d13994b2910c488fc744d87245d667db337f6cc395755e064e79d2",
+  "archiveSha256": "8421b0ac6d0a33c2b584565e61c268c113a599c0166cd212d9d2a217cf4f7123",
   "releaseLockSha256": "ea46db227e60e1d1b81c196b50896c298fbe12aa575bb5ac37a90dec6df13577",
-  "gcsUri": "gs://ontology-41607_cloudbuild/relationship-review/52e890b313d13994b2910c488fc744d87245d667db337f6cc395755e064e79d2.tar.gz"
+  "gcsUri": "gs://ontology-41607_cloudbuild/relationship-review/8421b0ac6d0a33c2b584565e61c268c113a599c0166cd212d9d2a217cf4f7123.tar.gz",
+  "presentationSha256": "803840473349351df753e658bf8b4edeae2a161a33d337af2f8e109e5acc8684",
+  "presentationTraceSha256": "8dc8ee876cd6ee9a24bb51613a2a3d3fa7bad487cd3143e704491c7b58ebb934"
 }
