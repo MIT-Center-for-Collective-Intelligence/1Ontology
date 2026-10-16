@@ -133,11 +133,19 @@ class TitleModelComparisonReleaseTests(unittest.TestCase):
 
 
 class TitleReviewRouteTests(unittest.TestCase):
+    def setUp(self):
+        self.redirect_patch = patch("promote.urllib.request.build_opener")
+        self.no_redirect = self.redirect_patch.start().return_value
+        self.addCleanup(self.redirect_patch.stop)
+        self.no_redirect.open.side_effect = urllib.error.HTTPError(
+            "https://example.org/review/title-validation?workspace=practice", 307,
+            "Temporary redirect", {"Location": "/review/title-validation"}, None)
+
     def opener(self, bad_practice=None, accept_practice=False):
         def open_url(request, timeout):
             if isinstance(request, str):
                 practice = "?workspace=practice" in request
-                html = ('Human title review {"preview":false,"practice":' + ("true" if practice else "false") + '}')
+                html = 'Human title review {"preview":false,"practice":false}'
                 if practice and bad_practice is not None:
                     html = bad_practice
                 return io.BytesIO(html.encode())
@@ -153,7 +161,7 @@ class TitleReviewRouteTests(unittest.TestCase):
 
     def test_rejects_missing_mismatched_or_development_practice_page(self):
         for html in ("missing", 'Human title review {"preview":true,"practice":true}',
-                     'Human title review {"preview":false,"practice":false}'):
+                     'Human title review {"preview":false,"practice":true}'):
             with self.subTest(html=html), patch("promote.urllib.request.urlopen", side_effect=self.opener(bad_practice=html)):
                 with self.assertRaises(ValueError):
                     verify_title_review_route("https://example.org")
@@ -161,6 +169,20 @@ class TitleReviewRouteTests(unittest.TestCase):
     def test_rejects_anonymous_practice_access(self):
         with patch("promote.urllib.request.urlopen", side_effect=self.opener(accept_practice=True)):
             with self.assertRaises(ValueError):
+                verify_title_review_route("https://example.org")
+
+    def test_requires_actual_redirect_rather_than_direct_team_html(self):
+        self.no_redirect.open.side_effect = None
+        self.no_redirect.open.return_value = io.BytesIO(b'Human title review {"preview":false,"practice":false}')
+        with self.assertRaises(ValueError):
+            verify_title_review_route("https://example.org")
+
+    def test_rejects_wrong_redirect_status_or_destination(self):
+        for code, location in [(302, "/review/title-validation"), (307, "/other"), (307, "https://elsewhere.org/review/title-validation")]:
+            self.no_redirect.open.side_effect = urllib.error.HTTPError(
+                "https://example.org/review/title-validation?workspace=practice", code,
+                "Redirect", {"Location": location}, None)
+            with self.subTest(code=code, location=location), self.assertRaises(ValueError):
                 verify_title_review_route("https://example.org")
 
 

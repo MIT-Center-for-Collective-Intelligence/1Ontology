@@ -8,6 +8,7 @@ import sys
 import time
 import urllib.request
 import urllib.error
+import urllib.parse
 
 PROJECT = "ontology-41607"
 REGION = "us-central1"
@@ -116,12 +117,26 @@ def validate_release(info, commit, build_id, revision):
 
 
 def verify_title_review_route(origin):
-    """Smoke-test both workspaces and their anonymous boundary, without writes."""
-    for suffix, practice in (("", False), ("?workspace=practice", True)):
+    """Smoke-test the team page, legacy link redirect, and anonymous boundary."""
+    class NoRedirect(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self, request, fp, code, message, headers, url):
+            return None
+
+    legacy = origin + "/review/title-validation?workspace=practice"
+    try:
+        with urllib.request.build_opener(NoRedirect()).open(legacy, timeout=60):
+            pass
+    except urllib.error.HTTPError as error:
+        if (error.code != 307 or urllib.parse.urljoin(legacy, error.headers.get("Location", ""))
+                != origin + "/review/title-validation"):
+            raise ValueError("The earlier review link does not redirect to the team review") from error
+    else:
+        raise ValueError("The earlier review link must redirect to the team review")
+    for suffix in ("", "?workspace=practice"):
         with urllib.request.urlopen(origin + "/review/title-validation" + suffix, timeout=60) as response:
             html = response.read().decode("utf-8")
         if ("Human title review" not in html or '"preview":false' not in html
-                or ('"practice":true' if practice else '"practice":false') not in html):
+                or '"practice":false' not in html):
             raise ValueError("Title review workspace is missing, mismatched, or exposes development mode")
     for payload in (b'{"previewReviewer":"preview-a"}',
                     b'{"workspace":"practice"}',

@@ -30,6 +30,9 @@ export interface ValidationStudy {
   roster: { reviewerId: string; label: string }[];
   caseIds: string[];
   createdAt: number;
+  // Freeze existing comparator assignments when another reviewer joins.
+  primaryCreators?: Record<string, string>;
+  additionalCreations?: Record<string, string[]>;
   practice?: { ownerUid: string; purpose: "interface-practice" };
 }
 export interface ValidationAnswer {
@@ -68,8 +71,18 @@ export const sourceCase = (data: ValidationDataset, id: string) =>
 export const creatorFor = (study: ValidationStudy, caseId: string): string => {
   const index = study.caseIds.indexOf(caseId);
   if (index < 0) return fail(400, "Activity is not in this pilot.");
-  return study.roster[index % study.roster.length].reviewerId;
+  return (
+    study.primaryCreators?.[caseId] ||
+    study.roster[index % study.roster.length].reviewerId
+  );
 };
+export const createsCase = (
+  study: ValidationStudy,
+  caseId: string,
+  reviewerId: string,
+) =>
+  creatorFor(study, caseId) === reviewerId ||
+  Boolean(study.additionalCreations?.[reviewerId]?.includes(caseId));
 export function validateStudy(
   study: ValidationStudy,
   data: ValidationDataset,
@@ -94,6 +107,70 @@ export function validateStudy(
   )
     fail(400, "The pilot configuration is invalid.");
   study.caseIds.forEach((id) => sourceCase(data, id));
+  if (
+    study.primaryCreators &&
+    (Object.keys(study.primaryCreators).length !== study.caseIds.length ||
+      study.caseIds.some(
+        (id) =>
+          !study.roster.some(
+            (r) => r.reviewerId === study.primaryCreators![id],
+          ),
+      ))
+  )
+    fail(400, "The primary title assignments are invalid.");
+  if (
+    study.additionalCreations &&
+    (!study.primaryCreators ||
+      Object.entries(study.additionalCreations).some(
+        ([uid, ids]) =>
+          !study.roster.some((r) => r.reviewerId === uid) ||
+          !Array.isArray(ids) ||
+          !ids.length ||
+          new Set(ids).size !== ids.length ||
+          ids.some(
+            (id) =>
+              !study.caseIds.includes(id) || creatorFor(study, id) === uid,
+          ),
+      ))
+  )
+    fail(400, "The additional title assignments are invalid.");
+}
+// Called only for the authenticated coordinator's own account by the API.
+// Supplemental titles are retained as team data; existing comparison sets stay fixed.
+export function joinAsReviewer(
+  state: ValidationState,
+  data: ValidationDataset,
+  reviewerId: string,
+  label: string,
+): { state: ValidationState; joined: boolean } {
+  validateStudy(state.study, data);
+  if (state.study.practice) fail(403, "Join through the team review page.");
+  if (state.study.roster.some((r) => r.reviewerId === reviewerId))
+    return { state, joined: false };
+  if (state.study.status !== "active")
+    fail(409, "Join when this pilot is open.");
+  if (state.study.roster.length !== 3)
+    fail(409, "The fourth reviewer has already joined this pilot.");
+  const primaryCreators = Object.fromEntries(
+    state.study.caseIds.map((id) => [id, creatorFor(state.study, id)]),
+  );
+  const next = {
+    ...state,
+    study: {
+      ...state.study,
+      primaryCreators,
+      additionalCreations: {
+        ...state.study.additionalCreations,
+        [reviewerId]: state.study.caseIds.slice(
+          0,
+          Math.min(2, state.study.caseIds.length - 1),
+        ),
+      },
+      roster: [...state.study.roster, { reviewerId, label }],
+    },
+  };
+  validateStudy(next.study, data);
+  return { state: next, joined: true };
 }
 function ensureReviewer(state: ValidationState, reviewerId: string) {
   return (
@@ -102,11 +179,11 @@ function ensureReviewer(state: ValidationState, reviewerId: string) {
   );
 }
 export function progressFor(state: ValidationState, reviewerId: string) {
-  const creationIds = state.study.caseIds.filter(
-    (id) => creatorFor(state.study, id) === reviewerId,
+  const creationIds = state.study.caseIds.filter((id) =>
+    createsCase(state.study, id, reviewerId),
   );
   const evaluationIds = state.study.caseIds.filter(
-    (id) => creatorFor(state.study, id) !== reviewerId,
+    (id) => !createsCase(state.study, id, reviewerId),
   );
   return {
     creationDone: creationIds.filter(
@@ -138,7 +215,7 @@ export function privateOptions(
   reviewerId: string,
 ): PrivateOption[] {
   ensureReviewer(state, reviewerId);
-  if (creatorFor(state.study, caseId) === reviewerId)
+  if (createsCase(state.study, caseId, reviewerId))
     fail(403, "You cannot evaluate an activity you created.");
   if (!allCreationsDone(state))
     fail(
@@ -230,7 +307,7 @@ export function sessionFor(
     };
   const createId = state.study.caseIds.find(
     (id) =>
-      creatorFor(state.study, id) === reviewerId &&
+      createsCase(state.study, id, reviewerId) &&
       !state.answers[answerKey("create", id, reviewerId)],
   );
   if (createId) {
@@ -255,7 +332,7 @@ export function sessionFor(
     };
   const evalId = state.study.caseIds.find(
     (id) =>
-      creatorFor(state.study, id) !== reviewerId &&
+      !createsCase(state.study, id, reviewerId) &&
       !state.answers[answerKey("evaluate", id, reviewerId)],
   );
   if (evalId) {
@@ -431,8 +508,10 @@ export function submitAnswerForTask(
   }
   if (state.study.status !== "active")
     fail(409, "This pilot is not open for answers.");
-  const creator = creatorFor(state.study, payload.caseId);
-  if ((payload.kind === "create") !== (creator === reviewerId))
+  if (
+    (payload.kind === "create") !==
+    createsCase(state.study, payload.caseId, reviewerId)
+  )
     fail(403, "This task is not assigned to you.");
   const current = expectedTask();
   if (
@@ -542,8 +621,10 @@ export function dashboardFor(
     reviewerCount: state.study.roster.length,
     completedCreations: creations.length,
     completedEvaluations: evaluations.length,
-    expectedEvaluations:
-      state.study.caseIds.length * (state.study.roster.length - 1),
+    expectedEvaluations: state.study.roster.reduce(
+      (sum, r) => sum + progressFor(state, r.reviewerId).evaluationTotal,
+      0,
+    ),
     byReviewer: state.study.roster.map((r) => ({
       label: r.label,
       ...progressFor(state, r.reviewerId),
@@ -587,6 +668,19 @@ export function dashboardFor(
                 confidence: human.payload.confidence,
               }
             : null,
+        additionalHumans: creations
+          .filter((a) => a.caseId === caseId && a.reviewerId !== creator)
+          .map((a) => {
+            if (a.payload.kind !== "create") throw Error("Invalid creation");
+            return {
+              reviewerLabel: ensureReviewer(state, a.reviewerId).label,
+              titles:
+                a.payload.decision === "keep"
+                  ? [item.currentTitle]
+                  : a.payload.titles,
+              confidence: a.payload.confidence,
+            };
+          }),
         evaluations: evaluations
           .filter((a) => a.caseId === caseId)
           .map((a) => {

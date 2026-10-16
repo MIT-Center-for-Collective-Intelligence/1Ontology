@@ -4,6 +4,7 @@ import { getTitleValidationDataset } from "./dataset";
 import {
   allCreationsDone,
   dashboardFor,
+  joinAsReviewer,
   presentTask,
   progressFor,
   sessionFor,
@@ -30,6 +31,7 @@ const defaultStudyId = () =>
 const reviewerPreviewIds = ["preview-a", "preview-b", "preview-c"];
 interface Actor {
   uid: string;
+  label: string;
   canManage: boolean;
   preview: boolean;
 }
@@ -52,7 +54,7 @@ async function actorFor(
     const uid = String(body.previewReviewer || "preview-a");
     if (!reviewerPreviewIds.includes(uid))
       throw new TitleValidationError(400, "Unknown preview reviewer.");
-    return { uid, canManage: true, preview: true };
+    return { uid, label: "Preview reviewer", canManage: true, preview: true };
   }
   const token = String(req.headers.authorization || "").replace(/^Bearer /, "");
   if (!token)
@@ -81,6 +83,10 @@ async function actorFor(
   );
   return {
     uid: user.uid,
+    label:
+      String(user.name || user.email || "Reviewer")
+        .trim()
+        .slice(0, 80) || "Reviewer",
     preview: false,
     canManage:
       user.titleValidationCoordinator === true ||
@@ -299,6 +305,34 @@ export async function titleValidationHandler(
             404,
             "This pilot has not been created.",
           );
+        if (op === "join") {
+          if (actor.preview || id !== defaultStudyId())
+            throw new TitleValidationError(
+              403,
+              "Join through the current team review page.",
+            );
+          const change = joinAsReviewer(state, data, actor.uid, actor.label);
+          return {
+            state: change.state,
+            result: {
+              status: change.state.study.status,
+              joined: change.joined,
+            },
+            ...(change.joined
+              ? {
+                  event: {
+                    kind: "reviewer-joined",
+                    actorId: actor.uid,
+                    reviewerId: actor.uid,
+                    creationCaseIds:
+                      change.state.study.additionalCreations![actor.uid],
+                    comparisonPolicy:
+                      "Existing primary human comparators preserved; additional creations retained separately.",
+                  },
+                }
+              : {}),
+          };
+        }
         const next =
           op === "start" && state.study.status === "draft"
             ? "active"

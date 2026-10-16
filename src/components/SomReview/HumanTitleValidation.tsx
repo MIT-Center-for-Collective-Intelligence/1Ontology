@@ -598,7 +598,7 @@ export default function HumanTitleValidation({
   }
 
   async function manage(
-    operation: "create" | "start" | "pause" | "resume" | "close",
+    operation: "create" | "start" | "pause" | "resume" | "close" | "join",
   ): Promise<void> {
     if (!session?.canManage || manageBusy) return;
     let reviewers: { reviewerId: string; label: string }[] | undefined;
@@ -651,6 +651,7 @@ export default function HumanTitleValidation({
           pause: "Pilot paused.",
           resume: "Pilot resumed.",
           close: "Pilot closed. Saved answers are preserved.",
+          join: "You have joined as a reviewer. Your answers will be saved with the team’s reviews.",
         }[operation],
       );
       await refreshSession();
@@ -841,33 +842,42 @@ export default function HumanTitleValidation({
             {practice && (
               <Alert severity="info" sx={{ mb: 3 }}>
                 <Typography sx={{ fontWeight: 650 }}>
-                  Your review copy
+                  Earlier review copy
                 </Typography>
                 <Typography>
-                  Your answers are saved separately from Rob, Xinru, and
-                  Anushka’s. This copy lets you try the full process on your
-                  own; your answers are not included in the team’s results.
+                  Open the team review page to participate with the other
+                  reviewers. Your earlier saved work is preserved.
                 </Typography>
+                <Button href="/review/title-validation">
+                  Open team review
+                </Button>
               </Alert>
             )}
-            {!practice && !preview && session?.canManage && (
-              <Box sx={{ mb: 3 }}>
-                <Button
-                  variant="outlined"
-                  href="/review/title-validation?workspace=practice"
-                >
-                  Review the five activities yourself
-                </Button>
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  sx={{ mt: 1 }}
-                >
-                  Your own copy saves your answers separately from the other
-                  reviewers.
-                </Typography>
-              </Box>
-            )}
+            {!practice &&
+              !preview &&
+              session?.canManage &&
+              session.studyId &&
+              session.phase === "unassigned" &&
+              session.studyStatus === "active" && (
+                <Box sx={{ mb: 3 }}>
+                  <Button
+                    variant="outlined"
+                    onClick={() => void manage("join")}
+                    disabled={manageBusy}
+                  >
+                    Join as reviewer
+                  </Button>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mt: 1 }}
+                  >
+                    Work through the same five activities. Your answers will be
+                    saved with the team’s reviews, under your own account.
+                    Everyone’s existing answers and progress stay in place.
+                  </Typography>
+                </Box>
+              )}
 
             {error && (
               <Alert
@@ -1997,6 +2007,18 @@ export default function HumanTitleValidation({
                                         ? `${activity.human.titles.join("; ")} (${activity.human.reviewerLabel}, confidence ${activity.human.confidence}/5)`
                                         : "Not submitted yet"}
                                     </Typography>
+                                    {activity.additionalHumans?.map(
+                                      (human, i) => (
+                                        <Typography key={`additional-${i}`}>
+                                          Additional human title:{" "}
+                                          {human.titles.join("; ")} (
+                                          {human.reviewerLabel}, confidence{" "}
+                                          {human.confidence}/5). Saved for team
+                                          review; existing comparison
+                                          alternatives are unchanged.
+                                        </Typography>
+                                      ),
+                                    )}
                                     {activity.evaluations.map(
                                       (evaluation, i) => (
                                         <Box key={i}>

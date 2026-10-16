@@ -100,6 +100,11 @@ export interface TitleValidationDashboard {
       titles: string[];
       confidence: number;
     } | null;
+    additionalHumans?: {
+      reviewerLabel: string;
+      titles: string[];
+      confidence: number;
+    }[];
     evaluations: {
       reviewerLabel: string;
       confidence: number;
