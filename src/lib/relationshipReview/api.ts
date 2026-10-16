@@ -30,7 +30,18 @@ export async function relationshipReviewHandler(
     if (req.headers.origin) {
       let good = false;
       try {
-        good = new URL(req.headers.origin).host === req.headers.host;
+        const origin = new URL(req.headers.origin);
+        // Firebase Hosting forwards the public domain to a Cloud Run host.
+        // Pin that public origin; do not trust client-supplied forwarded hosts.
+        good =
+          req.headers.origin === origin.origin &&
+          (origin.origin === "https://ontology.mit.edu" ||
+            (origin.protocol === "https:" &&
+              origin.host === req.headers.host) ||
+            (process.env.NODE_ENV !== "production" &&
+              origin.protocol === "http:" &&
+              origin.host === req.headers.host &&
+              ["localhost", "127.0.0.1", "[::1]"].includes(origin.hostname)));
       } catch {}
       if (!good)
         throw new RelationshipError(403, "Use this review from its own page.");

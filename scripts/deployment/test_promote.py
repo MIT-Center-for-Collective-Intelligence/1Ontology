@@ -205,6 +205,8 @@ class RelationshipReviewRouteTests(unittest.TestCase):
         with patch("promote.urllib.request.urlopen",side_effect=self.opener()) as call:
             verify_relationship_review_route("https://example.org")
             self.assertEqual(call.call_count,5)
+            for request in call.call_args_list[1:]:
+                self.assertEqual(request.args[0].get_header("Origin"), "https://ontology.mit.edu")
 
     def test_no_preview_or_anonymous_data_in_production(self):
         for accepted in ('session','save','trace','tom-feedback'):
