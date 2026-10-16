@@ -12,6 +12,7 @@ import {
 } from "../../lib/somReview/titlePromptStudyRelease";
 import { titleModelComparisonRelease } from "../../lib/somReview/titleModelComparisonRelease";
 import { titleValidationRelease } from "../../lib/titleValidation/release";
+import { relationshipReviewRelease } from "../../lib/relationshipReview/release";
 
 // Public, read-only release identity. Never include runtime configuration or user data.
 export default function deployment(req: NextApiRequest, res: NextApiResponse) {
@@ -66,6 +67,7 @@ export default function deployment(req: NextApiRequest, res: NextApiResponse) {
       latestTitlePromptStudy: latestTitlePromptStudyRelease(),
       titleModelComparison: titleModelComparisonRelease(),
       humanTitleReview: titleValidationRelease(),
+      relationshipReview: relationshipReviewRelease(),
     });
   } catch {
     return res

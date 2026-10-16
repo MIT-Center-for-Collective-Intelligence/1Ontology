@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "private-relationship-review-package-v1",
+  "version": "top-level-relationships-20261016-v1",
+  "cases": 68,
+  "model": "GPT-6.1 Sol",
+  "reasoning": "high",
+  "bundleSha256": "df7e2ef5fe2a6c0a43c1d8bb3b8567852c2f514fa41fcdc2140fd727ee0dc34e",
+  "sourceSha256": "f8df2bfefd87ae238763cc79b50d0488fa248c39edc74ac14b38adcc9a97c563",
+  "archiveSha256": "52e890b313d13994b2910c488fc744d87245d667db337f6cc395755e064e79d2",
+  "releaseLockSha256": "ea46db227e60e1d1b81c196b50896c298fbe12aa575bb5ac37a90dec6df13577",
+  "gcsUri": "gs://ontology-41607_cloudbuild/relationship-review/52e890b313d13994b2910c488fc744d87245d667db337f6cc395755e064e79d2.tar.gz"
+}
