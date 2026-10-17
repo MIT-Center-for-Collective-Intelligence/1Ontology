@@ -131,3 +131,33 @@ export function combinedProposalConflicts(proposals, graph) {
       })),
   );
 }
+/** Individually valid replacements can lose a still-valid Generalization when
+ * another proposal changes the suggested parent's own ancestry. Check the
+ * complete combined parent sets, including independent polyhierarchical links.
+ * The caller supplies only source parents assessed as valid, not rejected links. */
+export function combinedGeneralizationLosses(proposals, graph) {
+  const replacements = new Map();
+  for (const p of proposals) {
+    if (!graph.byId.has(p.subjectId) || replacements.has(p.subjectId))
+      throw Error("Unknown or repeated proposal subject");
+    if (p.parentIds.some((id) => !graph.byId.has(id)))
+      throw Error("Unknown proposed Generalization");
+    replacements.set(p.subjectId, p.parentIds);
+  }
+  return proposals.flatMap((p) => {
+    const sourceParents = parentIds(graph.byId.get(p.subjectId));
+    if (p.requiredGeneralizationIds.some((id) => !sourceParents.includes(id)))
+      throw Error("Required Generalization is not a current source parent");
+    const seen = new Set([p.subjectId]), queue = [p.subjectId], inherited = new Set();
+    for (let i = 0; i < queue.length; i++) {
+      const id = queue[i];
+      for (const parent of replacements.get(id) ?? parentIds(graph.byId.get(id))) {
+        inherited.add(parent);
+        if (!seen.has(parent)) { seen.add(parent); queue.push(parent); }
+      }
+    }
+    return p.requiredGeneralizationIds
+      .filter((id) => !inherited.has(id))
+      .map((id) => ({subjectId: p.subjectId, generalizationId: id, kind: "lost-valid-generalization"}));
+  });
+}

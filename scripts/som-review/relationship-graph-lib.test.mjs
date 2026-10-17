@@ -5,6 +5,7 @@ import {
   inspectRecommendation,
   descendants,
   combinedProposalConflicts,
+  combinedGeneralizationLosses,
 } from "./relationship-graph-lib.mjs";
 const node = (id, children = [], parents = [], root = false, title = id) => ({
   id,
@@ -12,6 +13,41 @@ const node = (id, children = [], parents = [], root = false, title = id) => ({
   root,
   specializations: [{ nodes: children.map((id) => ({ id })) }],
   generalizations: [{ nodes: parents.map((id) => ({ id })) }],
+});
+test("a closer parent preserves a valid broader parent and independent parents", () => {
+  const g = graphInventory([
+    node("r", ["broad", "independent"], [], true),
+    node("broad", ["closer", "subject"], ["r"]),
+    node("closer", [], ["broad"]),
+    node("independent", ["subject"], ["r"]),
+    node("subject", [], ["broad", "independent"]),
+  ]);
+  const p = {subjectId: "subject", parentIds: ["closer", "independent"], requiredGeneralizationIds: ["broad", "independent"]};
+  assert.deepEqual(combinedGeneralizationLosses([p], g), []);
+  assert.deepEqual(combinedGeneralizationLosses([{...p, parentIds: ["closer"]}], g), [
+    {subjectId: "subject", generalizationId: "independent", kind: "lost-valid-generalization"},
+  ]);
+});
+test("a simultaneous parent change cannot silently erase a valid inherited Generalization", () => {
+  const g = graphInventory([
+    node("r", ["broad"], [], true),
+    node("broad", ["closer", "subject"], ["r"]),
+    node("closer", [], ["broad"]),
+    node("subject", [], ["broad"]),
+  ]);
+  const proposals = [
+    {subjectId: "subject", parentIds: ["closer"], requiredGeneralizationIds: ["broad"]},
+    {subjectId: "closer", parentIds: ["r"], requiredGeneralizationIds: []},
+  ];
+  assert.deepEqual(combinedProposalConflicts(proposals, g), []);
+  assert.deepEqual(combinedGeneralizationLosses(proposals, g), [
+    {subjectId: "subject", generalizationId: "broad", kind: "lost-valid-generalization"},
+  ]);
+});
+test("combined preservation checks reject invented requirements and unknown subjects", () => {
+  const g = graphInventory([node("r", ["x"], [], true), node("x", [], ["r"])]);
+  assert.throws(() => combinedGeneralizationLosses([{subjectId: "x", parentIds: ["r"], requiredGeneralizationIds: ["missing"]}], g), /not a current/);
+  assert.throws(() => combinedGeneralizationLosses([{subjectId: "missing", parentIds: ["r"], requiredGeneralizationIds: []}], g), /Unknown/);
 });
 test("minimum depth respects polyhierarchy and follows headings without treating them as activities", () => {
   const g = graphInventory([

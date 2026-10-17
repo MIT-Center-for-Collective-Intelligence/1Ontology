@@ -1,4 +1,4 @@
-import { proposalReviewTrace } from "../../../src/lib/relationshipReview/trace";
+import { proposalReviewTrace, relationshipTraceDisclosure } from "../../../src/lib/relationshipReview/trace";
 import {
   getRelationshipDataset,
   getRelationshipTrace,
@@ -66,11 +66,30 @@ test("every current proposal has a complete bounded disclosure rather than the w
   const full = getPresentationTrace(dataset.version);
   for (const c of dataset.cases) {
     const selectedChangesReview = proposalReviewTrace(full, c.id);
-    const response = {
-      original: getRelationshipTrace(c.id, dataset.version),
-      selectedChangesReview,
-    };
+    const original = getRelationshipTrace(c.id, dataset.version) as any;
+    const before = JSON.stringify(original);
+    const response = relationshipTraceDisclosure(original, full, c.id);
+    expect(JSON.stringify(original)).toBe(before);
+    if (response.original.sourceContextReference) {
+      const context = JSON.parse(response.original.proposalRequest.input).context.find((value: any) => value.subject.id === c.id);
+      if (context.sourceRecordColumns) {
+        const columns = context.sourceRecordColumns;
+        const unpack = (rows: any[]) => rows.map((row) => Object.fromEntries(columns.map((key: string, i: number) => [key, row[i]])));
+        context.records = unpack(context.records);
+        context.ancestors = unpack(context.ancestors);
+        context.descendantCoverage.fullDescendantRecords = unpack(context.descendantCoverage.fullDescendantRecords);
+        delete context.sourceRecordColumns;
+        delete context.recordEncoding;
+      }
+      expect(context).toEqual(original.sourceContext);
+    }
     expect(selectedChangesReview.exactRequests).toHaveLength(3);
+    for (const request of response.selectedChangesReview.exactRequests) {
+      const resolved = request.bodyReference
+        ? request.bodyReference.split(".").reduce((value: any, key: string) => value[key], response)
+        : request.body;
+      expect(resolved).toEqual(selectedChangesReview.exactRequests.find((r: any) => r.jobId === request.jobId).body);
+    }
     expect(JSON.stringify(response).length).toBeLessThan(500000);
   }
 });

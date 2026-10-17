@@ -3,6 +3,8 @@ export interface RelationshipNode {
   title: string;
   description?: string;
   level?: number | null;
+  oNetTask?: boolean | null;
+  descriptionSource?: string | null;
 }
 export interface RelationshipAnalysis {
   nodeId: string;
@@ -62,6 +64,8 @@ export interface RelationshipDataset {
   candidateLimit: string;
   prompt: string;
   challengePrompt: string;
+  promptByCase?: Record<string, string>;
+  challengePromptByCase?: Record<string, string>;
   cases: RelationshipCase[];
   candidates: RelationshipNode[];
   usefulnessNote?: string;

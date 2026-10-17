@@ -61,3 +61,31 @@ test("rejects repinned evidence when the exact request differs from its recorded
       assert.throws(validate, /selection review request provenance mismatch/),
   );
 });
+test("rejects a repinned display-card binding that disagrees with the raw response", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "relationship-card-binding-"));
+  try {
+    const data = path.join(root, "src/lib/relationshipReview/data");
+    const scripts = path.join(root, "scripts/deployment");
+    fs.mkdirSync(path.dirname(data), { recursive: true });
+    fs.mkdirSync(scripts, { recursive: true });
+    fs.cpSync("src/lib/relationshipReview/data", data, { recursive: true });
+    const manifest = JSON.parse(fs.readFileSync("scripts/deployment/relationship-review-package.json"));
+    const directory = path.join(data, manifest.directory || "");
+    const dataset = JSON.parse(fs.readFileSync(path.join(directory, manifest.directory ? "dataset.json" : "top-level-v1.json")));
+    const id = dataset.cases[0].id;
+    const file = path.join(directory, "traces", id + ".json");
+    const trace = JSON.parse(fs.readFileSync(file));
+    trace.cardIdentifierNormalization = { caseId: "wrong-activity", originalCardId: "wrong-card", requestSha256: dataset.cases[0].requestSha256 };
+    fs.writeFileSync(file, JSON.stringify(trace));
+    const hash = (bytes) => crypto.createHash("sha256").update(bytes).digest("hex");
+    const lockFile = path.join(directory, "release-lock.json");
+    const lock = JSON.parse(fs.readFileSync(lockFile));
+    lock.traceHashes[id] = hash(fs.readFileSync(file));
+    fs.writeFileSync(lockFile, JSON.stringify(lock));
+    manifest.releaseLockSha256 = hash(fs.readFileSync(lockFile));
+    fs.writeFileSync(path.join(scripts, "relationship-review-package.json"), JSON.stringify(manifest));
+    assert.throws(() => validateRelationshipRelease(root), /unverified display card identifier normalization/);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
