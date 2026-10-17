@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
 import { completeDiscoveryPrefix } from "./relationship-discovery-lib.mjs";
+import { assertFreeRelationshipExplanations } from "./relationship-schema-lib.mjs";
 function validateEntry(root, committed) {
   const dir = path.join(
     root,
@@ -47,6 +48,10 @@ function validateEntry(root, committed) {
   )
     fail("wrong scope");
   const sourceIds = new Set(dataset.candidates.map((n) => n.id));
+  const caseIds = new Set(dataset.cases.map((c) => c.id));
+  for (const map of [dataset.promptByCase, dataset.challengePromptByCase])
+    if (map && Object.entries(map).some(([id, prompt]) => !caseIds.has(id) || typeof prompt !== "string" || !prompt.trim()))
+      fail("invalid per-case prompt provenance");
   for (const c of dataset.cases) {
     const traceBytes = read("traces/" + c.id + ".json");
     if (sha(traceBytes) !== lock.traceHashes[c.id]) fail("trace hash mismatch");
@@ -60,10 +65,12 @@ function validateEntry(root, committed) {
       challenge.reasoning.effort !== "high"
     )
       fail("trace model mismatch");
+    assertFreeRelationshipExplanations(body.text?.format?.schema);
+    assertFreeRelationshipExplanations(challenge.text?.format?.schema);
     if (
       sha(JSON.stringify(body)) !== c.requestSha256 ||
-      body.instructions !== dataset.prompt ||
-      challenge.instructions !== dataset.challengePrompt
+      body.instructions !== (dataset.promptByCase?.[c.id] ?? dataset.prompt) ||
+      challenge.instructions !== (dataset.challengePromptByCase?.[c.id] ?? dataset.challengePrompt)
     )
       fail("exact prompt provenance mismatch");
     if (
@@ -78,6 +85,19 @@ function validateEntry(root, committed) {
       fail("incomplete response or wrong Azure deployment");
     if (c.analysis.nodeId !== c.id || !c.analysis.proposedParents.length)
       fail("missing subject or full parent set");
+    if (trace.cardIdentifierNormalization) {
+      const normalization = trace.cardIdentifierNormalization;
+      const text = trace.proposalResponse.output
+        .flatMap((o) => o.content || [])
+        .filter((part) => part.type === "output_text")
+        .map((part) => part.text).join("\n");
+      const rawCases = JSON.parse(text).cases;
+      if (rawCases.length !== 1 || rawCases[0].analysis.nodeId !== c.id ||
+          normalization.caseId !== c.id ||
+          normalization.originalCardId !== rawCases[0].card.caseId ||
+          normalization.requestSha256 !== c.requestSha256)
+        fail("unverified display card identifier normalization");
+    }
     const parents = c.analysis.proposedParents.map((n) => n.nodeId);
     if (
       new Set(parents).size !== parents.length ||
@@ -101,6 +121,8 @@ function validateEntry(root, committed) {
     ].join(" ");
     if (/\bn\d{3}\b/.test(prose))
       fail("unresolved source alias in reviewer prose");
+    if ([c.analysis.summary, c.analysis.meaning, c.analysis.example].some((text) => sourceIds.has(String(text).trim())))
+      fail("reviewer explanation contains only a source identifier");
   }
   if (committed.presentationSha256) {
     const presentationBytes = read("presentation.json"),
@@ -184,6 +206,9 @@ function validateEntry(root, committed) {
         !requests[0].body.input
       )
         fail("selection review request provenance mismatch");
+      assertFreeRelationshipExplanations(requests[0].body.text?.format?.schema);
+      if (review.value.assessments?.some((a) => sourceIds.has(String(a.reason).trim())))
+        fail("critical explanation contains only a source identifier");
     }
     if (
       presentation.datasetSha256 !== sha(bytes) ||
@@ -230,7 +255,10 @@ function validateEntry(root, committed) {
       )
         fail("unresolved selected proposal");
       for (const q of card.quotes)
-        if (!q.quote || !sources.get(q.nodeId)?.description?.includes(q.quote))
+        if (!q.quote || !(
+          sources.get(q.nodeId)?.description?.includes(q.quote) ||
+          sources.get(q.nodeId)?.oNetTask === true && sources.get(q.nodeId)?.title?.includes(q.quote)
+        ))
           fail("unverified displayed quote");
     }
   }

@@ -5,7 +5,7 @@ import { getRelationshipDataset, getRelationshipTrace } from "./dataset";
 import { parseFeedback, RelationshipError } from "./feedback";
 import { readFeedback, saveFeedback } from "./repository";
 import { relationshipPackages } from "./package";
-import { proposalReviewTrace } from "./trace";
+import { relationshipTraceDisclosure } from "./trace";
 import {
   getRelationshipPresentation,
   getPresentationTrace,
@@ -116,13 +116,11 @@ export async function relationshipReviewHandler(
       if (!dataset.cases.some((c) => c.id === caseId))
         throw new RelationshipError(404, "Unknown activity.");
       return res.status(200).json({
-        trace: {
-          original: getRelationshipTrace(caseId, dataset.version),
-          selectedChangesReview: proposalReviewTrace(
-            getPresentationTrace(dataset.version),
-            caseId,
-          ),
-        },
+        trace: relationshipTraceDisclosure(
+          getRelationshipTrace(caseId, dataset.version),
+          getPresentationTrace(dataset.version),
+          caseId,
+        ),
       });
     }
     if (action === "save") {

@@ -578,8 +578,10 @@ export default function RelationshipReview({
               evidence. An activity may have multiple generalizations; each link
               is assessed separately. Your judgment is needed before any
               ontology change is made.
+              {" "}A supporting description may mention several activities;
+              each proposal concerns the activity named on its card.
               {data?.cases.some((c) => c.scope === "sibling-review") &&
-                " This review compares siblings to find closer generalizations, even where the existing generalization is valid."}
+                " These proposals look for closer generalizations and review links that may not fit the activity’s meaning."}
             </Typography>
             {error && (
               <Alert
@@ -594,6 +596,31 @@ export default function RelationshipReview({
             )}
             {session && data && (
               <>
+                {session.availableVersions?.some(
+                  (v) => v.current && v.version !== data.version,
+                ) && (
+                  <Alert
+                    severity="info"
+                    sx={{ mb: 3 }}
+                    action={
+                      <Button
+                        href={
+                          "/review/relationships?version=" +
+                          encodeURIComponent(
+                            session.availableVersions.find((v) => v.current)!
+                              .version,
+                          )
+                        }
+                      >
+                        Open latest proposals
+                      </Button>
+                    }
+                  >
+                    You are viewing an earlier review. Open the latest proposals
+                    for the current recommendations. Your answers here remain
+                    saved with this version.
+                  </Alert>
+                )}
                 {selectionNotice && (
                   <Alert severity="info" sx={{ mb: 3 }}>
                     {selectionNotice}
@@ -631,7 +658,9 @@ export default function RelationshipReview({
                             <Button
                               href={
                                 "/review/relationships?view=analysis&activity=" +
-                                encodeURIComponent(c.id)
+                                encodeURIComponent(c.id) +
+                                "&version=" +
+                                encodeURIComponent(data.version)
                               }
                             >
                               View activity
@@ -756,6 +785,8 @@ export default function RelationshipReview({
                               label={
                                 item.scope === "sibling-review"
                                   ? "Sibling comparison"
+                                  : item.scope === "focal-source-review"
+                                    ? "Activity comparison"
                                   : "Reason’s immediate child"
                               }
                               size="small"
@@ -912,18 +943,7 @@ export default function RelationshipReview({
                                 context; you can inspect that context below.
                               </Typography>
                             )}
-                            {selectedCard.quotes
-                              .filter(
-                                (q) =>
-                                  q.nodeId === item.id ||
-                                  item.currentParents.some(
-                                    (p) => p.id === q.nodeId,
-                                  ) ||
-                                  item.analysis.proposedParents.some(
-                                    (p) => p.nodeId === q.nodeId,
-                                  ),
-                              )
-                              .map((q, i) => (
+                            {selectedCard.quotes.map((q, i) => (
                                 <Box
                                   component="blockquote"
                                   key={i}
@@ -934,7 +954,9 @@ export default function RelationshipReview({
                                   }}
                                 >
                                   <Typography>
-                                    <strong>{title(q.nodeId)}:</strong> “
+                                    <strong>{data.candidates.find((n) => n.id === q.nodeId)?.oNetTask
+                                      ? "O*NET description"
+                                      : title(q.nodeId)}:</strong> “
                                     {q.quote}”
                                   </Typography>
                                 </Box>
@@ -1186,13 +1208,14 @@ export default function RelationshipReview({
                           component="pre"
                           sx={{ whiteSpace: "pre-wrap", fontSize: 13, mt: 2 }}
                         >
-                          {data.prompt}
+                          {data.promptByCase?.[item.id] ?? data.prompt}
                         </Typography>
                         <Typography
                           component="pre"
                           sx={{ whiteSpace: "pre-wrap", fontSize: 13, mt: 2 }}
                         >
-                          {data.challengePrompt}
+                          {data.challengePromptByCase?.[item.id] ??
+                            data.challengePrompt}
                         </Typography>
                         <Typography
                           component="pre"

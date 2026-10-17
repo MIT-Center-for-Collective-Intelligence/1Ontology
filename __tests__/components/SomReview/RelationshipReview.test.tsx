@@ -216,8 +216,54 @@ test("versioned links load the matching review and keep history accessible", asy
   expect(
     screen.getByRole("link", { name: "Return to current review" }),
   ).toHaveAttribute("href", "/review/relationships?version=v2");
+  expect(
+    screen.getByRole("link", { name: "Open latest proposals" }),
+  ).toHaveAttribute("href", "/review/relationships?version=v2");
+  expect(
+    screen.getByText(/Your answers here remain saved with this version/),
+  ).toBeInTheDocument();
   expect(screen.getByText("Sibling comparison")).toBeInTheDocument();
   expect(new URLSearchParams(window.location.search).get("version")).toBe("v1");
+});
+test("Tom's feedback links preserve the version of the reviewed evidence", async () => {
+  setup(() => respond({ feedback: { reason: answer() } }));
+  await screen.findByRole("heading", { name: "Reason" });
+  fireEvent.click(screen.getByRole("button", { name: "Tom’s saved feedback" }));
+  fireEvent.click(screen.getByRole("button", { name: "Load latest feedback" }));
+  expect(await screen.findByRole("link", { name: "View activity" })).toHaveAttribute(
+    "href",
+    "/review/relationships?view=analysis&activity=reason&version=v1",
+  );
+});
+test("the disclosure shows the exact prompts used for the displayed case", async () => {
+  const data = curated();
+  data.dataset.prompt = "Shared author fallback";
+  data.dataset.challengePrompt = "Shared critic fallback";
+  data.dataset.promptByCase = { selected: "Exact selected author prompt" };
+  data.dataset.challengePromptByCase = { selected: "Exact selected critic prompt" };
+  setup(undefined, data);
+  await screen.findByRole("heading", { name: "Selected activity" });
+  fireEvent.click(screen.getByRole("button", { name: "Agents and prompts used for this proposal" }));
+  expect(screen.getByText("Exact selected author prompt")).toBeVisible();
+  expect(screen.getByText("Exact selected critic prompt")).toBeVisible();
+  expect(screen.queryByText("Shared author fallback")).not.toBeInTheDocument();
+  expect(screen.queryByText("Shared critic fallback")).not.toBeInTheDocument();
+});
+test("evidence includes supporting O*NET and ancestor quotes beyond the direct parents", async () => {
+  const data = curated();
+  data.dataset.candidates.push(
+    { id: "support", title: "(O*Net) 123 - Create invoices for completed work.", description: "Create invoices for completed work.", oNetTask: true },
+    { id: "ancestor", title: "Create information", description: "Generate new information." },
+  );
+  data.presentation.cards[0].quotes = [
+    { nodeId: "support", quote: "Create invoices for completed work." },
+    { nodeId: "ancestor", quote: "Generate new information." },
+  ];
+  setup(undefined, data);
+  await screen.findByRole("heading", { name: "Selected activity" });
+  expect(screen.getByText("O*NET description:", { selector: "strong" })).toBeVisible();
+  expect(screen.getByText(/Create invoices for completed work\./)).toBeVisible();
+  expect(screen.getByText(/Generate new information\./)).toBeVisible();
 });
 test("a partial change keeps the other valid generalization and binds new saves to the displayed evidence", async () => {
   window.history.replaceState({}, "", "/review/relationships");
