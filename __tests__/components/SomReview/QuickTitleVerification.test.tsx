@@ -127,8 +127,18 @@ test("an uncertain network delivery retries the same frozen answer and advances 
   await screen.findByText("Write Technical Reports for Clients");
   for (const group of screen.getAllByRole("radiogroup"))
     fireEvent.click(within(group).getByLabelText("Acceptable"));
+  fireEvent.click(
+    within(screen.getAllByRole("radiogroup")[0]).getByLabelText("I’m not sure"),
+  );
+  fireEvent.change(
+    screen.getByLabelText("What are you unsure about?", { exact: false }),
+    { target: { value: "Keep this explanation in the submitted answer." } },
+  );
   fireEvent.click(screen.getByRole("button", { name: "Save and continue" }));
   await screen.findByText("Connection interrupted");
+  expect(
+    screen.getByLabelText("What are you unsure about?", { exact: false }),
+  ).toBeDisabled();
   const sent = jest.mocked(Post).mock.calls[1][1];
   fireEvent.click(
     screen.getByRole("button", { name: "Retry saving this answer" }),

@@ -540,6 +540,7 @@ export default function QuickTitleVerification({
                               ) && (
                                 <TextField
                                   required
+                                  disabled={frozen}
                                   fullWidth
                                   multiline
                                   minRows={2}
