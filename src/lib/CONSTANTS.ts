@@ -1,5 +1,5 @@
 import { DESIGN_SYSTEM_COLORS } from "./theme/colors";
-export const development = process.env.NODE_ENV !== "development";
+export const development = process.env.NODE_ENV === "development";
 
 // Defining an object to hold initial values for various node types
 
