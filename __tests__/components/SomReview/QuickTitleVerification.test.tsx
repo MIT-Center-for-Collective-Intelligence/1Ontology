@@ -186,3 +186,51 @@ test("automatic checkpoint includes elapsed active-page time and open text", asy
     15000,
   );
 });
+test("background checkpoints leave fields editable and do not replace text typed while saving", async () => {
+  jest.useFakeTimers();
+  const v = start();
+  let finishCheckpoint: ((value: unknown) => void) | undefined;
+  let checkpointBody: any;
+  jest.mocked(Post).mockImplementation(async (path, body: any) => {
+    if (String(path).endsWith("checkpoint")) {
+      checkpointBody = body;
+      return new Promise((resolve) => {
+        finishCheckpoint = resolve;
+      }) as any;
+    }
+    return v as any;
+  });
+  render(<QuickTitleVerification />);
+  await act(async () => {
+    await Promise.resolve();
+  });
+  fireEvent.click(
+    within(screen.getAllByRole("radiogroup")[0]).getByLabelText("I’m not sure"),
+  );
+  const field = screen.getByLabelText("What are you unsure about?", {
+    exact: false,
+  });
+  fireEvent.change(field, { target: { value: "Initial note" } });
+  await act(async () => {
+    jest.advanceTimersByTime(10000);
+    await Promise.resolve();
+  });
+  expect(finishCheckpoint).toBeDefined();
+  expect(field).not.toBeDisabled();
+  fireEvent.change(field, {
+    target: { value: "More text written during autosave" },
+  });
+  await act(async () => {
+    finishCheckpoint!({
+      ...v,
+      draft: { ...v.draft, revision: 1, payload: checkpointBody.payload },
+    });
+    await Promise.resolve();
+  });
+  expect(field).toHaveValue("More text written during autosave");
+  expect(
+    JSON.parse(
+      localStorage.getItem("quick-title-draft:quick-v1:reviewer-test:case-1")!,
+    ).payload.ratings.original.explanation,
+  ).toBe("More text written during autosave");
+});
