@@ -313,7 +313,8 @@ export default function QuickTitleVerification({
       setError(message(e));
     }
   }
-  const frozen = busy || pending;
+  // Background checkpoints must not interrupt typing. Only final delivery freezes an answer.
+  const frozen = pending;
   return (
     <ThemeProvider theme={titleValidationTheme}>
       <ScopedCssBaseline>
