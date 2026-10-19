@@ -222,7 +222,7 @@ def verify_relationship_review_route(origin):
     html = read_bytes(origin + "/review/relationships").decode("utf-8")
     if "Activity relationship review" not in html or '"preview":false' not in html:
         raise ValueError("Relationship review page is missing or exposes preview mode")
-    for action in ("session", "save", "trace", "tom-feedback"):
+    for action in ("session", "save", "trace", "evidence", "tom-feedback"):
         request = urllib.request.Request(origin + "/api/som-review/relationships/" + action,
             data=b'{"previewReviewer":"tom"}', method="POST", headers={"Content-Type":"application/json", "Origin":"https://ontology.mit.edu"})
         try:

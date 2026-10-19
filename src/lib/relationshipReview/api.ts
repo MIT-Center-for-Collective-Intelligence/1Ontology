@@ -6,6 +6,7 @@ import { parseFeedback, RelationshipError } from "./feedback";
 import { readFeedback, saveFeedback } from "./repository";
 import { relationshipPackages } from "./package";
 import { relationshipTraceDisclosure } from "./trace";
+import { relationshipSourceEvidence } from "./evidence";
 import {
   getRelationshipPresentation,
   getPresentationTrace,
@@ -31,7 +32,9 @@ export async function relationshipReviewHandler(
   }
   try {
     const action = String(req.query.action || "");
-    if (!["session", "save", "trace", "tom-feedback"].includes(action))
+    if (
+      !["session", "save", "trace", "evidence", "tom-feedback"].includes(action)
+    )
       throw new RelationshipError(404, "Unknown review action.");
     if (req.headers.origin) {
       let good = false;
@@ -111,10 +114,27 @@ export async function relationshipReviewHandler(
         feedback: await readFeedback(tom.uid, dataset.version, false, sha256),
       });
     }
-    if (action === "trace") {
+    if (action === "trace" || action === "evidence") {
       const caseId = String(req.body?.caseId || "");
       if (!dataset.cases.some((c) => c.id === caseId))
         throw new RelationshipError(404, "Unknown activity.");
+      if (action === "evidence") {
+        const evidence = relationshipSourceEvidence(
+          dataset,
+          caseId,
+          getRelationshipTrace(caseId, dataset.version),
+        );
+        return res.status(200).json({
+          evidence: {
+            ...evidence,
+            datasetSha256: sha256,
+            disclosureVersion: "frozen-source-disclosure-v1",
+            evidenceSha256: createHash("sha256")
+              .update(JSON.stringify(evidence))
+              .digest("hex"),
+          },
+        });
+      }
       return res.status(200).json({
         trace: relationshipTraceDisclosure(
           getRelationshipTrace(caseId, dataset.version),

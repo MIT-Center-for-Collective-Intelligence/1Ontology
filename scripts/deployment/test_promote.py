@@ -263,12 +263,12 @@ class RelationshipReviewRouteTests(unittest.TestCase):
     def test_page_and_all_anonymous_boundaries(self):
         with patch("promote.urllib.request.urlopen",side_effect=self.opener()) as call:
             verify_relationship_review_route("https://example.org")
-            self.assertEqual(call.call_count,5)
+            self.assertEqual(call.call_count,6)
             for request in call.call_args_list[1:]:
                 self.assertEqual(request.args[0].get_header("Origin"), "https://ontology.mit.edu")
 
     def test_no_preview_or_anonymous_data_in_production(self):
-        for accepted in ('session','save','trace','tom-feedback'):
+        for accepted in ('session','save','trace','evidence','tom-feedback'):
             with self.subTest(action=accepted), patch("promote.urllib.request.urlopen",side_effect=self.opener(accepted=accepted)):
                 with self.assertRaises(ValueError): verify_relationship_review_route("https://example.org")
         with patch("promote.urllib.request.urlopen",side_effect=self.opener(preview=True)):

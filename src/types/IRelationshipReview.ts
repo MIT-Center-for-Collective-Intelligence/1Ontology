@@ -94,6 +94,24 @@ export interface RelationshipSession {
   presentation?: RelationshipPresentation;
   presentationSha256?: string;
 }
+export interface RelationshipSourceEvidence {
+  caseId: string;
+  datasetVersion: string;
+  records: {
+    id: string;
+    title: string;
+    description: string;
+    descriptionSource: string;
+    alternateTitle?: string;
+    alternateDescription?: string;
+  }[];
+  complete: boolean;
+  limitation: string;
+  issues: string[];
+  datasetSha256?: string;
+  evidenceSha256?: string;
+  disclosureVersion?: string;
+}
 export interface RelationshipPresentation {
   version: string;
   datasetVersion: string;

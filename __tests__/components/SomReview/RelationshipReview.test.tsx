@@ -155,9 +155,20 @@ const setup = (
   data = clone(),
 ) => {
   (global.fetch as jest.Mock).mockImplementation(async (url, options) =>
-    String(url).endsWith("session")
-      ? respond(data)
-      : save(JSON.parse(options.body)),
+    String(url).endsWith("evidence")
+      ? respond({
+          evidence: {
+            caseId: JSON.parse(options.body).caseId,
+            datasetVersion: data.dataset.version,
+            datasetSha256: data.datasetSha256,
+            complete: true,
+            limitation: "",
+            records: [],
+          },
+        })
+      : String(url).endsWith("session")
+        ? respond(data)
+        : save(JSON.parse(options.body)),
   );
   return render(<RelationshipReview />);
 };
@@ -199,6 +210,46 @@ test("the default queue includes only selected actual changes and shows Generali
     screen.queryByRole("button", { name: "View research archive" }),
   ).not.toBeInTheDocument();
 });
+test("complete O*NET wording is shown separately from illustrative examples and saving remains explicit", async () => {
+  (global.fetch as jest.Mock).mockImplementation(async (url, options) => {
+    if (String(url).endsWith("session")) return respond(clone());
+    if (String(url).endsWith("evidence"))
+      return respond({
+        evidence: {
+          caseId: "reason",
+          datasetVersion: "v1",
+          datasetSha256: "sha",
+          complete: false,
+          limitation: "Deeper sources were not exhaustively reviewed.",
+          records: [
+            {
+              id: "onet-id",
+              title: "Complete original title including its tools and purpose.",
+              description: "",
+              descriptionSource: "title",
+            },
+          ],
+        },
+      });
+    throw Error("No save expected");
+  });
+  render(<RelationshipReview />);
+  await screen.findByText(
+    "Complete original title including its tools and purpose.",
+  );
+  expect(screen.getByText(/Source record: onet-id/)).toBeInTheDocument();
+  expect(
+    screen.getByText("Deeper sources were not exhaustively reviewed."),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByText(/Save feedback shares your answer/),
+  ).toBeInTheDocument();
+  expect(
+    (global.fetch as jest.Mock).mock.calls.some(([url]) =>
+      String(url).endsWith("/save"),
+    ),
+  ).toBe(false);
+});
 test("versioned links load the matching review and keep history accessible", async () => {
   window.history.replaceState({}, "", "/review/relationships?version=v1");
   const data = curated();
@@ -230,7 +281,9 @@ test("Tom's feedback links preserve the version of the reviewed evidence", async
   await screen.findByRole("heading", { name: "Reason" });
   fireEvent.click(screen.getByRole("button", { name: "Tom’s saved feedback" }));
   fireEvent.click(screen.getByRole("button", { name: "Load latest feedback" }));
-  expect(await screen.findByRole("link", { name: "View activity" })).toHaveAttribute(
+  expect(
+    await screen.findByRole("link", { name: "View activity" }),
+  ).toHaveAttribute(
     "href",
     "/review/relationships?view=analysis&activity=reason&version=v1",
   );
@@ -240,10 +293,16 @@ test("the disclosure shows the exact prompts used for the displayed case", async
   data.dataset.prompt = "Shared author fallback";
   data.dataset.challengePrompt = "Shared critic fallback";
   data.dataset.promptByCase = { selected: "Exact selected author prompt" };
-  data.dataset.challengePromptByCase = { selected: "Exact selected critic prompt" };
+  data.dataset.challengePromptByCase = {
+    selected: "Exact selected critic prompt",
+  };
   setup(undefined, data);
   await screen.findByRole("heading", { name: "Selected activity" });
-  fireEvent.click(screen.getByRole("button", { name: "Agents and prompts used for this proposal" }));
+  fireEvent.click(
+    screen.getByRole("button", {
+      name: "Agents and prompts used for this proposal",
+    }),
+  );
   expect(screen.getByText("Exact selected author prompt")).toBeVisible();
   expect(screen.getByText("Exact selected critic prompt")).toBeVisible();
   expect(screen.queryByText("Shared author fallback")).not.toBeInTheDocument();
@@ -252,8 +311,17 @@ test("the disclosure shows the exact prompts used for the displayed case", async
 test("evidence includes supporting O*NET and ancestor quotes beyond the direct parents", async () => {
   const data = curated();
   data.dataset.candidates.push(
-    { id: "support", title: "(O*Net) 123 - Create invoices for completed work.", description: "Create invoices for completed work.", oNetTask: true },
-    { id: "ancestor", title: "Create information", description: "Generate new information." },
+    {
+      id: "support",
+      title: "(O*Net) 123 - Create invoices for completed work.",
+      description: "Create invoices for completed work.",
+      oNetTask: true,
+    },
+    {
+      id: "ancestor",
+      title: "Create information",
+      description: "Generate new information.",
+    },
   );
   data.presentation.cards[0].quotes = [
     { nodeId: "support", quote: "Create invoices for completed work." },
@@ -261,8 +329,12 @@ test("evidence includes supporting O*NET and ancestor quotes beyond the direct p
   ];
   setup(undefined, data);
   await screen.findByRole("heading", { name: "Selected activity" });
-  expect(screen.getByText("O*NET description:", { selector: "strong" })).toBeVisible();
-  expect(screen.getByText(/Create invoices for completed work\./)).toBeVisible();
+  expect(
+    screen.getByText("O*NET description:", { selector: "strong" }),
+  ).toBeVisible();
+  expect(
+    screen.getByText(/Create invoices for completed work\./),
+  ).toBeVisible();
   expect(screen.getByText(/Generate new information\./)).toBeVisible();
 });
 test("a partial change keeps the other valid generalization and binds new saves to the displayed evidence", async () => {
@@ -273,7 +345,9 @@ test("a partial change keeps the other valid generalization and binds new saves 
   );
   await screen.findByRole("heading", { name: "Selected activity" });
   expect(
-    screen.getByText(/Remove the direct generalization link to Old generalization/),
+    screen.getByText(
+      /Remove the direct generalization link to Old generalization/,
+    ),
   ).toHaveTextContent(
     "Add the direct generalization link to New generalization. Keep Think.",
   );
@@ -284,8 +358,11 @@ test("a partial change keeps the other valid generalization and binds new saves 
   fireEvent.click(screen.getByRole("button", { name: "Save feedback" }));
   await screen.findByText("Saved to your account.");
   expect(
-    JSON.parse((global.fetch as jest.Mock).mock.calls[1][1].body)
-      .presentationSha256,
+    JSON.parse(
+      (global.fetch as jest.Mock).mock.calls.find(([url]) =>
+        String(url).endsWith("/save"),
+      )[1].body,
+    ).presentationSha256,
   ).toBe("presentation-sha");
 });
 test("exact prompt requests stay bound to the displayed dataset version", async () => {
@@ -390,7 +467,9 @@ test("no default judgment; saves only after acknowledgement and hides technical 
   fireEvent.click(screen.getByRole("button", { name: "Save feedback" }));
   await screen.findByText("Saved to your account.");
   expect(screen.getByText("1 of 1 analyses reviewed")).toBeInTheDocument();
-  const call = (global.fetch as jest.Mock).mock.calls[1];
+  const call = (global.fetch as jest.Mock).mock.calls.find(([url]) =>
+    String(url).endsWith("/save"),
+  );
   expect(call[0]).toBe("/api/som-review/relationships/save");
   expect(call[1].headers.Authorization).toBe("Bearer test-token");
 });
@@ -430,6 +509,17 @@ test("revision conflict offers explicit recovery while preserving the draft", as
     attempts = 0;
   const payloads: any[] = [];
   (global.fetch as jest.Mock).mockImplementation(async (url, options) => {
+    if (String(url).endsWith("evidence"))
+      return respond({
+        evidence: {
+          caseId: "reason",
+          datasetVersion: "v1",
+          datasetSha256: "sha",
+          complete: true,
+          records: [],
+          limitation: "",
+        },
+      });
     if (String(url).endsWith("session")) {
       const data = clone();
       if (++sessions > 1)
