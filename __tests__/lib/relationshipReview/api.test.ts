@@ -68,6 +68,33 @@ test("verified Tom reads without creating answers", async () => {
   expect(saveFeedback).not.toHaveBeenCalled();
   expect(r.headers).toHaveBeenCalledWith("Cache-Control", "private, no-store");
 });
+test("source evidence is authenticated, case-bound, and read-only", async () => {
+  const result = await call("evidence", {
+    datasetVersion: "v2",
+    caseId: "reason",
+  });
+  expect(result.code).toBe(200);
+  expect(result.data.evidence).toMatchObject({
+    caseId: "reason",
+    datasetVersion: "v2",
+    complete: false,
+    records: [],
+  });
+  expect(saveFeedback).not.toHaveBeenCalled();
+  expect(
+    (await call("evidence", { datasetVersion: "v2", caseId: "../other" })).code,
+  ).toBe(404);
+  expect(
+    (
+      await call(
+        "evidence",
+        { datasetVersion: "v2", caseId: "reason" },
+        {},
+        { host: "ontology.mit.edu" },
+      )
+    ).code,
+  ).toBe(401);
+});
 test("an earlier review version remains independently readable", async () => {
   expect((await call("session", { datasetVersion: "v2" })).code).toBe(200);
   expect(readFeedback).toHaveBeenCalledWith("tom", "v2", false, "sha");
