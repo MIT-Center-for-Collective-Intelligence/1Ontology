@@ -1,10 +1,21 @@
 import type { GetServerSideProps } from "next";
 import HumanTitleValidation from "@components/components/SomReview/HumanTitleValidation";
+import QuickTitleVerification from "@components/components/SomReview/QuickTitleVerification";
 import withAuthUser from "@components/components/hoc/withAuthUser";
 import { useAuth } from "@components/components/context/AuthContext";
 import { localPreviewEnabled } from "@components/lib/titleValidation/repository";
 
-function AuthReadyReview({ practice = false }: { practice?: boolean }) {
+function AuthReadyReview({
+  practice = false,
+  earlier = false,
+  flagged = false,
+  qa = false,
+}: {
+  practice?: boolean;
+  earlier?: boolean;
+  flagged?: boolean;
+  qa?: boolean;
+}) {
   const [{ isAuthInitialized, isAuthenticated }] = useAuth();
   // The shared redirect wrapper renders its child during Firebase startup.
   // Mount this review only once its first request can carry the user's token.
@@ -15,12 +26,14 @@ function AuthReadyReview({ practice = false }: { practice?: boolean }) {
         <p role="status">Loading your account…</p>
       </main>
     );
-  return (
+  return earlier ? (
     <HumanTitleValidation
       key={practice ? "practice" : "pilot"}
       preview={false}
       practice={practice}
     />
+  ) : (
+    <QuickTitleVerification flagged={flagged} qa={qa} />
   );
 }
 
@@ -31,14 +44,29 @@ const SignedInReview = withAuthUser({
 export default function TitleValidationPage({
   preview,
   practice = false,
+  earlier = false,
+  flagged = false,
+  qa = false,
 }: {
   preview: boolean;
   practice?: boolean;
+  earlier?: boolean;
+  flagged?: boolean;
+  qa?: boolean;
 }) {
   return preview ? (
-    <HumanTitleValidation preview />
+    earlier ? (
+      <HumanTitleValidation preview />
+    ) : (
+      <QuickTitleVerification preview flagged={flagged} qa={qa} />
+    )
   ) : (
-    <SignedInReview practice={practice} />
+    <SignedInReview
+      practice={practice}
+      earlier={earlier}
+      flagged={flagged}
+      qa={qa}
+    />
   );
 }
 export const getServerSideProps: GetServerSideProps = async (context) => {
@@ -53,6 +81,9 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         context.req.socket.remoteAddress,
       ),
       practice: false,
+      earlier: context.query.workflow === "earlier",
+      flagged: context.query.set === "flagged",
+      qa: context.query.qa === "1",
     },
   };
 };

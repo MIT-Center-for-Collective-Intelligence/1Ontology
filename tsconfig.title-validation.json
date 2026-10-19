@@ -6,10 +6,12 @@
     "src/types/ITitleValidation.ts",
     "src/lib/titleValidation/**/*.ts",
     "src/components/SomReview/HumanTitleValidation.tsx",
+    "src/components/SomReview/QuickTitleVerification.tsx",
     "src/pages/review/title-validation.tsx",
     "src/pages/api/som-review/title-validation/*.ts",
     "__tests__/lib/titleValidation/**/*.ts",
-    "__tests__/components/SomReview/HumanTitleValidation.test.tsx"
+    "__tests__/components/SomReview/HumanTitleValidation.test.tsx",
+    "__tests__/components/SomReview/QuickTitleVerification.test.tsx"
   ],
   "exclude": ["node_modules", "scripts"]
 }

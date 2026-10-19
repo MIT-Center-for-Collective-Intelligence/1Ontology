@@ -95,6 +95,9 @@ class ReleaseVerificationTests(unittest.TestCase):
         self.info["humanTitleReview"] = {"version":staff["version"],"cases":len(staff["cases"]),
             "model":staff["provenance"]["model"],"promptSha256":staff["provenance"]["scientificPromptSha256"],
             "bundleSha256":hashlib.sha256(staff_bytes).hexdigest(),"released":True}
+        quick_bytes=(ROOT / "src/lib/titleValidation/data/quick-v1.json").read_bytes()
+        self.info["quickTitleReview"]={"version":json.loads(quick_bytes)["version"],"initialRegular":25,"reservedRegular":75,"flagged":319,
+            "bundleSha256":hashlib.sha256(quick_bytes).hexdigest(),"released":True}
         relationship_manifest=json.loads((ROOT / "scripts/deployment/relationship-review-package.json").read_bytes())
         relationship_root=ROOT / "src/lib/relationshipReview/data" / relationship_manifest.get("directory", "")
         relation_bytes = (relationship_root / ("dataset.json" if relationship_manifest.get("directory") else "top-level-v1.json")).read_bytes()
@@ -113,7 +116,7 @@ class ReleaseVerificationTests(unittest.TestCase):
 
     def test_rejects_stale_or_mispackaged_release(self):
         for field in ("commit", "buildId", "revision", "packageSha256", "titlePromptStudy", "latestTitlePromptStudy",
-                      "titleModelComparison", "humanTitleReview", "relationshipReview"):
+                      "titleModelComparison", "humanTitleReview", "quickTitleReview", "relationshipReview"):
             with self.subTest(field=field):
                 broken = copy.deepcopy(self.info)
                 broken[field] = "stale"
@@ -218,7 +221,7 @@ class TitleReviewRouteTests(unittest.TestCase):
     def test_checks_both_workspaces_and_denies_anonymous(self):
         with patch("promote.urllib.request.urlopen", side_effect=self.opener()) as open_url:
             verify_title_review_route("https://example.org")
-            self.assertEqual(open_url.call_count, 5)
+            self.assertEqual(open_url.call_count, 13)
 
     def test_rejects_missing_mismatched_or_development_practice_page(self):
         for html in ("missing", 'Human title review {"preview":true,"practice":true}',
