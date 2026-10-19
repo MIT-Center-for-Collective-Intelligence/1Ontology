@@ -47,3 +47,5 @@ firebase-debug.log
 /.next-relationship-siblings/
 /.next-relationship-siblings-preview/
 /.next-relationship-evidence/
+# Review source proposals stay in private GCS; only their release hash is committed.
+/src/lib/titleValidation/data/quick-v1.json

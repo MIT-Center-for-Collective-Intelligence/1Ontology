@@ -16,6 +16,7 @@ steps:
         [[ '${COMMIT_SHA}' =~ ^[0-9a-f]{40}$ ]]
         test -n '${BUILD_ID}'
         python3 scripts/deployment/stage_relationship_package.py
+        python3 scripts/deployment/stage_quick_title_package.py
         python3 -m unittest discover -s scripts/deployment -p 'test_*.py'
 
   - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
