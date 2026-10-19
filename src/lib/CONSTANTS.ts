@@ -1,5 +1,5 @@
 import { DESIGN_SYSTEM_COLORS } from "./theme/colors";
-export const development = process.env.NODE_ENV === "development";
+export const development = process.env.NODE_ENV !== "development";
 
 // Defining an object to hold initial values for various node types
 
@@ -245,6 +245,7 @@ export const ONTOLOGY_APPS: any = development
         id: "ontology-development-version",
         name: "Ontology - Development Version",
         type: "other",
+        group: "other",
       },
       /*   {
         id: "final-hierarchy-with-o*net-parts",
@@ -258,18 +259,18 @@ export const ONTOLOGY_APPS: any = development
         type: "other",
         group: "other",
       },
-      {
-        id: "onet-ontology",
-        name: "O*NET Ontology Including Tasks",
-        type: "other",
-        group: "other",
-      },
-      {
-        id: "onet-ontology-no-tasks",
-        name: "O*NET Ontology Excluding Tasks",
-        type: "other",
-        group: "other",
-      },
+      // {
+      //   id: "onet-ontology",
+      //   name: "O*NET Ontology Including Tasks",
+      //   type: "other",
+      //   group: "other",
+      // },
+      // {
+      //   id: "onet-ontology-no-tasks",
+      //   name: "O*NET Ontology Excluding Tasks",
+      //   type: "other",
+      //   group: "other",
+      // },
     ];
 
 export const SANDBOX_ONTOLOGY_APP_ID = "sandbox";
