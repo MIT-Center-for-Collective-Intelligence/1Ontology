@@ -45,7 +45,15 @@ The new UI uses quick-source-* endpoints and different browser recovery keys.
 Production requests require authentication and roster membership. Clients cannot
 choose a user identity, unlock the flagged queue, or select a different study.
 Coordinators can export submitted team reviews while their own reviews are in progress.
-The three navigation links retain the existing named-user permission policy.
+Reload and flagged-review navigation retain the existing named-user permission
+policy. The earlier five-activity pilot link is temporarily commented out;
+its direct route, access rules, and saved reviews remain unchanged.
+
+The collapsed Agents and prompts disclosure retains the model, exact saved
+scientific prompt, and a short explanation of software checks. The raw saved
+proposal metadata block is not rendered. Complete provenance remains in the
+unchanged packages and stored review records for audit; this presentation
+change does not alter the model output format or exports.
 
 The page shows Reviewing with a Pause review button, or Paused with Resume
 review. It never displays elapsed time. Pausing keeps the current choices,

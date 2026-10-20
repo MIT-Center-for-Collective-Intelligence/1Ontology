@@ -261,7 +261,7 @@ test("pausing during an in-flight checkpoint keeps the review paused after that 
   expect(local.payload.activeTimeMs).toBe(37000);
   expect(local.revision).toBe(1);
 });
-test("displayed proposal information omits model, reasoning, funding, and hashes without changing saved provenance", async () => {
+test("the disclosure retains the exact prompt and model without displaying raw saved provenance or changing it", async () => {
   const v = start();
   const fundingRoute =
     "Native ChatGPT on oneman@mit.edu; user states personally funded allocation. Not ACCESS or MIT-funded inference.";
@@ -285,12 +285,21 @@ test("displayed proposal information omits model, reasoning, funding, and hashes
   );
   expect(screen.getByText("Exact saved prompt")).toBeVisible();
   expect(screen.getByText("gpt-6.1-sol")).toBeVisible();
-  const displayed = screen.getByText(/saved-source/);
-  expect(displayed).toBeVisible();
-  expect(JSON.parse(displayed.textContent!)).toEqual({
-    sourceSnapshot: "saved-source",
-    sourceDetails: { label: "Saved evidence" },
-  });
+  expect(
+    screen.queryByText(/Saved proposal information/),
+  ).not.toBeInTheDocument();
+  for (const technical of [
+    "saved-source",
+    "Saved evidence",
+    "source-hash",
+    "prompt-hash",
+  ])
+    expect(document.body).not.toHaveTextContent(technical);
+  expect(
+    screen.getByText(
+      /The software requires a rating for each displayed question/,
+    ),
+  ).toBeVisible();
   expect(document.body).not.toHaveTextContent(fundingRoute);
   expect(JSON.stringify(v.disclosure.provenance)).toEqual(originalProvenance);
 });
@@ -587,7 +596,7 @@ test("optional comments appear only for Not acceptable and retain draft text whe
   );
 });
 test.each(["Rob", "Xinru", "Iman"])(
-  "%s sees the three review-navigation controls without receiving coordinator tools",
+  "%s sees the permitted navigation but not the temporarily hidden earlier pilot",
   async (name) => {
     jest.mocked(Post).mockResolvedValue({
       ...start(),
@@ -604,13 +613,13 @@ test.each(["Rob", "Xinru", "Iman"])(
       screen.getByRole("link", { name: "Rob’s flagged review" }),
     ).toBeVisible();
     expect(
-      screen.getByRole("link", { name: "Earlier five-activity pilot" }),
-    ).toBeVisible();
+      screen.queryByRole("link", { name: "Earlier five-activity pilot" }),
+    ).not.toBeInTheDocument();
     expect(screen.queryByText("Coordinator tools")).not.toBeInTheDocument();
   },
 );
 test.each([false, true])(
-  "other reviewers do not see the three navigation controls, even with coordinator permission %s",
+  "other reviewers do not see restricted navigation, even with coordinator permission %s",
   async (canManage) => {
     jest
       .mocked(Post)

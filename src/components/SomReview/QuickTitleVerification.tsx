@@ -45,11 +45,6 @@ const labels = [
 // Keep one stable local identity so removing the test-account switcher does not
 // discard existing preview drafts. Production always uses the signed-in user.
 const previewReviewer = "preview-a";
-const hiddenProvenanceFields = new Set([
-  "model",
-  "modelReasoningEffort",
-  "fundingRoute",
-]);
 const message = (e: any) =>
   e?.response?.data?.error ||
   (typeof e === "string" ? e : "") ||
@@ -1086,9 +1081,11 @@ export default function QuickTitleVerification({
                           : "Rob’s flagged review"}
                       </Button>
                     )}
+                    {/* Earlier pilot navigation temporarily hidden; keep its route and reviews.
                     <Button href="/review/title-validation?workflow=earlier">
                       Earlier five-activity pilot
                     </Button>
+                    */}
                   </Stack>
                 )}
                 <Accordion sx={{ mt: 3 }}>
@@ -1106,28 +1103,6 @@ export default function QuickTitleVerification({
                       sx={{ mt: 2, whiteSpace: "pre-wrap" }}
                     >
                       {view.disclosure.prompt}
-                    </Typography>
-                    <Typography variant="subtitle2" sx={{ mt: 2 }}>
-                      Saved proposal information (separate from the model’s
-                      output format)
-                    </Typography>
-                    <Typography
-                      component="pre"
-                      sx={{
-                        fontSize: 12,
-                        whiteSpace: "pre-wrap",
-                        overflowWrap: "anywhere",
-                      }}
-                    >
-                      {JSON.stringify(
-                        view.disclosure.provenance,
-                        (key, value) =>
-                          hiddenProvenanceFields.has(key) ||
-                          /sha256$/i.test(key)
-                            ? undefined
-                            : value,
-                        2,
-                      )}
                     </Typography>
                     <Typography variant="body2">
                       The software requires a rating for each displayed question
