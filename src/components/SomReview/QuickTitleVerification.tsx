@@ -30,7 +30,10 @@ import type {
   quickSession,
 } from "@components/lib/titleValidation/quick";
 
-type View = ReturnType<typeof quickSession> & { preview: boolean };
+type View = ReturnType<typeof quickSession> & {
+  preview: boolean;
+  canUseReviewLinks?: boolean;
+};
 const labels = [
   { value: "acceptable", label: "Acceptable" },
   { value: "not_acceptable", label: "Not acceptable" },
@@ -41,10 +44,6 @@ const hiddenProvenanceFields = new Set([
   "modelReasoningEffort",
   "fundingRoute",
 ]);
-const clock = (ms: number) => {
-  const s = Math.floor(ms / 1000);
-  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
-};
 const message = (e: any) =>
   e?.response?.data?.error ||
   (typeof e === "string" ? e : "") ||
@@ -273,7 +272,9 @@ export default function QuickTitleVerification({
       }
       if (status === 409) {
         blocked.current = true;
-        setError(message(e) + " Use Reload saved review below.");
+        setError(
+          message(e) + " Refresh this page to recover the saved review.",
+        );
       }
     } finally {
       busyRef.current = false;
@@ -364,6 +365,9 @@ export default function QuickTitleVerification({
   }
   // Background checkpoints must not interrupt typing. Only final delivery freezes an answer.
   const frozen = pending;
+  const showOptionalComments = Object.values(payload?.ratings || {}).some(
+    (rating) => rating.value === "not_acceptable",
+  );
   const issues =
     validationAttempted && view && payload ? questionIssues(view, payload) : {};
   return (
@@ -433,7 +437,7 @@ export default function QuickTitleVerification({
             )}
             {!view && (
               <Button disabled={busy} onClick={load}>
-                {busy ? "Loading your review…" : "Reload saved review"}
+                {busy ? "Loading your review…" : "Try loading again"}
               </Button>
             )}
             {view && (
@@ -449,13 +453,6 @@ export default function QuickTitleVerification({
                         {view.reviewerLabel} · {view.completed} of {view.total}{" "}
                         activities saved
                       </Typography>
-                      <Typography aria-live="off">
-                        This activity: {clock(payload?.activeTimeMs || 0)} ·
-                        Total review time:{" "}
-                        {clock(
-                          view.savedActiveTimeMs + (payload?.activeTimeMs || 0),
-                        )}
-                      </Typography>
                     </Stack>
                     <LinearProgress
                       variant="determinate"
@@ -467,10 +464,7 @@ export default function QuickTitleVerification({
                       color="text.secondary"
                       sx={{ mt: 1 }}
                     >
-                      Timing runs automatically while this tab is visible and
-                      pauses when it is hidden. Work in one sitting if
-                      practical; note any interruptions below. Drafts save
-                      automatically.
+                      Drafts save automatically.
                     </Typography>
                   </CardContent>
                 </Card>
@@ -635,40 +629,42 @@ export default function QuickTitleVerification({
                           </CardContent>
                         </Card>
                       ))}
-                      <Card>
-                        <CardContent>
-                          <TextField
-                            fullWidth
-                            multiline
-                            minRows={2}
-                            disabled={frozen}
-                            label="Suggested correction, if useful (optional)"
-                            value={payload.correction}
-                            inputProps={{ maxLength: 5000 }}
-                            onChange={(e) =>
-                              update({
-                                ...payloadRef.current!,
-                                correction: e.target.value,
-                              })
-                            }
-                          />
-                          <TextField
-                            fullWidth
-                            multiline
-                            disabled={frozen}
-                            label="Interruptions or other comments (optional)"
-                            value={payload.interruption}
-                            inputProps={{ maxLength: 5000 }}
-                            sx={{ mt: 2 }}
-                            onChange={(e) =>
-                              update({
-                                ...payloadRef.current!,
-                                interruption: e.target.value,
-                              })
-                            }
-                          />
-                        </CardContent>
-                      </Card>
+                      {showOptionalComments && (
+                        <Card>
+                          <CardContent>
+                            <TextField
+                              fullWidth
+                              multiline
+                              minRows={2}
+                              disabled={frozen}
+                              label="Suggested correction, if useful (optional)"
+                              value={payload.correction}
+                              inputProps={{ maxLength: 5000 }}
+                              onChange={(e) =>
+                                update({
+                                  ...payloadRef.current!,
+                                  correction: e.target.value,
+                                })
+                              }
+                            />
+                            <TextField
+                              fullWidth
+                              multiline
+                              disabled={frozen}
+                              label="Interruptions or other comments (optional)"
+                              value={payload.interruption}
+                              inputProps={{ maxLength: 5000 }}
+                              sx={{ mt: 2 }}
+                              onChange={(e) =>
+                                update({
+                                  ...payloadRef.current!,
+                                  interruption: e.target.value,
+                                })
+                              }
+                            />
+                          </CardContent>
+                        </Card>
+                      )}
                       <Button
                         type="submit"
                         size="large"
@@ -692,29 +688,33 @@ export default function QuickTitleVerification({
                       : ""}
                   </Alert>
                 )}
-                <Stack
-                  direction="row"
-                  spacing={2}
-                  sx={{ mt: 3, flexWrap: "wrap" }}
-                >
-                  <Button onClick={load} disabled={busy}>
-                    Reload saved review
-                  </Button>
-                  {view.canReviewFlagged && (
-                    <Button
-                      href={
-                        flagged
-                          ? "/review/title-validation"
-                          : "/review/title-validation?set=flagged"
-                      }
-                    >
-                      {flagged ? "Regular activities" : "Rob’s flagged review"}
+                {view.canUseReviewLinks && (
+                  <Stack
+                    direction="row"
+                    spacing={2}
+                    sx={{ mt: 3, flexWrap: "wrap" }}
+                  >
+                    <Button onClick={load} disabled={busy}>
+                      Reload saved review
                     </Button>
-                  )}
-                  <Button href="/review/title-validation?workflow=earlier">
-                    Earlier five-activity pilot
-                  </Button>
-                </Stack>
+                    {view.canReviewFlagged && (
+                      <Button
+                        href={
+                          flagged
+                            ? "/review/title-validation"
+                            : "/review/title-validation?set=flagged"
+                        }
+                      >
+                        {flagged
+                          ? "Regular activities"
+                          : "Rob’s flagged review"}
+                      </Button>
+                    )}
+                    <Button href="/review/title-validation?workflow=earlier">
+                      Earlier five-activity pilot
+                    </Button>
+                  </Stack>
+                )}
                 <Accordion sx={{ mt: 3 }}>
                   <AccordionSummary>
                     Agents and prompts used for these proposals

@@ -64,6 +64,7 @@ const start = () => ({
   flagged: false,
   canManage: false,
   canReviewFlagged: false,
+  canUseReviewLinks: false,
   regularLimit: 25,
   softwareQA: false,
   savedActiveTimeMs: 4000,
@@ -124,15 +125,19 @@ test("three plain ratings replace rankings and reason menus; uncertainty opens a
   expect(
     screen.getByLabelText("What are you unsure about?", { exact: false }),
   ).toBeRequired();
-  expect(screen.getByText(/This activity: 0:07/)).toHaveTextContent(
-    "Total review time: 0:11",
-  );
+  expect(
+    screen.queryByText(/This activity:|Total review time:/),
+  ).not.toBeInTheDocument();
   expect(screen.queryByText("Take a break")).not.toBeInTheDocument();
 });
 test("unfinished answers and time recover from browser draft, and restore matching server revision", async () => {
   const v = start();
   v.draft.payload.activeTimeMs = 19000;
   v.draft.payload.correction = "My unfinished correction";
+  v.draft.payload.ratings.original = {
+    value: "not_acceptable",
+    explanation: "My saved explanation",
+  };
   localStorage.setItem(
     "quick-title-draft:quick-v1:reviewer-test:case-1",
     JSON.stringify({ revision: 0, payload: v.draft.payload }),
@@ -142,7 +147,9 @@ test("unfinished answers and time recover from browser draft, and restore matchi
   expect(
     await screen.findByDisplayValue("My unfinished correction"),
   ).toBeInTheDocument();
-  expect(screen.getByText(/This activity: 0:19/)).toBeInTheDocument();
+  expect(
+    screen.queryByText(/This activity:|Total review time:/),
+  ).not.toBeInTheDocument();
 });
 test("an unanswered question is highlighted before submission and existing choices remain editable", async () => {
   const v = start();
@@ -201,6 +208,15 @@ test("a definite server rejection leaves all choices editable for a corrected sa
   expect(
     localStorage.getItem("quick-title-pending:reviewer-test:regular"),
   ).toBeNull();
+  fireEvent.click(
+    within(screen.getAllByRole("radiogroup")[0]).getByLabelText(
+      "Not acceptable",
+    ),
+  );
+  fireEvent.change(
+    screen.getByLabelText("Why is it not acceptable?", { exact: false }),
+    { target: { value: "My explanation after rejection" } },
+  );
   fireEvent.change(screen.getByLabelText(/Suggested correction/), {
     target: { value: "My correction after the rejection" },
   });
@@ -239,7 +255,9 @@ test("a rejected submission from an older browser recovers on reload without los
     });
   render(<QuickTitleVerification />);
   expect(await screen.findByDisplayValue("My saved uncertainty")).toBeEnabled();
-  expect(screen.getByText(/This activity: 0:19/)).toBeVisible();
+  expect(
+    screen.queryByText(/This activity:|Total review time:/),
+  ).not.toBeInTheDocument();
   expect(
     within(screen.getAllByRole("radiogroup")[0]).getByLabelText("I’m not sure"),
   ).toBeChecked();
@@ -315,6 +333,11 @@ test("automatic checkpoint includes elapsed active-page time and open text", asy
   await act(async () => {
     await Promise.resolve();
   });
+  fireEvent.click(
+    within(screen.getAllByRole("radiogroup")[0]).getByLabelText(
+      "Not acceptable",
+    ),
+  );
   fireEvent.change(screen.getByLabelText(/Interruptions or other comments/), {
     target: { value: "Brief interruption noted." },
   });
@@ -331,7 +354,90 @@ test("automatic checkpoint includes elapsed active-page time and open text", asy
   expect((checkpoint[1] as any).payload.activeTimeMs).toBeGreaterThanOrEqual(
     15000,
   );
+  expect(
+    screen.queryByText(/This activity:|Total review time:/),
+  ).not.toBeInTheDocument();
 });
+test("optional comments appear only for Not acceptable and retain draft text when hidden", async () => {
+  jest.mocked(Post).mockResolvedValue(start());
+  render(<QuickTitleVerification />);
+  await screen.findByText("Write Technical Reports for Clients");
+  expect(
+    screen.queryByLabelText(/Suggested correction/),
+  ).not.toBeInTheDocument();
+  expect(
+    screen.queryByLabelText(/Interruptions or other comments/),
+  ).not.toBeInTheDocument();
+  const group = screen.getAllByRole("radiogroup")[0];
+  fireEvent.click(within(group).getByLabelText("Not acceptable"));
+  fireEvent.change(screen.getByLabelText(/Suggested correction/), {
+    target: { value: "Retain my correction" },
+  });
+  fireEvent.change(screen.getByLabelText(/Interruptions or other comments/), {
+    target: { value: "Retain my comment" },
+  });
+  fireEvent.click(within(group).getByLabelText("I’m not sure"));
+  expect(
+    screen.queryByLabelText(/Suggested correction/),
+  ).not.toBeInTheDocument();
+  expect(
+    screen.queryByLabelText(/Interruptions or other comments/),
+  ).not.toBeInTheDocument();
+  expect(
+    screen.getByLabelText("What are you unsure about?", { exact: false }),
+  ).toBeRequired();
+  fireEvent.click(within(group).getByLabelText("Not acceptable"));
+  expect(screen.getByLabelText(/Suggested correction/)).toHaveValue(
+    "Retain my correction",
+  );
+  expect(screen.getByLabelText(/Interruptions or other comments/)).toHaveValue(
+    "Retain my comment",
+  );
+});
+test.each(["Rob", "Xinru", "Iman"])(
+  "%s sees the three review-navigation controls without receiving coordinator tools",
+  async (name) => {
+    jest
+      .mocked(Post)
+      .mockResolvedValue({
+        ...start(),
+        reviewerLabel: name,
+        canUseReviewLinks: true,
+        canReviewFlagged: true,
+      });
+    render(<QuickTitleVerification />);
+    await screen.findByText("Write Technical Reports for Clients");
+    expect(
+      screen.getByRole("button", { name: "Reload saved review" }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole("link", { name: "Rob’s flagged review" }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole("link", { name: "Earlier five-activity pilot" }),
+    ).toBeVisible();
+    expect(screen.queryByText("Coordinator tools")).not.toBeInTheDocument();
+  },
+);
+test.each([false, true])(
+  "other reviewers do not see the three navigation controls, even with coordinator permission %s",
+  async (canManage) => {
+    jest
+      .mocked(Post)
+      .mockResolvedValue({ ...start(), canManage, canReviewFlagged: true });
+    render(<QuickTitleVerification />);
+    await screen.findByText("Write Technical Reports for Clients");
+    expect(
+      screen.queryByRole("button", { name: "Reload saved review" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Rob’s flagged review" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Earlier five-activity pilot" }),
+    ).not.toBeInTheDocument();
+  },
+);
 test("background checkpoints leave fields editable and do not replace text typed while saving", async () => {
   jest.useFakeTimers();
   const v = start();
