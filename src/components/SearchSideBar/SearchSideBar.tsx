@@ -46,6 +46,8 @@ const SearchSideBar = ({
   const [loadingSearchResult, setLoadingSearchResult] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const selectOnMouseUpRef = useRef(false);
+  const pendingSelectRef = useRef(false);
   const [searchRefreshKey, setSearchRefreshKey] = useState(0);
   const [errorSearch, setErrorSearch] = useState(false);
 
@@ -55,14 +57,19 @@ const SearchSideBar = ({
     return [];
   };
 
-  const handleFocus = () => {
+  const handleFocus = (
+    event: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    event.currentTarget.select();
+    selectOnMouseUpRef.current = true;
+    pendingSelectRef.current = true;
     setIsFocused(true);
     if (onFocusChange) onFocusChange(true);
 
     if (searchQuery.trim() !== "") {
       const freshResults = getSearchResults(searchQuery.trim());
       if (freshResults.length === 0) {
-        setSearchQuery("");
+        /*         setSearchQuery(""); */
         setIsListOpen(!!lastSearches.length);
       } else {
         setSearchRefreshKey((prevKey) => prevKey + 1);
@@ -75,6 +82,11 @@ const SearchSideBar = ({
     updateLastSearches();
   };
 
+  const handleMouseDown = () => {
+    if (document.activeElement === inputRef.current) {
+      selectOnMouseUpRef.current = false;
+    }
+  };
   const clearSearch = () => {
     setSearchQuery("");
     setIsListOpen(false);
@@ -135,6 +147,11 @@ const SearchSideBar = ({
 
     if (document.activeElement !== inputRef.current) {
       inputRef.current.focus({ preventScroll: true });
+    }
+
+    if (pendingSelectRef.current) {
+      inputRef.current.select();
+      pendingSelectRef.current = false;
     }
   }, [isFocused, searchQuery, isListOpen, loadingSearchResult]);
 
@@ -278,6 +295,7 @@ const SearchSideBar = ({
         value={searchQuery}
         onChange={handleInputChange}
         onFocus={handleFocus}
+        onMouseDown={handleMouseDown}
         onKeyDown={onKeyDown}
         fullWidth
         slotProps={{
