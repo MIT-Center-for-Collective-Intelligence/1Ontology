@@ -22,8 +22,8 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { ThemeProvider } from "@mui/material/styles";
-import { titleValidationTheme } from "./titleValidationDesign";
+import ReviewTheme from "./ReviewTheme";
+import ThemeModeToggle from "./ThemeModeToggle";
 import { relationshipRequest as request } from "../../lib/relationshipReview/client";
 import { reconcileSession } from "../../lib/relationshipReview/clientState";
 import {
@@ -670,7 +670,7 @@ export default function RelationshipReview({
     : { added: [], removed: [], retained: [] };
   const hasChange = delta.added.length > 0 || delta.removed.length > 0;
   return (
-    <ThemeProvider theme={titleValidationTheme}>
+    <ReviewTheme>
       <ScopedCssBaseline>
         <Head>
           <title>Review generalization changes</title>
@@ -680,19 +680,29 @@ export default function RelationshipReview({
           component="main"
           sx={{
             minHeight: "100vh",
-            bgcolor: "#F7F6F2",
+            bgcolor: "background.default",
             py: { xs: 3, md: 5 },
             px: { xs: 2, md: 4 },
             overflowWrap: "anywhere",
           }}
         >
           <Box sx={{ maxWidth: 1120, mx: "auto" }}>
-            <Typography variant="overline" color="primary">
-              Society of Mind · Ontology review
-            </Typography>
-            <Typography component="h1" variant="h4" sx={{ mt: 1, mb: 2 }}>
-              Review proposed generalization changes
-            </Typography>
+            <Stack
+              direction={{ xs: "column", sm: "row" }}
+              justifyContent="space-between"
+              alignItems="flex-start"
+              gap={2}
+            >
+              <Box>
+                <Typography variant="overline" color="primary">
+                  Society of Mind · Ontology review
+                </Typography>
+                <Typography component="h1" variant="h4" sx={{ mt: 1, mb: 2 }}>
+                  Review proposed generalization changes
+                </Typography>
+              </Box>
+              <ThemeModeToggle showLabel />
+            </Stack>
             <Typography sx={{ maxWidth: 850, mb: 3 }}>
               Every specialization should be a kind of its generalization.
               Review the proposed change, the reason for it, and the source
@@ -998,7 +1008,10 @@ export default function RelationshipReview({
                               <Box
                                 sx={{
                                   p: 2.5,
-                                  bgcolor: "#F2F3EF",
+                                  bgcolor: ({ palette }) =>
+                                    palette.mode === "dark"
+                                      ? "#16211E"
+                                      : "#F2F3EF",
                                   borderRadius: 2,
                                 }}
                               >
@@ -1016,8 +1029,12 @@ export default function RelationshipReview({
                               <Box
                                 sx={{
                                   p: 2.5,
-                                  bgcolor: "#EAF3F0",
-                                  border: "1px solid #BDD5CD",
+                                  bgcolor: ({ palette }) =>
+                                    palette.mode === "dark"
+                                      ? "#25463C"
+                                      : "#EAF3F0",
+                                  border: "1px solid",
+                                  borderColor: "divider",
                                   borderRadius: 2,
                                 }}
                               >
@@ -1512,6 +1529,6 @@ export default function RelationshipReview({
           </Box>
         </Box>
       </ScopedCssBaseline>
-    </ThemeProvider>
+    </ReviewTheme>
   );
 }

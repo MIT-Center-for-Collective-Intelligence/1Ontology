@@ -8,6 +8,9 @@ import {
   waitFor,
 } from "@testing-library/react";
 import "@testing-library/jest-dom";
+jest.mock("../../../src/components/SomReview/ThemeModeToggle", () => () => (
+  <button>Use dark mode</button>
+));
 import HumanTitleValidation from "../../../src/components/SomReview/HumanTitleValidation";
 import TitleValidationPage, {
   getServerSideProps,
@@ -78,7 +81,15 @@ test("the old practice bookmark redirects to the team flow without carrying old 
         socket: { remoteAddress: "127.0.0.1" },
       },
     } as never),
-  ).toEqual({ props: { preview: false, practice: false, earlier: false, flagged: false, qa: false } });
+  ).toEqual({
+    props: {
+      preview: false,
+      practice: false,
+      earlier: false,
+      flagged: false,
+      qa: false,
+    },
+  });
 });
 test("the signed-in page waits for restored authentication before requesting a session", async () => {
   jest

@@ -9,11 +9,15 @@ import {
   within,
 } from "@testing-library/react";
 import "@testing-library/jest-dom";
+import { createTheme, ThemeProvider } from "@mui/material/styles";
 import QuickTitleVerification from "../../../src/components/SomReview/QuickTitleVerification";
 import { postQuickReview as Post } from "../../../src/lib/titleValidation/quickRequest";
 jest.mock("../../../src/lib/titleValidation/quickRequest", () => ({
   postQuickReview: jest.fn(),
 }));
+jest.mock("../../../src/components/SomReview/ThemeModeToggle", () => () => (
+  <button>Use dark mode</button>
+));
 const start = () => ({
   studyId: "quick-test",
   datasetVersion: "quick-v1",
@@ -637,6 +641,44 @@ test.each([false, true])(
     ).not.toBeInTheDocument();
   },
 );
+test("switching profile appearance keeps the in-progress choices and does not reload the review", async () => {
+  jest.mocked(Post).mockResolvedValue(start());
+  const view = render(
+    <ThemeProvider theme={createTheme({ palette: { mode: "light" } })}>
+      <QuickTitleVerification />
+    </ThemeProvider>,
+  );
+  await screen.findByText("Write Technical Reports for Clients");
+  fireEvent.click(
+    within(screen.getAllByRole("radiogroup")[0]).getByLabelText(
+      "Not acceptable",
+    ),
+  );
+  fireEvent.change(screen.getByLabelText(/Why is it not acceptable/), {
+    target: { value: "Keep my unfinished explanation" },
+  });
+  view.rerender(
+    <ThemeProvider theme={createTheme({ palette: { mode: "dark" } })}>
+      <QuickTitleVerification />
+    </ThemeProvider>,
+  );
+  expect(
+    screen.getByDisplayValue("Keep my unfinished explanation"),
+  ).toBeVisible();
+  expect(
+    within(screen.getAllByRole("radiogroup")[0]).getByLabelText(
+      "Not acceptable",
+    ),
+  ).toBeChecked();
+  expect(
+    jest
+      .mocked(Post)
+      .mock.calls.filter(([path]) => String(path).endsWith("session")),
+  ).toHaveLength(1);
+  expect(
+    screen.getByRole("button", { name: "Save and continue" }),
+  ).toBeEnabled();
+});
 test("background checkpoints leave fields editable and do not replace text typed while saving", async () => {
   jest.useFakeTimers();
   const v = start();
