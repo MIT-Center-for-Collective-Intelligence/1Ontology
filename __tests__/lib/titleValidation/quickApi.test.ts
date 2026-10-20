@@ -38,14 +38,12 @@ const previousReady = process.env.TITLE_QUICK_SELECTION_ACTIVATION_READY;
 const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value));
 const data = getQuickDataset();
 function coordinator() {
-  jest
-    .mocked(actorFor)
-    .mockResolvedValue({
-      uid: "rob",
-      label: "Rob",
-      canManage: true,
-      preview: false,
-    });
+  jest.mocked(actorFor).mockResolvedValue({
+    uid: "rob",
+    label: "Rob",
+    canManage: true,
+    preview: false,
+  });
 }
 function seedDraft(item: QuickCase) {
   const now = Date.now(),
@@ -206,6 +204,24 @@ test("clients cannot select an earlier pilot or software test via studyId/qa fie
   );
   expect(state.study.regularLimit).toBe(25);
 });
+test.each([false, true])(
+  "review links follow authenticated permission %s, not a client-supplied flag",
+  async (allowed) => {
+    jest
+      .mocked(actorFor)
+      .mockResolvedValue({
+        uid: "urop",
+        label: "UROP",
+        canManage: false,
+        canUseReviewLinks: allowed,
+        preview: false,
+      });
+    const result = await call("quick-session", { canUseReviewLinks: !allowed });
+    expect(result.status).toBe(200);
+    expect(result.body.canUseReviewLinks).toBe(allowed);
+    expect(result.body.canManage).toBe(false);
+  },
+);
 test("HTTP retry of a submitted answer returns progress without duplicating or changing saved timing", async () => {
   const opened = await call("quick-session"),
     payload = opened.body.draft.payload;

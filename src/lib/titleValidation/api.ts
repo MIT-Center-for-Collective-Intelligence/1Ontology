@@ -14,6 +14,7 @@ import {
   ValidationState,
 } from "./engine";
 import { localPreviewEnabled, withStudy } from "./repository";
+import { hasReviewNavigation } from "./reviewNavigation";
 import {
   newPracticeState,
   practiceRole,
@@ -33,6 +34,7 @@ export interface Actor {
   uid: string;
   label: string;
   canManage: boolean;
+  canUseReviewLinks?: boolean;
   preview: boolean;
 }
 export async function actorFor(
@@ -54,7 +56,13 @@ export async function actorFor(
     const uid = String(body.previewReviewer || "preview-a");
     if (!reviewerPreviewIds.includes(uid))
       throw new TitleValidationError(400, "Unknown preview reviewer.");
-    return { uid, label: "Preview reviewer", canManage: true, preview: true };
+    return {
+      uid,
+      label: "Preview reviewer",
+      canManage: true,
+      canUseReviewLinks: true,
+      preview: true,
+    };
   }
   const token = String(req.headers.authorization || "").replace(/^Bearer /, "");
   if (!token)
@@ -88,6 +96,12 @@ export async function actorFor(
         .trim()
         .slice(0, 80) || "Reviewer",
     preview: false,
+    canUseReviewLinks:
+      hasReviewNavigation(user.uid) ||
+      (user.email_verified === true &&
+        ["oneweb@umich.edu", "oneman@mit.edu"].includes(
+          String(user.email || "").toLowerCase(),
+        )),
     canManage:
       user.titleValidationCoordinator === true ||
       uids.has(user.uid) ||

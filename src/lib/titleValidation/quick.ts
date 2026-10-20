@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import { TitleValidationError } from "./engine";
+import { hasReviewNavigation } from "./reviewNavigation";
 import {
   assertQuickSelection,
   effectiveQuickBatch,
@@ -134,7 +135,12 @@ export function quickCases(
       403,
       "You are not assigned yet. Ask Iman or Rob to add your ontology account.",
     );
-  if (flagged && !canManage && !state.study.flaggedReviewerIds.includes(uid))
+  if (
+    flagged &&
+    !canManage &&
+    !state.study.flaggedReviewerIds.includes(uid) &&
+    !hasReviewNavigation(uid)
+  )
     fail(
       403,
       "Rob is reviewing the flagged items first. Please use your regular review.",
@@ -303,7 +309,10 @@ export function quickStatus(
     questions: item ? quickQuestions(item) : [],
     flagged,
     canManage,
-    canReviewFlagged: canManage || state.study.flaggedReviewerIds.includes(uid),
+    canReviewFlagged:
+      canManage ||
+      state.study.flaggedReviewerIds.includes(uid) ||
+      hasReviewNavigation(uid),
     regularLimit: state.study.regularLimit,
     softwareQA: Boolean(state.study.softwareQA),
     selectionVersion:

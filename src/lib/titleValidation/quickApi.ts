@@ -265,19 +265,18 @@ export async function quickTitleHandler(
           drafts.docs.map((d) => [d.id, d.data() as any]),
         ),
       };
-      return res
-        .status(200)
-        .json({
-          ...quickStatus(
-            state,
-            data,
-            actor.uid,
-            flagged,
-            actor.canManage,
-            Date.now(),
-          ),
-          preview: false,
-        });
+      return res.status(200).json({
+        ...quickStatus(
+          state,
+          data,
+          actor.uid,
+          flagged,
+          actor.canManage,
+          Date.now(),
+        ),
+        preview: false,
+        canUseReviewLinks: actor.canUseReviewLinks === true,
+      });
     }
     if (action === "quick-export") {
       if (!actor.canManage)
@@ -432,7 +431,11 @@ export async function quickTitleHandler(
         )(state, data, actor.uid, flagged, actor.canManage, Date.now());
         return {
           state,
-          result: { ...session, preview: actor.preview },
+          result: {
+            ...session,
+            preview: actor.preview,
+            canUseReviewLinks: actor.canUseReviewLinks === true,
+          },
           ...(event ? { event } : {}),
         };
       },
