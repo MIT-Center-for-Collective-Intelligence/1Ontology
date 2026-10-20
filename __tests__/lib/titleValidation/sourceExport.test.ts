@@ -4,6 +4,7 @@ import { getSourceDataset } from "../../../src/lib/titleValidation/sourceDataset
 import {
   sourceSession,
   saveSourceReview,
+  sourceStatus,
   type SourceState,
 } from "../../../src/lib/titleValidation/sourceReview";
 import { sourceReviewCsv } from "../../../src/lib/titleValidation/sourceCsv";
@@ -62,7 +63,7 @@ test("personal download works before completion and contains only that person's 
   expect(csv).not.toContain('"Other"');
   expect(JSON.stringify(s)).toBe(before);
 });
-test("personal scope cannot impersonate another reviewer; unfinished participating coordinators cannot download team answers", () => {
+test("personal scope cannot impersonate another reviewer and team exports remain coordinator-only", () => {
   const s = fixture();
   expect(() =>
     sourceReviewExport(s, data, sources, "unknown", false, false, "self"),
@@ -71,13 +72,34 @@ test("personal scope cannot impersonate another reviewer; unfinished participati
     sourceReviewExport(s, data, sources, "own", false, false, "team"),
   ).toThrow("Only coordinators");
   expect(() =>
-    sourceReviewExport(s, data, sources, "own", true, false, "team"),
-  ).toThrow("Finish your regular");
-  s.legacy.study.softwareQA = true;
-  expect(
-    sourceReviewExport(s, data, sources, "own", true, false, "team").answers,
-  ).toHaveLength(2);
-  expect(() =>
     sourceReviewExport(s, data, sources, "own", true, true, "team"),
   ).toThrow("Only coordinators");
+});
+test("an unfinished participating coordinator can download every submitted team answer and timing without changing reviews", () => {
+  const s = fixture(),
+    before = JSON.stringify(s);
+  const view = sourceStatus(s, data, sources, "own", false, true);
+  expect(view.completed).toBeLessThan(view.total);
+  expect(view.exports.teamAllowed).toBe(true);
+  expect(
+    sourceStatus(s, data, sources, "own", false, false).exports.teamAllowed,
+  ).toBe(false);
+  const record = sourceReviewExport(
+    s,
+    data,
+    sources,
+    "own",
+    true,
+    false,
+    "team",
+  );
+  expect(record.answers.map((a) => a.reviewerId).sort()).toEqual([
+    "other",
+    "own",
+  ]);
+  const csv = sourceReviewCsv(record);
+  expect(csv).toContain('"Own"');
+  expect(csv).toContain('"Other"');
+  expect(csv).toContain('"1.0"');
+  expect(JSON.stringify(s)).toBe(before);
 });

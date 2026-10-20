@@ -44,7 +44,7 @@ Existing legacy endpoints remain compatible with in-flight older browser tabs.
 The new UI uses quick-source-* endpoints and different browser recovery keys.
 Production requests require authentication and roster membership. Clients cannot
 choose a user identity, unlock the flagged queue, or select a different study.
-Coordinator exports remain blocked until their own current source pages finish.
+Coordinators can export submitted team reviews while their own reviews are in progress.
 The three navigation links retain the existing named-user permission policy.
 
 The page shows Reviewing with a Pause review button, or Paused with Resume
@@ -79,16 +79,18 @@ Requests, including response-body reads, have a 30-second deadline.
 Every reviewer can download their own submitted reviews before finishing.
 Personal exports read only their records and return only their roster entry
 and source pages/cases needed for those records; no other reviews or drafts
-are exposed. Team exports remain coordinator-only and retain the independent
-review completion guard. The UI shows the restriction next to the disabled
-team-download button. Earlier clients' unscoped export requests retain team
-semantics. QA exceptions depend on the stored softwareQA study flag.
+are exposed. Team exports remain coordinator-only, without requiring the
+coordinator to finish their own reviews. The team-download button lives under
+Coordinator tools. Earlier clients' unscoped export requests retain team
+semantics and the legacy export endpoint follows the same coordinator policy.
 
 CSV preparation has a separate busy/error state beside the download controls.
-An attached download anchor starts the transfer; a visible manual link remains
-available if automatic download is blocked. The Blob URL is retained until a
-new download replaces it or the component unmounts, never revoked immediately
-after clicking. Exports do not submit drafts or stop active review timing.
+An attached download anchor starts the transfer without a redundant success
+message or second download link. Errors appear next to the relevant personal
+or coordinator control, and its button becomes available to retry. The Blob
+URL is retained until a new CSV replaces it or the component unmounts, never
+revoked immediately after clicking. Conflict-recovery downloads have a separate
+URL and remain available. Exports do not submit drafts or stop review timing.
 
 Adding a reviewer checks for an enabled existing Firebase account. A missing
 account error names the email and asks that the ontology account be created
