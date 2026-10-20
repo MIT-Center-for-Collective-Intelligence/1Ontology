@@ -128,8 +128,8 @@ Production release procedure
    deployment itself neither creates a study nor assigns anyone to it.
 
 Interface and accessibility
-The review route has its own light theme; the ontology platform and legacy
-review pages retain their existing theme. Desktop uses a sticky source panel
+The review route has scoped light and dark themes following the user's saved
+platform profile preference. Desktop uses a sticky source panel
 beside the form; compact screens use one column. Choice styling is identical
 for every alternative. Draft recovery/storage failure, successful saves,
 uncertain delivery, and coordinator actions have visible status messages.

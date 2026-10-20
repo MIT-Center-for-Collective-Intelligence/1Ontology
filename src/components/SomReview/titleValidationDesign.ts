@@ -1,122 +1,134 @@
-import { createTheme } from "@mui/material/styles";
+import { alpha, createTheme } from "@mui/material/styles";
 import type { Theme } from "@mui/material/styles";
 import type { SxProps } from "@mui/system";
 
-const ink = "#243330";
-const teal = "#176B63";
-const border = "#D9E0DC";
-const focusRing = "rgba(23, 107, 99, 0.24)";
 const systemFont =
   '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
 
 /** Apply with a ThemeProvider around this page only. */
-export const titleValidationTheme = createTheme({
-  palette: {
-    mode: "light",
-    primary: { main: teal, dark: "#10534D", contrastText: "#FFFFFF" },
-    background: { default: "#F7F6F2", paper: "#FFFFFF" },
-    text: { primary: ink, secondary: "#586762" },
-    divider: border,
-  },
-  shape: { borderRadius: 8 },
-  typography: {
-    fontFamily: systemFont,
-    body1: { fontSize: "1rem", lineHeight: 1.65 },
-    body2: { fontSize: "0.875rem", lineHeight: 1.6 },
-    h4: { fontWeight: 700, lineHeight: 1.2, letterSpacing: "-0.025em" },
-    h5: { fontWeight: 700, lineHeight: 1.25, letterSpacing: "-0.02em" },
-    h6: { fontWeight: 650, lineHeight: 1.35 },
-    subtitle2: { fontWeight: 700, letterSpacing: "0.01em" },
-  },
-  components: {
-    MuiButton: {
-      defaultProps: { disableElevation: true },
-      styleOverrides: {
-        root: {
-          minHeight: 44,
-          borderRadius: 8,
-          fontWeight: 650,
-          textTransform: "none",
-          paddingInline: 18,
-          "&.Mui-focusVisible": {
-            outline: `3px solid ${teal}`,
-            outlineOffset: 3,
+function createReviewTheme(mode: "light" | "dark") {
+  const dark = mode === "dark";
+  const ink = dark ? "#EDF5F1" : "#243330";
+  const teal = dark ? "#83D6C6" : "#176B63";
+  const border = dark ? "#40544C" : "#D9E0DC";
+  const paper = dark ? "#1C2825" : "#FFFFFF";
+  const focusRing = alpha(teal, 0.24);
+  return createTheme({
+    palette: {
+      mode,
+      primary: {
+        main: teal,
+        dark: dark ? "#58BBA9" : "#10534D",
+        contrastText: dark ? "#102520" : "#FFFFFF",
+      },
+      background: { default: dark ? "#111918" : "#F7F6F2", paper },
+      text: { primary: ink, secondary: dark ? "#B5C8C0" : "#586762" },
+      divider: border,
+    },
+    shape: { borderRadius: 8 },
+    typography: {
+      fontFamily: systemFont,
+      body1: { fontSize: "1rem", lineHeight: 1.65 },
+      body2: { fontSize: "0.875rem", lineHeight: 1.6 },
+      h4: { fontWeight: 700, lineHeight: 1.2, letterSpacing: "-0.025em" },
+      h5: { fontWeight: 700, lineHeight: 1.25, letterSpacing: "-0.02em" },
+      h6: { fontWeight: 650, lineHeight: 1.35 },
+      subtitle2: { fontWeight: 700, letterSpacing: "0.01em" },
+    },
+    components: {
+      MuiButton: {
+        defaultProps: { disableElevation: true },
+        styleOverrides: {
+          root: {
+            minHeight: 44,
+            borderRadius: 8,
+            fontWeight: 650,
+            textTransform: "none",
+            paddingInline: 18,
+            "&.Mui-focusVisible": {
+              outline: `3px solid ${teal}`,
+              outlineOffset: 3,
+            },
+          },
+        },
+      },
+      MuiCard: {
+        styleOverrides: {
+          root: {
+            borderColor: border,
+            boxShadow: dark ? "none" : "0 2px 16px rgba(36, 51, 48, 0.035)",
+          },
+        },
+      },
+      MuiAccordion: {
+        defaultProps: { elevation: 0 },
+        styleOverrides: {
+          root: {
+            border: `1px solid ${border}`,
+            borderRadius: "12px !important",
+            backgroundImage: "none",
+            "&::before": { display: "none" },
+          },
+        },
+      },
+      MuiAccordionSummary: {
+        styleOverrides: {
+          root: {
+            minHeight: 52,
+            "&.Mui-focusVisible": {
+              outline: `3px solid ${teal}`,
+              outlineOffset: 2,
+            },
+          },
+        },
+      },
+      MuiOutlinedInput: {
+        styleOverrides: {
+          root: {
+            borderRadius: 8,
+            backgroundColor: paper,
+            "& .MuiOutlinedInput-notchedOutline": {
+              borderColor: dark ? "#8DA99D" : "#7D9187",
+            },
+            "&:hover .MuiOutlinedInput-notchedOutline": {
+              borderColor: dark ? teal : "#738C82",
+            },
+            "&.Mui-focused": { boxShadow: `0 0 0 3px ${focusRing}` },
+          },
+        },
+      },
+      MuiFormControlLabel: {
+        styleOverrides: { root: { minHeight: 44 } },
+      },
+      MuiRadio: {
+        styleOverrides: {
+          root: {
+            color: dark ? "#A6BDB2" : "#64746D",
+            "&.Mui-checked": { color: teal },
+            "&.Mui-focusVisible": {
+              outline: `3px solid ${teal}`,
+              outlineOffset: 1,
+            },
+          },
+        },
+      },
+      MuiCheckbox: {
+        styleOverrides: {
+          root: {
+            color: dark ? "#A6BDB2" : "#64746D",
+            "&.Mui-checked": { color: teal },
+            "&.Mui-focusVisible": {
+              outline: `3px solid ${teal}`,
+              outlineOffset: 1,
+            },
           },
         },
       },
     },
-    MuiCard: {
-      styleOverrides: {
-        root: {
-          borderColor: border,
-          boxShadow: "0 2px 16px rgba(36, 51, 48, 0.035)",
-        },
-      },
-    },
-    MuiAccordion: {
-      defaultProps: { elevation: 0 },
-      styleOverrides: {
-        root: {
-          border: `1px solid ${border}`,
-          borderRadius: "12px !important",
-          backgroundImage: "none",
-          "&::before": { display: "none" },
-        },
-      },
-    },
-    MuiAccordionSummary: {
-      styleOverrides: {
-        root: {
-          minHeight: 52,
-          "&.Mui-focusVisible": {
-            outline: `3px solid ${teal}`,
-            outlineOffset: 2,
-          },
-        },
-      },
-    },
-    MuiOutlinedInput: {
-      styleOverrides: {
-        root: {
-          borderRadius: 8,
-          backgroundColor: "#FFFFFF",
-          "& .MuiOutlinedInput-notchedOutline": { borderColor: "#7D9187" },
-          "&:hover .MuiOutlinedInput-notchedOutline": {
-            borderColor: "#738C82",
-          },
-          "&.Mui-focused": { boxShadow: `0 0 0 3px ${focusRing}` },
-        },
-      },
-    },
-    MuiFormControlLabel: {
-      styleOverrides: { root: { minHeight: 44 } },
-    },
-    MuiRadio: {
-      styleOverrides: {
-        root: {
-          color: "#64746D",
-          "&.Mui-checked": { color: teal },
-          "&.Mui-focusVisible": {
-            outline: `3px solid ${teal}`,
-            outlineOffset: 1,
-          },
-        },
-      },
-    },
-    MuiCheckbox: {
-      styleOverrides: {
-        root: {
-          color: "#64746D",
-          "&.Mui-checked": { color: teal },
-          "&.Mui-focusVisible": {
-            outline: `3px solid ${teal}`,
-            outlineOffset: 1,
-          },
-        },
-      },
-    },
-  },
-});
+  });
+}
+export const titleValidationTheme = createReviewTheme("light");
+export const darkTitleValidationTheme = createReviewTheme("dark");
 
 type StyleKey =
   | "page"
@@ -168,7 +180,7 @@ export const titleValidationStyles: Record<StyleKey, SxProps<Theme>> = {
     },
   },
   evidence: {
-    bgcolor: "#FBFCFA",
+    bgcolor: ({ palette }) => (palette.mode === "dark" ? "#16211E" : "#FBFCFA"),
     border: 1,
     borderColor: "divider",
     borderRadius: 2,
@@ -192,7 +204,10 @@ export const titleValidationStyles: Record<StyleKey, SxProps<Theme>> = {
     p: { xs: 2.5, sm: 3 },
     minWidth: 0,
     overflowWrap: "anywhere",
-    "&:focus-within": { boxShadow: `0 0 0 3px ${focusRing}` },
+    "&:focus-within": {
+      boxShadow: ({ palette }) =>
+        `0 0 0 3px ${alpha(palette.primary.main, 0.24)}`,
+    },
   },
   confidenceGroup: {
     "& .MuiRadioGroup-root": { display: "flex", flexWrap: "wrap", gap: 1 },
@@ -205,7 +220,8 @@ export const titleValidationStyles: Record<StyleKey, SxProps<Theme>> = {
       borderRadius: 2,
       '&[data-selected="true"]': {
         borderColor: "primary.main",
-        bgcolor: "#EDF5F1",
+        bgcolor: ({ palette }) =>
+          palette.mode === "dark" ? "#25463C" : "#EDF5F1",
       },
     },
   },

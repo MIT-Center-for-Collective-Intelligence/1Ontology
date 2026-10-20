@@ -55,6 +55,16 @@ proposal metadata block is not rendered. Complete provenance remains in the
 unchanged packages and stored review records for audit; this presentation
 change does not alter the model output format or exports.
 
+Reviewers can choose Use light mode or Use dark mode in the page header. All
+title and generalization review surfaces follow the existing authenticated
+profile's users/{uname}.theme preference through AuthContext; they no longer
+force light mode. The change writes only that profile field, never review or
+ontology records. A failed profile write restores the previous mode and shows
+an error; best-effort audit logging does not determine save success. The
+browser cache is optional and never overrides a signed-in profile. Reloading
+the app retrieves the profile preference again. Switching appearance changes
+the scoped theme without remounting the review or resetting its draft/timing.
+
 The page shows Reviewing with a Pause review button, or Paused with Resume
 review. It never displays elapsed time. Pausing keeps the current choices,
 checkpoints the draft, disables answer editing/submission, and excludes the

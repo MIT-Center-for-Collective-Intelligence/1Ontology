@@ -64,7 +64,7 @@ not instructions to apply changes to the ontology. Deployment does not write
 to the ontology or review collections.
 
 The five-case human title-review staff pilot is available at
-`/review/title-validation`. Its light theme and reviewer state are scoped to
+`/review/title-validation`. Its light/dark review styling and reviewer state are scoped to
 that route. A coordinator must create a draft roster and explicitly open it;
 deployment does not enroll reviewers or apply ontology proposals. The full
 validation sample and acceptance procedure remain separate team decisions.

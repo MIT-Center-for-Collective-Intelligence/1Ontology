@@ -13,7 +13,6 @@ import {
   CircularProgress,
   Chip,
   LinearProgress,
-  ScopedCssBaseline,
   Divider,
   FormControl,
   FormControlLabel,
@@ -21,15 +20,14 @@ import {
   MenuItem,
   Radio,
   RadioGroup,
+  ScopedCssBaseline,
   Stack,
   TextField,
   Typography,
 } from "@mui/material";
-import { ThemeProvider } from "@mui/material/styles";
-import {
-  titleValidationTheme,
-  titleValidationStyles as design,
-} from "./titleValidationDesign";
+import ReviewTheme from "./ReviewTheme";
+import ThemeModeToggle from "./ThemeModeToggle";
+import { titleValidationStyles as design } from "./titleValidationDesign";
 import { Post } from "@components/lib/utils/Post";
 import type {
   TitleAdequacy,
@@ -698,7 +696,7 @@ export default function HumanTitleValidation({
       (session?.progress.evaluationTotal || 0);
 
   return (
-    <ThemeProvider theme={titleValidationTheme}>
+    <ReviewTheme>
       <ScopedCssBaseline>
         <Head>
           <title>
@@ -750,6 +748,7 @@ export default function HumanTitleValidation({
                 spacing={1.5}
                 sx={{ width: { xs: "100%", md: 300 }, flexShrink: 0 }}
               >
+                <ThemeModeToggle showLabel />
                 {preview && (
                   <Typography variant="caption" color="text.secondary">
                     Local preview · practice responses stay on this computer.
@@ -808,7 +807,12 @@ export default function HumanTitleValidation({
                       }
                       aria-label="Your review progress"
                       aria-valuetext={`${completedTasks} of ${assignedTasks} reviews complete`}
-                      sx={{ height: 6, borderRadius: 10, bgcolor: "#E5ECE8" }}
+                      sx={{
+                        height: 6,
+                        borderRadius: 10,
+                        bgcolor: ({ palette }) =>
+                          palette.mode === "dark" ? "#31463C" : "#E5ECE8",
+                      }}
                     />
                     <Stack
                       direction="row"
@@ -1209,10 +1213,13 @@ export default function HumanTitleValidation({
                                       borderRadius: 2,
                                       alignItems: "center",
                                       transition: "background-color 120ms ease",
-                                      "&:hover": { bgcolor: "#F5F8F5" },
+                                      "&:hover": { bgcolor: "action.hover" },
                                       '&[data-selected="true"]': {
                                         borderColor: "primary.main",
-                                        bgcolor: "#EDF5F1",
+                                        bgcolor: ({ palette }) =>
+                                          palette.mode === "dark"
+                                            ? "#25463C"
+                                            : "#EDF5F1",
                                       },
                                     },
                                   }}
@@ -1766,7 +1773,10 @@ export default function HumanTitleValidation({
                                 border: "1px solid",
                                 borderColor: "divider",
                                 borderRadius: 2,
-                                bgcolor: "#FBFCFA",
+                                bgcolor: ({ palette }) =>
+                                  palette.mode === "dark"
+                                    ? "#16211E"
+                                    : "#FBFCFA",
                               }}
                             >
                               <Typography
@@ -1827,7 +1837,10 @@ export default function HumanTitleValidation({
                                 sx={{
                                   height: 4,
                                   borderRadius: 2,
-                                  bgcolor: "#E5ECE8",
+                                  bgcolor: ({ palette }) =>
+                                    palette.mode === "dark"
+                                      ? "#31463C"
+                                      : "#E5ECE8",
                                 }}
                               />
                             </Box>
@@ -2039,6 +2052,6 @@ export default function HumanTitleValidation({
           </Box>
         </Box>
       </ScopedCssBaseline>
-    </ThemeProvider>
+    </ReviewTheme>
   );
 }

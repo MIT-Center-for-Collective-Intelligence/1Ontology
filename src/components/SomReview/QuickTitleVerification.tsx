@@ -21,8 +21,8 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { ThemeProvider } from "@mui/material/styles";
-import { titleValidationTheme } from "./titleValidationDesign";
+import ReviewTheme from "./ReviewTheme";
+import ThemeModeToggle from "./ThemeModeToggle";
 import { postQuickReview } from "@components/lib/titleValidation/quickRequest";
 import { sourceReviewCsv } from "@components/lib/titleValidation/sourceCsv";
 import type { QuickPayload } from "@components/lib/titleValidation/quick";
@@ -584,7 +584,7 @@ export default function QuickTitleVerification({
   const issues =
     validationAttempted && view && payload ? questionIssues(view, payload) : {};
   return (
-    <ThemeProvider theme={titleValidationTheme}>
+    <ReviewTheme>
       <ScopedCssBaseline>
         <Head>
           <title>Review activity titles</title>
@@ -593,24 +593,35 @@ export default function QuickTitleVerification({
           component="main"
           sx={{
             minHeight: "100vh",
-            background: "#f4f6f8",
+            bgcolor: ({ palette }) =>
+              palette.mode === "dark" ? "background.default" : "#f4f6f8",
             py: { xs: 2, md: 5 },
             px: 2,
           }}
         >
           <Box sx={{ maxWidth: 1120, mx: "auto" }}>
-            <Typography variant="overline" color="text.secondary">
-              MIT · Ontology of work activities
-            </Typography>
-            <Typography
-              variant="h3"
-              component="h1"
-              id="quick-review-heading"
-              tabIndex={-1}
-              sx={{ fontSize: { xs: 28, md: 36 }, fontWeight: 700, mt: 1 }}
+            <Stack
+              direction={{ xs: "column", sm: "row" }}
+              justifyContent="space-between"
+              alignItems="flex-start"
+              gap={2}
             >
-              Review activity titles
-            </Typography>
+              <Box>
+                <Typography variant="overline" color="text.secondary">
+                  MIT · Ontology of work activities
+                </Typography>
+                <Typography
+                  variant="h3"
+                  component="h1"
+                  id="quick-review-heading"
+                  tabIndex={-1}
+                  sx={{ fontSize: { xs: 28, md: 36 }, fontWeight: 700, mt: 1 }}
+                >
+                  Review activity titles
+                </Typography>
+              </Box>
+              <ThemeModeToggle showLabel />
+            </Stack>
             <Typography sx={{ mt: 1, mb: 3, maxWidth: 800 }}>
               Read the O*NET description, then judge whether each title clearly
               and accurately describes the relevant activity for someone
@@ -1189,7 +1200,7 @@ export default function QuickTitleVerification({
           </Box>
         </Box>
       </ScopedCssBaseline>
-    </ThemeProvider>
+    </ReviewTheme>
   );
 }
 import { quickCoordinatorCopy } from "../../lib/titleValidation/quickCoordinatorCopy";
