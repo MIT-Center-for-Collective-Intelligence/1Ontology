@@ -47,6 +47,17 @@ choose a user identity, unlock the flagged queue, or select a different study.
 Coordinator exports remain blocked until their own current source pages finish.
 The three navigation links retain the existing named-user permission policy.
 
+The page shows Reviewing with a Pause review button, or Paused with Resume
+review. It never displays elapsed time. Pausing keeps the current choices,
+checkpoints the draft, disables answer editing/submission, and excludes the
+break from activeTimeMs. Resuming resets the active clock without catch-up.
+Pause state is local to this browser, reviewer, package and source page and
+survives reload; it does not alter answer records or other reviewers' sessions.
+Background checkpoints continue during a break. Elapsed wall time remains
+separate from active review time. Hidden tabs also do not accrue active time.
+Local preview keeps its existing default test identity privately, but exposes
+no test-account switcher or preview-a/b/c names in the review interface.
+
 Adding a reviewer checks for an enabled existing Firebase account. A missing
 account error names the email and asks that the ontology account be created
 first; disabled-account errors are separate, and service outages are not
