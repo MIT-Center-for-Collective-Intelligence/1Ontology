@@ -37,6 +37,9 @@ const labels = [
   { value: "not_acceptable", label: "Not acceptable" },
   { value: "unsure", label: "I’m not sure" },
 ];
+// Keep one stable local identity so removing the test-account switcher does not
+// discard existing preview drafts. Production always uses the signed-in user.
+const previewReviewer = "preview-a";
 const hiddenProvenanceFields = new Set([
   "model",
   "modelReasoningEffort",
@@ -102,7 +105,7 @@ export default function QuickTitleVerification({
     [busy, setBusy] = useState(false),
     [pending, setPending] = useState(false),
     [validationAttempted, setValidationAttempted] = useState(false),
-    [reviewer, setReviewer] = useState("preview-a"),
+    [paused, setPaused] = useState(false),
     [emails, setEmails] = useState(""),
     [reviewerFeedback, setReviewerFeedback] = useState<{
       severity: "success" | "error";
@@ -113,12 +116,14 @@ export default function QuickTitleVerification({
     revision = useRef(0),
     busyRef = useRef(false),
     pendingRef = useRef<any>(null),
-    blocked = useRef(false);
+    blocked = useRef(false),
+    pausedRef = useRef(false),
+    lastActiveTick = useRef(Date.now());
   const context = {
     pool: flagged ? "flagged" : "regular",
     qa,
     sourceReview: true,
-    ...(preview ? { previewReviewer: reviewer } : {}),
+    ...(preview ? { previewReviewer } : {}),
   };
   async function request(action: string, extra: object = {}): Promise<any> {
     const path =
@@ -136,6 +141,8 @@ export default function QuickTitleVerification({
     `source-title-draft:${v.datasetVersion}:${v.reviewerKey}:${v.item?.id}`;
   const pendingKey = (v: View) =>
     `source-title-pending:${v.datasetVersion}:${v.reviewerKey}:${flagged ? "flagged" : "regular"}`;
+  const pauseKey = (v: View) =>
+    `source-title-paused:${v.datasetVersion}:${v.reviewerKey}:${v.item?.id}`;
   function applyView(next: View, recover = true) {
     setValidationAttempted(false);
     viewRef.current = next;
@@ -150,11 +157,14 @@ export default function QuickTitleVerification({
         local.payload.activeTimeMs >= p.activeTimeMs
       ) {
         p = local.payload;
-        setNotice("Your unfinished answers and timer have been restored.");
+        setNotice("Your unfinished review has been restored.");
       }
     }
     payloadRef.current = p;
     setPayload(p);
+    pausedRef.current = Boolean(next.item && storage.get(pauseKey(next)));
+    setPaused(pausedRef.current);
+    lastActiveTick.current = Date.now();
   }
   async function load() {
     setError("");
@@ -210,7 +220,7 @@ export default function QuickTitleVerification({
   }
   useEffect(() => {
     load();
-  }, [reviewer, flagged, qa]); // Request identity stays fixed for each mounted reviewer page.
+  }, [flagged, qa]); // Request identity stays fixed for each mounted reviewer page.
   function update(p: QuickPayload) {
     payloadRef.current = p;
     setPayload(p);
@@ -223,14 +233,42 @@ export default function QuickTitleVerification({
         "Browser recovery is unavailable. Keep this page open until your answer is saved.",
       );
   }
+  function recordActiveTime() {
+    const now = Date.now(),
+      delta = Math.max(0, Math.min(2000, now - lastActiveTick.current));
+    lastActiveTick.current = now;
+    if (
+      document.visibilityState === "visible" &&
+      !pausedRef.current &&
+      !pendingRef.current &&
+      payloadRef.current &&
+      !blocked.current
+    )
+      update({
+        ...payloadRef.current,
+        activeTimeMs: payloadRef.current.activeTimeMs + delta,
+      });
+  }
+  function togglePause() {
+    if (!viewRef.current?.item || pendingRef.current) return;
+    // Flush the last fraction of active time before pausing; on resume this
+    // resets the clock while still paused, so none of the break is counted.
+    recordActiveTime();
+    pausedRef.current = !pausedRef.current;
+    setPaused(pausedRef.current);
+    storage.set(pauseKey(viewRef.current), pausedRef.current);
+    if (pausedRef.current) save(false);
+  }
   async function save(final: boolean) {
     if (
       busyRef.current ||
       !payloadRef.current ||
       !viewRef.current ||
-      blocked.current
+      blocked.current ||
+      (final && pausedRef.current)
     )
       return;
+    recordActiveTime();
     const v = viewRef.current;
     if (final && !pendingRef.current) {
       setValidationAttempted(true);
@@ -258,6 +296,7 @@ export default function QuickTitleVerification({
       if (final) {
         storage.remove(pendingKey(v));
         storage.remove(draftKey(v));
+        storage.remove(pauseKey(v));
         pendingRef.current = null;
         setPending(false);
         setNotice("Your answer and review time are saved.");
@@ -296,28 +335,13 @@ export default function QuickTitleVerification({
     if (caseKey) document.getElementById("quick-review-heading")?.focus();
   }, [caseKey]);
   useEffect(() => {
-    let last = Date.now();
-    const tick = () => {
-      const now = Date.now(),
-        delta = Math.max(0, Math.min(2000, now - last));
-      last = now;
-      if (
-        document.visibilityState === "visible" &&
-        !pendingRef.current &&
-        payloadRef.current &&
-        !blocked.current
-      )
-        update({
-          ...payloadRef.current,
-          activeTimeMs: payloadRef.current.activeTimeMs + delta,
-        });
-    };
-    const timer = window.setInterval(tick, 1000),
+    lastActiveTick.current = Date.now();
+    const timer = window.setInterval(recordActiveTime, 1000),
       checkpoint = window.setInterval(() => {
         save(false);
       }, 10000);
     const visibility = () => {
-      last = Date.now();
+      lastActiveTick.current = Date.now();
     };
     document.addEventListener("visibilitychange", visibility);
     return () => {
@@ -325,7 +349,7 @@ export default function QuickTitleVerification({
       clearInterval(checkpoint);
       document.removeEventListener("visibilitychange", visibility);
     };
-  }, [caseKey, reviewer, flagged, qa]);
+  }, [caseKey, flagged, qa]);
   async function manage(operation: string) {
     if (
       operation === "expand" &&
@@ -391,8 +415,8 @@ export default function QuickTitleVerification({
       setError(message(e));
     }
   }
-  // Background checkpoints must not interrupt typing. Only final delivery freezes an answer.
-  const frozen = pending;
+  // Background checkpoints leave fields editable; a break or final delivery locks them.
+  const frozen = pending || paused;
   const showOptionalComments = Object.values(payload?.ratings || {}).some(
     (rating) => rating.value === "not_acceptable",
   );
@@ -444,15 +468,6 @@ export default function QuickTitleVerification({
                 not mean the proposal is wrong.
               </Alert>
             )}
-            {preview && (
-              <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
-                {["preview-a", "preview-b", "preview-c"].map((uid) => (
-                  <Button key={uid} onClick={() => setReviewer(uid)}>
-                    {uid}
-                  </Button>
-                ))}
-              </Stack>
-            )}
             {error && (
               <Alert severity="error" sx={{ mb: 2 }}>
                 {error}
@@ -478,9 +493,38 @@ export default function QuickTitleVerification({
                       gap={1}
                     >
                       <Typography fontWeight={600}>
-                        {view.reviewerLabel} · {view.completed} of {view.total}{" "}
-                        O*NET descriptions saved
+                        {preview ? "Local preview" : view.reviewerLabel} ·{" "}
+                        {view.completed} of {view.total} O*NET descriptions
+                        saved
                       </Typography>
+                      {view.item && payload && (
+                        <Stack direction="row" spacing={2} alignItems="center">
+                          <Typography role="status" sx={{ fontWeight: 600 }}>
+                            <Box
+                              component="span"
+                              aria-hidden="true"
+                              sx={{
+                                display: "inline-block",
+                                width: 8,
+                                height: 8,
+                                borderRadius: "50%",
+                                bgcolor: paused
+                                  ? "text.disabled"
+                                  : "success.main",
+                                mr: 1,
+                              }}
+                            />
+                            {paused ? "Paused" : "Reviewing"}
+                          </Typography>
+                          <Button
+                            variant="outlined"
+                            onClick={togglePause}
+                            disabled={pending}
+                          >
+                            {paused ? "Resume review" : "Pause review"}
+                          </Button>
+                        </Stack>
+                      )}
                     </Stack>
                     <LinearProgress
                       variant="determinate"
@@ -494,6 +538,11 @@ export default function QuickTitleVerification({
                     >
                       Drafts save automatically.
                     </Typography>
+                    {paused && (
+                      <Alert severity="info" sx={{ mt: 2 }}>
+                        Review paused. Resume when you’re ready to continue.
+                      </Alert>
+                    )}
                     {view.historicalCompleted > 0 && (
                       <Typography
                         variant="body2"
@@ -743,7 +792,7 @@ export default function QuickTitleVerification({
                         type="submit"
                         size="large"
                         variant="contained"
-                        disabled={busy}
+                        disabled={busy || paused}
                       >
                         {busy
                           ? "Saving…"

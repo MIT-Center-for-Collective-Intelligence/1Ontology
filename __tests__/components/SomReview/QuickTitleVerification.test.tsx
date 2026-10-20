@@ -119,6 +119,146 @@ beforeEach(() => {
   localStorage.clear();
 });
 afterEach(() => jest.useRealTimers());
+test("local preview uses one stable identity without showing test-account names or switches", async () => {
+  jest
+    .mocked(Post)
+    .mockResolvedValue({ ...start(), reviewerLabel: "preview-a" });
+  render(<QuickTitleVerification preview />);
+  await screen.findByText(/Local preview · 0 of 25/);
+  expect(document.body).not.toHaveTextContent(/preview-[abc]/);
+  expect(Post).toHaveBeenCalledWith(
+    expect.stringContaining("session"),
+    expect.objectContaining({ previewReviewer: "preview-a" }),
+    true,
+  );
+});
+test("a break stops hidden timing, survives reload, and resumes without counting the break", async () => {
+  jest.useFakeTimers();
+  let v = start();
+  jest.mocked(Post).mockImplementation(async (path, body: any) => {
+    if (String(path).endsWith("checkpoint")) {
+      v = {
+        ...v,
+        draft: {
+          ...v.draft,
+          revision: v.draft.revision + 1,
+          payload: body.payload,
+        },
+      };
+    }
+    if (String(path).endsWith("respond"))
+      return {
+        ...v,
+        item: undefined,
+        draft: undefined,
+        questions: [],
+        completed: 25,
+      } as any;
+    return v as any;
+  });
+  const first = render(<QuickTitleVerification />);
+  await act(async () => {
+    await Promise.resolve();
+  });
+  for (const group of screen.getAllByRole("radiogroup"))
+    fireEvent.click(within(group).getByLabelText("Acceptable"));
+  await act(async () => {
+    jest.advanceTimersByTime(2500);
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Pause review" }));
+  await act(async () => {
+    await Promise.resolve();
+  });
+  expect(v.draft.payload.activeTimeMs).toBe(9500);
+  expect(screen.getByText("Paused", { exact: true })).toBeVisible();
+  expect(
+    screen.getByRole("button", { name: "Save and continue" }),
+  ).toBeDisabled();
+  for (const group of screen.getAllByRole("radiogroup"))
+    expect(within(group).getByLabelText("Acceptable")).toBeChecked();
+  await act(async () => {
+    jest.advanceTimersByTime(300000);
+  });
+  expect(v.draft.payload.activeTimeMs).toBe(9500);
+  first.unmount();
+  render(<QuickTitleVerification />);
+  await act(async () => {
+    await Promise.resolve();
+  });
+  expect(screen.getByText("Paused", { exact: true })).toBeVisible();
+  await act(async () => {
+    jest.advanceTimersByTime(20000);
+  });
+  expect(v.draft.payload.activeTimeMs).toBe(9500);
+  fireEvent.click(screen.getByRole("button", { name: "Resume review" }));
+  expect(screen.getByText("Reviewing", { exact: true })).toBeVisible();
+  for (const group of screen.getAllByRole("radiogroup"))
+    expect(within(group).getByLabelText("Acceptable")).toBeEnabled();
+  await act(async () => {
+    jest.advanceTimersByTime(3500);
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Save and continue" }));
+  await act(async () => {
+    await Promise.resolve();
+  });
+  const sent = jest
+    .mocked(Post)
+    .mock.calls.find((c) => String(c[0]).endsWith("respond"))![1] as any;
+  expect(sent.payload.activeTimeMs).toBe(13000);
+  expect(
+    Object.values(sent.payload.ratings).every(
+      (r: any) => r.value === "acceptable",
+    ),
+  ).toBe(true);
+  expect(
+    localStorage.getItem("source-title-paused:quick-v1:reviewer-test:case-1"),
+  ).toBeNull();
+  expect(
+    screen.queryByRole("button", { name: /Pause review|Resume review/ }),
+  ).not.toBeInTheDocument();
+  expect(document.body).not.toHaveTextContent(
+    /00:|9500|13000|Total review time:/,
+  );
+});
+test("pausing during an in-flight checkpoint keeps the review paused after that save finishes", async () => {
+  jest.useFakeTimers();
+  const v = start();
+  let finish: ((value: unknown) => void) | undefined, body: any;
+  jest.mocked(Post).mockImplementation(async (path, request: any) => {
+    if (String(path).endsWith("checkpoint")) {
+      body = request;
+      return new Promise((resolve) => {
+        finish = resolve;
+      }) as any;
+    }
+    return v as any;
+  });
+  render(<QuickTitleVerification />);
+  await act(async () => {
+    await Promise.resolve();
+  });
+  await act(async () => {
+    jest.advanceTimersByTime(10000);
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Pause review" }));
+  await act(async () => {
+    jest.advanceTimersByTime(60000);
+    finish!({
+      ...v,
+      draft: { ...v.draft, revision: 1, payload: body.payload },
+    });
+    await Promise.resolve();
+  });
+  expect(screen.getByText("Paused", { exact: true })).toBeVisible();
+  expect(
+    screen.getByRole("button", { name: "Save and continue" }),
+  ).toBeDisabled();
+  const local = JSON.parse(
+    localStorage.getItem("source-title-draft:quick-v1:reviewer-test:case-1")!,
+  );
+  expect(local.payload.activeTimeMs).toBe(17000);
+  expect(local.revision).toBe(1);
+});
 test("displayed proposal information omits model, reasoning, funding, and hashes without changing saved provenance", async () => {
   const v = start();
   const fundingRoute =
