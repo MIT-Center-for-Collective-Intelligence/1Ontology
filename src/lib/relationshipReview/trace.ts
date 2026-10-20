@@ -2,6 +2,39 @@
  * Returning unrelated request bodies can create megabytes of wrapped DOM text. */
 export function proposalReviewTrace(trace: any, caseId: string) {
   if (!Array.isArray(trace.authors)) return trace; // Frozen v1 disclosure.
+  if (trace.methodology === "atomic-generalization-pilot-v1") {
+    const authors = trace.authors.filter((r: any) =>
+      r.value.cases.some((c: any) => c.subjectId === caseId),
+    );
+    const critiques = trace.critiques.filter((r: any) =>
+      r.value.cases.some((c: any) => c.subjectId === caseId),
+    );
+    if (authors.length !== 1 || critiques.length !== 2)
+      throw Error("Incomplete proposal-specific agent trace");
+    const jobs = new Set([...authors, ...critiques].map((r: any) => r.jobId));
+    const exactRequests = trace.exactRequests.filter((r: any) =>
+      jobs.has(r.jobId),
+    );
+    if (exactRequests.length !== 3)
+      throw Error("Missing proposal-specific exact requests");
+    return {
+      schemaVersion: trace.schemaVersion,
+      methodology: trace.methodology,
+      scope:
+        "Exact shared author and two separate critical-review requests for this atomic-activity pilot. These same-model critiques are not human validation.",
+      authors,
+      critiques,
+      exactRequests,
+      selectionRule: trace.selectionRule,
+      completeRun: {
+        privatelyPreserved: true,
+        inferenceAttempts: new Set(
+          trace.allInferenceAttempts.map((a: any) => a.attemptId),
+        ).size,
+        sample: trace.sample,
+      },
+    };
+  }
   const authors = trace.authors.filter((r: any) =>
     r.value.cases.some((c: any) => c.analysis.nodeId === caseId),
   );
@@ -39,14 +72,21 @@ export function proposalReviewTrace(trace: any, caseId: string) {
 /** Preserve every exact body once in this self-contained disclosure. Selection
  * reviews often reuse the same author/critic requests already in the case trace.
  * References point within the returned JSON; immutable evidence is never edited. */
-export function relationshipTraceDisclosure(original: any, full: any, caseId: string) {
+export function relationshipTraceDisclosure(
+  original: any,
+  full: any,
+  caseId: string,
+) {
   const selected = proposalReviewTrace(full, caseId);
   if (!Array.isArray(full.authors))
     return { original, selectedChangesReview: selected };
   const requests = [
     ["original.proposalRequest", original.proposalRequest],
     ["original.challengeRequest", original.challengeRequest],
-    ["original.additionalChallenge.request", original.additionalChallenge?.request],
+    [
+      "original.additionalChallenge.request",
+      original.additionalChallenge?.request,
+    ],
   ] as const;
   const projectedOriginal = { ...original };
   if (original.sourceContext && original.proposalRequest?.input) {
@@ -54,11 +94,17 @@ export function relationshipTraceDisclosure(original: any, full: any, caseId: st
     const context = input.context?.find((c: any) => c.subject?.id === caseId);
     if (context?.sourceRecordColumns) {
       const columns = context.sourceRecordColumns;
-      const unpack = (rows: any[]) => rows.map((row) =>
-        Object.fromEntries(columns.map((key: string, i: number) => [key, row[i]])));
+      const unpack = (rows: any[]) =>
+        rows.map((row) =>
+          Object.fromEntries(
+            columns.map((key: string, i: number) => [key, row[i]]),
+          ),
+        );
       context.records = unpack(context.records);
       context.ancestors = unpack(context.ancestors);
-      context.descendantCoverage.fullDescendantRecords = unpack(context.descendantCoverage.fullDescendantRecords);
+      context.descendantCoverage.fullDescendantRecords = unpack(
+        context.descendantCoverage.fullDescendantRecords,
+      );
       delete context.sourceRecordColumns;
       delete context.recordEncoding;
     }
@@ -77,13 +123,16 @@ export function relationshipTraceDisclosure(original: any, full: any, caseId: st
     selectedChangesReview: {
       ...selected,
       exactRequests: selected.exactRequests.map((request: any) => {
-        const match = requests.find(([, body]) => body &&
-          JSON.stringify(body) === JSON.stringify(request.body));
+        const match = requests.find(
+          ([, body]) =>
+            body && JSON.stringify(body) === JSON.stringify(request.body),
+        );
         if (!match) return request;
         const { body, ...identity } = request;
         return { ...identity, bodyReference: match[0] };
       }),
-      requestReferenceNote: "A bodyReference identifies the identical exact request already present under original in this JSON. No request content is omitted.",
+      requestReferenceNote:
+        "A bodyReference identifies the identical exact request already present under original in this JSON. No request content is omitted.",
     },
   };
 }

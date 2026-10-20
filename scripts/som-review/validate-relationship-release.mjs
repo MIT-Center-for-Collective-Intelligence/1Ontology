@@ -3,7 +3,10 @@ import path from "node:path";
 import crypto from "node:crypto";
 import { completeDiscoveryPrefix } from "./relationship-discovery-lib.mjs";
 import { assertFreeRelationshipExplanations } from "./relationship-schema-lib.mjs";
+import { validateAtomicRelationshipRelease } from "./validate-atomic-relationship-release.mjs";
 function validateEntry(root, committed) {
+  if (committed.methodology === "atomic-generalization-pilot-v1")
+    return validateAtomicRelationshipRelease(root, committed);
   const dir = path.join(
     root,
     "src/lib/relationshipReview/data",

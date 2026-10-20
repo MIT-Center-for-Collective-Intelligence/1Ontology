@@ -50,6 +50,7 @@ export interface RelationshipCase extends RelationshipNode {
   };
 }
 export interface RelationshipDataset {
+  methodology?: "atomic-generalization-pilot-v1";
   version: string;
   createdAt: string;
   title: string;
@@ -83,7 +84,7 @@ export interface RelationshipFeedback {
   presentationVersion?: string;
 }
 export interface RelationshipSession {
-  availableVersions?: { version: string; current: boolean }[];
+  availableVersions?: { version: string; current: boolean; label?: string }[];
   dataset: RelationshipDataset;
   datasetSha256: string;
   reviewerKey: string;

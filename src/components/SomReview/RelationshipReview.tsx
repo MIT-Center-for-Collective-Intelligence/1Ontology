@@ -24,7 +24,7 @@ import {
 } from "@mui/material";
 import { ThemeProvider } from "@mui/material/styles";
 import { titleValidationTheme } from "./titleValidationDesign";
-import { getIdToken } from "../../lib/firestoreClient/auth";
+import { relationshipRequest as request } from "../../lib/relationshipReview/client";
 import { reconcileSession } from "../../lib/relationshipReview/clientState";
 import {
   generalizationChanges,
@@ -38,29 +38,6 @@ import type {
   RelationshipSourceEvidence,
 } from "../../types/IRelationshipReview";
 
-async function request(
-  action: string,
-  body: unknown = {},
-  preview = false,
-): Promise<any> {
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-  };
-  if (!preview) headers.Authorization = "Bearer " + (await getIdToken());
-  const response = await fetch("/api/som-review/relationships/" + action, {
-    method: "POST",
-    credentials: "same-origin",
-    headers,
-    body: JSON.stringify(body),
-  });
-  const data = await response.json();
-  if (!response.ok)
-    throw Object.assign(
-      Error(data.error || "Could not reach the review. Please retry."),
-      { status: response.status, code: data.code },
-    );
-  return data;
-}
 type Draft = {
   decision: RelationshipDecision | "";
   note: string;
@@ -740,6 +717,32 @@ export default function RelationshipReview({
             )}
             {session && data && (
               <>
+                {data.methodology === "atomic-generalization-pilot-v1" && (
+                  <Alert severity="info" sx={{ mb: 3 }}>
+                    New atomic-activity proposals. Your answers to the earlier
+                    proposals remain saved in their original review.
+                    {session.availableVersions?.find(
+                      (v) => !v.current && v.label,
+                    ) && (
+                      <Button
+                        href={
+                          "/review/relationships?version=" +
+                          encodeURIComponent(
+                            session.availableVersions.find(
+                              (v) => !v.current && v.label,
+                            )!.version,
+                          )
+                        }
+                      >
+                        {
+                          session.availableVersions.find(
+                            (v) => !v.current && v.label,
+                          )!.label
+                        }
+                      </Button>
+                    )}
+                  </Alert>
+                )}
                 {session.availableVersions?.some(
                   (v) => v.current && v.version !== data.version,
                 ) && (
@@ -929,7 +932,8 @@ export default function RelationshipReview({
                               label={
                                 item.scope === "sibling-review"
                                   ? "Sibling comparison"
-                                  : item.scope === "focal-source-review"
+                                  : item.scope === "focal-source-review" ||
+                                      item.scope === "atomic-activity-review"
                                     ? "Activity comparison"
                                     : "Reason’s immediate child"
                               }
@@ -1082,10 +1086,10 @@ export default function RelationshipReview({
                             </Typography>
                             {!selectedCard.quotes.length && (
                               <Typography>
-                                No recorded definition establishes this
-                                relationship. The proposal uses the ordinary
-                                meaning of the activity names and their current
-                                context; you can inspect that context below.
+                                {data.methodology ===
+                                "atomic-generalization-pilot-v1"
+                                  ? "The complete O*NET descriptions supporting this activity are shown below."
+                                  : "No recorded definition establishes this relationship. The proposal uses the ordinary meaning of the activity names and their current context; you can inspect that context below."}
                               </Typography>
                             )}
                             {selectedCard.quotes.map((q, i) => (
@@ -1136,16 +1140,20 @@ export default function RelationshipReview({
                           preview={session.preview}
                           datasetSha256={session.datasetSha256}
                         />
-                        <Typography sx={{ mb: 2 }}>
-                          <strong>
+                        {!!(selectedCard
+                          ? selectedCard.example
+                          : item.analysis.example) && (
+                          <Typography sx={{ mb: 2 }}>
+                            <strong>
+                              {selectedCard
+                                ? "Illustrative example:"
+                                : "Example:"}
+                            </strong>{" "}
                             {selectedCard
-                              ? "Illustrative example:"
-                              : "Example:"}
-                          </strong>{" "}
-                          {selectedCard
-                            ? selectedCard.example
-                            : item.analysis.example}
-                        </Typography>
+                              ? selectedCard.example
+                              : item.analysis.example}
+                          </Typography>
+                        )}
                         {!selectedCard && (
                           <Typography sx={{ mb: 2 }}>
                             <strong>Reason to be cautious:</strong>{" "}
@@ -1433,7 +1441,7 @@ export default function RelationshipReview({
                     >
                       {v.current
                         ? "Return to current review"
-                        : "Earlier review and saved answers"}
+                        : v.label || "Earlier review and saved answers"}
                     </Button>
                   ))}
               </>
