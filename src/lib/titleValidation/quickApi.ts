@@ -50,11 +50,13 @@ export async function quickTitleHandler(
     if (body.pool !== undefined && !["regular", "flagged"].includes(body.pool))
       throw new TitleValidationError(400, "Unknown review set.");
     const id =
-        body.qa === "selection"
-          ? QUICK_SELECTION_QA_ID
-          : body.qa
-            ? QUICK_QA_ID
-            : QUICK_STUDY_ID,
+        body.qa && body.sourceReview
+          ? "software-qa-quick-title-source-pages-v2"
+          : body.qa === "selection"
+            ? QUICK_SELECTION_QA_ID
+            : body.qa
+              ? QUICK_QA_ID
+              : QUICK_STUDY_ID,
       flagged = body.pool === "flagged",
       data = getQuickDataset(),
       action = String(req.query.action);
@@ -66,9 +68,25 @@ export async function quickTitleHandler(
       "quick-manage",
       "quick-export",
     ];
+    if (action.startsWith("quick-source-")) {
+      const { sourceReviewAction } = await import("./sourceApi");
+      const sourceId = body.qa ? "software-qa-quick-title-source-pages-v2" : id;
+      return res
+        .status(200)
+        .json(
+          await sourceReviewAction(
+            action,
+            body,
+            actor,
+            sourceId,
+            data,
+            flagged,
+          ),
+        );
+    }
     if (!allowed.includes(action))
       throw new TitleValidationError(404, "Unknown review action.");
-    let additions: { reviewerId: string; label: string }[] = [];
+    let additions: { reviewerId: string; label: string; email: string }[] = [];
     if (action === "quick-manage") {
       if (!actor.canManage)
         throw new TitleValidationError(
@@ -88,21 +106,38 @@ export async function quickTitleHandler(
         const { admin } = await import("../firestoreServer/admin");
         additions = await Promise.all(
           body.reviewers.map(async (row: any) => {
+            const email = String(row.email || "")
+              .trim()
+              .toLowerCase();
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254)
+              throw new TitleValidationError(
+                400,
+                "Enter a valid reviewer email address.",
+              );
             try {
-              const user = await admin
-                .auth()
-                .getUserByEmail(String(row.email).trim());
-              if (user.disabled) throw Error();
+              const user = await admin.auth().getUserByEmail(email);
+              if (user.disabled)
+                throw new TitleValidationError(
+                  400,
+                  `The ontology account for ${email} is disabled. It must be enabled before it can be added as a reviewer.`,
+                );
               return {
                 reviewerId: user.uid,
                 label: String(
                   user.displayName || row.label || user.email,
                 ).slice(0, 80),
+                email,
               };
-            } catch {
+            } catch (error: any) {
+              if (error instanceof TitleValidationError) throw error;
+              if (error?.code !== "auth/user-not-found")
+                throw new TitleValidationError(
+                  503,
+                  "Reviewer accounts could not be checked. No reviewers were added. Please try again.",
+                );
               throw new TitleValidationError(
                 400,
-                "One account could not be found or is disabled. Use an existing ontology account.",
+                `The email address ${email} does not exist in the ontology platform. Create the ontology account first, then add it as a reviewer here. No reviewers were added.`,
               );
             }
           }),
@@ -220,9 +255,13 @@ export async function quickTitleHandler(
           return { ok: true, ...release };
         }
         const roster = [...study.roster];
+        const addedReviewers: string[] = [],
+          alreadyAssigned: string[] = [];
         for (const row of additions)
-          if (!roster.some((r) => r.reviewerId === row.reviewerId))
-            roster.push(row);
+          if (!roster.some((r) => r.reviewerId === row.reviewerId)) {
+            roster.push({ reviewerId: row.reviewerId, label: row.label });
+            addedReviewers.push(row.email);
+          } else alreadyAssigned.push(row.email);
         tx.update(
           ref,
           body.operation === "expand"
@@ -239,6 +278,8 @@ export async function quickTitleHandler(
         return {
           ok: true,
           regularLimit: body.operation === "expand" ? 100 : study.regularLimit,
+          addedReviewers,
+          alreadyAssigned,
         };
       });
       return res.status(200).json(result);
@@ -372,7 +413,7 @@ export async function quickTitleHandler(
             answers: {},
             drafts: {},
           };
-          if (body.qa === "selection")
+          if (body.qa === "selection" || body.sourceReview)
             state.study.selection = makeQuickSelection(state, data, Date.now());
         }
         if (!state)
@@ -389,7 +430,10 @@ export async function quickTitleHandler(
               if (
                 !state.study.roster.some((r) => r.reviewerId === row.reviewerId)
               )
-                state.study.roster.push(row);
+                state.study.roster.push({
+                  reviewerId: row.reviewerId,
+                  label: row.label,
+                });
           return {
             state,
             result: { ok: true, regularLimit: state.study.regularLimit },

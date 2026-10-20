@@ -24,13 +24,11 @@ import {
 import { ThemeProvider } from "@mui/material/styles";
 import { titleValidationTheme } from "./titleValidationDesign";
 import { postQuickReview } from "@components/lib/titleValidation/quickRequest";
-import { quickReviewCsv } from "@components/lib/titleValidation/quickCsv";
-import type {
-  QuickPayload,
-  quickSession,
-} from "@components/lib/titleValidation/quick";
+import { sourceReviewCsv } from "@components/lib/titleValidation/sourceCsv";
+import type { QuickPayload } from "@components/lib/titleValidation/quick";
+import type { sourceSession } from "@components/lib/titleValidation/sourceReview";
 
-type View = ReturnType<typeof quickSession> & {
+type View = ReturnType<typeof sourceSession> & {
   preview: boolean;
   canUseReviewLinks?: boolean;
 };
@@ -105,7 +103,11 @@ export default function QuickTitleVerification({
     [pending, setPending] = useState(false),
     [validationAttempted, setValidationAttempted] = useState(false),
     [reviewer, setReviewer] = useState("preview-a"),
-    [emails, setEmails] = useState("");
+    [emails, setEmails] = useState(""),
+    [reviewerFeedback, setReviewerFeedback] = useState<{
+      severity: "success" | "error";
+      text: string;
+    } | null>(null);
   const viewRef = useRef<View | null>(null),
     payloadRef = useRef<QuickPayload | null>(null),
     revision = useRef(0),
@@ -115,17 +117,25 @@ export default function QuickTitleVerification({
   const context = {
     pool: flagged ? "flagged" : "regular",
     qa,
+    sourceReview: true,
     ...(preview ? { previewReviewer: reviewer } : {}),
   };
   async function request(action: string, extra: object = {}): Promise<any> {
-    const path = "/som-review/title-validation/quick-" + action,
-      body = { ...context, ...extra };
+    const path =
+        "/som-review/title-validation/quick-" +
+        (action === "manage" ? "" : "source-") +
+        action,
+      body = {
+        ...context,
+        ...extra,
+        packageVersion: viewRef.current?.datasetVersion,
+      };
     return postQuickReview(path, body, preview);
   }
   const draftKey = (v: View) =>
-    `quick-title-draft:${v.datasetVersion}:${v.reviewerKey}:${v.item?.id}`;
+    `source-title-draft:${v.datasetVersion}:${v.reviewerKey}:${v.item?.id}`;
   const pendingKey = (v: View) =>
-    `quick-title-pending:${v.reviewerKey}:${flagged ? "flagged" : "regular"}`;
+    `source-title-pending:${v.datasetVersion}:${v.reviewerKey}:${flagged ? "flagged" : "regular"}`;
   function applyView(next: View, recover = true) {
     setValidationAttempted(false);
     viewRef.current = next;
@@ -325,8 +335,9 @@ export default function QuickTitleVerification({
     )
       return;
     setBusy(true);
+    setReviewerFeedback(null);
     try {
-      await request("manage", {
+      const result = await request("manage", {
         operation,
         reviewers: emails
           .split(/[,\n]/)
@@ -340,8 +351,25 @@ export default function QuickTitleVerification({
           ? "The additional 75 activities are now available."
           : "Reviewer access updated.",
       );
+      if (operation === "add")
+        setReviewerFeedback({
+          severity: "success",
+          text:
+            [
+              result.addedReviewers?.length
+                ? `Added as reviewer: ${result.addedReviewers.join(", ")}.`
+                : "",
+              result.alreadyAssigned?.length
+                ? `Already has reviewer access: ${result.alreadyAssigned.join(", ")}.`
+                : "",
+            ]
+              .filter(Boolean)
+              .join(" ") || "Reviewer access confirmed.",
+        });
     } catch (e) {
       setError(message(e));
+      if (operation === "add")
+        setReviewerFeedback({ severity: "error", text: message(e) });
     } finally {
       setBusy(false);
     }
@@ -350,7 +378,7 @@ export default function QuickTitleVerification({
     try {
       const result = await request("export"),
         url = URL.createObjectURL(
-          new Blob([quickReviewCsv(result)], {
+          new Blob([sourceReviewCsv(result)], {
             type: "text/csv;charset=utf-8",
           }),
         ),
@@ -401,8 +429,8 @@ export default function QuickTitleVerification({
             <Typography sx={{ mt: 1, mb: 3, maxWidth: 800 }}>
               Read the O*NET description, then judge whether each title clearly
               and accurately describes the relevant activity for someone
-              unfamiliar with the occupation. Judge only the activity named in
-              the original title.
+              unfamiliar with the occupation. Review all the linked activities
+              together on this page. Each proposed title has its own rating.
             </Typography>
             {qa && (
               <Alert severity="warning" sx={{ mb: 2 }}>
@@ -451,7 +479,7 @@ export default function QuickTitleVerification({
                     >
                       <Typography fontWeight={600}>
                         {view.reviewerLabel} · {view.completed} of {view.total}{" "}
-                        activities saved
+                        O*NET descriptions saved
                       </Typography>
                     </Stack>
                     <LinearProgress
@@ -466,6 +494,18 @@ export default function QuickTitleVerification({
                     >
                       Drafts save automatically.
                     </Typography>
+                    {view.historicalCompleted > 0 && (
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ mt: 1 }}
+                      >
+                        Your {view.historicalCompleted} earlier activity reviews
+                        are preserved. Their proposed-title ratings are filled
+                        in below when available. Progress here counts the new
+                        pages that show all linked activities together.
+                      </Typography>
+                    )}
                   </CardContent>
                 </Card>
                 {view.item && payload ? (
@@ -500,21 +540,14 @@ export default function QuickTitleVerification({
                           variant="body2"
                           sx={{ mt: 2 }}
                         >
-                          Original activity: {view.item.currentTitle}
+                          {view.item.activities.length} linked{" "}
+                          {view.item.activities.length === 1
+                            ? "activity"
+                            : "activities"}{" "}
+                          · {view.questions.length} proposed{" "}
+                          {view.questions.length === 1 ? "title" : "titles"} to
+                          review
                         </Typography>
-                        <Typography color="text.secondary" variant="body2">
-                          {view.item.outcome === "Keep"
-                            ? "The model kept the original title."
-                            : view.item.outcome === "Split"
-                              ? "The model proposed several activities from this description."
-                              : "The model proposed one clarified title."}
-                        </Typography>
-                        <Accordion disableGutters elevation={0} sx={{ mt: 2 }}>
-                          <AccordionSummary>Model explanation</AccordionSummary>
-                          <AccordionDetails sx={{ whiteSpace: "pre-wrap" }}>
-                            {view.item.modelReason}
-                          </AccordionDetails>
-                        </Accordion>
                       </CardContent>
                     </Card>
                     <Stack
@@ -535,6 +568,13 @@ export default function QuickTitleVerification({
                       {view.questions.map((q) => (
                         <Card key={q.id}>
                           <CardContent>
+                            <Typography
+                              variant="body2"
+                              color="text.secondary"
+                              sx={{ mb: 1 }}
+                            >
+                              Original activity: {q.originalTitle}
+                            </Typography>
                             <FormControl
                               component="fieldset"
                               fullWidth
@@ -563,6 +603,18 @@ export default function QuickTitleVerification({
                                   }}
                                 >
                                   {q.title}
+                                </Typography>
+                              )}
+                              {view.draft?.legacyReferences.some(
+                                (r) => r.questionId === q.id,
+                              ) && (
+                                <Typography
+                                  variant="body2"
+                                  color="text.secondary"
+                                  sx={{ mb: 1 }}
+                                >
+                                  Your earlier rating has been restored. Your
+                                  original review remains saved.
                                 </Typography>
                               )}
                               <RadioGroup
@@ -626,9 +678,31 @@ export default function QuickTitleVerification({
                                 />
                               )}
                             </FormControl>
+                            <Accordion
+                              disableGutters
+                              elevation={0}
+                              sx={{ mt: 1 }}
+                            >
+                              <AccordionSummary>
+                                Model explanation
+                              </AccordionSummary>
+                              <AccordionDetails sx={{ whiteSpace: "pre-wrap" }}>
+                                {q.reason}
+                              </AccordionDetails>
+                            </Accordion>
                           </CardContent>
                         </Card>
                       ))}
+                      {view.item.activities
+                        .filter((a) => !a.proposals.length)
+                        .map((a) => (
+                          <Alert key={a.id} severity="warning">
+                            <strong>{a.currentTitle}</strong> is also linked to
+                            this description, but has no saved model proposal.
+                            There is no proposed title to rate. This missing
+                            output remains recorded for follow-up.
+                          </Alert>
+                        ))}
                       {showOptionalComments && (
                         <Card>
                           <CardContent>
@@ -681,8 +755,9 @@ export default function QuickTitleVerification({
                   </Box>
                 ) : (
                   <Alert severity="success">
-                    You have finished the {view.total} activities currently
-                    assigned to you. Your answers and timing are saved.
+                    You have finished the {view.total} O*NET descriptions
+                    currently assigned to you. Your answers and timing are
+                    saved.
                     {!flagged && view.regularLimit === 25
                       ? " Rob and Iman will let you know when the next batch is ready."
                       : ""}
@@ -767,7 +842,7 @@ export default function QuickTitleVerification({
                     <AccordionSummary>Coordinator tools</AccordionSummary>
                     <AccordionDetails>
                       <Typography sx={{ mb: 2 }}>
-                        {quickCoordinatorCopy(view.selectionVersion)}
+                        {quickCoordinatorCopy(view.selectionVersion, true)}
                       </Typography>
                       <TextField
                         fullWidth
@@ -775,7 +850,16 @@ export default function QuickTitleVerification({
                         label="Existing reviewer account emails, one per line"
                         value={emails}
                         onChange={(e) => setEmails(e.target.value)}
+                        helperText="Create an ontology account first. Adding a reviewer gives that existing account access to this review."
                       />
+                      {reviewerFeedback && (
+                        <Alert
+                          severity={reviewerFeedback.severity}
+                          sx={{ mt: 2 }}
+                        >
+                          {reviewerFeedback.text}
+                        </Alert>
+                      )}
                       <Stack
                         direction={{ xs: "column", sm: "row" }}
                         gap={1}

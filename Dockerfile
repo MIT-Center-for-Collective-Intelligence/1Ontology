@@ -109,6 +109,7 @@ COPY --from=builder /app/scripts/deployment/review-package-lock.json ./scripts/d
 COPY --from=builder /app/scripts/deployment/relationship-review-package.json ./scripts/deployment/relationship-review-package.json
 COPY --from=builder /app/src/lib/titleValidation/data/prepilot-v1.json ./src/lib/titleValidation/data/prepilot-v1.json
 COPY --from=builder /app/src/lib/titleValidation/data/quick-v1.json ./src/lib/titleValidation/data/quick-v1.json
+COPY --from=builder /app/src/lib/titleValidation/data/source-pages-v2.json ./src/lib/titleValidation/data/source-pages-v2.json
 COPY --from=builder --chown=nextjs:nodejs /app/src/lib/relationshipReview/data ./src/lib/relationshipReview/data
 
 # Automatically leverage output traces to reduce image size 

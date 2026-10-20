@@ -1,0 +1,67 @@
+Source-grouped title review — October 20, 2026
+
+The current /review/title-validation interface asks only whether each proposed
+title is acceptable. The unchanged title is the proposal for a Keep case. It
+does not ask for an original-title judgment or a separate split judgment.
+
+All direct generalizations of the same O*NET evidence node appear together.
+The source-pages-v2 package was derived without inference from the exact frozen
+15,994-case delivery and saved exact proposals. Every edge was independently
+matched against the live source-node generalizations on October 20: 366 evidence
+nodes, 1,370 activity links, no missing or extra edges. Match by evidenceNodeId
+and activity nodeId, never title similarity or O*NET number alone. For an
+activity with multiple supporting descriptions, show only proposal groups
+containing this description's original number.
+
+The original 419-case package and 5/15/5 selection remain unchanged. The 25
+sampled activities select 25 source pages containing 88 linked activities and
+99 proposed titles. Associated activities are supplemental observations, not
+additional independently sampled cases. Some associated activities were
+keyword-flagged (five in the initial batch). The separate flagged queue remains
+restricted; showing ALL linked activities, as requested, includes those peers
+on an otherwise regular description page. Retain flag status in the package.
+
+Seven linked activities in the complete source package have no usable saved
+proposal. Show them explicitly without inventing a title or asking for a rating
+on a nonexistent proposal. None occurs in the current 25-description batch.
+
+Historical answers, drafts, their timestamps/timing, and events remain in their
+original collections and are not rewritten. New source-level answers and drafts
+use sourceAnswersV2 and sourceDraftsV2 under the same study document. One record
+per reviewer and evidence node; the same source in two queues is not duplicated.
+Package version/hash, sampled anchor IDs, review pool, activity IDs and missing
+outputs are recorded with each new answer. Existing proposed-title ratings can
+be prefilled, with references to their original answers/drafts. Original-title
+ratings are reused only for an exact unchanged Keep title, never as approval of
+a replacement. Original split judgments are never converted into title ratings.
+Historical time is retained separately; new page time starts at zero and is
+counted once per description, not once per proposed title. CSV exports label
+historical activity records and new page records; do not sum their judgments
+as independent reviews or copy historical timing into every proposed-title row.
+
+Existing legacy endpoints remain compatible with in-flight older browser tabs.
+The new UI uses quick-source-* endpoints and different browser recovery keys.
+Production requests require authentication and roster membership. Clients cannot
+choose a user identity, unlock the flagged queue, or select a different study.
+Coordinator exports remain blocked until their own current source pages finish.
+The three navigation links retain the existing named-user permission policy.
+
+Adding a reviewer checks for an enabled existing Firebase account. A missing
+account error names the email and asks that the ontology account be created
+first; disabled-account errors are separate, and service outages are not
+reported as missing accounts. Account checks finish before any roster writes.
+Success lists added emails and distinguishes already assigned accounts. The
+review app does not create authentication accounts or send invitations.
+
+Source-page software QA is isolated in
+software-qa-quick-title-source-pages-v2 (qa=1, coordinator-only). It does not
+overwrite the earlier software QA studies or human reviews.
+
+Private proposal bytes remain outside Git in the existing private GCS prefix.
+scripts/deployment/source-title-review-package.json pins their SHA256/version.
+The build stages and validates them, and Docker explicitly copies the package.
+/api/deployment reports sourceTitleReview metadata without private storage URI
+or reviewer data. Promotion requires the exact committed package metadata in
+addition to all existing ontology, title, and relationship release guards.
+Deploy only merged GitHub main via the existing guarded Cloud Build pipeline.
+Rollback restores serving code, never deletes or replaces review records.

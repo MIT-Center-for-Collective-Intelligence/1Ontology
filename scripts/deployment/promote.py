@@ -140,6 +140,12 @@ def validate_release(info, commit, build_id, revision):
     if info.get("quickTitleReview") != {"version":quick["version"],"initialRegular":25,"reservedRegular":75,"flagged":319,
             "bundleSha256":hashlib.sha256(quick_bytes).hexdigest(),"released":True, **selection_release(quick_bytes)}:
         raise ValueError("The quick title-review package is missing, changed, or not enabled")
+    from stage_source_title_package import validate as validate_source_pages
+    source_manifest = json.loads(Path(__file__).with_name("source-title-review-package.json").read_bytes())
+    source_bytes = (Path(__file__).resolve().parents[2] / "src/lib/titleValidation/data/source-pages-v2.json").read_bytes()
+    validate_source_pages(source_bytes, source_manifest)
+    if info.get("sourceTitleReview") != {k:v for k,v in source_manifest.items() if k != "gcsUri"}:
+        raise ValueError("The grouped title-review package is missing or changed")
     relation_manifest = json.loads(Path(__file__).with_name("relationship-review-package.json").read_bytes())
     directory = relation_manifest.get("directory", "")
     if directory and not re.fullmatch(r"[a-z0-9-]+", directory):

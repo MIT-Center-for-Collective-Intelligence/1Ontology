@@ -13,8 +13,12 @@ import {
   QuickState,
 } from "../../../src/lib/titleValidation/quick";
 import { TitleValidationError } from "../../../src/lib/titleValidation/engine";
-import { db } from "../../../src/lib/firestoreServer/admin";
+import { db, admin } from "../../../src/lib/firestoreServer/admin";
 import { quickReviewCsv } from "../../../src/lib/titleValidation/quickCsv";
+import { sourceReviewAction } from "../../../src/lib/titleValidation/sourceApi";
+jest.mock("../../../src/lib/titleValidation/sourceApi", () => ({
+  sourceReviewAction: jest.fn(),
+}));
 import {
   effectiveQuickBatch,
   LEGACY_QUICK_SELECTION,
@@ -25,6 +29,7 @@ import {
 } from "../../../src/lib/titleValidation/quickSelection";
 jest.mock("../../../src/lib/firestoreServer/admin", () => ({
   db: { collection: jest.fn(), runTransaction: jest.fn() },
+  admin: { auth: jest.fn() },
 }));
 jest.mock("../../../src/lib/titleValidation/api", () => ({
   actorFor: jest.fn(),
@@ -204,18 +209,37 @@ test("clients cannot select an earlier pilot or software test via studyId/qa fie
   );
   expect(state.study.regularLimit).toBe(25);
 });
+
+test("new source-page software QA is isolated and remains coordinator-only", async () => {
+  expect(
+    (await call("quick-source-session", { qa: true, sourceReview: true }))
+      .status,
+  ).toBe(403);
+  expect(sourceReviewAction).not.toHaveBeenCalled();
+  coordinator();
+  jest.mocked(sourceReviewAction).mockResolvedValue({ ok: true } as any);
+  expect(
+    (await call("quick-source-session", { qa: true, sourceReview: true }))
+      .status,
+  ).toBe(200);
+  expect(jest.mocked(sourceReviewAction).mock.calls[0][3]).toBe(
+    "software-qa-quick-title-source-pages-v2",
+  );
+  expect(
+    (await call("quick-source-session", { studyId: QUICK_QA_ID })).status,
+  ).toBe(200);
+  expect(jest.mocked(sourceReviewAction).mock.calls[1][3]).toBe(QUICK_STUDY_ID);
+});
 test.each([false, true])(
   "review links follow authenticated permission %s, not a client-supplied flag",
   async (allowed) => {
-    jest
-      .mocked(actorFor)
-      .mockResolvedValue({
-        uid: "urop",
-        label: "UROP",
-        canManage: false,
-        canUseReviewLinks: allowed,
-        preview: false,
-      });
+    jest.mocked(actorFor).mockResolvedValue({
+      uid: "urop",
+      label: "UROP",
+      canManage: false,
+      canUseReviewLinks: allowed,
+      preview: false,
+    });
     const result = await call("quick-session", { canUseReviewLinks: !allowed });
     expect(result.status).toBe(200);
     expect(result.body.canUseReviewLinks).toBe(allowed);
@@ -268,6 +292,75 @@ test("checkpoint revisions protect explanations from stale tabs", async () => {
     payload.interruption,
   );
 });
+
+test("a missing reviewer account identifies the email and next step; nothing is partly added", async () => {
+  coordinator();
+  const backend = store(),
+    before = JSON.stringify(state);
+  const lookup = jest
+    .fn()
+    .mockResolvedValueOnce({
+      uid: "new",
+      email: "existing@mit.edu",
+      displayName: "Existing",
+    })
+    .mockRejectedValueOnce({ code: "auth/user-not-found" });
+  jest.mocked(admin.auth).mockReturnValue({ getUserByEmail: lookup } as any);
+  const result = await call("quick-manage", {
+    operation: "add",
+    reviewers: [{ email: "existing@mit.edu" }, { email: "s_a_min@mit.edu" }],
+  });
+  expect(result.status).toBe(400);
+  expect(result.body.error).toContain(
+    "s_a_min@mit.edu does not exist in the ontology platform",
+  );
+  expect(result.body.error).toContain("Create the ontology account first");
+  expect(JSON.stringify(state)).toBe(before);
+  expect(backend.tx.update).not.toHaveBeenCalled();
+});
+test("existing accounts get confirmed reviewer access, and a repeated add reports already assigned", async () => {
+  coordinator();
+  store();
+  jest.mocked(admin.auth).mockReturnValue({
+    getUserByEmail: jest.fn().mockResolvedValue({
+      uid: "new-reviewer",
+      email: "example@mit.edu",
+      displayName: "Example",
+    }),
+  } as any);
+  const req = { operation: "add", reviewers: [{ email: "example@mit.edu" }] };
+  const result = await call("quick-manage", req);
+  expect(result.status).toBe(200);
+  expect(result.body.addedReviewers).toEqual(["example@mit.edu"]);
+  expect(
+    state.study.roster.filter((r) => r.reviewerId === "new-reviewer"),
+  ).toEqual([{ reviewerId: "new-reviewer", label: "Example" }]);
+  store();
+  const again = await call("quick-manage", req);
+  expect(again.body.addedReviewers).toEqual([]);
+  expect(again.body.alreadyAssigned).toEqual(["example@mit.edu"]);
+});
+test.each([
+  [{ code: "auth/internal-error" }, 503, "could not be checked"],
+  [{ disabled: true, uid: "disabled" }, 400, "disabled"],
+])(
+  "account service failures and disabled accounts never get reported as nonexistent",
+  async (value, status, expected) => {
+    coordinator();
+    const backend = store();
+    const lookup = (value as any).code
+      ? jest.fn().mockRejectedValue(value)
+      : jest.fn().mockResolvedValue(value);
+    jest.mocked(admin.auth).mockReturnValue({ getUserByEmail: lookup } as any);
+    const result = await call("quick-manage", {
+      operation: "add",
+      reviewers: [{ email: "example@mit.edu" }],
+    });
+    expect(result.status).toBe(status);
+    expect(result.body.error).toContain(expected);
+    expect(backend.tx.update).not.toHaveBeenCalled();
+  },
+);
 
 test.each([undefined, true])(
   "authorized activation preserves existing production/old-QA records (qa=%s)",
