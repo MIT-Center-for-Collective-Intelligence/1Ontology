@@ -77,6 +77,26 @@ beforeEach(() => {
   localStorage.clear();
 });
 afterEach(() => jest.useRealTimers());
+test("proposal disclosure omits funding wording while retaining the model and exact prompt", async () => {
+  const v = start();
+  const fundingRoute =
+    "Native ChatGPT on oneman@mit.edu; user states personally funded allocation. Not ACCESS or MIT-funded inference.";
+  Object.assign(v.disclosure.provenance, {
+    fundingRoute,
+    sourceSnapshot: "saved-source",
+  });
+  jest.mocked(Post).mockResolvedValue(v);
+  render(<QuickTitleVerification />);
+  await screen.findByText("Write Technical Reports for Clients");
+  fireEvent.click(
+    screen.getByText("Agents and prompts used for these proposals"),
+  );
+  expect(screen.getByText("Exact saved prompt")).toBeVisible();
+  expect(screen.getByText("gpt-6.1-sol")).toBeVisible();
+  expect(screen.getByText(/saved-source/)).toBeVisible();
+  expect(document.body).not.toHaveTextContent(fundingRoute);
+  expect(v.disclosure.provenance).toHaveProperty("fundingRoute", fundingRoute);
+});
 test("three plain ratings replace rankings and reason menus; uncertainty opens a required explanation", async () => {
   jest.mocked(Post).mockResolvedValue(start());
   render(<QuickTitleVerification />);
