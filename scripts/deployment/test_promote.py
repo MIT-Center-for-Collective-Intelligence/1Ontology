@@ -208,7 +208,7 @@ class TitleReviewRouteTests(unittest.TestCase):
             "https://example.org/review/title-validation?workspace=practice", 307,
             "Temporary redirect", {"Location": "/review/title-validation"}, None)
 
-    def opener(self, bad_practice=None, accept_practice=False):
+    def opener(self, bad_practice=None, accept_practice=False, accept_action=None):
         def open_url(request, timeout):
             if isinstance(request, str):
                 practice = "?workspace=practice" in request
@@ -218,13 +218,20 @@ class TitleReviewRouteTests(unittest.TestCase):
                 return io.BytesIO(html.encode())
             if accept_practice and b'"workspace":"practice"' in request.data:
                 return io.BytesIO(b'{}')
+            if accept_action and request.full_url.endswith('/'+accept_action):
+                return io.BytesIO(b'{}')
             raise urllib.error.HTTPError(request.full_url, 401, "Sign in", {}, None)
         return open_url
 
     def test_checks_both_workspaces_and_denies_anonymous(self):
         with patch("promote.urllib.request.urlopen", side_effect=self.opener()) as open_url:
             verify_title_review_route("https://example.org")
-            self.assertEqual(open_url.call_count, 13)
+            self.assertEqual(open_url.call_count, 18)
+
+    def test_rejects_anonymous_source_page_access(self):
+        for action in ('quick-source-session','quick-source-status','quick-source-checkpoint','quick-source-respond','quick-source-export'):
+            with self.subTest(action=action),patch('promote.urllib.request.urlopen',side_effect=self.opener(accept_action=action)):
+                with self.assertRaises(ValueError):verify_title_review_route('https://example.org')
 
     def test_rejects_missing_mismatched_or_development_practice_page(self):
         for html in ("missing", 'Human title review {"preview":true,"practice":true}',

@@ -14,8 +14,9 @@ activity with multiple supporting descriptions, show only proposal groups
 containing this description's original number.
 
 The original 419-case package and 5/15/5 selection remain unchanged. The 25
-sampled activities select 25 source pages containing 88 linked activities and
-99 proposed titles. Associated activities are supplemental observations, not
+sampled activities select 25 source pages containing 88 activity/description
+pairs (87 distinct activities) and 99 title ratings (98 distinct proposals).
+Associated activities are supplemental observations, not
 additional independently sampled cases. Some associated activities were
 keyword-flagged (five in the initial batch). The separate flagged queue remains
 restricted; showing ALL linked activities, as requested, includes those peers

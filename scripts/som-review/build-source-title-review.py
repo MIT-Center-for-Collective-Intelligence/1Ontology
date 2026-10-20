@@ -30,6 +30,9 @@ pages = []
 for source in sorted(source_ids):
     live = {n['id'] for group in graph[source]['generalizations'] for n in group['nodes']}
     assert live == {c['nodeId'] for c,d in edges[source]}
+    assert graph[source]['deleted'] is False
+    assert graph[source]['appName'] == 'final-hierarchy-with-o*net'
+    assert all(graph[source]['title'] == d['exactSourceTitle'] for c,d in edges[source])
     activities = []
     for c,d in sorted(edges[source],key=lambda cd:(cd[0]['title'].casefold(),cd[0]['nodeId'])):
         p = proposals.get(c['nodeId'])
