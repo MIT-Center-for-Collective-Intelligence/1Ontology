@@ -172,6 +172,34 @@ const setup = (
   );
   return render(<RelationshipReview />);
 };
+test("atomic proposals clearly retain an earlier review and do not invent an example", async () => {
+  const data = curated();
+  data.dataset.methodology = "atomic-generalization-pilot-v1";
+  data.dataset.cases[1].scope = "atomic-activity-review";
+  data.dataset.cases[1].analysis.example = "";
+  data.presentation.cards[0].example = "";
+  data.availableVersions = [
+    { version: "v1", current: true, label: "New atomic proposals" },
+    {
+      version: "earlier",
+      current: false,
+      label: "Earlier 16 proposals and saved answers",
+    },
+  ];
+  setup(undefined, data);
+  await screen.findByText(/New atomic-activity proposals/);
+  expect(
+    screen.getByText(/Your answers to the earlier proposals remain saved/),
+  ).toBeInTheDocument();
+  for (const a of screen.getAllByRole("link", {
+    name: "Earlier 16 proposals and saved answers",
+  }))
+    expect(a).toHaveAttribute("href", "/review/relationships?version=earlier");
+  expect(screen.queryByText("Illustrative example:")).not.toBeInTheDocument();
+  expect(
+    screen.queryByText("Reason’s immediate child"),
+  ).not.toBeInTheDocument();
+});
 beforeEach(() => {
   window.history.replaceState({}, "", "/review/relationships?view=analysis");
   sessionStorage.clear();
@@ -490,7 +518,7 @@ test("lost-response retry restores the exact request after reload", async () => 
     target: { value: "Check meaning" },
   });
   fireEvent.click(screen.getByRole("button", { name: "Save feedback" }));
-  await screen.findByText(/Connection lost/);
+  await screen.findByText(/review service is temporarily unavailable/);
   expect(screen.queryByText("Saved to your account.")).not.toBeInTheDocument();
   view.unmount();
   setup(save);

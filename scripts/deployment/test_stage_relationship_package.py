@@ -9,6 +9,25 @@ from stage_relationship_package import stage_archive, verify_directory
 
 
 class PrivateRelationshipPackageTests(unittest.TestCase):
+    def test_only_a_pinned_source_graph_gets_the_larger_file_bound(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root=Path(temporary)
+            archive,manifest=self.package(root)
+            with tarfile.open(archive,"r:gz") as package:
+                files=[(m.name,package.extractfile(m).read()) for m in package.getmembers()]
+            graph=b'["'+b'x'*(5*1024*1024)+b'"]'
+            files.append(("source-graph.json",graph))
+            with tarfile.open(archive,"w:gz") as package:
+                for name,content in files:
+                    info=tarfile.TarInfo(name);info.size=len(content);package.addfile(info,io.BytesIO(content))
+            manifest['archiveSha256']=hashlib.sha256(archive.read_bytes()).hexdigest()
+            with self.assertRaises(ValueError):stage_archive(archive,manifest,root/'unapproved')
+            manifest['sourceGraphSha256']=hashlib.sha256(graph).hexdigest()
+            stage_archive(archive,manifest,root/'approved')
+            verify_directory(root/'approved',manifest)
+            (root/'approved/source-graph.json').write_text('[]')
+            with self.assertRaises(ValueError):verify_directory(root/'approved',manifest)
+
     def test_new_version_keeps_the_complete_original_package(self):
         with tempfile.TemporaryDirectory() as temporary:
             root=Path(temporary)

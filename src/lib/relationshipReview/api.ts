@@ -184,6 +184,7 @@ export async function relationshipReviewHandler(
       availableVersions: relationshipPackages().map((e) => ({
         version: e.version,
         current: e.version === relationshipPackages()[0].version,
+        ...(e.label ? { label: e.label } : {}),
       })),
     });
   } catch (e: any) {

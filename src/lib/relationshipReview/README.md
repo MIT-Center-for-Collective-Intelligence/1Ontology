@@ -1,5 +1,22 @@
 # Activity relationship review
 
+The October 19 atomic-activity pilot is a separate, additive review version. Five
+proposals are shown after a shared author request and two separately issued
+critical reviews through ACCESS GPT-6.1 Sol. Create Form, Create Sketch and Create
+Report are held out because of unresolved source meaning or scope. This small
+purposive sample is not an accuracy estimate. The complete original requests and
+responses, including superseded semantic attempts, remain privately preserved.
+The atomic validator checks its own methodology rather than inventing sibling
+discovery. A hash-pinned full source graph independently establishes the request's
+source wording, complete current Generalizations, descendant coverage and valid
+inherited paths. The reused author and first critique have pinned lineage hashes.
+No prior evidence or feedback is regenerated or copied into the new version.
+
+The browser handles a plain-text hosting/proxy failure without exposing a JSON
+parser exception. Read-only calls can retry once with the same serialized bytes;
+saves retain the explicit idempotent retry workflow and the same pending request.
+The timeout covers response-body parsing as well as the initial request.
+
 The exact-request API returns the discovery, author and two critical reviews participating in the current proposal. It derives this small view from the verified immutable evidence files; it does not render the entire run's request/response archive inside every card. The complete archive and its pinned hashes remain privately preserved, and the v1 disclosure remains readable.
 
 The self-contained disclosure stores each identical request body once. Selection-review entries can reference the exact request already under `original`; a losslessly encoded source context can likewise reference the complete JSON input after verifying an exact round trip. Tests resolve every reference and verify the original evidence object stays unchanged. All current disclosures remain below the existing 500,000-character guard.

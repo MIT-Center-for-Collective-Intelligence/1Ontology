@@ -35,7 +35,7 @@ def verify_entry(directory, manifest):
             or len(dataset["cases"]) != manifest["cases"] or lock["caseCount"] != manifest["cases"]):
         raise ValueError("Private relationship package does not match committed release")
     expected = {filename, "release-lock.json"}
-    for filename, key in [("presentation.json", "presentationSha256"), ("presentation-trace.json", "presentationTraceSha256")]:
+    for filename, key in [("presentation.json", "presentationSha256"), ("presentation-trace.json", "presentationTraceSha256"), ("source-graph.json", "sourceGraphSha256")]:
         if key in manifest:
             raw = (directory / filename).read_bytes()
             if hashlib.sha256(raw).hexdigest() != manifest[key]:
@@ -61,6 +61,8 @@ def expected_members(manifest):
         names = {"dataset.json" if prefix else "top-level-v1.json", "release-lock.json"}
         if "presentationSha256" in entry:
             names.update({"presentation.json", "presentation-trace.json"})
+        if "sourceGraphSha256" in entry:
+            names.add("source-graph.json")
         # Case identifiers are checked after extraction; count remains bounded.
         result.update(str(Path(prefix) / name) for name in names)
     return result
@@ -85,16 +87,23 @@ def stage_archive(archive, manifest, destination):
         total = 0
         with tarfile.open(archive, "r:gz") as package:
             members = package.getmembers()
-            expected_count = sum(e["cases"] + (4 if "presentationSha256" in e else 2) for e in package_entries(manifest))
+            entries = package_entries(manifest)
+            expected_count = sum(e["cases"] + (4 if "presentationSha256" in e else 2) + (1 if "sourceGraphSha256" in e else 0) for e in entries)
             if len(members) != expected_count:
                 raise ValueError("Unexpected private evidence member count")
             for member in members:
                 if (not member.isfile() or member.name in seen or
-                        not re.fullmatch(r"(?:[a-z0-9-]+/)?(?:dataset\.json|top-level-v1\.json|release-lock\.json|presentation\.json|presentation-trace\.json|traces/[A-Za-z0-9_-]+\.json)", member.name)):
+                        not re.fullmatch(r"(?:[a-z0-9-]+/)?(?:dataset\.json|top-level-v1\.json|release-lock\.json|presentation\.json|presentation-trace\.json|source-graph\.json|traces/[A-Za-z0-9_-]+\.json)", member.name)):
                     raise ValueError("Unsafe or duplicate private archive member")
                 seen.add(member.name)
                 total += member.size
-                if member.size > 4 * 1024 * 1024 or total > 32 * 1024 * 1024:
+                source_graph = member.name.endswith("source-graph.json")
+                if source_graph and not any("sourceGraphSha256" in e and str(Path(e.get("directory", "")) / "source-graph.json") == member.name for e in entries):
+                    raise ValueError("Unpinned source graph")
+                # Only this explicitly pinned file may use the larger bound.
+                member_limit = (32 if source_graph else 4) * 1024 * 1024
+                total_limit = (64 if any("sourceGraphSha256" in e for e in entries) else 32) * 1024 * 1024
+                if member.size > member_limit or total > total_limit:
                     raise ValueError("Private evidence archive exceeds bounded size")
                 target = staging / member.name
                 target.parent.mkdir(parents=True, exist_ok=True)

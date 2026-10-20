@@ -4,6 +4,27 @@ import {
   getRelationshipTrace,
 } from "../../../src/lib/relationshipReview/dataset";
 import { getPresentationTrace } from "../../../src/lib/relationshipReview/presentation";
+import { relationshipSourceEvidence } from "../../../src/lib/relationshipReview/evidence";
+
+test("atomic cards retain complete sources and three exact inference bodies within the disclosure bound", () => {
+  const {dataset}=getRelationshipDataset();
+  if(dataset.methodology!=="atomic-generalization-pilot-v1") return;
+  const full=getPresentationTrace(dataset.version);
+  for(const c of dataset.cases){
+    const original=getRelationshipTrace(c.id,dataset.version);
+    const response=relationshipTraceDisclosure(original,full,c.id);
+    expect(response.selectedChangesReview.authors).toHaveLength(1);
+    expect(response.selectedChangesReview.critiques).toHaveLength(2);
+    const requests=response.selectedChangesReview.exactRequests;
+    expect(requests).toHaveLength(3);
+    const bodies=new Map<string,unknown>([["original.proposalRequest",original.proposalRequest],["original.challengeRequest",original.challengeRequest],["original.additionalChallenge.request",original.additionalChallenge.request]]);
+    for(const request of requests) expect(request.body || bodies.get(request.bodyReference)).toBeTruthy();
+    expect(JSON.stringify(response).length).toBeLessThan(500000);
+    const evidence=relationshipSourceEvidence(dataset,c.id,original);
+    expect(evidence.complete).toBe(true);
+    expect(evidence.records.length).toBeGreaterThan(0);
+  }
+});
 const author = (jobId: string, id: string) => ({
   jobId,
   value: { cases: [{ analysis: { nodeId: id } }] },
