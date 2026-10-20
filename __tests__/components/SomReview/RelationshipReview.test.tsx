@@ -172,34 +172,43 @@ const setup = (
   );
   return render(<RelationshipReview />);
 };
-test("atomic proposals clearly retain an earlier review and do not invent an example", async () => {
-  const data = curated();
-  data.dataset.methodology = "atomic-generalization-pilot-v1";
-  data.dataset.cases[1].scope = "atomic-activity-review";
-  data.dataset.cases[1].analysis.example = "";
-  data.presentation.cards[0].example = "";
-  data.availableVersions = [
-    { version: "v1", current: true, label: "New atomic proposals" },
-    {
-      version: "earlier",
-      current: false,
-      label: "Earlier 16 proposals and saved answers",
-    },
-  ];
-  setup(undefined, data);
-  await screen.findByText(/New atomic-activity proposals/);
-  expect(
-    screen.getByText(/Your answers to the earlier proposals remain saved/),
-  ).toBeInTheDocument();
-  for (const a of screen.getAllByRole("link", {
-    name: "Earlier 16 proposals and saved answers",
-  }))
-    expect(a).toHaveAttribute("href", "/review/relationships?version=earlier");
-  expect(screen.queryByText("Illustrative example:")).not.toBeInTheDocument();
-  expect(
-    screen.queryByText("Reason’s immediate child"),
-  ).not.toBeInTheDocument();
-});
+test.each([
+  "atomic-generalization-pilot-v1",
+  "atomic-generalization-expansion-v1",
+])(
+  "%s clearly retains an earlier review and does not invent an example",
+  async (methodology) => {
+    const data = curated();
+    data.dataset.methodology = methodology;
+    data.dataset.cases[1].scope = "atomic-activity-review";
+    data.dataset.cases[1].analysis.example = "";
+    data.presentation.cards[0].example = "";
+    data.availableVersions = [
+      { version: "v1", current: true, label: "New atomic proposals" },
+      {
+        version: "earlier",
+        current: false,
+        label: "Earlier 16 proposals and saved answers",
+      },
+    ];
+    setup(undefined, data);
+    await screen.findByText(/New atomic-activity proposals/);
+    expect(
+      screen.getByText(/Your answers to the earlier proposals remain saved/),
+    ).toBeInTheDocument();
+    for (const a of screen.getAllByRole("link", {
+      name: "Earlier 16 proposals and saved answers",
+    }))
+      expect(a).toHaveAttribute(
+        "href",
+        "/review/relationships?version=earlier",
+      );
+    expect(screen.queryByText("Illustrative example:")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Reason’s immediate child"),
+    ).not.toBeInTheDocument();
+  },
+);
 beforeEach(() => {
   window.history.replaceState({}, "", "/review/relationships?view=analysis");
   sessionStorage.clear();
@@ -211,6 +220,44 @@ beforeEach(() => {
     configurable: true,
     value: () => "aaaaaaaa-bbbb-cccc-dddd-" + String(++id).padStart(12, "0"),
   });
+});
+
+test("proposed-Generalization evidence is separate from the focal O*NET records", async () => {
+  const data = curated();
+  data.dataset.methodology = "atomic-generalization-expansion-v1";
+  data.dataset.cases[1].generalizationEvidence = [
+    { parentId: "new", sourceIds: ["parent-source", "definition"] },
+  ];
+  data.dataset.candidates.push(
+    {
+      id: "parent-source",
+      title: "Complete O*NET description for the Generalization",
+      oNetTask: true,
+      descriptionSource: "title (complete O*NET description)",
+    },
+    {
+      id: "definition",
+      title: "A generated activity definition",
+      oNetTask: false,
+    },
+  );
+  setup(undefined, data);
+  const panel = await screen.findByRole("button", {
+    name: "O*NET evidence for proposed Generalizations",
+  });
+  fireEvent.click(panel);
+  await screen.findByText("Complete O*NET description for the Generalization");
+  expect(
+    screen.getByText(
+      /These descriptions belong to the suggested Generalizations/,
+    ),
+  ).toBeInTheDocument();
+  expect(
+    screen.queryByText("A generated activity definition"),
+  ).not.toBeInTheDocument();
+  expect(
+    screen.getByLabelText("O*NET descriptions for New generalization"),
+  ).toHaveTextContent("parent-source");
 });
 test("the default queue includes only selected actual changes and shows Generalizations", async () => {
   window.history.replaceState({}, "", "/review/relationships?activity=reason");

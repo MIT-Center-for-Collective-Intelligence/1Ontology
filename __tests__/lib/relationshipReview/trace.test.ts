@@ -83,7 +83,7 @@ test("keeps the original v1 trace readable", () => {
 });
 test("every current proposal has a complete bounded disclosure rather than the whole run", () => {
   const { dataset } = getRelationshipDataset();
-  if (!dataset.cases.some((c) => c.scope === "sibling-review")) return;
+  if (!dataset.cases.some((c) => c.scope === "sibling-review" || c.scope === "atomic-activity-review")) return;
   const full = getPresentationTrace(dataset.version);
   for (const c of dataset.cases) {
     const selectedChangesReview = proposalReviewTrace(full, c.id);

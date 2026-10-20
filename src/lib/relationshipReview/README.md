@@ -1,5 +1,23 @@
 # Activity relationship review
 
+The expanded atomic-activity review is a new version with bounded sibling-title
+discovery followed by complete focal and proposed-parent O*NET evidence. Every
+shown change requires an author and two separate critical reviews through ACCESS
+GPT-6.1 Sol, with no material unresolved objection. Both critics identify simpler
+opening cases; that ordering is not a confidence score or human validation.
+The discovery is purposive and cannot estimate population accuracy or prove the
+globally best parent. Exact paid discovery, author and critical-review requests,
+responses, attempts and held cases remain private and pinned. Each batch receives
+the same strict atomic evidence validation, and the combined release additionally
+checks complete candidate-parent evidence, joint graph safety, source coverage,
+review history exclusion and reconciliation of all semantic attempts. Its full
+source graph is shared by hash with the immutable earlier pilot, never replaced.
+No earlier evidence or saved response is copied into the new version.
+In expansion requests, considered and supporting source IDs refer to the union
+of focal and proposed-parent evidence. Every considered ID must cover that exact
+union; every supporting ID must belong to it. Complete candidate coverage is
+derived from the pinned graph. The earlier pilot's focal-only rules stay intact.
+
 The October 19 atomic-activity pilot is a separate, additive review version. Five
 proposals are shown after a shared author request and two separately issued
 critical reviews through ACCESS GPT-6.1 Sol. Create Form, Create Sketch and Create

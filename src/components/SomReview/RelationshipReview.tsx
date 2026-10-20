@@ -717,7 +717,9 @@ export default function RelationshipReview({
             )}
             {session && data && (
               <>
-                {data.methodology === "atomic-generalization-pilot-v1" && (
+                {(data.methodology === "atomic-generalization-pilot-v1" ||
+                  data.methodology ===
+                    "atomic-generalization-expansion-v1") && (
                   <Alert severity="info" sx={{ mb: 3 }}>
                     New atomic-activity proposals. Your answers to the earlier
                     proposals remain saved in their original review.
@@ -1087,7 +1089,9 @@ export default function RelationshipReview({
                             {!selectedCard.quotes.length && (
                               <Typography>
                                 {data.methodology ===
-                                "atomic-generalization-pilot-v1"
+                                  "atomic-generalization-pilot-v1" ||
+                                data.methodology ===
+                                  "atomic-generalization-expansion-v1"
                                   ? "The complete O*NET descriptions supporting this activity are shown below."
                                   : "No recorded definition establishes this relationship. The proposal uses the ordinary meaning of the activity names and their current context; you can inspect that context below."}
                               </Typography>
@@ -1140,6 +1144,65 @@ export default function RelationshipReview({
                           preview={session.preview}
                           datasetSha256={session.datasetSha256}
                         />
+                        {!!item.generalizationEvidence?.length && (
+                          <Accordion sx={{ mb: 2 }}>
+                            <AccordionSummary
+                              expandIcon={<span aria-hidden="true">＋</span>}
+                            >
+                              O*NET evidence for proposed Generalizations
+                            </AccordionSummary>
+                            <AccordionDetails>
+                              <Typography sx={{ mb: 2 }}>
+                                These descriptions belong to the suggested
+                                Generalizations. Compare their scope with{" "}
+                                {item.title}.
+                              </Typography>
+                              {item.generalizationEvidence.map((e) => (
+                                <Box key={e.parentId} sx={{ mb: 2 }}>
+                                  <Typography component="h4" variant="h6">
+                                    {title(e.parentId)}
+                                  </Typography>
+                                  <Box
+                                    aria-label={
+                                      "O*NET descriptions for " +
+                                      title(e.parentId)
+                                    }
+                                    sx={{
+                                      maxHeight: 360,
+                                      overflowY: "auto",
+                                      overflowWrap: "anywhere",
+                                    }}
+                                  >
+                                    {e.sourceIds
+                                      .map((id) =>
+                                        data.candidates.find(
+                                          (n) => n.id === id,
+                                        ),
+                                      )
+                                      .filter((n) => n?.oNetTask === true)
+                                      .map((n) => (
+                                        <Box key={n!.id} sx={{ mt: 1.5 }}>
+                                          <Typography>{n!.title}</Typography>
+                                          {n!.description && (
+                                            <Typography>
+                                              {n!.description}
+                                            </Typography>
+                                          )}
+                                          <Typography
+                                            variant="caption"
+                                            color="text.secondary"
+                                          >
+                                            Source record: {n!.id} ·{" "}
+                                            {n!.descriptionSource}
+                                          </Typography>
+                                        </Box>
+                                      ))}
+                                  </Box>
+                                </Box>
+                              ))}
+                            </AccordionDetails>
+                          </Accordion>
+                        )}
                         {!!(selectedCard
                           ? selectedCard.example
                           : item.analysis.example) && (

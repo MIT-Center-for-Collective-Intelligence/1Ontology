@@ -2,7 +2,10 @@
  * Returning unrelated request bodies can create megabytes of wrapped DOM text. */
 export function proposalReviewTrace(trace: any, caseId: string) {
   if (!Array.isArray(trace.authors)) return trace; // Frozen v1 disclosure.
-  if (trace.methodology === "atomic-generalization-pilot-v1") {
+  if (
+    trace.methodology === "atomic-generalization-pilot-v1" ||
+    trace.methodology === "atomic-generalization-expansion-v1"
+  ) {
     const authors = trace.authors.filter((r: any) =>
       r.value.cases.some((c: any) => c.subjectId === caseId),
     );
@@ -21,7 +24,7 @@ export function proposalReviewTrace(trace: any, caseId: string) {
       schemaVersion: trace.schemaVersion,
       methodology: trace.methodology,
       scope:
-        "Exact shared author and two separate critical-review requests for this atomic-activity pilot. These same-model critiques are not human validation.",
+        "Exact shared author and two separate critical-review requests for this atomic-activity proposal. These same-model critiques are not human validation.",
       authors,
       critiques,
       exactRequests,
