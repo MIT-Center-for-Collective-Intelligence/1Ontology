@@ -30,17 +30,55 @@ const start = () => ({
     outcome: "Clarify",
     batch: "first25",
     sourceId: "1",
+    activities: [
+      {
+        id: "case-1",
+        currentTitle: "Write Report",
+        proposals: [
+          {
+            id: "proposed-0",
+            title: "Write Technical Reports for Clients",
+            reason: "Adds the audience",
+            groupNumber: 1,
+          },
+        ],
+        modelReason: "Saved explanation",
+        flagged: false,
+        evidenceDescriptionNumber: 1,
+        supportingDescriptionCount: 1,
+      },
+      {
+        id: "case-2",
+        currentTitle: "Send Report",
+        proposals: [
+          {
+            id: "related-0",
+            title: "Send Reports to Clients",
+            reason: "Names the recipient",
+            groupNumber: 1,
+          },
+        ],
+        modelReason: "Saved explanation",
+        flagged: false,
+        evidenceDescriptionNumber: 1,
+        supportingDescriptionCount: 1,
+      },
+    ],
   },
   questions: [
     {
-      id: "original",
-      label: "Is the original title acceptable?",
-      title: "Write Report",
+      id: "related-0",
+      label: "Is the proposed title acceptable?",
+      title: "Send Reports to Clients",
+      originalTitle: "Send Report",
+      reason: "Names the recipient",
     },
     {
       id: "proposed-0",
       label: "Is the proposed title acceptable?",
       title: "Write Technical Reports for Clients",
+      originalTitle: "Write Report",
+      reason: "Adds the audience",
     },
   ],
   draft: {
@@ -52,7 +90,7 @@ const start = () => ({
     payload: {
       caseId: "case-1",
       ratings: {
-        original: { value: "", explanation: "" },
+        "related-0": { value: "", explanation: "" },
         "proposed-0": { value: "", explanation: "" },
       },
       correction: "",
@@ -60,6 +98,7 @@ const start = () => ({
       activeTimeMs: 7000,
       submissionId: "test-submission-0001",
     },
+    legacyReferences: [],
   },
   flagged: false,
   canManage: false,
@@ -118,9 +157,15 @@ test("three plain ratings replace rankings and reason menus; uncertainty opens a
   render(<QuickTitleVerification />);
   await screen.findByText("Write Technical Reports for Clients");
   expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
-  const group = screen.getByRole("radiogroup", {
-    name: "Is the original title acceptable?",
-  });
+  expect(
+    screen.queryByText("Is the original title acceptable?"),
+  ).not.toBeInTheDocument();
+  expect(
+    screen.getAllByRole("radiogroup", {
+      name: "Is the proposed title acceptable?",
+    }),
+  ).toHaveLength(2);
+  const group = screen.getAllByRole("radiogroup")[0];
   fireEvent.click(within(group).getByLabelText("I’m not sure"));
   expect(
     screen.getByLabelText("What are you unsure about?", { exact: false }),
@@ -134,12 +179,12 @@ test("unfinished answers and time recover from browser draft, and restore matchi
   const v = start();
   v.draft.payload.activeTimeMs = 19000;
   v.draft.payload.correction = "My unfinished correction";
-  v.draft.payload.ratings.original = {
+  v.draft.payload.ratings["related-0"] = {
     value: "not_acceptable",
     explanation: "My saved explanation",
   };
   localStorage.setItem(
-    "quick-title-draft:quick-v1:reviewer-test:case-1",
+    "source-title-draft:quick-v1:reviewer-test:case-1",
     JSON.stringify({ revision: 0, payload: v.draft.payload }),
   );
   jest.mocked(Post).mockResolvedValue(start());
@@ -179,7 +224,7 @@ test("an unanswered question is highlighted before submission and existing choic
   expect(within(groups[1]).getByLabelText("Acceptable")).toBeEnabled();
   fireEvent.click(within(groups[1]).getByLabelText("Acceptable"));
   fireEvent.click(screen.getByRole("button", { name: "Save and continue" }));
-  await screen.findByText(/You have finished the 25 activities/);
+  await screen.findByText(/You have finished the 25 O\*NET descriptions/);
   expect(Post).toHaveBeenCalledTimes(2);
 });
 test("a definite server rejection leaves all choices editable for a corrected save", async () => {
@@ -206,7 +251,7 @@ test("a definite server rejection leaves all choices editable for a corrected sa
   for (const group of screen.getAllByRole("radiogroup"))
     expect(within(group).getByLabelText("Acceptable")).toBeEnabled();
   expect(
-    localStorage.getItem("quick-title-pending:reviewer-test:regular"),
+    localStorage.getItem("source-title-pending:quick-v1:reviewer-test:regular"),
   ).toBeNull();
   fireEvent.click(
     within(screen.getAllByRole("radiogroup")[0]).getByLabelText(
@@ -221,7 +266,7 @@ test("a definite server rejection leaves all choices editable for a corrected sa
     target: { value: "My correction after the rejection" },
   });
   fireEvent.click(screen.getByRole("button", { name: "Save and continue" }));
-  await screen.findByText(/You have finished the 25 activities/);
+  await screen.findByText(/You have finished the 25 O\*NET descriptions/);
   expect((jest.mocked(Post).mock.calls[2][1] as any).payload.correction).toBe(
     "My correction after the rejection",
   );
@@ -229,13 +274,13 @@ test("a definite server rejection leaves all choices editable for a corrected sa
 test("a rejected submission from an older browser recovers on reload without losing choices or time", async () => {
   const v = start();
   const payload = JSON.parse(JSON.stringify(v.draft.payload));
-  payload.ratings.original = {
+  payload.ratings["related-0"] = {
     value: "unsure",
     explanation: "My saved uncertainty",
   };
   payload.activeTimeMs = 19000;
   localStorage.setItem(
-    "quick-title-pending:reviewer-test:regular",
+    "source-title-pending:quick-v1:reviewer-test:regular",
     JSON.stringify({ payload, revision: 0 }),
   );
   jest
@@ -262,15 +307,15 @@ test("a rejected submission from an older browser recovers on reload without los
     within(screen.getAllByRole("radiogroup")[0]).getByLabelText("I’m not sure"),
   ).toBeChecked();
   expect(
-    localStorage.getItem("quick-title-pending:reviewer-test:regular"),
+    localStorage.getItem("source-title-pending:quick-v1:reviewer-test:regular"),
   ).toBeNull();
   fireEvent.click(
     within(screen.getAllByRole("radiogroup")[1]).getByLabelText("Acceptable"),
   );
   fireEvent.click(screen.getByRole("button", { name: "Save and continue" }));
-  await screen.findByText(/You have finished the 25 activities/);
+  await screen.findByText(/You have finished the 25 O\*NET descriptions/);
   const sent = (jest.mocked(Post).mock.calls[2][1] as any).payload;
-  expect(sent.ratings.original).toEqual(payload.ratings.original);
+  expect(sent.ratings["related-0"]).toEqual(payload.ratings["related-0"]);
   expect(sent.activeTimeMs).toBeGreaterThanOrEqual(19000);
 });
 test("an uncertain network delivery retries the same frozen answer and advances only after confirmation", async () => {
@@ -307,10 +352,10 @@ test("an uncertain network delivery retries the same frozen answer and advances 
   fireEvent.click(
     screen.getByRole("button", { name: "Retry saving this answer" }),
   );
-  await screen.findByText(/You have finished the 25 activities/);
+  await screen.findByText(/You have finished the 25 O\*NET descriptions/);
   expect(jest.mocked(Post).mock.calls[2][1]).toEqual(sent);
   expect(
-    localStorage.getItem("quick-title-pending:reviewer-test:regular"),
+    localStorage.getItem("source-title-pending:quick-v1:reviewer-test:regular"),
   ).toBeNull();
 });
 test("automatic checkpoint includes elapsed active-page time and open text", async () => {
@@ -397,14 +442,12 @@ test("optional comments appear only for Not acceptable and retain draft text whe
 test.each(["Rob", "Xinru", "Iman"])(
   "%s sees the three review-navigation controls without receiving coordinator tools",
   async (name) => {
-    jest
-      .mocked(Post)
-      .mockResolvedValue({
-        ...start(),
-        reviewerLabel: name,
-        canUseReviewLinks: true,
-        canReviewFlagged: true,
-      });
+    jest.mocked(Post).mockResolvedValue({
+      ...start(),
+      reviewerLabel: name,
+      canUseReviewLinks: true,
+      canReviewFlagged: true,
+    });
     render(<QuickTitleVerification />);
     await screen.findByText("Write Technical Reports for Clients");
     expect(
@@ -482,7 +525,53 @@ test("background checkpoints leave fields editable and do not replace text typed
   expect(field).toHaveValue("More text written during autosave");
   expect(
     JSON.parse(
-      localStorage.getItem("quick-title-draft:quick-v1:reviewer-test:case-1")!,
-    ).payload.ratings.original.explanation,
+      localStorage.getItem("source-title-draft:quick-v1:reviewer-test:case-1")!,
+    ).payload.ratings["related-0"].explanation,
   ).toBe("More text written during autosave");
+});
+
+test("account errors appear beside Add reviewers and preserve the entered email", async () => {
+  const v = { ...start(), canManage: true };
+  const missing =
+    "The email address s_a_min@mit.edu does not exist in the ontology platform. Create the ontology account first, then add it as a reviewer here.";
+  jest
+    .mocked(Post)
+    .mockResolvedValueOnce(v)
+    .mockRejectedValueOnce(Object.assign(new Error(missing), { status: 400 }));
+  render(<QuickTitleVerification />);
+  await screen.findByText("Coordinator tools");
+  fireEvent.click(screen.getByText("Coordinator tools"));
+  const field = screen.getByLabelText(
+    "Existing reviewer account emails, one per line",
+  );
+  fireEvent.change(field, { target: { value: "s_a_min@mit.edu" } });
+  fireEvent.click(screen.getByRole("button", { name: "Add reviewers" }));
+  await waitFor(() =>
+    expect(screen.getAllByText(missing).length).toBeGreaterThan(0),
+  );
+  expect(field).toHaveValue("s_a_min@mit.edu");
+});
+test("a confirmed reviewer addition shows an explicit success message next to coordinator controls", async () => {
+  const v = { ...start(), canManage: true };
+  jest
+    .mocked(Post)
+    .mockResolvedValueOnce(v)
+    .mockResolvedValueOnce({
+      ok: true,
+      addedReviewers: ["example@mit.edu"],
+      alreadyAssigned: [],
+    })
+    .mockResolvedValueOnce(v);
+  render(<QuickTitleVerification />);
+  await screen.findByText("Coordinator tools");
+  fireEvent.click(screen.getByText("Coordinator tools"));
+  const field = screen.getByLabelText(
+    "Existing reviewer account emails, one per line",
+  );
+  fireEvent.change(field, { target: { value: "example@mit.edu" } });
+  fireEvent.click(screen.getByRole("button", { name: "Add reviewers" }));
+  expect(
+    await screen.findByText("Added as reviewer: example@mit.edu."),
+  ).toBeVisible();
+  expect(field).toHaveValue("");
 });

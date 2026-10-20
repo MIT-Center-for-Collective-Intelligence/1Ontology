@@ -1,0 +1,143 @@
+import { sourceReviewAction } from "../../../src/lib/titleValidation/sourceApi";
+import { withSourceStudy } from "../../../src/lib/titleValidation/sourceRepository";
+import { getQuickDataset } from "../../../src/lib/titleValidation/quickDataset";
+import type { SourceState } from "../../../src/lib/titleValidation/sourceReview";
+jest.mock("../../../src/lib/titleValidation/sourceRepository", () => ({
+  withSourceStudy: jest.fn(),
+}));
+const data = getQuickDataset();
+const actor = {
+  uid: "urop",
+  label: "Reviewer",
+  canManage: false,
+  preview: false,
+};
+let state: SourceState;
+beforeEach(() => {
+  jest.clearAllMocks();
+  state = {
+    legacy: {
+      study: {
+        id: "quick-title-verification-test",
+        protocol: "quick-title-verification-v1",
+        datasetVersion: data.version,
+        roster: [{ reviewerId: "urop", label: "Reviewer" }],
+        flaggedReviewerIds: [],
+        regularLimit: 25,
+        createdAt: 1,
+      },
+      answers: {},
+      drafts: {},
+    },
+    answers: {},
+    drafts: {},
+  };
+  jest
+    .mocked(withSourceStudy)
+    .mockImplementation(
+      async (_id, _uid, _preview, _seed, fn) => fn(state).result as any,
+    );
+});
+test("only own assigned source pages are delivered; package mismatch, unassigned identity, flagged access, exports and tampering fail", async () => {
+  const view: any = await sourceReviewAction(
+    "quick-source-session",
+    {},
+    actor,
+    state.legacy.study.id,
+    data,
+    false,
+  );
+  expect(view.item.activities.length).toBeGreaterThan(0);
+  expect(view.canUseReviewLinks).toBe(false);
+  expect(Object.keys(view)).not.toContain("legacyAnswers");
+  await expect(
+    sourceReviewAction(
+      "quick-source-session",
+      { canUseReviewLinks: true },
+      { ...actor, uid: "other" },
+      state.legacy.study.id,
+      data,
+      false,
+    ),
+  ).rejects.toThrow("not assigned");
+  await expect(
+    sourceReviewAction(
+      "quick-source-session",
+      {},
+      actor,
+      state.legacy.study.id,
+      data,
+      true,
+    ),
+  ).rejects.toThrow("Rob is reviewing");
+  await expect(
+    sourceReviewAction(
+      "quick-source-export",
+      {},
+      actor,
+      state.legacy.study.id,
+      data,
+      false,
+    ),
+  ).rejects.toThrow("Only coordinators");
+  await expect(
+    sourceReviewAction(
+      "quick-source-respond",
+      { payload: view.draft.payload, revision: 0, packageVersion: "old" },
+      actor,
+      state.legacy.study.id,
+      data,
+      false,
+    ),
+  ).rejects.toThrow("form version");
+  const p = structuredClone(view.draft.payload);
+  p.ratings.original = { value: "acceptable", explanation: "injected" };
+  await expect(
+    sourceReviewAction(
+      "quick-source-respond",
+      { payload: p, revision: 0, packageVersion: view.datasetVersion },
+      actor,
+      state.legacy.study.id,
+      data,
+      false,
+    ),
+  ).rejects.toThrow("every proposed title");
+  expect(Object.keys(state.answers)).toHaveLength(0);
+});
+test("page response and retry store one record with its version and leave every historical answer untouched", async () => {
+  const view: any = await sourceReviewAction(
+    "quick-source-session",
+    {},
+    actor,
+    state.legacy.study.id,
+    data,
+    false,
+  );
+  const before = JSON.stringify(state.legacy);
+  for (const r of Object.values(view.draft.payload.ratings) as any[])
+    r.value = "acceptable";
+  const body = {
+    payload: view.draft.payload,
+    revision: 0,
+    packageVersion: view.datasetVersion,
+  };
+  const saved: any = await sourceReviewAction(
+    "quick-source-respond",
+    body,
+    actor,
+    state.legacy.study.id,
+    data,
+    false,
+  );
+  expect(saved.completed).toBe(1);
+  await sourceReviewAction(
+    "quick-source-respond",
+    body,
+    actor,
+    state.legacy.study.id,
+    data,
+    false,
+  );
+  expect(Object.keys(state.answers)).toHaveLength(1);
+  expect(JSON.stringify(state.legacy)).toBe(before);
+});

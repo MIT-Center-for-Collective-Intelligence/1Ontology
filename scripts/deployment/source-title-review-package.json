@@ -1,0 +1,8 @@
+{
+  "version": "source-title-review-20261020-v2",
+  "pages": 366,
+  "activities": 1370,
+  "missingProposals": 7,
+  "bundleSha256": "6010283fd843373bd7e232f78d422faf1fc35f4db855342518f1c73f088518b5",
+  "gcsUri": "gs://ontology-41607_cloudbuild/quick-title-review/6010283fd843373bd7e232f78d422faf1fc35f4db855342518f1c73f088518b5.json"
+}

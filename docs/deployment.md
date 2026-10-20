@@ -90,3 +90,8 @@ The September 10 reconciliation preserved the already deployed v6 and v7
 packages and prompt-transparency fixes, and incorporated main's ontology
 export fix. Historical development work remains in its original worktree;
 private audit records and conversations are not deployment inputs.
+
+The current source-grouped title-review form and its historical-data handling
+are documented in `docs/source-title-review.txt`. Its private, pinned package
+is staged by `stage_source_title_package.py`; `sourceTitleReview` on the release
+endpoint and promotion checks identify its exact version and SHA256.
