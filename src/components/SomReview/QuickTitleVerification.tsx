@@ -113,7 +113,11 @@ export default function QuickTitleVerification({
     [paused, setPaused] = useState(false),
     [draftError, setDraftError] = useState(""),
     [exporting, setExporting] = useState<"self" | "team" | null>(null),
-    [exportFeedback, setExportFeedback] = useState<{
+    [exportError, setExportError] = useState<{
+      scope: "self" | "team";
+      text: string;
+    } | null>(null),
+    [recoveryFeedback, setRecoveryFeedback] = useState<{
       severity: "success" | "error";
       text: string;
     } | null>(null),
@@ -139,6 +143,7 @@ export default function QuickTitleVerification({
     checkpointJournal = useRef<DraftFrame | undefined>(),
     editTimer = useRef<number | undefined>(),
     downloadUrl = useRef<string | null>(null),
+    csvDownloadUrl = useRef<string | null>(null),
     exportRef = useRef(false);
   const context = {
     pool: flagged ? "flagged" : "regular",
@@ -284,6 +289,7 @@ export default function QuickTitleVerification({
       window.clearTimeout(editTimer.current);
       writerRef.current = null;
       if (downloadUrl.current) URL.revokeObjectURL(downloadUrl.current);
+      if (csvDownloadUrl.current) URL.revokeObjectURL(csvDownloadUrl.current);
     },
     [],
   );
@@ -511,50 +517,37 @@ export default function QuickTitleVerification({
     if (exportRef.current) return;
     exportRef.current = true;
     setExporting(scope);
-    setExportFeedback(null);
+    setExportError(null);
     try {
       const result = await request("export", { scope });
-      publishDownload(
+      const url = URL.createObjectURL(
         new Blob([sourceReviewCsv(result)], { type: "text/csv;charset=utf-8" }),
-        "title-review-" + scope + "-" + view?.datasetVersion + ".csv",
-        "Download the prepared CSV",
-        true,
       );
-      const count = result.answers.length + result.legacyAnswers.length;
-      setExportFeedback({
-        severity: "success",
-        text: `Your CSV is ready (${count} submitted ${count === 1 ? "review" : "reviews"}). If it did not download automatically, use the link below.`,
-      });
+      if (csvDownloadUrl.current) URL.revokeObjectURL(csvDownloadUrl.current);
+      csvDownloadUrl.current = url;
+      const a = document.createElement("a");
+      a.href = url;
+      a.download =
+        "title-review-" + scope + "-" + view?.datasetVersion + ".csv";
+      a.style.display = "none";
+      document.body.appendChild(a);
+      try {
+        a.click();
+      } finally {
+        a.remove();
+      }
     } catch (e) {
-      setExportFeedback({ severity: "error", text: message(e) });
+      setExportError({ scope, text: message(e) });
     } finally {
       exportRef.current = false;
       setExporting(null);
     }
   }
-  function publishDownload(
-    blob: Blob,
-    filename: string,
-    label: string,
-    start = false,
-  ) {
+  function publishDownload(blob: Blob, filename: string, label: string) {
     const url = URL.createObjectURL(blob);
     if (downloadUrl.current) URL.revokeObjectURL(downloadUrl.current);
     downloadUrl.current = url;
     setDownload({ url, filename, label });
-    if (start) {
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = filename;
-      a.style.display = "none";
-      document.body.appendChild(a);
-      try {
-        a.click();
-      } catch {
-        /* The visible download link remains available. */
-      }
-      a.remove();
-    }
   }
   async function recoverConflict() {
     const v = viewRef.current;
@@ -571,7 +564,7 @@ export default function QuickTitleVerification({
       "Download my unsent choices",
     );
     if (!storage.set(draftKey(v) + ":recovery:" + Date.now(), copy)) {
-      setExportFeedback({
+      setRecoveryFeedback({
         severity: "error",
         text: "This browser could not keep a recovery copy. Download your unsent choices before reloading.",
       });
@@ -582,7 +575,7 @@ export default function QuickTitleVerification({
     pendingRef.current = null;
     setPending(false);
     writerRef.current = null;
-    setExportFeedback({
+    setRecoveryFeedback({
       severity: "success",
       text: "Your unsent choices are preserved in a separate recovery copy. The form now loads the saved version.",
     });
@@ -1037,30 +1030,7 @@ export default function QuickTitleVerification({
                           ? "Preparing your CSV…"
                           : "Download my reviews and timing (CSV)"}
                       </Button>
-                      {view.canManage && (
-                        <Button
-                          variant="outlined"
-                          onClick={() => exportReviews("team")}
-                          disabled={
-                            exporting !== null || !view.exports?.teamAllowed
-                          }
-                        >
-                          {exporting === "team"
-                            ? "Preparing team CSV…"
-                            : "Download team reviews and timing (CSV)"}
-                        </Button>
-                      )}
                     </Stack>
-                    {view.canManage && !view.exports?.teamAllowed && (
-                      <Typography variant="body2" sx={{ mt: 1 }}>
-                        Finish your remaining{" "}
-                        {view.exports?.regularRemaining ??
-                          Math.max(0, view.total - view.completed)}{" "}
-                        regular description pages before downloading other
-                        reviewers’ answers. This keeps your reviews independent.
-                        Your own submitted reviews can be downloaded separately.
-                      </Typography>
-                    )}
                     {!(
                       view.exports?.ownSubmitted ??
                       view.completed + (view.historicalCompleted || 0)
@@ -1069,9 +1039,17 @@ export default function QuickTitleVerification({
                         Submit a review to make your CSV available.
                       </Typography>
                     )}
-                    {exportFeedback && (
-                      <Alert severity={exportFeedback.severity} sx={{ mt: 2 }}>
-                        {exportFeedback.text}
+                    {exportError?.scope === "self" && (
+                      <Alert severity="error" sx={{ mt: 2 }}>
+                        {exportError.text}
+                      </Alert>
+                    )}
+                    {recoveryFeedback && (
+                      <Alert
+                        severity={recoveryFeedback.severity}
+                        sx={{ mt: 2 }}
+                      >
+                        {recoveryFeedback.text}
                       </Alert>
                     )}
                     {download && (
@@ -1206,12 +1184,28 @@ export default function QuickTitleVerification({
                       <Typography
                         variant="body2"
                         color="text.secondary"
-                        sx={{ mt: 1 }}
+                        sx={{ mt: 3, mb: 1 }}
                       >
-                        Participating coordinators finish their regular reviews
-                        before downloading other reviewers’ answers. Earlier
-                        pilot records are preserved separately.
+                        Download all submitted team reviews and timing at any
+                        point, even while your own reviews are in progress.
+                        Unsubmitted drafts are not included.
                       </Typography>
+                      <Button
+                        variant="outlined"
+                        onClick={() => exportReviews("team")}
+                        disabled={
+                          exporting !== null || !view.exports?.teamAllowed
+                        }
+                      >
+                        {exporting === "team"
+                          ? "Preparing team CSV…"
+                          : "Download team reviews and timing (CSV)"}
+                      </Button>
+                      {exportError?.scope === "team" && (
+                        <Alert severity="error" sx={{ mt: 2 }}>
+                          {exportError.text}
+                        </Alert>
+                      )}
                     </AccordionDetails>
                   </Accordion>
                 )}

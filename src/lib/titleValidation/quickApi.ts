@@ -347,16 +347,6 @@ export async function quickTitleHandler(
           drafts.docs.map((d) => [d.id, d.data() as any]),
         ),
       };
-      const own = quickStatus(state, data, actor.uid, false, true, Date.now());
-      if (
-        state.study.roster.some((r) => r.reviewerId === actor.uid) &&
-        (own.completed !== own.total || Boolean(own.item)) &&
-        !body.qa
-      )
-        throw new TitleValidationError(
-          403,
-          "Finish your regular reviews before opening other reviewers’ answers.",
-        );
       return res.status(200).json({
         formatVersion: "quick-title-review-export-v1",
         study: state.study,

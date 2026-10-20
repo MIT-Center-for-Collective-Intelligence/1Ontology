@@ -825,7 +825,7 @@ test("download errors appear beside the download controls without interrupting t
     screen.getByRole("button", { name: "Save and continue" }),
   ).toBeEnabled();
 });
-test("a CSV download uses an attached link, retains a manual download link, and cleans up only on unmount", async () => {
+test("a CSV downloads once without redundant success controls and retains its URL until unmount", async () => {
   const create = jest.fn(() => "blob:prepared-review-csv"),
     revoke = jest.fn();
   Object.defineProperty(URL, "createObjectURL", {
@@ -838,11 +838,15 @@ test("a CSV download uses an attached link, retains a manual download link, and 
     writable: true,
     value: revoke,
   });
-  let attached = false;
+  let attached = false,
+    filename = "",
+    href = "";
   const click = jest
     .spyOn(HTMLAnchorElement.prototype, "click")
     .mockImplementation(function (this: HTMLAnchorElement) {
       attached = document.body.contains(this);
+      filename = this.download;
+      href = this.href;
     });
   jest
     .mocked(Post)
@@ -861,38 +865,107 @@ test("a CSV download uses an attached link, retains a manual download link, and 
       name: "Download my reviews and timing (CSV)",
     }),
   );
-  const fallback = await screen.findByRole("link", {
-    name: "Download the prepared CSV",
-  });
+  await waitFor(() => expect(click).toHaveBeenCalledTimes(1));
   expect(attached).toBe(true);
-  expect(fallback).toHaveAttribute("href", "blob:prepared-review-csv");
-  expect(fallback).toHaveAttribute(
-    "download",
-    "title-review-self-quick-v1.csv",
-  );
+  expect(href).toBe("blob:prepared-review-csv");
+  expect(filename).toBe("title-review-self-quick-v1.csv");
+  expect(screen.queryByText(/Your CSV is ready/)).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole("link", { name: "Download the prepared CSV" }),
+  ).not.toBeInTheDocument();
+  expect(
+    screen.getByRole("button", {
+      name: "Download my reviews and timing (CSV)",
+    }),
+  ).toBeEnabled();
   expect(revoke).not.toHaveBeenCalled();
   expect(jest.mocked(Post).mock.calls[1][1]).toMatchObject({ scope: "self" });
   mounted.unmount();
   expect(revoke).toHaveBeenCalledWith("blob:prepared-review-csv");
   click.mockRestore();
 });
-test("team downloads clearly explain the independence restriction while personal download remains available", async () => {
-  jest.mocked(Post).mockResolvedValue({ ...start(), canManage: true });
+test("an unfinished coordinator can download team reviews within Coordinator tools", async () => {
+  jest.mocked(Post).mockResolvedValue({
+    ...start(),
+    canManage: true,
+    exports: { ownSubmitted: 1, teamAllowed: true, regularRemaining: 25 },
+  });
   render(<QuickTitleVerification />);
   await screen.findByText("Write Technical Reports for Clients");
+  const tools = screen.getByRole("button", { name: "Coordinator tools" });
+  expect(tools).toHaveAttribute("aria-expanded", "false");
+  fireEvent.click(tools);
+  const section = tools.closest<HTMLElement>(".MuiAccordion-root")!;
   expect(
-    screen.getByRole("button", {
+    within(section).getByRole("button", {
       name: "Download team reviews and timing (CSV)",
     }),
-  ).toBeDisabled();
+  ).toBeEnabled();
+  expect(
+    within(
+      screen.getByText("Download submitted reviews").parentElement!,
+    ).queryByRole("button", { name: "Download team reviews and timing (CSV)" }),
+  ).not.toBeInTheDocument();
   expect(
     screen.getByRole("button", {
       name: "Download my reviews and timing (CSV)",
     }),
   ).toBeEnabled();
+  expect(screen.queryByText(/Finish your remaining/)).not.toBeInTheDocument();
   expect(
-    screen.getByText(/Finish your remaining 25 regular description pages/),
+    within(section).getByText(
+      /Download all submitted team reviews and timing at any point/,
+    ),
   ).toBeVisible();
+});
+test("ordinary reviewers cannot see team downloads or Coordinator tools", async () => {
+  jest.mocked(Post).mockResolvedValue(start());
+  render(<QuickTitleVerification />);
+  await screen.findByText("Write Technical Reports for Clients");
+  expect(
+    screen.queryByRole("button", { name: "Coordinator tools" }),
+  ).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole("button", {
+      name: "Download team reviews and timing (CSV)",
+    }),
+  ).not.toBeInTheDocument();
+});
+test("a team export failure appears in Coordinator tools and leaves the review editable", async () => {
+  jest
+    .mocked(Post)
+    .mockResolvedValueOnce({
+      ...start(),
+      canManage: true,
+      exports: { ownSubmitted: 1, teamAllowed: true, regularRemaining: 25 },
+    })
+    .mockRejectedValueOnce(new Error("Team download temporarily unavailable"));
+  render(<QuickTitleVerification />);
+  await screen.findByText("Write Technical Reports for Clients");
+  const tools = screen.getByRole("button", { name: "Coordinator tools" });
+  fireEvent.click(tools);
+  fireEvent.click(
+    within(tools.closest<HTMLElement>(".MuiAccordion-root")!).getByRole(
+      "button",
+      {
+        name: "Download team reviews and timing (CSV)",
+      },
+    ),
+  );
+  expect(
+    await within(tools.closest<HTMLElement>(".MuiAccordion-root")!).findByText(
+      "Team download temporarily unavailable",
+    ),
+  ).toBeVisible();
+  expect(
+    within(
+      screen.getByText("Download submitted reviews").parentElement!,
+    ).queryByText("Team download temporarily unavailable"),
+  ).not.toBeInTheDocument();
+  expect(
+    screen.getByRole("button", { name: "Save and continue" }),
+  ).toBeEnabled();
+  expect(jest.mocked(Post).mock.calls[1][1]).toMatchObject({ scope: "team" });
 });
 test("conflict recovery keeps an unsent copy before explicitly loading another tab's saved version", async () => {
   const v = start();

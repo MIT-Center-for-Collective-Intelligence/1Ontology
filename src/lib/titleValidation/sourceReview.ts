@@ -201,11 +201,7 @@ export function sourceStatus(
           .length +
         Object.values(state.legacy.answers).filter((a) => a.reviewerId === uid)
           .length,
-      teamAllowed:
-        canManage &&
-        (Boolean(state.legacy.study.softwareQA) ||
-          !state.legacy.study.roster.some((r) => r.reviewerId === uid) ||
-          regularRemaining === 0),
+      teamAllowed: canManage,
       regularRemaining,
     },
     canReviewFlagged:

@@ -532,3 +532,17 @@ test("read-only exports create no phantom drafts and retain legacy and per-answe
   expect(backend.tx.update).not.toHaveBeenCalled();
   expect(backend.tx.create).not.toHaveBeenCalled();
 });
+
+test("legacy exports permit an unfinished participating coordinator and still reject ordinary reviewers", async () => {
+  state.study.roster.push({ reviewerId: "rob", label: "Rob" });
+  const backend = store();
+  expect((await call("quick-export")).status).toBe(403);
+  coordinator();
+  const before = JSON.stringify({ state, events: backend.events });
+  const exported = await call("quick-export");
+  expect(exported.status).toBe(200);
+  expect(exported.body.answers).toEqual([]);
+  expect(JSON.stringify({ state, events: backend.events })).toBe(before);
+  expect(backend.tx.update).not.toHaveBeenCalled();
+  expect(backend.tx.create).not.toHaveBeenCalled();
+});

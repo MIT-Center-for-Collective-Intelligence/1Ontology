@@ -15,17 +15,12 @@ export function sourceReviewExport(
   preview: boolean,
   scope: "self" | "team",
 ) {
-  const own = sourceStatus(state, data, sources, uid, false, canManage);
+  sourceStatus(state, data, sources, uid, false, canManage);
   if (scope === "team") {
     if (!canManage || preview)
       throw new TitleValidationError(
         403,
         "Only coordinators can export team reviews.",
-      );
-    if (!own.exports.teamAllowed)
-      throw new TitleValidationError(
-        403,
-        "Finish your regular reviews before opening other reviewers’ answers. You can download your own submitted reviews now.",
       );
   }
   const answers = Object.values(state.answers).filter(
