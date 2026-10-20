@@ -24,7 +24,7 @@ import {
 } from "@mui/material";
 import { ThemeProvider } from "@mui/material/styles";
 import { titleValidationTheme } from "./titleValidationDesign";
-import { getIdToken } from "../../lib/firestoreClient/auth";
+import { relationshipRequest as request } from "../../lib/relationshipReview/client";
 import { reconcileSession } from "../../lib/relationshipReview/clientState";
 import {
   generalizationChanges,
@@ -35,31 +35,9 @@ import type {
   RelationshipDecision,
   RelationshipFeedback,
   RelationshipSession,
+  RelationshipSourceEvidence,
 } from "../../types/IRelationshipReview";
 
-async function request(
-  action: string,
-  body: unknown = {},
-  preview = false,
-): Promise<any> {
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-  };
-  if (!preview) headers.Authorization = "Bearer " + (await getIdToken());
-  const response = await fetch("/api/som-review/relationships/" + action, {
-    method: "POST",
-    credentials: "same-origin",
-    headers,
-    body: JSON.stringify(body),
-  });
-  const data = await response.json();
-  if (!response.ok)
-    throw Object.assign(
-      Error(data.error || "Could not reach the review. Please retry."),
-      { status: response.status, code: data.code },
-    );
-  return data;
-}
 type Draft = {
   decision: RelationshipDecision | "";
   note: string;
@@ -68,6 +46,142 @@ type Draft = {
   pending?: Record<string, unknown>;
   dirty: boolean;
 };
+function SourceEvidence({
+  caseId,
+  version,
+  preview,
+  datasetSha256,
+}: {
+  caseId: string;
+  version: string;
+  preview: boolean;
+  datasetSha256: string;
+}) {
+  const [evidence, setEvidence] = useState<RelationshipSourceEvidence | null>(
+    null,
+  );
+  const [error, setError] = useState("");
+  const [retry, setRetry] = useState(0);
+  useEffect(() => {
+    let active = true;
+    setEvidence(null);
+    setError("");
+    request("evidence", { caseId, datasetVersion: version }, preview)
+      .then(({ evidence: result }) => {
+        if (!active) return;
+        if (
+          result?.caseId !== caseId ||
+          result?.datasetVersion !== version ||
+          result?.datasetSha256 !== datasetSha256 ||
+          !Array.isArray(result.records)
+        )
+          throw Error(
+            "The source descriptions could not be matched to this activity.",
+          );
+        setEvidence(result);
+      })
+      .catch((e) => {
+        if (active) setError(e.message);
+      });
+    return () => {
+      active = false;
+    };
+  }, [caseId, version, preview, datasetSha256, retry]);
+  return (
+    <Box sx={{ mb: 3 }}>
+      <Typography variant="h6" component="h3" sx={{ mb: 1 }}>
+        Original O*NET descriptions
+      </Typography>
+      {error ? (
+        <Alert severity="warning">
+          {error}{" "}
+          <Button onClick={() => setRetry((n) => n + 1)}>
+            Retry descriptions
+          </Button>
+        </Alert>
+      ) : !evidence ? (
+        <Typography color="text.secondary">
+          Loading source descriptions…
+        </Typography>
+      ) : (
+        <>
+          {!evidence.complete && (
+            <Alert severity="warning" sx={{ mb: 1 }}>
+              {evidence.limitation}
+            </Alert>
+          )}
+          {evidence.records.length === 0 ? (
+            <Typography>
+              No complete O*NET description is available in this proposal’s
+              frozen evidence.
+            </Typography>
+          ) : (
+            <Box
+              sx={{
+                maxHeight: 420,
+                overflowY: "auto",
+                overflowWrap: "anywhere",
+              }}
+              tabIndex={0}
+              aria-label="O*NET source descriptions"
+            >
+              {evidence.records.map((record) => (
+                <Box
+                  key={record.id}
+                  component="blockquote"
+                  sx={{ ml: 0, pl: 2, borderLeft: "3px solid #BDD5CD" }}
+                >
+                  <Typography sx={{ whiteSpace: "pre-wrap" }}>
+                    {record.title}
+                  </Typography>
+                  {record.description &&
+                    record.description !== record.title && (
+                      <Typography sx={{ whiteSpace: "pre-wrap", mt: 1 }}>
+                        Additional recorded description: {record.description}
+                      </Typography>
+                    )}
+                  <Typography variant="caption" color="text.secondary">
+                    Source record: {record.id} · {record.descriptionSource}
+                  </Typography>
+                  {record.alternateTitle && (
+                    <Typography sx={{ mt: 1 }}>
+                      Alternate frozen title: {record.alternateTitle}
+                    </Typography>
+                  )}
+                  {record.alternateDescription && (
+                    <Typography sx={{ mt: 1 }}>
+                      Alternate frozen description:{" "}
+                      {record.alternateDescription}
+                    </Typography>
+                  )}
+                </Box>
+              ))}
+            </Box>
+          )}
+          {!!evidence.issues?.length && (
+            <Alert severity="warning">{evidence.issues.join(" ")}</Alert>
+          )}
+          <Accordion sx={{ mt: 1 }}>
+            <AccordionSummary expandIcon={<span aria-hidden="true">＋</span>}>
+              Source provenance
+            </AccordionSummary>
+            <AccordionDetails sx={{ overflowWrap: "anywhere" }}>
+              <Typography variant="body2">
+                {evidence.limitation} This source view is an additional
+                disclosure of the frozen requests; earlier saved reviews retain
+                their original presentation.
+              </Typography>
+              <Typography variant="body2">
+                {evidence.disclosureVersion} · Dataset: {evidence.datasetSha256}{" "}
+                · Evidence: {evidence.evidenceSha256}
+              </Typography>
+            </AccordionDetails>
+          </Accordion>
+        </>
+      )}
+    </Box>
+  );
+}
 function ExactTrace({
   caseId,
   preview,
@@ -123,11 +237,13 @@ function FeedbackForm({
   session,
   onSaved,
   memory,
+  navigation,
 }: {
   item: RelationshipCase;
   session: RelationshipSession;
   onSaved: (answer: RelationshipFeedback) => void;
   memory: Record<string, Draft>;
+  navigation: React.ReactNode;
 }) {
   const saved = session.feedback[item.id];
   const latestSaved = useRef(saved);
@@ -401,6 +517,11 @@ function FeedbackForm({
           >
             {busy ? "Saving…" : draft.pending ? "Retry save" : "Save feedback"}
           </Button>
+          {navigation}
+          <Typography variant="body2" color="text.secondary">
+            Save feedback shares your answer. Next changes the activity and
+            keeps any unsaved draft in this tab.
+          </Typography>
         </Stack>
       </CardContent>
     </Card>
@@ -577,9 +698,9 @@ export default function RelationshipReview({
               Review the proposed change, the reason for it, and the source
               evidence. An activity may have multiple generalizations; each link
               is assessed separately. Your judgment is needed before any
-              ontology change is made.
-              {" "}A supporting description may mention several activities;
-              each proposal concerns the activity named on its card.
+              ontology change is made. A supporting description may mention
+              several activities; each proposal concerns the activity named on
+              its card.
               {data?.cases.some((c) => c.scope === "sibling-review") &&
                 " These proposals look for closer generalizations and review links that may not fit the activity’s meaning."}
             </Typography>
@@ -596,6 +717,34 @@ export default function RelationshipReview({
             )}
             {session && data && (
               <>
+                {(data.methodology === "atomic-generalization-pilot-v1" ||
+                  data.methodology ===
+                    "atomic-generalization-expansion-v1") && (
+                  <Alert severity="info" sx={{ mb: 3 }}>
+                    New atomic-activity proposals. Your answers to the earlier
+                    proposals remain saved in their original review.
+                    {session.availableVersions?.find(
+                      (v) => !v.current && v.label,
+                    ) && (
+                      <Button
+                        href={
+                          "/review/relationships?version=" +
+                          encodeURIComponent(
+                            session.availableVersions.find(
+                              (v) => !v.current && v.label,
+                            )!.version,
+                          )
+                        }
+                      >
+                        {
+                          session.availableVersions.find(
+                            (v) => !v.current && v.label,
+                          )!.label
+                        }
+                      </Button>
+                    )}
+                  </Alert>
+                )}
                 {session.availableVersions?.some(
                   (v) => v.current && v.version !== data.version,
                 ) && (
@@ -785,9 +934,10 @@ export default function RelationshipReview({
                               label={
                                 item.scope === "sibling-review"
                                   ? "Sibling comparison"
-                                  : item.scope === "focal-source-review"
+                                  : item.scope === "focal-source-review" ||
+                                      item.scope === "atomic-activity-review"
                                     ? "Activity comparison"
-                                  : "Reason’s immediate child"
+                                    : "Reason’s immediate child"
                               }
                               size="small"
                             />
@@ -878,7 +1028,8 @@ export default function RelationshipReview({
                                   variant="body2"
                                   color="text.secondary"
                                 >
-                              All direct generalizations after the proposed change
+                                  All direct generalizations after the proposed
+                                  change
                                 </Typography>
                                 <Box component="ul" sx={{ pl: 3, mb: 0 }}>
                                   {item.analysis.proposedParents.map((p) => (
@@ -937,30 +1088,37 @@ export default function RelationshipReview({
                             </Typography>
                             {!selectedCard.quotes.length && (
                               <Typography>
-                                No recorded definition establishes this
-                                relationship. The proposal uses the ordinary
-                                meaning of the activity names and their current
-                                context; you can inspect that context below.
+                                {data.methodology ===
+                                  "atomic-generalization-pilot-v1" ||
+                                data.methodology ===
+                                  "atomic-generalization-expansion-v1"
+                                  ? "The complete O*NET descriptions supporting this activity are shown below."
+                                  : "No recorded definition establishes this relationship. The proposal uses the ordinary meaning of the activity names and their current context; you can inspect that context below."}
                               </Typography>
                             )}
                             {selectedCard.quotes.map((q, i) => (
-                                <Box
-                                  component="blockquote"
-                                  key={i}
-                                  sx={{
-                                    ml: 0,
-                                    pl: 2,
-                                    borderLeft: "3px solid #BDD5CD",
-                                  }}
-                                >
-                                  <Typography>
-                                    <strong>{data.candidates.find((n) => n.id === q.nodeId)?.oNetTask
+                              <Box
+                                component="blockquote"
+                                key={i}
+                                sx={{
+                                  ml: 0,
+                                  pl: 2,
+                                  borderLeft: "3px solid #BDD5CD",
+                                }}
+                              >
+                                <Typography>
+                                  <strong>
+                                    {data.candidates.find(
+                                      (n) => n.id === q.nodeId,
+                                    )?.oNetTask
                                       ? "O*NET description"
-                                      : title(q.nodeId)}:</strong> “
-                                    {q.quote}”
-                                  </Typography>
-                                </Box>
-                              ))}
+                                      : title(q.nodeId)}
+                                    :
+                                  </strong>{" "}
+                                  “{q.quote}”
+                                </Typography>
+                              </Box>
+                            ))}
                           </Box>
                         )}
                         {!selectedCard &&
@@ -979,16 +1137,86 @@ export default function RelationshipReview({
                             {item.interProposalIssues.join(" ")}
                           </Alert>
                         )}
-                        <Typography sx={{ mb: 2 }}>
-                          <strong>
+                        <SourceEvidence
+                          key={data.version + item.id}
+                          caseId={item.id}
+                          version={data.version}
+                          preview={session.preview}
+                          datasetSha256={session.datasetSha256}
+                        />
+                        {!!item.generalizationEvidence?.length && (
+                          <Accordion sx={{ mb: 2 }}>
+                            <AccordionSummary
+                              expandIcon={<span aria-hidden="true">＋</span>}
+                            >
+                              O*NET evidence for proposed Generalizations
+                            </AccordionSummary>
+                            <AccordionDetails>
+                              <Typography sx={{ mb: 2 }}>
+                                These descriptions belong to the suggested
+                                Generalizations. Compare their scope with{" "}
+                                {item.title}.
+                              </Typography>
+                              {item.generalizationEvidence.map((e) => (
+                                <Box key={e.parentId} sx={{ mb: 2 }}>
+                                  <Typography component="h4" variant="h6">
+                                    {title(e.parentId)}
+                                  </Typography>
+                                  <Box
+                                    aria-label={
+                                      "O*NET descriptions for " +
+                                      title(e.parentId)
+                                    }
+                                    sx={{
+                                      maxHeight: 360,
+                                      overflowY: "auto",
+                                      overflowWrap: "anywhere",
+                                    }}
+                                  >
+                                    {e.sourceIds
+                                      .map((id) =>
+                                        data.candidates.find(
+                                          (n) => n.id === id,
+                                        ),
+                                      )
+                                      .filter((n) => n?.oNetTask === true)
+                                      .map((n) => (
+                                        <Box key={n!.id} sx={{ mt: 1.5 }}>
+                                          <Typography>{n!.title}</Typography>
+                                          {n!.description && (
+                                            <Typography>
+                                              {n!.description}
+                                            </Typography>
+                                          )}
+                                          <Typography
+                                            variant="caption"
+                                            color="text.secondary"
+                                          >
+                                            Source record: {n!.id} ·{" "}
+                                            {n!.descriptionSource}
+                                          </Typography>
+                                        </Box>
+                                      ))}
+                                  </Box>
+                                </Box>
+                              ))}
+                            </AccordionDetails>
+                          </Accordion>
+                        )}
+                        {!!(selectedCard
+                          ? selectedCard.example
+                          : item.analysis.example) && (
+                          <Typography sx={{ mb: 2 }}>
+                            <strong>
+                              {selectedCard
+                                ? "Illustrative example:"
+                                : "Example:"}
+                            </strong>{" "}
                             {selectedCard
-                              ? "Illustrative example:"
-                              : "Example:"}
-                          </strong>{" "}
-                          {selectedCard
-                            ? selectedCard.example
-                            : item.analysis.example}
-                        </Typography>
+                              ? selectedCard.example
+                              : item.analysis.example}
+                          </Typography>
+                        )}
                         {!selectedCard && (
                           <Typography sx={{ mb: 2 }}>
                             <strong>Reason to be cautious:</strong>{" "}
@@ -1038,6 +1266,36 @@ export default function RelationshipReview({
                       item={item}
                       session={session}
                       memory={drafts.current}
+                      navigation={
+                        items.length > 1 && (
+                          <Stack
+                            direction="row"
+                            spacing={1.5}
+                            useFlexGap
+                            flexWrap="wrap"
+                            alignItems="center"
+                          >
+                            <Button
+                              variant="outlined"
+                              disabled={index <= 0}
+                              onClick={() => navigate(index - 1)}
+                            >
+                              Previous
+                            </Button>
+                            <Button
+                              variant="outlined"
+                              disabled={index >= items.length - 1}
+                              onClick={() => navigate(index + 1)}
+                            >
+                              Next
+                            </Button>
+                            <Typography>
+                              {Math.min(index + 1, items.length)} /{" "}
+                              {items.length}
+                            </Typography>
+                          </Stack>
+                        )
+                      }
                       onSaved={(answer) =>
                         setSession((s) =>
                           s &&
@@ -1055,27 +1313,6 @@ export default function RelationshipReview({
                         )
                       }
                     />
-                    {items.length > 1 && (
-                      <Stack direction="row" justifyContent="space-between">
-                        <Button
-                          variant="outlined"
-                          disabled={index <= 0}
-                          onClick={() => navigate(index - 1)}
-                        >
-                          Previous
-                        </Button>
-                        <Typography sx={{ alignSelf: "center" }}>
-                          {Math.min(index + 1, items.length)} / {items.length}
-                        </Typography>
-                        <Button
-                          variant="outlined"
-                          disabled={index >= items.length - 1}
-                          onClick={() => navigate(index + 1)}
-                        >
-                          Next
-                        </Button>
-                      </Stack>
-                    )}
                     <Accordion>
                       <AccordionSummary
                         expandIcon={<span aria-hidden="true">＋</span>}
@@ -1267,7 +1504,7 @@ export default function RelationshipReview({
                     >
                       {v.current
                         ? "Return to current review"
-                        : "Earlier review and saved answers"}
+                        : v.label || "Earlier review and saved answers"}
                     </Button>
                   ))}
               </>

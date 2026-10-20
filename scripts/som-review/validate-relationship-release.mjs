@@ -3,7 +3,13 @@ import path from "node:path";
 import crypto from "node:crypto";
 import { completeDiscoveryPrefix } from "./relationship-discovery-lib.mjs";
 import { assertFreeRelationshipExplanations } from "./relationship-schema-lib.mjs";
+import { validateAtomicRelationshipRelease } from "./validate-atomic-relationship-release.mjs";
+import { validateExpandedAtomicRelease } from "./validate-expanded-atomic-release.mjs";
 function validateEntry(root, committed) {
+  if (committed.methodology === "atomic-generalization-expansion-v1")
+    return validateExpandedAtomicRelease(root, committed);
+  if (committed.methodology === "atomic-generalization-pilot-v1")
+    return validateAtomicRelationshipRelease(root, committed);
   const dir = path.join(
     root,
     "src/lib/relationshipReview/data",
@@ -92,7 +98,7 @@ function validateEntry(root, committed) {
         .filter((part) => part.type === "output_text")
         .map((part) => part.text).join("\n");
       const rawCases = JSON.parse(text).cases;
-      if (rawCases.length !== 1 || rawCases[0].analysis.nodeId !== c.id ||
+      if (!Array.isArray(rawCases) || rawCases.length !== 1 || rawCases[0].analysis.nodeId !== c.id ||
           normalization.caseId !== c.id ||
           normalization.originalCardId !== rawCases[0].card.caseId ||
           normalization.requestSha256 !== c.requestSha256)

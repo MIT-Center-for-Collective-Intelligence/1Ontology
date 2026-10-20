@@ -78,7 +78,7 @@ test("the old practice bookmark redirects to the team flow without carrying old 
         socket: { remoteAddress: "127.0.0.1" },
       },
     } as never),
-  ).toEqual({ props: { preview: false, practice: false } });
+  ).toEqual({ props: { preview: false, practice: false, earlier: false, flagged: false, qa: false } });
 });
 test("the signed-in page waits for restored authentication before requesting a session", async () => {
   jest
@@ -87,7 +87,7 @@ test("the signed-in page waits for restored authentication before requesting a s
       { isAuthInitialized: false, isAuthenticated: false },
     ] as never);
   jest.mocked(Post).mockResolvedValue({ ...session(), preview: false });
-  const view = render(<TitleValidationPage preview={false} />);
+  const view = render(<TitleValidationPage preview={false} earlier />);
   expect(screen.getByRole("status")).toHaveTextContent("Loading your account");
   expect(Post).not.toHaveBeenCalled();
   jest
@@ -95,14 +95,14 @@ test("the signed-in page waits for restored authentication before requesting a s
     .mockReturnValue([
       { isAuthInitialized: true, isAuthenticated: false },
     ] as never);
-  view.rerender(<TitleValidationPage preview={false} />);
+  view.rerender(<TitleValidationPage preview={false} earlier />);
   expect(Post).not.toHaveBeenCalled();
   jest
     .mocked(useAuth)
     .mockReturnValue([
       { isAuthInitialized: true, isAuthenticated: true },
     ] as never);
-  view.rerender(<TitleValidationPage preview={false} />);
+  view.rerender(<TitleValidationPage preview={false} earlier />);
   await screen.findByText("Write Report");
   expect(Post).toHaveBeenCalledTimes(1);
 });

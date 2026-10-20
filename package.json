@@ -8,7 +8,7 @@
     "start": "next start -p 8080",
     "lint": "next lint",
     "test": "jest --watch --runInBand",
-    "test:title-validation": "jest --runInBand --watch=false --coverage=false __tests__/lib/titleValidation __tests__/components/SomReview/HumanTitleValidation.test.tsx",
+    "test:title-validation": "jest --runInBand --watch=false --coverage=false __tests__/lib/titleValidation __tests__/components/SomReview/HumanTitleValidation.test.tsx __tests__/components/SomReview/QuickTitleVerification.test.tsx",
     "typecheck:title-validation": "tsc --project tsconfig.title-validation.json"
   },
   "dependencies": {

@@ -25,6 +25,9 @@ COPY scripts/som-review/title-prompt-study-lib.mjs scripts/som-review/title-prom
 COPY scripts/som-review/latest-title-prompt-study-lib.mjs scripts/som-review/latest-title-prompt-study-lib.test.mjs ./scripts/som-review/
 COPY scripts/som-review/title-clarification-judge-lib.mjs scripts/som-review/title-clarification-judge-lib.test.mjs ./scripts/som-review/
 COPY scripts/som-review/relationship-graph-lib.mjs scripts/som-review/relationship-graph-lib.test.mjs scripts/som-review/validate-relationship-release.mjs scripts/som-review/validate-relationship-release.test.mjs ./scripts/som-review/
+COPY scripts/som-review/validate-atomic-relationship-release.mjs scripts/som-review/validate-atomic-relationship-release.test.mjs ./scripts/som-review/
+COPY scripts/som-review/validate-expanded-atomic-release.mjs scripts/som-review/validate-expanded-atomic-release.test.mjs scripts/som-review/inference-evidence-lib.mjs scripts/som-review/inference-evidence-lib.test.mjs scripts/som-review/execution-cost-proof.mjs scripts/som-review/execution-cost-proof.test.mjs ./scripts/som-review/
+RUN node --test scripts/som-review/inference-evidence-lib.test.mjs scripts/som-review/execution-cost-proof.test.mjs
 COPY scripts/som-review/relationship-discovery-lib.mjs scripts/som-review/relationship-discovery-lib.test.mjs ./scripts/som-review/
 COPY scripts/som-review/relationship-schema-lib.mjs scripts/som-review/relationship-schema-lib.test.mjs ./scripts/som-review/
 COPY __tests__ ./__tests__
@@ -73,7 +76,7 @@ RUN node --test scripts/som-review/title-prompt-study-lib.test.mjs scripts/som-r
 RUN npm run build
 RUN npm run typecheck:title-validation
 RUN npx tsc --project tsconfig.relationship-review.json
-RUN node --test scripts/som-review/relationship-graph-lib.test.mjs scripts/som-review/relationship-discovery-lib.test.mjs scripts/som-review/relationship-schema-lib.test.mjs scripts/som-review/validate-relationship-release.test.mjs
+RUN node --test scripts/som-review/relationship-graph-lib.test.mjs scripts/som-review/relationship-discovery-lib.test.mjs scripts/som-review/relationship-schema-lib.test.mjs scripts/som-review/validate-relationship-release.test.mjs scripts/som-review/validate-atomic-relationship-release.test.mjs scripts/som-review/validate-expanded-atomic-release.test.mjs
 RUN node scripts/som-review/validate-relationship-release.mjs
 
 # Step 2. Production image (Runner)
@@ -105,6 +108,7 @@ COPY --from=builder /app/package.json .
 COPY --from=builder /app/scripts/deployment/review-package-lock.json ./scripts/deployment/review-package-lock.json
 COPY --from=builder /app/scripts/deployment/relationship-review-package.json ./scripts/deployment/relationship-review-package.json
 COPY --from=builder /app/src/lib/titleValidation/data/prepilot-v1.json ./src/lib/titleValidation/data/prepilot-v1.json
+COPY --from=builder /app/src/lib/titleValidation/data/quick-v1.json ./src/lib/titleValidation/data/quick-v1.json
 COPY --from=builder --chown=nextjs:nodejs /app/src/lib/relationshipReview/data ./src/lib/relationshipReview/data
 
 # Automatically leverage output traces to reduce image size 

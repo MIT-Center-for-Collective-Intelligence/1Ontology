@@ -95,6 +95,10 @@ class ReleaseVerificationTests(unittest.TestCase):
         self.info["humanTitleReview"] = {"version":staff["version"],"cases":len(staff["cases"]),
             "model":staff["provenance"]["model"],"promptSha256":staff["provenance"]["scientificPromptSha256"],
             "bundleSha256":hashlib.sha256(staff_bytes).hexdigest(),"released":True}
+        quick_bytes=(ROOT / "src/lib/titleValidation/data/quick-v1.json").read_bytes()
+        from quick_title_selection import selection_release
+        self.info["quickTitleReview"]={"version":json.loads(quick_bytes)["version"],"initialRegular":25,"reservedRegular":75,"flagged":319,
+            "bundleSha256":hashlib.sha256(quick_bytes).hexdigest(),"released":True, **selection_release(quick_bytes)}
         relationship_manifest=json.loads((ROOT / "scripts/deployment/relationship-review-package.json").read_bytes())
         relationship_root=ROOT / "src/lib/relationshipReview/data" / relationship_manifest.get("directory", "")
         relation_bytes = (relationship_root / ("dataset.json" if relationship_manifest.get("directory") else "top-level-v1.json")).read_bytes()
@@ -113,7 +117,7 @@ class ReleaseVerificationTests(unittest.TestCase):
 
     def test_rejects_stale_or_mispackaged_release(self):
         for field in ("commit", "buildId", "revision", "packageSha256", "titlePromptStudy", "latestTitlePromptStudy",
-                      "titleModelComparison", "humanTitleReview", "relationshipReview"):
+                      "titleModelComparison", "humanTitleReview", "quickTitleReview", "relationshipReview"):
             with self.subTest(field=field):
                 broken = copy.deepcopy(self.info)
                 broken[field] = "stale"
@@ -218,7 +222,7 @@ class TitleReviewRouteTests(unittest.TestCase):
     def test_checks_both_workspaces_and_denies_anonymous(self):
         with patch("promote.urllib.request.urlopen", side_effect=self.opener()) as open_url:
             verify_title_review_route("https://example.org")
-            self.assertEqual(open_url.call_count, 5)
+            self.assertEqual(open_url.call_count, 13)
 
     def test_rejects_missing_mismatched_or_development_practice_page(self):
         for html in ("missing", 'Human title review {"preview":true,"practice":true}',
@@ -260,12 +264,12 @@ class RelationshipReviewRouteTests(unittest.TestCase):
     def test_page_and_all_anonymous_boundaries(self):
         with patch("promote.urllib.request.urlopen",side_effect=self.opener()) as call:
             verify_relationship_review_route("https://example.org")
-            self.assertEqual(call.call_count,5)
+            self.assertEqual(call.call_count,6)
             for request in call.call_args_list[1:]:
                 self.assertEqual(request.args[0].get_header("Origin"), "https://ontology.mit.edu")
 
     def test_no_preview_or_anonymous_data_in_production(self):
-        for accepted in ('session','save','trace','tom-feedback'):
+        for accepted in ('session','save','trace','evidence','tom-feedback'):
             with self.subTest(action=accepted), patch("promote.urllib.request.urlopen",side_effect=self.opener(accepted=accepted)):
                 with self.assertRaises(ValueError): verify_relationship_review_route("https://example.org")
         with patch("promote.urllib.request.urlopen",side_effect=self.opener(preview=True)):

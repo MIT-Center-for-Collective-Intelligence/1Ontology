@@ -134,6 +134,12 @@ def validate_release(info, commit, build_id, revision):
         "bundleSha256": hashlib.sha256(staff_bytes).hexdigest(), "released": True}
     if info.get("humanTitleReview") != expected_staff:
         raise ValueError("The staff title-review pilot is missing, changed, or not enabled")
+    quick_bytes = (Path(__file__).resolve().parents[2] / "src/lib/titleValidation/data/quick-v1.json").read_bytes()
+    quick = json.loads(quick_bytes)
+    from quick_title_selection import selection_release
+    if info.get("quickTitleReview") != {"version":quick["version"],"initialRegular":25,"reservedRegular":75,"flagged":319,
+            "bundleSha256":hashlib.sha256(quick_bytes).hexdigest(),"released":True, **selection_release(quick_bytes)}:
+        raise ValueError("The quick title-review package is missing, changed, or not enabled")
     relation_manifest = json.loads(Path(__file__).with_name("relationship-review-package.json").read_bytes())
     directory = relation_manifest.get("directory", "")
     if directory and not re.fullmatch(r"[a-z0-9-]+", directory):
@@ -166,7 +172,7 @@ def verify_title_review_route(origin):
             raise ValueError("The earlier review link does not redirect to the team review") from error
     else:
         raise ValueError("The earlier review link must redirect to the team review")
-    for suffix in ("", "?workspace=practice"):
+    for suffix in ("", "?workspace=practice", "?workflow=earlier", "?set=flagged", "?qa=1"):
         html = read_bytes(origin + "/review/title-validation" + suffix).decode("utf-8")
         if ("Human title review" not in html or '"preview":false' not in html
                 or '"practice":false' not in html):
@@ -183,6 +189,16 @@ def verify_title_review_route(origin):
                 continue
             raise ValueError("Unexpected anonymous title review response") from error
         raise ValueError("Anonymous title review access was accepted")
+    for action in ("quick-session", "quick-checkpoint", "quick-respond", "quick-manage", "quick-export"):
+        request = urllib.request.Request(origin + "/api/som-review/title-validation/" + action,
+            data=b'{"previewReviewer":"preview-a","qa":true}', method="POST", headers={"Content-Type":"application/json"})
+        try:
+            urllib.request.urlopen(request, timeout=60)
+        except urllib.error.HTTPError as error:
+            if error.code == 401:
+                continue
+            raise ValueError("Unexpected anonymous quick title review response") from error
+        raise ValueError("Anonymous quick title review access was accepted")
 
 
 def promote_if_current(commit, revision, api, main_head):
@@ -207,7 +223,7 @@ def verify_relationship_review_route(origin):
     html = read_bytes(origin + "/review/relationships").decode("utf-8")
     if "Activity relationship review" not in html or '"preview":false' not in html:
         raise ValueError("Relationship review page is missing or exposes preview mode")
-    for action in ("session", "save", "trace", "tom-feedback"):
+    for action in ("session", "save", "trace", "evidence", "tom-feedback"):
         request = urllib.request.Request(origin + "/api/som-review/relationships/" + action,
             data=b'{"previewReviewer":"tom"}', method="POST", headers={"Content-Type":"application/json", "Origin":"https://ontology.mit.edu"})
         try:

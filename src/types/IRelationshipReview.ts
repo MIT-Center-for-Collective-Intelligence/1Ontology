@@ -41,6 +41,7 @@ export interface RelationshipCase extends RelationshipNode {
   responseId: string;
   requestSha256: string;
   challengeResponseId: string;
+  generalizationEvidence?: { parentId: string; sourceIds: string[] }[];
   meetingEvidence?: {
     sourceFile: string;
     sourceFileSha256: string;
@@ -50,6 +51,9 @@ export interface RelationshipCase extends RelationshipNode {
   };
 }
 export interface RelationshipDataset {
+  methodology?:
+    | "atomic-generalization-pilot-v1"
+    | "atomic-generalization-expansion-v1";
   version: string;
   createdAt: string;
   title: string;
@@ -83,7 +87,7 @@ export interface RelationshipFeedback {
   presentationVersion?: string;
 }
 export interface RelationshipSession {
-  availableVersions?: { version: string; current: boolean }[];
+  availableVersions?: { version: string; current: boolean; label?: string }[];
   dataset: RelationshipDataset;
   datasetSha256: string;
   reviewerKey: string;
@@ -93,6 +97,24 @@ export interface RelationshipSession {
   canViewTomFeedback?: boolean;
   presentation?: RelationshipPresentation;
   presentationSha256?: string;
+}
+export interface RelationshipSourceEvidence {
+  caseId: string;
+  datasetVersion: string;
+  records: {
+    id: string;
+    title: string;
+    description: string;
+    descriptionSource: string;
+    alternateTitle?: string;
+    alternateDescription?: string;
+  }[];
+  complete: boolean;
+  limitation: string;
+  issues: string[];
+  datasetSha256?: string;
+  evidenceSha256?: string;
+  disclosureVersion?: string;
 }
 export interface RelationshipPresentation {
   version: string;

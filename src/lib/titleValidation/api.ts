@@ -29,13 +29,13 @@ const defaultStudyId = () =>
   process.env.TITLE_VALIDATION_STUDY_ID ||
   "human-title-review-prepilot-20261015-v1";
 const reviewerPreviewIds = ["preview-a", "preview-b", "preview-c"];
-interface Actor {
+export interface Actor {
   uid: string;
   label: string;
   canManage: boolean;
   preview: boolean;
 }
-async function actorFor(
+export async function actorFor(
   req: NextApiRequest,
   body: Record<string, unknown>,
 ): Promise<Actor> {
@@ -232,6 +232,11 @@ export async function titleValidationHandler(
       throw new TitleValidationError(
         403,
         "Open your private copy through the practice link.",
+      );
+    if (/^(quick-title-verification-|software-qa-quick-title-)/.test(id))
+      throw new TitleValidationError(
+        403,
+        "Use the direct-rating review for this study. Earlier-pilot actions cannot change it.",
       );
     if (
       !["session", "respond", "dashboard", "manage", "export"].includes(action)

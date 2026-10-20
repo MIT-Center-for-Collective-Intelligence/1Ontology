@@ -5,10 +5,39 @@ from pathlib import Path
 import tarfile
 import tempfile
 import unittest
-from stage_relationship_package import stage_archive, verify_directory
+from stage_relationship_package import stage_archive, verify_directory, member_limits
 
 
 class PrivateRelationshipPackageTests(unittest.TestCase):
+    def test_expanded_trace_exception_is_pinned_and_does_not_expand_other_files(self):
+        entry={"directory":"atomic-v2","methodology":"atomic-generalization-expansion-v1","cases":80,"presentationTraceSha256":"a"*64}
+        self.assertEqual(member_limits("atomic-v2/presentation-trace.json",[entry]),(16*1024*1024,96*1024*1024))
+        self.assertEqual(member_limits("atomic-v2/traces/case.json",[entry])[0],4*1024*1024)
+        self.assertEqual(member_limits("earlier/presentation-trace.json",[entry])[0],4*1024*1024)
+        unpinned=dict(entry);del unpinned['presentationTraceSha256']
+        self.assertEqual(member_limits("atomic-v2/presentation-trace.json",[unpinned])[0],4*1024*1024)
+        with self.assertRaises(ValueError):member_limits("atomic-v2/source-graph.json",[entry])
+        with self.assertRaises(ValueError):member_limits("atomic-v2/presentation-trace.json",[{**entry,"cases":121}])
+
+    def test_only_a_pinned_source_graph_gets_the_larger_file_bound(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root=Path(temporary)
+            archive,manifest=self.package(root)
+            with tarfile.open(archive,"r:gz") as package:
+                files=[(m.name,package.extractfile(m).read()) for m in package.getmembers()]
+            graph=b'["'+b'x'*(5*1024*1024)+b'"]'
+            files.append(("source-graph.json",graph))
+            with tarfile.open(archive,"w:gz") as package:
+                for name,content in files:
+                    info=tarfile.TarInfo(name);info.size=len(content);package.addfile(info,io.BytesIO(content))
+            manifest['archiveSha256']=hashlib.sha256(archive.read_bytes()).hexdigest()
+            with self.assertRaises(ValueError):stage_archive(archive,manifest,root/'unapproved')
+            manifest['sourceGraphSha256']=hashlib.sha256(graph).hexdigest()
+            stage_archive(archive,manifest,root/'approved')
+            verify_directory(root/'approved',manifest)
+            (root/'approved/source-graph.json').write_text('[]')
+            with self.assertRaises(ValueError):verify_directory(root/'approved',manifest)
+
     def test_new_version_keeps_the_complete_original_package(self):
         with tempfile.TemporaryDirectory() as temporary:
             root=Path(temporary)
