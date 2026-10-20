@@ -136,8 +136,9 @@ def validate_release(info, commit, build_id, revision):
         raise ValueError("The staff title-review pilot is missing, changed, or not enabled")
     quick_bytes = (Path(__file__).resolve().parents[2] / "src/lib/titleValidation/data/quick-v1.json").read_bytes()
     quick = json.loads(quick_bytes)
+    from quick_title_selection import selection_release
     if info.get("quickTitleReview") != {"version":quick["version"],"initialRegular":25,"reservedRegular":75,"flagged":319,
-            "bundleSha256":hashlib.sha256(quick_bytes).hexdigest(),"released":True}:
+            "bundleSha256":hashlib.sha256(quick_bytes).hexdigest(),"released":True, **selection_release(quick_bytes)}:
         raise ValueError("The quick title-review package is missing, changed, or not enabled")
     relation_manifest = json.loads(Path(__file__).with_name("relationship-review-package.json").read_bytes())
     directory = relation_manifest.get("directory", "")
