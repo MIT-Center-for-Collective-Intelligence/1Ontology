@@ -41,6 +41,13 @@ describe("public deployment identity", () => {
         }),
       ]);
       expect(info.packageSha256).toMatch(/^[a-f0-9]{64}$/);
+      expect(info.sourceTitleReview).toEqual({
+        version: "source-title-review-20261020-v2",
+        pages: 366,
+        activities: 1370,
+        missingProposals: 7,
+        bundleSha256: "6010283fd843373bd7e232f78d422faf1fc35f4db855342518f1c73f088518b5",
+      });
       expect(info.humanTitleReview).toEqual({
         version: "human-title-prepilot-20261015-v1",
         cases: 5,
@@ -118,6 +125,7 @@ describe("public deployment identity", () => {
         "quickTitleReview",
         "relationshipReview",
         "revision",
+        "sourceTitleReview",
         "titleModelComparison",
         "titlePromptStudy",
       ]);
