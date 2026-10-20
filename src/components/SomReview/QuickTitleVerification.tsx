@@ -35,6 +35,11 @@ const labels = [
   { value: "not_acceptable", label: "Not acceptable" },
   { value: "unsure", label: "I’m not sure" },
 ];
+const hiddenProvenanceFields = new Set([
+  "model",
+  "modelReasoningEffort",
+  "fundingRoute",
+]);
 const clock = (ms: number) => {
   const s = Math.floor(ms / 1000);
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
@@ -667,6 +672,10 @@ export default function QuickTitleVerification({
                     >
                       {view.disclosure.prompt}
                     </Typography>
+                    <Typography variant="subtitle2" sx={{ mt: 2 }}>
+                      Saved proposal information (separate from the model’s
+                      output format)
+                    </Typography>
                     <Typography
                       component="pre"
                       sx={{
@@ -678,7 +687,10 @@ export default function QuickTitleVerification({
                       {JSON.stringify(
                         view.disclosure.provenance,
                         (key, value) =>
-                          key === "fundingRoute" ? undefined : value,
+                          hiddenProvenanceFields.has(key) ||
+                          /sha256$/i.test(key)
+                            ? undefined
+                            : value,
                         2,
                       )}
                     </Typography>

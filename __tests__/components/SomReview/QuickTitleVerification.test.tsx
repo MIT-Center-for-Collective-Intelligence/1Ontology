@@ -77,14 +77,22 @@ beforeEach(() => {
   localStorage.clear();
 });
 afterEach(() => jest.useRealTimers());
-test("proposal disclosure omits funding wording while retaining the model and exact prompt", async () => {
+test("displayed proposal information omits model, reasoning, funding, and hashes without changing saved provenance", async () => {
   const v = start();
   const fundingRoute =
     "Native ChatGPT on oneman@mit.edu; user states personally funded allocation. Not ACCESS or MIT-funded inference.";
   Object.assign(v.disclosure.provenance, {
     fundingRoute,
+    modelReasoningEffort: "high",
+    sourceSha256: "source-hash",
+    scientificPromptSha256: "prompt-hash",
+    originalSourceSnapshotSha256: "original-source-hash",
+    fullProposalCsvSha256: "csv-hash",
+    sourceCohortSha256: "cohort-hash",
     sourceSnapshot: "saved-source",
+    sourceDetails: { sourceSha256: "nested-hash", label: "Saved evidence" },
   });
+  const originalProvenance = JSON.stringify(v.disclosure.provenance);
   jest.mocked(Post).mockResolvedValue(v);
   render(<QuickTitleVerification />);
   await screen.findByText("Write Technical Reports for Clients");
@@ -93,9 +101,14 @@ test("proposal disclosure omits funding wording while retaining the model and ex
   );
   expect(screen.getByText("Exact saved prompt")).toBeVisible();
   expect(screen.getByText("gpt-6.1-sol")).toBeVisible();
-  expect(screen.getByText(/saved-source/)).toBeVisible();
+  const displayed = screen.getByText(/saved-source/);
+  expect(displayed).toBeVisible();
+  expect(JSON.parse(displayed.textContent!)).toEqual({
+    sourceSnapshot: "saved-source",
+    sourceDetails: { label: "Saved evidence" },
+  });
   expect(document.body).not.toHaveTextContent(fundingRoute);
-  expect(v.disclosure.provenance).toHaveProperty("fundingRoute", fundingRoute);
+  expect(JSON.stringify(v.disclosure.provenance)).toEqual(originalProvenance);
 });
 test("three plain ratings replace rankings and reason menus; uncertainty opens a required explanation", async () => {
   jest.mocked(Post).mockResolvedValue(start());
