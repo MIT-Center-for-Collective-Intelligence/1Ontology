@@ -1,18 +1,63 @@
 {
   "schemaVersion": "private-relationship-review-package-v2",
-  "methodology": "atomic-generalization-pilot-v1",
-  "version": "atomic-generalizations-20261019-v1",
-  "directory": "atomic-v1",
-  "label": "New atomic-activity proposals",
-  "cases": 5,
+  "methodology": "atomic-generalization-expansion-v1",
+  "version": "atomic-generalizations-20261019-v3",
+  "directory": "atomic-v3",
+  "label": "Expanded atomic-activity proposals",
+  "cases": 103,
   "model": "GPT-6.1 Sol",
   "reasoning": "high",
-  "bundleSha256": "89c2a4458347e8ffdbd40860a9006566107d61da179707090c603a81b6535c11",
+  "bundleSha256": "822a6dbe0a455e6ab258a7256972897872873c13c1b3e0a0eb8f095510aa9f60",
   "sourceSha256": "06daeedf3153e3f7efa00659d69d076aa0962efdd1c373642050f5831a96a703",
-  "releaseLockSha256": "fe091f4b802f3a325940eba9b245eeeb3339074103aca9b3a3577030cb510a1a",
-  "presentationSha256": "23f4ec763303ed75ec96c183f3db70aa3ecffd26405ea6df0465fd61e12b3983",
-  "presentationTraceSha256": "6bd56d0db6c6e824ebc8588ac1d3d4154a63c28587295a8e75c60f5f45e27f8f",
+  "sourceNodes": 39614,
+  "sharedSourceGraph": {
+    "directory": "atomic-v1",
+    "sha256": "06daeedf3153e3f7efa00659d69d076aa0962efdd1c373642050f5831a96a703"
+  },
+  "releaseLockSha256": "8671adb51e9afeaf53958ce1122e98a15c29e3c823f1c2e952d2cdcbb1e5b947",
+  "presentationSha256": "1e1d9a81d982c7d8a4d309c9b0cddfdf64d5a8f6fa3c7e872cfba1b74ac32ede",
+  "presentationTraceSha256": "493db520edabcef918e93330f686678ef44324582deb26310c747ef36abfa141",
+  "semanticAttemptsSha256": "65b7715f8abf3494ca8c964b85bd132bf77b49ce90d48f08aeecbe9df769581c",
+  "executionProofSha256": "7454af460a6889568e83f1dbe9082f9c56467f5116a3894f2213b932a9c1687f",
+  "executionProofFileCount": 146,
   "history": [
+    {
+      "schemaVersion": "private-relationship-review-package-v2",
+      "methodology": "atomic-generalization-pilot-v1",
+      "version": "atomic-generalizations-20261019-v1",
+      "directory": "atomic-v1",
+      "label": "Earlier five atomic proposals and saved answers",
+      "cases": 5,
+      "model": "GPT-6.1 Sol",
+      "reasoning": "high",
+      "bundleSha256": "89c2a4458347e8ffdbd40860a9006566107d61da179707090c603a81b6535c11",
+      "sourceSha256": "06daeedf3153e3f7efa00659d69d076aa0962efdd1c373642050f5831a96a703",
+      "releaseLockSha256": "fe091f4b802f3a325940eba9b245eeeb3339074103aca9b3a3577030cb510a1a",
+      "presentationSha256": "23f4ec763303ed75ec96c183f3db70aa3ecffd26405ea6df0465fd61e12b3983",
+      "presentationTraceSha256": "6bd56d0db6c6e824ebc8588ac1d3d4154a63c28587295a8e75c60f5f45e27f8f",
+      "archiveSha256": "d32c7866c76e5cf5bd70e56b93e07a7612a23318fe63a42c97a638e65febed54",
+      "gcsUri": "gs://ontology-41607_cloudbuild/relationship-review/d32c7866c76e5cf5bd70e56b93e07a7612a23318fe63a42c97a638e65febed54.tar.gz",
+      "sourceGraphSha256": "06daeedf3153e3f7efa00659d69d076aa0962efdd1c373642050f5831a96a703",
+      "sourceNodes": 39614,
+      "inferenceLineage": [
+        {
+          "role": "author",
+          "requestSha256": "533d6012fd72bb570d85b073399b7daf30c2ecb86df82622e08d3a964aff89f4",
+          "responseSha256": "2d05f973dc8a820ac8d1df787d53b1d085f4fc4b278e9877bb908b5a7d950533"
+        },
+        {
+          "role": "first-critic",
+          "requestSha256": "9125083b2347dace7a8b72b4c2ba7d85d2f1281fc75ea3dd86dc4e946debefc4",
+          "responseSha256": "24e73179d07b1d6b48cb9b0370bcb94bb6c3708fca9a8a66f04d2ed5167bf684"
+        },
+        {
+          "role": "second-critic",
+          "requestSha256": "e61b95cfcbf06f9646128469969291b1c78eab2628722da7973aa921a9b82a27",
+          "responseSha256": "3bf513b37be4a6242f4f841e42a527dacd1a0710bbd649f2827f7058cb7b6f33"
+        }
+      ],
+      "semanticAttemptsSha256": "e78c9617081398ce41ec71dc81ad7cadc081fc3b35e36d91ea83d1e8c67fe7b1"
+    },
     {
       "schemaVersion": "private-relationship-review-package-v2",
       "version": "relationship-evidence-20261017-v3",
@@ -59,26 +104,6 @@
       "presentationTraceSha256": "94180deab8d737d63a2fb9fb20a11a83f69ab741b741314f3eecc14ca79cd4b4"
     }
   ],
-  "archiveSha256": "d32c7866c76e5cf5bd70e56b93e07a7612a23318fe63a42c97a638e65febed54",
-  "gcsUri": "gs://ontology-41607_cloudbuild/relationship-review/d32c7866c76e5cf5bd70e56b93e07a7612a23318fe63a42c97a638e65febed54.tar.gz",
-  "sourceGraphSha256": "06daeedf3153e3f7efa00659d69d076aa0962efdd1c373642050f5831a96a703",
-  "sourceNodes": 39614,
-  "inferenceLineage": [
-    {
-      "role": "author",
-      "requestSha256": "533d6012fd72bb570d85b073399b7daf30c2ecb86df82622e08d3a964aff89f4",
-      "responseSha256": "2d05f973dc8a820ac8d1df787d53b1d085f4fc4b278e9877bb908b5a7d950533"
-    },
-    {
-      "role": "first-critic",
-      "requestSha256": "9125083b2347dace7a8b72b4c2ba7d85d2f1281fc75ea3dd86dc4e946debefc4",
-      "responseSha256": "24e73179d07b1d6b48cb9b0370bcb94bb6c3708fca9a8a66f04d2ed5167bf684"
-    },
-    {
-      "role": "second-critic",
-      "requestSha256": "e61b95cfcbf06f9646128469969291b1c78eab2628722da7973aa921a9b82a27",
-      "responseSha256": "3bf513b37be4a6242f4f841e42a527dacd1a0710bbd649f2827f7058cb7b6f33"
-    }
-  ],
-  "semanticAttemptsSha256": "e78c9617081398ce41ec71dc81ad7cadc081fc3b35e36d91ea83d1e8c67fe7b1"
+  "archiveSha256": "20001768da24040757227ec814249f089d6d9a7b2775f54da725a52d70d8b881",
+  "gcsUri": "gs://ontology-41607_cloudbuild/relationship-review/20001768da24040757227ec814249f089d6d9a7b2775f54da725a52d70d8b881.tar.gz"
 }

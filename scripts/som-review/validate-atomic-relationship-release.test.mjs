@@ -11,10 +11,14 @@ function changed(edit, check) {
     path.join(os.tmpdir(), "atomic-relationship-release-"),
   );
   try {
-    const entry = JSON.parse(
+    const current = JSON.parse(
       fs.readFileSync("scripts/deployment/relationship-review-package.json"),
     );
-    assert.equal(entry.methodology, "atomic-generalization-pilot-v1");
+    const pilot = [current, ...(current.history || [])].find(
+      (e) => e.methodology === "atomic-generalization-pilot-v1",
+    );
+    assert.ok(pilot, "Missing pinned pilot manifest entry");
+    const entry = structuredClone(pilot);
     const dir = path.join(
       root,
       "src/lib/relationshipReview/data",

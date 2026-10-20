@@ -23,6 +23,40 @@ const output = (response) =>
       .join("\n"),
   );
 
+export function atomicConsideredSourceIds(c, completeCandidateEvidence = false) {
+  return [...new Set([
+    ...c.supportingSourceIds,
+    ...(completeCandidateEvidence ? c.candidateEvidence.flatMap((e) => e.supportingSourceIds) : []),
+  ])];
+}
+
+export const matchesAtomicSourceCoverage = (reported, required) =>
+  Array.isArray(reported) && same(reported, required) &&
+  new Set(reported).size === required.length;
+
+/** Expansion-only mappings; do not reinterpret frozen pilot releases. */
+export function validateAtomicExpansionBindings(c, card, author, critics, subject) {
+  const identities = {
+    responseId: author.responseId,
+    requestSha256: author.requestSha256,
+    challengeResponseId: critics[0].responseId,
+    challengeRequestSha256: critics[0].requestSha256,
+    additionalChallengeResponseId: critics[1].responseId,
+    additionalChallengeRequestSha256: critics[1].requestSha256,
+  };
+  const fail = () => { throw Error("Atomic relationship release: unbound expansion card or inference identity"); };
+  for (const key of ["responseId", "requestSha256", "challengeResponseId"])
+    if (c[key] !== identities[key]) fail();
+  for (const key of Object.keys(c))
+    if (/(?:responseId|requestSha256|jobId)$/i.test(key) &&
+        (!Object.hasOwn(identities, key) || c[key] !== identities[key])) fail();
+  const assessment = author.value.cases.find((a) => a.subjectId === c.id);
+  if (!card || card.caseId !== c.id || card.eligible !== true ||
+      card.headline !== subject.title || card.reason !== assessment?.reason) fail();
+  for (const key of Object.keys(card))
+    if (/(?:responseId|requestSha256|jobId)$/i.test(key)) fail();
+}
+
 export function validateAtomicReviewShape(value, author = false) {
   const strings = (v) => Array.isArray(v) && v.every((x) => typeof x === "string");
   const text = (v) => typeof v === "string" && !!v.trim();
@@ -49,7 +83,14 @@ export function validateAtomicRelationshipRelease(root, committed) {
     "src/lib/relationshipReview/data",
     committed.directory,
   );
-  const bytes = (file) => fs.readFileSync(path.join(dir, file));
+  return validateAtomicRelationshipEvidence(committed, (file) =>
+    fs.readFileSync(path.join(dir, file)),
+  );
+}
+
+/** Validate identical pinned evidence whether stored as a standalone pilot or
+ * as an exact batch proof inside a larger release. No checks are skipped. */
+export function validateAtomicRelationshipEvidence(committed, bytes, {completeCandidateEvidence = false} = {}) {
   const read = (file) => JSON.parse(bytes(file));
   const fail = (message) => {
     throw Error("Atomic relationship release: " + message);
@@ -192,16 +233,21 @@ export function validateAtomicRelationshipRelease(root, committed) {
   const admitted = [];
   for (const c of source.cases) {
     const a = author.value.cases.find((x) => x.subjectId === c.subjectId);
+    // The expansion supplies complete proposed-parent evidence in addition to
+    // focal evidence. Its reported considered/supporting IDs therefore refer
+    // to that combined evidence universe. The standalone pilot remains exact
+    // against its original focal-only scope. The expansion's outer validator
+    // independently derives every candidate record from the pinned graph.
+    const consideredIds = atomicConsideredSourceIds(c, completeCandidateEvidence);
     if (
-      !same(a.consideredSourceIds, c.supportingSourceIds) ||
-      new Set(a.consideredSourceIds).size !== c.supportingSourceIds.length ||
+      !matchesAtomicSourceCoverage(a.consideredSourceIds, consideredIds) ||
       !same(
         a.currentParentAssessments.map((p) => p.parentId),
         c.currentParentIds,
       ) ||
       a.currentParentAssessments.length !== c.currentParentIds.length ||
       !a.supportingSourceIds.every((id) =>
-        c.supportingSourceIds.includes(id),
+        consideredIds.includes(id),
       ) ||
       !a.proposedParentIds.every(
         (id) =>
@@ -214,8 +260,7 @@ export function validateAtomicRelationshipRelease(root, committed) {
     );
     for (const r of critiques)
       if (
-        !same(r.consideredSourceIds, c.supportingSourceIds) ||
-        new Set(r.consideredSourceIds).size !== c.supportingSourceIds.length
+        !matchesAtomicSourceCoverage(r.consideredSourceIds, consideredIds)
       )
         fail("critic source coverage mismatch");
     if (
@@ -231,6 +276,10 @@ export function validateAtomicRelationshipRelease(root, committed) {
       admitted.push(c.subjectId);
   }
   const caseIds = dataset.cases.map((c) => c.id);
+  if (completeCandidateEvidence &&
+      (presentation.cards.length !== caseIds.length ||
+       !same(presentation.cards.map((c) => c.caseId), caseIds)))
+    fail("invalid expansion card inventory");
   if (
     !same(caseIds, admitted) ||
     new Set(caseIds).size !== caseIds.length ||
@@ -398,6 +447,8 @@ export function validateAtomicRelationshipRelease(root, committed) {
     if (inspectRecommendation(c.id, proposed, graph).length)
       fail("joint cycle or lost current Generalization");
     const card = presentation.cards.find((x) => x.caseId === c.id);
+    if (completeCandidateEvidence)
+      validateAtomicExpansionBindings(c, card, author, trace.critiques, records.get(c.id));
     if (
       !card?.eligible ||
       card.remainingMaterialObjections.length ||

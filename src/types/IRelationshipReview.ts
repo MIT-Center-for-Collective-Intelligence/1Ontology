@@ -41,6 +41,7 @@ export interface RelationshipCase extends RelationshipNode {
   responseId: string;
   requestSha256: string;
   challengeResponseId: string;
+  generalizationEvidence?: { parentId: string; sourceIds: string[] }[];
   meetingEvidence?: {
     sourceFile: string;
     sourceFileSha256: string;
@@ -50,7 +51,9 @@ export interface RelationshipCase extends RelationshipNode {
   };
 }
 export interface RelationshipDataset {
-  methodology?: "atomic-generalization-pilot-v1";
+  methodology?:
+    | "atomic-generalization-pilot-v1"
+    | "atomic-generalization-expansion-v1";
   version: string;
   createdAt: string;
   title: string;

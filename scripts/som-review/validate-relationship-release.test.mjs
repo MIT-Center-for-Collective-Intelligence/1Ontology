@@ -70,8 +70,14 @@ test("rejects a repinned display-card binding that disagrees with the raw respon
     fs.mkdirSync(scripts, { recursive: true });
     fs.cpSync("src/lib/relationshipReview/data", data, { recursive: true });
     const manifest = JSON.parse(fs.readFileSync("scripts/deployment/relationship-review-package.json"));
-    const directory = path.join(data, manifest.directory || "");
-    const dataset = JSON.parse(fs.readFileSync(path.join(directory, manifest.directory ? "dataset.json" : "top-level-v1.json")));
+    // Legacy cardIdentifierNormalization belongs to the pinned root release,
+    // not to an active atomic batch with its own frozen trace hashes.
+    const entry = manifest.history?.find(
+      (e) => !e.directory && e.version === "top-level-relationships-20261016-v1",
+    );
+    assert.ok(entry, "missing pinned historical top-level-v1 entry");
+    const directory = data;
+    const dataset = JSON.parse(fs.readFileSync(path.join(directory, "top-level-v1.json")));
     const id = dataset.cases[0].id;
     const file = path.join(directory, "traces", id + ".json");
     const trace = JSON.parse(fs.readFileSync(file));
@@ -82,7 +88,7 @@ test("rejects a repinned display-card binding that disagrees with the raw respon
     const lock = JSON.parse(fs.readFileSync(lockFile));
     lock.traceHashes[id] = hash(fs.readFileSync(file));
     fs.writeFileSync(lockFile, JSON.stringify(lock));
-    manifest.releaseLockSha256 = hash(fs.readFileSync(lockFile));
+    entry.releaseLockSha256 = hash(fs.readFileSync(lockFile));
     fs.writeFileSync(path.join(scripts, "relationship-review-package.json"), JSON.stringify(manifest));
     assert.throws(() => validateRelationshipRelease(root), /unverified display card identifier normalization/);
   } finally {
