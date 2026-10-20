@@ -174,6 +174,12 @@ export function sourceStatus(
           state.drafts[quickKey(uid, b.id)].firstPresentedAt,
       )[0] || unfinished[0];
   const draft = item ? state.drafts[quickKey(uid, item.id)] : undefined;
+  const regular = flagged
+    ? assignedSourcePages(state, data, sources, uid, false, canManage)
+    : pages;
+  const regularRemaining = regular.filter(
+    (p) => !state.answers[quickKey(uid, p.id)],
+  ).length;
   return {
     studyId: state.legacy.study.id,
     datasetVersion: sources.version,
@@ -189,6 +195,19 @@ export function sourceStatus(
     questions: item ? sourceQuestions(item) : [],
     flagged,
     canManage,
+    exports: {
+      ownSubmitted:
+        Object.values(state.answers).filter((a) => a.reviewerId === uid)
+          .length +
+        Object.values(state.legacy.answers).filter((a) => a.reviewerId === uid)
+          .length,
+      teamAllowed:
+        canManage &&
+        (Boolean(state.legacy.study.softwareQA) ||
+          !state.legacy.study.roster.some((r) => r.reviewerId === uid) ||
+          regularRemaining === 0),
+      regularRemaining,
+    },
     canReviewFlagged:
       canManage ||
       state.legacy.study.flaggedReviewerIds.includes(uid) ||

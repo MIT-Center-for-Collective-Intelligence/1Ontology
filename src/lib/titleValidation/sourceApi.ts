@@ -12,6 +12,7 @@ import { STUDY_COLLECTION } from "./repository";
 import { hasReviewNavigation } from "./reviewNavigation";
 import type { Actor } from "./api";
 import { makeQuickSelection } from "./quickSelection";
+import { sourceReviewExport } from "./sourceExport";
 
 export async function sourceReviewAction(
   action: string,
@@ -32,7 +33,13 @@ export async function sourceReviewAction(
   )
     throw new TitleValidationError(404, "Unknown description review action.");
   const sources = getSourceDataset();
-  if (action === "quick-source-export") {
+  if (
+    action === "quick-source-export" &&
+    body.scope !== undefined &&
+    !["self", "team"].includes(body.scope)
+  )
+    throw new TitleValidationError(400, "Unknown download scope.");
+  if (action === "quick-source-export" && body.scope !== "self") {
     if (!actor.canManage || actor.preview)
       throw new TitleValidationError(
         403,
@@ -63,28 +70,15 @@ export async function sourceReviewAction(
       answers: rows[2] as any,
       drafts: rows[3] as any,
     };
-    const own = sourceStatus(state, data, sources, actor.uid, false, true);
-    if (
-      state.legacy.study.roster.some((r) => r.reviewerId === actor.uid) &&
-      own.completed !== own.total &&
-      !body.qa
-    )
-      throw new TitleValidationError(
-        403,
-        "Finish your regular reviews before opening other reviewers’ answers.",
-      );
-    return {
-      formatVersion: "source-title-review-export-v2",
-      study: state.legacy.study,
-      answers: Object.values(state.answers),
-      drafts: Object.values(state.drafts),
-      legacyAnswers: Object.values(state.legacy.answers),
-      legacyDrafts: Object.values(state.legacy.drafts),
-      dataset: sources,
-      legacyDataset: data,
-      interpretation:
-        "One new timing record per O*NET description page. Previous activity-level answers/timing are separate historical records, never overwritten or added to page time. Associated activities supplement the original sample; do not treat them as independently sampled cases. Missing model proposals are not human rejections.",
-    };
+    return sourceReviewExport(
+      state,
+      data,
+      sources,
+      actor.uid,
+      actor.canManage,
+      actor.preview,
+      "team",
+    );
   }
   const seed = (): QuickState => {
     const legacy: QuickState = {
@@ -114,7 +108,19 @@ export async function sourceReviewAction(
     legacy.study.selection = makeQuickSelection(legacy, data, Date.now());
     return legacy;
   };
-  return withSourceStudy(id, actor.uid, actor.preview, seed, (state) => {
+  return withSourceStudy<any>(id, actor.uid, actor.preview, seed, (state) => {
+    if (action === "quick-source-export")
+      return {
+        result: sourceReviewExport(
+          state,
+          data,
+          sources,
+          actor.uid,
+          actor.canManage,
+          actor.preview,
+          "self",
+        ),
+      };
     let event: Record<string, unknown> | undefined;
     if (
       action === "quick-source-checkpoint" ||
@@ -173,6 +179,10 @@ export async function sourceReviewAction(
           view.canReviewFlagged || hasReviewNavigation(actor.uid),
         preview: actor.preview,
         canUseReviewLinks: actor.canUseReviewLinks === true,
+        exports: {
+          ...view.exports,
+          teamAllowed: view.exports.teamAllowed && !actor.preview,
+        },
       },
       ...(event ? { event } : {}),
     };
