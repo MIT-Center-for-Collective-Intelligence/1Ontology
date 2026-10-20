@@ -195,7 +195,8 @@ def verify_title_review_route(origin):
                 continue
             raise ValueError("Unexpected anonymous title review response") from error
         raise ValueError("Anonymous title review access was accepted")
-    for action in ("quick-session", "quick-checkpoint", "quick-respond", "quick-manage", "quick-export"):
+    for action in ("quick-session", "quick-checkpoint", "quick-respond", "quick-manage", "quick-export",
+                   "quick-source-session", "quick-source-status", "quick-source-checkpoint", "quick-source-respond", "quick-source-export"):
         request = urllib.request.Request(origin + "/api/som-review/title-validation/" + action,
             data=b'{"previewReviewer":"preview-a","qa":true}', method="POST", headers={"Content-Type":"application/json"})
         try:
