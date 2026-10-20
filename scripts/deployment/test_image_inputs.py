@@ -33,6 +33,34 @@ def verify_review_modules(dockerfile):
 
 
 class ReviewImageInputsTests(unittest.TestCase):
+    def test_cloudbuild_provisions_node_before_private_package_staging(self):
+        steps = re.split(r"(?m)^  - name: ", (ROOT / "cloudbuild.yaml").read_text())[1:]
+        provision_index = next(i for i, step in enumerate(steps)
+                               if step.startswith('"node:18.20.8-bookworm-slim"\n'))
+        staging_index = next(i for i, step in enumerate(steps)
+                             if "python3 scripts/deployment/stage_relationship_package.py" in step)
+        self.assertLess(provision_index, staging_index)
+        # Without waitFor overrides, Cloud Build waits for all preceding steps.
+        self.assertNotIn("waitFor:", "\n".join(steps[:staging_index + 1]))
+        provision = steps[provision_index]
+        staging = steps[staging_index]
+        for step in (provision, staging):
+            self.assertIn("    entrypoint: bash\n", step)
+            self.assertIn('      - "-ceu"\n', step)
+        mkdir = "mkdir -p /workspace/.cloudbuild-tools/bin"
+        copy = "cp /usr/local/bin/node /workspace/.cloudbuild-tools/bin/node"
+        self.assertLess(provision.index(mkdir), provision.index(copy))
+        self.assertTrue(staging.startswith('"gcr.io/google.com/cloudsdktool/cloud-sdk"\n'))
+        # Cloud Build's $$ preserves runtime expansion of the existing SDK PATH.
+        export = 'export PATH="/workspace/.cloudbuild-tools/bin:$$PATH"'
+        self.assertLess(staging.index(export), staging.index("node --version"))
+        for command in (
+                "python3 scripts/deployment/stage_relationship_package.py",
+                "python3 scripts/deployment/stage_quick_title_package.py",
+                "python3 -m unittest discover -s scripts/deployment -p 'test_*.py'"):
+            self.assertLess(staging.index("node --version"), staging.index(command))
+        self.assertIn(".cloudbuild-tools/", (ROOT / ".dockerignore").read_text().splitlines())
+
     def test_all_review_module_dependencies_and_tests_are_in_the_image(self):
         verify_review_modules((ROOT / "Dockerfile").read_text())
 
