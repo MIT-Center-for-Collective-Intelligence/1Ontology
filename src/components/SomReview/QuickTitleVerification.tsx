@@ -11,6 +11,7 @@ import {
   CardContent,
   FormControl,
   FormControlLabel,
+  FormHelperText,
   FormLabel,
   LinearProgress,
   Radio,
@@ -22,7 +23,7 @@ import {
 } from "@mui/material";
 import { ThemeProvider } from "@mui/material/styles";
 import { titleValidationTheme } from "./titleValidationDesign";
-import { Post } from "@components/lib/utils/Post";
+import { postQuickReview } from "@components/lib/titleValidation/quickRequest";
 import { quickReviewCsv } from "@components/lib/titleValidation/quickCsv";
 import type {
   QuickPayload,
@@ -46,8 +47,23 @@ const clock = (ms: number) => {
 };
 const message = (e: any) =>
   e?.response?.data?.error ||
+  (typeof e === "string" ? e : "") ||
   e?.message ||
   "Your answer could not be saved. Please retry.";
+const questionIssues = (view: View, payload: QuickPayload) =>
+  Object.fromEntries(
+    view.questions.flatMap((q) => {
+      const rating = payload.ratings[q.id];
+      if (!rating || !labels.some((r) => r.value === rating.value))
+        return [[q.id, "Choose one of the three ratings before continuing."]];
+      if (
+        ["not_acceptable", "unsure"].includes(rating.value) &&
+        !rating.explanation?.trim()
+      )
+        return [[q.id, "Please explain this answer before continuing."]];
+      return [];
+    }),
+  );
 const storage = {
   get: (key: string) => {
     try {
@@ -88,6 +104,7 @@ export default function QuickTitleVerification({
     [notice, setNotice] = useState(""),
     [busy, setBusy] = useState(false),
     [pending, setPending] = useState(false),
+    [validationAttempted, setValidationAttempted] = useState(false),
     [reviewer, setReviewer] = useState("preview-a"),
     [emails, setEmails] = useState("");
   const viewRef = useRef<View | null>(null),
@@ -104,22 +121,14 @@ export default function QuickTitleVerification({
   async function request(action: string, extra: object = {}): Promise<any> {
     const path = "/som-review/title-validation/quick-" + action,
       body = { ...context, ...extra };
-    if (!preview) return Post(path, body, false);
-    const response = await fetch("/api" + path, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      }),
-      data = await response.json();
-    if (!response.ok)
-      throw Object.assign(new Error(data.error), { status: response.status });
-    return data;
+    return postQuickReview(path, body, preview);
   }
   const draftKey = (v: View) =>
     `quick-title-draft:${v.datasetVersion}:${v.reviewerKey}:${v.item?.id}`;
   const pendingKey = (v: View) =>
     `quick-title-pending:${v.reviewerKey}:${flagged ? "flagged" : "regular"}`;
   function applyView(next: View, recover = true) {
+    setValidationAttempted(false);
     viewRef.current = next;
     setView(next);
     revision.current = next.draft?.revision || 0;
@@ -147,11 +156,38 @@ export default function QuickTitleVerification({
       let next: View = await request("session");
       const old = storage.get(pendingKey(next));
       if (old) {
-        next = await request("respond", old);
-        storage.remove(pendingKey(next));
-        setNotice(
-          "Your previous submission was recovered and confirmed saved.",
-        );
+        try {
+          next = await request("respond", old);
+          storage.remove(pendingKey(next));
+          setNotice(
+            "Your previous submission was recovered and confirmed saved.",
+          );
+        } catch (e: any) {
+          if (e?.status !== 400) throw e;
+          // A definite rejection can be corrected. Preserve even an older
+          // browser's frozen submission when no newer local draft exists.
+          const local = storage.get(draftKey(next));
+          if (
+            old.payload?.caseId === next.item?.id &&
+            old.payload?.submissionId === next.draft?.payload.submissionId &&
+            old.revision === next.draft?.revision &&
+            (!local || local.payload?.activeTimeMs < old.payload.activeTimeMs)
+          )
+            storage.set(draftKey(next), {
+              payload: old.payload,
+              revision: old.revision,
+            });
+          storage.remove(pendingKey(next));
+          pendingRef.current = null;
+          setPending(false);
+          applyView(next);
+          setValidationAttempted(true);
+          setError(
+            message(e) +
+              " Your choices are still here; complete the highlighted questions and save again.",
+          );
+          return;
+        }
       }
       pendingRef.current = null;
       setPending(false);
@@ -187,6 +223,14 @@ export default function QuickTitleVerification({
     )
       return;
     const v = viewRef.current;
+    if (final && !pendingRef.current) {
+      setValidationAttempted(true);
+      const first = Object.keys(questionIssues(v, payloadRef.current))[0];
+      if (first) {
+        document.getElementById("quick-question-" + first)?.focus();
+        return;
+      }
+    }
     const body = pendingRef.current || {
       payload: JSON.parse(JSON.stringify(payloadRef.current)),
       revision: revision.current,
@@ -320,6 +364,8 @@ export default function QuickTitleVerification({
   }
   // Background checkpoints must not interrupt typing. Only final delivery freezes an answer.
   const frozen = pending;
+  const issues =
+    validationAttempted && view && payload ? questionIssues(view, payload) : {};
   return (
     <ThemeProvider theme={titleValidationTheme}>
       <ScopedCssBaseline>
@@ -479,12 +525,19 @@ export default function QuickTitleVerification({
                     </Card>
                     <Stack
                       component="form"
+                      noValidate
                       spacing={2}
                       onSubmit={(e) => {
                         e.preventDefault();
                         save(true);
                       }}
                     >
+                      {Object.keys(issues).length > 0 && (
+                        <Alert severity="error">
+                          Please complete the highlighted questions before
+                          saving. Your choices and review time are still here.
+                        </Alert>
+                      )}
                       {view.questions.map((q) => (
                         <Card key={q.id}>
                           <CardContent>
@@ -492,6 +545,9 @@ export default function QuickTitleVerification({
                               component="fieldset"
                               fullWidth
                               disabled={frozen}
+                              error={Boolean(issues[q.id])}
+                              id={"quick-question-" + q.id}
+                              tabIndex={-1}
                             >
                               <FormLabel
                                 component="legend"
@@ -541,6 +597,9 @@ export default function QuickTitleVerification({
                                   />
                                 ))}
                               </RadioGroup>
+                              {issues[q.id] && (
+                                <FormHelperText>{issues[q.id]}</FormHelperText>
+                              )}
                               {["not_acceptable", "unsure"].includes(
                                 payload.ratings[q.id]?.value,
                               ) && (

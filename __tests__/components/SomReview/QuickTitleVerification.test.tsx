@@ -10,8 +10,10 @@ import {
 } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import QuickTitleVerification from "../../../src/components/SomReview/QuickTitleVerification";
-import { Post } from "../../../src/lib/utils/Post";
-jest.mock("../../../src/lib/utils/Post", () => ({ Post: jest.fn() }));
+import { postQuickReview as Post } from "../../../src/lib/titleValidation/quickRequest";
+jest.mock("../../../src/lib/titleValidation/quickRequest", () => ({
+  postQuickReview: jest.fn(),
+}));
 const start = () => ({
   studyId: "quick-test",
   datasetVersion: "quick-v1",
@@ -141,6 +143,117 @@ test("unfinished answers and time recover from browser draft, and restore matchi
     await screen.findByDisplayValue("My unfinished correction"),
   ).toBeInTheDocument();
   expect(screen.getByText(/This activity: 0:19/)).toBeInTheDocument();
+});
+test("an unanswered question is highlighted before submission and existing choices remain editable", async () => {
+  const v = start();
+  jest
+    .mocked(Post)
+    .mockResolvedValueOnce(v)
+    .mockResolvedValueOnce({
+      ...v,
+      item: undefined,
+      draft: undefined,
+      questions: [],
+      completed: 25,
+    });
+  render(<QuickTitleVerification />);
+  await screen.findByText("Write Technical Reports for Clients");
+  const groups = screen.getAllByRole("radiogroup");
+  fireEvent.click(within(groups[0]).getByLabelText("Acceptable"));
+  fireEvent.click(screen.getByRole("button", { name: "Save and continue" }));
+  expect(
+    screen.getByText(/Please complete the highlighted questions/),
+  ).toBeVisible();
+  expect(
+    screen.getByText("Choose one of the three ratings before continuing."),
+  ).toBeVisible();
+  expect(Post).toHaveBeenCalledTimes(1);
+  expect(within(groups[0]).getByLabelText("Acceptable")).toBeChecked();
+  expect(within(groups[1]).getByLabelText("Acceptable")).toBeEnabled();
+  fireEvent.click(within(groups[1]).getByLabelText("Acceptable"));
+  fireEvent.click(screen.getByRole("button", { name: "Save and continue" }));
+  await screen.findByText(/You have finished the 25 activities/);
+  expect(Post).toHaveBeenCalledTimes(2);
+});
+test("a definite server rejection leaves all choices editable for a corrected save", async () => {
+  const v = start();
+  jest
+    .mocked(Post)
+    .mockResolvedValueOnce(v)
+    .mockRejectedValueOnce(
+      Object.assign(new Error("Please correct this answer."), { status: 400 }),
+    )
+    .mockResolvedValueOnce({
+      ...v,
+      item: undefined,
+      draft: undefined,
+      questions: [],
+      completed: 25,
+    });
+  render(<QuickTitleVerification />);
+  await screen.findByText("Write Technical Reports for Clients");
+  for (const group of screen.getAllByRole("radiogroup"))
+    fireEvent.click(within(group).getByLabelText("Acceptable"));
+  fireEvent.click(screen.getByRole("button", { name: "Save and continue" }));
+  await screen.findByText("Please correct this answer.");
+  for (const group of screen.getAllByRole("radiogroup"))
+    expect(within(group).getByLabelText("Acceptable")).toBeEnabled();
+  expect(
+    localStorage.getItem("quick-title-pending:reviewer-test:regular"),
+  ).toBeNull();
+  fireEvent.change(screen.getByLabelText(/Suggested correction/), {
+    target: { value: "My correction after the rejection" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Save and continue" }));
+  await screen.findByText(/You have finished the 25 activities/);
+  expect((jest.mocked(Post).mock.calls[2][1] as any).payload.correction).toBe(
+    "My correction after the rejection",
+  );
+});
+test("a rejected submission from an older browser recovers on reload without losing choices or time", async () => {
+  const v = start();
+  const payload = JSON.parse(JSON.stringify(v.draft.payload));
+  payload.ratings.original = {
+    value: "unsure",
+    explanation: "My saved uncertainty",
+  };
+  payload.activeTimeMs = 19000;
+  localStorage.setItem(
+    "quick-title-pending:reviewer-test:regular",
+    JSON.stringify({ payload, revision: 0 }),
+  );
+  jest
+    .mocked(Post)
+    .mockResolvedValueOnce(v)
+    .mockRejectedValueOnce(
+      Object.assign(new Error("Choose a rating for every question."), {
+        status: 400,
+      }),
+    )
+    .mockResolvedValueOnce({
+      ...v,
+      item: undefined,
+      draft: undefined,
+      questions: [],
+      completed: 25,
+    });
+  render(<QuickTitleVerification />);
+  expect(await screen.findByDisplayValue("My saved uncertainty")).toBeEnabled();
+  expect(screen.getByText(/This activity: 0:19/)).toBeVisible();
+  expect(
+    within(screen.getAllByRole("radiogroup")[0]).getByLabelText("I’m not sure"),
+  ).toBeChecked();
+  expect(
+    localStorage.getItem("quick-title-pending:reviewer-test:regular"),
+  ).toBeNull();
+  fireEvent.click(
+    within(screen.getAllByRole("radiogroup")[1]).getByLabelText("Acceptable"),
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Save and continue" }));
+  await screen.findByText(/You have finished the 25 activities/);
+  const sent = (jest.mocked(Post).mock.calls[2][1] as any).payload;
+  expect(sent.ratings.original).toEqual(payload.ratings.original);
+  expect(sent.activeTimeMs).toBeGreaterThanOrEqual(19000);
 });
 test("an uncertain network delivery retries the same frozen answer and advances only after confirmation", async () => {
   const v = start();
