@@ -1632,7 +1632,6 @@ export default function HumanTitleValidation({
                       Model that generated the retained proposals:{" "}
                       {session.disclosure.model}.
                     </Typography>
-                    <Typography>{session.disclosure.fundingRoute}</Typography>
                     <Typography>{session.disclosure.selection}</Typography>
                     <Typography
                       variant="body2"

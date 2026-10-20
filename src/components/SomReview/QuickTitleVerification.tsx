@@ -659,8 +659,7 @@ export default function QuickTitleVerification({
                     <Typography variant="body2" sx={{ whiteSpace: "pre-wrap" }}>
                       {String(
                         view.disclosure.provenance.model || "GPT-6.1 Sol",
-                      )}{" "}
-                      · {String(view.disclosure.provenance.fundingRoute || "")}
+                      )}
                     </Typography>
                     <Typography
                       variant="body2"
@@ -676,7 +675,12 @@ export default function QuickTitleVerification({
                         overflowWrap: "anywhere",
                       }}
                     >
-                      {JSON.stringify(view.disclosure.provenance, null, 2)}
+                      {JSON.stringify(
+                        view.disclosure.provenance,
+                        (key, value) =>
+                          key === "fundingRoute" ? undefined : value,
+                        2,
+                      )}
                     </Typography>
                     <Typography variant="body2">
                       The software requires a rating for each displayed question
