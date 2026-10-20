@@ -104,6 +104,7 @@ const start = () => ({
   canManage: false,
   canReviewFlagged: false,
   canUseReviewLinks: false,
+  exports: { ownSubmitted: 1, teamAllowed: false, regularRemaining: 25 },
   regularLimit: 25,
   softwareQA: false,
   savedActiveTimeMs: 4000,
@@ -116,6 +117,7 @@ const start = () => ({
 });
 beforeEach(() => {
   jest.clearAllMocks();
+  jest.mocked(Post).mockReset();
   localStorage.clear();
 });
 afterEach(() => jest.useRealTimers());
@@ -238,7 +240,7 @@ test("pausing during an in-flight checkpoint keeps the review paused after that 
     await Promise.resolve();
   });
   await act(async () => {
-    jest.advanceTimersByTime(10000);
+    jest.advanceTimersByTime(30000);
   });
   fireEvent.click(screen.getByRole("button", { name: "Pause review" }));
   await act(async () => {
@@ -256,7 +258,7 @@ test("pausing during an in-flight checkpoint keeps the review paused after that 
   const local = JSON.parse(
     localStorage.getItem("source-title-draft:quick-v1:reviewer-test:case-1")!,
   );
-  expect(local.payload.activeTimeMs).toBe(17000);
+  expect(local.payload.activeTimeMs).toBe(37000);
   expect(local.revision).toBe(1);
 });
 test("displayed proposal information omits model, reasoning, funding, and hashes without changing saved provenance", async () => {
@@ -527,12 +529,17 @@ test("automatic checkpoint includes elapsed active-page time and open text", asy
     target: { value: "Brief interruption noted." },
   });
   await act(async () => {
-    jest.advanceTimersByTime(10000);
+    jest.advanceTimersByTime(2000);
+    await Promise.resolve();
+  });
+  await act(async () => {
+    jest.advanceTimersByTime(28000);
     await Promise.resolve();
   });
   const checkpoint = jest
     .mocked(Post)
-    .mock.calls.find((c) => String(c[0]).endsWith("checkpoint"))!;
+    .mock.calls.filter((c) => String(c[0]).endsWith("checkpoint"))
+    .slice(-1)[0];
   expect((checkpoint[1] as any).payload.interruption).toBe(
     "Brief interruption noted.",
   );
@@ -690,6 +697,250 @@ test("account errors appear beside Add reviewers and preserve the entered email"
     expect(screen.getAllByText(missing).length).toBeGreaterThan(0),
   );
   expect(field).toHaveValue("s_a_min@mit.edu");
+});
+test("submission queues behind autosave, includes newer edits, and never loses or duplicates the click", async () => {
+  jest.useFakeTimers();
+  const v = start();
+  let finish!: (v: any) => void, checkpointBody: any;
+  jest.mocked(Post).mockImplementation(async (path, body: any) => {
+    if (String(path).endsWith("checkpoint")) {
+      checkpointBody = body;
+      return new Promise((r) => {
+        finish = r;
+      }) as any;
+    }
+    if (String(path).endsWith("respond"))
+      return {
+        ...v,
+        item: undefined,
+        draft: undefined,
+        questions: [],
+        completed: 25,
+      } as any;
+    return v as any;
+  });
+  render(<QuickTitleVerification />);
+  await act(async () => {
+    await Promise.resolve();
+  });
+  for (const group of screen.getAllByRole("radiogroup"))
+    fireEvent.click(within(group).getByLabelText("Acceptable"));
+  await act(async () => {
+    jest.advanceTimersByTime(2000);
+    await Promise.resolve();
+  });
+  expect(finish).toBeDefined();
+  expect(
+    screen.getByRole("button", { name: "Save and continue" }),
+  ).toBeEnabled();
+  expect(
+    screen.queryByRole("button", { name: "Saving…" }),
+  ).not.toBeInTheDocument();
+  fireEvent.click(
+    within(screen.getAllByRole("radiogroup")[0]).getByLabelText(
+      "Not acceptable",
+    ),
+  );
+  fireEvent.change(screen.getByLabelText(/Why is it not acceptable/), {
+    target: { value: "New text typed while draft save is slow" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Save and continue" }));
+  expect(
+    jest
+      .mocked(Post)
+      .mock.calls.filter((c) => String(c[0]).endsWith("respond")),
+  ).toHaveLength(0);
+  expect(screen.getByRole("button", { name: "Saving…" })).toBeDisabled();
+  await act(async () => {
+    finish({
+      ...v,
+      draft: { ...v.draft, revision: 1, payload: checkpointBody.payload },
+    });
+    await Promise.resolve();
+  });
+  await screen.findByText(/You have finished the 25/);
+  const deliveries = jest
+    .mocked(Post)
+    .mock.calls.filter((c) => String(c[0]).endsWith("respond"));
+  expect(deliveries).toHaveLength(1);
+  expect((deliveries[0][1] as any).revision).toBe(1);
+  expect(
+    (deliveries[0][1] as any).payload.ratings["related-0"].explanation,
+  ).toBe("New text typed while draft save is slow");
+});
+test("unchanged paused drafts cause no repeated network writes", async () => {
+  jest.useFakeTimers();
+  let v = start();
+  jest.mocked(Post).mockImplementation(async (path, body: any) => {
+    if (String(path).endsWith("checkpoint"))
+      v = {
+        ...v,
+        draft: {
+          ...v.draft,
+          revision: v.draft.revision + 1,
+          payload: body.payload,
+        },
+      };
+    return v as any;
+  });
+  render(<QuickTitleVerification />);
+  await act(async () => {
+    await Promise.resolve();
+  });
+  await act(async () => {
+    jest.advanceTimersByTime(5000);
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Pause review" }));
+  await act(async () => {
+    await Promise.resolve();
+  });
+  const count = jest.mocked(Post).mock.calls.length;
+  await act(async () => {
+    jest.advanceTimersByTime(300000);
+    await Promise.resolve();
+  });
+  expect(jest.mocked(Post).mock.calls.length).toBe(count);
+  expect(v.draft.payload.activeTimeMs).toBe(12000);
+});
+test("download errors appear beside the download controls without interrupting the form", async () => {
+  jest
+    .mocked(Post)
+    .mockResolvedValueOnce(start())
+    .mockRejectedValueOnce(new Error("Download temporarily unavailable"));
+  render(<QuickTitleVerification />);
+  await screen.findByText("Write Technical Reports for Clients");
+  fireEvent.click(
+    screen.getByRole("button", {
+      name: "Download my reviews and timing (CSV)",
+    }),
+  );
+  expect(
+    await screen.findByText("Download temporarily unavailable"),
+  ).toBeVisible();
+  const card = screen.getByText("Download submitted reviews").parentElement!;
+  expect(
+    within(card).getByText("Download temporarily unavailable"),
+  ).toBeVisible();
+  expect(
+    screen.getByRole("button", { name: "Save and continue" }),
+  ).toBeEnabled();
+});
+test("a CSV download uses an attached link, retains a manual download link, and cleans up only on unmount", async () => {
+  const create = jest.fn(() => "blob:prepared-review-csv"),
+    revoke = jest.fn();
+  Object.defineProperty(URL, "createObjectURL", {
+    configurable: true,
+    writable: true,
+    value: create,
+  });
+  Object.defineProperty(URL, "revokeObjectURL", {
+    configurable: true,
+    writable: true,
+    value: revoke,
+  });
+  let attached = false;
+  const click = jest
+    .spyOn(HTMLAnchorElement.prototype, "click")
+    .mockImplementation(function (this: HTMLAnchorElement) {
+      attached = document.body.contains(this);
+    });
+  jest
+    .mocked(Post)
+    .mockResolvedValueOnce(start())
+    .mockResolvedValueOnce({
+      study: { roster: [] },
+      answers: [],
+      legacyAnswers: [],
+      dataset: { pages: [] },
+      legacyDataset: { cases: [] },
+    });
+  const mounted = render(<QuickTitleVerification />);
+  await screen.findByText("Write Technical Reports for Clients");
+  fireEvent.click(
+    screen.getByRole("button", {
+      name: "Download my reviews and timing (CSV)",
+    }),
+  );
+  const fallback = await screen.findByRole("link", {
+    name: "Download the prepared CSV",
+  });
+  expect(attached).toBe(true);
+  expect(fallback).toHaveAttribute("href", "blob:prepared-review-csv");
+  expect(fallback).toHaveAttribute(
+    "download",
+    "title-review-self-quick-v1.csv",
+  );
+  expect(revoke).not.toHaveBeenCalled();
+  expect(jest.mocked(Post).mock.calls[1][1]).toMatchObject({ scope: "self" });
+  mounted.unmount();
+  expect(revoke).toHaveBeenCalledWith("blob:prepared-review-csv");
+  click.mockRestore();
+});
+test("team downloads clearly explain the independence restriction while personal download remains available", async () => {
+  jest.mocked(Post).mockResolvedValue({ ...start(), canManage: true });
+  render(<QuickTitleVerification />);
+  await screen.findByText("Write Technical Reports for Clients");
+  expect(
+    screen.getByRole("button", {
+      name: "Download team reviews and timing (CSV)",
+    }),
+  ).toBeDisabled();
+  expect(
+    screen.getByRole("button", {
+      name: "Download my reviews and timing (CSV)",
+    }),
+  ).toBeEnabled();
+  expect(
+    screen.getByText(/Finish your remaining 25 regular description pages/),
+  ).toBeVisible();
+});
+test("conflict recovery keeps an unsent copy before explicitly loading another tab's saved version", async () => {
+  const v = start();
+  v.draft.revision = 2;
+  const local = JSON.parse(JSON.stringify(v.draft.payload));
+  local.ratings["related-0"] = {
+    value: "unsure",
+    explanation: "My unsent version",
+  };
+  local.activeTimeMs = 19000;
+  localStorage.setItem(
+    "source-title-draft:quick-v1:reviewer-test:case-1",
+    JSON.stringify({ revision: 0, payload: local }),
+  );
+  Object.defineProperty(URL, "createObjectURL", {
+    configurable: true,
+    writable: true,
+    value: jest.fn(() => "blob:recovery-copy"),
+  });
+  Object.defineProperty(URL, "revokeObjectURL", {
+    configurable: true,
+    writable: true,
+    value: jest.fn(),
+  });
+  jest.mocked(Post).mockResolvedValue(v);
+  render(<QuickTitleVerification />);
+  expect(await screen.findByDisplayValue("My unsent version")).toBeDisabled();
+  fireEvent.click(
+    screen.getByRole("button", { name: "Keep my copy and load saved version" }),
+  );
+  await waitFor(() =>
+    expect(
+      screen.queryByDisplayValue("My unsent version"),
+    ).not.toBeInTheDocument(),
+  );
+  expect(
+    screen.getByRole("button", { name: "Save and continue" }),
+  ).toBeEnabled();
+  expect(
+    screen.getByRole("link", { name: "Download my unsent choices" }),
+  ).toHaveAttribute("href", "blob:recovery-copy");
+  const backup = Object.keys(localStorage).find((k) =>
+    k.includes(":recovery:"),
+  )!;
+  expect(
+    JSON.parse(localStorage.getItem(backup)!).payload.ratings["related-0"]
+      .explanation,
+  ).toBe("My unsent version");
 });
 test("a confirmed reviewer addition shows an explicit success message next to coordinator controls", async () => {
   const v = { ...start(), canManage: true };

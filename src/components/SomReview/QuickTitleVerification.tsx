@@ -27,6 +27,11 @@ import { postQuickReview } from "@components/lib/titleValidation/quickRequest";
 import { sourceReviewCsv } from "@components/lib/titleValidation/sourceCsv";
 import type { QuickPayload } from "@components/lib/titleValidation/quick";
 import type { sourceSession } from "@components/lib/titleValidation/sourceReview";
+import {
+  recoverBrowserDraft,
+  ReviewDraftWriter,
+  type DraftFrame,
+} from "@components/lib/titleValidation/draftSync";
 
 type View = ReturnType<typeof sourceSession> & {
   preview: boolean;
@@ -106,6 +111,17 @@ export default function QuickTitleVerification({
     [pending, setPending] = useState(false),
     [validationAttempted, setValidationAttempted] = useState(false),
     [paused, setPaused] = useState(false),
+    [draftError, setDraftError] = useState(""),
+    [exporting, setExporting] = useState<"self" | "team" | null>(null),
+    [exportFeedback, setExportFeedback] = useState<{
+      severity: "success" | "error";
+      text: string;
+    } | null>(null),
+    [download, setDownload] = useState<{
+      url: string;
+      filename: string;
+      label: string;
+    } | null>(null),
     [emails, setEmails] = useState(""),
     [reviewerFeedback, setReviewerFeedback] = useState<{
       severity: "success" | "error";
@@ -118,7 +134,12 @@ export default function QuickTitleVerification({
     pendingRef = useRef<any>(null),
     blocked = useRef(false),
     pausedRef = useRef(false),
-    lastActiveTick = useRef(Date.now());
+    lastActiveTick = useRef(Date.now()),
+    writerRef = useRef<ReviewDraftWriter<View> | null>(null),
+    checkpointJournal = useRef<DraftFrame | undefined>(),
+    editTimer = useRef<number | undefined>(),
+    downloadUrl = useRef<string | null>(null),
+    exportRef = useRef(false);
   const context = {
     pool: flagged ? "flagged" : "regular",
     qa,
@@ -149,34 +170,71 @@ export default function QuickTitleVerification({
     setView(next);
     revision.current = next.draft?.revision || 0;
     let p = next.draft?.payload || null;
+    const local = recover ? storage.get(draftKey(next)) : null;
     if (recover && p) {
-      const local = storage.get(draftKey(next));
-      if (
-        local?.revision === revision.current &&
-        local.payload?.caseId === p.caseId &&
-        local.payload.activeTimeMs >= p.activeTimeMs
-      ) {
+      try {
+        p = recoverBrowserDraft(next.draft!, local).payload;
+        if (local) setNotice("Your unfinished review has been restored.");
+      } catch (e) {
+        blocked.current = true;
         p = local.payload;
-        setNotice("Your unfinished review has been restored.");
+        setError(message(e));
       }
     }
     payloadRef.current = p;
     setPayload(p);
+    checkpointJournal.current = undefined;
+    setDraftError("");
+    const writer = next.draft
+      ? new ReviewDraftWriter<View>(
+          next.draft,
+          (attempt) => request("checkpoint", attempt),
+          () => request("session"),
+          (attempt) => {
+            if (writerRef.current !== writer) return;
+            checkpointJournal.current = attempt;
+            revision.current = writer!.revision;
+            persistDraft();
+          },
+          (saved) => {
+            if (writerRef.current !== writer) return;
+            revision.current = saved.draft!.revision;
+            viewRef.current = saved;
+            setView(saved);
+            setDraftError("");
+          },
+        )
+      : null;
+    writerRef.current = writer;
+    // A mismatched draft is preserved until the reviewer explicitly reloads it.
+    if (!blocked.current) persistDraft();
     pausedRef.current = Boolean(next.item && storage.get(pauseKey(next)));
     setPaused(pausedRef.current);
     lastActiveTick.current = Date.now();
   }
   async function load() {
+    window.clearTimeout(editTimer.current);
     setError("");
     setBusy(true);
     busyRef.current = true;
     blocked.current = false;
     try {
+      await writerRef.current?.settle();
       let next: View = await request("session");
       const old = storage.get(pendingKey(next));
       if (old) {
         try {
-          next = await request("respond", old);
+          const delivery = old.awaitingCheckpoint
+            ? {
+                payload: old.payload,
+                revision: recoverBrowserDraft(
+                  next.draft!,
+                  storage.get(draftKey(next)),
+                ).revision,
+              }
+            : old;
+          storage.set(pendingKey(next), delivery);
+          next = await request("respond", delivery);
           storage.remove(pendingKey(next));
           setNotice(
             "Your previous submission was recovered and confirmed saved.",
@@ -221,17 +279,41 @@ export default function QuickTitleVerification({
   useEffect(() => {
     load();
   }, [flagged, qa]); // Request identity stays fixed for each mounted reviewer page.
-  function update(p: QuickPayload) {
-    payloadRef.current = p;
-    setPayload(p);
+  useEffect(
+    () => () => {
+      window.clearTimeout(editTimer.current);
+      writerRef.current = null;
+      if (downloadUrl.current) URL.revokeObjectURL(downloadUrl.current);
+    },
+    [],
+  );
+  function persistDraft() {
     const v = viewRef.current;
     if (
       v &&
-      !storage.set(draftKey(v), { payload: p, revision: revision.current })
+      payloadRef.current &&
+      !storage.set(draftKey(v), {
+        payload: payloadRef.current,
+        revision: revision.current,
+        ...(checkpointJournal.current
+          ? { checkpoint: checkpointJournal.current }
+          : {}),
+      })
     )
       setNotice(
         "Browser recovery is unavailable. Keep this page open until your answer is saved.",
       );
+  }
+  function update(p: QuickPayload, edited = true) {
+    payloadRef.current = p;
+    persistDraft();
+    if (edited) {
+      setPayload(p);
+      window.clearTimeout(editTimer.current);
+      editTimer.current = window.setTimeout(() => {
+        save(false);
+      }, 2000);
+    }
   }
   function recordActiveTime() {
     const now = Date.now(),
@@ -244,10 +326,13 @@ export default function QuickTitleVerification({
       payloadRef.current &&
       !blocked.current
     )
-      update({
-        ...payloadRef.current,
-        activeTimeMs: payloadRef.current.activeTimeMs + delta,
-      });
+      update(
+        {
+          ...payloadRef.current,
+          activeTimeMs: payloadRef.current.activeTimeMs + delta,
+        },
+        false,
+      );
   }
   function togglePause() {
     if (!viewRef.current?.item || pendingRef.current) return;
@@ -260,6 +345,30 @@ export default function QuickTitleVerification({
     if (pausedRef.current) save(false);
   }
   async function save(final: boolean) {
+    if (!final) {
+      const writer = writerRef.current;
+      if (
+        busyRef.current ||
+        pendingRef.current ||
+        !writer ||
+        !payloadRef.current ||
+        blocked.current ||
+        writer.writing
+      )
+        return;
+      recordActiveTime();
+      try {
+        await writer.checkpoint(payloadRef.current);
+      } catch (e: any) {
+        if (writerRef.current !== writer) return;
+        setDraftError("Your changes are kept on this device. " + message(e));
+        if ((e?.status || e?.response?.status) === 409) {
+          blocked.current = true;
+          setError(message(e));
+        }
+      }
+      return;
+    }
     if (
       busyRef.current ||
       !payloadRef.current ||
@@ -278,39 +387,35 @@ export default function QuickTitleVerification({
         return;
       }
     }
-    const body = pendingRef.current || {
+    window.clearTimeout(editTimer.current);
+    let body = pendingRef.current || {
       payload: JSON.parse(JSON.stringify(payloadRef.current)),
-      revision: revision.current,
+      awaitingCheckpoint: true,
     };
-    if (!final && pendingRef.current) return;
-    if (final) {
-      pendingRef.current = body;
-      setPending(true);
-      storage.set(pendingKey(v), body);
-    }
+    pendingRef.current = body;
+    setPending(true);
+    storage.set(pendingKey(v), body);
     busyRef.current = true;
     setBusy(true);
     setError("");
     try {
-      const next: View = await request(final ? "respond" : "checkpoint", body);
-      if (final) {
-        storage.remove(pendingKey(v));
-        storage.remove(draftKey(v));
-        storage.remove(pauseKey(v));
-        pendingRef.current = null;
-        setPending(false);
-        setNotice("Your answer and review time are saved.");
-        applyView(next, false);
-      } else {
-        revision.current = next.draft!.revision;
-        viewRef.current = next;
-        setView(next);
-        storage.set(draftKey(next), {
-          payload: payloadRef.current,
-          revision: revision.current,
-        });
-        setNotice("Draft and review time saved.");
+      if (body.awaitingCheckpoint) {
+        await writerRef.current?.settle();
+        body = {
+          payload: body.payload,
+          revision: writerRef.current?.revision ?? revision.current,
+        };
+        pendingRef.current = body;
+        storage.set(pendingKey(v), body);
       }
+      const next: View = await request("respond", body);
+      storage.remove(pendingKey(v));
+      storage.remove(draftKey(v));
+      storage.remove(pauseKey(v));
+      pendingRef.current = null;
+      setPending(false);
+      setNotice("Your answer and review time are saved.");
+      applyView(next, false);
     } catch (e: any) {
       setError(message(e));
       const status = e?.status || e?.response?.status;
@@ -339,9 +444,10 @@ export default function QuickTitleVerification({
     const timer = window.setInterval(recordActiveTime, 1000),
       checkpoint = window.setInterval(() => {
         save(false);
-      }, 10000);
+      }, 30000);
     const visibility = () => {
       lastActiveTick.current = Date.now();
+      if (document.visibilityState === "hidden") save(false);
     };
     document.addEventListener("visibilitychange", visibility);
     return () => {
@@ -359,8 +465,10 @@ export default function QuickTitleVerification({
     )
       return;
     setBusy(true);
+    busyRef.current = true;
     setReviewerFeedback(null);
     try {
+      await writerRef.current?.settle();
       const result = await request("manage", {
         operation,
         reviewers: emails
@@ -396,27 +504,92 @@ export default function QuickTitleVerification({
         setReviewerFeedback({ severity: "error", text: message(e) });
     } finally {
       setBusy(false);
+      busyRef.current = false;
     }
   }
-  async function exportReviews() {
+  async function exportReviews(scope: "self" | "team") {
+    if (exportRef.current) return;
+    exportRef.current = true;
+    setExporting(scope);
+    setExportFeedback(null);
     try {
-      const result = await request("export"),
-        url = URL.createObjectURL(
-          new Blob([sourceReviewCsv(result)], {
-            type: "text/csv;charset=utf-8",
-          }),
-        ),
-        a = document.createElement("a");
-      a.href = url;
-      a.download = "title-review-" + view?.datasetVersion + ".csv";
-      a.click();
-      URL.revokeObjectURL(url);
+      const result = await request("export", { scope });
+      publishDownload(
+        new Blob([sourceReviewCsv(result)], { type: "text/csv;charset=utf-8" }),
+        "title-review-" + scope + "-" + view?.datasetVersion + ".csv",
+        "Download the prepared CSV",
+        true,
+      );
+      const count = result.answers.length + result.legacyAnswers.length;
+      setExportFeedback({
+        severity: "success",
+        text: `Your CSV is ready (${count} submitted ${count === 1 ? "review" : "reviews"}). If it did not download automatically, use the link below.`,
+      });
     } catch (e) {
-      setError(message(e));
+      setExportFeedback({ severity: "error", text: message(e) });
+    } finally {
+      exportRef.current = false;
+      setExporting(null);
     }
+  }
+  function publishDownload(
+    blob: Blob,
+    filename: string,
+    label: string,
+    start = false,
+  ) {
+    const url = URL.createObjectURL(blob);
+    if (downloadUrl.current) URL.revokeObjectURL(downloadUrl.current);
+    downloadUrl.current = url;
+    setDownload({ url, filename, label });
+    if (start) {
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.style.display = "none";
+      document.body.appendChild(a);
+      try {
+        a.click();
+      } catch {
+        /* The visible download link remains available. */
+      }
+      a.remove();
+    }
+  }
+  async function recoverConflict() {
+    const v = viewRef.current;
+    if (!v || !payloadRef.current) return;
+    const copy = {
+      payload: payloadRef.current,
+      revision: revision.current,
+      checkpoint: checkpointJournal.current,
+      pending: pendingRef.current,
+    };
+    publishDownload(
+      new Blob([JSON.stringify(copy, null, 2)], { type: "application/json" }),
+      "unsent-review-recovery.json",
+      "Download my unsent choices",
+    );
+    if (!storage.set(draftKey(v) + ":recovery:" + Date.now(), copy)) {
+      setExportFeedback({
+        severity: "error",
+        text: "This browser could not keep a recovery copy. Download your unsent choices before reloading.",
+      });
+      return;
+    }
+    storage.remove(draftKey(v));
+    storage.remove(pendingKey(v));
+    pendingRef.current = null;
+    setPending(false);
+    writerRef.current = null;
+    setExportFeedback({
+      severity: "success",
+      text: "Your unsent choices are preserved in a separate recovery copy. The form now loads the saved version.",
+    });
+    await load();
   }
   // Background checkpoints leave fields editable; a break or final delivery locks them.
-  const frozen = pending || paused;
+  const frozen = pending || paused || blocked.current;
   const showOptionalComments = Object.values(payload?.ratings || {}).some(
     (rating) => rating.value === "not_acceptable",
   );
@@ -468,7 +641,7 @@ export default function QuickTitleVerification({
                 not mean the proposal is wrong.
               </Alert>
             )}
-            {error && (
+            {error && (!view?.item || !payload) && (
               <Alert severity="error" sx={{ mb: 2 }}>
                 {error}
               </Alert>
@@ -536,8 +709,29 @@ export default function QuickTitleVerification({
                       color="text.secondary"
                       sx={{ mt: 1 }}
                     >
-                      Drafts save automatically.
+                      Drafts save automatically. Save and continue submits this
+                      page.
                     </Typography>
+                    {draftError && (
+                      <Alert severity="warning" sx={{ mt: 2 }}>
+                        {draftError}{" "}
+                        {!blocked.current && (
+                          <Button onClick={() => save(false)}>
+                            Retry draft save
+                          </Button>
+                        )}
+                      </Alert>
+                    )}
+                    {blocked.current && (
+                      <Alert severity="warning" sx={{ mt: 2 }}>
+                        Your unsent choices are still here. To use the version
+                        saved by another tab, keep a recovery copy and reload
+                        it.
+                        <Button onClick={recoverConflict}>
+                          Keep my copy and load saved version
+                        </Button>
+                      </Alert>
+                    )}
                     {paused && (
                       <Alert severity="info" sx={{ mt: 2 }}>
                         Review paused. Resume when you’re ready to continue.
@@ -792,7 +986,7 @@ export default function QuickTitleVerification({
                         type="submit"
                         size="large"
                         variant="contained"
-                        disabled={busy || paused}
+                        disabled={busy || paused || blocked.current}
                       >
                         {busy
                           ? "Saving…"
@@ -800,6 +994,7 @@ export default function QuickTitleVerification({
                             ? "Retry saving this answer"
                             : "Save and continue"}
                       </Button>
+                      {error && <Alert severity="error">{error}</Alert>}
                     </Stack>
                   </Box>
                 ) : (
@@ -812,6 +1007,85 @@ export default function QuickTitleVerification({
                       : ""}
                   </Alert>
                 )}
+                <Card sx={{ mt: 3 }}>
+                  <CardContent>
+                    <Typography fontWeight={600}>
+                      Download submitted reviews
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ mt: 1, mb: 2 }}
+                    >
+                      Your CSV includes your submitted answers and timing,
+                      including earlier reviews. Unsubmitted drafts are not
+                      included.
+                    </Typography>
+                    <Stack direction={{ xs: "column", sm: "row" }} gap={1}>
+                      <Button
+                        variant="outlined"
+                        onClick={() => exportReviews("self")}
+                        disabled={
+                          exporting !== null ||
+                          !(
+                            view.exports?.ownSubmitted ??
+                            view.completed + (view.historicalCompleted || 0)
+                          )
+                        }
+                      >
+                        {exporting === "self"
+                          ? "Preparing your CSV…"
+                          : "Download my reviews and timing (CSV)"}
+                      </Button>
+                      {view.canManage && (
+                        <Button
+                          variant="outlined"
+                          onClick={() => exportReviews("team")}
+                          disabled={
+                            exporting !== null || !view.exports?.teamAllowed
+                          }
+                        >
+                          {exporting === "team"
+                            ? "Preparing team CSV…"
+                            : "Download team reviews and timing (CSV)"}
+                        </Button>
+                      )}
+                    </Stack>
+                    {view.canManage && !view.exports?.teamAllowed && (
+                      <Typography variant="body2" sx={{ mt: 1 }}>
+                        Finish your remaining{" "}
+                        {view.exports?.regularRemaining ??
+                          Math.max(0, view.total - view.completed)}{" "}
+                        regular description pages before downloading other
+                        reviewers’ answers. This keeps your reviews independent.
+                        Your own submitted reviews can be downloaded separately.
+                      </Typography>
+                    )}
+                    {!(
+                      view.exports?.ownSubmitted ??
+                      view.completed + (view.historicalCompleted || 0)
+                    ) && (
+                      <Typography variant="body2" sx={{ mt: 1 }}>
+                        Submit a review to make your CSV available.
+                      </Typography>
+                    )}
+                    {exportFeedback && (
+                      <Alert severity={exportFeedback.severity} sx={{ mt: 2 }}>
+                        {exportFeedback.text}
+                      </Alert>
+                    )}
+                    {download && (
+                      <Button
+                        component="a"
+                        href={download.url}
+                        download={download.filename}
+                        sx={{ mt: 1 }}
+                      >
+                        {download.label}
+                      </Button>
+                    )}
+                  </CardContent>
+                </Card>
                 {view.canUseReviewLinks && (
                   <Stack
                     direction="row"
@@ -927,9 +1201,6 @@ export default function QuickTitleVerification({
                           onClick={() => manage("expand")}
                         >
                           Open the next 75 activities
-                        </Button>
-                        <Button onClick={exportReviews}>
-                          Download reviews and timing (CSV)
                         </Button>
                       </Stack>
                       <Typography

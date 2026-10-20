@@ -58,6 +58,38 @@ separate from active review time. Hidden tabs also do not accrue active time.
 Local preview keeps its existing default test identity privately, but exposes
 no test-account switcher or preview-a/b/c names in the review interface.
 
+Draft synchronization is independent of final submission, management, and
+downloads. Edits persist immediately in browser recovery storage and debounce
+server checkpoints by two seconds. Hidden active-time accumulation uses a ref
+without rerendering the form each second. Timing-only checkpoints occur every
+30 seconds, on pause, and when the tab is hidden. Unchanged paused drafts make
+no network writes. Background checkpoints never change or disable the submit
+button, freeze fields, or replace text typed during a request.
+
+ReviewDraftWriter permits one draft write at a time. Final submission freezes
+the chosen payload immediately, waits for any draft save, then uses its known
+revision. Browser storage journals the in-flight checkpoint and the queued
+submission intent. A lost response is reconciled against the exact server
+payload/revision before writing again. Unknown final deliveries retry the
+same immutable payload; definite validation rejections remain editable. Other
+tabs' changes are not overwritten. Explicit conflict recovery retains the
+unsent copy in separate browser storage and provides a recovery download.
+Requests, including response-body reads, have a 30-second deadline.
+
+Every reviewer can download their own submitted reviews before finishing.
+Personal exports read only their records and return only their roster entry
+and source pages/cases needed for those records; no other reviews or drafts
+are exposed. Team exports remain coordinator-only and retain the independent
+review completion guard. The UI shows the restriction next to the disabled
+team-download button. Earlier clients' unscoped export requests retain team
+semantics. QA exceptions depend on the stored softwareQA study flag.
+
+CSV preparation has a separate busy/error state beside the download controls.
+An attached download anchor starts the transfer; a visible manual link remains
+available if automatic download is blocked. The Blob URL is retained until a
+new download replaces it or the component unmounts, never revoked immediately
+after clicking. Exports do not submit drafts or stop active review timing.
+
 Adding a reviewer checks for an enabled existing Firebase account. A missing
 account error names the email and asks that the ontology account be created
 first; disabled-account errors are separate, and service outages are not

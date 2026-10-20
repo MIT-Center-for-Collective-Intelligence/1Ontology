@@ -141,3 +141,28 @@ test("page response and retry store one record with its version and leave every 
   expect(Object.keys(state.answers)).toHaveLength(1);
   expect(JSON.stringify(state.legacy)).toBe(before);
 });
+test("a personal export uses only the authenticated reviewer's repository scope, and rejects unknown scope", async () => {
+  const own: any = await sourceReviewAction(
+    "quick-source-export",
+    { scope: "self", reviewerId: "other" },
+    actor,
+    state.legacy.study.id,
+    data,
+    false,
+  );
+  expect(own.scope).toBe("self");
+  expect(own.study.roster).toEqual([{ reviewerId: "urop", label: "Reviewer" }]);
+  expect(own.answers).toEqual([]);
+  expect(own.dataset.pages).toEqual([]);
+  expect(jest.mocked(withSourceStudy).mock.calls[0][1]).toBe("urop");
+  await expect(
+    sourceReviewAction(
+      "quick-source-export",
+      { scope: "all" },
+      actor,
+      state.legacy.study.id,
+      data,
+      false,
+    ),
+  ).rejects.toThrow("Unknown download scope");
+});
