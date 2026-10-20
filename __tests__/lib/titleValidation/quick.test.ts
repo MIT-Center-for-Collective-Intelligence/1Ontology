@@ -76,8 +76,7 @@ test("flagged cases are withheld from UROPs and reviewer orders remain stable wh
 test("uncertain/rejected ratings require explanations; saves are immutable and delivery retries deduplicate", () => {
   const s = state(),
     v = quickSession(s, data, "urop", false, false, 1000),
-    item = v.item!,
-    p = emptyQuickPayload(item);
+    p = JSON.parse(JSON.stringify(v.draft!.payload));
   for (const q of v.questions)
     p.ratings[q.id] = { value: "unsure", explanation: "" };
   p.activeTimeMs = 10000;

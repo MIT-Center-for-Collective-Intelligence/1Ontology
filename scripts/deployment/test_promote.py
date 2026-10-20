@@ -96,8 +96,9 @@ class ReleaseVerificationTests(unittest.TestCase):
             "model":staff["provenance"]["model"],"promptSha256":staff["provenance"]["scientificPromptSha256"],
             "bundleSha256":hashlib.sha256(staff_bytes).hexdigest(),"released":True}
         quick_bytes=(ROOT / "src/lib/titleValidation/data/quick-v1.json").read_bytes()
+        from quick_title_selection import selection_release
         self.info["quickTitleReview"]={"version":json.loads(quick_bytes)["version"],"initialRegular":25,"reservedRegular":75,"flagged":319,
-            "bundleSha256":hashlib.sha256(quick_bytes).hexdigest(),"released":True}
+            "bundleSha256":hashlib.sha256(quick_bytes).hexdigest(),"released":True, **selection_release(quick_bytes)}
         relationship_manifest=json.loads((ROOT / "scripts/deployment/relationship-review-package.json").read_bytes())
         relationship_root=ROOT / "src/lib/relationshipReview/data" / relationship_manifest.get("directory", "")
         relation_bytes = (relationship_root / ("dataset.json" if relationship_manifest.get("directory") else "top-level-v1.json")).read_bytes()

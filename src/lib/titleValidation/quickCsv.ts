@@ -1,4 +1,5 @@
 import type { QuickAnswer, QuickDataset, QuickStudy } from "./quick";
+import type { QuickSelectionProvenance } from "./quickSelection";
 
 const label: Record<string, string> = {
   acceptable: "Acceptable",
@@ -15,6 +16,13 @@ export function quickReviewCsv(record: {
   study: QuickStudy;
   answers: QuickAnswer[];
   dataset: QuickDataset;
+  selection?: {
+    active: boolean;
+    selectionVersion: string;
+    selectionSha256: string;
+    initialCaseIds: string[];
+  };
+  answerSelections?: Record<string, QuickSelectionProvenance>;
 }) {
   const headers = [
     "Reviewer",
@@ -37,11 +45,20 @@ export function quickReviewCsv(record: {
     "Activity ID",
     "Dataset version",
     "Software test",
+    "Effective current review set",
+    "Current selection version",
+    "Current selection SHA-256",
+    "Answer selection version",
+    "Answer selection SHA-256",
+    "Answer selection review set",
+    "Answer assignment access",
   ];
   const rows = record.answers.map((a) => {
     const c = record.dataset.cases.find((c) => c.id === a.caseId)!;
     const original = a.payload.ratings.original,
       split = a.payload.ratings.split;
+    const current = record.selection?.active;
+    const provenance = record.answerSelections?.[a.id] || a.selection;
     return [
       record.study.roster.find((r) => r.reviewerId === a.reviewerId)?.label ||
         a.reviewerId,
@@ -71,6 +88,19 @@ export function quickReviewCsv(record: {
       a.caseId,
       record.dataset.version,
       a.softwareQA ? "YES — exclude from human results" : "No",
+      !current || c.batch === "flagged"
+        ? c.batch
+        : record.selection!.initialCaseIds.includes(c.id)
+          ? "first25"
+          : "next75",
+      current
+        ? record.selection!.selectionVersion
+        : "quick-title-selection-original-v1",
+      current ? record.selection!.selectionSha256 : "",
+      provenance?.version || "quick-title-selection-original-v1",
+      provenance?.sha256 || "",
+      provenance?.batch || c.batch,
+      provenance?.access || "assigned",
     ];
   });
   // One row per activity and reviewer: timing is never repeated for each proposed title.

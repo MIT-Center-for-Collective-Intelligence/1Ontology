@@ -5,6 +5,7 @@ from pathlib import Path
 import re
 import subprocess
 import tempfile
+from quick_title_selection import selection_release
 
 ROOT = Path(__file__).resolve().parents[2]
 MANIFEST = Path(__file__).with_name("quick-title-review-package.json")
@@ -21,6 +22,7 @@ def validate(raw, manifest):
     for batch, key in [("first25", "initialRegular"), ("next75", "reservedRegular"), ("flagged", "flagged")]:
         if sum(c["batch"] == batch for c in cases) != manifest[key]:
             raise ValueError("Private title-review batch mismatch")
+    selection_release(raw)
 
 
 def main():
@@ -40,7 +42,8 @@ def main():
             with target.open("xb") as output:
                 output.write(raw)
             target.chmod(0o600)
-    print(json.dumps({"quickTitlePackageStaged": True, "version": manifest["version"], "bundleSha256": manifest["bundleSha256"]}))
+    print(json.dumps({"quickTitlePackageStaged": True, "version": manifest["version"],
+                      "bundleSha256": manifest["bundleSha256"], **selection_release(target.read_bytes())}))
 
 
 if __name__ == "__main__":

@@ -692,10 +692,7 @@ export default function QuickTitleVerification({
                     <AccordionSummary>Coordinator tools</AccordionSummary>
                     <AccordionDetails>
                       <Typography sx={{ mb: 2 }}>
-                        The initial batch contains 25 unflagged activities (2
-                        kept titles, 22 single replacements, 1 split). Another
-                        75 are reserved. All 319 flagged cases remain in Rob’s
-                        separate review.
+                        {quickCoordinatorCopy(view.selectionVersion)}
                       </Typography>
                       <TextField
                         fullWidth
@@ -747,3 +744,4 @@ export default function QuickTitleVerification({
     </ThemeProvider>
   );
 }
+import { quickCoordinatorCopy } from "../../lib/titleValidation/quickCoordinatorCopy";

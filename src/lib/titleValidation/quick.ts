@@ -1,5 +1,13 @@
 import crypto from "crypto";
 import { TitleValidationError } from "./engine";
+import {
+  assertQuickSelection,
+  effectiveQuickBatch,
+  isLegacyQuickDraft,
+  quickAnswerSelection,
+  QuickSelection,
+  QuickSelectionProvenance,
+} from "./quickSelection";
 
 export type QuickRating = "acceptable" | "not_acceptable" | "unsure";
 export interface QuickCase {
@@ -45,6 +53,7 @@ export interface QuickAnswer {
   elapsedTimeMs: number;
   activeTimeMs: number;
   softwareQA: boolean;
+  selection?: QuickSelectionProvenance;
 }
 export interface QuickStudy {
   id: string;
@@ -55,6 +64,7 @@ export interface QuickStudy {
   regularLimit: 25 | 100;
   createdAt: number;
   softwareQA?: boolean;
+  selection?: QuickSelection;
 }
 export interface QuickState {
   study: QuickStudy;
@@ -63,6 +73,8 @@ export interface QuickState {
 }
 export const QUICK_STUDY_ID = "quick-title-verification-20261019-v1";
 export const QUICK_QA_ID = "software-qa-quick-title-20261019-v1";
+export const QUICK_SELECTION_QA_ID =
+  "software-qa-quick-title-selection-5-15-5-v1";
 export const quickHash = (value: unknown) =>
   crypto.createHash("sha256").update(JSON.stringify(value)).digest("hex");
 export const quickKey = (uid: string, id: string) => quickHash([uid, id]);
@@ -108,6 +120,7 @@ export function quickCases(
   flagged: boolean,
   canManage: boolean,
 ) {
+  assertQuickSelection(state);
   if (
     state.study.protocol !== "quick-title-verification-v1" ||
     state.study.datasetVersion !== data.version
@@ -126,16 +139,18 @@ export function quickCases(
       403,
       "Rob is reviewing the flagged items first. Please use your regular review.",
     );
+  const batch = (c: QuickCase) =>
+    state.study.selection ? effectiveQuickBatch(c) : c.batch;
   return data.cases
     .filter((c) =>
       flagged
         ? c.batch === "flagged"
-        : c.batch === "first25" ||
-          (state.study.regularLimit === 100 && c.batch === "next75"),
+        : batch(c) === "first25" ||
+          (state.study.regularLimit === 100 && batch(c) === "next75"),
     )
     .sort(
       (a, b) =>
-        (a.batch === "first25" ? 0 : 1) - (b.batch === "first25" ? 0 : 1) ||
+        (batch(a) === "first25" ? 0 : 1) - (batch(b) === "first25" ? 0 : 1) ||
         quickHash([data.version, uid, a.id]).localeCompare(
           quickHash([data.version, uid, b.id]),
         ),
@@ -222,7 +237,38 @@ export function validateQuickPayload(
     submissionId: p.submissionId,
   };
 }
-export function quickSession(
+function currentQuickCase(
+  state: QuickState,
+  data: QuickDataset,
+  uid: string,
+  flagged: boolean,
+  cases: QuickCase[],
+) {
+  const eligible = data.cases.filter(
+    (c) =>
+      (flagged ? c.batch === "flagged" : c.batch !== "flagged") &&
+      (cases.some((assigned) => assigned.id === c.id) ||
+        isLegacyQuickDraft(state, quickKey(uid, c.id), uid)),
+  );
+  const drafts = eligible
+    .filter((c) => {
+      const key = quickKey(uid, c.id),
+        draft = state.drafts[key];
+      return (
+        !state.answers[key] &&
+        draft?.reviewerId === uid &&
+        draft.caseId === c.id
+      );
+    })
+    .sort(
+      (a, b) =>
+        state.drafts[quickKey(uid, a.id)].firstPresentedAt -
+          state.drafts[quickKey(uid, b.id)].firstPresentedAt ||
+        a.id.localeCompare(b.id),
+    );
+  return drafts[0] || cases.find((c) => !state.answers[quickKey(uid, c.id)]);
+}
+export function quickStatus(
   state: QuickState,
   data: QuickDataset,
   uid: string,
@@ -232,20 +278,17 @@ export function quickSession(
 ) {
   const cases = quickCases(state, data, uid, flagged, canManage);
   const done = cases.filter((c) => state.answers[quickKey(uid, c.id)]);
-  const item = cases.find((c) => !state.answers[quickKey(uid, c.id)]);
-  let draft = item ? state.drafts[quickKey(uid, item.id)] : undefined;
-  if (item && !draft) {
-    draft = {
-      reviewerId: uid,
-      caseId: item.id,
-      revision: 0,
-      firstPresentedAt: now,
-      updatedAt: now,
-      payload: emptyQuickPayload(item),
-    };
-    state.drafts[quickKey(uid, item.id)] = draft;
-  }
-  const answers = done.map((c) => state.answers[quickKey(uid, c.id)]);
+  const item = currentQuickCase(state, data, uid, flagged, cases);
+  const draft = item ? state.drafts[quickKey(uid, item.id)] : undefined;
+  const answers = Object.values(state.answers).filter(
+    (a) =>
+      a.reviewerId === uid &&
+      data.cases.some(
+        (c) =>
+          c.id === a.caseId &&
+          (flagged ? c.batch === "flagged" : c.batch !== "flagged"),
+      ),
+  );
   return {
     studyId: state.study.id,
     datasetVersion: data.version,
@@ -263,10 +306,37 @@ export function quickSession(
     canReviewFlagged: canManage || state.study.flaggedReviewerIds.includes(uid),
     regularLimit: state.study.regularLimit,
     softwareQA: Boolean(state.study.softwareQA),
+    selectionVersion:
+      state.study.selection?.version || "quick-title-selection-original-v1",
+    selectionSha256: state.study.selection?.sha256 || null,
+    historicalCompleted: answers.length,
+    historicalOutsideCurrentSelection: answers.length - done.length,
     savedActiveTimeMs: answers.reduce((n, a) => n + a.activeTimeMs, 0),
     savedElapsedTimeMs: answers.reduce((n, a) => n + a.elapsedTimeMs, 0),
     disclosure: { prompt: data.scientificPrompt, provenance: data.provenance },
   };
+}
+export function quickSession(
+  state: QuickState,
+  data: QuickDataset,
+  uid: string,
+  flagged: boolean,
+  canManage: boolean,
+  now: number,
+) {
+  const session = quickStatus(state, data, uid, flagged, canManage, now);
+  if (session.item && !session.draft) {
+    session.draft = {
+      reviewerId: uid,
+      caseId: session.item.id,
+      revision: 0,
+      firstPresentedAt: now,
+      updatedAt: now,
+      payload: emptyQuickPayload(session.item),
+    };
+    state.drafts[quickKey(uid, session.item.id)] = session.draft;
+  }
+  return session;
 }
 export function saveQuick(
   state: QuickState,
@@ -281,8 +351,11 @@ export function saveQuick(
 ) {
   const cases = quickCases(state, data, uid, flagged, canManage);
   const item =
-    cases.find((c) => c.id === (raw as QuickPayload)?.caseId) ||
-    fail(403, "This activity is not in your assigned review.");
+    data.cases.find(
+      (c) =>
+        c.id === (raw as QuickPayload)?.caseId &&
+        (flagged ? c.batch === "flagged" : c.batch !== "flagged"),
+    ) || fail(403, "This activity is not in your assigned review.");
   const p = validateQuickPayload(raw, item, final),
     key = quickKey(uid, item.id);
   const answer = state.answers[key];
@@ -294,11 +367,22 @@ export function saveQuick(
       "This answer has already been saved. It has not been overwritten.",
     );
   }
-  const current = cases.find((c) => !state.answers[quickKey(uid, c.id)]);
+  if (
+    !cases.some((c) => c.id === item.id) &&
+    !isLegacyQuickDraft(state, key, uid)
+  )
+    fail(403, "This activity is not in your assigned review.");
+  const current = currentQuickCase(state, data, uid, flagged, cases);
   if (current?.id !== item.id)
     fail(409, "Save your current activity before continuing.");
   const draft =
     state.drafts[key] || fail(409, "Open this activity before saving it.");
+  if (
+    draft.reviewerId !== uid ||
+    draft.caseId !== item.id ||
+    p.submissionId !== draft.payload.submissionId
+  )
+    fail(409, "Reload to recover the original saved draft.");
   if (revision !== draft.revision)
     fail(
       409,
@@ -331,6 +415,12 @@ export function saveQuick(
     elapsedTimeMs: Math.max(0, now - draft.firstPresentedAt),
     activeTimeMs: p.activeTimeMs,
     softwareQA: Boolean(state.study.softwareQA),
+    selection: {
+      ...quickAnswerSelection(state, item),
+      access: cases.some((c) => c.id === item.id)
+        ? "assigned"
+        : "pre-cutover-draft",
+    },
   };
   state.answers[key] = saved;
   return { duplicate: false, answer: saved };
