@@ -131,6 +131,7 @@ test("drafts retain explanations and timing across readback; stale tabs and impo
     p = v.draft!.payload;
   p.activeTimeMs = 5000;
   p.correction = "Draft text";
+  p.ratings[Object.keys(p.ratings)[0]].correction = "Per-title draft text";
   saveQuick(s, data, "urop", false, false, p, 0, false, 6000);
   s = JSON.parse(JSON.stringify(s));
   const restored = quickSession(s, data, "urop", false, false, 30000);

@@ -116,6 +116,12 @@ test("page response and retry store one record with its version and leave every 
   const before = JSON.stringify(state.legacy);
   for (const r of Object.values(view.draft.payload.ratings) as any[])
     r.value = "acceptable";
+  const first = Object.keys(view.draft.payload.ratings)[0];
+  view.draft.payload.ratings[first] = {
+    value: "not_acceptable",
+    explanation: "This title needs a change.",
+    correction: "A correction attached only to this title",
+  };
   const body = {
     payload: view.draft.payload,
     revision: 0,
@@ -139,6 +145,9 @@ test("page response and retry store one record with its version and leave every 
     false,
   );
   expect(Object.keys(state.answers)).toHaveLength(1);
+  expect(
+    Object.values(state.answers)[0].payload.ratings[first].correction,
+  ).toBe("A correction attached only to this title");
   expect(JSON.stringify(state.legacy)).toBe(before);
 });
 test("a personal export uses only the authenticated reviewer's repository scope, and rejects unknown scope", async () => {

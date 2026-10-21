@@ -8,6 +8,7 @@ import {
   type SourceState,
 } from "../../../src/lib/titleValidation/sourceReview";
 import { sourceReviewCsv } from "../../../src/lib/titleValidation/sourceCsv";
+import { parse } from "csv-parse/sync";
 const data = getQuickDataset(),
   sources = getSourceDataset();
 function fixture() {
@@ -62,6 +63,44 @@ test("personal download works before completion and contains only that person's 
   expect(csv).toContain('"1.0"');
   expect(csv).not.toContain('"Other"');
   expect(JSON.stringify(s)).toBe(before);
+});
+test("CSV keeps each correction with its proposed title and preserves earlier page-level comments", () => {
+  const s = fixture();
+  const record = sourceReviewExport(
+    s,
+    data,
+    sources,
+    "own",
+    false,
+    false,
+    "self",
+  );
+  const answer = record.answers[0];
+  const page = sources.pages.find((p) => p.id === answer.caseId)!;
+  const proposal = page.activities[0].proposals[0];
+  answer.payload.ratings[proposal.id].correction =
+    'Correction with a comma, a "quote", and\na new line';
+  answer.payload.correction = "Earlier correction for the whole page";
+  answer.payload.interruption = "Earlier interruption note";
+  const rows = parse(sourceReviewCsv(record), { columns: true, bom: true });
+  expect(rows).toHaveLength(1);
+  expect(JSON.parse(rows[0]["Per-title suggested corrections"])).toEqual([
+    {
+      activityId: page.activities[0].id,
+      proposedTitle: proposal.title,
+      correction: answer.payload.ratings[proposal.id].correction,
+    },
+  ]);
+  expect(rows[0]["Suggested correction"]).toBe(
+    "Earlier correction for the whole page",
+  );
+  expect(rows[0]["Interruptions or comments"]).toBe(
+    "Earlier interruption note",
+  );
+  expect(JSON.parse(rows[0]["Proposed titles and ratings"])[0].correction).toBe(
+    answer.payload.ratings[proposal.id].correction,
+  );
+  expect(rows[0]["Active page seconds"]).toBe("1.0");
 });
 test("personal scope cannot impersonate another reviewer and team exports remain coordinator-only", () => {
   const s = fixture();

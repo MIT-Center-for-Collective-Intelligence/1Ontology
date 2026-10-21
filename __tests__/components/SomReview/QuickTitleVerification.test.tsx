@@ -333,11 +333,11 @@ test("three plain ratings replace rankings and reason menus; uncertainty opens a
 test("unfinished answers and time recover from browser draft, and restore matching server revision", async () => {
   const v = start();
   v.draft.payload.activeTimeMs = 19000;
-  v.draft.payload.correction = "My unfinished correction";
-  v.draft.payload.ratings["related-0"] = {
+  Object.assign(v.draft.payload.ratings["related-0"], {
     value: "not_acceptable",
     explanation: "My saved explanation",
-  };
+    correction: "My unfinished correction",
+  });
   localStorage.setItem(
     "source-title-draft:quick-v1:reviewer-test:case-1",
     JSON.stringify({ revision: 0, payload: v.draft.payload }),
@@ -422,9 +422,10 @@ test("a definite server rejection leaves all choices editable for a corrected sa
   });
   fireEvent.click(screen.getByRole("button", { name: "Save and continue" }));
   await screen.findByText(/You have finished the 25 O\*NET descriptions/);
-  expect((jest.mocked(Post).mock.calls[2][1] as any).payload.correction).toBe(
-    "My correction after the rejection",
-  );
+  expect(
+    (jest.mocked(Post).mock.calls[2][1] as any).payload.ratings["related-0"]
+      .correction,
+  ).toBe("My correction after the rejection");
 });
 test("a rejected submission from an older browser recovers on reload without losing choices or time", async () => {
   const v = start();
@@ -538,8 +539,8 @@ test("automatic checkpoint includes elapsed active-page time and open text", asy
       "Not acceptable",
     ),
   );
-  fireEvent.change(screen.getByLabelText(/Interruptions or other comments/), {
-    target: { value: "Brief interruption noted." },
+  fireEvent.change(screen.getByLabelText(/Suggested correction/), {
+    target: { value: "Correction for this title only." },
   });
   await act(async () => {
     jest.advanceTimersByTime(2000);
@@ -553,8 +554,8 @@ test("automatic checkpoint includes elapsed active-page time and open text", asy
     .mocked(Post)
     .mock.calls.filter((c) => String(c[0]).endsWith("checkpoint"))
     .slice(-1)[0];
-  expect((checkpoint[1] as any).payload.interruption).toBe(
-    "Brief interruption noted.",
+  expect((checkpoint[1] as any).payload.ratings["related-0"].correction).toBe(
+    "Correction for this title only.",
   );
   expect((checkpoint[1] as any).payload.activeTimeMs).toBeGreaterThanOrEqual(
     15000,
@@ -563,7 +564,7 @@ test("automatic checkpoint includes elapsed active-page time and open text", asy
     screen.queryByText(/This activity:|Total review time:/),
   ).not.toBeInTheDocument();
 });
-test("optional comments appear only for Not acceptable and retain draft text when hidden", async () => {
+test("each unacceptable proposed title has its own optional correction; switching ratings preserves the text and interruptions are not shown", async () => {
   jest.mocked(Post).mockResolvedValue(start());
   render(<QuickTitleVerification />);
   await screen.findByText("Write Technical Reports for Clients");
@@ -573,18 +574,26 @@ test("optional comments appear only for Not acceptable and retain draft text whe
   expect(
     screen.queryByLabelText(/Interruptions or other comments/),
   ).not.toBeInTheDocument();
-  const group = screen.getAllByRole("radiogroup")[0];
+  const groups = screen.getAllByRole("radiogroup");
+  const group = groups[0];
   fireEvent.click(within(group).getByLabelText("Not acceptable"));
   fireEvent.change(screen.getByLabelText(/Suggested correction/), {
     target: { value: "Retain my correction" },
   });
-  fireEvent.change(screen.getByLabelText(/Interruptions or other comments/), {
-    target: { value: "Retain my comment" },
-  });
-  fireEvent.click(within(group).getByLabelText("I’m not sure"));
   expect(
-    screen.queryByLabelText(/Suggested correction/),
+    screen.queryByLabelText(/Interruptions or other comments/),
   ).not.toBeInTheDocument();
+  fireEvent.click(within(groups[1]).getByLabelText("Not acceptable"));
+  const fields = screen.getAllByLabelText(/Suggested correction/);
+  expect(fields).toHaveLength(2);
+  expect(fields[0]).toHaveValue("Retain my correction");
+  expect(fields[1]).toHaveValue("");
+  fireEvent.change(fields[1], { target: { value: "A different correction" } });
+  fireEvent.click(within(group).getByLabelText("I’m not sure"));
+  expect(screen.getAllByLabelText(/Suggested correction/)).toHaveLength(1);
+  expect(screen.getByLabelText(/Suggested correction/)).toHaveValue(
+    "A different correction",
+  );
   expect(
     screen.queryByLabelText(/Interruptions or other comments/),
   ).not.toBeInTheDocument();
@@ -592,12 +601,17 @@ test("optional comments appear only for Not acceptable and retain draft text whe
     screen.getByLabelText("What are you unsure about?", { exact: false }),
   ).toBeRequired();
   fireEvent.click(within(group).getByLabelText("Not acceptable"));
-  expect(screen.getByLabelText(/Suggested correction/)).toHaveValue(
+  expect(screen.getAllByLabelText(/Suggested correction/)[0]).toHaveValue(
     "Retain my correction",
   );
-  expect(screen.getByLabelText(/Interruptions or other comments/)).toHaveValue(
-    "Retain my comment",
+  expect(screen.getAllByLabelText(/Suggested correction/)[1]).toHaveValue(
+    "A different correction",
   );
+  fireEvent.click(within(group).getByLabelText("Acceptable"));
+  fireEvent.click(within(groups[1]).getByLabelText("Acceptable"));
+  expect(
+    screen.queryByLabelText(/Suggested correction/),
+  ).not.toBeInTheDocument();
 });
 test.each(["Rob", "Xinru", "Iman"])(
   "%s sees the permitted navigation but not the temporarily hidden earlier pilot",
