@@ -32,6 +32,9 @@ export function sourceReviewCsv(record: {
     "Review pool",
     "Package SHA256",
     "Per-title suggested corrections",
+    "Active seconds at original submission",
+    "Active seconds on later visits",
+    "Last timing update (UTC)",
   ];
   const reviewer = (id: string) =>
     record.study.roster.find((r) => r.reviewerId === id)?.label || id;
@@ -53,7 +56,7 @@ export function sourceReviewCsv(record: {
       JSON.stringify(ratings),
       a.payload.correction,
       a.payload.interruption,
-      (a.activeTimeMs / 1000).toFixed(1),
+      ((a.cumulativeActiveTimeMs ?? a.activeTimeMs) / 1000).toFixed(1),
       (a.elapsedTimeMs / 1000).toFixed(1),
       new Date(a.submittedAt).toISOString(),
       a.id,
@@ -73,6 +76,9 @@ export function sourceReviewCsv(record: {
             correction: r.correction,
           })),
       ),
+      (a.activeTimeMs / 1000).toFixed(1),
+      ((a.revisitActiveTimeMs ?? 0) / 1000).toFixed(1),
+      new Date(a.lastTimingUpdateAt ?? a.submittedAt).toISOString(),
     ];
   });
   for (const a of record.legacyAnswers) {
@@ -97,6 +103,9 @@ export function sourceReviewCsv(record: {
       c.batch,
       "",
       "",
+      (a.activeTimeMs / 1000).toFixed(1),
+      "0.0",
+      new Date(a.submittedAt).toISOString(),
     ]);
   }
   return (

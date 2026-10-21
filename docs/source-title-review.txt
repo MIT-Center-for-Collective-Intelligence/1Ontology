@@ -1,5 +1,18 @@
 Source-grouped title review — October 20, 2026
 
+October 21 navigation update: Previous, Next, and Go to O*NET description let
+reviewers browse any assigned page without submitting incomplete ratings.
+Navigation checkpoints the current draft before opening another page; failed
+checkpoints keep the reviewer on the current page. Saved responses can be
+reopened read-only. Original submissions are immutable. Their retained drafts
+accept only timing changes after submission, with revision checks and append-only
+revisit timing events. Exports report cumulative active page time and separate
+original-submission and later-visit time; elapsed time still ends at submission.
+Pause and hidden-tab exclusions apply on every visit, including previews.
+The named review staff can open a list of pages containing linked activities
+with multiple supporting descriptions. This exposes the existing scope without
+changing the cohort, source package, reviewer access, or historical responses.
+
 The current /review/title-validation interface asks only whether each proposed
 title is acceptable. The unchanged title is the proposal for a Keep case. It
 does not ask for an original-title judgment or a separate split judgment.

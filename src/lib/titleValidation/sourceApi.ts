@@ -33,6 +33,8 @@ export async function sourceReviewAction(
   )
     throw new TitleValidationError(404, "Unknown description review action.");
   const sources = getSourceDataset();
+  if (body.pageId !== undefined && typeof body.pageId !== "string")
+    throw new TitleValidationError(400, "Unknown description.");
   if (
     action === "quick-source-export" &&
     body.scope !== undefined &&
@@ -152,6 +154,20 @@ export async function sourceReviewAction(
           softwareQA: Boolean(state.legacy.study.softwareQA),
           packageVersion: sources.version,
         };
+      else if (
+        !saved.duplicate &&
+        action === "quick-source-checkpoint" &&
+        state.answers[quickKey(actor.uid, body.payload.caseId)]
+      )
+        event = {
+          kind: "source-title-revisit-timing-checkpoint",
+          actorId: actor.uid,
+          sourcePageId: body.payload.caseId,
+          activeTimeMs: body.payload.activeTimeMs,
+          revision: saved.draft!.revision,
+          softwareQA: Boolean(state.legacy.study.softwareQA),
+          packageVersion: sources.version,
+        };
     }
     const view =
       action === "quick-source-status"
@@ -162,6 +178,7 @@ export async function sourceReviewAction(
             actor.uid,
             flagged,
             actor.canManage,
+            body.pageId,
           )
         : sourceSession(
             state,
@@ -171,6 +188,11 @@ export async function sourceReviewAction(
             flagged,
             actor.canManage,
             Date.now(),
+            action === "quick-source-respond"
+              ? undefined
+              : action === "quick-source-checkpoint"
+                ? body.payload?.caseId
+                : body.pageId,
           );
     return {
       result: {

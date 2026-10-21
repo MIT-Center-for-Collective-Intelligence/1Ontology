@@ -18,6 +18,7 @@ import {
 } from "../../../src/lib/titleValidation/quick";
 import { makeQuickSelection } from "../../../src/lib/titleValidation/quickSelection";
 import { sourceReviewCsv } from "../../../src/lib/titleValidation/sourceCsv";
+import { sourceReviewExport } from "../../../src/lib/titleValidation/sourceExport";
 const data = getQuickDataset(),
   sources = getSourceDataset();
 function state(): SourceState {
@@ -312,3 +313,155 @@ test.each([null, 42, {}, "x".repeat(5001)])(
     expect(JSON.stringify(s)).toBe(before);
   },
 );
+
+test("navigation preserves partial answers and cumulative time across visits; submitted responses stay immutable while later viewing time is added", () => {
+  const s = state();
+  const pages = assignedSourcePages(s, data, sources, "urop", false, false);
+  let first = sourceSession(
+    s,
+    data,
+    sources,
+    "urop",
+    false,
+    false,
+    1000,
+    pages[0].id,
+  );
+  const p = structuredClone(first.draft!.payload);
+  const question = first.questions[0].id;
+  p.ratings[question].value = "acceptable";
+  p.activeTimeMs = 1500;
+  saveSourceReview(s, data, sources, "urop", false, false, p, 0, false, 3000);
+  const later = sourceSession(
+    s,
+    data,
+    sources,
+    "urop",
+    false,
+    false,
+    4000,
+    pages[9].id,
+  );
+  expect(later.navigation[9].number).toBe(10);
+  expect(later.completed).toBe(0);
+  first = sourceSession(
+    s,
+    data,
+    sources,
+    "urop",
+    false,
+    false,
+    8000,
+    pages[0].id,
+  );
+  expect(first.draft!.payload).toEqual(p);
+  expect(first.draft!.revision).toBe(1);
+  for (const r of Object.values(p.ratings)) r.value = "acceptable";
+  p.activeTimeMs = 3000;
+  saveSourceReview(s, data, sources, "urop", false, false, p, 1, true, 10000);
+  const original = JSON.stringify(s.answers);
+  const revisited = sourceSession(
+    s,
+    data,
+    sources,
+    "urop",
+    false,
+    false,
+    20000,
+    pages[0].id,
+  );
+  expect(revisited.submitted).toBe(true);
+  expect(revisited.completed).toBe(1);
+  expect(revisited.navigation[0].submitted).toBe(true);
+  const timing = {
+    ...structuredClone(revisited.draft!.payload),
+    activeTimeMs: 4500,
+  };
+  saveSourceReview(
+    s,
+    data,
+    sources,
+    "urop",
+    false,
+    false,
+    timing,
+    2,
+    false,
+    22000,
+  );
+  const restored = sourceSession(
+    s,
+    data,
+    sources,
+    "urop",
+    false,
+    false,
+    30000,
+    pages[0].id,
+  );
+  expect(restored.draft!.payload.activeTimeMs).toBe(4500);
+  expect(() =>
+    saveSourceReview(
+      s,
+      data,
+      sources,
+      "urop",
+      false,
+      false,
+      {
+        ...timing,
+        ratings: {
+          ...timing.ratings,
+          [question]: { value: "unsure", explanation: "change" },
+        },
+      },
+      3,
+      false,
+      31000,
+    ),
+  ).toThrow("not been overwritten");
+  expect(() =>
+    saveSourceReview(
+      s,
+      data,
+      sources,
+      "urop",
+      false,
+      false,
+      timing,
+      2,
+      false,
+      31000,
+    ),
+  ).toThrow("another tab");
+  expect(() =>
+    sourceSession(
+      s,
+      data,
+      sources,
+      "urop",
+      false,
+      false,
+      31000,
+      sources.pages.find(
+        (p) => !pages.some((assigned) => assigned.id === p.id),
+      )!.id,
+    ),
+  ).toThrow("not in your assigned");
+  const exported = sourceReviewExport(
+    s,
+    data,
+    sources,
+    "urop",
+    false,
+    false,
+    "self",
+  );
+  expect(exported.answers[0]).toMatchObject({
+    activeTimeMs: 3000,
+    cumulativeActiveTimeMs: 4500,
+    revisitActiveTimeMs: 1500,
+  });
+  expect(sourceReviewCsv(exported)).toContain('"4.5","9.0"');
+  expect(JSON.stringify(s.answers)).toBe(original);
+});

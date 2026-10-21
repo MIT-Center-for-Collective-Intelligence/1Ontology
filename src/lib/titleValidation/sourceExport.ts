@@ -23,9 +23,24 @@ export function sourceReviewExport(
         "Only coordinators can export team reviews.",
       );
   }
-  const answers = Object.values(state.answers).filter(
-      (a) => scope === "team" || a.reviewerId === uid,
-    ),
+  const answers = Object.values(state.answers)
+      .filter((a) => scope === "team" || a.reviewerId === uid)
+      .map((answer) => {
+        const draft = state.drafts[answer.id];
+        const cumulativeActiveTimeMs = Math.max(
+          answer.activeTimeMs,
+          draft?.payload.activeTimeMs ?? 0,
+        );
+        return {
+          ...answer,
+          cumulativeActiveTimeMs,
+          revisitActiveTimeMs: cumulativeActiveTimeMs - answer.activeTimeMs,
+          lastTimingUpdateAt: Math.max(
+            answer.submittedAt,
+            draft?.updatedAt ?? 0,
+          ),
+        };
+      }),
     legacyAnswers = Object.values(state.legacy.answers).filter(
       (a) => scope === "team" || a.reviewerId === uid,
     );
@@ -68,6 +83,6 @@ export function sourceReviewExport(
             ),
           },
     interpretation:
-      "Submitted reviews only in CSV. One timing record per O*NET description page. Earlier activity-level answers/timing remain separate historical records; do not add their time to the new page time or count associated activities as independent samples. Missing proposals are not human rejections.",
+      "Submitted reviews only in CSV. Active page time includes later visits, counted once per description page; original submission time is retained separately. Earlier activity-level records remain separate; associated activities are not independent samples. Missing proposals are not human rejections.",
   };
 }
