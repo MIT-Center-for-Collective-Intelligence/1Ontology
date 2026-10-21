@@ -14,6 +14,7 @@ import {
   FormHelperText,
   FormLabel,
   LinearProgress,
+  MenuItem,
   Radio,
   RadioGroup,
   ScopedCssBaseline,
@@ -164,10 +165,13 @@ export default function QuickTitleVerification({
     `source-title-pending:${v.datasetVersion}:${v.reviewerKey}:${flagged ? "flagged" : "regular"}`;
   const pauseKey = (v: View) =>
     `source-title-paused:${v.datasetVersion}:${v.reviewerKey}:${v.item?.id}`;
+  const locationKey = (v: View) =>
+    `source-title-location:${v.datasetVersion}:${v.reviewerKey}:${flagged ? "flagged" : "regular"}`;
   function applyView(next: View, recover = true) {
     setValidationAttempted(false);
     viewRef.current = next;
     setView(next);
+    if (next.item) storage.set(locationKey(next), next.item.id);
     revision.current = next.draft?.revision || 0;
     let p = next.draft?.payload || null;
     const local = recover ? storage.get(draftKey(next)) : null;
@@ -189,7 +193,7 @@ export default function QuickTitleVerification({
       ? new ReviewDraftWriter<View>(
           next.draft,
           (attempt) => request("checkpoint", attempt),
-          () => request("session"),
+          () => request("session", { pageId: next.item!.id }),
           (attempt) => {
             if (writerRef.current !== writer) return;
             checkpointJournal.current = attempt;
@@ -222,6 +226,17 @@ export default function QuickTitleVerification({
       await writerRef.current?.settle();
       let next: View = await request("session");
       const old = storage.get(pendingKey(next));
+      const selected =
+        old?.payload?.caseId ||
+        viewRef.current?.item?.id ||
+        new URLSearchParams(window.location.search).get("item") ||
+        storage.get(locationKey(next));
+      if (
+        selected &&
+        next.navigation?.some((p) => p.id === selected) &&
+        selected !== next.item?.id
+      )
+        next = await request("session", { pageId: selected });
       if (old) {
         try {
           const delivery = old.awaitingCheckpoint
@@ -322,6 +337,7 @@ export default function QuickTitleVerification({
     lastActiveTick.current = now;
     if (
       document.visibilityState === "visible" &&
+      !busyRef.current &&
       !pausedRef.current &&
       !pendingRef.current &&
       payloadRef.current &&
@@ -344,6 +360,43 @@ export default function QuickTitleVerification({
     setPaused(pausedRef.current);
     storage.set(pauseKey(viewRef.current), pausedRef.current);
     if (pausedRef.current) save(false);
+  }
+  async function navigate(pageId: string) {
+    if (
+      busyRef.current ||
+      pendingRef.current ||
+      blocked.current ||
+      pageId === viewRef.current?.item?.id
+    )
+      return;
+    recordActiveTime();
+    window.clearTimeout(editTimer.current);
+    busyRef.current = true;
+    setBusy(true);
+    setError("");
+    try {
+      const writer = writerRef.current;
+      await writer?.settle();
+      if (writer && payloadRef.current)
+        await writer.checkpoint(payloadRef.current);
+      const next: View = await request("session", { pageId });
+      blocked.current = false;
+      applyView(next);
+      setNotice(
+        next.submitted
+          ? "Your saved response is shown below."
+          : "Your unfinished choices and review time are saved when you move between descriptions.",
+      );
+    } catch (e: any) {
+      setError(
+        "Could not open that description. Your current choices are kept here. " +
+          message(e),
+      );
+      if ((e?.status || e?.response?.status) === 409) blocked.current = true;
+    } finally {
+      busyRef.current = false;
+      setBusy(false);
+    }
   }
   async function save(final: boolean) {
     if (!final) {
@@ -378,6 +431,7 @@ export default function QuickTitleVerification({
       (final && pausedRef.current)
     )
       return;
+    if (viewRef.current.submitted) return;
     recordActiveTime();
     const v = viewRef.current;
     if (final && !pendingRef.current) {
@@ -577,7 +631,10 @@ export default function QuickTitleVerification({
     await load();
   }
   // Background checkpoints leave fields editable; a break or final delivery locks them.
-  const frozen = pending || paused || blocked.current;
+  const frozen =
+    busy || pending || paused || blocked.current || view?.submitted;
+  const navigation = view?.navigation || [];
+  const position = navigation.findIndex((p) => p.id === view?.item?.id);
   const issues =
     validationAttempted && view && payload ? questionIssues(view, payload) : {};
   return (
@@ -705,9 +762,63 @@ export default function QuickTitleVerification({
                       color="text.secondary"
                       sx={{ mt: 1 }}
                     >
-                      Drafts save automatically. Save and continue submits this
-                      page.
+                      You can visit any description without submitting it.
+                      Unfinished choices save automatically. Review time adds
+                      together across visits, including visits after submission;
+                      pauses and hidden tabs are excluded.
                     </Typography>
+                    {navigation.length > 0 && (
+                      <Stack
+                        direction={{ xs: "column", sm: "row" }}
+                        gap={1}
+                        sx={{ mt: 2 }}
+                      >
+                        <Button
+                          disabled={
+                            busy || pending || blocked.current || position <= 0
+                          }
+                          onClick={() => navigate(navigation[position - 1].id)}
+                        >
+                          Previous
+                        </Button>
+                        <TextField
+                          select
+                          fullWidth
+                          label="Go to O*NET description"
+                          value={view.item?.id || ""}
+                          disabled={busy || pending || blocked.current}
+                          onChange={(e) => navigate(e.target.value)}
+                        >
+                          {!view.item && (
+                            <MenuItem value="">Choose a description</MenuItem>
+                          )}
+                          {navigation.map((p) => (
+                            <MenuItem key={p.id} value={p.id}>
+                              Description {p.number} of {view.total} ·{" "}
+                              {p.submitted ? "Submitted" : "Not submitted"}
+                            </MenuItem>
+                          ))}
+                        </TextField>
+                        <Button
+                          disabled={
+                            busy ||
+                            pending ||
+                            blocked.current ||
+                            position >= navigation.length - 1
+                          }
+                          onClick={() => navigate(navigation[position + 1].id)}
+                        >
+                          Next
+                        </Button>
+                      </Stack>
+                    )}
+                    {view.submitted && (
+                      <Alert severity="info" sx={{ mt: 2 }}>
+                        This is your submitted response. It is shown read-only
+                        so your original answers stay unchanged. Time spent
+                        revisiting this description is still recorded.
+                      </Alert>
+                    )}
                     {draftError && (
                       <Alert severity="warning" sx={{ mt: 2 }}>
                         {draftError}{" "}
@@ -753,7 +864,7 @@ export default function QuickTitleVerification({
                       display: "grid",
                       gridTemplateColumns: {
                         xs: "1fr",
-                        md: "minmax(0,0.9fr) minmax(0,1.1fr)",
+                        md: "minmax(0,0.7fr) minmax(0,1.3fr)",
                       },
                       gap: 3,
                       alignItems: "start",
@@ -967,18 +1078,20 @@ export default function QuickTitleVerification({
                             output remains recorded for follow-up.
                           </Alert>
                         ))}
-                      <Button
-                        type="submit"
-                        size="large"
-                        variant="contained"
-                        disabled={busy || paused || blocked.current}
-                      >
-                        {busy
-                          ? "Saving…"
-                          : pending
-                            ? "Retry saving this answer"
-                            : "Save and continue"}
-                      </Button>
+                      {!view.submitted && (
+                        <Button
+                          type="submit"
+                          size="large"
+                          variant="contained"
+                          disabled={busy || paused || blocked.current}
+                        >
+                          {busy
+                            ? "Saving…"
+                            : pending
+                              ? "Retry saving this answer"
+                              : "Save and continue"}
+                        </Button>
+                      )}
                       {error && <Alert severity="error">{error}</Alert>}
                     </Stack>
                   </Box>
@@ -1056,6 +1169,50 @@ export default function QuickTitleVerification({
                     )}
                   </CardContent>
                 </Card>
+                {view.canUseReviewLinks && (
+                  <Accordion sx={{ mt: 3 }}>
+                    <AccordionSummary>
+                      Activities linked to multiple O*NET descriptions
+                    </AccordionSummary>
+                    <AccordionDetails>
+                      <Typography sx={{ mb: 2 }}>
+                        The sampled activities have one description each, but
+                        their description pages also include these linked
+                        activities. Rob can inspect these before the UROP
+                        review.
+                      </Typography>
+                      {navigation
+                        .filter(
+                          (p) => p.multipleDescriptionActivities.length > 0,
+                        )
+                        .map((p) => (
+                          <Box key={p.id} sx={{ mb: 2 }}>
+                            <Button
+                              onClick={() => navigate(p.id)}
+                              disabled={busy || pending || blocked.current}
+                            >
+                              Open description {p.number}
+                            </Button>
+                            <Typography variant="body2">
+                              {p.multipleDescriptionActivities
+                                .map(
+                                  (a) =>
+                                    `${a.title} (${a.descriptions} descriptions)`,
+                                )
+                                .join("; ")}
+                            </Typography>
+                          </Box>
+                        ))}
+                      {!navigation.some(
+                        (p) => p.multipleDescriptionActivities.length > 0,
+                      ) && (
+                        <Typography>
+                          No such activities on the assigned description pages.
+                        </Typography>
+                      )}
+                    </AccordionDetails>
+                  </Accordion>
+                )}
                 {view.canUseReviewLinks && (
                   <Stack
                     direction="row"

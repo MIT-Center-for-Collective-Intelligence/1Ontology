@@ -125,6 +125,105 @@ beforeEach(() => {
   localStorage.clear();
 });
 afterEach(() => jest.useRealTimers());
+test("reviewers can preview a later description without completing ratings, then return to the partial draft", async () => {
+  const first: any = start();
+  const second: any = JSON.parse(JSON.stringify(first));
+  second.item.id =
+    second.draft.caseId =
+    second.draft.payload.caseId =
+      "later-page";
+  second.item.description = "A later O*NET description";
+  second.draft.payload.submissionId = "later-submission-0001";
+  const nav = [
+    {
+      id: first.item.id,
+      number: 1,
+      submitted: false,
+      multipleDescriptionActivities: [],
+    },
+    {
+      id: second.item.id,
+      number: 2,
+      submitted: false,
+      multipleDescriptionActivities: [],
+    },
+  ];
+  first.navigation = second.navigation = nav;
+  let active = first;
+  jest.mocked(Post).mockImplementation(async (path, body: any) => {
+    if (String(path).endsWith("checkpoint")) {
+      const page = body.payload.caseId === first.item.id ? first : second;
+      page.draft = {
+        ...page.draft,
+        revision: page.draft.revision + 1,
+          payload: JSON.parse(JSON.stringify(body.payload)),
+      };
+      return page;
+    }
+    if (body.pageId) active = body.pageId === first.item.id ? first : second;
+    return active;
+  });
+  render(<QuickTitleVerification />);
+  await screen.findByText(first.item.description);
+  fireEvent.click(
+    within(screen.getAllByRole("radiogroup")[0]).getByLabelText("Acceptable"),
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Next" }));
+  await screen.findByText(second.item.description);
+  expect(Post).not.toHaveBeenCalledWith(
+    expect.stringContaining("respond"),
+    expect.anything(),
+    expect.anything(),
+  );
+  expect(first.draft.payload.ratings["related-0"].value).toBe("acceptable");
+  fireEvent.click(
+    screen.getByRole("button", { name: "Previous" }),
+  );
+  await screen.findByText(first.item.description);
+  expect(
+    within(screen.getAllByRole("radiogroup")[0]).getByLabelText("Acceptable"),
+  ).toBeChecked();
+});
+test("a submitted response is visible read-only and later viewing time still checkpoints", async () => {
+  jest.useFakeTimers();
+  let v: any = { ...start(), submitted: true, completed: 1 };
+  for (const rating of Object.values(v.draft.payload.ratings) as any[])
+    rating.value = "acceptable";
+  jest.mocked(Post).mockImplementation(async (path, body: any) => {
+    if (String(path).endsWith("checkpoint"))
+      v = {
+        ...v,
+        draft: {
+          ...v.draft,
+          revision: v.draft.revision + 1,
+          payload: body.payload,
+        },
+      };
+    return v;
+  });
+  render(<QuickTitleVerification />);
+  await act(async () => {
+    await Promise.resolve();
+  });
+  expect(screen.getByText(/This is your submitted response/)).toBeVisible();
+  expect(
+    screen.queryByRole("button", { name: "Save and continue" }),
+  ).not.toBeInTheDocument();
+  expect(
+    screen
+      .getAllByRole("radio")
+      .every((radio) => radio.hasAttribute("disabled")),
+  ).toBe(true);
+  await act(async () => {
+    jest.advanceTimersByTime(30000);
+  });
+  expect(v.draft.payload.activeTimeMs).toBe(37000);
+  expect(Post).not.toHaveBeenCalledWith(
+    expect.stringContaining("respond"),
+    expect.anything(),
+    expect.anything(),
+  );
+});
 test("local preview uses one stable identity without showing test-account names or switches", async () => {
   jest
     .mocked(Post)

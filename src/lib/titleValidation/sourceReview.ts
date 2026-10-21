@@ -57,6 +57,10 @@ export interface SourceAnswer extends QuickAnswer {
   legacyReferences: LegacyReference[];
   activityIds: string[];
   missingProposalActivityIds: string[];
+  // Derived only for exports; the immutable submission stays unchanged.
+  cumulativeActiveTimeMs?: number;
+  revisitActiveTimeMs?: number;
+  lastTimingUpdateAt?: number;
 }
 export interface SourceState {
   legacy: QuickState;
@@ -154,6 +158,7 @@ export function sourceStatus(
   uid: string,
   flagged: boolean,
   canManage: boolean,
+  pageId?: string,
 ) {
   const pages = assignedSourcePages(
     state,
@@ -165,7 +170,7 @@ export function sourceStatus(
   );
   const done = pages.filter((p) => state.answers[quickKey(uid, p.id)]);
   const unfinished = pages.filter((p) => !state.answers[quickKey(uid, p.id)]);
-  const item =
+  const defaultItem =
     unfinished
       .filter((p) => state.drafts[quickKey(uid, p.id)])
       .sort(
@@ -173,7 +178,13 @@ export function sourceStatus(
           state.drafts[quickKey(uid, a.id)].firstPresentedAt -
           state.drafts[quickKey(uid, b.id)].firstPresentedAt,
       )[0] || unfinished[0];
+  const item =
+    pageId === undefined
+      ? defaultItem
+      : pages.find((p) => p.id === pageId) ||
+        fail(403, "This description is not in your assigned review.");
   const draft = item ? state.drafts[quickKey(uid, item.id)] : undefined;
+  const submitted = item ? state.answers[quickKey(uid, item.id)] : undefined;
   const regular = flagged
     ? assignedSourcePages(state, data, sources, uid, false, canManage)
     : pages;
@@ -192,6 +203,19 @@ export function sourceStatus(
     total: pages.length,
     item,
     draft,
+    submitted: Boolean(submitted),
+    navigation: pages.map((page, index) => ({
+      id: page.id,
+      number: index + 1,
+      submitted: Boolean(state.answers[quickKey(uid, page.id)]),
+      multipleDescriptionActivities: page.activities
+        .filter((a) => a.supportingDescriptionCount > 1)
+        .map((a) => ({
+          id: a.id,
+          title: a.currentTitle,
+          descriptions: a.supportingDescriptionCount,
+        })),
+    })),
     questions: item ? sourceQuestions(item) : [],
     flagged,
     canManage,
@@ -237,17 +261,32 @@ export function sourceSession(
   flagged: boolean,
   canManage: boolean,
   now: number,
+  pageId?: string,
 ) {
-  let view = sourceStatus(state, data, sources, uid, flagged, canManage);
+  let view = sourceStatus(
+    state,
+    data,
+    sources,
+    uid,
+    flagged,
+    canManage,
+    pageId,
+  );
   if (view.item && !view.draft) {
-    state.drafts[quickKey(uid, view.item.id)] = initialDraft(
-      state,
-      view.item,
-      data,
-      uid,
-      now,
-    );
-    view = sourceStatus(state, data, sources, uid, flagged, canManage);
+    const key = quickKey(uid, view.item.id);
+    const answer = state.answers[key];
+    state.drafts[key] = answer
+      ? {
+          reviewerId: uid,
+          caseId: answer.caseId,
+          revision: 0,
+          firstPresentedAt: answer.firstPresentedAt,
+          updatedAt: answer.submittedAt,
+          payload: structuredClone(answer.payload),
+          legacyReferences: answer.legacyReferences,
+        }
+      : initialDraft(state, view.item, data, uid, now);
+    view = sourceStatus(state, data, sources, uid, flagged, canManage, pageId);
   }
   return view;
 }
@@ -348,16 +387,16 @@ export function saveSourceReview(
   if (answer) {
     if (final && answer.payloadHash === quickHash(payload))
       return { duplicate: true, answer };
-    fail(
-      409,
-      "This description has already been saved. Its answers have not been overwritten.",
-    );
+    if (
+      final ||
+      quickHash({ ...payload, activeTimeMs: 0 }) !==
+        quickHash({ ...answer.payload, activeTimeMs: 0 })
+    )
+      fail(
+        409,
+        "This description has already been saved. Its answers have not been overwritten.",
+      );
   }
-  if (
-    sourceStatus(state, data, sources, uid, flagged, canManage).item?.id !==
-    page.id
-  )
-    fail(409, "Save your current description before continuing.");
   const draft =
     state.drafts[key] || fail(409, "Open this description before saving it.");
   if (
