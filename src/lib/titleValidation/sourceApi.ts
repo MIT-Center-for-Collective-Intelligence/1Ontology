@@ -5,6 +5,7 @@ import {
   sourceStatus,
   saveSourceReview,
   SourceState,
+  SOURCE_SCOPE,
 } from "./sourceReview";
 import { QuickDataset, QuickState, quickKey } from "./quick";
 import { TitleValidationError } from "./engine";
@@ -133,6 +134,11 @@ export async function sourceReviewAction(
           409,
           "This form version has changed. Reload to recover your saved review.",
         );
+      if (body.reviewScope !== SOURCE_SCOPE)
+        throw new TitleValidationError(
+          409,
+          "The review now includes only activities linked to one O*NET description. Refresh this page in your browser to continue; your saved answers and timing are preserved.",
+        );
       const saved = saveSourceReview(
         state,
         data,
@@ -148,6 +154,7 @@ export async function sourceReviewAction(
       if (!saved.duplicate && action === "quick-source-respond")
         event = {
           kind: "source-title-answer-submitted-v2",
+          reviewScope: SOURCE_SCOPE,
           actorId: actor.uid,
           sourcePageId: body.payload.caseId,
           answerId: quickKey(actor.uid, body.payload.caseId),
@@ -161,6 +168,7 @@ export async function sourceReviewAction(
       )
         event = {
           kind: "source-title-revisit-timing-checkpoint",
+          reviewScope: SOURCE_SCOPE,
           actorId: actor.uid,
           sourcePageId: body.payload.caseId,
           activeTimeMs: body.payload.activeTimeMs,

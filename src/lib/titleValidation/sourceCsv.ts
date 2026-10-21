@@ -35,24 +35,39 @@ export function sourceReviewCsv(record: {
     "Active seconds at original submission",
     "Active seconds on later visits",
     "Last timing update (UTC)",
+    "Submitted review scope",
+    "Timing scope",
+    "Excluded historical or draft ratings (not current review)",
   ];
   const reviewer = (id: string) =>
     record.study.roster.find((r) => r.reviewerId === id)?.label || id;
   const rows = record.answers.map((a) => {
     const page = record.dataset.pages.find((p) => p.id === a.caseId)!;
-    const ratings = page.activities.flatMap((activity) =>
-      activity.proposals.map((p) => ({
-        activityId: activity.id,
-        originalTitle: activity.currentTitle,
-        proposedTitle: p.title,
-        ...a.payload.ratings[p.id],
-      })),
+    const ratingsFor = (activities: typeof page.activities) =>
+      activities.flatMap((activity) =>
+        activity.proposals.map((p) => ({
+          activityId: activity.id,
+          originalTitle: activity.currentTitle,
+          proposedTitle: p.title,
+          ...a.payload.ratings[p.id],
+        })),
+      );
+    const eligible = page.activities.filter(
+      (activity) =>
+        activity.supportingDescriptionCount === 1 &&
+        a.activityIds.includes(activity.id),
     );
+    const ratings = ratingsFor(eligible);
+    const excluded = ratingsFor(
+      page.activities.filter(
+        (activity) => activity.supportingDescriptionCount !== 1,
+      ),
+    ).filter((rating) => rating.value);
     return [
       "description-page-v2",
       reviewer(a.reviewerId),
       page.description,
-      a.activityIds.join("\n"),
+      eligible.map((activity) => activity.id).join("\n"),
       JSON.stringify(ratings),
       a.payload.correction,
       a.payload.interruption,
@@ -79,6 +94,10 @@ export function sourceReviewCsv(record: {
       (a.activeTimeMs / 1000).toFixed(1),
       ((a.revisitActiveTimeMs ?? 0) / 1000).toFixed(1),
       new Date(a.lastTimingUpdateAt ?? a.submittedAt).toISOString(),
+      a.reviewScope || "all-linked-v2 (historical)",
+      a.timingScope ||
+        "all-linked-v2 (includes time on now-excluded activities)",
+      JSON.stringify(excluded),
     ];
   });
   for (const a of record.legacyAnswers) {
@@ -106,6 +125,9 @@ export function sourceReviewCsv(record: {
       (a.activeTimeMs / 1000).toFixed(1),
       "0.0",
       new Date(a.submittedAt).toISOString(),
+      "historical-activity-v1",
+      "historical-activity-v1",
+      "[]",
     ]);
   }
   return (

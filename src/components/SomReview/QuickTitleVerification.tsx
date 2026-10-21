@@ -156,6 +156,7 @@ export default function QuickTitleVerification({
         ...context,
         ...extra,
         packageVersion: viewRef.current?.datasetVersion,
+        reviewScope: viewRef.current?.reviewScope,
       };
     return postQuickReview(path, body, preview);
   }
@@ -679,8 +680,10 @@ export default function QuickTitleVerification({
             <Typography sx={{ mt: 1, mb: 3, maxWidth: 800 }}>
               Read the O*NET description, then judge whether each title clearly
               and accurately describes the relevant activity for someone
-              unfamiliar with the occupation. Review all the linked activities
+              unfamiliar with the occupation. Review the activities shown
               together on this page. Each proposed title has its own rating.
+              Activities linked to additional O*NET descriptions are left for a
+              later review.
             </Typography>
             {qa && (
               <Alert severity="warning" sx={{ mb: 2 }}>
@@ -1169,50 +1172,6 @@ export default function QuickTitleVerification({
                     )}
                   </CardContent>
                 </Card>
-                {view.canUseReviewLinks && (
-                  <Accordion sx={{ mt: 3 }}>
-                    <AccordionSummary>
-                      Activities linked to multiple O*NET descriptions
-                    </AccordionSummary>
-                    <AccordionDetails>
-                      <Typography sx={{ mb: 2 }}>
-                        The sampled activities have one description each, but
-                        their description pages also include these linked
-                        activities. Rob can inspect these before the UROP
-                        review.
-                      </Typography>
-                      {navigation
-                        .filter(
-                          (p) => p.multipleDescriptionActivities.length > 0,
-                        )
-                        .map((p) => (
-                          <Box key={p.id} sx={{ mb: 2 }}>
-                            <Button
-                              onClick={() => navigate(p.id)}
-                              disabled={busy || pending || blocked.current}
-                            >
-                              Open description {p.number}
-                            </Button>
-                            <Typography variant="body2">
-                              {p.multipleDescriptionActivities
-                                .map(
-                                  (a) =>
-                                    `${a.title} (${a.descriptions} descriptions)`,
-                                )
-                                .join("; ")}
-                            </Typography>
-                          </Box>
-                        ))}
-                      {!navigation.some(
-                        (p) => p.multipleDescriptionActivities.length > 0,
-                      ) && (
-                        <Typography>
-                          No such activities on the assigned description pages.
-                        </Typography>
-                      )}
-                    </AccordionDetails>
-                  </Accordion>
-                )}
                 {view.canUseReviewLinks && (
                   <Stack
                     direction="row"

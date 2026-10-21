@@ -1,5 +1,23 @@
 Source-grouped title review — October 20, 2026
 
+October 21 scope restriction, authorized by Rob: the current regular and flagged
+forms show only activities with exactly one supporting O*NET description. Keep
+the existing 25 sampled anchors and 25 source pages; filtering linked peers leaves
+65 distinct eligible activities. The 22 multiple-description activities are
+deferred, not deleted. The staff inspection panel for those activities is hidden.
+The private frozen package, proposal outputs and assignment overlay are unchanged.
+
+Existing submitted answers remain immutable. Existing drafts retain now-excluded
+rating fields without requiring answers to them. A queued pre-cutover browser
+choice can be archived on its first current-scope checkpoint; excluded fields
+are then immutable. New submissions identify the scope and the included
+activity IDs. Old clients cannot mutate this form until they reload its new scope.
+CSV separates current eligible ratings from excluded historical/draft ratings.
+Raw exports preserve original saved answers. Earlier page timing included work
+on all linked activities; retain it and label it instead of trying to apportion
+it or treating it as timing solely for the narrower review. Navigation, cumulative
+timing, pauses and earlier reviews remain available.
+
 October 21 navigation update: Previous, Next, and Go to O*NET description let
 reviewers browse any assigned page without submitting incomplete ratings.
 Navigation checkpoints the current draft before opening another page; failed
@@ -9,16 +27,16 @@ accept only timing changes after submission, with revision checks and append-onl
 revisit timing events. Exports report cumulative active page time and separate
 original-submission and later-visit time; elapsed time still ends at submission.
 Pause and hidden-tab exclusions apply on every visit, including previews.
-The named review staff can open a list of pages containing linked activities
-with multiple supporting descriptions. This exposes the existing scope without
-changing the cohort, source package, reviewer access, or historical responses.
+The earlier staff list of pages with multiple-description activities was removed
+when Rob restricted the active review to single-description activities.
 
 The current /review/title-validation interface asks only whether each proposed
 title is acceptable. The unchanged title is the proposal for a Keep case. It
 does not ask for an original-title judgment or a separate split judgment.
 
-All direct generalizations of the same O*NET evidence node appear together.
-The source-pages-v2 package was derived without inference from the exact frozen
+Eligible direct generalizations of the same O*NET evidence node appear together;
+activities with multiple descriptions are deferred under the October 21 scope.
+The immutable source-pages-v2 package was derived without inference from the exact frozen
 15,994-case delivery and saved exact proposals. Every edge was independently
 matched against the live source-node generalizations on October 20: 366 evidence
 nodes, 1,370 activity links, no missing or extra edges. Match by evidenceNodeId
@@ -26,10 +44,12 @@ and activity nodeId, never title similarity or O*NET number alone. For an
 activity with multiple supporting descriptions, show only proposal groups
 containing this description's original number.
 
-The original 419-case package and 5/15/5 selection remain unchanged. The 25
+The original 419-case package and 5/15/5 selection remain unchanged. Before the
+October 21 scope restriction, the 25
 sampled activities select 25 source pages containing 88 activity/description
 pairs (87 distinct activities) and 99 title ratings (98 distinct proposals).
-Associated activities are supplemental observations, not
+The current view has 25 description pages, 65 single-description activities and
+76 proposed-title ratings. Associated activities are supplemental observations, not
 additional independently sampled cases. Some associated activities were
 keyword-flagged (five in the initial batch). The separate flagged queue remains
 restricted; showing ALL linked activities, as requested, includes those peers

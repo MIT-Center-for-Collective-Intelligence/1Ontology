@@ -12,6 +12,7 @@ import { TitleValidationError } from "./engine";
 import { hasReviewNavigation } from "./reviewNavigation";
 
 export const SOURCE_FORM = "proposed-titles-by-source-v2";
+export const SOURCE_SCOPE = "single-description-only-v1";
 export interface SourceActivity {
   id: string;
   currentTitle: string;
@@ -47,6 +48,8 @@ export interface LegacyReference {
 }
 export interface SourceDraft extends QuickDraft {
   legacyReferences: LegacyReference[];
+  reviewScope?: string;
+  timingScope?: string;
 }
 export interface SourceAnswer extends QuickAnswer {
   formVersion: typeof SOURCE_FORM;
@@ -57,6 +60,8 @@ export interface SourceAnswer extends QuickAnswer {
   legacyReferences: LegacyReference[];
   activityIds: string[];
   missingProposalActivityIds: string[];
+  reviewScope?: string;
+  timingScope?: string;
   // Derived only for exports; the immutable submission stays unchanged.
   cumulativeActiveTimeMs?: number;
   revisitActiveTimeMs?: number;
@@ -94,6 +99,13 @@ export function assignedSourcePages(
   const rank = new Map(anchors.map((c, i) => [c.id, i]));
   return sources.pages
     .filter((p) => p.anchorCaseIds.some((id) => rank.has(id)))
+    .map((p) => ({
+      ...p,
+      activities: p.activities.filter(
+        (a) => a.supportingDescriptionCount === 1,
+      ),
+    }))
+    .filter((p) => p.activities.length > 0)
     .sort(
       (a, b) =>
         Math.min(...a.anchorCaseIds.map((id) => rank.get(id) ?? Infinity)) -
@@ -148,6 +160,8 @@ function initialDraft(
       submissionId: crypto.randomUUID(),
     },
     legacyReferences: references,
+    reviewScope: SOURCE_SCOPE,
+    timingScope: SOURCE_SCOPE,
   };
 }
 import crypto from "crypto";
@@ -195,6 +209,7 @@ export function sourceStatus(
     studyId: state.legacy.study.id,
     datasetVersion: sources.version,
     formVersion: SOURCE_FORM,
+    reviewScope: SOURCE_SCOPE,
     reviewerKey: quickHash([state.legacy.study.id, uid]),
     reviewerLabel:
       state.legacy.study.roster.find((r) => r.reviewerId === uid)?.label ||
@@ -284,8 +299,18 @@ export function sourceSession(
           updatedAt: answer.submittedAt,
           payload: structuredClone(answer.payload),
           legacyReferences: answer.legacyReferences,
+          reviewScope: SOURCE_SCOPE,
+          timingScope: answer.timingScope || "all-linked-v2",
         }
-      : initialDraft(state, view.item, data, uid, now);
+      : // Keep the original payload shape for archive/rollback compatibility.
+        // Only the single-description questions are presented or required.
+        initialDraft(
+          state,
+          sources.pages.find((p) => p.id === view.item!.id)!,
+          data,
+          uid,
+          now,
+        );
     view = sourceStatus(state, data, sources, uid, flagged, canManage, pageId);
   }
   return view;
@@ -314,8 +339,26 @@ export function saveSourceReview(
   const page =
     pages.find((page) => page.id === p?.caseId) ||
     fail(403, "This description is not in your assigned review.");
+  const key = quickKey(uid, page.id);
+  const draft =
+    state.drafts[key] || fail(409, "Open this description before saving it.");
+  const existingAnswer = state.answers[key];
   const questions = sourceQuestions(page),
-    ids = questions.map((q) => q.id);
+    visibleIds = new Set(questions.map((q) => q.id)),
+    ids = Object.keys(draft.payload.ratings);
+  const frozenIds = new Set(
+    sourceQuestions(sources.pages.find((p) => p.id === page.id)!).map(
+      (q) => q.id,
+    ),
+  );
+  if (
+    ids.some((id) => !frozenIds.has(id)) ||
+    [...visibleIds].some((id) => !ids.includes(id))
+  )
+    fail(
+      409,
+      "This draft does not match the saved proposals. Reload this description.",
+    );
   if (
     !p ||
     !p.ratings ||
@@ -333,10 +376,26 @@ export function saveSourceReview(
     fail(400, "The answer or timer is invalid. Reload this description.");
   for (const id of ids) {
     const r = p.ratings[id];
+    if (!r || typeof r !== "object")
+      fail(400, "A saved rating is invalid. Reload this description.");
+    // Old tabs may deliver one last uncheckpointed choice during the scope
+    // transition. Archive it once. Confirmed current-scope and submitted
+    // records keep all excluded ratings unchanged.
+    if (
+      !visibleIds.has(id) &&
+      (existingAnswer || draft.reviewScope === SOURCE_SCOPE)
+    ) {
+      if (quickHash(r) !== quickHash(draft.payload.ratings[id]))
+        fail(
+          409,
+          "An excluded activity cannot be changed in this review. Reload this description.",
+        );
+      continue;
+    }
     if (
       !r ||
       !["", "acceptable", "not_acceptable", "unsure"].includes(r.value) ||
-      (final && !r.value)
+      (final && visibleIds.has(id) && !r.value)
     )
       fail(400, "Choose a rating for every proposed title.");
     if (typeof r.explanation !== "string" || r.explanation.length > 5000)
@@ -348,6 +407,7 @@ export function saveSourceReview(
       fail(400, "Keep each suggested correction under 5,000 characters.");
     if (
       final &&
+      visibleIds.has(id) &&
       ["not_acceptable", "unsure"].includes(r.value) &&
       !r.explanation.trim()
     )
@@ -382,8 +442,7 @@ export function saveSourceReview(
     activeTimeMs: p.activeTimeMs,
     submissionId: p.submissionId,
   };
-  const key = quickKey(uid, page.id),
-    answer = state.answers[key];
+  const answer = state.answers[key];
   if (answer) {
     if (final && answer.payloadHash === quickHash(payload))
       return { duplicate: true, answer };
@@ -397,8 +456,6 @@ export function saveSourceReview(
         "This description has already been saved. Its answers have not been overwritten.",
       );
   }
-  const draft =
-    state.drafts[key] || fail(409, "Open this description before saving it.");
   if (
     draft.reviewerId !== uid ||
     draft.payload.submissionId !== p.submissionId ||
@@ -418,6 +475,8 @@ export function saveSourceReview(
     );
   state.drafts[key] = {
     ...draft,
+    reviewScope: SOURCE_SCOPE,
+    timingScope: draft.timingScope || "all-linked-v2",
     revision: draft.revision + 1,
     updatedAt: now,
     payload,
@@ -435,6 +494,8 @@ export function saveSourceReview(
     activeTimeMs: p.activeTimeMs,
     softwareQA: Boolean(state.legacy.study.softwareQA),
     formVersion: SOURCE_FORM,
+    reviewScope: SOURCE_SCOPE,
+    timingScope: draft.timingScope || "all-linked-v2",
     packageVersion: sources.version,
     packageSha256:
       sources.bundleSha256 || fail(409, "The source package is not verified."),
