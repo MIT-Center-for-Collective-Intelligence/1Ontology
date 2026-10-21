@@ -29,7 +29,10 @@ export interface QuickDataset {
 }
 export interface QuickPayload {
   caseId: string;
-  ratings: Record<string, { value: QuickRating | ""; explanation: string }>;
+  ratings: Record<
+    string,
+    { value: QuickRating | ""; explanation: string; correction?: string }
+  >;
   correction: string;
   interruption: string;
   activeTimeMs: number;
@@ -210,6 +213,11 @@ export function validateQuickPayload(
     if (typeof r.explanation !== "string" || r.explanation.length > 5000)
       fail(400, "Keep each explanation under 5,000 characters.");
     if (
+      r.correction !== undefined &&
+      (typeof r.correction !== "string" || r.correction.length > 5000)
+    )
+      fail(400, "Keep each suggested correction under 5,000 characters.");
+    if (
       final &&
       ["not_acceptable", "unsure"].includes(r.value) &&
       !r.explanation.trim()
@@ -234,6 +242,9 @@ export function validateQuickPayload(
         {
           value: p.ratings[q.id].value,
           explanation: p.ratings[q.id].explanation,
+          ...(p.ratings[q.id].correction !== undefined
+            ? { correction: p.ratings[q.id].correction }
+            : {}),
         },
       ]),
     ),

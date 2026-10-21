@@ -578,9 +578,6 @@ export default function QuickTitleVerification({
   }
   // Background checkpoints leave fields editable; a break or final delivery locks them.
   const frozen = pending || paused || blocked.current;
-  const showOptionalComments = Object.values(payload?.ratings || {}).some(
-    (rating) => rating.value === "not_acceptable",
-  );
   const issues =
     validationAttempted && view && payload ? questionIssues(view, payload) : {};
   return (
@@ -919,6 +916,31 @@ export default function QuickTitleVerification({
                                   }
                                 />
                               )}
+                              {payload.ratings[q.id]?.value ===
+                                "not_acceptable" && (
+                                <TextField
+                                  fullWidth
+                                  multiline
+                                  minRows={2}
+                                  disabled={frozen}
+                                  label="Suggested correction, if useful (optional)"
+                                  value={payload.ratings[q.id].correction || ""}
+                                  inputProps={{ maxLength: 5000 }}
+                                  sx={{ mt: 2 }}
+                                  onChange={(e) =>
+                                    update({
+                                      ...payloadRef.current!,
+                                      ratings: {
+                                        ...payloadRef.current!.ratings,
+                                        [q.id]: {
+                                          ...payloadRef.current!.ratings[q.id],
+                                          correction: e.target.value,
+                                        },
+                                      },
+                                    })
+                                  }
+                                />
+                              )}
                             </FormControl>
                             <Accordion
                               disableGutters
@@ -945,42 +967,6 @@ export default function QuickTitleVerification({
                             output remains recorded for follow-up.
                           </Alert>
                         ))}
-                      {showOptionalComments && (
-                        <Card>
-                          <CardContent>
-                            <TextField
-                              fullWidth
-                              multiline
-                              minRows={2}
-                              disabled={frozen}
-                              label="Suggested correction, if useful (optional)"
-                              value={payload.correction}
-                              inputProps={{ maxLength: 5000 }}
-                              onChange={(e) =>
-                                update({
-                                  ...payloadRef.current!,
-                                  correction: e.target.value,
-                                })
-                              }
-                            />
-                            <TextField
-                              fullWidth
-                              multiline
-                              disabled={frozen}
-                              label="Interruptions or other comments (optional)"
-                              value={payload.interruption}
-                              inputProps={{ maxLength: 5000 }}
-                              sx={{ mt: 2 }}
-                              onChange={(e) =>
-                                update({
-                                  ...payloadRef.current!,
-                                  interruption: e.target.value,
-                                })
-                              }
-                            />
-                          </CardContent>
-                        </Card>
-                      )}
                       <Button
                         type="submit"
                         size="large"

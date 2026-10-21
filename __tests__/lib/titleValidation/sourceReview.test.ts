@@ -177,6 +177,17 @@ test("every proposed title is required, uncertainty needs explanation, checkpoin
   ).toThrow("explain");
   for (const r of Object.values(p.ratings) as any[])
     r.explanation = "Software test only";
+  const [first, second] = Object.keys(p.ratings);
+  p.ratings[first] = {
+    value: "not_acceptable",
+    explanation: "The first title needs a correction.",
+    correction: "Correction for the first title",
+  };
+  p.ratings[second] = {
+    value: "not_acceptable",
+    explanation: "The second title needs a different correction.",
+    correction: "Correction for the second title",
+  };
   p.correction = "Saved correction";
   p.interruption = "Saved interruption";
   saveSourceReview(s, data, sources, "urop", false, false, p, 0, false, 6000);
@@ -214,12 +225,38 @@ test("every proposed title is required, uncertainty needs explanation, checkpoin
     10000,
   ).answer!;
   expect(a).toMatchObject({ activeTimeMs: 5000, elapsedTimeMs: 9000 });
+  expect(a.payload.ratings[first].correction).toBe(
+    "Correction for the first title",
+  );
+  expect(a.payload.ratings[second].correction).toBe(
+    "Correction for the second title",
+  );
   const all = JSON.stringify(s.answers);
   expect(
     saveSourceReview(s, data, sources, "urop", false, false, p, 1, true, 12000)
       .duplicate,
   ).toBe(true);
   expect(JSON.stringify(s.answers)).toBe(all);
+  expect(() =>
+    saveSourceReview(
+      s,
+      data,
+      sources,
+      "urop",
+      false,
+      false,
+      {
+        ...p,
+        ratings: {
+          ...p.ratings,
+          [first]: { ...p.ratings[first], correction: "Changed correction" },
+        },
+      },
+      1,
+      true,
+      12000,
+    ),
+  ).toThrow("not been overwritten");
   expect(() =>
     saveSourceReview(
       s,
@@ -249,3 +286,29 @@ test("every proposed title is required, uncertainty needs explanation, checkpoin
   expect(csv).toContain('"5.0","9.0"');
   expect(csv.split("\r\n")).toHaveLength(3);
 });
+test.each([null, 42, {}, "x".repeat(5001)])(
+  "invalid per-title correction is rejected without changing the draft (%#)",
+  (correction) => {
+    const s = state();
+    const v = sourceSession(s, data, sources, "urop", false, false, 1000);
+    const p = JSON.parse(JSON.stringify(v.draft!.payload));
+    const first = Object.keys(p.ratings)[0];
+    p.ratings[first].correction = correction;
+    const before = JSON.stringify(s);
+    expect(() =>
+      saveSourceReview(
+        s,
+        data,
+        sources,
+        "urop",
+        false,
+        false,
+        p,
+        0,
+        false,
+        2000,
+      ),
+    ).toThrow("suggested correction");
+    expect(JSON.stringify(s)).toBe(before);
+  },
+);

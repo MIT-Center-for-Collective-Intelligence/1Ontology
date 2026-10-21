@@ -62,6 +62,12 @@ test("source drafts/answers/timing round-trip separately while historical record
   }));
   const p = structuredClone(view.draft!.payload);
   for (const r of Object.values(p.ratings)) r.value = "acceptable";
+  const first = Object.keys(p.ratings)[0];
+  p.ratings[first] = {
+    value: "not_acceptable",
+    explanation: "The proposed title needs a correction.",
+    correction: "This correction must survive storage",
+  };
   p.activeTimeMs = 5000;
   await withSourceStudy(id, "test", true, seed, (s) => ({
     result: saveSourceReview(
@@ -90,6 +96,11 @@ test("source drafts/answers/timing round-trip separately while historical record
     activeTimeMs: 5000,
     elapsedTimeMs: 5000,
     softwareQA: true,
+    payload: {
+      ratings: {
+        [first]: { correction: "This correction must survive storage" },
+      },
+    },
   });
   const bytes = JSON.stringify(stored.answers);
   await expect(

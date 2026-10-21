@@ -303,6 +303,11 @@ export function saveSourceReview(
     if (typeof r.explanation !== "string" || r.explanation.length > 5000)
       fail(400, "Keep each explanation under 5,000 characters.");
     if (
+      r.correction !== undefined &&
+      (typeof r.correction !== "string" || r.correction.length > 5000)
+    )
+      fail(400, "Keep each suggested correction under 5,000 characters.");
+    if (
       final &&
       ["not_acceptable", "unsure"].includes(r.value) &&
       !r.explanation.trim()
@@ -323,7 +328,14 @@ export function saveSourceReview(
     ratings: Object.fromEntries(
       ids.map((id) => [
         id,
-        { value: p.ratings[id].value, explanation: p.ratings[id].explanation },
+        {
+          value: p.ratings[id].value,
+          explanation: p.ratings[id].explanation,
+          // Omit absent fields so historical retry hashes remain unchanged.
+          ...(p.ratings[id].correction !== undefined
+            ? { correction: p.ratings[id].correction }
+            : {}),
+        },
       ]),
     ),
     correction: p.correction,

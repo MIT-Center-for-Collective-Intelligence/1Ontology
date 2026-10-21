@@ -31,6 +31,7 @@ export function sourceReviewCsv(record: {
     "Sampled anchor IDs",
     "Review pool",
     "Package SHA256",
+    "Per-title suggested corrections",
   ];
   const reviewer = (id: string) =>
     record.study.roster.find((r) => r.reviewerId === id)?.label || id;
@@ -63,6 +64,15 @@ export function sourceReviewCsv(record: {
       a.sampledAnchorIds.join("\n"),
       a.reviewPool,
       a.packageSha256,
+      JSON.stringify(
+        ratings
+          .filter((r) => r.correction?.trim())
+          .map((r) => ({
+            activityId: r.activityId,
+            proposedTitle: r.proposedTitle,
+            correction: r.correction,
+          })),
+      ),
     ];
   });
   for (const a of record.legacyAnswers) {
@@ -85,6 +95,7 @@ export function sourceReviewCsv(record: {
       a.softwareQA ? "YES — exclude from human results" : "No",
       c.id,
       c.batch,
+      "",
       "",
     ]);
   }
