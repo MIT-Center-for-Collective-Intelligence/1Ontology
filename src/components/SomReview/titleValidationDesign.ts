@@ -8,21 +8,21 @@ const systemFont =
 /** Apply with a ThemeProvider around this page only. */
 function createReviewTheme(mode: "light" | "dark") {
   const dark = mode === "dark";
-  const ink = dark ? "#EDF5F1" : "#243330";
-  const teal = dark ? "#83D6C6" : "#176B63";
-  const border = dark ? "#40544C" : "#D9E0DC";
-  const paper = dark ? "#1C2825" : "#FFFFFF";
-  const focusRing = alpha(teal, 0.24);
+  const ink = dark ? "#F2F2F2" : "#243330";
+  const accent = dark ? "#D6D6D6" : "#176B63";
+  const border = dark ? "#505050" : "#D9E0DC";
+  const paper = dark ? "#242424" : "#FFFFFF";
+  const focusRing = alpha(accent, 0.24);
   return createTheme({
     palette: {
       mode,
       primary: {
-        main: teal,
-        dark: dark ? "#58BBA9" : "#10534D",
-        contrastText: dark ? "#102520" : "#FFFFFF",
+        main: accent,
+        dark: dark ? "#AFAFAF" : "#10534D",
+        contrastText: dark ? "#171717" : "#FFFFFF",
       },
-      background: { default: dark ? "#111918" : "#F7F6F2", paper },
-      text: { primary: ink, secondary: dark ? "#B5C8C0" : "#586762" },
+      background: { default: dark ? "#171717" : "#F7F6F2", paper },
+      text: { primary: ink, secondary: dark ? "#BDBDBD" : "#586762" },
       divider: border,
     },
     shape: { borderRadius: 8 },
@@ -46,7 +46,7 @@ function createReviewTheme(mode: "light" | "dark") {
             textTransform: "none",
             paddingInline: 18,
             "&.Mui-focusVisible": {
-              outline: `3px solid ${teal}`,
+              outline: `3px solid ${accent}`,
               outlineOffset: 3,
             },
           },
@@ -76,7 +76,7 @@ function createReviewTheme(mode: "light" | "dark") {
           root: {
             minHeight: 52,
             "&.Mui-focusVisible": {
-              outline: `3px solid ${teal}`,
+              outline: `3px solid ${accent}`,
               outlineOffset: 2,
             },
           },
@@ -88,10 +88,10 @@ function createReviewTheme(mode: "light" | "dark") {
             borderRadius: 8,
             backgroundColor: paper,
             "& .MuiOutlinedInput-notchedOutline": {
-              borderColor: dark ? "#8DA99D" : "#7D9187",
+              borderColor: dark ? "#949494" : "#7D9187",
             },
             "&:hover .MuiOutlinedInput-notchedOutline": {
-              borderColor: dark ? teal : "#738C82",
+              borderColor: dark ? accent : "#738C82",
             },
             "&.Mui-focused": { boxShadow: `0 0 0 3px ${focusRing}` },
           },
@@ -103,10 +103,10 @@ function createReviewTheme(mode: "light" | "dark") {
       MuiRadio: {
         styleOverrides: {
           root: {
-            color: dark ? "#A6BDB2" : "#64746D",
-            "&.Mui-checked": { color: teal },
+            color: dark ? "#B5B5B5" : "#64746D",
+            "&.Mui-checked": { color: accent },
             "&.Mui-focusVisible": {
-              outline: `3px solid ${teal}`,
+              outline: `3px solid ${accent}`,
               outlineOffset: 1,
             },
           },
@@ -115,10 +115,10 @@ function createReviewTheme(mode: "light" | "dark") {
       MuiCheckbox: {
         styleOverrides: {
           root: {
-            color: dark ? "#A6BDB2" : "#64746D",
-            "&.Mui-checked": { color: teal },
+            color: dark ? "#B5B5B5" : "#64746D",
+            "&.Mui-checked": { color: accent },
             "&.Mui-focusVisible": {
-              outline: `3px solid ${teal}`,
+              outline: `3px solid ${accent}`,
               outlineOffset: 1,
             },
           },
@@ -180,7 +180,7 @@ export const titleValidationStyles: Record<StyleKey, SxProps<Theme>> = {
     },
   },
   evidence: {
-    bgcolor: ({ palette }) => (palette.mode === "dark" ? "#16211E" : "#FBFCFA"),
+    bgcolor: ({ palette }) => (palette.mode === "dark" ? "#1C1C1C" : "#FBFCFA"),
     border: 1,
     borderColor: "divider",
     borderRadius: 2,
@@ -221,7 +221,7 @@ export const titleValidationStyles: Record<StyleKey, SxProps<Theme>> = {
       '&[data-selected="true"]': {
         borderColor: "primary.main",
         bgcolor: ({ palette }) =>
-          palette.mode === "dark" ? "#25463C" : "#EDF5F1",
+          palette.mode === "dark" ? "#363636" : "#EDF5F1",
       },
     },
   },
