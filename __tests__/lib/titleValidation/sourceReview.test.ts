@@ -10,6 +10,7 @@ import {
   sourceQuestions,
   saveSourceReview,
   SourceState,
+  SOURCE_SCOPE,
 } from "../../../src/lib/titleValidation/sourceReview";
 import {
   quickKey,
@@ -87,6 +88,14 @@ test("25 sampled activities become 25 description pages; all their linked tasks 
     before = JSON.stringify(s.legacy);
   const pages = assignedSourcePages(s, data, sources, "urop", false, false);
   expect(pages).toHaveLength(25);
+  expect(
+    pages
+      .flatMap((p) => p.activities)
+      .every((a) => a.supportingDescriptionCount === 1),
+  ).toBe(true);
+  expect(
+    new Set(pages.flatMap((p) => p.activities.map((a) => a.id))).size,
+  ).toBe(65);
   expect(new Set(pages.map((p) => p.id)).size).toBe(25);
   const v = sourceSession(s, data, sources, "urop", false, false, 1000);
   expect(v.sampledActivities).toBe(25);
@@ -98,6 +107,11 @@ test("25 sampled activities become 25 description pages; all their linked tasks 
   expect(() =>
     sourceSession(s, data, sources, "urop", true, false, 1000),
   ).toThrow("Rob is reviewing");
+  expect(
+    assignedSourcePages(s, data, sources, "rob", true, false)
+      .flatMap((p) => p.activities)
+      .every((a) => a.supportingDescriptionCount === 1),
+  ).toBe(true);
   const first = pages.map((p) => p.id);
   s.legacy.study.regularLimit = 100;
   expect(
@@ -105,6 +119,117 @@ test("25 sampled activities become 25 description pages; all their linked tasks 
       .slice(0, 25)
       .map((p) => p.id),
   ).toEqual(first);
+});
+
+test("old all-linked drafts retain excluded ratings and timing, but only single-description titles need answers", () => {
+  const s = state();
+  const assigned = assignedSourcePages(s, data, sources, "urop", false, false);
+  const page = sources.pages.find(
+    (p) =>
+      assigned.some((a) => a.id === p.id) &&
+      p.activities.some((a) => a.supportingDescriptionCount > 1),
+  )!;
+  let view = sourceSession(
+    s,
+    data,
+    sources,
+    "urop",
+    false,
+    false,
+    1000,
+    page.id,
+  );
+  const draft = s.drafts[quickKey("urop", page.id)];
+  delete draft.timingScope;
+  delete draft.reviewScope;
+  // Reproduce an unfinished pre-cutover draft, including one untouched blank
+  // excluded answer and one earlier selected excluded answer.
+  const visible = new Set(view.questions.map((q) => q.id));
+  const hidden = sourceQuestions(page).filter((q) => !visible.has(q.id));
+  for (const [index, q] of hidden.entries())
+    draft.payload.ratings[q.id] = {
+      value: index === 0 ? "unsure" : "",
+      explanation: "Saved before scope changed",
+    };
+  draft.payload.activeTimeMs = 1000;
+  const archived = JSON.stringify(
+    hidden.map((q) => draft.payload.ratings[q.id]),
+  );
+  view = sourceSession(s, data, sources, "urop", false, false, 3000, page.id);
+  expect(view.reviewScope).toBe(SOURCE_SCOPE);
+  expect(view.questions.every((q) => visible.has(q.id))).toBe(true);
+  expect(view.draft!.payload.activeTimeMs).toBe(1000);
+  const payload = structuredClone(view.draft!.payload);
+  // Preserve a choice made in the old browser before its last checkpoint.
+  payload.ratings[hidden[0].id] = {
+    value: "not_acceptable",
+    explanation: "Uncheckpointed older choice",
+  };
+  for (const q of view.questions) payload.ratings[q.id].value = "acceptable";
+  payload.activeTimeMs = 1500;
+  const answer = saveSourceReview(
+    s,
+    data,
+    sources,
+    "urop",
+    false,
+    false,
+    payload,
+    0,
+    true,
+    4000,
+  ).answer!;
+  expect(answer.reviewScope).toBe(SOURCE_SCOPE);
+  expect(answer.timingScope).toBe("all-linked-v2");
+  expect(answer.activityIds).toEqual(view.item!.activities.map((a) => a.id));
+  expect(answer.payload.ratings[hidden[0].id].explanation).toBe(
+    "Uncheckpointed older choice",
+  );
+  expect(
+    JSON.stringify(hidden.slice(1).map((q) => answer.payload.ratings[q.id])),
+  ).toBe(JSON.stringify(JSON.parse(archived).slice(1)));
+  const originalAnswer = JSON.stringify(s.answers);
+  expect(() =>
+    saveSourceReview(
+      s,
+      data,
+      sources,
+      "urop",
+      false,
+      false,
+      {
+        ...payload,
+        ratings: {
+          ...payload.ratings,
+          [hidden[0].id]: {
+            value: "acceptable",
+            explanation: "Changed hidden rating",
+          },
+        },
+      },
+      1,
+      false,
+      5000,
+    ),
+  ).toThrow("excluded activity");
+  saveSourceReview(
+    s,
+    data,
+    sources,
+    "urop",
+    false,
+    false,
+    { ...payload, activeTimeMs: 1600 },
+    1,
+    false,
+    5000,
+  );
+  expect(JSON.stringify(s.answers)).toBe(originalAnswer);
+  const csv = sourceReviewCsv(
+    sourceReviewExport(s, data, sources, "urop", false, false, "self"),
+  );
+  expect(csv).toContain("Excluded historical or draft ratings");
+  expect(csv).toContain("Uncheckpointed older choice");
 });
 test("saved earlier proposed-title ratings are restored with references, without recopying original-title or split judgments or timing", () => {
   const s = state();

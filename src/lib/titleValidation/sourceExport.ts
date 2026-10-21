@@ -2,6 +2,7 @@ import { TitleValidationError } from "./engine";
 import type { QuickDataset } from "./quick";
 import {
   sourceStatus,
+  SOURCE_SCOPE,
   type SourceDataset,
   type SourceState,
 } from "./sourceReview";
@@ -58,6 +59,7 @@ export function sourceReviewExport(
   };
   return {
     formatVersion: "source-title-review-export-v2",
+    currentReviewScope: SOURCE_SCOPE,
     scope,
     study: scope === "team" ? state.legacy.study : ownStudy,
     answers,
@@ -83,6 +85,6 @@ export function sourceReviewExport(
             ),
           },
     interpretation:
-      "Submitted reviews only in CSV. Active page time includes later visits, counted once per description page; original submission time is retained separately. Earlier activity-level records remain separate; associated activities are not independent samples. Missing proposals are not human rejections.",
+      "The current review includes only activities linked to exactly one O*NET description. CSV separates excluded historical ratings from current-scope ratings; raw answers and frozen proposals remain unchanged. Timing from an earlier all-linked page cannot be divided between retained and excluded activities. Active time includes later visits; original timing remains separate. Associated activities are not independent samples.",
   };
 }

@@ -48,6 +48,9 @@ test("only own assigned source pages are delivered; package mismatch, unassigned
     false,
   );
   expect(view.item.activities.length).toBeGreaterThan(0);
+  expect(
+    view.item.activities.every((a: any) => a.supportingDescriptionCount === 1),
+  ).toBe(true);
   expect(view.canUseReviewLinks).toBe(false);
   expect(Object.keys(view)).not.toContain("legacyAnswers");
   await expect(
@@ -95,7 +98,12 @@ test("only own assigned source pages are delivered; package mismatch, unassigned
   await expect(
     sourceReviewAction(
       "quick-source-respond",
-      { payload: p, revision: 0, packageVersion: view.datasetVersion },
+      {
+        payload: p,
+        revision: 0,
+        packageVersion: view.datasetVersion,
+        reviewScope: view.reviewScope,
+      },
       actor,
       state.legacy.study.id,
       data,
@@ -103,6 +111,20 @@ test("only own assigned source pages are delivered; package mismatch, unassigned
     ),
   ).rejects.toThrow("every proposed title");
   expect(Object.keys(state.answers)).toHaveLength(0);
+  await expect(
+    sourceReviewAction(
+      "quick-source-checkpoint",
+      {
+        payload: view.draft.payload,
+        revision: 0,
+        packageVersion: view.datasetVersion,
+      },
+      actor,
+      state.legacy.study.id,
+      data,
+      false,
+    ),
+  ).rejects.toThrow("review now includes only");
 });
 test("page response and retry store one record with its version and leave every historical answer untouched", async () => {
   const view: any = await sourceReviewAction(
@@ -126,6 +148,7 @@ test("page response and retry store one record with its version and leave every 
     payload: view.draft.payload,
     revision: 0,
     packageVersion: view.datasetVersion,
+    reviewScope: view.reviewScope,
   };
   const saved: any = await sourceReviewAction(
     "quick-source-respond",

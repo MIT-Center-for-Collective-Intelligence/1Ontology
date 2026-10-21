@@ -5,6 +5,8 @@ import {
   sourceSession,
   saveSourceReview,
   sourceStatus,
+  sourceQuestions,
+  assignedSourcePages,
   type SourceState,
 } from "../../../src/lib/titleValidation/sourceReview";
 import { sourceReviewCsv } from "../../../src/lib/titleValidation/sourceCsv";
@@ -35,7 +37,7 @@ function fixture() {
   for (const uid of ["own", "other"]) {
     const v = sourceSession(s, data, sources, uid, false, false, 1000);
     const p = JSON.parse(JSON.stringify(v.draft!.payload));
-    for (const r of Object.values(p.ratings) as any[]) r.value = "acceptable";
+    for (const q of v.questions) p.ratings[q.id].value = "acceptable";
     p.activeTimeMs = 1000;
     saveSourceReview(s, data, sources, uid, false, false, p, 0, true, 2000);
   }
@@ -77,7 +79,10 @@ test("CSV keeps each correction with its proposed title and preserves earlier pa
   );
   const answer = record.answers[0];
   const page = sources.pages.find((p) => p.id === answer.caseId)!;
-  const proposal = page.activities[0].proposals[0];
+  const activity = page.activities.find(
+    (a) => a.supportingDescriptionCount === 1,
+  )!;
+  const proposal = activity.proposals[0];
   answer.payload.ratings[proposal.id].correction =
     'Correction with a comma, a "quote", and\na new line';
   answer.payload.correction = "Earlier correction for the whole page";
@@ -86,7 +91,7 @@ test("CSV keeps each correction with its proposed title and preserves earlier pa
   expect(rows).toHaveLength(1);
   expect(JSON.parse(rows[0]["Per-title suggested corrections"])).toEqual([
     {
-      activityId: page.activities[0].id,
+      activityId: activity.id,
       proposedTitle: proposal.title,
       correction: answer.payload.ratings[proposal.id].correction,
     },
@@ -101,6 +106,64 @@ test("CSV keeps each correction with its proposed title and preserves earlier pa
     answer.payload.ratings[proposal.id].correction,
   );
   expect(rows[0]["Active page seconds"]).toBe("1.0");
+});
+
+test("CSV separates earlier excluded ratings and labels broader timing without rewriting the saved answer", () => {
+  const s = fixture();
+  const assigned = assignedSourcePages(s, data, sources, "own", false, false);
+  const page = sources.pages.find(
+    (p) =>
+      assigned.some((a) => a.id === p.id) &&
+      p.activities.some((a) => a.supportingDescriptionCount > 1),
+  )!;
+  const record = sourceReviewExport(
+    s,
+    data,
+    sources,
+    "own",
+    false,
+    false,
+    "self",
+  );
+  const historical = {
+    ...record.answers[0],
+    caseId: page.id,
+    reviewScope: undefined,
+    timingScope: undefined,
+    activityIds: page.activities.map((a) => a.id),
+    payload: {
+      ...record.answers[0].payload,
+      caseId: page.id,
+      ratings: Object.fromEntries(
+        sourceQuestions(page).map((q) => [
+          q.id,
+          { value: "acceptable" as const, explanation: "Historical judgment" },
+        ]),
+      ),
+    },
+  };
+  record.answers = [historical];
+  record.dataset = sources;
+  const before = JSON.stringify(record.answers);
+  const rows = parse(sourceReviewCsv(record), { columns: true, bom: true });
+  const current = JSON.parse(rows[0]["Proposed titles and ratings"]);
+  const excluded = JSON.parse(
+    rows[0]["Excluded historical or draft ratings (not current review)"],
+  );
+  const eligible = new Set(
+    page.activities
+      .filter((a) => a.supportingDescriptionCount === 1)
+      .map((a) => a.id),
+  );
+  expect(current.every((r: any) => eligible.has(r.activityId))).toBe(true);
+  expect(excluded.length).toBeGreaterThan(0);
+  expect(
+    excluded.every(
+      (r: any) => !eligible.has(r.activityId) && r.value === "acceptable",
+    ),
+  ).toBe(true);
+  expect(rows[0]["Timing scope"]).toContain("includes time on now-excluded");
+  expect(JSON.stringify(record.answers)).toBe(before);
 });
 test("personal scope cannot impersonate another reviewer and team exports remain coordinator-only", () => {
   const s = fixture();
