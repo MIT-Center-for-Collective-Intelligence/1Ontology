@@ -129,7 +129,13 @@ function SourceEvidence({
                 <Box
                   key={record.id}
                   component="blockquote"
-                  sx={{ ml: 0, pl: 2, borderLeft: "3px solid #BDD5CD" }}
+                  sx={{
+                    ml: 0,
+                    pl: 2,
+                    borderLeft: "3px solid",
+                    borderColor: ({ palette }) =>
+                      palette.mode === "dark" ? "#707070" : "#BDD5CD",
+                  }}
                 >
                   <Typography sx={{ whiteSpace: "pre-wrap" }}>
                     {record.title}
@@ -1010,7 +1016,7 @@ export default function RelationshipReview({
                                   p: 2.5,
                                   bgcolor: ({ palette }) =>
                                     palette.mode === "dark"
-                                      ? "#16211E"
+                                      ? "#1C1C1C"
                                       : "#F2F3EF",
                                   borderRadius: 2,
                                 }}
@@ -1031,7 +1037,7 @@ export default function RelationshipReview({
                                   p: 2.5,
                                   bgcolor: ({ palette }) =>
                                     palette.mode === "dark"
-                                      ? "#25463C"
+                                      ? "#363636"
                                       : "#EAF3F0",
                                   border: "1px solid",
                                   borderColor: "divider",
@@ -1120,7 +1126,11 @@ export default function RelationshipReview({
                                 sx={{
                                   ml: 0,
                                   pl: 2,
-                                  borderLeft: "3px solid #BDD5CD",
+                                  borderLeft: "3px solid",
+                                  borderColor: ({ palette }) =>
+                                    palette.mode === "dark"
+                                      ? "#707070"
+                                      : "#BDD5CD",
                                 }}
                               >
                                 <Typography>

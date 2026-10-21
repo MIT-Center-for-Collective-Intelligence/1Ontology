@@ -30,7 +30,7 @@ test("review surfaces follow a profile's mode and retain their scoped design", (
       </ReviewTheme>
     </ThemeProvider>,
   );
-  expect(screen.getByText("dark:#1C2825")).toBeVisible();
+  expect(screen.getByText("dark:#242424")).toBeVisible();
   view.rerender(
     <ThemeProvider theme={createTheme({ palette: { mode: "light" } })}>
       <ReviewTheme>

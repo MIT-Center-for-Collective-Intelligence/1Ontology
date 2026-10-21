@@ -811,7 +811,7 @@ export default function HumanTitleValidation({
                         height: 6,
                         borderRadius: 10,
                         bgcolor: ({ palette }) =>
-                          palette.mode === "dark" ? "#31463C" : "#E5ECE8",
+                          palette.mode === "dark" ? "#3A3A3A" : "#E5ECE8",
                       }}
                     />
                     <Stack
@@ -1218,7 +1218,7 @@ export default function HumanTitleValidation({
                                         borderColor: "primary.main",
                                         bgcolor: ({ palette }) =>
                                           palette.mode === "dark"
-                                            ? "#25463C"
+                                            ? "#363636"
                                             : "#EDF5F1",
                                       },
                                     },
@@ -1775,7 +1775,7 @@ export default function HumanTitleValidation({
                                 borderRadius: 2,
                                 bgcolor: ({ palette }) =>
                                   palette.mode === "dark"
-                                    ? "#16211E"
+                                    ? "#1C1C1C"
                                     : "#FBFCFA",
                               }}
                             >
@@ -1839,7 +1839,7 @@ export default function HumanTitleValidation({
                                   borderRadius: 2,
                                   bgcolor: ({ palette }) =>
                                     palette.mode === "dark"
-                                      ? "#31463C"
+                                      ? "#3A3A3A"
                                       : "#E5ECE8",
                                 }}
                               />
