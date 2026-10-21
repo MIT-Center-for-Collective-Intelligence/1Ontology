@@ -168,7 +168,7 @@ test("reviewers can preview a later description without completing ratings, then
   fireEvent.click(
     within(screen.getAllByRole("radiogroup")[0]).getByLabelText("Acceptable"),
   );
-  fireEvent.click(screen.getByRole("button", { name: "Next", exact: true }));
+  fireEvent.click(screen.getByRole("button", { name: "Next" }));
   await screen.findByText(second.item.description);
   expect(Post).not.toHaveBeenCalledWith(
     expect.stringContaining("respond"),
@@ -177,7 +177,7 @@ test("reviewers can preview a later description without completing ratings, then
   );
   expect(first.draft.payload.ratings["related-0"].value).toBe("acceptable");
   fireEvent.click(
-    screen.getByRole("button", { name: "Previous", exact: true }),
+    screen.getByRole("button", { name: "Previous" }),
   );
   await screen.findByText(first.item.description);
   expect(
