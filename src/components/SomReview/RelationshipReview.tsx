@@ -9,6 +9,7 @@ import {
   Button,
   Card,
   CardContent,
+  Checkbox,
   Chip,
   FormControl,
   FormControlLabel,
@@ -42,10 +43,15 @@ type Draft = {
   decision: RelationshipDecision | "";
   note: string;
   correction: string;
+  revisitLater: boolean;
   revision: number;
   pending?: Record<string, unknown>;
   dirty: boolean;
 };
+type FeedbackWithRevisit = RelationshipFeedback & { revisitLater?: boolean };
+function savedRevisitLater(feedback?: RelationshipFeedback): boolean {
+  return (feedback as FeedbackWithRevisit | undefined)?.revisitLater === true;
+}
 function SourceEvidence({
   caseId,
   version,
@@ -264,6 +270,7 @@ function FeedbackForm({
       decision: saved?.decision || "",
       note: saved?.note || "",
       correction: saved?.correction || "",
+      revisitLater: savedRevisitLater(saved),
       revision: saved?.revision || 0,
       dirty: false,
     };
@@ -277,7 +284,15 @@ function FeedbackForm({
         typeof prior.correction === "string" &&
         Number.isSafeInteger(prior.revision)
       )
-        return { ...prior, dirty: true };
+        return {
+          ...prior,
+          // Older drafts have no flag. Do not change their pending payloads.
+          revisitLater:
+            typeof prior.revisitLater === "boolean"
+              ? prior.revisitLater
+              : base.revisitLater,
+          dirty: true,
+        };
     } catch {}
     return base;
   });
@@ -320,6 +335,7 @@ function FeedbackForm({
       decision: draft.decision,
       note: draft.note,
       correction: draft.correction,
+      revisitLater: draft.revisitLater,
       revision: draft.revision,
       requestId: crypto.randomUUID(),
       reviewerKey: session.reviewerKey,
@@ -354,6 +370,7 @@ function FeedbackForm({
         decision: answer.decision,
         note: answer.note,
         correction: answer.correction,
+        revisitLater: savedRevisitLater(answer),
         revision: answer.revision,
         dirty: false,
       });
@@ -406,6 +423,10 @@ function FeedbackForm({
             <Typography>
               A newer response is saved: {conflict.decision}.{" "}
               {conflict.correction} {conflict.note}
+            </Typography>
+            <Typography variant="body2">
+              Saved Revisit later:{" "}
+              {savedRevisitLater(conflict) ? "Yes" : "No"}
             </Typography>
             <Button
               onClick={() => {
@@ -467,6 +488,29 @@ function FeedbackForm({
           </RadioGroup>
         </FormControl>
         <Stack spacing={2} sx={{ mt: 2 }}>
+          <Box>
+            <FormControlLabel
+              disabled={busy || !!draft.pending}
+              control={
+                <Checkbox
+                  checked={draft.revisitLater}
+                  onChange={(e) => edit({ revisitLater: e.target.checked })}
+                  inputProps={{
+                    "aria-describedby": "relationship-revisit-later-help",
+                  }}
+                />
+              }
+              label="Revisit later"
+            />
+            <Typography
+              id="relationship-revisit-later-help"
+              variant="body2"
+              color="text.secondary"
+            >
+              Return to this activity later without changing your judgment.
+              No comment is needed; press Save feedback to save this mark.
+            </Typography>
+          </Box>
           <TextField
             label="Suggested generalizations (optional)"
             helperText="Use activity names; this is a suggestion, not an automatic change."
@@ -619,6 +663,8 @@ export default function RelationshipReview({
             .filter(
               (c) =>
                 (value === "unreviewed" && !session?.feedback[c.id]) ||
+                (value === "revisit-later" &&
+                  savedRevisitLater(session?.feedback[c.id])) ||
                 (value === "changes" && c.analysis.judgment === "change") ||
                 (value === "discussion" &&
                   (c.analysis.judgment === "discuss" ||
@@ -816,6 +862,12 @@ export default function RelationshipReview({
                             <Typography component="h3" variant="h6">
                               {c.title} · {tomFeedback![c.id].decision}
                             </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              Revisit later:{" "}
+                              {savedRevisitLater(tomFeedback![c.id])
+                                ? "Yes"
+                                : "No"}
+                            </Typography>
                             <Typography sx={{ whiteSpace: "pre-wrap" }}>
                               {tomFeedback![c.id].correction}{" "}
                               {tomFeedback![c.id].note}
@@ -868,20 +920,34 @@ export default function RelationshipReview({
                   spacing={2}
                   sx={{ mb: 3 }}
                 >
-                  {archive && (
-                    <TextField
-                      select
-                      label="Show"
-                      value={filter}
-                      onChange={(e) => chooseFilter(e.target.value)}
-                      sx={{ minWidth: 210 }}
-                    >
-                      <MenuItem value="all">All analyses</MenuItem>
+                  <TextField
+                    select
+                    label="Show"
+                    value={filter}
+                    onChange={(e) => chooseFilter(e.target.value)}
+                    helperText={
+                      filter === "revisit-later"
+                        ? "Your saved marks in this view. Saving keeps this list in place."
+                        : "Revisit later shows your saved marks in this view."
+                    }
+                    sx={{ minWidth: 210 }}
+                  >
+                    <MenuItem value="all">
+                      {archive ? "All analyses" : "All selected proposals"}
+                    </MenuItem>
+                    {archive && (
                       <MenuItem value="unreviewed">Not reviewed yet</MenuItem>
+                    )}
+                    <MenuItem value="revisit-later">
+                      My saved Revisit later items
+                    </MenuItem>
+                    {archive && (
                       <MenuItem value="changes">Suggested changes</MenuItem>
+                    )}
+                    {archive && (
                       <MenuItem value="discussion">Needs discussion</MenuItem>
-                    </TextField>
-                  )}
+                    )}
+                  </TextField>
                   {items.length > 1 && (
                     <TextField
                       select

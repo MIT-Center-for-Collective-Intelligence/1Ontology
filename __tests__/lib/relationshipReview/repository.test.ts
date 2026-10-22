@@ -96,3 +96,48 @@ test("a reused dataset version cannot silently bind old answers to changed propo
     "first",
   );
 });
+
+test("revisit-later flags persist, retry exactly, and reject changed flags", async () => {
+  const flaggedRequest = { ...request, revisitLater: true };
+  const first = await saveFeedback("tom", flaggedRequest);
+  expect(first).toMatchObject({
+    decision: "agree",
+    revision: 1,
+    revisitLater: true,
+  });
+  expect(await saveFeedback("tom", { ...flaggedRequest })).toEqual(first);
+  await expect(
+    saveFeedback("tom", { ...flaggedRequest, revisitLater: false }),
+  ).rejects.toThrow("already used");
+  expect(docs.size).toBe(4);
+
+  const preservedRequest = {
+    ...request,
+    revision: 1,
+    requestId: "fedcba9876543210",
+  };
+  const second = await saveFeedback("tom", preservedRequest);
+  expect(second).toMatchObject({ revision: 2, revisitLater: true });
+
+  const clearedRequest = {
+    ...request,
+    revision: 2,
+    requestId: "0011223344556677",
+    revisitLater: false,
+  };
+  const third = await saveFeedback("tom", clearedRequest);
+  expect(third).toMatchObject({ revision: 3, revisitLater: false });
+  expect(await saveFeedback("tom", { ...flaggedRequest })).toEqual(first);
+  expect(await saveFeedback("tom", { ...preservedRequest })).toEqual(second);
+  expect(await saveFeedback("tom", { ...clearedRequest })).toEqual(third);
+  await expect(
+    saveFeedback("tom", { ...clearedRequest, revisitLater: true }),
+  ).rejects.toThrow("already used");
+  expect(docs.size).toBe(6);
+  expect((await readFeedback("tom", "v1")).reason).toEqual(third);
+  expect(
+    [...docs.values()].filter((v) => v.answer).map((v) => v.answer),
+  ).toEqual([first, second, third]);
+  expect(first.revisitLater).toBe(true);
+  expect(second.revisitLater).toBe(true);
+});

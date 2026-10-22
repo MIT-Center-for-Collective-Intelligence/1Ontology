@@ -1,3 +1,4 @@
+import { createHash } from "crypto";
 import {
   parseFeedback,
   nextFeedback,
@@ -37,6 +38,14 @@ test.each([
   { requestId: "x" },
   { note: null },
   { note: "x".repeat(8001) },
+  { revisitLater: undefined },
+  { revisitLater: null },
+  { revisitLater: "true" },
+  { revisitLater: "false" },
+  { revisitLater: 0 },
+  { revisitLater: 1 },
+  { revisitLater: {} },
+  { revisitLater: [] },
 ])("rejects invalid or stale request %s", (patch) => {
   expect(() =>
     parseFeedback({ ...body, ...patch }, "v1", "sha", ["reason"]),
@@ -71,3 +80,42 @@ test("evidence presentation is retained on new feedback without rewriting histor
     feedbackHash({ ...r, presentationSha256: "p-sha" }),
   );
 });
+
+test("legacy requests keep their original shape and hash", () => {
+  const r = parseFeedback(body, "v1", "sha", ["reason"]);
+  const legacy = { ...body, note: "note" };
+  expect(r).toStrictEqual(legacy);
+  expect(r).not.toHaveProperty("revisitLater");
+  expect(feedbackHash(r)).toBe(
+    createHash("sha256").update(JSON.stringify(legacy)).digest("hex"),
+  );
+  const first = nextFeedback(r, null, "before");
+  const second = nextFeedback({ ...r, revision: 1 }, first, "after");
+  expect(first).not.toHaveProperty("revisitLater");
+  expect(second).not.toHaveProperty("revisitLater");
+});
+
+test.each([true, false])(
+  "revisitLater %s is independent of agreement and survives omission",
+  (revisitLater) => {
+    const legacy = parseFeedback(body, "v1", "sha", ["reason"]);
+    const r = parseFeedback({ ...body, revisitLater }, "v1", "sha", ["reason"]);
+    expect(r.revisitLater).toBe(revisitLater);
+    expect(feedbackHash(r)).not.toBe(feedbackHash(legacy));
+    expect(feedbackHash(r)).not.toBe(
+      feedbackHash({ ...r, revisitLater: !revisitLater }),
+    );
+    const first = nextFeedback(r, null, "before");
+    const second = nextFeedback({ ...legacy, revision: 1 }, first, "after");
+    expect(first).toMatchObject({
+      revision: 1,
+      decision: "agree",
+      revisitLater,
+    });
+    expect(second).toMatchObject({
+      revision: 2,
+      decision: "agree",
+      revisitLater,
+    });
+  },
+);
