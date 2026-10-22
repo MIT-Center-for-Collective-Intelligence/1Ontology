@@ -7,6 +7,7 @@ import { readFeedback, saveFeedback } from "./repository";
 import { relationshipPackages } from "./package";
 import { relationshipTraceDisclosure } from "./trace";
 import { relationshipSourceEvidence } from "./evidence";
+import { relationshipContext } from "./context";
 import {
   getRelationshipPresentation,
   getPresentationTrace,
@@ -33,7 +34,14 @@ export async function relationshipReviewHandler(
   try {
     const action = String(req.query.action || "");
     if (
-      !["session", "save", "trace", "evidence", "tom-feedback"].includes(action)
+      ![
+        "session",
+        "save",
+        "trace",
+        "evidence",
+        "context",
+        "tom-feedback",
+      ].includes(action)
     )
       throw new RelationshipError(404, "Unknown review action.");
     if (req.headers.origin) {
@@ -93,6 +101,11 @@ export async function relationshipReviewHandler(
       (["trace", "tom-feedback"].includes(action)
         ? relationshipPackages().find((e) => !e.directory)?.version
         : undefined);
+    if (action === "context" && requestedVersion === undefined)
+      throw new RelationshipError(
+        400,
+        "A review version is required to show neighboring activities. Reload this review.",
+      );
     if (
       requestedVersion !== undefined &&
       (typeof requestedVersion !== "string" ||
@@ -103,6 +116,27 @@ export async function relationshipReviewHandler(
         "This review version is unavailable. Reload to continue.",
       );
     const { dataset, sha256 } = getRelationshipDataset(requestedVersion);
+    if (action === "context") {
+      const caseId = String(req.body?.caseId || "");
+      if (!dataset.cases.some((c) => c.id === caseId))
+        throw new RelationshipError(404, "Unknown activity.");
+      if (
+        req.body?.datasetSha256 !== undefined &&
+        req.body.datasetSha256 !== sha256
+      )
+        throw new RelationshipError(
+          409,
+          "This review snapshot changed. Reload before showing neighboring activities.",
+        );
+      return res.status(200).json({
+        context: relationshipContext(dataset, sha256, caseId, {
+          focusId: req.body?.focusId,
+          activityOffset: req.body?.activityOffset,
+          sourceOffset: req.body?.sourceOffset,
+          limit: req.body?.limit,
+        }),
+      });
+    }
     const { presentation, sha256: presentationSha256 } =
       getRelationshipPresentation(dataset, sha256);
     if (action === "tom-feedback") {

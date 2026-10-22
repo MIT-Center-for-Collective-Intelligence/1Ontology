@@ -79,6 +79,7 @@ export interface RelationshipFeedback {
   caseId: string;
   datasetVersion: string;
   decision: RelationshipDecision;
+  revisitLater?: boolean;
   note: string;
   correction: string;
   revision: number;

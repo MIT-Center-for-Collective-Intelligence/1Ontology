@@ -1,6 +1,12 @@
 import { getIdToken } from "../firestoreClient/auth";
 
-const readActions = new Set(["session", "trace", "evidence", "tom-feedback"]);
+const readActions = new Set([
+  "session",
+  "trace",
+  "evidence",
+  "context",
+  "tom-feedback",
+]);
 const transientStatuses = new Set([408, 429, 500, 502, 503, 504]);
 const retryMessage =
   "The review service is temporarily unavailable. Keep this tab open and retry; your draft is retained.";

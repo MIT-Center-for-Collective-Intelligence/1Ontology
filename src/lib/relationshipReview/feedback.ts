@@ -14,6 +14,7 @@ export interface FeedbackRequest {
   datasetVersion: string;
   datasetSha256: string;
   decision: "agree" | "disagree" | "discuss";
+  revisitLater?: boolean;
   note: string;
   correction: string;
   revision: number;
@@ -50,6 +51,12 @@ export function parseFeedback(
     !/^[a-zA-Z0-9_-]{16,80}$/.test(body.requestId)
   )
     throw new RelationshipError(400, "Invalid save request.");
+  const hasRevisitLater = Object.prototype.hasOwnProperty.call(
+    body,
+    "revisitLater",
+  );
+  if (hasRevisitLater && typeof body.revisitLater !== "boolean")
+    throw new RelationshipError(400, "Invalid save request.");
   return {
     caseId: body.caseId,
     datasetVersion: version,
@@ -59,6 +66,7 @@ export function parseFeedback(
     correction: body.correction.trim(),
     revision: Number(body.revision),
     requestId: body.requestId,
+    ...(hasRevisitLater ? { revisitLater: body.revisitLater as boolean } : {}),
   };
 }
 export function feedbackHash(request: FeedbackRequest) {
@@ -75,6 +83,7 @@ export function nextFeedback(
       "A newer answer was saved in another tab. Your draft is preserved.",
       "revision_conflict",
     );
+  const revisitLater = request.revisitLater ?? current?.revisitLater;
   return {
     caseId: request.caseId,
     datasetVersion: request.datasetVersion,
@@ -89,5 +98,6 @@ export function nextFeedback(
           presentationVersion: request.presentationVersion,
         }
       : {}),
+    ...(typeof revisitLater === "boolean" ? { revisitLater } : {}),
   };
 }
