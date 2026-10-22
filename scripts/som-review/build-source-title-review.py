@@ -1,6 +1,7 @@
 """Join frozen proposals to checked O*NET generalization edges; no inference/writes to DB."""
 import argparse, collections, hashlib, json
 from pathlib import Path
+from title_output_quality import assert_no_within_activity_repeats
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--delivery', type=Path, required=True)
@@ -49,6 +50,12 @@ for source in sorted(source_ids):
     assert len(descriptions)==1
     pages.append(dict(id=source,sourceId=edges[source][0][1]['oNetId'],description=next(iter(descriptions)),activities=activities,
         anchorCaseIds=sorted(c['id'] for c in sample['cases'] if by_id[c['id']]['evidenceNodeId']==source)))
+# New package builds must stop on repeated titles within an activity. Candidate
+# wording findings require expert review; never rewrite the frozen proposals.
+quality = assert_no_within_activity_repeats(pages)
+print(json.dumps({'outputQualityVersion':quality['version'],
+    'screeningCounts':quality['counts'],
+    'note':'Lexical screening only; inspect the separate quality-review queue before releasing a new package. No title has been rewritten.'}))
 data=dict(version='source-title-review-20261020-v2',pages=pages,
     provenance=dict(quickBundleSha256=sha(original),frozenSourceSha256=sha(args.delivery),exactProposalsSha256=sha(args.proposals),sourceGraphSha256=sha(args.graph),
         sourceLinkRule='Exact evidenceNodeId; every direct generalization checked against the production source-node snapshot. Titles joined by original nodeId and original description number, never by text similarity.',
