@@ -34,6 +34,9 @@ jest.mock("../../../src/lib/relationshipReview/presentation", () => ({
   }),
   getPresentationTrace: () => ({ exactCurationPrompt: "curation audit" }),
 }));
+jest.mock("../../../src/lib/relationshipReview/context", () => ({
+  relationshipContext: jest.fn(),
+}));
 async function call(
   action = "session",
   body: any = {},

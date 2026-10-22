@@ -24,6 +24,7 @@ import {
   Typography,
 } from "@mui/material";
 import ReviewTheme from "./ReviewTheme";
+import RelationshipNeighborhood from "./RelationshipNeighborhood";
 import ThemeModeToggle from "./ThemeModeToggle";
 import { relationshipRequest as request } from "../../lib/relationshipReview/client";
 import { reconcileSession } from "../../lib/relationshipReview/clientState";
@@ -995,7 +996,9 @@ export default function RelationshipReview({
                 )}
                 {!item && (
                   <Alert severity="info">
-                    {archive
+                    {filter === "revisit-later"
+                      ? `No saved responses in this view are marked Revisit later. Choose ${archive ? "All analyses" : "All selected proposals"} in Show to return.`
+                      : archive
                       ? "There are no analyses in this view."
                       : "No changes currently meet the evidence standard for this review. Unresolved analyses are held for further work."}
                   </Alert>
@@ -1156,6 +1159,12 @@ export default function RelationshipReview({
                             </Typography>
                           </>
                         )}
+                        <RelationshipNeighborhood
+                          item={item}
+                          datasetVersion={data.version}
+                          datasetSha256={session.datasetSha256}
+                          preview={session.preview}
+                        />
                         {selectedCard && (
                           <Box sx={{ mb: 3 }}>
                             <Typography

@@ -463,6 +463,7 @@ test("Tom's overview shows saved flags, while my saved-mark filter excludes draf
     expect(screen.queryByRole("checkbox", { name: "Revisit later" }))
       .not.toBeInTheDocument(),
   );
+  expect(screen.getByText(/No saved responses in this view are marked Revisit later/)).toBeInTheDocument();
   expect(saves).toHaveLength(1);
 });
 

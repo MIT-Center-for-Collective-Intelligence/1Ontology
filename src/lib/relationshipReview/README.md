@@ -49,6 +49,23 @@ An identifier-binding defect in the local audit runner was caught before release
 
 Versions are additive. The active manifest selects a private dataset directory and retains every earlier pinned package in `history`; `?version=…` loads that version's evidence, traces and saved answers. An earlier-version page offers a prominent link to the latest proposals without changing the displayed evidence or saved answers. Saves, retries, drafts, trace requests and Tom's feedback links bind to the loaded version. Earlier answers are never copied into a new dataset or overwritten during deployment. The private archive includes every unchanged original evidence file, and staging validates all retained versions.
 
+## Optional revisit marks and frozen neighborhoods
+
+The optional revisit-later mark is separate from agree, disagree or discuss.
+It changes only with an explicit feedback save. Older clients may omit it
+without clearing an existing saved mark.
+
+Frozen-neighborhood context uses the existing authenticated review access and
+is read-only: viewing or paging does not save feedback or change ontology links.
+Requests name an explicit saved dataset version. Activity and O*NET pages use
+separate offsets (`activityOffset` and `sourceOffset`), with a shared `limit`
+of 8 by default, capped at 25. Atomic v1 and v3 share the hash-pinned frozen
+source: file bytes are verified before caching, and the dataset source pin is
+checked on every call. Other saved versions return explicit unavailable context
+without changing their evidence or answers. A source-pin failure is an error,
+not an unavailable result.
+
+
 For sibling discovery, the complete recorded descriptions of all siblings are supplied. A bounded shortlist then receives current parents, ancestor descriptions and every immediate child of the subject and suggested parents. The author and two critics run through ACCESS GPT-6.1 Sol with high reasoning. Separate same-model calls provide critical review, not human validation. Truncated discovery output may contribute only fully emitted candidate objects when every family assessment is complete; partial candidates are discarded and the original response status and usage remain recorded. Final proposal and critical-review responses must be complete.
 
 The separate `/review/relationships` workflow lets Tom examine proposed specialization/generalization changes. It never applies a suggestion to the ontology. The existing title-review workflows and their saved responses are unchanged.
