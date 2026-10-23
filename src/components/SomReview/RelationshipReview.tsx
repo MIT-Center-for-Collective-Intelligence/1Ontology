@@ -25,6 +25,7 @@ import {
 } from "@mui/material";
 import ReviewTheme from "./ReviewTheme";
 import RelationshipNeighborhood from "./RelationshipNeighborhood";
+import RelationshipPeerFeedback from "./RelationshipPeerFeedback";
 import ThemeModeToggle from "./ThemeModeToggle";
 import { relationshipRequest as request } from "../../lib/relationshipReview/client";
 import { reconcileSession } from "../../lib/relationshipReview/clientState";
@@ -426,8 +427,7 @@ function FeedbackForm({
               {conflict.correction} {conflict.note}
             </Typography>
             <Typography variant="body2">
-              Saved Revisit later:{" "}
-              {savedRevisitLater(conflict) ? "Yes" : "No"}
+              Saved Revisit later: {savedRevisitLater(conflict) ? "Yes" : "No"}
             </Typography>
             <Button
               onClick={() => {
@@ -508,8 +508,8 @@ function FeedbackForm({
               variant="body2"
               color="text.secondary"
             >
-              Return to this activity later without changing your judgment.
-              No comment is needed; press Save feedback to save this mark.
+              Return to this activity later without changing your judgment. No
+              comment is needed; press Save feedback to save this mark.
             </Typography>
           </Box>
           <TextField
@@ -999,8 +999,8 @@ export default function RelationshipReview({
                     {filter === "revisit-later"
                       ? `No saved responses in this view are marked Revisit later. Choose ${archive ? "All analyses" : "All selected proposals"} in Show to return.`
                       : archive
-                      ? "There are no analyses in this view."
-                      : "No changes currently meet the evidence standard for this review. Unresolved analyses are held for further work."}
+                        ? "There are no analyses in this view."
+                        : "No changes currently meet the evidence standard for this review. Unresolved analyses are held for further work."}
                   </Alert>
                 )}
                 {item && (
@@ -1415,6 +1415,12 @@ export default function RelationshipReview({
                         )
                       }
                     />
+                    {session.canViewPeerFeedback && !session.preview && (
+                      <RelationshipPeerFeedback
+                        session={session}
+                        caseId={item.id}
+                      />
+                    )}
                     <Accordion>
                       <AccordionSummary
                         expandIcon={<span aria-hidden="true">＋</span>}

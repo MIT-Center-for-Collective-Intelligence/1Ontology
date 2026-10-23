@@ -1,7 +1,12 @@
 import { relationshipReviewHandler } from "../../../src/lib/relationshipReview/api";
 import { createHash } from "crypto";
 const verifyIdToken = jest.fn(),
-  getUserByEmail = jest.fn(async () => ({ uid: "verified-tom" })),
+  getUserByEmail = jest.fn(async () => ({
+    uid: "verified-tom",
+    email: "malone@mit.edu",
+    emailVerified: true,
+    disabled: false,
+  })),
   readFeedback = jest.fn(async (..._args: any[]) => ({})),
   saveFeedback = jest.fn(async (..._args: any[]) => ({ revision: 1 }));
 jest.mock("../../../src/lib/firestoreServer/admin", () => ({
@@ -244,7 +249,7 @@ test("exact traces have the same authorization boundary and reject unknown case 
     ).code,
   ).toBe(401);
 });
-test("Tom's feedback overview is read-only and restricted to the project owner", async () => {
+test("Tom's feedback overview remains read-only for authorized viewers", async () => {
   expect((await call("tom-feedback", { canViewTomFeedback: true })).code).toBe(
     403,
   );
