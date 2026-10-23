@@ -1,4 +1,12 @@
 import { getIdToken } from "../firestoreClient/auth";
+import { relationshipFeedbackSnapshotJson } from "../../types/IRelationshipReview";
+import type {
+  PeerFeedback,
+  PeerFeedbackQuery,
+  PeerFeedbackResponse,
+  RelationshipFeedback,
+  SavePeerFeedbackRequest,
+} from "../../types/IRelationshipReview";
 
 const readActions = new Set([
   "session",
@@ -6,6 +14,7 @@ const readActions = new Set([
   "evidence",
   "context",
   "tom-feedback",
+  "peer-feedback",
 ]);
 const transientStatuses = new Set([408, 429, 500, 502, 503, 504]);
 const retryMessage =
@@ -78,4 +87,56 @@ export async function relationshipRequest(
     }
   }
   throw Error(retryMessage);
+}
+
+export function readRelationshipPeerFeedback(
+  request: PeerFeedbackQuery,
+  preview = false,
+): Promise<PeerFeedbackResponse> {
+  return relationshipRequest("peer-feedback", request, preview);
+}
+
+/** Keep requestId, revision and target binding unchanged for an explicit retry.
+ * A changed target requires a deliberate new request, not automatic carry-over. */
+export function saveRelationshipPeerFeedback(
+  request: SavePeerFeedbackRequest,
+  preview = false,
+): Promise<{ answer: PeerFeedback }> {
+  return relationshipRequest("save-peer", request, preview);
+}
+
+export async function relationshipTargetFeedbackSha256(
+  feedback: RelationshipFeedback,
+): Promise<string> {
+  if (!globalThis.crypto?.subtle)
+    throw Error(
+      "This browser cannot verify saved feedback. Use a current browser on the review site.",
+    );
+  const digest = await globalThis.crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(relationshipFeedbackSnapshotJson(feedback)),
+  );
+  return Array.from(new Uint8Array(digest), (byte) =>
+    byte.toString(16).padStart(2, "0"),
+  ).join("");
+}
+
+/** Compare the saved response with the current row.feedback, not its snapshot.
+ * This only reports staleness; it never changes or resaves a response. */
+export async function isRelationshipPeerFeedbackStale(
+  response: PeerFeedback | null,
+  target: RelationshipFeedback | null,
+): Promise<boolean> {
+  if (!response) return false;
+  if (
+    !target ||
+    response.caseId !== target.caseId ||
+    response.datasetVersion !== target.datasetVersion ||
+    response.targetRevision !== target.revision
+  )
+    return true;
+  return (
+    response.targetFeedbackSha256 !==
+    (await relationshipTargetFeedbackSha256(target))
+  );
 }
