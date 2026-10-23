@@ -427,12 +427,35 @@ export function RelationshipPeerFeedback({
   const d = entry.draft;
   const data = entry.data && isBound(entry.data, query) ? entry.data : null;
   const canRespond = allowed && author !== null && author === entry.author;
+  const hasUnresolvedDraft =
+    canRespond && (!!d.pending || d.dirty || !!d.error);
+  const visiblePeople = people.filter((person) => {
+    const row = data?.reviewers.find(
+      (candidate) => candidate.reviewer === person,
+    );
+    return (
+      row?.feedback ||
+      row?.response ||
+      (hasUnresolvedDraft && person === entry.target)
+    );
+  });
   const edit = (patch: { decision?: PeerDecision; note?: string }) => {
     if (active.current !== key || !canRespond || d.pending || d.needsRebase)
       return;
     Object.assign(d, patch, { dirty: true, error: "" });
     entry.notify();
   };
+
+  // Do not show empty reviewer sections. Keep read errors and unfinished saves
+  // accessible, and retain historical responses even without a live original.
+  if (
+    allowed &&
+    data &&
+    visiblePeople.length === 0 &&
+    !entry.loading &&
+    !entry.readError
+  )
+    return null;
 
   return (
     <Stack
@@ -483,14 +506,17 @@ export function RelationshipPeerFeedback({
             </Typography>
           )}
           {data &&
-            people.map((person) => {
+            visiblePeople.map((person) => {
               const row = data.reviewers.find(
                 (candidate) => candidate.reviewer === person,
               )!;
               const response = row.response,
                 label = labels[person],
                 stale = earlier(row);
-              const editable = canRespond && person === entry.target;
+              const editable =
+                canRespond &&
+                person === entry.target &&
+                (!!row.feedback || hasUnresolvedDraft);
               const hasCurrent = !!row.feedback && !!hash(row);
               const locked =
                 !!d.pending ||
@@ -510,17 +536,15 @@ export function RelationshipPeerFeedback({
                     bgcolor: "background.paper",
                   }}
                 >
-                  <Typography component="h3" variant="subtitle1">
-                    {label}’s original review
-                  </Typography>
-                  {row.feedback ? (
-                    <FeedbackText feedback={row.feedback} />
-                  ) : (
-                    <Typography color="text.secondary">
-                      No original review saved yet.
-                    </Typography>
+                  {row.feedback && (
+                    <>
+                      <Typography component="h3" variant="subtitle1">
+                        {label}’s original review
+                      </Typography>
+                      <FeedbackText feedback={row.feedback} />
+                    </>
                   )}
-                  {response ? (
+                  {response && (
                     <Stack spacing={1} sx={{ mt: 2 }}>
                       {stale && (
                         <Alert severity="warning">
@@ -552,14 +576,6 @@ export function RelationshipPeerFeedback({
                         </Box>
                       )}
                     </Stack>
-                  ) : (
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{ mt: 2 }}
-                    >
-                      No saved response from {labels[other(person)]}.
-                    </Typography>
                   )}
                   {editable && (
                     <Stack
