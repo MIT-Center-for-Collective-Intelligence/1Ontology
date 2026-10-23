@@ -247,6 +247,133 @@ beforeEach(() => {
 });
 afterEach(cleanup);
 
+test.each(["tom", "rob"] as const)(
+  "%s can respond to an existing review without seeing empty review or response sections",
+  async (author) => {
+    const target = author === "tom" ? "rob" : "tom";
+    const data = rows();
+    const own = data.reviewers.find((row) => row.reviewer === author)!;
+    own.feedback = null;
+    own.feedbackSha256 = null;
+    wire.mockResolvedValue(data);
+    render(<RelationshipPeerFeedback session={session(author)} caseId={A} />);
+    await loaded();
+    expect(
+      screen.queryByRole("heading", {
+        name: `${LABEL[author]}’s original review`,
+      }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", {
+        name: `${LABEL[target]}’s original review`,
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/No original review saved/),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/No saved response from/),
+    ).not.toBeInTheDocument();
+    pick("agree", target);
+    expect(saveButton(target)).toBeEnabled();
+  },
+);
+
+test("hides the whole shared section when empty and shows saved feedback after navigation", async () => {
+  const empty = rows();
+  empty.reviewers.forEach((row) => {
+    row.feedback = null;
+    row.feedbackSha256 = null;
+  });
+  wire.mockResolvedValueOnce(empty).mockResolvedValueOnce(rows(B));
+  const coordinator = session(null);
+  const view = render(
+    <RelationshipPeerFeedback session={coordinator} caseId={A} />,
+  );
+  await loaded();
+  expect(
+    screen.queryByRole("region", { name: "Tom and Rob’s feedback" }),
+  ).not.toBeInTheDocument();
+  view.rerender(<RelationshipPeerFeedback session={coordinator} caseId={B} />);
+  await loaded();
+  expectExactNote("tom", review("tom", B));
+  expect(screen.queryByText(/No saved response from/)).not.toBeInTheDocument();
+});
+
+test("keeps a saved response and its snapshot when the live original is absent", async () => {
+  const data = rows();
+  const snapshot = data.reviewers[0].feedback!;
+  data.reviewers[0].response = savedPeer("tom", snapshot);
+  data.reviewers[0].feedback = null;
+  data.reviewers[0].feedbackSha256 = null;
+  wire.mockResolvedValue(data);
+  render(<RelationshipPeerFeedback session={session(null)} caseId={A} />);
+  await loaded();
+  expect(
+    screen.queryByRole("heading", { name: "Tom’s original review" }),
+  ).not.toBeInTheDocument();
+  expect(screen.getByText("Saved response by Rob: Agree")).toBeInTheDocument();
+  expect(
+    screen.getByText("Saved target feedback (revision 1)"),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByText(`Note: ${snapshot.note}`, {
+      normalizer: (value) => value,
+    }),
+  ).toBeInTheDocument();
+  expect(
+    screen.queryByText(/No original review saved/),
+  ).not.toBeInTheDocument();
+});
+
+test("keeps identical retry controls if the target disappears after an uncertain save", async () => {
+  const initial = rows();
+  const snapshot = initial.reviewers[0].feedback!;
+  const empty = rows();
+  empty.reviewers.forEach((row) => {
+    row.feedback = null;
+    row.feedbackSha256 = null;
+  });
+  let reads = 0;
+  let attempts = 0;
+  wire.mockImplementation((action, body) => {
+    if (action === "peer-feedback")
+      return Promise.resolve(++reads === 1 ? initial : empty);
+    if (++attempts === 1)
+      return Promise.reject(new Error("Synthetic lost receipt"));
+    return Promise.resolve({
+      answer: receipt(body as SavePeerFeedbackRequest, snapshot),
+    });
+  });
+  render(<RelationshipPeerFeedback session={session()} caseId={A} />);
+  await loaded();
+  pick("agree");
+  writeNote("Preserve this pending response");
+  fireEvent.click(saveButton());
+  await screen.findByText(SAVE_ERROR);
+  const pending = saves()[0];
+  fireEvent.click(screen.getByRole("button", { name: "Refresh feedback" }));
+  await loaded();
+  expect(
+    screen.queryByRole("heading", { name: "Tom’s original review" }),
+  ).not.toBeInTheDocument();
+  expect(note()).toHaveValue("Preserve this pending response");
+  expect(note()).toBeDisabled();
+  expect(saveButton()).toHaveAccessibleName("Retry save to Tom’s feedback");
+  expect(saveButton()).toBeEnabled();
+  fireEvent.click(saveButton());
+  await screen.findByText("Saved response by Rob: Agree");
+  await loaded();
+  expect(saves()[1]).toBe(pending);
+  expect(uuid).toHaveBeenCalledTimes(1);
+  expect(
+    screen.getByText("Saved target feedback (revision 1)"),
+  ).toBeInTheDocument();
+  expect(
+    screen.queryByText(/No original review saved/),
+  ).not.toBeInTheDocument();
+});
+
 test("Rob reads Tom's exact saved note and can agree/disagree, never self-respond", async () => {
   const data = rows();
   wire.mockResolvedValue(data);
