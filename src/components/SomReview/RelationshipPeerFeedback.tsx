@@ -23,7 +23,6 @@ import type {
   PeerFeedbackRow,
   PeerReviewer,
   RelationshipFeedback,
-  RelationshipSession,
   SavePeerFeedbackRequest,
 } from "../../types/IRelationshipReview";
 
@@ -44,8 +43,21 @@ type Draft = {
   error: string;
   needsRebase: boolean;
 };
+type PeerFeedbackSession = {
+  dataset: { version: string };
+  datasetSha256: string;
+  reviewerKey: string;
+  preview: boolean;
+  peerReviewer?: PeerReviewer | null;
+  canViewPeerFeedback?: boolean;
+  feedback?: Record<string, RelationshipFeedback>;
+};
+type PeerReadAction = "peer-feedback" | "branch-peer-feedback";
+type PeerSaveAction = "save-peer" | "branch-save-peer";
 type Entry = {
   query: PeerFeedbackQuery;
+  readAction: PeerReadAction;
+  saveAction: PeerSaveAction;
   reviewerKey: string;
   author: PeerReviewer | null;
   target: PeerReviewer | null;
@@ -192,7 +204,7 @@ async function read(e: Entry) {
   e.notify();
   try {
     const data: PeerFeedbackResponse = await relationshipRequest(
-      "peer-feedback",
+      e.readAction,
       e.query,
     );
     if (sequence !== e.readSeq) return;
@@ -235,7 +247,7 @@ async function send(e: Entry) {
   e.notify();
   let refresh = false;
   try {
-    const result = await relationshipRequest("save-peer", body);
+    const result = await relationshipRequest(e.saveAction, body);
     if (sequence !== e.saveSeq || e.draft.pending !== body) return;
     const receipt: PeerFeedback | undefined = result?.answer;
     if (
@@ -357,9 +369,15 @@ function submit(e: Entry) {
 export function RelationshipPeerFeedback({
   session,
   caseId,
+  readAction = "peer-feedback",
+  saveAction = "save-peer",
+  refreshKey = session.feedback?.[caseId]?.revision,
 }: {
-  session: RelationshipSession;
+  session: PeerFeedbackSession;
   caseId: string;
+  readAction?: PeerReadAction;
+  saveAction?: PeerSaveAction;
+  refreshKey?: string | number;
 }) {
   const entries = useRef(new Map<string, Entry>());
   const active = useRef(""),
@@ -371,6 +389,8 @@ export function RelationshipPeerFeedback({
     caseId,
   };
   const key = JSON.stringify([
+    readAction,
+    saveAction,
     session.reviewerKey,
     query.datasetVersion,
     query.datasetSha256,
@@ -384,6 +404,8 @@ export function RelationshipPeerFeedback({
   if (!entries.current.has(key)) {
     entries.current.set(key, {
       query,
+      readAction,
+      saveAction,
       reviewerKey: session.reviewerKey,
       author,
       target: author ? other(author) : null,
@@ -413,7 +435,6 @@ export function RelationshipPeerFeedback({
     });
   }
   const entry = entries.current.get(key)!;
-  const ownReviewRevision = session.feedback[caseId]?.revision;
   useEffect(() => {
     alive.current = true;
     return () => {
@@ -423,7 +444,7 @@ export function RelationshipPeerFeedback({
   useEffect(() => {
     active.current = allowed ? key : "";
     if (allowed) void read(entry);
-  }, [entry, allowed, key, ownReviewRevision]);
+  }, [entry, allowed, key, refreshKey]);
   const d = entry.draft;
   const data = entry.data && isBound(entry.data, query) ? entry.data : null;
   const canRespond = allowed && author !== null && author === entry.author;

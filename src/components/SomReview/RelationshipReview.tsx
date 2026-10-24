@@ -750,9 +750,21 @@ export default function RelationshipReview({
                 <Typography variant="overline" color="primary">
                   Society of Mind · Ontology review
                 </Typography>
-                <Typography component="h1" variant="h4" sx={{ mt: 1, mb: 2 }}>
+<Typography component="h1" variant="h4" sx={{ mt: 1, mb: 2 }}>
                   Review proposed generalization changes
                 </Typography>
+              <a
+                href="/review/relationships/branches?version=generalization-branches-20261024-v1"
+                style={{
+                  display: "block",
+                  marginTop: 12,
+                  fontSize: "1rem",
+                  fontWeight: 600,
+                  color: "inherit",
+                }}
+              >
+                Review whole Generalization families
+              </a>
               </Box>
               <ThemeModeToggle showLabel />
             </Stack>
