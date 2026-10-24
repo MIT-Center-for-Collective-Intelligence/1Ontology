@@ -115,6 +115,15 @@ describe("public deployment identity", () => {
           presentationSha256: relationshipManifest.presentationSha256,
         }),
       );
+      const branchManifest = JSON.parse(fs.readFileSync(
+        path.join(process.cwd(), "scripts/deployment/branch-review-package.json"), "utf8"));
+      expect(info.relationshipBranchReview).toEqual({
+        version: branchManifest.version,
+        families: branchManifest.families,
+        groups: branchManifest.groups,
+        bundleSha256: branchManifest.bundleSha256,
+        sourceSha256: branchManifest.sourceSha256,
+      });
       expect(Object.keys(info).sort()).toEqual([
         "buildId",
         "commit",
@@ -123,6 +132,7 @@ describe("public deployment identity", () => {
         "latestTitlePromptStudy",
         "packageSha256",
         "quickTitleReview",
+        "relationshipBranchReview",
         "relationshipReview",
         "revision",
         "sourceTitleReview",

@@ -1,4 +1,5 @@
 /** @jest-environment jsdom */
+import { createHash } from "crypto";
 import { relationshipRequest } from "../../../src/lib/relationshipReview/client";
 jest.mock("../../../src/lib/firestoreClient/auth", () => ({
   getIdToken: async () => "test-token",
@@ -16,6 +17,96 @@ beforeEach(() => {
   global.fetch = jest.fn();
 });
 afterEach(() => jest.useRealTimers());
+
+ test.each([
+  "branch-session",
+  "branch-trace",
+  "branch-context",
+  "branch-peer-feedback",
+])("branch read-only action %s retries once with the original bound payload", async (action) => {
+  (fetch as jest.Mock)
+    .mockResolvedValueOnce(response(503, null, true))
+    .mockResolvedValueOnce(response(200, { verified: true }));
+  const body: Record<string, unknown> = {
+    datasetVersion: "generalization-branches-20261024-v1",
+    datasetSha256: createHash("sha256").update("synthetic branch retry dataset").digest("hex"),
+  };
+  if (action !== "branch-session") body.caseId = "fixture-family";
+  if (action === "branch-context") {
+    body.focusId = "fixture-group";
+    body.activityOffset = 20;
+    body.sourceOffset = 40;
+    body.limit = 20;
+  }
+  const original = JSON.stringify(body);
+  const pending = relationshipRequest(action, body);
+  body.datasetVersion = "fixture-child-v1";
+  body.datasetSha256 = createHash("sha256").update("different synthetic dataset").digest("hex");
+  body.caseId = "different-family";
+  body.focusId = "different-group";
+  body.activityOffset = 0;
+  body.sourceOffset = 0;
+  body.limit = 10;
+  await jest.advanceTimersByTimeAsync(500);
+  await expect(pending).resolves.toEqual({ verified: true });
+  expect(fetch).toHaveBeenCalledTimes(2);
+  for (const [url, options] of (fetch as jest.Mock).mock.calls) {
+    expect(url).toBe("/api/som-review/relationships/" + action);
+    expect(options.method).toBe("POST");
+    expect(options.body).toBe(original);
+    expect(options.credentials).toBe("same-origin");
+    expect(options.headers.Authorization).toBe("Bearer test-token");
+  }
+});
+
+test.each(["save", "save-peer", "branch-save", "branch-save-peer"])(
+  "save action %s never gets an automatic transient retry",
+  async (action) => {
+    (fetch as jest.Mock).mockResolvedValue(response(503, null, true));
+    const base = {
+      caseId: "fixture-family",
+      datasetVersion: "generalization-branches-20261024-v1",
+      datasetSha256: createHash("sha256").update("synthetic save dataset").digest("hex"),
+      reviewerKey: "fixture-reviewer",
+      decision: "agree",
+      note: "Synthetic response",
+      revision: 0,
+      requestId: "8a9ed9af-4b21-4db4-a965-7de49bfa6203",
+    };
+    const body = action.endsWith("save-peer")
+      ? {
+          ...base,
+          targetReviewer: "rob",
+          targetRevision: 1,
+          targetFeedbackSha256: createHash("sha256").update("synthetic target feedback").digest("hex"),
+        }
+      : { ...base, correction: "" };
+    const pending = expect(relationshipRequest(action, body)).rejects.toMatchObject({
+      status: 503,
+      message: expect.stringContaining("Keep this tab open"),
+    });
+    await jest.advanceTimersByTimeAsync(500);
+    await pending;
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect((fetch as jest.Mock).mock.calls[0][1].body).toBe(JSON.stringify(body));
+  },
+);
+
+test("branch preview session transport still posts to the server handler", async () => {
+  (fetch as jest.Mock).mockResolvedValue(response(200, { preview: true }));
+  const body = { datasetVersion: "generalization-branches-20261024-v1" };
+  await expect(relationshipRequest("branch-session", body, true)).resolves.toEqual({ preview: true });
+  expect(fetch).toHaveBeenCalledTimes(1);
+  expect(fetch).toHaveBeenCalledWith(
+    "/api/som-review/relationships/branch-session",
+    expect.objectContaining({
+      method: "POST",
+      credentials: "same-origin",
+      body: JSON.stringify(body),
+      headers: { "Content-Type": "application/json" },
+    }),
+  );
+});
 
 test("context uses one read retry with the original snapshot, focus and pages", async () => {
   (fetch as jest.Mock)

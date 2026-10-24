@@ -15,6 +15,10 @@ const readActions = new Set([
   "context",
   "tom-feedback",
   "peer-feedback",
+  "branch-session",
+  "branch-trace",
+  "branch-context",
+  "branch-peer-feedback",
 ]);
 const transientStatuses = new Set([408, 429, 500, 502, 503, 504]);
 const retryMessage =

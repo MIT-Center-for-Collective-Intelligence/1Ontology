@@ -161,6 +161,10 @@ def validate_release(info, commit, build_id, revision):
     expected_relation.update({"presentationVersion":presentation["version"],"selectedProposals":len(presentation["selectedCaseIds"]),"presentationSha256":hashlib.sha256(presentation_bytes).hexdigest()})
     if len(relation["cases"]) != relation_manifest["cases"] or info.get("relationshipReview") != expected_relation:
         raise ValueError("The relationship review proposals are missing, incomplete, or changed")
+    from stage_branch_package import read_manifest, release_identity
+    branch_manifest = read_manifest(Path(__file__).with_name("branch-review-package.json"))
+    if info.get("relationshipBranchReview") != release_identity(branch_manifest):
+        raise ValueError("The branch review public release identity is missing or changed")
 
 
 def verify_title_review_route(origin):
@@ -242,6 +246,39 @@ def verify_relationship_review_route(origin):
         raise ValueError("Anonymous relationship review access was accepted")
 
 
+def verify_relationship_branch_review_route(origin):
+    # Read the public page and anonymous error boundaries, never private review data.
+    html = read_bytes(origin + "/review/relationships/branches").decode("utf-8")
+    if '"page":"/review/relationships/branches"' not in html or '"preview":true' in html:
+        raise ValueError("Branch review page is missing or exposes preview mode")
+    for action in ("branch-session", "branch-save", "branch-trace", "branch-context",
+                   "branch-peer-feedback", "branch-save-peer"):
+        request = urllib.request.Request(origin + "/api/som-review/relationships/" + action,
+            data=b'{"previewReviewer":"tom"}', method="POST",
+            headers={"Content-Type": "application/json", "Origin": "https://ontology.mit.edu"})
+        try:
+            with urllib.request.urlopen(request, timeout=60):
+                pass
+        except urllib.error.HTTPError as error:
+            try:
+                content_type = error.headers.get("Content-Type", "").split(";", 1)[0].strip().lower()
+                if error.code != 401 or content_type != "application/json":
+                    raise ValueError("Unexpected anonymous branch review response")
+                raw = error.read(65537)
+                if len(raw) > 65536:
+                    raise ValueError("Anonymous branch review error exceeds bounded size")
+                payload = json.loads(raw)
+                if (not isinstance(payload, dict) or set(payload) != {"error"}
+                        or not isinstance(payload["error"], str) or not payload["error"].strip()):
+                    raise ValueError("Anonymous branch review did not return error-only JSON")
+            except (json.JSONDecodeError, UnicodeDecodeError) as invalid:
+                raise ValueError("Anonymous branch review did not return valid error JSON") from invalid
+            finally:
+                error.close()
+            continue
+        raise ValueError("Anonymous branch review access was accepted")
+
+
 def main():
     commit, build_id, revision = sys.argv[1:]
     if not re.fullmatch(r"[a-f0-9]{40}", commit):
@@ -254,6 +291,7 @@ def main():
     validate_release(read_release(candidates[0]["url"]), commit, build_id, revision)
     verify_title_review_route(candidates[0]["url"])
     verify_relationship_review_route(candidates[0]["url"])
+    verify_relationship_branch_review_route(candidates[0]["url"])
     token = subprocess.check_output(["gcloud", "auth", "print-access-token"], text=True).strip()
     def api(resource, method="GET", body=None):
         request = urllib.request.Request("https://run.googleapis.com/v2/" + resource,
@@ -277,6 +315,7 @@ def main():
     validate_release(read_release(service["status"]["url"]), commit, build_id, revision)
     verify_title_review_route(service["status"]["url"])
     verify_relationship_review_route(service["status"]["url"])
+    verify_relationship_branch_review_route(service["status"]["url"])
     print(json.dumps({"productionVerified": True, "commit": commit, "revision": revision}), flush=True)
 
 

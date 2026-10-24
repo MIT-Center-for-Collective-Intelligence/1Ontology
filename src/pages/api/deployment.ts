@@ -15,6 +15,7 @@ import { titleValidationRelease } from "../../lib/titleValidation/release";
 import { quickTitleReviewRelease } from "../../lib/titleValidation/quickDataset";
 import { sourceTitleReviewRelease } from "../../lib/titleValidation/sourceDataset";
 import { relationshipReviewRelease } from "../../lib/relationshipReview/release";
+import { relationshipBranchReviewRelease } from "../../lib/relationshipReview/branchRelease";
 
 // Public, read-only release identity. Never include runtime configuration or user data.
 export default function deployment(req: NextApiRequest, res: NextApiResponse) {
@@ -72,6 +73,7 @@ export default function deployment(req: NextApiRequest, res: NextApiResponse) {
       quickTitleReview: quickTitleReviewRelease(),
       sourceTitleReview: sourceTitleReviewRelease(),
       relationshipReview: relationshipReviewRelease(),
+      relationshipBranchReview: relationshipBranchReviewRelease(),
     });
   } catch {
     return res
