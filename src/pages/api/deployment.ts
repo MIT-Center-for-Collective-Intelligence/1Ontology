@@ -13,6 +13,7 @@ import {
 import { titleModelComparisonRelease } from "../../lib/somReview/titleModelComparisonRelease";
 import { titleValidationRelease } from "../../lib/titleValidation/release";
 import { quickTitleReviewRelease } from "../../lib/titleValidation/quickDataset";
+import { sourceTitleReviewRelease } from "../../lib/titleValidation/sourceDataset";
 import { relationshipReviewRelease } from "../../lib/relationshipReview/release";
 
 // Public, read-only release identity. Never include runtime configuration or user data.
@@ -69,6 +70,7 @@ export default function deployment(req: NextApiRequest, res: NextApiResponse) {
       titleModelComparison: titleModelComparisonRelease(),
       humanTitleReview: titleValidationRelease(),
       quickTitleReview: quickTitleReviewRelease(),
+      sourceTitleReview: sourceTitleReviewRelease(),
       relationshipReview: relationshipReviewRelease(),
     });
   } catch {

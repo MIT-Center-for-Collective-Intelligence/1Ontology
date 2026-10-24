@@ -16,13 +16,11 @@ afterEach(() => {
 test.each([400, 409, 503])(
   "retains HTTP %i and the server explanation",
   async (status) => {
-    jest
-      .mocked(fetch)
-      .mockResolvedValue({
-        ok: false,
-        status,
-        json: async () => ({ error: "Specific server explanation" }),
-      } as Response);
+    jest.mocked(fetch).mockResolvedValue({
+      ok: false,
+      status,
+      json: async () => ({ error: "Specific server explanation" }),
+    } as Response);
     await expect(postQuickReview(path, { payload: {} })).rejects.toMatchObject({
       status,
       message: "Specific server explanation",
@@ -64,13 +62,11 @@ test("signed-out requests fail before transmission", async () => {
   expect(fetch).not.toHaveBeenCalled();
 });
 test("preview requests do not obtain or send an authentication token", async () => {
-  jest
-    .mocked(fetch)
-    .mockResolvedValue({
-      ok: true,
-      status: 200,
-      json: async () => ({ saved: true }),
-    } as Response);
+  jest.mocked(fetch).mockResolvedValue({
+    ok: true,
+    status: 200,
+    json: async () => ({ saved: true }),
+  } as Response);
   await expect(postQuickReview(path, {}, true)).resolves.toEqual({
     saved: true,
   });
@@ -81,4 +77,22 @@ test("preview requests do not obtain or send an authentication token", async () 
       headers: { "Content-Type": "application/json" },
     }),
   );
+});
+test("a stalled request has a bounded deadline and remains an uncertain delivery", async () => {
+  jest.useFakeTimers();
+  jest.mocked(fetch).mockImplementation(
+    async (_url, options: any) =>
+      new Promise((_resolve, reject) => {
+        options.signal.addEventListener("abort", () =>
+          reject(new Error("Aborted")),
+        );
+      }),
+  );
+  const request = postQuickReview(path, {});
+  const result = expect(request).rejects.toMatchObject({ status: 504 });
+  await Promise.resolve();
+  jest.advanceTimersByTime(30000);
+  await result;
+  expect(fetch).toHaveBeenCalledTimes(1);
+  jest.useRealTimers();
 });

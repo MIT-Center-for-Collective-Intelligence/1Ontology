@@ -8,6 +8,9 @@ import {
   waitFor,
 } from "@testing-library/react";
 import "@testing-library/jest-dom";
+jest.mock("../../../src/components/SomReview/ThemeModeToggle", () => () => (
+  <button>Use dark mode</button>
+));
 import RelationshipReview from "../../../src/components/SomReview/RelationshipReview";
 import type { RelationshipSession } from "../../../src/types/IRelationshipReview";
 import { reconcileSession } from "../../../src/lib/relationshipReview/clientState";

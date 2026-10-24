@@ -17,6 +17,50 @@ beforeEach(() => {
 });
 afterEach(() => jest.useRealTimers());
 
+test("context uses one read retry with the original snapshot, focus and pages", async () => {
+  (fetch as jest.Mock)
+    .mockResolvedValueOnce(response(500, null, true))
+    .mockResolvedValueOnce(response(200, { context: { caseId: "original" } }));
+  const body = {
+    caseId: "original", datasetVersion: "v3", datasetSha256: "sha",
+    focusId: "proposed", activityOffset: 20, sourceOffset: 40, limit: 20,
+  };
+  const original = JSON.stringify(body);
+  const pending = relationshipRequest("context", body);
+  body.caseId = "different";
+  body.datasetVersion = "v1";
+  body.datasetSha256 = "other-sha";
+  body.focusId = "current";
+  body.activityOffset = 0;
+  body.sourceOffset = 0;
+  body.limit = 10;
+  await jest.advanceTimersByTimeAsync(500);
+  await expect(pending).resolves.toEqual({ context: { caseId: "original" } });
+  expect(fetch).toHaveBeenCalledTimes(2);
+  for (const [url, options] of (fetch as jest.Mock).mock.calls) {
+    expect(url).toBe("/api/som-review/relationships/context");
+    expect(options.body).toBe(original);
+    expect(options.headers.Authorization).toBe("Bearer test-token");
+    expect(options.credentials).toBe("same-origin");
+  }
+});
+
+test("persistent context failures stop after one automatic retry", async () => {
+  (fetch as jest.Mock).mockResolvedValue(response(503, null, true));
+  const pending = expect(relationshipRequest("context", { caseId: "a", datasetVersion: "v3" }))
+    .rejects.toMatchObject({ status: 503, message: expect.stringContaining("Keep this tab open") });
+  await jest.advanceTimersByTimeAsync(500);
+  await pending;
+  expect(fetch).toHaveBeenCalledTimes(2);
+});
+
+test.each([400, 404, 409])("context status %s is not automatically retried", async (status) => {
+  (fetch as jest.Mock).mockResolvedValue(response(status, { error: "Context input changed" }));
+  await expect(relationshipRequest("context", { caseId: "a", datasetVersion: "v3" }))
+    .rejects.toMatchObject({ status, message: "Context input changed" });
+  expect(fetch).toHaveBeenCalledTimes(1);
+});
+
 test("a read retry keeps the original case and version when the caller changes its object", async () => {
   (fetch as jest.Mock).mockResolvedValueOnce(response(500, null, true)).mockResolvedValueOnce(response(200, {evidence:{}}));
   const body = {caseId:"original",datasetVersion:"v1"};

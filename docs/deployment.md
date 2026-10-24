@@ -64,7 +64,7 @@ not instructions to apply changes to the ontology. Deployment does not write
 to the ontology or review collections.
 
 The five-case human title-review staff pilot is available at
-`/review/title-validation`. Its light theme and reviewer state are scoped to
+`/review/title-validation`. Its light/dark review styling and reviewer state are scoped to
 that route. A coordinator must create a draft roster and explicitly open it;
 deployment does not enroll reviewers or apply ontology proposals. The full
 validation sample and acceptance procedure remain separate team decisions.
@@ -90,3 +90,8 @@ The September 10 reconciliation preserved the already deployed v6 and v7
 packages and prompt-transparency fixes, and incorporated main's ontology
 export fix. Historical development work remains in its original worktree;
 private audit records and conversations are not deployment inputs.
+
+The current source-grouped title-review form and its historical-data handling
+are documented in `docs/source-title-review.txt`. Its private, pinned package
+is staged by `stage_source_title_package.py`; `sourceTitleReview` on the release
+endpoint and promotion checks identify its exact version and SHA256.

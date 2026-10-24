@@ -73,6 +73,17 @@ test("flagged cases are withheld from UROPs and reviewer orders remain stable wh
       .map((c) => c.id),
   ).toEqual(first);
 });
+test("Xinru's named flagged-review link works without granting coordinator privileges or editing assignments", () => {
+  const s = state();
+  const uid = "dPvaiA6EAwcIAwYbxAEap0WDcoK2";
+  s.study.roster.push({ reviewerId: uid, label: "Xinru" });
+  const originalStudy = JSON.stringify(s.study);
+  const session = quickSession(s, data, uid, true, false, 1000);
+  expect(session.total).toBe(319);
+  expect(session.canReviewFlagged).toBe(true);
+  expect(session.canManage).toBe(false);
+  expect(JSON.stringify(s.study)).toBe(originalStudy);
+});
 test("uncertain/rejected ratings require explanations; saves are immutable and delivery retries deduplicate", () => {
   const s = state(),
     v = quickSession(s, data, "urop", false, false, 1000),
@@ -120,6 +131,7 @@ test("drafts retain explanations and timing across readback; stale tabs and impo
     p = v.draft!.payload;
   p.activeTimeMs = 5000;
   p.correction = "Draft text";
+  p.ratings[Object.keys(p.ratings)[0]].correction = "Per-title draft text";
   saveQuick(s, data, "urop", false, false, p, 0, false, 6000);
   s = JSON.parse(JSON.stringify(s));
   const restored = quickSession(s, data, "urop", false, false, 30000);

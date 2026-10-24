@@ -6,4 +6,5 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     ? quickTitleHandler(req, res)
     : titleValidationHandler(req, res);
 }
-export const config = { api: { bodyParser: { sizeLimit: "96kb" } } };
+// A grouped page can contain 21 ratings with independently bounded explanations.
+export const config = { api: { bodyParser: { sizeLimit: "512kb" } } };

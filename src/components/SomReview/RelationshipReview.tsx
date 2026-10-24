@@ -9,6 +9,7 @@ import {
   Button,
   Card,
   CardContent,
+  Checkbox,
   Chip,
   FormControl,
   FormControlLabel,
@@ -22,8 +23,10 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { ThemeProvider } from "@mui/material/styles";
-import { titleValidationTheme } from "./titleValidationDesign";
+import ReviewTheme from "./ReviewTheme";
+import RelationshipNeighborhood from "./RelationshipNeighborhood";
+import RelationshipPeerFeedback from "./RelationshipPeerFeedback";
+import ThemeModeToggle from "./ThemeModeToggle";
 import { relationshipRequest as request } from "../../lib/relationshipReview/client";
 import { reconcileSession } from "../../lib/relationshipReview/clientState";
 import {
@@ -42,10 +45,15 @@ type Draft = {
   decision: RelationshipDecision | "";
   note: string;
   correction: string;
+  revisitLater: boolean;
   revision: number;
   pending?: Record<string, unknown>;
   dirty: boolean;
 };
+type FeedbackWithRevisit = RelationshipFeedback & { revisitLater?: boolean };
+function savedRevisitLater(feedback?: RelationshipFeedback): boolean {
+  return (feedback as FeedbackWithRevisit | undefined)?.revisitLater === true;
+}
 function SourceEvidence({
   caseId,
   version,
@@ -129,7 +137,13 @@ function SourceEvidence({
                 <Box
                   key={record.id}
                   component="blockquote"
-                  sx={{ ml: 0, pl: 2, borderLeft: "3px solid #BDD5CD" }}
+                  sx={{
+                    ml: 0,
+                    pl: 2,
+                    borderLeft: "3px solid",
+                    borderColor: ({ palette }) =>
+                      palette.mode === "dark" ? "#707070" : "#BDD5CD",
+                  }}
                 >
                   <Typography sx={{ whiteSpace: "pre-wrap" }}>
                     {record.title}
@@ -258,6 +272,7 @@ function FeedbackForm({
       decision: saved?.decision || "",
       note: saved?.note || "",
       correction: saved?.correction || "",
+      revisitLater: savedRevisitLater(saved),
       revision: saved?.revision || 0,
       dirty: false,
     };
@@ -271,7 +286,15 @@ function FeedbackForm({
         typeof prior.correction === "string" &&
         Number.isSafeInteger(prior.revision)
       )
-        return { ...prior, dirty: true };
+        return {
+          ...prior,
+          // Older drafts have no flag. Do not change their pending payloads.
+          revisitLater:
+            typeof prior.revisitLater === "boolean"
+              ? prior.revisitLater
+              : base.revisitLater,
+          dirty: true,
+        };
     } catch {}
     return base;
   });
@@ -314,6 +337,7 @@ function FeedbackForm({
       decision: draft.decision,
       note: draft.note,
       correction: draft.correction,
+      revisitLater: draft.revisitLater,
       revision: draft.revision,
       requestId: crypto.randomUUID(),
       reviewerKey: session.reviewerKey,
@@ -348,6 +372,7 @@ function FeedbackForm({
         decision: answer.decision,
         note: answer.note,
         correction: answer.correction,
+        revisitLater: savedRevisitLater(answer),
         revision: answer.revision,
         dirty: false,
       });
@@ -400,6 +425,9 @@ function FeedbackForm({
             <Typography>
               A newer response is saved: {conflict.decision}.{" "}
               {conflict.correction} {conflict.note}
+            </Typography>
+            <Typography variant="body2">
+              Saved Revisit later: {savedRevisitLater(conflict) ? "Yes" : "No"}
             </Typography>
             <Button
               onClick={() => {
@@ -461,6 +489,29 @@ function FeedbackForm({
           </RadioGroup>
         </FormControl>
         <Stack spacing={2} sx={{ mt: 2 }}>
+          <Box>
+            <FormControlLabel
+              disabled={busy || !!draft.pending}
+              control={
+                <Checkbox
+                  checked={draft.revisitLater}
+                  onChange={(e) => edit({ revisitLater: e.target.checked })}
+                  inputProps={{
+                    "aria-describedby": "relationship-revisit-later-help",
+                  }}
+                />
+              }
+              label="Revisit later"
+            />
+            <Typography
+              id="relationship-revisit-later-help"
+              variant="body2"
+              color="text.secondary"
+            >
+              Return to this activity later without changing your judgment. No
+              comment is needed; press Save feedback to save this mark.
+            </Typography>
+          </Box>
           <TextField
             label="Suggested generalizations (optional)"
             helperText="Use activity names; this is a suggestion, not an automatic change."
@@ -613,6 +664,8 @@ export default function RelationshipReview({
             .filter(
               (c) =>
                 (value === "unreviewed" && !session?.feedback[c.id]) ||
+                (value === "revisit-later" &&
+                  savedRevisitLater(session?.feedback[c.id])) ||
                 (value === "changes" && c.analysis.judgment === "change") ||
                 (value === "discussion" &&
                   (c.analysis.judgment === "discuss" ||
@@ -670,7 +723,7 @@ export default function RelationshipReview({
     : { added: [], removed: [], retained: [] };
   const hasChange = delta.added.length > 0 || delta.removed.length > 0;
   return (
-    <ThemeProvider theme={titleValidationTheme}>
+    <ReviewTheme>
       <ScopedCssBaseline>
         <Head>
           <title>Review generalization changes</title>
@@ -680,19 +733,29 @@ export default function RelationshipReview({
           component="main"
           sx={{
             minHeight: "100vh",
-            bgcolor: "#F7F6F2",
+            bgcolor: "background.default",
             py: { xs: 3, md: 5 },
             px: { xs: 2, md: 4 },
             overflowWrap: "anywhere",
           }}
         >
           <Box sx={{ maxWidth: 1120, mx: "auto" }}>
-            <Typography variant="overline" color="primary">
-              Society of Mind · Ontology review
-            </Typography>
-            <Typography component="h1" variant="h4" sx={{ mt: 1, mb: 2 }}>
-              Review proposed generalization changes
-            </Typography>
+            <Stack
+              direction={{ xs: "column", sm: "row" }}
+              justifyContent="space-between"
+              alignItems="flex-start"
+              gap={2}
+            >
+              <Box>
+                <Typography variant="overline" color="primary">
+                  Society of Mind · Ontology review
+                </Typography>
+                <Typography component="h1" variant="h4" sx={{ mt: 1, mb: 2 }}>
+                  Review proposed generalization changes
+                </Typography>
+              </Box>
+              <ThemeModeToggle showLabel />
+            </Stack>
             <Typography sx={{ maxWidth: 850, mb: 3 }}>
               Every specialization should be a kind of its generalization.
               Review the proposed change, the reason for it, and the source
@@ -800,6 +863,12 @@ export default function RelationshipReview({
                             <Typography component="h3" variant="h6">
                               {c.title} · {tomFeedback![c.id].decision}
                             </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              Revisit later:{" "}
+                              {savedRevisitLater(tomFeedback![c.id])
+                                ? "Yes"
+                                : "No"}
+                            </Typography>
                             <Typography sx={{ whiteSpace: "pre-wrap" }}>
                               {tomFeedback![c.id].correction}{" "}
                               {tomFeedback![c.id].note}
@@ -852,20 +921,34 @@ export default function RelationshipReview({
                   spacing={2}
                   sx={{ mb: 3 }}
                 >
-                  {archive && (
-                    <TextField
-                      select
-                      label="Show"
-                      value={filter}
-                      onChange={(e) => chooseFilter(e.target.value)}
-                      sx={{ minWidth: 210 }}
-                    >
-                      <MenuItem value="all">All analyses</MenuItem>
+                  <TextField
+                    select
+                    label="Show"
+                    value={filter}
+                    onChange={(e) => chooseFilter(e.target.value)}
+                    helperText={
+                      filter === "revisit-later"
+                        ? "Your saved marks in this view. Saving keeps this list in place."
+                        : "Revisit later shows your saved marks in this view."
+                    }
+                    sx={{ minWidth: 210 }}
+                  >
+                    <MenuItem value="all">
+                      {archive ? "All analyses" : "All selected proposals"}
+                    </MenuItem>
+                    {archive && (
                       <MenuItem value="unreviewed">Not reviewed yet</MenuItem>
+                    )}
+                    <MenuItem value="revisit-later">
+                      My saved Revisit later items
+                    </MenuItem>
+                    {archive && (
                       <MenuItem value="changes">Suggested changes</MenuItem>
+                    )}
+                    {archive && (
                       <MenuItem value="discussion">Needs discussion</MenuItem>
-                    </TextField>
-                  )}
+                    )}
+                  </TextField>
                   {items.length > 1 && (
                     <TextField
                       select
@@ -913,9 +996,11 @@ export default function RelationshipReview({
                 )}
                 {!item && (
                   <Alert severity="info">
-                    {archive
-                      ? "There are no analyses in this view."
-                      : "No changes currently meet the evidence standard for this review. Unresolved analyses are held for further work."}
+                    {filter === "revisit-later"
+                      ? `No saved responses in this view are marked Revisit later. Choose ${archive ? "All analyses" : "All selected proposals"} in Show to return.`
+                      : archive
+                        ? "There are no analyses in this view."
+                        : "No changes currently meet the evidence standard for this review. Unresolved analyses are held for further work."}
                   </Alert>
                 )}
                 {item && (
@@ -998,7 +1083,10 @@ export default function RelationshipReview({
                               <Box
                                 sx={{
                                   p: 2.5,
-                                  bgcolor: "#F2F3EF",
+                                  bgcolor: ({ palette }) =>
+                                    palette.mode === "dark"
+                                      ? "#1C1C1C"
+                                      : "#F2F3EF",
                                   borderRadius: 2,
                                 }}
                               >
@@ -1016,8 +1104,12 @@ export default function RelationshipReview({
                               <Box
                                 sx={{
                                   p: 2.5,
-                                  bgcolor: "#EAF3F0",
-                                  border: "1px solid #BDD5CD",
+                                  bgcolor: ({ palette }) =>
+                                    palette.mode === "dark"
+                                      ? "#363636"
+                                      : "#EAF3F0",
+                                  border: "1px solid",
+                                  borderColor: "divider",
                                   borderRadius: 2,
                                 }}
                               >
@@ -1067,6 +1159,12 @@ export default function RelationshipReview({
                             </Typography>
                           </>
                         )}
+                        <RelationshipNeighborhood
+                          item={item}
+                          datasetVersion={data.version}
+                          datasetSha256={session.datasetSha256}
+                          preview={session.preview}
+                        />
                         {selectedCard && (
                           <Box sx={{ mb: 3 }}>
                             <Typography
@@ -1103,7 +1201,11 @@ export default function RelationshipReview({
                                 sx={{
                                   ml: 0,
                                   pl: 2,
-                                  borderLeft: "3px solid #BDD5CD",
+                                  borderLeft: "3px solid",
+                                  borderColor: ({ palette }) =>
+                                    palette.mode === "dark"
+                                      ? "#707070"
+                                      : "#BDD5CD",
                                 }}
                               >
                                 <Typography>
@@ -1313,6 +1415,12 @@ export default function RelationshipReview({
                         )
                       }
                     />
+                    {session.canViewPeerFeedback && !session.preview && (
+                      <RelationshipPeerFeedback
+                        session={session}
+                        caseId={item.id}
+                      />
+                    )}
                     <Accordion>
                       <AccordionSummary
                         expandIcon={<span aria-hidden="true">＋</span>}
@@ -1512,6 +1620,6 @@ export default function RelationshipReview({
           </Box>
         </Box>
       </ScopedCssBaseline>
-    </ThemeProvider>
+    </ReviewTheme>
   );
 }

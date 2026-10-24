@@ -21,6 +21,7 @@ COPY jest.config.js ./
 COPY Dockerfile ./
 COPY scripts/deployment/review-package-lock.json ./scripts/deployment/review-package-lock.json
 COPY scripts/deployment/relationship-review-package.json ./scripts/deployment/relationship-review-package.json
+COPY scripts/deployment/source-title-review-package.json ./scripts/deployment/source-title-review-package.json
 COPY scripts/som-review/title-prompt-study-lib.mjs scripts/som-review/title-prompt-study-lib.test.mjs ./scripts/som-review/
 COPY scripts/som-review/latest-title-prompt-study-lib.mjs scripts/som-review/latest-title-prompt-study-lib.test.mjs ./scripts/som-review/
 COPY scripts/som-review/title-clarification-judge-lib.mjs scripts/som-review/title-clarification-judge-lib.test.mjs ./scripts/som-review/
@@ -107,8 +108,10 @@ COPY --from=builder /app/next.config.js .
 COPY --from=builder /app/package.json .
 COPY --from=builder /app/scripts/deployment/review-package-lock.json ./scripts/deployment/review-package-lock.json
 COPY --from=builder /app/scripts/deployment/relationship-review-package.json ./scripts/deployment/relationship-review-package.json
+COPY --from=builder /app/scripts/deployment/source-title-review-package.json ./scripts/deployment/source-title-review-package.json
 COPY --from=builder /app/src/lib/titleValidation/data/prepilot-v1.json ./src/lib/titleValidation/data/prepilot-v1.json
 COPY --from=builder /app/src/lib/titleValidation/data/quick-v1.json ./src/lib/titleValidation/data/quick-v1.json
+COPY --from=builder /app/src/lib/titleValidation/data/source-pages-v2.json ./src/lib/titleValidation/data/source-pages-v2.json
 COPY --from=builder --chown=nextjs:nodejs /app/src/lib/relationshipReview/data ./src/lib/relationshipReview/data
 
 # Automatically leverage output traces to reduce image size 

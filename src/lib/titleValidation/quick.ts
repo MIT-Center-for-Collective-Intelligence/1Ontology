@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import { TitleValidationError } from "./engine";
+import { hasReviewNavigation } from "./reviewNavigation";
 import {
   assertQuickSelection,
   effectiveQuickBatch,
@@ -28,7 +29,10 @@ export interface QuickDataset {
 }
 export interface QuickPayload {
   caseId: string;
-  ratings: Record<string, { value: QuickRating | ""; explanation: string }>;
+  ratings: Record<
+    string,
+    { value: QuickRating | ""; explanation: string; correction?: string }
+  >;
   correction: string;
   interruption: string;
   activeTimeMs: number;
@@ -134,7 +138,12 @@ export function quickCases(
       403,
       "You are not assigned yet. Ask Iman or Rob to add your ontology account.",
     );
-  if (flagged && !canManage && !state.study.flaggedReviewerIds.includes(uid))
+  if (
+    flagged &&
+    !canManage &&
+    !state.study.flaggedReviewerIds.includes(uid) &&
+    !hasReviewNavigation(uid)
+  )
     fail(
       403,
       "Rob is reviewing the flagged items first. Please use your regular review.",
@@ -204,6 +213,11 @@ export function validateQuickPayload(
     if (typeof r.explanation !== "string" || r.explanation.length > 5000)
       fail(400, "Keep each explanation under 5,000 characters.");
     if (
+      r.correction !== undefined &&
+      (typeof r.correction !== "string" || r.correction.length > 5000)
+    )
+      fail(400, "Keep each suggested correction under 5,000 characters.");
+    if (
       final &&
       ["not_acceptable", "unsure"].includes(r.value) &&
       !r.explanation.trim()
@@ -228,6 +242,9 @@ export function validateQuickPayload(
         {
           value: p.ratings[q.id].value,
           explanation: p.ratings[q.id].explanation,
+          ...(p.ratings[q.id].correction !== undefined
+            ? { correction: p.ratings[q.id].correction }
+            : {}),
         },
       ]),
     ),
@@ -303,7 +320,10 @@ export function quickStatus(
     questions: item ? quickQuestions(item) : [],
     flagged,
     canManage,
-    canReviewFlagged: canManage || state.study.flaggedReviewerIds.includes(uid),
+    canReviewFlagged:
+      canManage ||
+      state.study.flaggedReviewerIds.includes(uid) ||
+      hasReviewNavigation(uid),
     regularLimit: state.study.regularLimit,
     softwareQA: Boolean(state.study.softwareQA),
     selectionVersion:

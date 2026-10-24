@@ -1,0 +1,164 @@
+Source-grouped title review — October 20, 2026
+
+October 21 scope restriction, authorized by Rob: the current regular and flagged
+forms show only activities with exactly one supporting O*NET description. Keep
+the existing 25 sampled anchors and 25 source pages; filtering linked peers leaves
+65 distinct eligible activities. The 22 multiple-description activities are
+deferred, not deleted. The staff inspection panel for those activities is hidden.
+The private frozen package, proposal outputs and assignment overlay are unchanged.
+
+Existing submitted answers remain immutable. Existing drafts retain now-excluded
+rating fields without requiring answers to them. A queued pre-cutover browser
+choice can be archived on its first current-scope checkpoint; excluded fields
+are then immutable. New submissions identify the scope and the included
+activity IDs. Old clients cannot mutate this form until they reload its new scope.
+CSV separates current eligible ratings from excluded historical/draft ratings.
+Raw exports preserve original saved answers. Earlier page timing included work
+on all linked activities; retain it and label it instead of trying to apportion
+it or treating it as timing solely for the narrower review. Navigation, cumulative
+timing, pauses and earlier reviews remain available.
+
+October 21 navigation update: Previous, Next, and Go to O*NET description let
+reviewers browse any assigned page without submitting incomplete ratings.
+Navigation checkpoints the current draft before opening another page; failed
+checkpoints keep the reviewer on the current page. Saved responses can be
+reopened read-only. Original submissions are immutable. Their retained drafts
+accept only timing changes after submission, with revision checks and append-only
+revisit timing events. Exports report cumulative active page time and separate
+original-submission and later-visit time; elapsed time still ends at submission.
+Pause and hidden-tab exclusions apply on every visit, including previews.
+The earlier staff list of pages with multiple-description activities was removed
+when Rob restricted the active review to single-description activities.
+
+The current /review/title-validation interface asks only whether each proposed
+title is acceptable. The unchanged title is the proposal for a Keep case. It
+does not ask for an original-title judgment or a separate split judgment.
+
+Eligible direct generalizations of the same O*NET evidence node appear together;
+activities with multiple descriptions are deferred under the October 21 scope.
+The immutable source-pages-v2 package was derived without inference from the exact frozen
+15,994-case delivery and saved exact proposals. Every edge was independently
+matched against the live source-node generalizations on October 20: 366 evidence
+nodes, 1,370 activity links, no missing or extra edges. Match by evidenceNodeId
+and activity nodeId, never title similarity or O*NET number alone. For an
+activity with multiple supporting descriptions, show only proposal groups
+containing this description's original number.
+
+The original 419-case package and 5/15/5 selection remain unchanged. Before the
+October 21 scope restriction, the 25
+sampled activities select 25 source pages containing 88 activity/description
+pairs (87 distinct activities) and 99 title ratings (98 distinct proposals).
+The current view has 25 description pages, 65 single-description activities and
+76 proposed-title ratings. Associated activities are supplemental observations, not
+additional independently sampled cases. Some associated activities were
+keyword-flagged (five in the initial batch). The separate flagged queue remains
+restricted; showing ALL linked activities, as requested, includes those peers
+on an otherwise regular description page. Retain flag status in the package.
+
+Seven linked activities in the complete source package have no usable saved
+proposal. Show them explicitly without inventing a title or asking for a rating
+on a nonexistent proposal. None occurs in the current 25-description batch.
+
+Historical answers, drafts, their timestamps/timing, and events remain in their
+original collections and are not rewritten. New source-level answers and drafts
+use sourceAnswersV2 and sourceDraftsV2 under the same study document. One record
+per reviewer and evidence node; the same source in two queues is not duplicated.
+Package version/hash, sampled anchor IDs, review pool, activity IDs and missing
+outputs are recorded with each new answer. Existing proposed-title ratings can
+be prefilled, with references to their original answers/drafts. Original-title
+ratings are reused only for an exact unchanged Keep title, never as approval of
+a replacement. Original split judgments are never converted into title ratings.
+Historical time is retained separately; new page time starts at zero and is
+counted once per description, not once per proposed title. CSV exports label
+historical activity records and new page records; do not sum their judgments
+as independent reviews or copy historical timing into every proposed-title row.
+
+Existing legacy endpoints remain compatible with in-flight older browser tabs.
+The new UI uses quick-source-* endpoints and different browser recovery keys.
+Production requests require authentication and roster membership. Clients cannot
+choose a user identity, unlock the flagged queue, or select a different study.
+Coordinators can export submitted team reviews while their own reviews are in progress.
+Reload and flagged-review navigation retain the existing named-user permission
+policy. The earlier five-activity pilot link is temporarily commented out;
+its direct route, access rules, and saved reviews remain unchanged.
+
+The collapsed Agents and prompts disclosure retains the model, exact saved
+scientific prompt, and a short explanation of software checks. The raw saved
+proposal metadata block is not rendered. Complete provenance remains in the
+unchanged packages and stored review records for audit; this presentation
+change does not alter the model output format or exports.
+
+Reviewers can choose Use light mode or Use dark mode in the page header. All
+title and generalization review surfaces follow the existing authenticated
+profile's users/{uname}.theme preference through AuthContext; they no longer
+force light mode. The change writes only that profile field, never review or
+ontology records. A failed profile write restores the previous mode and shows
+an error; best-effort audit logging does not determine save success. The
+browser cache is optional and never overrides a signed-in profile. Reloading
+the app retrieves the profile preference again. Switching appearance changes
+the scoped theme without remounting the review or resetting its draft/timing.
+
+The page shows Reviewing with a Pause review button, or Paused with Resume
+review. It never displays elapsed time. Pausing keeps the current choices,
+checkpoints the draft, disables answer editing/submission, and excludes the
+break from activeTimeMs. Resuming resets the active clock without catch-up.
+Pause state is local to this browser, reviewer, package and source page and
+survives reload; it does not alter answer records or other reviewers' sessions.
+Background checkpoints continue during a break. Elapsed wall time remains
+separate from active review time. Hidden tabs also do not accrue active time.
+Local preview keeps its existing default test identity privately, but exposes
+no test-account switcher or preview-a/b/c names in the review interface.
+
+Draft synchronization is independent of final submission, management, and
+downloads. Edits persist immediately in browser recovery storage and debounce
+server checkpoints by two seconds. Hidden active-time accumulation uses a ref
+without rerendering the form each second. Timing-only checkpoints occur every
+30 seconds, on pause, and when the tab is hidden. Unchanged paused drafts make
+no network writes. Background checkpoints never change or disable the submit
+button, freeze fields, or replace text typed during a request.
+
+ReviewDraftWriter permits one draft write at a time. Final submission freezes
+the chosen payload immediately, waits for any draft save, then uses its known
+revision. Browser storage journals the in-flight checkpoint and the queued
+submission intent. A lost response is reconciled against the exact server
+payload/revision before writing again. Unknown final deliveries retry the
+same immutable payload; definite validation rejections remain editable. Other
+tabs' changes are not overwritten. Explicit conflict recovery retains the
+unsent copy in separate browser storage and provides a recovery download.
+Requests, including response-body reads, have a 30-second deadline.
+
+Every reviewer can download their own submitted reviews before finishing.
+Personal exports read only their records and return only their roster entry
+and source pages/cases needed for those records; no other reviews or drafts
+are exposed. Team exports remain coordinator-only, without requiring the
+coordinator to finish their own reviews. The team-download button lives under
+Coordinator tools. Earlier clients' unscoped export requests retain team
+semantics and the legacy export endpoint follows the same coordinator policy.
+
+CSV preparation has a separate busy/error state beside the download controls.
+An attached download anchor starts the transfer without a redundant success
+message or second download link. Errors appear next to the relevant personal
+or coordinator control, and its button becomes available to retry. The Blob
+URL is retained until a new CSV replaces it or the component unmounts, never
+revoked immediately after clicking. Conflict-recovery downloads have a separate
+URL and remain available. Exports do not submit drafts or stop review timing.
+
+Adding a reviewer checks for an enabled existing Firebase account. A missing
+account error names the email and asks that the ontology account be created
+first; disabled-account errors are separate, and service outages are not
+reported as missing accounts. Account checks finish before any roster writes.
+Success lists added emails and distinguishes already assigned accounts. The
+review app does not create authentication accounts or send invitations.
+
+Source-page software QA is isolated in
+software-qa-quick-title-source-pages-v2 (qa=1, coordinator-only). It does not
+overwrite the earlier software QA studies or human reviews.
+
+Private proposal bytes remain outside Git in the existing private GCS prefix.
+scripts/deployment/source-title-review-package.json pins their SHA256/version.
+The build stages and validates them, and Docker explicitly copies the package.
+/api/deployment reports sourceTitleReview metadata without private storage URI
+or reviewer data. Promotion requires the exact committed package metadata in
+addition to all existing ontology, title, and relationship release guards.
+Deploy only merged GitHub main via the existing guarded Cloud Build pipeline.
+Rollback restores serving code, never deletes or replaces review records.

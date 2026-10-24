@@ -1,4 +1,7 @@
-import { titleValidationHandler } from "../../../src/lib/titleValidation/api";
+import {
+  actorFor,
+  titleValidationHandler,
+} from "../../../src/lib/titleValidation/api";
 import type { ValidationState } from "../../../src/lib/titleValidation/engine";
 
 let state: ValidationState | null = null;
@@ -68,6 +71,39 @@ test("a coordinator can inspect setup without creating or changing a study", asy
   expect(r.data.canManage).toBe(true);
   expect(r.data.studyId).toBe("");
   expect(state).toBeNull();
+});
+test.each([
+  ["Rob", "vFCAkxKTwjcDKohmiWfiZWz2lZf1"],
+  ["Xinru", "dPvaiA6EAwcIAwYbxAEap0WDcoK2"],
+  ["Iman", "uQesveK6m5Mz76vO9C93UBKbWPA2"],
+])(
+  "navigation access for %s follows verified account identity and does not grant administration",
+  async (_name, uid) => {
+    verifyIdToken.mockResolvedValue({ uid });
+    const actor = await actorFor(
+      {
+        headers: { host: "ontology.mit.edu", authorization: "Bearer test" },
+      } as any,
+      {},
+    );
+    expect(actor.canUseReviewLinks).toBe(true);
+    expect(actor.canManage).toBe(false);
+  },
+);
+test("a different coordinator or a forged display name cannot gain the named review links", async () => {
+  verifyIdToken.mockResolvedValue({
+    uid: "other",
+    name: "Xinru Wang",
+    titleValidationCoordinator: true,
+  });
+  const actor = await actorFor(
+    {
+      headers: { host: "ontology.mit.edu", authorization: "Bearer test" },
+    } as any,
+    { canUseReviewLinks: true },
+  );
+  expect(actor.canUseReviewLinks).toBe(false);
+  expect(actor.canManage).toBe(true);
 });
 test("production API requires authentication even with forged preview fields", async () => {
   const r = await call("session", { previewReviewer: "preview-a" }, {}, "");

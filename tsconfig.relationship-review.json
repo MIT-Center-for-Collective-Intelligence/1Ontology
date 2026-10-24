@@ -1,6 +1,6 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {"incremental": false},
-  "include": ["next-env.d.ts", "src/types/IRelationshipReview.ts", "src/lib/relationshipReview/**/*.ts", "src/components/SomReview/RelationshipReview.tsx", "src/pages/review/relationships.tsx", "src/pages/api/som-review/relationships/*.ts", "__tests__/lib/relationshipReview/**/*.ts", "__tests__/components/SomReview/RelationshipReview.test.tsx"],
+  "include": ["next-env.d.ts", "src/types/IRelationshipReview.ts", "src/lib/relationshipReview/**/*.ts", "src/components/SomReview/RelationshipReview.tsx", "src/pages/review/relationships.tsx", "src/pages/api/som-review/relationships/*.ts", "__tests__/lib/relationshipReview/**/*.ts", "__tests__/components/SomReview/Relationship*.test.tsx"],
   "exclude": ["node_modules", "scripts"]
 }
