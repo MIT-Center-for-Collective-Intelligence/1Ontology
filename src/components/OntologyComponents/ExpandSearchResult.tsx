@@ -168,7 +168,7 @@ const ExpandSearchResult = ({
             },
           }}
         >
-          {(node.specializations[0]?.nodes || []).map(renderSubNodes)}
+          {(node.specializations?.[0]?.nodes || []).map(renderSubNodes)}
         </TreeItem>
       ))}
     </SimpleTreeView>

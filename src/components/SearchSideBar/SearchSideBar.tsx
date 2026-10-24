@@ -295,7 +295,7 @@ const SearchSideBar = ({
         value={searchQuery}
         onChange={handleInputChange}
         onFocus={handleFocus}
-        onMouseDown={handleMouseDown}
+/*         onMouseDown={handleMouseDown} */
         onKeyDown={onKeyDown}
         fullWidth
         slotProps={{

@@ -272,8 +272,6 @@ const Ontology = ({
     null,
   );
   const [isLoadingOutline, setIsLoadingOutline] = useState<boolean>(true);
-  const [sidebarSearchValue, setSidebarSearchValue] = useState("");
-  const [isSidebarSearchFocused, setIsSidebarSearchFocused] = useState(false);
   const [isLoadingNodeDetails, setIsLoadingNodeDetails] = useState(false);
   const [navigationError, setNavigationError] = useState<{
     type: "not-found" | "wrong-app";
@@ -1872,9 +1870,6 @@ const Ontology = ({
   const openSearchedNode = useCallback(
     (node: INode, searched = true) => {
       try {
-        // Clear outline tree filter (react-arborist `searchTerm`); leftover query
-        // from the search box would otherwise hide every outline row.
-        setSidebarSearchValue("");
         // Set the clicked node as the open currentVisibleNode
         // setCurrentVisibleNode(node);
 
@@ -2211,8 +2206,6 @@ const Ontology = ({
               updateLastSearches={updateLastSearches}
               appName={appName}
               isExperimentalSearch={isExperimentalSearch}
-              onSearchChange={(value) => setSidebarSearchValue(value)}
-              onFocusChange={setIsSidebarSearchFocused}
             />
           </Box>
         </Box>
@@ -2427,9 +2420,6 @@ const Ontology = ({
                     specializationNumsUnder={specializationNumsUnder}
                     nodesWithComments={nodesWithComments}
                     onOutlineNodeOpen={handleOutlineNodeOpen}
-                    searchTerm={
-                      isSidebarSearchFocused ? "" : sidebarSearchValue
-                    }
                   />
                 )}
               </>
@@ -2770,8 +2760,6 @@ const Ontology = ({
                 updateLastSearches={updateLastSearches}
                 appName={appName}
                 isExperimentalSearch={isExperimentalSearch}
-                onSearchChange={(value) => setSidebarSearchValue(value)}
-                onFocusChange={setIsSidebarSearchFocused}
               />{" "}
               <Divider sx={{ borderBottomWidth: 1.5, borderColor: "gray" }} />
               <Tabs
@@ -2967,9 +2955,6 @@ const Ontology = ({
                       onExpandEllipsis={handleExpandEllipsis}
                       nodesWithComments={nodesWithComments}
                       onOutlineNodeOpen={handleOutlineNodeOpen}
-                      searchTerm={
-                        isSidebarSearchFocused ? "" : sidebarSearchValue
-                      }
                     />
                   )}
                 </Box>

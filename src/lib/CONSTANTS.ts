@@ -222,6 +222,11 @@ export const ONTOLOGY_APPS: any = development
         group: "main",
       },
       {
+        id: "final-hierarchy-and-development",
+        name: "Final Hierarchy and Development Version",
+        group: "other",
+      },
+      {
         id: "sandbox",
         name: "Sandbox (Final Hierarchy with O*Net)",
         type: "other",
