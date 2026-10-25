@@ -10,7 +10,8 @@ import urllib.error
 import urllib.request
 from promote import (MANIFESTS, SERVICE, TITLE_PROMPT_STUDY, LATEST_TITLE_PROMPT_STUDY, TITLE_MODEL_COMPARISON,
                      TITLE_MODEL_COMPARISON_JUDGE_RESULTS, title_model_comparison_release, validate_release,
-                     promote_if_current, verify_title_review_route, verify_relationship_review_route, read_release, read_bytes)
+                     promote_if_current, verify_title_review_route, verify_relationship_review_route,
+                     verify_relationship_branch_review_route, read_release, read_bytes)
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -113,13 +114,16 @@ class ReleaseVerificationTests(unittest.TestCase):
             presentation_bytes=presentation_path.read_bytes()
             presentation=json.loads(presentation_bytes)
             self.info["relationshipReview"].update({"presentationVersion":presentation["version"],"selectedProposals":len(presentation["selectedCaseIds"]),"presentationSha256":hashlib.sha256(presentation_bytes).hexdigest()})
+        from stage_branch_package import read_manifest, release_identity
+        self.info["relationshipBranchReview"] = release_identity(
+            read_manifest(ROOT / "scripts/deployment/branch-review-package.json"))
 
     def test_accepts_exact_release(self):
         validate_release(self.info, "a" * 40, "build-1", "revision-1")
 
     def test_rejects_stale_or_mispackaged_release(self):
         for field in ("commit", "buildId", "revision", "packageSha256", "titlePromptStudy", "latestTitlePromptStudy",
-                      "titleModelComparison", "humanTitleReview", "quickTitleReview", "sourceTitleReview", "relationshipReview"):
+                      "titleModelComparison", "humanTitleReview", "quickTitleReview", "sourceTitleReview", "relationshipReview", "relationshipBranchReview"):
             with self.subTest(field=field):
                 broken = copy.deepcopy(self.info)
                 broken[field] = "stale"
@@ -283,6 +287,30 @@ class RelationshipReviewRouteTests(unittest.TestCase):
                 with self.assertRaises(ValueError): verify_relationship_review_route("https://example.org")
         with patch("promote.urllib.request.urlopen",side_effect=self.opener(preview=True)):
             with self.assertRaises(ValueError): verify_relationship_review_route("https://example.org")
+
+
+class BranchReviewRouteTests(unittest.TestCase):
+    def error(self, status=401, body=b'{"error":"Sign in required."}'):
+        return urllib.error.HTTPError('https://candidate/api', status, 'response',
+                                      {'Content-Type':'application/json'}, io.BytesIO(body))
+
+    def test_all_six_routes_require_sign_in_and_error_only_json(self):
+        with patch('promote.read_bytes', return_value=b'{"page":"/review/relationships/branches","preview":false}'), \
+             patch('promote.urllib.request.urlopen', side_effect=[self.error() for _ in range(6)]) as send:
+            verify_relationship_branch_review_route('https://candidate')
+            self.assertEqual(send.call_count, 6)
+
+    def test_missing_page_or_preview_page_cannot_pass(self):
+        for html in (b'{}', b'{"page":"/review/relationships/branches","preview":true}'):
+            with patch('promote.read_bytes', return_value=html), self.assertRaises(ValueError):
+                verify_relationship_branch_review_route('https://candidate')
+
+    def test_anonymous_success_or_private_fields_cannot_pass(self):
+        for response in (io.BytesIO(b'{}'), self.error(401, b'{"error":"Sign in","dataset":{}}')):
+            with patch('promote.read_bytes', return_value=b'{"page":"/review/relationships/branches","preview":false}'), \
+                 patch('promote.urllib.request.urlopen', side_effect=[response] if isinstance(response,Exception) else None,
+                       return_value=response), self.assertRaises(ValueError):
+                verify_relationship_branch_review_route('https://candidate')
 
 
 class ConcurrentPromotionTests(unittest.TestCase):

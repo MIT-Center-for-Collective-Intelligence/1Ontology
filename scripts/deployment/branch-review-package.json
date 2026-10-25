@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "private-generalization-branch-package-v1",
+  "version": "generalization-branches-20261024-v1",
+  "directory": "branches-v1",
+  "families": 18,
+  "groups": 82,
+  "bundleSha256": "27a908ee8a8d764c97973351d10fd582e05a32c963de8b51cc0bc68110c0321b",
+  "releaseLockSha256": "20c2bca1ea5fde600a4cc3982cf1c2991cc9010e8ab0b26a3c2053ac98e73365",
+  "sourceSha256": "06daeedf3153e3f7efa00659d69d076aa0962efdd1c373642050f5831a96a703",
+  "sourceGraph": {
+    "directory": "atomic-v1",
+    "sha256": "06daeedf3153e3f7efa00659d69d076aa0962efdd1c373642050f5831a96a703"
+  },
+  "archiveSha256": "49d956b1781c6895076ddead6e970c623010f29e9da8560ec05a6e3af4746051",
+  "gcsUri": "gs://ontology-41607_cloudbuild/relationship-branches/49d956b1781c6895076ddead6e970c623010f29e9da8560ec05a6e3af4746051.tar.gz"
+}

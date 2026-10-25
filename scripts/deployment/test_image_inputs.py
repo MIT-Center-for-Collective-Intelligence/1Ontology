@@ -33,6 +33,17 @@ def verify_review_modules(dockerfile):
 
 
 class ReviewImageInputsTests(unittest.TestCase):
+    def test_branch_package_is_staged_and_copied_into_both_image_stages(self):
+        dockerfile = (ROOT / "Dockerfile").read_text()
+        self.assertIn("COPY scripts/deployment/branch-review-package.json ./scripts/deployment/branch-review-package.json", dockerfile)
+        self.assertIn("COPY --from=builder /app/scripts/deployment/branch-review-package.json ./scripts/deployment/branch-review-package.json", dockerfile)
+        self.assertIn("COPY --from=builder --chown=nextjs:nodejs /app/src/lib/relationshipReview/branch-data ./src/lib/relationshipReview/branch-data", dockerfile)
+        cloudbuild = (ROOT / "cloudbuild.yaml").read_text()
+        self.assertLess(cloudbuild.index("python3 scripts/deployment/stage_relationship_package.py"),
+                        cloudbuild.index("python3 scripts/deployment/stage_branch_package.py"))
+        self.assertLess(cloudbuild.index("python3 scripts/deployment/stage_branch_package.py"),
+                        cloudbuild.index("docker build -t"))
+
     def test_cloudbuild_provisions_node_before_private_package_staging(self):
         steps = re.split(r"(?m)^  - name: ", (ROOT / "cloudbuild.yaml").read_text())[1:]
         provision_index = next(i for i, step in enumerate(steps)

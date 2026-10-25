@@ -12,6 +12,7 @@ import { relationshipPackages } from "./package";
 import { relationshipTraceDisclosure } from "./trace";
 import { relationshipSourceEvidence } from "./evidence";
 import { relationshipContext } from "./context";
+import { isBranchAction, branchReviewHandler } from "./branchApi";
 import {
   getRelationshipPresentation,
   getPresentationTrace,
@@ -129,7 +130,8 @@ export async function relationshipReviewHandler(
         "tom-feedback",
         "peer-feedback",
         "save-peer",
-      ].includes(action)
+      ].includes(action) &&
+      !isBranchAction(action)
     )
       throw new RelationshipError(404, "Unknown review action.");
     if (req.headers.origin) {
@@ -210,6 +212,17 @@ export async function relationshipReviewHandler(
         400,
         "A review version and snapshot hash are required for peer feedback. Reload this review.",
       );
+    if (isBranchAction(action))
+      return await branchReviewHandler(req, res, action, {
+        uid,
+        label,
+        preview,
+        peerReviewer,
+        canViewPeerFeedback,
+        activePeerReviewerUids,
+        checkPeerAccount,
+      });
+
     // Cached v1 clients did not send a version for these read-only actions.
     // New clients always bind them explicitly to the displayed dataset.
     const requestedVersion =

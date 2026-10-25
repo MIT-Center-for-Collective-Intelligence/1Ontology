@@ -1,0 +1,126 @@
+{
+  "dataset": {
+    "schemaVersion": "generalization-branch-review-v1",
+    "version": "generalization-branches-20261024-v1",
+    "title": "Synthetic branch test package",
+    "createdAt": "2030-01-01T00:00:00Z",
+    "model": "synthetic-offline-fixture",
+    "modelVersion": "fixture-only",
+    "reasoning": "Synthetic test metadata; no model execution.",
+    "fundingRoute": "ACCESS",
+    "sourceApp": "synthetic graph",
+    "sourceCapturedAt": "2030-01-01T00:00:00Z",
+    "sourceRecheckedAt": "2030-01-02T00:00:00Z",
+    "sourceSha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "priorDatasetVersion": "synthetic-individual-v0",
+    "priorDatasetSha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "scopeNote": "Synthetic package scope.",
+    "titleStatusNote": "Synthetic titles still need clarification.",
+    "nounNote": "Synthetic noun evidence is not an endorsement.",
+    "prompt": "Synthetic author template; no expanded review input.",
+    "criticPrompts": ["Synthetic critic template one.", "Synthetic critic template two."],
+    "families": [
+      {
+        "id": "family-01",
+        "title": "Synthetic family 01",
+        "description": "Synthetic higher activity 01.",
+        "generalizations": [
+          { "id": "root-parent-a", "title": "Root parent Alpha", "description": "Synthetic first root parent." },
+          { "id": "root-parent-b", "title": "Root parent Beta", "description": "Synthetic independent root parent." }
+        ],
+        "currentSpecializations": [
+          { "id": "current-direct", "title": "Existing direct activity", "description": "Synthetic untouched direct neighbor." }
+        ],
+        "currentSourceRecords": [
+          {
+            "id": "frozen-source",
+            "title": "Frozen O*NET source",
+            "description": "Synthetic frozen O*NET wording: Plan a route, inspect a vehicle, record its condition, and report every unresolved defect before departure."
+          }
+        ],
+        "summary": "Synthetic complete arrangement summary.",
+        "scopeNote": "Synthetic family scope is provisional.",
+        "groups": [
+          {
+            "id": "ready-group",
+            "node": { "id": "ready-group", "title": "Ready intermediate group", "description": "Synthetic intermediate activity." },
+            "summary": "Synthetic ready-group summary.",
+            "coherence": "Synthetic coherence note.",
+            "eligible": true,
+            "members": [
+              {
+                "node": { "id": "included-activity", "title": "Included named activity", "description": "Synthetic included activity description." },
+                "decision": "include",
+                "reason": "Synthetic inclusion reason.",
+                "titleDependency": "none-observed",
+                "currentGeneralizations": [
+                  { "id": "independent-a", "title": "Independent parent Alpha", "description": "Synthetic retained first parent." },
+                  { "id": "independent-b", "title": "Independent parent Beta", "description": "Synthetic retained independent parent." }
+                ],
+                "nounEvidenceNote": "Synthetic noun reminder.",
+                "sourceRecords": [
+                  {
+                    "id": "compound-source",
+                    "title": "Compound O*NET source",
+                    "text": "Synthetic compound O*NET wording: Inspect machinery, compare readings with specifications, document discrepancies, and notify the responsible operator before restarting equipment."
+                  }
+                ]
+              },
+              {
+                "node": { "id": "held-activity", "title": "Held named activity", "description": "Synthetic held activity description." },
+                "decision": "hold",
+                "reason": "Synthetic unresolved scope reason.",
+                "titleDependency": "requires-title-clarification",
+                "currentGeneralizations": [],
+                "nounEvidenceNote": "",
+                "sourceRecords": []
+              },
+              {
+                "node": { "id": "excluded-activity", "title": "Excluded named activity", "description": "Synthetic excluded activity description." },
+                "decision": "exclude",
+                "reason": "Synthetic exclusion reason.",
+                "titleDependency": "none-observed",
+                "currentGeneralizations": [],
+                "nounEvidenceNote": "",
+                "sourceRecords": []
+              }
+            ],
+            "remainingQuestions": ["Synthetic remaining group question?"]
+          },
+          {
+            "id": "not-ready-group",
+            "node": { "id": "not-ready-group", "title": "Not-ready intermediate group", "description": "Synthetic unsettled intermediate activity." },
+            "summary": "Synthetic not-ready summary.",
+            "coherence": "Synthetic unresolved coherence note.",
+            "eligible": false,
+            "members": [
+              {
+                "node": { "id": "not-ready-include", "title": "Not-ready include candidate", "description": "Synthetic retained include candidate." },
+                "decision": "include",
+                "reason": "Synthetic candidate reason, not an eligible placement.",
+                "titleDependency": "recheck-after-title-change",
+                "currentGeneralizations": [],
+                "nounEvidenceNote": "",
+                "sourceRecords": []
+              }
+            ],
+            "remainingQuestions": []
+          }
+        ],
+        "sourceCaseIds": ["included-activity", "historical-only"],
+        "remainingQuestions": ["Synthetic remaining family question?"]
+      }
+    ]
+  },
+  "datasetSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "reviewerKey": "reviewer-a",
+  "reviewerLabel": "Synthetic reviewer",
+  "feedback": {},
+  "preview": true,
+  "peerReviewer": null,
+  "canViewPeerFeedback": false,
+  "legacy": {
+    "version": "synthetic-individual-v0",
+    "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+  }
+}
