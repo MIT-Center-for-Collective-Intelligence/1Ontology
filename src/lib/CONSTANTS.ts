@@ -208,6 +208,11 @@ export const ONTOLOGY_APPS: any = development
         group: "main",
       },
       {
+        id: "final-hierarchy-and-development",
+        name: "Final Hierarchy and Development Version",
+        group: "main",
+      },
+      {
         id: "ssg-skills-framework",
         name: "SSG Skills Framework",
         type: "other",
@@ -220,11 +225,6 @@ export const ONTOLOGY_APPS: any = development
         type: "other",
         editAccess: true,
         group: "main",
-      },
-      {
-        id: "final-hierarchy-and-development",
-        name: "Final Hierarchy and Development Version",
-        group: "other",
       },
       {
         id: "sandbox",
