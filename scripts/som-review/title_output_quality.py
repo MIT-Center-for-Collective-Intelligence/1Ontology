@@ -4,12 +4,14 @@ Compare proposals only within the SAME source record. Different verbs and
 different evidence records are never silently merged. Original text/IDs survive.
 """
 import collections
+import copy
 import hashlib
 import json
 import re
 import unicodedata
 
-VERSION = 'title-output-quality-v1'
+VERSION = 'title-output-quality-v2'
+PREPOSITIONS = {'in', 'into', 'on', 'onto', 'to', 'at', 'within', 'inside', 'from'}
 
 
 def normalized_title(text):
@@ -18,6 +20,43 @@ def normalized_title(text):
 
 def tokens(text):
     return re.findall(r"[^\W_]+(?:['’][^\W_]+)?", normalized_title(text))
+
+
+def consolidate_surface_duplicates(pages):
+    """Create review questions once per identical title/source, retaining every origin.
+
+    This is display-question consolidation, never an ontology-node merge.
+    Nonidentical wording, including prepositions, is deliberately left unchanged.
+    """
+    result, decisions = copy.deepcopy(pages), []
+    for page in result:
+        seen = {}
+        for activity in page['activities']:
+            kept = []
+            for proposal in activity['proposals']:
+                key = normalized_title(proposal['title'])
+                if not key:
+                    raise ValueError('An empty title cannot be consolidated')
+                if key not in seen:
+                    seen[key] = (activity, proposal)
+                    kept.append(proposal)
+                    continue
+                primary_activity, primary = seen[key]
+                primary.setdefault('sourceProposalIds', [primary['id']]).append(proposal['id'])
+                primary.setdefault('sourceActivityIds', [primary_activity['id']])
+                if activity['id'] not in primary['sourceActivityIds']:
+                    primary['sourceActivityIds'].append(activity['id'])
+                primary.setdefault('originalTitles', [primary_activity['currentTitle']])
+                if activity['currentTitle'] not in primary['originalTitles']:
+                    primary['originalTitles'].append(activity['currentTitle'])
+                decisions.append(dict(sourcePageId=page['id'], primaryProposalId=primary['id'],
+                                      representedProposalId=proposal['id'],
+                                      representedActivityId=activity['id'], exactTitle=proposal['title'],
+                                      ontologyMerge=False))
+            if activity['proposals'] and not kept:
+                activity['representedByProposalId'] = seen[normalized_title(activity['proposals'][0]['title'])][1]['id']
+            activity['proposals'] = kept
+    return result, decisions
 
 
 def _clause(text, markers):
@@ -55,6 +94,7 @@ def audit_pages(pages, single_description_only=True):
 
         exact, word_order, parallel = collections.defaultdict(list), collections.defaultdict(list), collections.defaultdict(list)
         by_verb = collections.defaultdict(list)
+        preposition_forms = collections.defaultdict(list)
         for e in entries:
             t = tokens(e['title'])
             exact[normalized_title(e['title'])].append(e)
@@ -64,6 +104,10 @@ def audit_pages(pages, single_description_only=True):
                 word_order[(t[0], tuple(sorted(t[1:])))].append(e)
                 parallel[normalized_title(e['title']).split(' ', 1)[-1]].append(e)
                 by_verb[t[0]].append(e)
+                core = tuple(w for w in t[1:] if w not in PREPOSITIONS)
+                prepositions = tuple(w for w in t[1:] if w in PREPOSITIONS)
+                if core and prepositions:
+                    preposition_forms[core].append((e, prepositions))
         for rows in exact.values():
             if len(rows) > 1:
                 add('exact_title_repeat', rows,
@@ -76,6 +120,12 @@ def audit_pages(pages, single_description_only=True):
             if len({tokens(r['title'])[0] for r in rows}) > 1:
                 add('parallel_distinct_verbs', rows,
                     'The remaining wording matches but the leading verbs differ. Preserve the actions separately unless an expert explicitly decides otherwise.', 'context')
+        for forms in preposition_forms.values():
+            if len({prep for _, prep in forms}) > 1:
+                rows = [row for row, _ in forms]
+                same_verb = len({tokens(row['title'])[0] for row in rows}) == 1
+                add('possible_preposition_duplicate' if same_verb else 'parallel_preposition_wording', rows,
+                    'The wording matches apart from the verb and prepositions. Check the complete source: in, into, to, or similar words can change the activity or target. Preserve different verbs; never merge or standardize automatically.')
         for rows in by_verb.values():
             if len({r['activityId'] for r in rows}) < 2:
                 continue

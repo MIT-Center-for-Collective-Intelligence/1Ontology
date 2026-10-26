@@ -103,6 +103,8 @@ class ReleaseVerificationTests(unittest.TestCase):
         relationship_manifest=json.loads((ROOT / "scripts/deployment/relationship-review-package.json").read_bytes())
         source_manifest=json.loads((ROOT / "scripts/deployment/source-title-review-package.json").read_bytes())
         self.info["sourceTitleReview"]={k:v for k,v in source_manifest.items() if k!='gcsUri'}
+        followup_manifest=json.loads((ROOT / "scripts/deployment/title-followup-package.json").read_bytes())
+        self.info["titleFollowupReview"]={k:v for k,v in followup_manifest.items() if k!='gcsUri'}
         relationship_root=ROOT / "src/lib/relationshipReview/data" / relationship_manifest.get("directory", "")
         relation_bytes = (relationship_root / ("dataset.json" if relationship_manifest.get("directory") else "top-level-v1.json")).read_bytes()
         relation = json.loads(relation_bytes)
@@ -123,7 +125,7 @@ class ReleaseVerificationTests(unittest.TestCase):
 
     def test_rejects_stale_or_mispackaged_release(self):
         for field in ("commit", "buildId", "revision", "packageSha256", "titlePromptStudy", "latestTitlePromptStudy",
-                      "titleModelComparison", "humanTitleReview", "quickTitleReview", "sourceTitleReview", "relationshipReview", "relationshipBranchReview"):
+                      "titleModelComparison", "humanTitleReview", "quickTitleReview", "sourceTitleReview", "titleFollowupReview", "relationshipReview", "relationshipBranchReview"):
             with self.subTest(field=field):
                 broken = copy.deepcopy(self.info)
                 broken[field] = "stale"

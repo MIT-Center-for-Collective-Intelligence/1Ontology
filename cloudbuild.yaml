@@ -29,8 +29,10 @@ steps:
         python3 scripts/deployment/stage_branch_package.py
         python3 scripts/deployment/stage_quick_title_package.py
         python3 scripts/deployment/stage_source_title_package.py
+        python3 scripts/deployment/stage_title_followup_package.py
         python3 -m unittest discover -s scripts/deployment -p 'test_*.py'
         python3 -m unittest discover -s scripts/som-review -p 'test_title_output_quality.py'
+        python3 -m unittest discover -s scripts/som-review -p 'test_title_surface_consolidation.py'
 
   - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
     entrypoint: bash

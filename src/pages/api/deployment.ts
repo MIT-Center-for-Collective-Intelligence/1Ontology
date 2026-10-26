@@ -14,6 +14,7 @@ import { titleModelComparisonRelease } from "../../lib/somReview/titleModelCompa
 import { titleValidationRelease } from "../../lib/titleValidation/release";
 import { quickTitleReviewRelease } from "../../lib/titleValidation/quickDataset";
 import { sourceTitleReviewRelease } from "../../lib/titleValidation/sourceDataset";
+import { followupTitleReviewRelease } from "../../lib/titleValidation/followupBatches";
 import { relationshipReviewRelease } from "../../lib/relationshipReview/release";
 import { relationshipBranchReviewRelease } from "../../lib/relationshipReview/branchRelease";
 
@@ -72,6 +73,7 @@ export default function deployment(req: NextApiRequest, res: NextApiResponse) {
       humanTitleReview: titleValidationRelease(),
       quickTitleReview: quickTitleReviewRelease(),
       sourceTitleReview: sourceTitleReviewRelease(),
+      titleFollowupReview: followupTitleReviewRelease(),
       relationshipReview: relationshipReviewRelease(),
       relationshipBranchReview: relationshipBranchReviewRelease(),
     });

@@ -114,6 +114,7 @@ COPY --from=builder /app/scripts/deployment/source-title-review-package.json ./s
 COPY --from=builder /app/src/lib/titleValidation/data/prepilot-v1.json ./src/lib/titleValidation/data/prepilot-v1.json
 COPY --from=builder /app/src/lib/titleValidation/data/quick-v1.json ./src/lib/titleValidation/data/quick-v1.json
 COPY --from=builder /app/src/lib/titleValidation/data/source-pages-v2.json ./src/lib/titleValidation/data/source-pages-v2.json
+COPY --from=builder /app/src/lib/titleValidation/data/followup-batches-v1.json ./src/lib/titleValidation/data/followup-batches-v1.json
 COPY --from=builder --chown=nextjs:nodejs /app/src/lib/relationshipReview/data ./src/lib/relationshipReview/data
 COPY --from=builder --chown=nextjs:nodejs /app/src/lib/relationshipReview/branch-data ./src/lib/relationshipReview/branch-data
 

@@ -10,11 +10,13 @@ function AuthReadyReview({
   earlier = false,
   flagged = false,
   qa = false,
+  reviewBatch,
 }: {
   practice?: boolean;
   earlier?: boolean;
   flagged?: boolean;
   qa?: boolean;
+  reviewBatch?: 2 | 3 | 4;
 }) {
   const [{ isAuthInitialized, isAuthenticated }] = useAuth();
   // The shared redirect wrapper renders its child during Firebase startup.
@@ -33,7 +35,7 @@ function AuthReadyReview({
       practice={practice}
     />
   ) : (
-    <QuickTitleVerification flagged={flagged} qa={qa} />
+    <QuickTitleVerification key={reviewBatch || "initial"} flagged={flagged} qa={qa} reviewBatch={reviewBatch} />
   );
 }
 
@@ -47,18 +49,20 @@ export default function TitleValidationPage({
   earlier = false,
   flagged = false,
   qa = false,
+  reviewBatch,
 }: {
   preview: boolean;
   practice?: boolean;
   earlier?: boolean;
   flagged?: boolean;
   qa?: boolean;
+  reviewBatch?: 2 | 3 | 4;
 }) {
   return preview ? (
     earlier ? (
       <HumanTitleValidation preview />
     ) : (
-      <QuickTitleVerification preview flagged={flagged} qa={qa} />
+      <QuickTitleVerification key={reviewBatch || "initial"} preview flagged={flagged} qa={qa} reviewBatch={reviewBatch} />
     )
   ) : (
     <SignedInReview
@@ -66,10 +70,16 @@ export default function TitleValidationPage({
       earlier={earlier}
       flagged={flagged}
       qa={qa}
+      reviewBatch={reviewBatch}
     />
   );
 }
 export const getServerSideProps: GetServerSideProps = async (context) => {
+  const batch = context.query.batch;
+  if (batch !== undefined && !["2", "3", "4"].includes(String(batch)))
+    return { notFound: true };
+  if (batch && (context.query.workflow || context.query.set || context.query.workspace))
+    return { notFound: true };
   if (context.query.workspace === "practice")
     return {
       redirect: { destination: "/review/title-validation", permanent: false },
@@ -84,6 +94,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       earlier: context.query.workflow === "earlier",
       flagged: context.query.set === "flagged",
       qa: context.query.qa === "1",
+      ...(batch ? { reviewBatch: Number(batch) } : {}),
     },
   };
 };
