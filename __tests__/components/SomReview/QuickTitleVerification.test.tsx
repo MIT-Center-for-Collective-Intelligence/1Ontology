@@ -125,6 +125,20 @@ beforeEach(() => {
   localStorage.clear();
 });
 afterEach(() => jest.useRealTimers());
+test("follow-up batch identity and post-output wording prompt remain visible and bound to requests", async () => {
+  const view: any = { ...start(), reviewBatch: 2,
+    datasetVersion: "followup-batch-2", postProcessing: {
+      explanation: "Compare parallel wording against the same source.",
+      exactPrompt: "Exact saved wording-check prompt", model: "GPT-6.1 Sol, Max",
+    } };
+  jest.mocked(Post).mockResolvedValue(view);
+  render(<QuickTitleVerification reviewBatch={2} />);
+  expect(await screen.findByRole("heading", { name: "Batch 2: 25 O*NET descriptions" })).toBeInTheDocument();
+  await waitFor(() => expect(jest.mocked(Post).mock.calls[0][1]).toEqual(expect.objectContaining({reviewBatch:2})));
+  fireEvent.click(screen.getByText("Agents and prompts used for these proposals"));
+  expect(await screen.findByText("Exact saved wording-check prompt")).toBeInTheDocument();
+  expect(screen.getByText("Exact saved prompt")).toBeInTheDocument();
+});
 test("reviewers can preview a later description without completing ratings, then return to the partial draft", async () => {
   const first: any = start();
   const second: any = JSON.parse(JSON.stringify(first));

@@ -230,6 +230,19 @@ test("new source-page software QA is isolated and remains coordinator-only", asy
   ).toBe(200);
   expect(jest.mocked(sourceReviewAction).mock.calls[1][3]).toBe(QUICK_STUDY_ID);
 });
+
+test("follow-up requests bind the server-selected package and a separate study", async () => {
+  jest.mocked(sourceReviewAction).mockResolvedValue({ ok: true } as any);
+  const result = await call("quick-source-status", { reviewBatch: 2, studyId: QUICK_STUDY_ID });
+  expect(result.status).toBe(200);
+  const args = jest.mocked(sourceReviewAction).mock.calls[0];
+  expect(args[3]).toBe("quick-title-verification-20261026-batch-2");
+  expect(args[4].cases).toHaveLength(25);
+  expect(args[6]?.number).toBe(2);
+  expect((await call("quick-source-status", { reviewBatch: "2" })).status).toBe(400);
+  expect((await call("quick-source-status", { reviewBatch: 2, pool: "flagged" })).status).toBe(400);
+  expect((await call("quick-manage", { reviewBatch: 2, operation: "expand" })).status).toBe(400);
+});
 test.each([false, true])(
   "review links follow authenticated permission %s, not a client-supplied flag",
   async (allowed) => {

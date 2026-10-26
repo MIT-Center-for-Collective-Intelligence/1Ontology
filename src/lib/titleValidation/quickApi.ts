@@ -14,6 +14,7 @@ import {
 } from "./quick";
 import { withQuickStudy } from "./quickRepository";
 import { STUDY_COLLECTION } from "./repository";
+import { followupBatchNumber, followupStudyId, getFollowupBatch } from "./followupBatches";
 import {
   makeQuickSelection,
   quickAnswerSelection,
@@ -49,7 +50,13 @@ export async function quickTitleHandler(
       throw new TitleValidationError(400, "Unknown software test study.");
     if (body.pool !== undefined && !["regular", "flagged"].includes(body.pool))
       throw new TitleValidationError(400, "Unknown review set.");
-    const id =
+    const reviewBatch = followupBatchNumber(body.reviewBatch);
+    if (reviewBatch !== undefined && (body.pool === "flagged" ||
+      (!String(req.query.action).startsWith("quick-source-") &&
+       !(String(req.query.action) === "quick-manage" && body.operation === "add" && !actor.preview))))
+      throw new TitleValidationError(400, "Use the assigned follow-up batch review.");
+    const followup = reviewBatch === undefined ? undefined : getFollowupBatch(reviewBatch);
+    const id = reviewBatch !== undefined ? followupStudyId(reviewBatch, Boolean(body.qa)) :
         body.qa && body.sourceReview
           ? "software-qa-quick-title-source-pages-v2"
           : body.qa === "selection"
@@ -58,7 +65,7 @@ export async function quickTitleHandler(
               ? QUICK_QA_ID
               : QUICK_STUDY_ID,
       flagged = body.pool === "flagged",
-      data = getQuickDataset(),
+      data = followup?.data || getQuickDataset(),
       action = String(req.query.action);
     const allowed = [
       "quick-session",
@@ -70,7 +77,7 @@ export async function quickTitleHandler(
     ];
     if (action.startsWith("quick-source-")) {
       const { sourceReviewAction } = await import("./sourceApi");
-      const sourceId = body.qa ? "software-qa-quick-title-source-pages-v2" : id;
+      const sourceId = followup ? id : body.qa ? "software-qa-quick-title-source-pages-v2" : id;
       return res
         .status(200)
         .json(
@@ -81,6 +88,7 @@ export async function quickTitleHandler(
             sourceId,
             data,
             flagged,
+            followup,
           ),
         );
     }

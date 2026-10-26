@@ -49,6 +49,11 @@ export function sourceReviewCsv(record: {
           activityId: activity.id,
           originalTitle: activity.currentTitle,
           proposedTitle: p.title,
+          ...(p.sourceProposalIds ? {
+            sourceProposalIds: p.sourceProposalIds,
+            sourceActivityIds: p.sourceActivityIds,
+            originalTitles: p.originalTitles,
+          } : {}),
           ...a.payload.ratings[p.id],
         })),
       );
