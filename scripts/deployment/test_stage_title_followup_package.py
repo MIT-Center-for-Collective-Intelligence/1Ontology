@@ -7,6 +7,14 @@ from stage_title_followup_package import validate
 
 
 class FollowupStagingTests(unittest.TestCase):
+    def test_container_has_followup_manifest_and_private_payload(self):
+        root=Path(__file__).resolve().parents[2]
+        docker=(root/'Dockerfile').read_text()
+        builder,runner=docker.split('FROM node:18-alpine AS runner',1)
+        self.assertIn('COPY scripts/deployment/title-followup-package.json ./scripts/deployment/title-followup-package.json',builder)
+        self.assertIn('COPY src ./src',builder)
+        self.assertIn('COPY --from=builder /app/src/lib/titleValidation/data/followup-batches-v1.json ./src/lib/titleValidation/data/followup-batches-v1.json',runner)
+
     def setUp(self):
         root=Path(__file__).resolve().parents[2]
         self.raw=(root/'src/lib/titleValidation/data/followup-batches-v1.json').read_bytes()
