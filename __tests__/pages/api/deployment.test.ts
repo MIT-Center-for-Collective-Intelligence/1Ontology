@@ -124,6 +124,10 @@ describe("public deployment identity", () => {
         bundleSha256: branchManifest.bundleSha256,
         sourceSha256: branchManifest.sourceSha256,
       });
+      const { gcsUri, ...followupManifest } = JSON.parse(fs.readFileSync(
+        path.join(process.cwd(), "scripts/deployment/title-followup-package.json"), "utf8"));
+      expect(info.titleFollowupReview).toEqual(followupManifest);
+      expect(JSON.stringify(info)).not.toContain(gcsUri);
       expect(Object.keys(info).sort()).toEqual([
         "buildId",
         "commit",
@@ -136,6 +140,7 @@ describe("public deployment identity", () => {
         "relationshipReview",
         "revision",
         "sourceTitleReview",
+        "titleFollowupReview",
         "titleModelComparison",
         "titlePromptStudy",
       ]);
