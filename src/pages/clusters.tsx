@@ -229,6 +229,7 @@ const getTreeView = (
       actionAlternatives: node.actionAlternatives,
       category: !!node.category,
       task: !!node.task,
+      oNetTask: !!node.oNetTask,
       comments: !!node.comments,
     });
   }

@@ -481,7 +481,7 @@ const Node = ({
   user,
   navigateToNode,
   searchWithFuse,
-  locked,
+  locked: lockedProp,
   selectedDiffNode,
   displaySidebar,
   activeSidebar,
@@ -510,7 +510,7 @@ const Node = ({
   setSelectedCollection,
   selectedCollection,
   appName,
-  enableEdit,
+  enableEdit: enableEditProp,
   setEnableEdit,
   editableProperty,
   setEditableProperty,
@@ -519,6 +519,9 @@ const Node = ({
   nodesWithComments,
   onOpenInNavigator,
 }: INodeProps) => {
+  const isONetNode = !!currentVisibleNode?.oNetTask;
+  const locked = lockedProp || isONetNode;
+  const enableEdit = isONetNode ? false : enableEditProp;
   // const [newTitle, setNewTitle] = useState<string>("");
   // const [description, setDescription] = useState<string>("");
   const isSmallScreen = useMediaQuery("(max-width: 600px)");

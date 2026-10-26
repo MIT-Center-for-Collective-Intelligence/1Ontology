@@ -1275,6 +1275,8 @@ function OutlineView({
                 className={clsx(styles.nodeLabel, {
                   [styles.mutedLabel]: node.data.task || node.data.comments,
                   [styles.categoryLabel]: node.data.category,
+                  [styles.onetLabel]:
+                    !node.data.category && !!node.data.oNetTask,
                 })}
               >
                 <span className={styles.nodeTitle}>{node.data.name}</span>
@@ -1323,7 +1325,7 @@ function OutlineView({
       </Box>
     );
   }
-
+// #078ded
   return (
     <Box className={styles.container}>
       {treeType !== "oNet" && userHasOntologyEditAccess(user, appName) && (
@@ -1452,8 +1454,13 @@ function OutlineView({
                     ensureExpandedWithLazyLoad(node as any);
                   }
                 }}
-                disableDrag={!editEnabled}
-                disableDrop={!editEnabled}
+                disableDrag={(data: any) =>
+                  !editEnabled || !!data?.oNetTask
+                }
+                disableDrop={({ dragNodes }: any) =>
+                  !editEnabled ||
+                  dragNodes?.some((n: any) => !!n.data?.oNetTask)
+                }
                 // onScroll={}
                 // onMove={handleMove}
               >

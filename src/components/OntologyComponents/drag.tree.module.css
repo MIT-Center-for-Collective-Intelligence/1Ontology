@@ -108,8 +108,10 @@
 .tree {
     border-radius: 10px;
     background: var(--tree-surface, transparent);
-    scrollbar-width: none; /* Firefox */
-    -ms-overflow-style: none; /* IE/Edge */
+    scrollbar-width: none;
+    /* Firefox */
+    -ms-overflow-style: none;
+    /* IE/Edge */
 }
 
 .tree::-webkit-scrollbar {
@@ -196,9 +198,7 @@
     /* Center the dashed guide within each indent column */
     padding-left: calc((var(--indent-size) - 1px) / 2);
     border-right: 1px dashed rgba(145, 158, 171, 0.3);
-    margin-right: calc(
-        var(--indent-size) - ((var(--indent-size) - 1px) / 2) - 1px
-    );
+    margin-right: calc(var(--indent-size) - ((var(--indent-size) - 1px) / 2) - 1px);
 }
 
 .row:focus {
@@ -359,13 +359,18 @@
 }
 
 .loadMoreNode {
-  background-color: transparent;
-  cursor: default;
-  padding: 0;
-  border-radius: 8px;
-  transition: background-color 0.15s ease;
+    background-color: transparent;
+    cursor: default;
+    padding: 0;
+    border-radius: 8px;
+    transition: background-color 0.15s ease;
 }
 
 .loadMoreNode:hover {
-  background-color: rgba(255, 165, 0, 0.04);
+    background-color: rgba(255, 165, 0, 0.04);
+}
+
+.onetLabel {
+    color: #fb6c06;
+    font-size: 15px;
 }

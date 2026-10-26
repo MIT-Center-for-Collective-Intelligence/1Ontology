@@ -310,6 +310,17 @@ const StructuredProperty = ({
     fetchNode,
   );
 
+  const allSpecializationsAreONet = useMemo(() => {
+    if (property !== "specializations") return false;
+    const ids = (currentVisibleNode.specializations || []).flatMap(
+      (collection) => (collection.nodes || []).map((n) => n.id),
+    );
+    return (
+      ids.length > 0 &&
+      ids.every((id) => relatedNodes[id]?.oNetTask)
+    );
+  }, [property, currentVisibleNode.specializations, relatedNodes]);
+
   const propertyValue: PaginatedCollection[] = useMemo(() => {
     try {
       let result = null;
@@ -1598,9 +1609,11 @@ const StructuredProperty = ({
                       padding: "4px",
                     }}
                   >
-                    {capitalizeFirstLetter(
-                      DISPLAY[property] ? DISPLAY[property] : property,
-                    )}
+                    {allSpecializationsAreONet
+                      ? "O*Net Descriptions"
+                      : capitalizeFirstLetter(
+                          DISPLAY[property] ? DISPLAY[property] : property,
+                        )}
                   </Typography>
                   <EditIcon
                     className="edit-icon"

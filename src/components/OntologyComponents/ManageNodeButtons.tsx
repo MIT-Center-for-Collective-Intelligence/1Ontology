@@ -50,6 +50,7 @@ const ManageNodeButtons = ({
   aiPeer,
   hasComments,
   appName,
+  hideEditToggle = false,
 }: {
   locked: boolean;
   lockedInductor: boolean;
@@ -69,6 +70,7 @@ const ManageNodeButtons = ({
   aiPeer: { on: boolean; waiting: boolean };
   hasComments: boolean;
   appName?: string;
+  hideEditToggle?: boolean;
 }) => {
   const canEditOntology = userHasOntologyEditAccess(user, appName);
   const db = getFirestore();
@@ -303,7 +305,7 @@ const ManageNodeButtons = ({
             </Tooltip>
           </>
         )}
-        {canEditOntology && (
+        {canEditOntology && !hideEditToggle && (
           <ToggleButton
             value="edit"
             selected={enableEdit}

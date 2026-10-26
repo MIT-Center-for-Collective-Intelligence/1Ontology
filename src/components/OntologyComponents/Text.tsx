@@ -669,6 +669,7 @@ const Text = ({
                   aiPeer={aiPeer}
                   hasComments={hasComments}
                   appName={appName}
+                  hideEditToggle={!!currentVisibleNode.oNetTask}
                 />
               )}{" "}
             {enableEdit &&

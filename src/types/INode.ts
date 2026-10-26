@@ -304,6 +304,7 @@ export type TreeData = {
   task?: boolean;
   comments?: boolean;
   unclassified?: boolean;
+  oNetTask?: boolean;
   outlineSpineOnly?: boolean;
   outlineLoadChildren?: boolean;
   hasUnresolvedChildren?: boolean;

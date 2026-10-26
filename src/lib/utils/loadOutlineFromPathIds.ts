@@ -263,6 +263,7 @@ function makeShallowChild(
     name: childNode.title,
     nodeType: childNode.nodeType,
     ...(childNode.unclassified && { unclassified: true }),
+    ...(childNode.oNetTask && { oNetTask: true }),
     // If the node has children, keep an empty array so react-arborist treats
     // it as an internal node and renders the chevron.
     children: lazy ? [] : undefined,
@@ -327,6 +328,7 @@ export function buildOneLevelFromSpecializations(
           category: true,
           children: collectionChildren,
           ...(node.unclassified && { unclassified: true }),
+          ...(node.oNetTask && { oNetTask: true }),
           ...(collectionRefs > 0 && collectionChildren.length === 0
             ? { hasUnresolvedChildren: true }
             : {}),
@@ -379,6 +381,7 @@ function buildSpineSegment(
       name: n.title,
       nodeType: n.nodeType,
       ...(n.unclassified && { unclassified: true }),
+      ...(n.oNetTask && { oNetTask: true }),
       children: leafLazy ? [] : undefined,
       hasUnresolvedChildren: leafLazy,
       outlineLoadChildren: leafLazy,
@@ -406,6 +409,7 @@ function buildSpineSegment(
     name: n.title,
     nodeType: n.nodeType,
     ...(n.unclassified && { unclassified: true }),
+    ...(n.oNetTask && { oNetTask: true }),
     children: [child],
     hasUnresolvedChildren: hasMore,
     outlineSpineOnly: hasMore,
@@ -494,6 +498,7 @@ export function buildPathTreeWithSiblings(
         name: node.title,
         nodeType: node.nodeType,
         ...(node.unclassified && { unclassified: true }),
+        ...(node.oNetTask && { oNetTask: true }),
         children: hasKids ? [] : undefined,
         hasUnresolvedChildren: hasKids,
         outlineLoadChildren: hasKids,
@@ -544,6 +549,7 @@ export function buildPathTreeWithSiblings(
       name: node.title,
       nodeType: node.nodeType,
       ...(node.unclassified && { unclassified: true }),
+      ...(node.oNetTask && { oNetTask: true }),
       children,
       hasUnresolvedChildren: true,
       outlineSpineOnly: false,
