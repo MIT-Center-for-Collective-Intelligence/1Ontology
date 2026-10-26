@@ -23,6 +23,7 @@ COPY scripts/deployment/review-package-lock.json ./scripts/deployment/review-pac
 COPY scripts/deployment/relationship-review-package.json ./scripts/deployment/relationship-review-package.json
 COPY scripts/deployment/branch-review-package.json ./scripts/deployment/branch-review-package.json
 COPY scripts/deployment/source-title-review-package.json ./scripts/deployment/source-title-review-package.json
+COPY scripts/deployment/title-followup-package.json ./scripts/deployment/title-followup-package.json
 COPY scripts/som-review/title-prompt-study-lib.mjs scripts/som-review/title-prompt-study-lib.test.mjs ./scripts/som-review/
 COPY scripts/som-review/latest-title-prompt-study-lib.mjs scripts/som-review/latest-title-prompt-study-lib.test.mjs ./scripts/som-review/
 COPY scripts/som-review/title-clarification-judge-lib.mjs scripts/som-review/title-clarification-judge-lib.test.mjs ./scripts/som-review/
