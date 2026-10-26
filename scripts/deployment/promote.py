@@ -146,6 +146,12 @@ def validate_release(info, commit, build_id, revision):
     validate_source_pages(source_bytes, source_manifest)
     if info.get("sourceTitleReview") != {k:v for k,v in source_manifest.items() if k != "gcsUri"}:
         raise ValueError("The grouped title-review package is missing or changed")
+    from stage_title_followup_package import validate as validate_followup
+    followup_manifest = json.loads(Path(__file__).with_name("title-followup-package.json").read_bytes())
+    followup_raw = (Path(__file__).resolve().parents[2] / "src/lib/titleValidation/data/followup-batches-v1.json").read_bytes()
+    validate_followup(followup_raw, followup_manifest)
+    if info.get("titleFollowupReview") != {k:v for k,v in followup_manifest.items() if k != "gcsUri"}:
+        raise ValueError("The follow-up title-review batches are missing or changed")
     relation_manifest = json.loads(Path(__file__).with_name("relationship-review-package.json").read_bytes())
     directory = relation_manifest.get("directory", "")
     if directory and not re.fullmatch(r"[a-z0-9-]+", directory):

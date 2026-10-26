@@ -8,6 +8,6 @@ export function quickCoordinatorCopy(
       ? "5 kept titles, 15 single replacements, 5 splits"
       : "2 kept titles, 22 single replacements, 1 split";
   if (sourcePages)
-    return `The starting sample still contains 25 activities (${mix}); another 75 are reserved. Each O*NET description now shows all its linked activities together, including associated activities outside that sample. Rob’s flagged-review queue remains separate, but a flagged activity may also appear alongside the other activities linked to the same description. The export distinguishes sampled activities from their associated activities.`;
+    return `The first sample contains 25 activities (${mix}). Each O*NET description shows its linked single-description activities together. Use the batch links above for the three additional sets of 25 descriptions, which have separate answers and timing. Flagged activities remain in Rob’s separate queue for those follow-up batches. The export distinguishes sampled activities from associated activities.`;
   return `The initial batch contains 25 unflagged activities (${mix}). Another 75 are reserved. All 319 flagged cases remain in Rob’s separate review.`;
 }

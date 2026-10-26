@@ -13,3 +13,10 @@ test("coordinator counts describe the current selection, not a future assignment
     expect(copy).not.toMatch(/activation|revision|manifest/i);
   }
 });
+
+test("source-page copy explains separate follow-up batches and saved first-round reviews", () => {
+  const copy = quickCoordinatorCopy("quick-title-selection-5-15-5-v1", true);
+  expect(copy).toContain("three additional sets of 25 descriptions");
+  expect(copy).toContain("separate answers and timing");
+  expect(copy).toContain("Rob’s separate queue");
+});

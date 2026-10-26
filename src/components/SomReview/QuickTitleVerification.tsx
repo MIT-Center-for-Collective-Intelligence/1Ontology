@@ -37,6 +37,8 @@ import {
 type View = ReturnType<typeof sourceSession> & {
   preview: boolean;
   canUseReviewLinks?: boolean;
+  reviewBatch?: number;
+  postProcessing?: { explanation: string; exactPrompt: string; model: string };
 };
 const labels = [
   { value: "acceptable", label: "Acceptable" },
@@ -94,10 +96,12 @@ export default function QuickTitleVerification({
   preview = false,
   flagged = false,
   qa = false,
+  reviewBatch,
 }: {
   preview?: boolean;
   flagged?: boolean;
   qa?: boolean;
+  reviewBatch?: 2 | 3 | 4;
 }) {
   const [view, setView] = useState<View | null>(null),
     [payload, setPayload] = useState<QuickPayload | null>(null),
@@ -145,6 +149,7 @@ export default function QuickTitleVerification({
     pool: flagged ? "flagged" : "regular",
     qa,
     sourceReview: true,
+    ...(reviewBatch ? { reviewBatch } : {}),
     ...(preview ? { previewReviewer } : {}),
   };
   async function request(action: string, extra: object = {}): Promise<any> {
@@ -395,6 +400,23 @@ export default function QuickTitleVerification({
       );
       if ((e?.status || e?.response?.status) === 409) blocked.current = true;
     } finally {
+      busyRef.current = false;
+      setBusy(false);
+    }
+  }
+  async function switchBatch(number: number) {
+    if (busyRef.current || pendingRef.current || blocked.current || number === (reviewBatch || 1)) return;
+    recordActiveTime();
+    window.clearTimeout(editTimer.current);
+    busyRef.current = true;
+    setBusy(true);
+    try {
+      const writer = writerRef.current;
+      await writer?.settle();
+      if (writer && payloadRef.current) await writer.checkpoint(payloadRef.current);
+      window.location.assign(number === 1 ? "/review/title-validation" : `/review/title-validation?batch=${number}`);
+    } catch (e) {
+      setError("Could not switch batches. Your current choices are kept here. " + message(e));
       busyRef.current = false;
       setBusy(false);
     }
@@ -677,6 +699,11 @@ export default function QuickTitleVerification({
               </Box>
               <ThemeModeToggle showLabel />
             </Stack>
+            {reviewBatch && (
+              <Typography component="h2" variant="h6" sx={{ mt: 2 }}>
+                Batch {reviewBatch}: 25 O*NET descriptions
+              </Typography>
+            )}
             <Typography sx={{ mt: 1, mb: 3, maxWidth: 800 }}>
               Read the O*NET description, then judge whether each title clearly
               and accurately describes the relevant activity for someone
@@ -714,6 +741,19 @@ export default function QuickTitleVerification({
             )}
             {view && (
               <>
+                {!flagged && !qa && (
+                  <Stack component="nav" aria-label="Review batches" direction="row" gap={1} sx={{ mb: 2, flexWrap: "wrap" }}>
+                    {[1, 2, 3, 4].map((number) => (
+                      <Button key={number}
+                        onClick={() => switchBatch(number)}
+                        variant={(reviewBatch || 1) === number ? "contained" : "outlined"}
+                        disabled={busy || pending || blocked.current}
+                        aria-current={(reviewBatch || 1) === number ? "page" : undefined}>
+                        Batch {number}
+                      </Button>
+                    ))}
+                  </Stack>
+                )}
                 <Card sx={{ mb: 3 }}>
                   <CardContent>
                     <Stack
@@ -1072,7 +1112,7 @@ export default function QuickTitleVerification({
                         </Card>
                       ))}
                       {view.item.activities
-                        .filter((a) => !a.proposals.length)
+                        .filter((a) => !a.proposals.length && !a.representedByProposalId)
                         .map((a) => (
                           <Alert key={a.id} severity="warning">
                             <strong>{a.currentTitle}</strong> is also linked to
@@ -1217,6 +1257,14 @@ export default function QuickTitleVerification({
                     >
                       {view.disclosure.prompt}
                     </Typography>
+                    {view.postProcessing && (
+                      <>
+                        <Typography fontWeight={600} sx={{ mt: 2 }}>Additional wording check</Typography>
+                        <Typography variant="body2">{view.postProcessing.explanation}</Typography>
+                        <Typography variant="body2" sx={{ mt: 1, whiteSpace: "pre-wrap" }}>{view.postProcessing.model}</Typography>
+                        <Typography variant="body2" sx={{ mt: 1, whiteSpace: "pre-wrap" }}>{view.postProcessing.exactPrompt}</Typography>
+                      </>
+                    )}
                     <Typography variant="body2">
                       The software requires a rating for each displayed question
                       and an explanation for rejected or uncertain answers. It
@@ -1231,7 +1279,9 @@ export default function QuickTitleVerification({
                     <AccordionSummary>Coordinator tools</AccordionSummary>
                     <AccordionDetails>
                       <Typography sx={{ mb: 2 }}>
-                        {quickCoordinatorCopy(view.selectionVersion, true)}
+                        {reviewBatch
+                          ? "This batch has its own answers and timing. Earlier reviews are preserved in the first batch. Flagged cases remain separate for Rob."
+                          : quickCoordinatorCopy(view.selectionVersion, true)}
                       </Typography>
                       <TextField
                         fullWidth
@@ -1260,14 +1310,7 @@ export default function QuickTitleVerification({
                         >
                           Add reviewers
                         </Button>
-                        <Button
-                          disabled={
-                            busy || view.regularLimit === 100 || flagged || qa
-                          }
-                          onClick={() => manage("expand")}
-                        >
-                          Open the next 75 activities
-                        </Button>
+                        {!flagged && !qa && (!reviewBatch || reviewBatch < 4) && <Button onClick={() => switchBatch(reviewBatch ? reviewBatch + 1 : 2)}>Open the next batch of 25</Button>}
                       </Stack>
                       <Typography
                         variant="body2"

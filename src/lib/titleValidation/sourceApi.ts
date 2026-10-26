@@ -6,6 +6,7 @@ import {
   saveSourceReview,
   SourceState,
   SOURCE_SCOPE,
+  SourceDataset,
 } from "./sourceReview";
 import { QuickDataset, QuickState, quickKey } from "./quick";
 import { TitleValidationError } from "./engine";
@@ -22,6 +23,7 @@ export async function sourceReviewAction(
   id: string,
   data: QuickDataset,
   flagged: boolean,
+  followup?: { sources: SourceDataset; number: number; postProcessing: { explanation: string; exactPrompt: string; model: string } },
 ) {
   if (
     ![
@@ -33,7 +35,7 @@ export async function sourceReviewAction(
     ].includes(action)
   )
     throw new TitleValidationError(404, "Unknown description review action.");
-  const sources = getSourceDataset();
+  const sources = followup?.sources || getSourceDataset();
   if (body.pageId !== undefined && typeof body.pageId !== "string")
     throw new TitleValidationError(400, "Unknown description.");
   if (
@@ -108,7 +110,8 @@ export async function sourceReviewAction(
       answers: {},
       drafts: {},
     };
-    legacy.study.selection = makeQuickSelection(legacy, data, Date.now());
+    if (!followup)
+      legacy.study.selection = makeQuickSelection(legacy, data, Date.now());
     return legacy;
   };
   return withSourceStudy<any>(id, actor.uid, actor.preview, seed, (state) => {
@@ -205,6 +208,10 @@ export async function sourceReviewAction(
     return {
       result: {
         ...view,
+        ...(followup ? {
+          reviewBatch: followup.number,
+          postProcessing: followup.postProcessing,
+        } : {}),
         canReviewFlagged:
           view.canReviewFlagged || hasReviewNavigation(actor.uid),
         preview: actor.preview,

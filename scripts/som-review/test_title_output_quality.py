@@ -45,6 +45,14 @@ class QualityChecks(unittest.TestCase):
         a=page('Inspect equipment');b=copy.deepcopy(a);b['id']='other'
         self.assertEqual(audit_pages([a,b])['findings'],[])
 
+    def test_prepositions_are_checked_for_same_and_different_verbs_without_merging(self):
+        same = audit_pages([page('Insert wires in molds','Insert wires into molds')])
+        self.assertIn('possible_preposition_duplicate',same['counts'])
+        parallel = audit_pages([page('Insert wires into molds','Adjust wires in molds')])
+        self.assertIn('parallel_preposition_wording',parallel['counts'])
+        self.assertTrue(all(not f['automaticChange'] for f in same['findings']+parallel['findings']))
+        self.assertEqual(audit_pages([page('Insert wires into molds','Adjust wires into molds')])['counts'],{'parallel_distinct_verbs':1})
+
     def test_word_order_never_automatically_merged(self):
         f=audit_pages([page('Send report to client','Send client to report')])['findings']
         self.assertEqual(f[0]['kind'],'possible_word_order_duplicate')

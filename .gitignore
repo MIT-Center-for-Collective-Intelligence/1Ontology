@@ -51,3 +51,4 @@ firebase-debug.log
 # Review source proposals stay in private GCS; only their release hash is committed.
 /src/lib/titleValidation/data/quick-v1.json
 /src/lib/titleValidation/data/source-pages-v2.json
+/src/lib/titleValidation/data/followup-batches-v1.json

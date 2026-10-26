@@ -21,11 +21,15 @@ export interface SourceActivity {
     title: string;
     reason: string;
     groupNumber: number;
+    sourceProposalIds?: string[];
+    sourceActivityIds?: string[];
+    originalTitles?: string[];
   }[];
   modelReason: string;
   flagged: boolean;
   evidenceDescriptionNumber: number;
   supportingDescriptionCount: number;
+  representedByProposalId?: string;
 }
 export interface SourcePage {
   id: string;
@@ -81,7 +85,7 @@ export function sourceQuestions(page: SourcePage) {
       id: p.id,
       title: p.title,
       label: "Is the proposed title acceptable?",
-      originalTitle: activity.currentTitle,
+      originalTitle: p.originalTitles?.join("; ") || activity.currentTitle,
       activityId: activity.id,
       reason: [activity.modelReason, p.reason].filter(Boolean).join("\n"),
     })),
@@ -508,7 +512,7 @@ export function saveSourceReview(
     legacyReferences: draft.legacyReferences,
     activityIds: page.activities.map((a) => a.id),
     missingProposalActivityIds: page.activities
-      .filter((a) => !a.proposals.length)
+      .filter((a) => !a.proposals.length && !a.representedByProposalId)
       .map((a) => a.id),
   };
   state.answers[key] = saved;
