@@ -369,3 +369,39 @@
 .loadMoreNode:hover {
   background-color: rgba(255, 165, 0, 0.04);
 }
+/* proposal review marks: solid dot = this node has a proposal waiting,
+   green number = children with proposals waiting, grey ring = decided */
+.proposalDot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #22c55e;
+    margin-left: 6px;
+    flex-shrink: 0;
+    vertical-align: middle;
+}
+.proposalDotDone {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: 1.5px solid #9ca3af;
+    margin-left: 6px;
+    flex-shrink: 0;
+    vertical-align: middle;
+}
+.proposalUnder {
+    display: inline-block;
+    min-width: 14px;
+    padding: 0 4px;
+    border-radius: 8px;
+    border: 1.5px solid #22c55e;
+    color: #22c55e;
+    font-size: 10px;
+    line-height: 13px;
+    text-align: center;
+    margin-left: 6px;
+    flex-shrink: 0;
+    vertical-align: middle;
+}

@@ -7,6 +7,8 @@ import React, {
 } from "react";
 import CloseIcon from "@mui/icons-material/Close";
 import HistoryIcon from "@mui/icons-material/History";
+import NoteAltOutlinedIcon from "@mui/icons-material/NoteAltOutlined";
+import { useReviewMode } from "../Review/ReviewModeContext";
 import CircularProgress from "@mui/material/CircularProgress";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import AutoStoriesIcon from "@mui/icons-material/AutoStories";
@@ -193,6 +195,8 @@ const ToolbarSidebar = ({
   appName,
 }: MainSidebarProps) => {
   const theme = useTheme();
+  const router = useRouter();
+  const reviewMode = useReviewMode();
   const isMobile = useMediaQuery("(max-width:599px)");
   const db = getFirestore();
   const [{ isAuthenticated }] = useAuth();
@@ -2321,6 +2325,31 @@ const ToolbarSidebar = ({
               }}
               text="Edit History"
               toolbarIsOpen={hovered}
+            />
+
+            <SidebarButton
+              id="toolbar-proposal-review-button"
+              icon={
+                <NoteAltOutlinedIcon
+                  sx={{ color: reviewMode ? "white" : "" }}
+                />
+              }
+              onClick={() => {
+                // Same node, other surface: the review workspace or back to
+                // the node page. The hash carries the node id either way.
+                const hash = currentVisibleNode?.id
+                  ? `#${currentVisibleNode.id}`
+                  : "";
+                const app = appName.replaceAll(" ", "_");
+                router.push(
+                  reviewMode
+                    ? `/${app}${hash}`
+                    : `/review/proposals?app=${encodeURIComponent(app)}${hash}`,
+                );
+              }}
+              text={reviewMode ? "Back to the node page" : "Proposal review"}
+              toolbarIsOpen={hovered}
+              variant={reviewMode ? "fill" : undefined}
             />
 
             {!!user?.admin &&

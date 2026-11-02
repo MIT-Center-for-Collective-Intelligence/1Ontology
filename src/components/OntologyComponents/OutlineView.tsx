@@ -25,6 +25,7 @@ import { useAuth } from "../context/AuthContext";
 import { FillFlexParent } from "./fill-flex-parent";
 import { findNode, removeNode } from "./treeUtils";
 import { userHasOntologyEditAccess } from "@components/lib/utils/helpers";
+import { useProposalIndex } from "../Review/ProposalIndexContext";
 
 const INDENT_STEP = 15;
 const INITIAL_LOAD_COUNT = 20;
@@ -82,6 +83,7 @@ function OutlineView({
 }) {
   const db = getFirestore();
   const [{ user }] = useAuth();
+  const proposalIndex = useProposalIndex();
   const theme = useTheme();
   const [treeData, setTreeData] = useState<PaginatedTreeData[]>([]);
   const [editEnabled, setEditEnabled] = useState(false);
@@ -1278,6 +1280,41 @@ function OutlineView({
                 })}
               >
                 <span className={styles.nodeTitle}>{node.data.name}</span>
+                {!node.data.category &&
+                  (() => {
+                    // One mark per node: own proposal waiting > children
+                    // waiting > own proposal decided.
+                    const own = proposalIndex.byNode.get(node.data.nodeId);
+                    const under = proposalIndex.pendingUnder.get(
+                      node.data.nodeId,
+                    );
+                    const ownPending = own === "pending";
+                    if (ownPending)
+                      return (
+                        <Tooltip
+                          title="Has a proposal waiting for review"
+                          arrow
+                        >
+                          <span className={styles.proposalDot} />
+                        </Tooltip>
+                      );
+                    if (under)
+                      return (
+                        <Tooltip
+                          title={`${under} children with proposals waiting for review`}
+                          arrow
+                        >
+                          <span className={styles.proposalUnder}>{under}</span>
+                        </Tooltip>
+                      );
+                    if (own)
+                      return (
+                        <Tooltip title={`Proposal ${own}`} arrow>
+                          <span className={styles.proposalDotDone} />
+                        </Tooltip>
+                      );
+                    return null;
+                  })()}
                 {!node.data.category &&
                   nodesWithComments.has(node.data.nodeId) && (
                     <Tooltip title="You have unread comments" arrow>

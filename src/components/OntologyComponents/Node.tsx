@@ -142,6 +142,8 @@ import {
   removeLinkFromNode,
 } from "@components/lib/utils/instantTreeUpdate";
 import { triggerUpdateDerivedPaths } from "@components/lib/utils/triggerUpdateDerivedPaths";
+import ProposalReview from "../Review/ProposalReview";
+import { useReviewMode } from "../Review/ReviewModeContext";
 
 type INodeProps = {
   currentVisibleNode: INode;
@@ -522,6 +524,9 @@ const Node = ({
   // const [newTitle, setNewTitle] = useState<string>("");
   // const [description, setDescription] = useState<string>("");
   const isSmallScreen = useMediaQuery("(max-width: 600px)");
+  // Under /review/proposals the content area shows the proposal review
+  // workspace instead of the node's properties. The title header stays.
+  const reviewMode = useReviewMode();
 
   const [cloning, setCloning] = useState<string | null>(null);
 
@@ -2032,208 +2037,361 @@ const Node = ({
           />
         )} */}
           </Box>
-          {currentVisibleNode.oNetTask &&
-            currentVisibleNode.specializations.flatMap((c) => c.nodes).length <=
-              0 && (
-              <Paper
-                id="property-onet-task"
-                elevation={9}
+          {reviewMode ? (
+            <ProposalReview
+              currentVisibleNode={currentVisibleNode}
+              relatedNodes={relatedNodes}
+              fetchNode={fetchNode}
+              navigateToNode={navigateToNode}
+              searchWithFuse={searchWithFuse}
+              appName={appName}
+              user={user}
+            />
+          ) : (
+            <>
+              {currentVisibleNode.oNetTask &&
+                currentVisibleNode.specializations.flatMap((c) => c.nodes)
+                  .length <= 0 && (
+                  <Paper
+                    id="property-onet-task"
+                    elevation={9}
+                    sx={{
+                      borderRadius: "30px",
+                      borderBottomRightRadius: "18px",
+                      borderBottomLeftRadius: "18px",
+                      width: "100%",
+                      maxHeight: "100%",
+                      overflow: "auto",
+                      position: "relative",
+                      display: "flex",
+                      flexDirection: "column",
+                      overflowX: "hidden",
+                      pb: "10px",
+                      mt: "14px",
+                      minHeight: "100px",
+                      mb: "10px",
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        background: (theme: any) =>
+                          theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
+                        p: 3,
+                        gap: "10px",
+                      }}
+                    >
+                      {" "}
+                      <Typography>O*Net Link</Typography>
+                    </Box>
+                    <Link
+                      underline="hover"
+                      onClick={async () => {
+                        if (!!currentVisibleNode.oNetTask?.id) {
+                          const taskDoc = await getDoc(
+                            doc(
+                              collection(db, "onetTasks"),
+                              currentVisibleNode.oNetTask.id,
+                            ),
+                          );
+                          const taskData = taskDoc.data();
+                          if (taskData) {
+                            const url = `https://www.onetonline.org/search/task/choose/${taskData["O*NET-SOC Code"]}`;
+
+                            window.open(url, "_blank");
+                          }
+                        }
+                      }}
+                      sx={{
+                        cursor: "pointer",
+                        mx: "5px",
+                        p: "10px",
+                      }}
+                    >
+                      {currentVisibleNode.oNetTask.title}
+                    </Link>
+                  </Paper>
+                )}
+              <Box
                 sx={{
-                  borderRadius: "30px",
-                  borderBottomRightRadius: "18px",
-                  borderBottomLeftRadius: "18px",
-                  width: "100%",
-                  maxHeight: "100%",
-                  overflow: "auto",
-                  position: "relative",
                   display: "flex",
                   flexDirection: "column",
-                  overflowX: "hidden",
-                  pb: "10px",
-                  mt: "14px",
-                  minHeight: "100px",
-                  mb: "10px",
+                  gap: "10px",
+                  width: "100%",
                 }}
               >
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    background: (theme: any) =>
-                      theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
-                    p: 3,
-                    gap: "10px",
-                  }}
-                >
-                  {" "}
-                  <Typography>O*Net Link</Typography>
-                </Box>
-                <Link
-                  underline="hover"
-                  onClick={async () => {
-                    if (!!currentVisibleNode.oNetTask?.id) {
-                      const taskDoc = await getDoc(
-                        doc(
-                          collection(db, "onetTasks"),
-                          currentVisibleNode.oNetTask.id,
-                        ),
-                      );
-                      const taskData = taskDoc.data();
-                      if (taskData) {
-                        const url = `https://www.onetonline.org/search/task/choose/${taskData["O*NET-SOC Code"]}`;
+                {/* alternatives of title of the node */}
+                {currentVisibleNode?.properties?.hasOwnProperty(
+                  "alternatives",
+                ) && (
+                  <ChipsProperty
+                    currentVisibleNode={currentVisibleNode}
+                    property={"alternatives"}
+                    relatedNodes={relatedNodes}
+                    fetchNode={fetchNode}
+                    locked={locked}
+                    currentImprovement={currentImprovement}
+                    selectedDiffNode={selectedDiffNode}
+                    user={user}
+                    enableEdit={enableEdit}
+                    appName={appName}
+                  />
+                )}
+                {/* description of the node */}
 
-                        window.open(url, "_blank");
-                      }
+                <Text
+                  appName={appName}
+                  relatedNodes={relatedNodes}
+                  fetchNode={fetchNode}
+                  text={onGetPropertyValue("description") as string}
+                  currentVisibleNode={currentVisibleNode}
+                  property={"description"}
+                  setCurrentVisibleNode={setCurrentVisibleNode}
+                  locked={locked}
+                  selectedDiffNode={selectedDiffNode}
+                  getTitleNode={getTitleNode}
+                  confirmIt={confirmIt}
+                  currentImprovement={currentImprovement}
+                  enableEdit={enableEdit}
+                  onInstantTreeUpdate={onInstantTreeUpdate}
+                />
+
+                {/* hidden in diff view */}
+                {!selectedDiffNode && (
+                  <NodeCompass
+                    currentVisibleNode={currentVisibleNode}
+                    relatedNodes={relatedNodes}
+                    navigateToNode={navigateToNode}
+                    requireModifierToZoom
+                    onOpenInNavigator={
+                      onOpenInNavigator
+                        ? () => onOpenInNavigator(currentVisibleNode.id)
+                        : undefined
                     }
-                  }}
+                  />
+                )}
+
+                {/* actors of the node if it's exist */}
+                {currentVisibleNode?.properties?.hasOwnProperty("actor") && (
+                  <StructuredProperty
+                    selectedDiffNode={selectedDiffNode}
+                    confirmIt={confirmIt}
+                    currentVisibleNode={currentVisibleNode}
+                    editStructuredProperty={editStructuredProperty}
+                    setSelectedProperty={setSelectedProperty}
+                    navigateToNode={navigateToNode}
+                    setSnackbarMessage={setSnackbarMessage}
+                    setCurrentVisibleNode={setCurrentVisibleNode}
+                    property={"actor"}
+                    relatedNodes={relatedNodes}
+                    fetchNode={fetchNode}
+                    addNodesToCache={addNodesToCache}
+                    locked={locked}
+                    onGetPropertyValue={onGetPropertyValue}
+                    currentImprovement={currentImprovement}
+                    handleCloseAddLinksModel={handleCloseAddLinksModel}
+                    selectedProperty={selectedProperty}
+                    setSearchValue={setSearchValue}
+                    searchValue={searchValue}
+                    searchResultsForSelection={searchResultsForSelection}
+                    checkedItems={checkedItems}
+                    setCheckedItems={setCheckedItems}
+                    setCheckedItemsCopy={setCheckedItemsCopy}
+                    checkedItemsCopy={checkedItemsCopy}
+                    handleCloning={handleCloning}
+                    user={user}
+                    selectFromTree={selectFromTree}
+                    expandedNodes={expandedNodes}
+                    setExpandedNodes={setExpandedNodes}
+                    handleToggle={handleToggle}
+                    getPath={getPath}
+                    handleSaveLinkChanges={handleSaveLinkChanges}
+                    checkDuplicateTitle={checkDuplicateTitle}
+                    cloning={cloning}
+                    addACloneNodeQueue={addACloneNodeQueue}
+                    setClonedNodesQueue={setClonedNodesQueue}
+                    clonedNodesQueue={clonedNodesQueue}
+                    newOnes={newOnes}
+                    setNewOnes={setNewOnes}
+                    loadingIds={loadingIds}
+                    setLoadingIds={setLoadingIds}
+                    editableProperty={editableProperty}
+                    setEditableProperty={setEditableProperty}
+                    removedElements={removedElements}
+                    setRemovedElements={setRemovedElements}
+                    addedElements={addedElements}
+                    setAddedElements={setAddedElements}
+                    glowIds={glowIds}
+                    setGlowIds={setGlowIds}
+                    selectedCollection={selectedCollection}
+                    enableEdit={enableEdit}
+                    appName={appName}
+                    onInstantTreeUpdate={onInstantTreeUpdate}
+                  />
+                )}
+                {/* specializations and generalizations*/}
+                <Stack
+                  direction={width < 1050 ? "column" : "row"}
                   sx={{
-                    cursor: "pointer",
-                    mx: "5px",
-                    p: "10px",
+                    gap: 3,
                   }}
                 >
-                  {currentVisibleNode.oNetTask.title}
-                </Link>
-              </Paper>
-            )}
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "10px",
-              width: "100%",
-            }}
-          >
-            {/* alternatives of title of the node */}
-            {currentVisibleNode?.properties?.hasOwnProperty("alternatives") && (
-              <ChipsProperty
-                currentVisibleNode={currentVisibleNode}
-                property={"alternatives"}
-                relatedNodes={relatedNodes}
-                fetchNode={fetchNode}
-                locked={locked}
-                currentImprovement={currentImprovement}
-                selectedDiffNode={selectedDiffNode}
-                user={user}
-                enableEdit={enableEdit}
-                appName={appName}
-              />
-            )}
-            {/* description of the node */}
+                  {["generalizations", "specializations"].map(
+                    (property, index) => (
+                      <StructuredProperty
+                        key={property + index}
+                        confirmIt={confirmIt}
+                        selectedDiffNode={selectedDiffNode}
+                        currentVisibleNode={currentVisibleNode}
+                        editStructuredProperty={editStructuredProperty}
+                        setSelectedProperty={setSelectedProperty}
+                        navigateToNode={navigateToNode}
+                        setSnackbarMessage={setSnackbarMessage}
+                        setCurrentVisibleNode={setCurrentVisibleNode}
+                        property={property}
+                        relatedNodes={relatedNodes}
+                        fetchNode={fetchNode}
+                        addNodesToCache={addNodesToCache}
+                        locked={locked}
+                        onGetPropertyValue={onGetPropertyValue}
+                        currentImprovement={currentImprovement}
+                        handleCloseAddLinksModel={handleCloseAddLinksModel}
+                        selectedProperty={selectedProperty}
+                        setSearchValue={setSearchValue}
+                        searchValue={searchValue}
+                        searchResultsForSelection={searchResultsForSelection}
+                        checkedItems={checkedItems}
+                        setCheckedItems={setCheckedItems}
+                        setCheckedItemsCopy={setCheckedItemsCopy}
+                        checkedItemsCopy={checkedItemsCopy}
+                        handleCloning={handleCloning}
+                        user={user}
+                        selectFromTree={selectFromTree}
+                        expandedNodes={expandedNodes}
+                        setExpandedNodes={setExpandedNodes}
+                        handleToggle={handleToggle}
+                        getPath={getPath}
+                        handleSaveLinkChanges={handleSaveLinkChanges}
+                        checkDuplicateTitle={checkDuplicateTitle}
+                        cloning={cloning}
+                        addACloneNodeQueue={addACloneNodeQueue}
+                        setClonedNodesQueue={setClonedNodesQueue}
+                        clonedNodesQueue={clonedNodesQueue}
+                        newOnes={newOnes}
+                        setNewOnes={setNewOnes}
+                        loadingIds={loadingIds}
+                        setLoadingIds={setLoadingIds}
+                        editableProperty={editableProperty}
+                        setEditableProperty={setEditableProperty}
+                        removedElements={removedElements}
+                        setRemovedElements={setRemovedElements}
+                        addedElements={addedElements}
+                        setAddedElements={setAddedElements}
+                        glowIds={glowIds}
+                        setGlowIds={setGlowIds}
+                        selectedCollection={selectedCollection}
+                        enableEdit={enableEdit}
+                        appName={appName}
+                        onInstantTreeUpdate={onInstantTreeUpdate}
+                      />
+                    ),
+                  )}
+                </Stack>
+                {/* isPartOf and isPartOf*/}
+                <Stack
+                  mt={1}
+                  direction={width < 1050 ? "column" : "row"}
+                  sx={{
+                    gap: 3,
+                  }}
+                >
+                  {["isPartOf", "parts"].map((property, index) => (
+                    <StructuredProperty
+                      key={property + index}
+                      confirmIt={confirmIt}
+                      selectedDiffNode={selectedDiffNode}
+                      currentVisibleNode={currentVisibleNode}
+                      editStructuredProperty={editStructuredProperty}
+                      setSelectedProperty={setSelectedProperty}
+                      navigateToNode={navigateToNode}
+                      setSnackbarMessage={setSnackbarMessage}
+                      setCurrentVisibleNode={setCurrentVisibleNode}
+                      property={property}
+                      relatedNodes={relatedNodes}
+                      fetchNode={fetchNode}
+                      addNodesToCache={addNodesToCache}
+                      locked={locked}
+                      onGetPropertyValue={onGetPropertyValue}
+                      currentImprovement={currentImprovement}
+                      cloneNode={cloneNode}
+                      handleCloseAddLinksModel={handleCloseAddLinksModel}
+                      selectedProperty={selectedProperty}
+                      setSearchValue={setSearchValue}
+                      searchValue={searchValue}
+                      searchResultsForSelection={searchResultsForSelection}
+                      checkedItems={checkedItems}
+                      setCheckedItems={setCheckedItems}
+                      setCheckedItemsCopy={setCheckedItemsCopy}
+                      checkedItemsCopy={checkedItemsCopy}
+                      handleCloning={handleCloning}
+                      user={user}
+                      selectFromTree={selectFromTree}
+                      expandedNodes={expandedNodes}
+                      setExpandedNodes={setExpandedNodes}
+                      handleToggle={handleToggle}
+                      getPath={getPath}
+                      handleSaveLinkChanges={handleSaveLinkChanges}
+                      checkDuplicateTitle={checkDuplicateTitle}
+                      cloning={cloning}
+                      addACloneNodeQueue={addACloneNodeQueue}
+                      setClonedNodesQueue={setClonedNodesQueue}
+                      clonedNodesQueue={clonedNodesQueue}
+                      newOnes={newOnes}
+                      setNewOnes={setNewOnes}
+                      loadingIds={loadingIds}
+                      setLoadingIds={setLoadingIds}
+                      editableProperty={editableProperty}
+                      setEditableProperty={setEditableProperty}
+                      removedElements={removedElements}
+                      setRemovedElements={setRemovedElements}
+                      addedElements={addedElements}
+                      setAddedElements={setAddedElements}
+                      glowIds={glowIds}
+                      setGlowIds={setGlowIds}
+                      selectedCollection={selectedCollection}
+                      enableEdit={enableEdit}
+                      appName={appName}
+                      onInstantTreeUpdate={onInstantTreeUpdate}
+                    />
+                  ))}
+                </Stack>
 
-            <Text
-              appName={appName}
-              relatedNodes={relatedNodes}
-              fetchNode={fetchNode}
-              text={onGetPropertyValue("description") as string}
-              currentVisibleNode={currentVisibleNode}
-              property={"description"}
-              setCurrentVisibleNode={setCurrentVisibleNode}
-              locked={locked}
-              selectedDiffNode={selectedDiffNode}
-              getTitleNode={getTitleNode}
-              confirmIt={confirmIt}
-              currentImprovement={currentImprovement}
-              enableEdit={enableEdit}
-              onInstantTreeUpdate={onInstantTreeUpdate}
-            />
+                {(user.claims.flowChart || development) &&
+                  currentVisibleNode.nodeType === "activity" &&
+                  !appName && (
+                    <NodeActivityFlow
+                      node={currentVisibleNode}
+                      relatedNodes={relatedNodes}
+                      fetchNode={fetchNode}
+                      confirmIt={confirmIt}
+                    />
+                  )}
 
-            {/* hidden in diff view */}
-            {!selectedDiffNode && (
-              <NodeCompass
-                currentVisibleNode={currentVisibleNode}
-                relatedNodes={relatedNodes}
-                navigateToNode={navigateToNode}
-                requireModifierToZoom
-                onOpenInNavigator={
-                  onOpenInNavigator
-                    ? () => onOpenInNavigator(currentVisibleNode.id)
-                    : undefined
-                }
-              />
-            )}
-
-            {/* actors of the node if it's exist */}
-            {currentVisibleNode?.properties?.hasOwnProperty("actor") && (
-              <StructuredProperty
-                selectedDiffNode={selectedDiffNode}
-                confirmIt={confirmIt}
-                currentVisibleNode={currentVisibleNode}
-                editStructuredProperty={editStructuredProperty}
-                setSelectedProperty={setSelectedProperty}
-                navigateToNode={navigateToNode}
-                setSnackbarMessage={setSnackbarMessage}
-                setCurrentVisibleNode={setCurrentVisibleNode}
-                property={"actor"}
-                relatedNodes={relatedNodes}
-                fetchNode={fetchNode}
-                addNodesToCache={addNodesToCache}
-                locked={locked}
-                onGetPropertyValue={onGetPropertyValue}
-                currentImprovement={currentImprovement}
-                handleCloseAddLinksModel={handleCloseAddLinksModel}
-                selectedProperty={selectedProperty}
-                setSearchValue={setSearchValue}
-                searchValue={searchValue}
-                searchResultsForSelection={searchResultsForSelection}
-                checkedItems={checkedItems}
-                setCheckedItems={setCheckedItems}
-                setCheckedItemsCopy={setCheckedItemsCopy}
-                checkedItemsCopy={checkedItemsCopy}
-                handleCloning={handleCloning}
-                user={user}
-                selectFromTree={selectFromTree}
-                expandedNodes={expandedNodes}
-                setExpandedNodes={setExpandedNodes}
-                handleToggle={handleToggle}
-                getPath={getPath}
-                handleSaveLinkChanges={handleSaveLinkChanges}
-                checkDuplicateTitle={checkDuplicateTitle}
-                cloning={cloning}
-                addACloneNodeQueue={addACloneNodeQueue}
-                setClonedNodesQueue={setClonedNodesQueue}
-                clonedNodesQueue={clonedNodesQueue}
-                newOnes={newOnes}
-                setNewOnes={setNewOnes}
-                loadingIds={loadingIds}
-                setLoadingIds={setLoadingIds}
-                editableProperty={editableProperty}
-                setEditableProperty={setEditableProperty}
-                removedElements={removedElements}
-                setRemovedElements={setRemovedElements}
-                addedElements={addedElements}
-                setAddedElements={setAddedElements}
-                glowIds={glowIds}
-                setGlowIds={setGlowIds}
-                selectedCollection={selectedCollection}
-                enableEdit={enableEdit}
-                appName={appName}
-                onInstantTreeUpdate={onInstantTreeUpdate}
-              />
-            )}
-            {/* specializations and generalizations*/}
-            <Stack
-              direction={width < 1050 ? "column" : "row"}
-              sx={{
-                gap: 3,
-              }}
-            >
-              {["generalizations", "specializations"].map((property, index) => (
-                <StructuredProperty
-                  key={property + index}
-                  confirmIt={confirmIt}
-                  selectedDiffNode={selectedDiffNode}
+                {/* rest of the properties in the NodeBody*/}
+                <NodeBody
                   currentVisibleNode={currentVisibleNode}
-                  editStructuredProperty={editStructuredProperty}
-                  setSelectedProperty={setSelectedProperty}
+                  setCurrentVisibleNode={setCurrentVisibleNode}
+                  showListToSelect={editStructuredProperty}
                   navigateToNode={navigateToNode}
                   setSnackbarMessage={setSnackbarMessage}
-                  setCurrentVisibleNode={setCurrentVisibleNode}
-                  property={property}
+                  setSelectedProperty={setSelectedProperty}
                   relatedNodes={relatedNodes}
                   fetchNode={fetchNode}
-                  addNodesToCache={addNodesToCache}
                   locked={locked}
+                  selectedDiffNode={selectedDiffNode}
+                  getTitleNode={getTitleNode}
+                  confirmIt={confirmIt}
                   onGetPropertyValue={onGetPropertyValue}
                   currentImprovement={currentImprovement}
                   handleCloseAddLinksModel={handleCloseAddLinksModel}
@@ -2246,8 +2404,6 @@ const Node = ({
                   setCheckedItemsCopy={setCheckedItemsCopy}
                   checkedItemsCopy={checkedItemsCopy}
                   handleCloning={handleCloning}
-                  user={user}
-                  selectFromTree={selectFromTree}
                   expandedNodes={expandedNodes}
                   setExpandedNodes={setExpandedNodes}
                   handleToggle={handleToggle}
@@ -2271,147 +2427,14 @@ const Node = ({
                   glowIds={glowIds}
                   setGlowIds={setGlowIds}
                   selectedCollection={selectedCollection}
+                  storage={storage}
                   enableEdit={enableEdit}
                   appName={appName}
-                  onInstantTreeUpdate={onInstantTreeUpdate}
+                  deleteProperty={deleteProperty}
                 />
-              ))}
-            </Stack>
-            {/* isPartOf and isPartOf*/}
-            <Stack
-              mt={1}
-              direction={width < 1050 ? "column" : "row"}
-              sx={{
-                gap: 3,
-              }}
-            >
-              {["isPartOf", "parts"].map((property, index) => (
-                <StructuredProperty
-                  key={property + index}
-                  confirmIt={confirmIt}
-                  selectedDiffNode={selectedDiffNode}
-                  currentVisibleNode={currentVisibleNode}
-                  editStructuredProperty={editStructuredProperty}
-                  setSelectedProperty={setSelectedProperty}
-                  navigateToNode={navigateToNode}
-                  setSnackbarMessage={setSnackbarMessage}
-                  setCurrentVisibleNode={setCurrentVisibleNode}
-                  property={property}
-                  relatedNodes={relatedNodes}
-                  fetchNode={fetchNode}
-                  addNodesToCache={addNodesToCache}
-                  locked={locked}
-                  onGetPropertyValue={onGetPropertyValue}
-                  currentImprovement={currentImprovement}
-                  cloneNode={cloneNode}
-                  handleCloseAddLinksModel={handleCloseAddLinksModel}
-                  selectedProperty={selectedProperty}
-                  setSearchValue={setSearchValue}
-                  searchValue={searchValue}
-                  searchResultsForSelection={searchResultsForSelection}
-                  checkedItems={checkedItems}
-                  setCheckedItems={setCheckedItems}
-                  setCheckedItemsCopy={setCheckedItemsCopy}
-                  checkedItemsCopy={checkedItemsCopy}
-                  handleCloning={handleCloning}
-                  user={user}
-                  selectFromTree={selectFromTree}
-                  expandedNodes={expandedNodes}
-                  setExpandedNodes={setExpandedNodes}
-                  handleToggle={handleToggle}
-                  getPath={getPath}
-                  handleSaveLinkChanges={handleSaveLinkChanges}
-                  checkDuplicateTitle={checkDuplicateTitle}
-                  cloning={cloning}
-                  addACloneNodeQueue={addACloneNodeQueue}
-                  setClonedNodesQueue={setClonedNodesQueue}
-                  clonedNodesQueue={clonedNodesQueue}
-                  newOnes={newOnes}
-                  setNewOnes={setNewOnes}
-                  loadingIds={loadingIds}
-                  setLoadingIds={setLoadingIds}
-                  editableProperty={editableProperty}
-                  setEditableProperty={setEditableProperty}
-                  removedElements={removedElements}
-                  setRemovedElements={setRemovedElements}
-                  addedElements={addedElements}
-                  setAddedElements={setAddedElements}
-                  glowIds={glowIds}
-                  setGlowIds={setGlowIds}
-                  selectedCollection={selectedCollection}
-                  enableEdit={enableEdit}
-                  appName={appName}
-                  onInstantTreeUpdate={onInstantTreeUpdate}
-                />
-              ))}
-            </Stack>
-
-            {(user.claims.flowChart || development) &&
-              currentVisibleNode.nodeType === "activity" &&
-              !appName && (
-                <NodeActivityFlow
-                  node={currentVisibleNode}
-                  relatedNodes={relatedNodes}
-                  fetchNode={fetchNode}
-                  confirmIt={confirmIt}
-                />
-              )}
-
-            {/* rest of the properties in the NodeBody*/}
-            <NodeBody
-              currentVisibleNode={currentVisibleNode}
-              setCurrentVisibleNode={setCurrentVisibleNode}
-              showListToSelect={editStructuredProperty}
-              navigateToNode={navigateToNode}
-              setSnackbarMessage={setSnackbarMessage}
-              setSelectedProperty={setSelectedProperty}
-              relatedNodes={relatedNodes}
-              fetchNode={fetchNode}
-              locked={locked}
-              selectedDiffNode={selectedDiffNode}
-              getTitleNode={getTitleNode}
-              confirmIt={confirmIt}
-              onGetPropertyValue={onGetPropertyValue}
-              currentImprovement={currentImprovement}
-              handleCloseAddLinksModel={handleCloseAddLinksModel}
-              selectedProperty={selectedProperty}
-              setSearchValue={setSearchValue}
-              searchValue={searchValue}
-              searchResultsForSelection={searchResultsForSelection}
-              checkedItems={checkedItems}
-              setCheckedItems={setCheckedItems}
-              setCheckedItemsCopy={setCheckedItemsCopy}
-              checkedItemsCopy={checkedItemsCopy}
-              handleCloning={handleCloning}
-              expandedNodes={expandedNodes}
-              setExpandedNodes={setExpandedNodes}
-              handleToggle={handleToggle}
-              getPath={getPath}
-              handleSaveLinkChanges={handleSaveLinkChanges}
-              checkDuplicateTitle={checkDuplicateTitle}
-              cloning={cloning}
-              addACloneNodeQueue={addACloneNodeQueue}
-              setClonedNodesQueue={setClonedNodesQueue}
-              clonedNodesQueue={clonedNodesQueue}
-              newOnes={newOnes}
-              setNewOnes={setNewOnes}
-              loadingIds={loadingIds}
-              setLoadingIds={setLoadingIds}
-              editableProperty={editableProperty}
-              setEditableProperty={setEditableProperty}
-              removedElements={removedElements}
-              setRemovedElements={setRemovedElements}
-              addedElements={addedElements}
-              setAddedElements={setAddedElements}
-              glowIds={glowIds}
-              setGlowIds={setGlowIds}
-              selectedCollection={selectedCollection}
-              storage={storage}
-              enableEdit={enableEdit}
-              appName={appName}
-              deleteProperty={deleteProperty}
-            />
-          </Box>{" "}
+              </Box>{" "}
+            </>
+          )}
         </>
       )}
       {ConfirmDialog}
