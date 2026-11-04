@@ -24,6 +24,8 @@ steps:
         [[ '${COMMIT_SHA}' =~ ^[0-9a-f]{40}$ ]]
         test -n '${BUILD_ID}'
         export PATH="/workspace/.cloudbuild-tools/bin:$$PATH"
+        apt-get update
+        apt-get install -y python3
         node --version
         python3 scripts/deployment/stage_relationship_package.py
         python3 scripts/deployment/stage_branch_package.py
@@ -155,8 +157,13 @@ steps:
 
   # Verify the exact candidate before explicitly moving traffic off a pinned revision.
   - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
-    entrypoint: python3
-    args: ["scripts/deployment/promote.py", "${COMMIT_SHA}", "${BUILD_ID}", "ontology-git-${SHORT_SHA}-${BUILD_ID}"]
+    entrypoint: bash
+    args:
+      - "-ceu"
+      - |
+        apt-get update
+        apt-get install -y python3
+        python3 scripts/deployment/promote.py '${COMMIT_SHA}' '${BUILD_ID}' 'ontology-git-${SHORT_SHA}-${BUILD_ID}'
 
 images:
   - "${_AR_IMAGE}:${COMMIT_SHA}-${BUILD_ID}"
