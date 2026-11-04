@@ -17,7 +17,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import CloseIcon from "@mui/icons-material/Close";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { development, SCROLL_BAR_STYLE } from "@components/lib/CONSTANTS";
+import { SCROLL_BAR_STYLE } from "@components/lib/CONSTANTS";
 import { Post } from "@components/lib/utils/Post";
 
 const SearchSideBar = ({
@@ -54,7 +54,7 @@ const SearchSideBar = ({
   const theme = useTheme();
 
   const getSearchResults = (query: string) => {
-    return [];
+    return searchWithFuse?.(query)?.slice(0, 30) ?? [];
   };
 
   const handleFocus = (
@@ -67,13 +67,18 @@ const SearchSideBar = ({
     if (onFocusChange) onFocusChange(true);
 
     if (searchQuery.trim() !== "") {
-      const freshResults = getSearchResults(searchQuery.trim());
-      if (freshResults.length === 0) {
-        /*         setSearchQuery(""); */
-        setIsListOpen(!!lastSearches.length);
-      } else {
-        setSearchRefreshKey((prevKey) => prevKey + 1);
+      // Keep Chroma results visible; do not close the panel on refocus.
+      if (searchResults.length > 0) {
         setIsListOpen(true);
+      } else {
+        const freshResults = getSearchResults(searchQuery.trim());
+        if (freshResults.length === 0) {
+          setIsListOpen(!!lastSearches.length);
+        } else {
+          setSearchResults(freshResults);
+          setSearchRefreshKey((prevKey) => prevKey + 1);
+          setIsListOpen(true);
+        }
       }
     } else if (lastSearches.length > 0) {
       setIsListOpen(true);
@@ -153,27 +158,47 @@ const SearchSideBar = ({
       inputRef.current.select();
       pendingSelectRef.current = false;
     }
-  }, [isFocused, searchQuery, isListOpen, loadingSearchResult]);
+    // Intentionally omit loadingSearchResult: when a search finishes the input
+    // may be refocused, and that used to re-enter handleFocus and close the list.
+  }, [isFocused, searchQuery, isListOpen]);
 
   const searchQueryHandler = useCallback(async () => {
+    if (!searchQuery.trim()) return;
+
     try {
       setErrorSearch(false);
       setLoadingSearchResult(true);
-      const response: any = !development
-        ? await Post("/searchChroma", {
-            query: searchQuery,
-            appName: appName || null,
-            resultsNum: 100,
-          })
-        : { results: [] };
+      setIsListOpen(true);
+      setIsFocused(true);
+      if (onFocusChange) onFocusChange(true);
+
+      const fuseSearch = searchWithFuse?.(searchQuery) ?? [];
+      const response: any = await Post("/searchChroma", {
+        query: searchQuery,
+        appName: appName || null,
+        resultsNum: 100,
+      });
       const chromaResults: any[] = [...(response.results || [])];
-      setSearchResults(chromaResults);
+      const results =
+        chromaResults.length > 0
+          ? chromaResults
+          : fuseSearch.slice(0, 30);
+
+      setSearchResults(results);
+      setIsListOpen(true);
     } catch (error) {
       console.error(error);
+      setErrorSearch(true);
+      const fuseFallback = searchWithFuse?.(searchQuery)?.slice(0, 30) ?? [];
+      if (fuseFallback.length > 0) {
+        setSearchResults(fuseFallback);
+        setErrorSearch(false);
+        setIsListOpen(true);
+      }
     } finally {
       setLoadingSearchResult(false);
     }
-  }, [searchQuery, searchWithFuse, appName, isExperimentalSearch]);
+  }, [searchQuery, searchWithFuse, appName, onFocusChange]);
 
   const onKeyDown = (event: any) => {
     if (event.key === "Enter") {
