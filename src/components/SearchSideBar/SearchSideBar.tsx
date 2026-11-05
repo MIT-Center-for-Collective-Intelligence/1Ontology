@@ -29,6 +29,7 @@ const SearchSideBar = ({
   isExperimentalSearch,
   onSearchChange,
   onFocusChange,
+  publicMode = false,
 }: {
   openSearchedNode: any;
   searchWithFuse: any;
@@ -38,6 +39,8 @@ const SearchSideBar = ({
   isExperimentalSearch: boolean;
   onSearchChange?: (value: string) => void;
   onFocusChange?: (focused: boolean) => void;
+  // Public-link visitors search through the token-gated public endpoint.
+  publicMode?: boolean;
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isListOpen, setIsListOpen] = useState(false);
@@ -173,7 +176,7 @@ const SearchSideBar = ({
       if (onFocusChange) onFocusChange(true);
 
       const fuseSearch = searchWithFuse?.(searchQuery) ?? [];
-      const response: any = await Post("/searchChroma", {
+      const response: any = await Post(publicMode ? "/public/search" : "/searchChroma", {
         query: searchQuery,
         appName: appName || null,
         resultsNum: 100,
@@ -198,7 +201,7 @@ const SearchSideBar = ({
     } finally {
       setLoadingSearchResult(false);
     }
-  }, [searchQuery, searchWithFuse, appName, onFocusChange]);
+  }, [searchQuery, searchWithFuse, appName, onFocusChange, publicMode]);
 
   const onKeyDown = (event: any) => {
     if (event.key === "Enter") {

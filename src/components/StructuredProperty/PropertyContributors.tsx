@@ -4,6 +4,7 @@ import type { SxProps, Theme } from "@mui/material";
 import OptimizedAvatar from "../Chat/OptimizedAvatar";
 import { useUsers } from "@components/hooks/useUsers";
 import { INode } from "@components/types/INode";
+import { usePublicMode } from "@components/components/context/PublicModeContext";
 
 interface PropertyContributorsProps {
   currentVisibleNode: INode;
@@ -11,7 +12,7 @@ interface PropertyContributorsProps {
   sx?: SxProps<Theme>;
 }
 
-const PropertyContributors: React.FC<PropertyContributorsProps> = ({
+const ContributorsBadge: React.FC<PropertyContributorsProps> = ({
   currentVisibleNode,
   property,
   sx = {},
@@ -98,6 +99,12 @@ const PropertyContributors: React.FC<PropertyContributorsProps> = ({
       </AvatarGroup>
     </Box>
   );
+};
+
+// Public visitors never see (or trigger a fetch of) contributor identities.
+const PropertyContributors: React.FC<PropertyContributorsProps> = (props) => {
+  if (usePublicMode()) return null;
+  return <ContributorsBadge {...props} />;
 };
 
 export default PropertyContributors;

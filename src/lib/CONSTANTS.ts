@@ -1,5 +1,5 @@
 import { DESIGN_SYSTEM_COLORS } from "./theme/colors";
-export const development = process.env.NODE_ENV === "development";
+export const development = process.env.NODE_ENV !== "development";
 
 // Defining an object to hold initial values for various node types
 
@@ -168,6 +168,9 @@ export const PROPERTIES_TO_IMPROVE: { [nodeType: string]: string[] } | any = {
 
 export const MODEL = "o3";
 export const GEMINI_MODEL = "gemini-3.1-pro-preview";
+
+/** The only ontology exposed through the secret /explore/ link. */
+export const PUBLIC_ONTOLOGY_APP_ID = "final-hierarchy-with-o*net";
 
 export const ONTOLOGY_APPS: any = development
   ? [

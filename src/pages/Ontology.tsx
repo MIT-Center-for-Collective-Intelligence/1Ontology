@@ -188,19 +188,37 @@ export const tokenize = (str: string) => {
   return tokens;
 };
 
+const PUBLIC_VIEWER_USER: any = {
+  userId: "",
+  uname: "",
+  fName: "",
+  lName: "",
+  email: "",
+  imageUrl: "",
+  claims: {},
+};
+
 const Ontology = ({
   appName,
   onOpenInNavigator,
   onFocusedTitleChange,
+  publicMode = false,
 }: {
   appName: string;
+  // Read-only mode for the secret public link: no sign-in, no editing, no sidebar tools.
+  publicMode?: boolean;
   onOpenInNavigator?: (nodeId: string) => void;
   // Reported up to the parent component, which owns the <title> tag.
   onFocusedTitleChange?: (title: string | null) => void;
 }) => {
   const db = getFirestore();
   const rtdb = getDatabase();
-  const [{ emailVerified, user, isAuthInitialized }] = useAuth();
+  const [{ emailVerified, user: authUser, isAuthInitialized }] = useAuth();
+  // Public visitors have no user doc; give read-only views a minimal stand-in.
+  const user = useMemo(
+    () => authUser ?? (publicMode ? PUBLIC_VIEWER_USER : null),
+    [authUser, publicMode],
+  );
   const router = useRouter();
   const isMobile = useMediaQuery("(max-width:599px)", { noSsr: true });
   const [relatedNodes, setRelatedNodes] = useState<{ [id: string]: INode }>({});
@@ -1488,7 +1506,7 @@ const Ontology = ({
 
   // Function to update the user document with the current ontology path
   const openedANode = async (nodeId: string, nodeTitle?: string) => {
-    if (!user) return;
+    if (!user || publicMode) return;
     const userRef = doc(collection(db, USERS), user.uname);
     await setDoc(
       userRef,
@@ -1909,7 +1927,7 @@ const Ontology = ({
     const handleUserActivity = () => {
       const currentTime = Date.now();
 
-      if (user && user?.uname !== "ouhrac") {
+      if (user && !publicMode && user?.uname !== "ouhrac") {
         const timeSinceLastUpdate =
           lastUpdate !== null ? currentTime - lastUpdate || 0 : 60001;
         if (timeSinceLastUpdate >= 60000) {
@@ -2139,6 +2157,7 @@ const Ontology = ({
             </Typography>
           </Box>
 
+{!publicMode && (
           <IconButton
             onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
             sx={{
@@ -2149,6 +2168,7 @@ const Ontology = ({
           >
             <MenuIcon />
           </IconButton>
+          )}
         </Box>
       )}
 
@@ -2206,6 +2226,7 @@ const Ontology = ({
               updateLastSearches={updateLastSearches}
               appName={appName}
               isExperimentalSearch={isExperimentalSearch}
+              publicMode={publicMode}
             />
           </Box>
         </Box>
@@ -2234,7 +2255,7 @@ const Ontology = ({
                 : "rgba(0, 0, 0, 0.08)",
           }}
         >
-          {appName && (
+          {appName && !publicMode && (
             <Box
               sx={{
                 m: "10px",
@@ -2429,7 +2450,7 @@ const Ontology = ({
       )}
 
       {/* Mobile Sidebar Panel */}
-      {isMobile && (
+      {isMobile && !publicMode && (
         <Box
           sx={{
             position: "fixed",
@@ -2485,7 +2506,7 @@ const Ontology = ({
       )}
 
       {/* Mobile Sidebar Backdrop */}
-      {isMobile && mobileSidebarOpen && (
+      {isMobile && !publicMode && mobileSidebarOpen && (
         <Box
           onClick={() => setMobileSidebarOpen(false)}
           sx={{
@@ -2540,7 +2561,7 @@ const Ontology = ({
               }}
             >
               {" "}
-              {appName && (
+              {appName && !publicMode && (
                 <Box sx={{ m: "10px", mb: "0px", p: 0 }}>
                   <FormControl
                     variant="outlined"
@@ -2760,6 +2781,7 @@ const Ontology = ({
                 updateLastSearches={updateLastSearches}
                 appName={appName}
                 isExperimentalSearch={isExperimentalSearch}
+                publicMode={publicMode}
               />{" "}
               <Divider sx={{ borderBottomWidth: 1.5, borderColor: "gray" }} />
               <Tabs
@@ -3088,12 +3110,14 @@ const Ontology = ({
                   setEditableProperty={setEditableProperty}
                   onInstantTreeUpdate={handleInstantTreeUpdate}
                   nodesWithComments={nodesWithComments}
-                  onOpenInNavigator={onOpenInNavigator}
+                  onOpenInNavigator={publicMode ? undefined : onOpenInNavigator}
+                  readOnly={publicMode}
                 />
               )}
           </Box>
         </Section>
 
+        {!publicMode && (
         <MemoizedToolbarSidebar
           // isHovered={toolbarIsHovered}
           searchWithFuse={searchWithFuse}
@@ -3127,6 +3151,7 @@ const Ontology = ({
           isExperimentalSearch={isExperimentalSearch}
           setIsExperimentalSearch={setIsExperimentalSearch}
         />
+        )}
       </Container>
       {ConfirmDialog}
       <SneakMessage

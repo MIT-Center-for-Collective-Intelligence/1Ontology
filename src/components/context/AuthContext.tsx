@@ -137,6 +137,11 @@ const AuthProvider: FC<Props> = ({ children, store }) => {
       dispatch({ type: "setIsLoading", payload: false });
       if (user) {
         const res: any = await user.getIdTokenResult(true);
+        // The shared public-link session is read-only guest access, never a real user.
+        if (res.claims?.publicViewer) {
+          dispatch({ type: "logoutSuccess" });
+          return;
+        }
         //sign in
         loadUser(user.uid, res.claims, user.emailVerified);
       } else {

@@ -196,6 +196,8 @@ type INodeProps = {
   onInstantTreeUpdate?: (updateFn: (treeData: any[]) => any[]) => void;
   onOpenInNavigator?: (nodeId: string) => void;
   isLoadingNodeDetails?: boolean;
+  // Public-link visitors: view only — no editing, locking, chat or history.
+  readOnly?: boolean;
 };
 
 // Skeleton loader component for node content
@@ -518,10 +520,11 @@ const Node = ({
   isLoadingNodeDetails = false,
   nodesWithComments,
   onOpenInNavigator,
+  readOnly = false,
 }: INodeProps) => {
   const isONetNode = !!currentVisibleNode?.oNetTask;
-  const locked = lockedProp || isONetNode;
-  const enableEdit = isONetNode ? false : enableEditProp;
+  const locked = lockedProp || isONetNode || readOnly;
+  const enableEdit = isONetNode || readOnly ? false : enableEditProp;
   // const [newTitle, setNewTitle] = useState<string>("");
   // const [description, setDescription] = useState<string>("");
   const isSmallScreen = useMediaQuery("(max-width: 600px)");
@@ -2002,7 +2005,7 @@ const Node = ({
               deleteNode={deleteNode}
               handleLockNode={handleLockNode}
               navigateToNode={navigateToNode}
-              displaySidebar={displaySidebar}
+              displaySidebar={readOnly ? undefined : displaySidebar}
               activeSidebar={activeSidebar}
               currentImprovement={currentImprovement}
               checkDuplicateTitle={checkDuplicateTitle}
