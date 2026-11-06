@@ -1610,7 +1610,7 @@ const StructuredProperty = ({
                     }}
                   >
                     {allSpecializationsAreONet
-                      ? "O*Net Descriptions"
+                      ? "O*Net Activities"
                       : capitalizeFirstLetter(
                           DISPLAY[property] ? DISPLAY[property] : property,
                         )}
