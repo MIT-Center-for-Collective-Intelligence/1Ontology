@@ -131,6 +131,7 @@ import {
 import { getDatabase, onValue, ref } from "firebase/database";
 
 import { recordLogs } from "@components/lib/utils/helpers";
+import { recordPublicViewLog } from "@components/lib/utils/recordPublicViewLog";
 import { pendingWrites } from "@components/lib/utils/pendingWrites";
 import { useHover } from "@components/lib/hooks/useHover";
 import { MemoizedToolbarSidebar } from "@components/components/Sidebar/ToolbarSidebar";
@@ -138,6 +139,7 @@ import { NodeChange } from "@components/types/INode";
 import GuidLines from "@components/components/Guidelines/GuideLines";
 import SearchSideBar from "@components/components/SearchSideBar/SearchSideBar";
 import OutlineView from "@components/components/OntologyComponents/OutlineView";
+import SunburstNav from "@components/components/OntologyComponents/SunburstNav";
 import { TreeApi } from "react-arborist";
 import { capitalizeFirstLetter } from "@components/lib/utils/string.utils";
 import ROUTES from "@components/lib/utils/routes";
@@ -855,10 +857,16 @@ const Ontology = ({
 
   const handleViewChange = (event: any, newValue: number) => {
     setViewValue(newValue);
-    recordLogs({
+    const viewTypes = ["Sunburst", "Outline", "Graph View"];
+    const entry = {
       action: "view change",
-      viewType: newValue === 0 ? "Tree View" : "Dag View",
-    });
+      viewType: viewTypes[newValue] || "Sunburst",
+    };
+    if (publicMode) {
+      void recordPublicViewLog(entry);
+    } else {
+      recordLogs(entry);
+    }
   };
 
   useEffect(() => {
@@ -1506,7 +1514,17 @@ const Ontology = ({
 
   // Function to update the user document with the current ontology path
   const openedANode = async (nodeId: string, nodeTitle?: string) => {
-    if (!user || publicMode) return;
+    if (publicMode) {
+      if (nodeId) {
+        void recordPublicViewLog({
+          action: "Opened a node",
+          node: nodeId,
+          nodeTitle: nodeTitle || "",
+        });
+      }
+      return;
+    }
+    if (!user) return;
     const userRef = doc(collection(db, USERS), user.uname);
     await setDoc(
       userRef,
@@ -1675,10 +1693,15 @@ const Ontology = ({
         setNavigationError(null); // Clear any error when navigating via graph
         setCurrentVisibleNode(node);
 
-        recordLogs({
+        const entry = {
           action: "opened dagre-view",
           itemClicked: node.id,
-        });
+        };
+        if (publicMode) {
+          void recordPublicViewLog(entry);
+        } else {
+          recordLogs(entry);
+        }
       }
 
       // If node wasn't in cache, fetch it in background
@@ -1700,7 +1723,7 @@ const Ontology = ({
         }
       }
     },
-    [relatedNodes, db, user, appName],
+    [relatedNodes, db, user, appName, publicMode],
   );
 
   // Function to handle opening node tree
@@ -1739,11 +1762,15 @@ const Ontology = ({
         setNavigationError(null); // Clear any error when navigating via tree
         setCurrentVisibleNode(node);
 
-        // Record logs for the action of clicking the tree-view
-        recordLogs({
+        const entry = {
           action: "clicked tree-view",
           itemClicked: node.id,
-        });
+        };
+        if (publicMode) {
+          void recordPublicViewLog(entry);
+        } else {
+          recordLogs(entry);
+        }
       }
 
       // If node wasn't in cache, fetch it in background
@@ -1765,7 +1792,7 @@ const Ontology = ({
         }
       }
     },
-    [relatedNodes, db, user, appName],
+    [relatedNodes, db, user, appName, publicMode],
   );
 
   // Function to retrieve main specializations from tree visualization data
@@ -1910,16 +1937,24 @@ const Ontology = ({
         // initializeExpanded(eachOntologyPath[node.id]);
         // Record the click action in logs
         if (searched) {
-          recordLogs({
-            action: "Search result clicked",
-            clicked: node.id,
-          });
+          if (publicMode) {
+            void recordPublicViewLog({
+              action: "Search result clicked",
+              clicked: node.id,
+              nodeTitle: node.title,
+            });
+          } else {
+            recordLogs({
+              action: "Search result clicked",
+              clicked: node.id,
+            });
+          }
         }
       } catch (error) {
         console.error(error);
       }
     },
-    [navigateToNode],
+    [navigateToNode, publicMode],
   );
 
   useEffect(() => {
@@ -1968,17 +2003,25 @@ const Ontology = ({
 
       if (elapsedMs > MAX_SESSION_MS) {
         const hoursOpen = Math.round(elapsedMs / (1000 * 60 * 60));
-        recordLogs({
-          type: "warning",
-          message: `Long session detected: ${hoursOpen} hours`,
-        });
+        const message = `Long session detected: ${hoursOpen} hours`;
+        if (publicMode) {
+          void recordPublicViewLog({
+            action: "Long session detected",
+            message,
+          });
+        } else {
+          recordLogs({
+            type: "warning",
+            message,
+          });
+        }
       }
     };
 
     const intervalId = setInterval(checkSessionAndDay, CHECK_INTERVAL_MS);
 
     return () => clearInterval(intervalId);
-  }, [setSnackbarMessage]);
+  }, [setSnackbarMessage, publicMode]);
 
   useEffect(() => {
     if (
@@ -2866,7 +2909,7 @@ const Ontology = ({
                   }}
                 />
                 <Tab
-                  label="Graph View"
+                  label="Graph"
                   {...a11yProps(1)}
                   sx={{
                     flex: 1,
@@ -2877,6 +2920,52 @@ const Ontology = ({
                     p: 0,
                     textTransform: "none",
                     fontSize: "15px",
+                    fontWeight: 700,
+                    lineHeight: 1,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: (theme) =>
+                      theme.palette.mode === "dark" ? "#9fb0c6" : "#475569",
+                    borderRadius: "999px",
+                    border: "2px solid",
+                    borderColor: "transparent",
+                    backgroundColor: (theme) =>
+                      theme.palette.mode === "dark"
+                        ? "rgba(148, 163, 184, 0.06)"
+                        : "rgba(255, 255, 255, 0.5)",
+                    transition: "all 150ms ease",
+                    "&:hover": {
+                      backgroundColor: (theme) =>
+                        theme.palette.mode === "dark"
+                          ? "rgba(148, 163, 184, 0.14)"
+                          : "rgba(255, 255, 255, 0.8)",
+                    },
+                    "&.Mui-selected": {
+                      color: "#ffffff",
+                      borderColor: (theme) =>
+                        theme.palette.mode === "dark" ? "#ff9b3d" : "#f97316",
+                      background: (theme) =>
+                        theme.palette.mode === "dark"
+                          ? "linear-gradient(180deg, #ffb15c 0%, #ff8a1f 100%)"
+                          : "linear-gradient(180deg, #fb923c 0%, #ea580c 100%)",
+                      boxShadow:
+                        "0 4px 12px rgba(249, 115, 22, 0.38), inset 0 1px 0 rgba(255,255,255,0.28)",
+                    },
+                  }}
+                />
+                <Tab
+                  label="Sunburst"
+                  {...a11yProps(2)}
+                  sx={{
+                    flex: 1,
+                    minWidth: 0,
+                    maxWidth: "none",
+                    minHeight: "38px",
+                    height: "38px",
+                    p: 0,
+                    textTransform: "none",
+                    fontSize: "14px",
                     fontWeight: 700,
                     lineHeight: 1,
                     display: "flex",
@@ -2988,6 +3077,21 @@ const Ontology = ({
                   expandedNodes={expandedNodes}
                   onOpenNodeDagre={onOpenNodeDagre}
                   currentVisibleNode={currentVisibleNode}
+                />
+              </TabPanel>
+              <TabPanel
+                value={viewValue}
+                index={2}
+                sx={{
+                  flex: 1,
+                  minHeight: 0,
+                  overflow: "hidden",
+                }}
+              >
+                <SunburstNav
+                  node={currentVisibleNode}
+                  appName={appName}
+                  onNavigate={navigateToNode}
                 />
               </TabPanel>
             </Box>
