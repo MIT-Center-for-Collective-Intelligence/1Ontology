@@ -18,6 +18,10 @@ import CloseIcon from "@mui/icons-material/Close";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { SCROLL_BAR_STYLE } from "@components/lib/CONSTANTS";
+import {
+  getBrowser,
+  getOperatingSystem,
+} from "@components/lib/firestoreClient/errors.firestore";
 import { Post } from "@components/lib/utils/Post";
 
 const SearchSideBar = ({
@@ -180,6 +184,12 @@ const SearchSideBar = ({
         query: searchQuery,
         appName: appName || null,
         resultsNum: 100,
+        ...(publicMode
+          ? {
+              browser: getBrowser(),
+              operatingSystem: getOperatingSystem(),
+            }
+          : {}),
       });
       const chromaResults: any[] = [...(response.results || [])];
       const results =

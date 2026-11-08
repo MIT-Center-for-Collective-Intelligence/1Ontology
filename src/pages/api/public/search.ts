@@ -3,6 +3,7 @@ import { admin } from "@components/lib/firestoreServer/admin";
 import { PUBLIC_VIEWER_CLAIM } from "@components/lib/server/publicAccess";
 import { PUBLIC_ONTOLOGY_APP_ID } from "@components/lib/CONSTANTS";
 import { searchChromaCore } from "../helpers";
+import { savePublicViewLog } from "@components/lib/server/publicViewLog";
 
 const MAX_RESULTS = 100;
 const MAX_QUERY_LENGTH = 500;
@@ -23,7 +24,8 @@ export default async function handler(
       return res.status(403).json({ error: "Forbidden" });
     }
 
-    const { query, appName, resultsNum } = req.body || {};
+    const { query, appName, resultsNum, browser, operatingSystem } =
+      req.body || {};
     if (
       typeof query !== "string" ||
       !query.trim() ||
@@ -38,6 +40,17 @@ export default async function handler(
       appName,
       resultsNum: Math.min(Number(resultsNum) || 20, MAX_RESULTS),
     });
+    try {
+      await savePublicViewLog({
+        at: "publicSearch",
+        query,
+        results,
+        browser,
+        operatingSystem,
+      });
+    } catch (logError) {
+      console.error("public search log error:", logError);
+    }
     return res.status(200).json({ results });
   } catch (error: any) {
     if (typeof error?.code === "string" && error.code.startsWith("auth/")) {
