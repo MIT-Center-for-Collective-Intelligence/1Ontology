@@ -30,6 +30,10 @@ const SkillsFuture = () => {
   const [hasVisitedNavigator, setHasVisitedNavigator] = useState(false);
   const [platformTitle, setPlatformTitle] = useState<string | null>(null);
   const [navigatorTitle, setNavigatorTitle] = useState<string | null>(null);
+  const [navRequest, setNavRequest] = useState({
+    view: "compass" as "compass" | "sunburst",
+    n: 0,
+  });
 
   useEffect(() => {
     if (!router.isReady) return;
@@ -58,19 +62,26 @@ const SkillsFuture = () => {
     return () => window.removeEventListener("hashchange", sync);
   }, []);
 
-  const openInNavigator = useCallback((nodeId: string) => {
-    if (typeof window === "undefined") return;
-    const target = `#${nodeId}/navigate`;
-    if (window.location.hash !== target) {
-      window.history.pushState(
-        null,
-        "",
-        `${window.location.pathname}${target}`,
-      );
-      // pushState doesn't fire hashchange natively.
-      window.dispatchEvent(new HashChangeEvent("hashchange"));
-    }
-  }, []);
+  const openInNavigator = useCallback(
+    (nodeId: string, view?: "compass" | "sunburst") => {
+      setNavRequest((current) => ({
+        view: view === "sunburst" ? "sunburst" : "compass",
+        n: current.n + 1,
+      }));
+      if (typeof window === "undefined") return;
+      const target = `#${nodeId}/navigate`;
+      if (window.location.hash !== target) {
+        window.history.pushState(
+          null,
+          "",
+          `${window.location.pathname}${target}`,
+        );
+        // pushState doesn't fire hashchange natively.
+        window.dispatchEvent(new HashChangeEvent("hashchange"));
+      }
+    },
+    [],
+  );
 
   const backToPlatform = useCallback(() => {
     if (typeof window === "undefined") return;
@@ -112,6 +123,7 @@ const SkillsFuture = () => {
               isDark={theme.palette.mode === "dark"}
               appName={appName}
               initialNodeId={navInitialNodeId}
+              openRequest={navRequest}
               onBackToPlatform={backToPlatform}
               onFocusedTitleChange={setNavigatorTitle}
             />

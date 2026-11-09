@@ -1,4 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  PointerEvent as ReactPointerEvent,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Box, CircularProgress, Typography, useTheme } from "@mui/material";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
 import HomeRoundedIcon from "@mui/icons-material/HomeRounded";
@@ -21,6 +27,7 @@ const LINE_HEIGHT = 1.22;
 const MIN_SCALE = 0.5;
 const MAX_SCALE = 8;
 const ZOOM_STEP = 1.25;
+const DRAG_THRESHOLD = 5;
 
 const clampScale = (scale: number) =>
   Math.min(MAX_SCALE, Math.max(MIN_SCALE, scale));
@@ -38,6 +45,9 @@ type Props = {
   node: INode | null;
   appName: string;
   onNavigate: (nodeId: string) => void;
+  /** Space left above the breadcrumb for a floating toolbar. */
+  insetTop?: number;
+  zoomPlacement?: "top" | "bottom";
 };
 
 const childIdsOf = (node: INode | undefined): string[] => {
@@ -127,7 +137,13 @@ const FitIcon = () => (
   </svg>
 );
 
-const SunburstNav = ({ node, appName, onNavigate }: Props) => {
+const SunburstNav = ({
+  node,
+  appName,
+  onNavigate,
+  insetTop = 0,
+  zoomPlacement = "top",
+}: Props) => {
   const theme = useTheme();
   const dark = theme.palette.mode === "dark";
   const canvas = dark ? "#0b0f17" : "#f8fafc";
@@ -138,7 +154,21 @@ const SunburstNav = ({ node, appName, onNavigate }: Props) => {
   const [loading, setLoading] = useState(false);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [scale, setScale] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [dragging, setDragging] = useState(false);
   const stageRef = useRef<HTMLDivElement>(null);
+  const panRef = useRef(pan);
+  panRef.current = pan;
+  const dragRef = useRef<{
+    x: number;
+    y: number;
+    ox: number;
+    oy: number;
+    moved: boolean;
+  } | null>(null);
+  // Sector under the pointer when the press started. Used only if the
+  // gesture never crosses the drag threshold.
+  const clickIdRef = useRef<string | null>(null);
 
   const nodeRef = useRef(node);
   nodeRef.current = node;
@@ -155,7 +185,50 @@ const SunburstNav = ({ node, appName, onNavigate }: Props) => {
 
   useEffect(() => {
     setScale(1);
+    setPan({ x: 0, y: 0 });
   }, [node?.id]);
+
+  const onStagePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.button !== 0) return;
+    const target = event.target as Element;
+    if (target.closest?.("[data-zoom-controls]")) return;
+    clickIdRef.current =
+      target.closest?.("[data-burst-id]")?.getAttribute("data-burst-id") ||
+      null;
+    dragRef.current = {
+      x: event.clientX,
+      y: event.clientY,
+      ox: panRef.current.x,
+      oy: panRef.current.y,
+      moved: false,
+    };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+
+  const onStagePointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const drag = dragRef.current;
+    if (!drag) return;
+    const dx = event.clientX - drag.x;
+    const dy = event.clientY - drag.y;
+    if (!drag.moved && Math.hypot(dx, dy) < DRAG_THRESHOLD) return;
+    if (!drag.moved) {
+      drag.moved = true;
+      setDragging(true);
+    }
+    setPan({ x: drag.ox + dx, y: drag.oy + dy });
+  };
+
+  const finishPointer = (event: ReactPointerEvent<HTMLDivElement>, commit: boolean) => {
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    const moved = dragRef.current?.moved ?? false;
+    const id = clickIdRef.current;
+    dragRef.current = null;
+    clickIdRef.current = null;
+    setDragging(false);
+    if (commit && !moved && id) onNavigate(id);
+  };
 
   useEffect(() => {
     const stage = stageRef.current;
@@ -393,6 +466,7 @@ const SunburstNav = ({ node, appName, onNavigate }: Props) => {
         flexDirection: "column",
         background: canvas,
         position: "relative",
+        pt: insetTop ? `${insetTop}px` : 0,
       }}
     >
       <Box
@@ -475,6 +549,10 @@ const SunburstNav = ({ node, appName, onNavigate }: Props) => {
 
       <Box
         ref={stageRef}
+        onPointerDown={onStagePointerDown}
+        onPointerMove={onStagePointerMove}
+        onPointerUp={(event) => finishPointer(event, true)}
+        onPointerCancel={(event) => finishPointer(event, false)}
         sx={{
           flex: 1,
           minHeight: 0,
@@ -483,6 +561,10 @@ const SunburstNav = ({ node, appName, onNavigate }: Props) => {
           justifyContent: "center",
           position: "relative",
           overflow: "hidden",
+          touchAction: "none",
+          userSelect: "none",
+          cursor: dragging ? "grabbing" : "grab",
+          "& path, & circle": { cursor: dragging ? "grabbing" : "pointer" },
         }}
       >
         {layout && (
@@ -494,24 +576,23 @@ const SunburstNav = ({ node, appName, onNavigate }: Props) => {
             aria-label="Sunburst navigation"
             style={{
               maxHeight: "100%",
-              transform: `scale(${scale})`,
+              transform: `translate(${pan.x}px, ${pan.y}px) scale(${scale})`,
               transformOrigin: "center center",
             }}
           >
             {layout.slices.map((slice) => (
               <path
                 key={slice.id}
+                data-burst-id={slice.id}
                 d={slice.d}
                 fill={slice.fill}
                 stroke={canvas}
                 strokeWidth={hoveredId === slice.id ? 2 : 1}
                 strokeLinejoin="round"
                 style={{
-                  cursor: "pointer",
                   filter:
                     hoveredId === slice.id ? "brightness(1.08)" : undefined,
                 }}
-                onClick={() => onNavigate(slice.id)}
                 onMouseEnter={() => setHoveredId(slice.id)}
                 onMouseLeave={() => setHoveredId(null)}
               >
@@ -519,12 +600,9 @@ const SunburstNav = ({ node, appName, onNavigate }: Props) => {
               </path>
             ))}
             <circle
+              data-burst-id={parentId ?? undefined}
               r={INNER_RADIUS - 1}
               fill={canvas}
-              style={{ cursor: parentId ? "pointer" : "default" }}
-              onClick={() => {
-                if (parentId) onNavigate(parentId);
-              }}
             />
             {layout.centerLines.map((line, index) => {
               const lh = layout.centerFont * LINE_HEIGHT;
@@ -602,7 +680,8 @@ const SunburstNav = ({ node, appName, onNavigate }: Props) => {
           data-zoom-controls
           sx={{
             position: "absolute",
-            top: 12,
+            top: zoomPlacement === "top" ? 12 : undefined,
+            bottom: zoomPlacement === "bottom" ? 12 : undefined,
             right: 12,
             zIndex: 2,
             display: "flex",
@@ -634,7 +713,10 @@ const SunburstNav = ({ node, appName, onNavigate }: Props) => {
             {
               label: "Fit",
               disabled: false,
-              onClick: () => setScale(1),
+              onClick: () => {
+                setScale(1);
+                setPan({ x: 0, y: 0 });
+              },
               icon: <FitIcon />,
             },
           ].map((control) => (
@@ -683,7 +765,7 @@ const SunburstNav = ({ node, appName, onNavigate }: Props) => {
           color: dark ? "#94a3b8" : "#64748b",
         }}
       >
-        Click a sector to open it · Click the center to step up
+        Drag to move · Click a sector to open it · Click the center to step up
       </Typography>
     </Box>
   );

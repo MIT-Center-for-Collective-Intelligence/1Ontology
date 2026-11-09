@@ -194,7 +194,10 @@ type INodeProps = {
   setEditableProperty: any;
   nodesWithComments: Set<string>;
   onInstantTreeUpdate?: (updateFn: (treeData: any[]) => any[]) => void;
-  onOpenInNavigator?: (nodeId: string) => void;
+  onOpenInNavigator?: (
+    nodeId: string,
+    view?: "compass" | "sunburst"
+  ) => void;
   isLoadingNodeDetails?: boolean;
   // Public-link visitors: view only — no editing, locking, chat or history.
   readOnly?: boolean;
@@ -2151,9 +2154,10 @@ const Node = ({
                 relatedNodes={relatedNodes}
                 navigateToNode={navigateToNode}
                 requireModifierToZoom
+                appName={appName}
                 onOpenInNavigator={
                   onOpenInNavigator
-                    ? () => onOpenInNavigator(currentVisibleNode.id)
+                    ? (view) => onOpenInNavigator(currentVisibleNode.id, view)
                     : undefined
                 }
               />

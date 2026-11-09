@@ -12,6 +12,8 @@ import {
   IconButton,
   Paper,
   Stack,
+  ToggleButton,
+  ToggleButtonGroup,
   Tooltip,
   Typography,
   alpha,
@@ -38,6 +40,7 @@ import {
 import "@xyflow/react/dist/style.css";
 
 import { ICollection, INode } from "@components/types/INode";
+import SunburstNav from "@components/components/OntologyComponents/SunburstNav";
 import {
   COMPASS,
   CompassAxis,
@@ -68,8 +71,12 @@ type Props = {
    * header. The callback is invoked on click. Typically used by the platform
    * to deep-link into the standalone /navigate route for the focused node.
    */
-  onOpenInNavigator?: () => void;
+  onOpenInNavigator?: (view: ExplorerView) => void;
+  /** Ontology app used to load the sunburst. The view switch is hidden without it. */
+  appName?: string;
 };
+
+type ExplorerView = "compass" | "sunburst";
 
 const DEFAULT_HEIGHT = 540;
 const LABEL_W = 260;
@@ -331,7 +338,9 @@ const NodeCompass: React.FC<Props> = ({
   borderless = false,
   requireModifierToZoom = false,
   onOpenInNavigator,
+  appName,
 }) => {
+  const [explorerView, setExplorerView] = useState<ExplorerView>("compass");
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
 
@@ -586,14 +595,7 @@ const NodeCompass: React.FC<Props> = ({
     [linkTitles, relatedNodes],
   );
 
-  if (
-    ids.left.length === 0 &&
-    ids.right.length === 0 &&
-    ids.top.length === 0 &&
-    ids.bottom.length === 0
-  ) {
-    return null;
-  }
+  const showSunburst = explorerView === "sunburst" && !!appName;
 
   return (
     <Paper
@@ -667,12 +669,59 @@ const NodeCompass: React.FC<Props> = ({
               flex: 1,
             }}
           >
-            Compass Explorer
+            {showSunburst ? "Sunburst" : "Compass Explorer"}
           </Typography>
+          {appName && (
+            <ToggleButtonGroup
+              value={explorerView}
+              exclusive
+              size="small"
+              onChange={(_, value: ExplorerView | null) => {
+                if (value) setExplorerView(value);
+              }}
+              aria-label="Explorer view"
+              sx={{
+                borderRadius: "999px",
+                p: "3px",
+                background: (t) =>
+                  t.palette.mode === "dark"
+                    ? alpha("#ffffff", 0.06)
+                    : alpha("#000000", 0.05),
+                "& .MuiToggleButtonGroup-grouped": {
+                  border: "none",
+                },
+                "& .MuiToggleButton-root": {
+                  border: "none",
+                  borderRadius: "999px !important",
+                  px: 1.5,
+                  py: 0.45,
+                  textTransform: "none",
+                  fontSize: "13px",
+                  fontWeight: 600,
+                  lineHeight: 1.2,
+                  color: "text.secondary",
+                  "&.Mui-selected": {
+                    color: "#ffffff",
+                    background:
+                      "linear-gradient(180deg, #ffb15c 0%, #ff8a1f 100%)",
+                    "&:hover": {
+                      background:
+                        "linear-gradient(180deg, #ffb15c 0%, #ff8a1f 100%)",
+                    },
+                  },
+                },
+              }}
+            >
+              <ToggleButton value="compass">Compass</ToggleButton>
+              <ToggleButton value="sunburst">Sunburst</ToggleButton>
+            </ToggleButtonGroup>
+          )}
           {onOpenInNavigator && (
             <IconButton
               size="small"
-              onClick={onOpenInNavigator}
+              onClick={() =>
+                onOpenInNavigator(showSunburst ? "sunburst" : "compass")
+              }
               sx={{
                 height: 32,
                 px: 1.5,
@@ -723,8 +772,19 @@ const NodeCompass: React.FC<Props> = ({
           background: (t) =>
             t.palette.mode === "dark" ? "#0d1117" : "#fafbfc",
           position: "relative",
+          ...(showSunburst
+            ? { display: "flex", flexDirection: "column" }
+            : {}),
         }}
       >
+        {showSunburst && appName ? (
+          <SunburstNav
+            node={currentVisibleNode}
+            appName={appName}
+            onNavigate={navigateToNode}
+          />
+        ) : (
+        <>
         <ReactFlowProvider>
           <ReactFlow
             nodes={nodes}
@@ -863,6 +923,8 @@ const NodeCompass: React.FC<Props> = ({
             ? "⌘-scroll or pinch to zoom"
             : "Scroll to zoom"}
         </Box>
+        </>
+        )}
       </Box>
 
       <Dialog
@@ -1063,6 +1125,7 @@ export default React.memo(NodeCompass, (prev, next) => {
     prev.currentVisibleNode === next.currentVisibleNode &&
     prev.borderless === next.borderless &&
     prev.requireModifierToZoom === next.requireModifierToZoom &&
-    prev.height === next.height
+    prev.height === next.height &&
+    prev.appName === next.appName
   );
 });

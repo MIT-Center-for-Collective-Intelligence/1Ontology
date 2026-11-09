@@ -139,7 +139,6 @@ import { NodeChange } from "@components/types/INode";
 import GuidLines from "@components/components/Guidelines/GuideLines";
 import SearchSideBar from "@components/components/SearchSideBar/SearchSideBar";
 import OutlineView from "@components/components/OntologyComponents/OutlineView";
-import SunburstNav from "@components/components/OntologyComponents/SunburstNav";
 import { TreeApi } from "react-arborist";
 import { capitalizeFirstLetter } from "@components/lib/utils/string.utils";
 import ROUTES from "@components/lib/utils/routes";
@@ -209,7 +208,10 @@ const Ontology = ({
   appName: string;
   // Read-only mode for the secret public link: no sign-in, no editing, no sidebar tools.
   publicMode?: boolean;
-  onOpenInNavigator?: (nodeId: string) => void;
+  onOpenInNavigator?: (
+    nodeId: string,
+    view?: "compass" | "sunburst"
+  ) => void;
   // Reported up to the parent component, which owns the <title> tag.
   onFocusedTitleChange?: (title: string | null) => void;
 }) => {
@@ -857,10 +859,10 @@ const Ontology = ({
 
   const handleViewChange = (event: any, newValue: number) => {
     setViewValue(newValue);
-    const viewTypes = ["Sunburst", "Outline", "Graph View"];
+    const viewTypes = ["Outline", "Graph View"];
     const entry = {
       action: "view change",
-      viewType: viewTypes[newValue] || "Sunburst",
+      viewType: viewTypes[newValue] || "Outline",
     };
     if (publicMode) {
       void recordPublicViewLog(entry);
@@ -2954,52 +2956,6 @@ const Ontology = ({
                     },
                   }}
                 />
-                <Tab
-                  label="Sunburst"
-                  {...a11yProps(2)}
-                  sx={{
-                    flex: 1,
-                    minWidth: 0,
-                    maxWidth: "none",
-                    minHeight: "38px",
-                    height: "38px",
-                    p: 0,
-                    textTransform: "none",
-                    fontSize: "14px",
-                    fontWeight: 700,
-                    lineHeight: 1,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    color: (theme) =>
-                      theme.palette.mode === "dark" ? "#9fb0c6" : "#475569",
-                    borderRadius: "999px",
-                    border: "2px solid",
-                    borderColor: "transparent",
-                    backgroundColor: (theme) =>
-                      theme.palette.mode === "dark"
-                        ? "rgba(148, 163, 184, 0.06)"
-                        : "rgba(255, 255, 255, 0.5)",
-                    transition: "all 150ms ease",
-                    "&:hover": {
-                      backgroundColor: (theme) =>
-                        theme.palette.mode === "dark"
-                          ? "rgba(148, 163, 184, 0.14)"
-                          : "rgba(255, 255, 255, 0.8)",
-                    },
-                    "&.Mui-selected": {
-                      color: "#ffffff",
-                      borderColor: (theme) =>
-                        theme.palette.mode === "dark" ? "#ff9b3d" : "#f97316",
-                      background: (theme) =>
-                        theme.palette.mode === "dark"
-                          ? "linear-gradient(180deg, #ffb15c 0%, #ff8a1f 100%)"
-                          : "linear-gradient(180deg, #fb923c 0%, #ea580c 100%)",
-                      boxShadow:
-                        "0 4px 12px rgba(249, 115, 22, 0.38), inset 0 1px 0 rgba(255,255,255,0.28)",
-                    },
-                  }}
-                />
               </Tabs>
             </Box>
 
@@ -3077,21 +3033,6 @@ const Ontology = ({
                   expandedNodes={expandedNodes}
                   onOpenNodeDagre={onOpenNodeDagre}
                   currentVisibleNode={currentVisibleNode}
-                />
-              </TabPanel>
-              <TabPanel
-                value={viewValue}
-                index={2}
-                sx={{
-                  flex: 1,
-                  minHeight: 0,
-                  overflow: "hidden",
-                }}
-              >
-                <SunburstNav
-                  node={currentVisibleNode}
-                  appName={appName}
-                  onNavigate={navigateToNode}
                 />
               </TabPanel>
             </Box>

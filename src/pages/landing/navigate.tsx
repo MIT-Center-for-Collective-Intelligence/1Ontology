@@ -21,6 +21,7 @@ import {
   ErrorOutline as ErrorOutlineIcon,
   ExploreOutlined as CompassIcon,
   AccountTreeOutlined as GraphIcon,
+  DonutLargeOutlined as SunburstIcon,
   AutoAwesomeOutlined as SparkIcon,
 } from "@mui/icons-material";
 import {
@@ -34,6 +35,7 @@ import {
 } from "firebase/firestore";
 import NodeCompass from "../../components/NodBody/NodeCompass";
 import NodeGraph from "../../components/NodBody/NodeGraph";
+import SunburstNav from "../../components/OntologyComponents/SunburstNav";
 import { AiPanel } from "./_components/AiPanel";
 import type { ICollection, INode, TreeData } from "../../types/INode";
 import { NODES } from "../../lib/firestoreClient/collections";
@@ -213,12 +215,15 @@ export const NavigateLandingSection = ({
   isDark,
   appName,
   initialNodeId,
+  openRequest,
   onBackToPlatform,
   onFocusedTitleChange,
 }: {
   isDark: boolean;
   appName: string;
   initialNodeId?: string | null;
+  /** Bumped each time Open in Navigator is clicked, carrying the view to show. */
+  openRequest?: { view: "compass" | "sunburst"; n: number };
   onBackToPlatform: () => void;
   // Reported up to the parent component, which owns the <title> tag.
   onFocusedTitleChange?: (title: string | null) => void;
@@ -236,7 +241,13 @@ export const NavigateLandingSection = ({
   const [activeId, setActiveId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [searchReadOnly, setSearchReadOnly] = useState(true);
-  const [view, setView] = useState<"compass" | "graph">("compass");
+  const [view, setView] = useState<"compass" | "graph" | "sunburst">("compass");
+
+  // Open in Navigator from the sunburst card should land on the sunburst.
+  useEffect(() => {
+    if (!openRequest?.n) return;
+    setView(openRequest.view);
+  }, [openRequest]);
   const [sidebarTab, setSidebarTab] = useState<"search" | "ai">("search");
 
   // Resolve the initial focused node with one targeted fetch — no full
@@ -1035,7 +1046,7 @@ export const NavigateLandingSection = ({
               navigateToNode={navigateToNode}
               borderless
             />
-          ) : (
+          ) : view === "graph" ? (
             <NodeGraph
               hierarchyTree={hierarchyTree}
               focusedId={activeId}
@@ -1043,6 +1054,16 @@ export const NavigateLandingSection = ({
               onCollapseNode={collapseGraphNode}
               borderless
             />
+          ) : (
+            <Box sx={{ height: "100%", minHeight: 0, display: "flex" }}>
+              <SunburstNav
+                node={activeNode}
+                appName={appName}
+                onNavigate={navigateToNode}
+                insetTop={52}
+                zoomPlacement="bottom"
+              />
+            </Box>
           )}
 
           <Box
@@ -1175,6 +1196,10 @@ export const NavigateLandingSection = ({
               <ToggleButton value="graph" aria-label="Graph view">
                 <GraphIcon sx={{ fontSize: 15 }} />
                 Graph
+              </ToggleButton>
+              <ToggleButton value="sunburst" aria-label="Sunburst view">
+                <SunburstIcon sx={{ fontSize: 15 }} />
+                Sunburst
               </ToggleButton>
             </ToggleButtonGroup>
           </Box>
