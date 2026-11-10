@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "wordnet-corpus-lock-v1",
+  "wordnetVersion": "3.0",
+  "nltkVersion": "3.9.2",
+  "archiveSha256": "cbda5ea6eef7f36a97a43d4a75f85e07fccbb4f23657d27b4ccbc93e2646ab59",
+  "archiveRoot": "wordnet/",
+  "recordedAt": "2026-09-13",
+  "scope": "Pins the existing local English corpus for offline preparation. Does not authorize title acceptance, model inference, alignment publication, or ontology changes."
+}
