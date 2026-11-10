@@ -11,7 +11,8 @@ import urllib.request
 from promote import (MANIFESTS, SERVICE, TITLE_PROMPT_STUDY, LATEST_TITLE_PROMPT_STUDY, TITLE_MODEL_COMPARISON,
                      TITLE_MODEL_COMPARISON_JUDGE_RESULTS, title_model_comparison_release, validate_release,
                      promote_if_current, verify_title_review_route, verify_relationship_review_route,
-                     verify_relationship_branch_review_route, read_release, read_bytes)
+                     verify_relationship_branch_review_route, verify_multi_source_title_review_route,
+                     read_release, read_bytes)
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -313,6 +314,26 @@ class BranchReviewRouteTests(unittest.TestCase):
                  patch('promote.urllib.request.urlopen', side_effect=[response] if isinstance(response,Exception) else None,
                        return_value=response), self.assertRaises(ValueError):
                 verify_relationship_branch_review_route('https://candidate')
+
+
+class MultiSourceTitleReviewRouteTests(unittest.TestCase):
+    def test_candidate_has_page_and_requires_sign_in_for_both_methods(self):
+        html = b'{"page":"/review/multi-source-title-review"}'
+        errors = [
+            urllib.error.HTTPError("https://candidate/api", 401, "Sign in", {}, io.BytesIO(b'{"error":"Sign in"}'))
+            for _ in range(2)
+        ]
+        with patch("promote.read_bytes", return_value=html), \
+             patch("promote.urllib.request.urlopen", side_effect=errors) as request:
+            verify_multi_source_title_review_route("https://candidate")
+            self.assertEqual([call.args[0].get_method() for call in request.call_args_list], ["GET", "POST"])
+
+    def test_candidate_cannot_expose_review_data_to_anonymous_requests(self):
+        html = b'{"page":"/review/multi-source-title-review"}'
+        with patch("promote.read_bytes", return_value=html), \
+             patch("promote.urllib.request.urlopen", return_value=io.BytesIO(b'{"cases":[]}')), \
+             self.assertRaises(ValueError):
+            verify_multi_source_title_review_route("https://candidate")
 
 
 class ConcurrentPromotionTests(unittest.TestCase):
