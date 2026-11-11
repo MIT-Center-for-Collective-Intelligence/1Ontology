@@ -24,6 +24,8 @@ import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import OpenInNewRoundedIcon from "@mui/icons-material/OpenInNewRounded";
+import ExploreOutlinedIcon from "@mui/icons-material/ExploreOutlined";
+import DonutLargeRoundedIcon from "@mui/icons-material/DonutLargeRounded";
 import {
   Controls,
   Handle,
@@ -682,7 +684,9 @@ const NodeCompass: React.FC<Props> = ({
               aria-label="Explorer view"
               sx={{
                 borderRadius: "999px",
+                height: 32,
                 p: "3px",
+                boxSizing: "border-box",
                 background: (t) =>
                   t.palette.mode === "dark"
                     ? alpha("#ffffff", 0.06)
@@ -694,11 +698,14 @@ const NodeCompass: React.FC<Props> = ({
                   border: "none",
                   borderRadius: "999px !important",
                   px: 1.5,
-                  py: 0.45,
+                  py: 0,
+                  height: "100%",
+                  gap: 0.6,
                   textTransform: "none",
-                  fontSize: "13px",
+                  fontSize: "12px",
                   fontWeight: 600,
-                  lineHeight: 1.2,
+                  lineHeight: 1,
+                  "& svg": { fontSize: 16, mr: 0 },
                   color: "text.secondary",
                   "&.Mui-selected": {
                     color: "#ffffff",
@@ -712,8 +719,14 @@ const NodeCompass: React.FC<Props> = ({
                 },
               }}
             >
-              <ToggleButton value="compass">Compass</ToggleButton>
-              <ToggleButton value="sunburst">Sunburst</ToggleButton>
+              <ToggleButton value="compass">
+                <ExploreOutlinedIcon sx={{ fontSize: 16 }} />
+                Compass
+              </ToggleButton>
+              <ToggleButton value="sunburst">
+                <DonutLargeRoundedIcon sx={{ fontSize: 16 }} />
+                Sunburst
+              </ToggleButton>
             </ToggleButtonGroup>
           )}
           {onOpenInNavigator && (
