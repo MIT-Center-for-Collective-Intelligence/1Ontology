@@ -29,6 +29,31 @@ const MAX_SCALE = 8;
 const ZOOM_STEP = 1.25;
 const DRAG_THRESHOLD = 5;
 
+const nodeCache = new Map<string, INode>();
+const cacheKey = (appName: string, id: string) => `${appName}:${id}`;
+
+const getNodesCached = async (
+  db: ReturnType<typeof getFirestore>,
+  ids: string[],
+  appName: string,
+): Promise<Record<string, INode>> => {
+  const out: Record<string, INode> = {};
+  const missing: string[] = [];
+  for (const id of ids) {
+    const hit = nodeCache.get(cacheKey(appName, id));
+    if (hit) out[id] = hit;
+    else missing.push(id);
+  }
+  if (missing.length > 0) {
+    const fetched = await batchGetNodesByIds(db, missing, appName);
+    for (const id of Object.keys(fetched)) {
+      nodeCache.set(cacheKey(appName, id), fetched[id]);
+      out[id] = fetched[id];
+    }
+  }
+  return out;
+};
+
 const clampScale = (scale: number) =>
   Math.min(MAX_SCALE, Math.max(MIN_SCALE, scale));
 
@@ -152,7 +177,6 @@ const SunburstNav = ({
   const [crumbs, setCrumbs] = useState<Crumb[]>([]);
   const [parentId, setParentId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [scale, setScale] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);
@@ -274,35 +298,6 @@ const SunburstNav = ({
         const parentOf = new Map<string, string | null>();
         parentOf.set(focus.id, null);
 
-        let frontier = [focus.id];
-        for (let depth = 0; depth < MAX_RINGS; depth++) {
-          const nextIds: string[] = [];
-          for (const id of frontier) {
-            const current = byId.get(id);
-            for (const childId of childIdsOf(current)) {
-              if (parentOf.has(childId)) continue;
-              parentOf.set(childId, id);
-              nextIds.push(childId);
-              if (byId.size + nextIds.length >= MAX_NODES) break;
-            }
-            if (byId.size + nextIds.length >= MAX_NODES) break;
-          }
-          if (nextIds.length === 0) break;
-          const fetched = await batchGetNodesByIds(db, nextIds, appName);
-          if (cancelled) return;
-          const loaded: string[] = [];
-          for (const id of nextIds) {
-            if (!fetched[id]) {
-              parentOf.delete(id);
-              continue;
-            }
-            byId.set(id, fetched[id]);
-            loaded.push(id);
-          }
-          frontier = loaded;
-          if (byId.size >= MAX_NODES) break;
-        }
-
         const build = (id: string, seen: Set<string>): BurstNode | null => {
           if (seen.has(id)) return null;
           const current = byId.get(id);
@@ -322,27 +317,68 @@ const SunburstNav = ({
           };
         };
 
-        const chain: Crumb[] = [];
-        const seenAncestors = new Set<string>();
-        let cursor: INode | null = focus;
-        let primaryParent: string | null = null;
-        while (cursor && !seenAncestors.has(cursor.id) && chain.length < 24) {
-          seenAncestors.add(cursor.id);
-          chain.unshift({
-            id: cursor.id,
-            title: cursor.title || "Untitled",
-          });
-          const nextId = choosePrimaryParentId(cursor.generalizations);
-          if (cursor.id === focus.id) primaryParent = nextId;
-          if (!nextId) break;
-          cursor = await fetchSingleNode(db, nextId, appName);
+        // Breadcrumbs load in parallel with the rings, not after them.
+        const chainPromise = (async () => {
+          const chain: Crumb[] = [];
+          const seenAncestors = new Set<string>();
+          let cursor: INode | null = focus;
+          let primaryParent: string | null = null;
+          while (cursor && !seenAncestors.has(cursor.id) && chain.length < 24) {
+            seenAncestors.add(cursor.id);
+            chain.unshift({
+              id: cursor.id,
+              title: cursor.title || "Untitled",
+            });
+            const nextId = choosePrimaryParentId(cursor.generalizations);
+            if (cursor.id === focus.id) primaryParent = nextId;
+            if (!nextId) break;
+            const cached = nodeCache.get(cacheKey(appName, nextId));
+            cursor =
+              cached ?? (await fetchSingleNode(db, nextId, appName));
+            if (cursor) nodeCache.set(cacheKey(appName, nextId), cursor);
+            if (cancelled) return null;
+          }
+          if (cancelled) return null;
+          setCrumbs(chain);
+          setParentId(primaryParent);
+          return chain;
+        })();
+
+        let frontier = [focus.id];
+        for (let depth = 0; depth < MAX_RINGS; depth++) {
+          const nextIds: string[] = [];
+          for (const id of frontier) {
+            const current = byId.get(id);
+            for (const childId of childIdsOf(current)) {
+              if (parentOf.has(childId)) continue;
+              parentOf.set(childId, id);
+              nextIds.push(childId);
+              if (byId.size + nextIds.length >= MAX_NODES) break;
+            }
+            if (byId.size + nextIds.length >= MAX_NODES) break;
+          }
+          if (nextIds.length === 0) break;
+          const fetched = await getNodesCached(db, nextIds, appName);
           if (cancelled) return;
+          const loaded: string[] = [];
+          for (const id of nextIds) {
+            if (!fetched[id]) {
+              parentOf.delete(id);
+              continue;
+            }
+            byId.set(id, fetched[id]);
+            loaded.push(id);
+          }
+          frontier = loaded;
+          // Paint each ring as soon as it arrives.
+          const partial = build(focus.id, new Set());
+          if (partial) setTree(partial);
+          if (byId.size >= MAX_NODES) break;
         }
 
+        await chainPromise;
         if (cancelled) return;
         setTree(build(focus.id, new Set()));
-        setCrumbs(chain);
-        setParentId(primaryParent);
       } catch (error) {
         console.error("sunburst navigation load failed", error);
         if (!cancelled) {
@@ -439,6 +475,26 @@ const SunburstNav = ({
 
     return { slices, frame, centerLines, centerFont };
   }, [tree]);
+
+  // Hover is handled with CSS so moving the pointer never re-renders ~480 paths.
+  const sliceNodes = useMemo(
+    () =>
+      layout?.slices.map((slice) => (
+        <path
+          key={slice.id}
+          className="burst-slice"
+          data-burst-id={slice.id}
+          d={slice.d}
+          fill={slice.fill}
+          stroke={canvas}
+          strokeWidth={1}
+          strokeLinejoin="round"
+        >
+          <title>{slice.name}</title>
+        </path>
+      )),
+    [layout, canvas],
+  );
 
   if (!node) {
     return (
@@ -565,6 +621,10 @@ const SunburstNav = ({
           userSelect: "none",
           cursor: dragging ? "grabbing" : "grab",
           "& path, & circle": { cursor: dragging ? "grabbing" : "pointer" },
+          "& .burst-slice:hover": {
+            strokeWidth: 2,
+            filter: "brightness(1.08)",
+          },
         }}
       >
         {layout && (
@@ -580,25 +640,7 @@ const SunburstNav = ({
               transformOrigin: "center center",
             }}
           >
-            {layout.slices.map((slice) => (
-              <path
-                key={slice.id}
-                data-burst-id={slice.id}
-                d={slice.d}
-                fill={slice.fill}
-                stroke={canvas}
-                strokeWidth={hoveredId === slice.id ? 2 : 1}
-                strokeLinejoin="round"
-                style={{
-                  filter:
-                    hoveredId === slice.id ? "brightness(1.08)" : undefined,
-                }}
-                onMouseEnter={() => setHoveredId(slice.id)}
-                onMouseLeave={() => setHoveredId(null)}
-              >
-                <title>{slice.name}</title>
-              </path>
-            ))}
+            {sliceNodes}
             <circle
               data-burst-id={parentId ?? undefined}
               r={INNER_RADIUS - 1}

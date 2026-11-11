@@ -190,14 +190,23 @@ export async function batchGetNodesByIds(
 ): Promise<Record<string, INode>> {
   const out: Record<string, INode> = {};
   const unique = Array.from(new Set(ids.filter(Boolean)));
+  const chunks: string[][] = [];
   for (let i = 0; i < unique.length; i += DOC_ID_IN_LIMIT) {
-    const chunk = unique.slice(i, i + DOC_ID_IN_LIMIT);
-    const q = query(
-      collection(db, NODES),
-      where(documentId(), "in", chunk),
-      where("deleted", "==", false),
-    );
-    const snap = await getDocs(q);
+    chunks.push(unique.slice(i, i + DOC_ID_IN_LIMIT));
+  }
+
+  const snaps = await Promise.all(
+    chunks.map((chunk) =>
+      getDocs(
+        query(
+          collection(db, NODES),
+          where(documentId(), "in", chunk),
+          where("deleted", "==", false),
+        ),
+      ),
+    ),
+  );
+  for (const snap of snaps) {
     snap.forEach((d) => {
       const node = { id: d.id, ...d.data() } as INode;
       if (appName && node.appName !== appName) return;
