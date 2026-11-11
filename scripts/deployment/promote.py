@@ -285,6 +285,28 @@ def verify_relationship_branch_review_route(origin):
         raise ValueError("Anonymous branch review access was accepted")
 
 
+def verify_multi_source_title_review_route(origin):
+    page = "/review/multi-source-title-review"
+    html = read_bytes(origin + page).decode("utf-8")
+    if f'"page":"{page}"' not in html:
+        raise ValueError("Multi-source title review page is missing")
+    url = origin + "/api/som-review/multi-source-title-review"
+    for method in ("GET", "POST"):
+        request = urllib.request.Request(
+            url, method=method, data=b"{}" if method == "POST" else None,
+            headers={"Content-Type": "application/json"},
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=60):
+                pass
+        except urllib.error.HTTPError as error:
+            with error:
+                if error.code == 401 and set(json.loads(error.read(4096))) == {"error"}:
+                    continue
+            raise ValueError("Unexpected anonymous multi-source review response") from error
+        raise ValueError("Anonymous multi-source review access was accepted")
+
+
 def main():
     commit, build_id, revision = sys.argv[1:]
     if not re.fullmatch(r"[a-f0-9]{40}", commit):
@@ -298,6 +320,7 @@ def main():
     verify_title_review_route(candidates[0]["url"])
     verify_relationship_review_route(candidates[0]["url"])
     verify_relationship_branch_review_route(candidates[0]["url"])
+    verify_multi_source_title_review_route(candidates[0]["url"])
     token = subprocess.check_output(["gcloud", "auth", "print-access-token"], text=True).strip()
     def api(resource, method="GET", body=None):
         request = urllib.request.Request("https://run.googleapis.com/v2/" + resource,
@@ -322,6 +345,7 @@ def main():
     verify_title_review_route(service["status"]["url"])
     verify_relationship_review_route(service["status"]["url"])
     verify_relationship_branch_review_route(service["status"]["url"])
+    verify_multi_source_title_review_route(service["status"]["url"])
     print(json.dumps({"productionVerified": True, "commit": commit, "revision": revision}), flush=True)
 
 
