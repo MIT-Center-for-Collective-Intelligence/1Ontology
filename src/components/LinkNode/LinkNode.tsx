@@ -113,6 +113,7 @@ import { getTitleDeleted } from "@components/lib/utils/string.utils";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import LinkOffIcon from "@mui/icons-material/LinkOff";
 import {
+  DISPLAY,
   UNCLASSIFIED,
   UNCLASSIFIED_COLLECTION,
   OPTIONAL_PART_SYMBOL,
@@ -782,8 +783,13 @@ const LinkNode = ({
                   />
                 ) : (
                   <Box sx={{ display: "flex" }}>
-                    <Tooltip title="Unlink">
+                    <Tooltip
+                      title={`Unlink “${title}” from ${
+                        DISPLAY[property] || property
+                      }`}
+                    >
                       <IconButton
+                        aria-label="Unlink"
                         sx={{
                           ml: "18px",
                           borderRadius: "18px",

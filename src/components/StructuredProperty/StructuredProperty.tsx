@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import AddIcon from "@mui/icons-material/Add";
 import {
   Box,
@@ -43,7 +49,11 @@ import {
   toPartsNode,
   PartsGraph,
 } from "@components/lib/server/partsModel";
-import { DISPLAY, UNCLASSIFIED, OPTIONAL_PART_SYMBOL } from "@components/lib/CONSTANTS";
+import {
+  DISPLAY,
+  UNCLASSIFIED,
+  OPTIONAL_PART_SYMBOL,
+} from "@components/lib/CONSTANTS";
 import {
   collection,
   doc,
@@ -315,10 +325,7 @@ const StructuredProperty = ({
     const ids = (currentVisibleNode.specializations || []).flatMap(
       (collection) => (collection.nodes || []).map((n) => n.id),
     );
-    return (
-      ids.length > 0 &&
-      ids.every((id) => relatedNodes[id]?.oNetTask)
-    );
+    return ids.length > 0 && ids.every((id) => relatedNodes[id]?.oNetTask);
   }, [property, currentVisibleNode.specializations, relatedNodes]);
 
   const propertyValue: PaginatedCollection[] = useMemo(() => {
@@ -912,7 +919,9 @@ const StructuredProperty = ({
             ? {
                 ...prev,
                 ...(responseData?.inheritedPartsDetails
-                  ? { inheritedPartsDetails: responseData.inheritedPartsDetails }
+                  ? {
+                      inheritedPartsDetails: responseData.inheritedPartsDetails,
+                    }
                   : {}),
                 ...(responseData?.resolvedParts
                   ? { resolvedParts: responseData.resolvedParts }
@@ -1542,6 +1551,7 @@ const StructuredProperty = ({
             background: (theme: any) =>
               theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
             p: 3,
+            gap: "14px",
 
             backgroundColor:
               selectedDiffNode &&
@@ -1551,7 +1561,15 @@ const StructuredProperty = ({
                 : "",
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              flex: 1,
+              minWidth: 0,
+            }}
+          >
             {editProperty === property && modifyProperty ? (
               <EditProperty
                 value={newPropertyValue}
@@ -1662,7 +1680,7 @@ const StructuredProperty = ({
               <PropertyContributors
                 currentVisibleNode={currentVisibleNode}
                 property={property}
-                sx={{ pl: "5px" }}
+                sx={{ ml: "auto", pl: "12px", flexShrink: 0 }}
               />
             )}
           </Box>
@@ -1694,7 +1712,15 @@ const StructuredProperty = ({
             !selectedDiffNode &&
             !currentImprovement &&
             property !== "isPartOf" && (
-              <Box sx={{ ml: "auto", display: "flex", gap: "14px" }}>
+              <Box
+                sx={{
+                  ml: "auto",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "14px",
+                  flexShrink: 0,
+                }}
+              >
                 {property !== "generalizations" &&
                   property !== "specializations" &&
                   property !== "isPartOf" &&
@@ -1738,23 +1764,44 @@ const StructuredProperty = ({
                     </Tooltip>
                   )}
                 {property !== "specializations" && property !== "parts" && (
-                  <Button
-                    onClick={() => editStructuredProperty(property)}
-                    sx={{
-                      borderRadius: "18px",
-                      backgroundColor: BUTTON_COLOR,
-                      ":hover": {
-                        backgroundColor:
-                          theme.palette.mode === "light" ? "#f0f0f0" : "",
-                      },
-                      display: !enableEdit ? "none" : "block",
-                    }}
-                    variant="outlined"
-                  >
-                    {`Edit ${capitalizeFirstLetter(
+                  <Tooltip
+                    title={`Edit ${capitalizeFirstLetter(
                       DISPLAY[property] || property,
-                    )}`}{" "}
-                  </Button>
+                    )}`}
+                    placement="top"
+                  >
+                    <Button
+                      onClick={() => editStructuredProperty(property)}
+                      aria-label={`Edit ${capitalizeFirstLetter(
+                        DISPLAY[property] || property,
+                      )}`}
+                      sx={{
+                        borderRadius: "18px",
+                        px: "18px",
+                        whiteSpace: "nowrap",
+                        fontWeight: 600,
+                        backgroundColor: BUTTON_COLOR,
+                        color:
+                          theme.palette.mode === "dark" ? "#ffb74d" : "#b45309",
+                        borderColor:
+                          theme.palette.mode === "dark" ? "#ffb74d" : "#b45309",
+                        ":hover": {
+                          backgroundColor:
+                            theme.palette.mode === "light"
+                              ? "#f0f0f0"
+                              : "rgba(255, 183, 77, 0.16)",
+                          borderColor:
+                            theme.palette.mode === "dark"
+                              ? "#ffcc80"
+                              : "#92400e",
+                        },
+                        display: !enableEdit ? "none" : "block",
+                      }}
+                      variant="outlined"
+                    >
+                      Edit
+                    </Button>
+                  </Tooltip>
                 )}
                 {property !== "generalizations" &&
                   property !== "specializations" &&
