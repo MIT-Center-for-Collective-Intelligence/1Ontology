@@ -85,7 +85,7 @@ export const LandingHomeSection: React.FC<LandingHomeSectionProps> = ({
             </Typography>
 
             {/* CTA Button */}
-            <Box sx={{ display: "flex", justifyContent: "center" }}>
+            {/* <Box sx={{ display: "flex", justifyContent: "center" }}>
               <Button
                 type="button"
                 onClick={() => onGoToSection("platform")}
@@ -106,7 +106,7 @@ export const LandingHomeSection: React.FC<LandingHomeSectionProps> = ({
               >
                 Explore Platform
               </Button>
-            </Box>
+            </Box> */}
           </Box>
         </Container>
       </Box>
@@ -1107,7 +1107,7 @@ export const LandingHomeSection: React.FC<LandingHomeSectionProps> = ({
                               </Typography>{" "}
                               for storing, editing, and viewing our ontology
                             </Typography>
-                            <Box sx={{ ml: 2 }}>
+                            {/* <Box sx={{ ml: 2 }}>
                               <Button
                                 variant="outlined"
                                 size="small"
@@ -1136,7 +1136,7 @@ export const LandingHomeSection: React.FC<LandingHomeSectionProps> = ({
                               >
                                 View Platform Details
                               </Button>
-                            </Box>
+                            </Box> */}
                           </Box>
 
                           <Box>
@@ -1702,7 +1702,7 @@ export const LandingHomeSection: React.FC<LandingHomeSectionProps> = ({
       </Box>
 
       {/* Sophisticated CTA Section */}
-      <Box
+      {/* <Box
         sx={{
           py: 12,
           bgcolor: (theme) =>
@@ -1717,7 +1717,7 @@ export const LandingHomeSection: React.FC<LandingHomeSectionProps> = ({
           overflow: "hidden",
         }}
       >
-        {/* Elegant background pattern */}
+        {/* Elegant background pattern *\/}
         <Box
           sx={{
             position: "absolute",
@@ -1798,7 +1798,7 @@ export const LandingHomeSection: React.FC<LandingHomeSectionProps> = ({
             </Box>
           </Box>
         </Container>
-      </Box>
+      </Box> */}
 
       {/* Footer */}
       <Footer isDark={isDark} onLandingSectionChange={onGoToSection} />

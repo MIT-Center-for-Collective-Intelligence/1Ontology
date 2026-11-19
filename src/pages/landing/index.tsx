@@ -7,7 +7,7 @@ import MobileDrawer from "./_components/MobileDrawer";
 import { createLandingTheme } from "../../theme/landingTheme";
 import { LandingHomeSection } from "./sections/LandingHomeSection";
 
-import { PlatformLandingSection } from "./platform";
+// import { PlatformLandingSection } from "./platform";
 import { AiUsesLandingSection } from "./ai-uses";
 import { TeamLandingSection } from "./team";
 import type { LandingSectionId } from "../../constants/landingTypes";
@@ -109,13 +109,13 @@ const LandingPage = () => {
             />
           )}
           {section === "paper" && <OntologyPaper isDark={isDark} />}
-          {section === "platform" && (
+          {/* {section === "platform" && (
             <PlatformLandingSection
               isDark={isDark}
               isAuthenticated={isAuthenticated}
               onGoToSection={commitSection}
             />
-          )}
+          )} */}
           {/*         {section === "aiUses" && (
             <AiUsesLandingSection
               isDark={isDark}

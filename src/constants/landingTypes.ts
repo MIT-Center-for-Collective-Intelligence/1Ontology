@@ -21,7 +21,7 @@ export const landingHashToSection = (
   if (!key) return "home";
   const map: Record<string, LandingSectionId> = {
     paper: "paper",
-    platform: "platform",
+    // platform: "platform",
     "ai-uses": "aiUses",
     team: "team",
   };

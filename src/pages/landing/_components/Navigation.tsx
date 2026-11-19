@@ -350,6 +350,7 @@ const Navigation: React.FC<NavigationProps> = ({
               )}
             </IconButton>
 
+            {/* Hidden: no sign in / platform access from the landing page
             <Box
               sx={{
                 display: "flex",
@@ -432,6 +433,7 @@ const Navigation: React.FC<NavigationProps> = ({
                 </Link>
               )}
             </Box>
+            */}
 
             <IconButton
               sx={{
