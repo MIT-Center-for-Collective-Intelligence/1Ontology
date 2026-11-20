@@ -158,3 +158,22 @@ test("restores a prior review and confirms before discarding an edited case", as
     confirm.mockRestore();
   }
 });
+
+test("the grouping batch asks only for a decision and reason", async () => {
+  const groupingCase = { ...firstCase, groups: [], reason: "" };
+  const categorization = { rating: "not_acceptable", comment: "Separate descriptions 1 and 2." };
+  mockFetch
+    .mockResolvedValueOnce(reply({ ...session, cases: [groupingCase] }))
+    .mockResolvedValueOnce(reply({ ...answer, titles: {}, categorization }));
+  render(<MultiSourceReview groupingOnly />);
+  await screen.findByText("Inspect production equipment for wear.");
+  expect(screen.getAllByRole("radiogroup")).toHaveLength(1);
+  fireEvent.click(radio("Decision", "Split"));
+  fireEvent.click(screen.getByRole("button", {name: "Save review"}));
+  expect(await screen.findByText("Give a brief reason for your decision.")).toBeInTheDocument();
+  fireEvent.change(screen.getByRole("textbox", { name: /Brief reason/ }), { target: {value: categorization.comment} });
+  fireEvent.click(screen.getByRole("button", {name: "Save review"}));
+  await screen.findByText("Review saved.");
+  expect(mockFetch.mock.calls[1][0]).toBe("/api/som-review/grouping-review");
+  expect(JSON.parse(mockFetch.mock.calls[1][1].body)).toMatchObject({titles: {}, categorization});
+});

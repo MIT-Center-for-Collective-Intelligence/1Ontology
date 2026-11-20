@@ -1,8 +1,10 @@
+import groupingHandler from "../../../src/pages/api/som-review/grouping-review";
 import handler from "../../../src/pages/api/som-review/multi-source-title-review";
 import { db } from "../../../src/lib/firestoreServer/admin";
 import { actorFor } from "../../../src/lib/titleValidation/api";
 import { TitleValidationError } from "../../../src/lib/titleValidation/engine";
 import {
+  GROUPING_STUDY_ID,
   MULTI_SOURCE_COMMENT_LIMIT,
   MULTI_SOURCE_STUDY_ID,
   MultiSourceReview,
@@ -42,6 +44,8 @@ const payload = {
   expectedRevision: 0,
 };
 
+let activeId: string;
+let activeCases: typeof cases;
 let records: Map<string, MultiSourceReview>;
 let getOwnReviews: jest.Mock;
 let setReview: jest.Mock;
@@ -54,6 +58,8 @@ function signIn(uid: string, canManage = false) {
 beforeEach(() => {
   jest.clearAllMocks();
   process.env.TITLE_VALIDATION_RELEASED = "1";
+  activeId = MULTI_SOURCE_STUDY_ID;
+  activeCases = cases;
   signIn("rob");
   records = new Map();
   getOwnReviews = jest.fn((uid: string) => ({
@@ -62,7 +68,7 @@ beforeEach(() => {
     })),
   }));
   const studyRef = {
-    get: async () => ({ data: () => ({ version: MULTI_SOURCE_STUDY_ID, roster, cases }) }),
+    get: async () => ({ data: () => ({ version: activeId, roster, cases: activeCases }) }),
     collection: (collection: string) => {
       expect(collection).toBe("reviews");
       return { doc: (uid: string) => ({ collection: (nestedCollection: string) => {
@@ -80,7 +86,7 @@ beforeEach(() => {
   (db.collection as jest.Mock).mockImplementation((collection: string) => {
     expect(collection).toBe("titleValidationStudiesV1");
     return { doc: (studyId: string) => {
-      expect(studyId).toBe(MULTI_SOURCE_STUDY_ID);
+      expect(studyId).toBe(activeId);
       return studyRef;
     } };
   });
@@ -96,10 +102,10 @@ afterAll(() => {
   else process.env.TITLE_VALIDATION_RELEASED = priorRelease;
 });
 
-async function request(method: string, body?: unknown) {
+async function request(method: string, body?: unknown, route = handler) {
   const res = { setHeader: jest.fn(), status: jest.fn(), json: jest.fn() };
   res.status.mockReturnValue(res);
-  await handler({ method, body } as any, res as any);
+  await route({ method, body } as any, res as any);
   expect(res.setHeader).toHaveBeenCalledWith("Cache-Control", "no-store, private");
   return { status: res.status.mock.calls[0][0], body: res.json.mock.calls[0][0] };
 }
@@ -170,4 +176,35 @@ test("saves both rating types atomically, retries idempotently, and rejects a st
     revision: 2, titles: payload.titles, categorization: edited.categorization,
   });
   expect([...records.keys()]).toEqual(["rob/activity-1"]);
+});
+
+test("six grouping decisions save independently for all three reviewers", async () => {
+  activeId = GROUPING_STUDY_ID;
+  activeCases = cases.slice(0, 6).map((item) => ({ ...item, reason: "", groups: [] }));
+  const submit = (caseId: string, rating: string, comment: string) => ({
+    version: activeId, titles: {}, caseId, expectedRevision: 0,
+    categorization: { rating, comment },
+  });
+  const ratings = ["acceptable", "not_acceptable", "unsure"];
+  for (const [i, reviewer] of roster.entries()) {
+    signIn(reviewer.reviewerId);
+    const first = await request("GET", undefined, groupingHandler);
+    expect(first.body).toMatchObject({ version: activeId, reviewerLabel: reviewer.label, cases: activeCases, reviews: {} });
+    expect((await request("POST", submit(activeCases[0].id, ratings[i], " "), groupingHandler)).status).toBe(400);
+    for (const item of activeCases) {
+      const body = submit(item.id, ratings[i], reviewer.label + " reason");
+      expect((await request("POST", body, groupingHandler)).status).toBe(200);
+    }
+  }
+  expect(records.size).toBe(18);
+  for (const [i, reviewer] of roster.entries()) {
+    signIn(reviewer.reviewerId);
+    const { body } = await request("GET", undefined, groupingHandler);
+    expect(Object.keys(body.reviews).sort()).toEqual(activeCases.map(({ id }) => id).sort());
+    for (const item of activeCases) {
+      expect(body.reviews[item.id]).toMatchObject({
+        titles: {}, categorization: { rating: ratings[i], comment: reviewer.label + " reason" }, revision: 1,
+      });
+    }
+  }
 });
