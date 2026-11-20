@@ -1,4 +1,5 @@
 export const MULTI_SOURCE_STUDY_ID = "multi-source-title-review-20261110-v1";
+export const GROUPING_STUDY_ID = "activity-grouping-20261120-v1";
 export const MULTI_SOURCE_COMMENT_LIMIT = 2000;
 
 export type MultiSourceRating = "acceptable" | "not_acceptable" | "unsure";
