@@ -1,3 +1,4 @@
+import followupHandler from "../../../src/pages/api/som-review/grouping-review-round-2";
 import groupingHandler from "../../../src/pages/api/som-review/grouping-review";
 import handler from "../../../src/pages/api/som-review/multi-source-title-review";
 import { db } from "../../../src/lib/firestoreServer/admin";
@@ -5,6 +6,7 @@ import { actorFor } from "../../../src/lib/titleValidation/api";
 import { TitleValidationError } from "../../../src/lib/titleValidation/engine";
 import {
   GROUPING_STUDY_ID,
+  GROUPING_FOLLOWUP_STUDY_ID,
   MULTI_SOURCE_COMMENT_LIMIT,
   MULTI_SOURCE_STUDY_ID,
   MultiSourceReview,
@@ -207,4 +209,15 @@ test("six grouping decisions save independently for all three reviewers", async 
       });
     }
   }
+});
+
+test("the grouping follow-up requires its own twelve blinded cases", async () => {
+  activeId = GROUPING_FOLLOWUP_STUDY_ID;
+  activeCases = cases.slice(0, 12).map((item) => ({ ...item, reason: "", groups: [] }));
+  const session = await request("GET", undefined, followupHandler);
+  expect(session.status).toBe(200);
+  expect(session.body.cases).toHaveLength(12);
+  expect(session.body.version).toBe(GROUPING_FOLLOWUP_STUDY_ID);
+  activeCases = activeCases.slice(0, 6);
+  expect((await request("GET", undefined, followupHandler)).status).toBe(503);
 });

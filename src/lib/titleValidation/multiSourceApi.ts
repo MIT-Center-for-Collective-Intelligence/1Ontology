@@ -4,6 +4,7 @@ import { TitleValidationError } from "./engine";
 import {
   MULTI_SOURCE_COMMENT_LIMIT,
   GROUPING_STUDY_ID,
+  GROUPING_FOLLOWUP_STUDY_ID,
   MULTI_SOURCE_STUDY_ID,
   MultiSourceCase,
   MultiSourceRatedItem,
@@ -21,8 +22,16 @@ interface Study {
 const identifier = (value: unknown): value is string =>
   typeof value === "string" && /^[A-Za-z0-9_-]{1,100}$/.test(value);
 
-function hasValidCases(cases: MultiSourceCase[], groupingOnly: boolean) {
-  const expected = groupingOnly ? 6 : 25;
+const caseCounts = {
+  [MULTI_SOURCE_STUDY_ID]: 25,
+  [GROUPING_STUDY_ID]: 6,
+  [GROUPING_FOLLOWUP_STUDY_ID]: 12,
+} as const;
+type StudyId = keyof typeof caseCounts;
+
+function hasValidCases(cases: MultiSourceCase[], studyId: StudyId) {
+  const groupingOnly = studyId !== MULTI_SOURCE_STUDY_ID;
+  const expected = caseCounts[studyId];
   if (cases.length !== expected || new Set(cases.map((item) => item?.id)).size !== expected)
     return false;
   return cases.every((item) => {
@@ -52,7 +61,7 @@ function loadStudy(value: unknown, uid: string, studyId: StudyId) {
     study.roster.find((member) => member?.reviewerId === uid);
   if (!reviewer) throw new TitleValidationError(403, "This batch is available only to assigned reviewers.");
   if (study.version !== studyId || typeof reviewer.label !== "string" ||
-      !Array.isArray(study.cases) || !hasValidCases(study.cases, studyId === GROUPING_STUDY_ID))
+      !Array.isArray(study.cases) || !hasValidCases(study.cases, studyId))
     throw new TitleValidationError(503, "This batch could not be loaded. Please contact the coordinator.");
   return { study, reviewerLabel: reviewer.label };
 }
@@ -94,8 +103,6 @@ function sameReviewContent(current: MultiSourceReview, submitted: Omit<MultiSour
     Object.keys(current.titles).length === Object.keys(submitted.titles).length &&
     Object.entries(submitted.titles).every(([id, answer]) => sameRatedItem(current.titles[id], answer));
 }
-
-type StudyId = typeof MULTI_SOURCE_STUDY_ID | typeof GROUPING_STUDY_ID;
 
 export async function handleMultiSourceReview(req: NextApiRequest, res: NextApiResponse, studyId: StudyId) {
   res.setHeader("Cache-Control", "no-store, private");
