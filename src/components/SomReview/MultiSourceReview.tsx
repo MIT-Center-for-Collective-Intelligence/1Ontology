@@ -137,8 +137,18 @@ function RatingField({
   );
 }
 
-export function MultiSourceReview({ groupingOnly = false }: { groupingOnly?: boolean }) {
-  const endpoint = groupingOnly ? "/api/som-review/grouping-review" : "/api/som-review/multi-source-title-review";
+const groupingEndpoints = {
+  first: "/api/som-review/grouping-review",
+  second: "/api/som-review/grouping-review-round-2",
+} as const;
+
+interface ReviewProps {
+  groupingRound?: keyof typeof groupingEndpoints;
+}
+
+export function MultiSourceReview({ groupingRound }: ReviewProps) {
+  const groupingOnly = Boolean(groupingRound);
+  const endpoint = groupingRound ? groupingEndpoints[groupingRound] : "/api/som-review/multi-source-title-review";
   const [batch, setBatch] = useState<MultiSourceSession>();
   const [index, setIndex] = useState(0);
   const [draft, setDraft] = useState<ReviewFields>();
@@ -451,15 +461,15 @@ export function MultiSourceReview({ groupingOnly = false }: { groupingOnly?: boo
   );
 }
 
-function AuthenticatedReview({ groupingOnly = false }: { groupingOnly?: boolean }) {
+function AuthenticatedReview({ groupingRound }: ReviewProps) {
   const [{ isAuthInitialized, isAuthenticated, user }] = useAuth();
   return (
     <>
       <Head>
-        <title>{groupingOnly ? "O*NET activity grouping review" : "Multi-description activity review"}</title>
+        <title>{groupingRound ? "O*NET activity grouping review" : "Multi-description activity review"}</title>
       </Head>
       {isAuthInitialized && isAuthenticated ? (
-        <MultiSourceReview key={user?.userId} groupingOnly={groupingOnly} />
+        <MultiSourceReview key={`${user?.userId}-${groupingRound ?? "titles"}`} groupingRound={groupingRound} />
       ) : (
         <main aria-busy="true">Loading your account…</main>
       )}
