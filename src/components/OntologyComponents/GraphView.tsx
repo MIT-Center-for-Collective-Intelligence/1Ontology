@@ -21,6 +21,8 @@ type GraphViewProps = {
   height?: number | string;
   /** When set, the initial fit-to-screen zoom never goes above this scale. */
   maxFitScale?: number;
+  /** When set, nodes marked `oNetTask` are filled with this color. */
+  oNetTaskFill?: string;
 };
 
 // Breaks a label into lines of at most `maxChars` characters, at spaces where
@@ -74,6 +76,7 @@ const GraphView = ({
   maxLabelChars,
   height = SVG_HEIGHT,
   maxFitScale,
+  oNetTaskFill,
 }: GraphViewProps) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [graph, setGraph] = useState<any>(null);
@@ -105,9 +108,12 @@ const GraphView = ({
       if (currentVisibleNode?.id === nodeId) {
         return ACTIVE_NODE_FILL;
       }
+      if (oNetTaskFill && !node.category && node.oNetTask) {
+        return oNetTaskFill;
+      }
       return node.category ? CATEGORY_NODE_FILL : DEFAULT_NODE_FILL;
     },
-    [currentVisibleNode?.id],
+    [currentVisibleNode?.id, oNetTaskFill],
   );
 
   const getNodeStyle = useCallback(
@@ -336,7 +342,6 @@ const GraphView = ({
       const children = node.children || [];
       const childCount = children.length;
       const isExpanded = expandedNodes.has(nodeId);
-      console.log(node, "node -->");
       if (childCount === 0) {
         return;
       }

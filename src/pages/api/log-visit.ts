@@ -16,7 +16,38 @@ type LogBody = {
   locale?: string;
   timeZone?: string;
   username?: string;
+
+  nodeId?: string;
+  nodeTitle?: string;
+  searchQuery?: string;
+  source?: string;
+  resultCount?: number;
 };
+
+const MAX_DETAIL_LENGTH = 500;
+const detailText = (value: unknown): string | undefined =>
+  typeof value === "string" && value.trim()
+    ? value.slice(0, MAX_DETAIL_LENGTH)
+    : undefined;
+
+function getEventDetails(body: LogBody) {
+  const details: Record<string, string | number> = {};
+  const nodeId = detailText(body.nodeId);
+  const nodeTitle = detailText(body.nodeTitle);
+  const searchQuery = detailText(body.searchQuery);
+  const source = detailText(body.source);
+  if (nodeId) details.nodeId = nodeId;
+  if (nodeTitle) details.nodeTitle = nodeTitle;
+  if (searchQuery) details.searchQuery = searchQuery;
+  if (source) details.source = source;
+  if (
+    typeof body.resultCount === "number" &&
+    Number.isFinite(body.resultCount)
+  ) {
+    details.resultCount = body.resultCount;
+  }
+  return details;
+}
 
 function getClientIp(req: NextApiRequest): string {
   const xff = req.headers["x-forwarded-for"];
@@ -68,6 +99,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       visibleMs: typeof body.visibleMs === "number" ? body.visibleMs : null,
       locale: body.locale ?? null,
       timeZone: body.timeZone ?? null,
+      ...getEventDetails(body),
     };
     console.log(entry.timeZone, "entry.timeZone");
     if (entry.timeZone) {

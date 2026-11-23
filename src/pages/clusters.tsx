@@ -17,6 +17,7 @@ import {
   alpha,
   Autocomplete,
   Box,
+  GlobalStyles,
   Drawer,
   Grid,
   IconButton,
@@ -34,7 +35,16 @@ import { INode, TreeData } from "@components/types/INode";
 import DraggableTree from "@components/components/OntologyComponents/OutlineView";
 import FullPageLogoLoading from "@components/components/layouts/FullPageLogoLoading";
 import GraphView from "@components/components/OntologyComponents/GraphView";
-const NODES_ONET = "oNetNodesDecomposed";
+import CopyTitleButton from "@components/components/OntologyComponents/CopyTitleButton";
+import { SCROLL_BAR_STYLE } from "@components/lib/CONSTANTS";
+import { usePageVisitLog } from "@components/lib/hooks/usePageVisitLog";
+
+/** The search dropdown's background (the theme's Paper colors, made explicit). */
+const searchPaperBg = (t: Theme) =>
+  t.palette.mode === "dark" ? "#303134" : "#f0f0f0";
+
+const GRAPH_COPY_BUTTON_CLASS = "graph-copy-button";
+const NODES_ONET = "oNetNodesDecomposedLeafs";
 type TreeNode = {
   title: string;
   children: TreeNode[];
@@ -248,7 +258,10 @@ const getChildGroups = (
       .filter((child: any) => child && !branch.has(child.id));
     if (collection.collectionName && collection.collectionName !== "main") {
       if (docs.length > 0) {
-        collections.push({ name: collection.collectionName, docs: uniqueById(docs) });
+        collections.push({
+          name: collection.collectionName,
+          docs: uniqueById(docs),
+        });
       }
     } else {
       main.push(...docs);
@@ -333,7 +346,10 @@ const expandRow = (row: TreeRow, nodesById: Record<string, any>): TreeRow => {
   const children: TreeRow[] = [
     ...collections.map(({ name, docs }) => {
       const collectionId = `${row.id}-${name}`;
-      const memberGraphKeys = [...childGraphKeys, graphCollectionKey(doc.id, name)];
+      const memberGraphKeys = [
+        ...childGraphKeys,
+        graphCollectionKey(doc.id, name),
+      ];
       const members = sortRows(
         docs.map((child) =>
           makeRow(
@@ -447,7 +463,10 @@ const buildParentIndex = (nodesById: Record<string, any>) => {
           : null;
       for (const link of collection.nodes || []) {
         if (nodesById[link.id] && link.id !== doc.id) {
-          (parentsOf[link.id] ||= []).push({ parentId: doc.id, collectionName });
+          (parentsOf[link.id] ||= []).push({
+            parentId: doc.id,
+            collectionName,
+          });
         }
       }
     }
@@ -512,6 +531,61 @@ const graphKeysForPath = (path: PathStep[]) =>
       : [parentId];
   });
 
+// One path from a root down to `nodeId` through each of its direct parents, so
+// navigating can show the node under every parent. Links that pass
+// `isPreferred` are tried first (paths the user already has open).
+const pathsThroughEachParent = (
+  nodeId: string,
+  parentsOf: Record<string, ParentLink[]>,
+  rootIds: Set<string>,
+  isPreferred: (link: ParentLink) => boolean,
+): PathStep[][] => {
+  if (rootIds.has(nodeId)) {
+    return [[{ docId: nodeId, collectionName: null }]];
+  }
+  const paths: PathStep[][] = [];
+  const seen = new Set<string>();
+  for (const link of parentsOf[nodeId] || []) {
+    const key = `${link.parentId}\u0000${link.collectionName ?? ""}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const toParent = findPathFromRoot(
+      link.parentId,
+      parentsOf,
+      rootIds,
+      isPreferred,
+    );
+    // Skip parents that are unreachable or only reachable through the node.
+    if (!toParent || toParent.some((step) => step.docId === nodeId)) continue;
+    paths.push([
+      ...toParent,
+      { docId: nodeId, collectionName: link.collectionName },
+    ]);
+  }
+  return paths;
+};
+
+/** Outline row ids along `path`, root first (collection rows included). */
+const outlineRowIdsForPath = (
+  path: PathStep[],
+  nodesById: Record<string, any>,
+): string[] => {
+  const rootId = path[0].docId;
+  let rowId =
+    nodesById[rootId]?.title?.toLowerCase() === "act" ? "root" : rootId;
+  const rowIds = [rowId];
+  for (const step of path.slice(1)) {
+    if (step.collectionName) {
+      rowIds.push(`${rowId}-${step.collectionName}`);
+      rowId = `${rowId}-${step.collectionName}-${step.docId}`;
+    } else {
+      rowId = `${rowId}-${step.docId}`;
+    }
+    rowIds.push(rowId);
+  }
+  return rowIds;
+};
+
 // Builds the outline rows along `path` (expanding each one) so its last doc
 // has a row the outline can select. Returns the new rows and that row's id.
 const revealPath = (
@@ -541,35 +615,42 @@ const revealPath = (
   return { rows, rowId };
 };
 
-// Graph tree: one entry per doc (GraphView merges copies by nodeId anyway).
-// Children are built only for expanded nodes; collapsed nodes get lightweight
-// placeholders so the graph's "N▸" child count stays correct.
+// Graph tree. GraphView merges every copy of a doc into one box, so each doc's
+// children are built only the first time it appears; later appearances (under
+// another parent, or a loop back to an ancestor) are childless references.
+// GraphView still draws an arrow from every parent, but walks each subtree
+// once: with shared subtrees, interlinked docs (the "Think" verbs list each
+// other as children) made it walk millions of rows per redraw.
+// Children of collapsed docs are references too, so the "N▸" count is right.
 const buildGraphTree = (
   rootDocs: any[],
   nodesById: Record<string, any>,
   expanded: Set<string>,
 ): TreeRow[] => {
-  const memo = new Map<string, TreeRow>();
-  const onBranch = new Set<string>();
-  const placeholder = (id: string, name: string): TreeRow => ({
-    id,
-    nodeId: id,
-    name,
-    category: false,
+  const built = new Set<string>();
+  const reference = (doc: any): TreeRow => ({
+    id: doc.id,
+    nodeId: doc.id,
+    name: doc.title,
+    category: !!doc.category,
+    oNetTask: !!doc.oNetTask,
     children: [],
   });
 
   const build = (doc: any): TreeRow => {
-    const cached = memo.get(doc.id);
-    if (cached) {
-      return cached;
+    if (built.has(doc.id)) {
+      return reference(doc);
     }
-    onBranch.add(doc.id);
-    const { collections, main } = getChildGroups(doc, nodesById, onBranch);
+    built.add(doc.id);
+    const { collections, main } = getChildGroups(
+      doc,
+      nodesById,
+      new Set([doc.id]),
+    );
     const isOpen = expanded.has(doc.id);
     const children: TreeRow[] = [
       ...collections.map(({ name, docs }) => {
-        const collectionId = `${doc.id}-${name}`;
+        const collectionId = graphCollectionKey(doc.id, name);
         return {
           id: collectionId,
           nodeId: doc.id,
@@ -578,14 +659,11 @@ const buildGraphTree = (
           children:
             isOpen && expanded.has(collectionId)
               ? docs.map(build)
-              : docs.map((child) => placeholder(child.id, child.title)),
+              : docs.map(reference),
         };
       }),
-      ...(isOpen
-        ? main.map(build)
-        : main.map((child) => placeholder(child.id, child.title))),
+      ...(isOpen ? main.map(build) : main.map(reference)),
     ];
-    onBranch.delete(doc.id);
     const row: TreeRow = {
       id: doc.id,
       nodeId: doc.id,
@@ -596,7 +674,6 @@ const buildGraphTree = (
       category: !!doc.category,
       oNetTask: !!doc.oNetTask,
     };
-    memo.set(doc.id, row);
     return row;
   };
 
@@ -607,14 +684,19 @@ type ClustersView = "outline" | "graph";
 type SearchOption = { id: string; title: string; parentTitle?: string };
 
 const MAX_SEARCH_RESULTS = 50;
+const SEARCH_LOG_DELAY_MS = 1000;
 /** Graph labels wrap onto a new line after about this many characters. */
 const GRAPH_LABEL_MAX_CHARS = 28;
 const ACCENT = "#ff8a1f";
+/** Same orange the outline uses for O*NET task text (.onetLabel). */
+const ONET_TASK_FILL = "#fb6c06";
 const ACCENT_GRADIENT = "linear-gradient(180deg, #ffb15c 0%, #ff8a1f 100%)";
 
 // Same border as the outline's tree container (the theme divider is harsher).
 const subtleBorder = (t: Theme) =>
-  t.palette.mode === "dark" ? "rgba(255,255,255,0.08)" : "rgba(15, 23, 42, 0.08)";
+  t.palette.mode === "dark"
+    ? "rgba(255,255,255,0.08)"
+    : "rgba(15, 23, 42, 0.08)";
 
 // Same card look as the outline's tree container, so both views match.
 const viewCardSx = {
@@ -643,6 +725,23 @@ const HighlightedText = ({ text, query }: { text: string; query: string }) => {
   );
 };
 
+// Memoized, with stable props below, so typing in the search box (which
+// re-renders the page) doesn't re-render the outline or redraw the graph.
+const MemoOutlineView = React.memo(DraggableTree);
+const MemoGraphView = React.memo(GraphView);
+const NO_NODES = {};
+const NO_COUNTS: Record<string, number> = {};
+const noop = () => {};
+
+// The page is a full-screen layout (each view scrolls or pans inside its own
+// card), so the document itself never needs to scroll. Without this, anything
+// that sits just past the bottom edge, such as the hidden tooltip GraphView
+// adds to <body>, gives the page a stray scrollbar. Applies only while this
+// page is mounted.
+const NO_PAGE_SCROLL = (
+  <GlobalStyles styles={{ "html, body": { overflow: "hidden" } }} />
+);
+
 const GraphHint = () => (
   <Box
     sx={{
@@ -666,6 +765,7 @@ const GraphHint = () => (
 );
 
 function OntTree() {
+  const logEvent = usePageVisitLog();
   const db = getFirestore();
   const [view, setView] = useState<ClustersView>("outline");
   const [searchInput, setSearchInput] = useState("");
@@ -690,64 +790,188 @@ function OntTree() {
   );
   const parentsOf = useMemo(() => buildParentIndex(nodesById), [nodesById]);
 
-  const openInGraph = useCallback((keys: string[]) => {
-    if (keys.length === 0) return;
-    setExpandedNodes((prev) => {
-      const next = new Set(prev);
-      keys.forEach((key) => next.add(key));
-      return next;
-    });
+  // Read through a ref so the handlers below keep a stable identity; otherwise
+  // every graph expansion would hand GraphView new callbacks and force a redraw.
+  const expandedNodesRef = useRef(expandedNodes);
+  expandedNodesRef.current = expandedNodes;
+
+  // The graph's nodes are SVG drawn by d3, so its copy button is an overlay
+  // placed on the top-right corner of the hovered node.
+  const [graphHover, setGraphHover] = useState<{
+    id: string;
+    title: string;
+    left: number;
+    top: number;
+  } | null>(null);
+  const hideGraphHoverTimer = useRef<number>();
+
+  const onGraphMouseOver = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      const target = event.target as Element;
+      window.clearTimeout(hideGraphHoverTimer.current);
+      if (target.closest(`.${GRAPH_COPY_BUTTON_CLASS}`)) return;
+      const node = target.closest("svg#graphGroup g.node");
+      if (!node) {
+        // A short delay lets the pointer travel from the node to the button.
+        hideGraphHoverTimer.current = window.setTimeout(
+          () => setGraphHover(null),
+          150,
+        );
+        return;
+      }
+      const id = node.getAttribute("data-node-id") || "";
+      const shape = node.querySelector("rect") ?? node;
+      const box = shape.getBoundingClientRect();
+      const layer = event.currentTarget.getBoundingClientRect();
+      const title =
+        nodesById[id]?.title ??
+        Array.from(node.querySelectorAll("tspan"))
+          .map((line) => line.textContent)
+          .join(" ");
+      setGraphHover({
+        id,
+        title,
+        left: box.right - layer.left - 16,
+        top: box.top - layer.top - 12,
+      });
+    },
+    [nodesById],
+  );
+
+  // Panning, zooming or clicking moves the nodes, so drop the overlay.
+  const hideGraphHover = useCallback((event?: React.SyntheticEvent) => {
+    const target = event?.target as Element | undefined;
+    if (target?.closest?.(`.${GRAPH_COPY_BUTTON_CLASS}`)) return;
+    window.clearTimeout(hideGraphHoverTimer.current);
+    setGraphHover(null);
   }, []);
 
-  // A parent link the graph currently shows (parent, and its collection, open).
-  const isOpenInGraph = useCallback(
-    (link: ParentLink) =>
-      expandedNodes.has(link.parentId) &&
-      (!link.collectionName ||
-        expandedNodes.has(
-          graphCollectionKey(link.parentId, link.collectionName),
-        )),
-    [expandedNodes],
+  useEffect(() => () => window.clearTimeout(hideGraphHoverTimer.current), []);
+
+  // Navigating from the outline or search focuses the graph on the node: only
+  // the paths to it (and the node itself) stay open. GraphView re-lays out every
+  // visible node on each change, so letting expansions pile up made each click
+  // take seconds. Including the node also saves GraphView a second redraw to
+  // open it.
+  const focusGraphOn = useCallback(
+    (keys: string[], nodeId: string) => {
+      setExpandedNodes(new Set([...rootIds, ...keys, nodeId]));
+    },
+    [rootIds],
   );
 
-  // Outline -> graph: open the graph nodes/collections on the clicked row's path.
+  // A parent link the graph currently shows (parent, and its collection, open).
+  const isOpenInGraph = useCallback((link: ParentLink) => {
+    const open = expandedNodesRef.current;
+    return (
+      open.has(link.parentId) &&
+      (!link.collectionName ||
+        open.has(graphCollectionKey(link.parentId, link.collectionName)))
+    );
+  }, []);
+
+  // Builds and opens the outline rows along each path, so the node shows up
+  // under every parent. Rows are opened by id right away: the outline keeps
+  // that open state and applies it as soon as the new rows arrive.
+  const revealInOutline = useCallback(
+    (paths: PathStep[][]) => {
+      if (paths.length === 0) return;
+      setTreeData((prev) =>
+        paths.reduce(
+          (rows, path) => revealPath(rows, path, nodesById).rows,
+          prev,
+        ),
+      );
+      const tree = treeRef.current;
+      for (const path of paths) {
+        outlineRowIdsForPath(path, nodesById)
+          .slice(0, -1)
+          .forEach((rowId) => tree?.open(rowId));
+      }
+    },
+    [nodesById],
+  );
+
+  // A graph click is followed, in the same handler, by GraphView replacing the
+  // expanded set to toggle that node; keys queued here are merged into that
+  // update, so opening the node's parents and the toggle land in one redraw.
+  const pendingGraphKeys = useRef<string[]>([]);
+  const setGraphExpandedNodes = useCallback((next: Set<string>) => {
+    const pending = pendingGraphKeys.current;
+    pendingGraphKeys.current = [];
+    setExpandedNodes(
+      pending.length > 0 ? new Set([...next, ...pending]) : next,
+    );
+  }, []);
+
+  // Outline -> both views: the clicked row stays put; the node's other parents
+  // are opened in the outline, and every parent is opened in the graph.
   const onOutlineSelect = useCallback(
     (nodeId: string, _name?: string, row?: TreeRow) => {
-      openInGraph(
-        row?.graphKeys ??
-          graphKeysForPath(
-            findPathFromRoot(nodeId, parentsOf, rootIds, () => true) || [],
-          ),
+      const rowParentId = row?.ancestorIds?.[row.ancestorIds.length - 1];
+      const paths = pathsThroughEachParent(
+        nodeId,
+        parentsOf,
+        rootIds,
+        () => false,
+      );
+      const otherPaths = row
+        ? paths.filter((path) => path[path.length - 2]?.docId !== rowParentId)
+        : paths;
+      revealInOutline(otherPaths);
+      focusGraphOn(
+        [...(row?.graphKeys ?? []), ...otherPaths.flatMap(graphKeysForPath)],
+        nodeId,
       );
       setCurrentVisibleNode({ id: nodeId });
+      logEvent("node_navigate", {
+        source: "outline",
+        nodeId,
+        nodeTitle: nodesById[nodeId]?.title ?? _name,
+      });
     },
-    [openInGraph, parentsOf, rootIds],
+    [focusGraphOn, logEvent, nodesById, parentsOf, revealInOutline, rootIds],
   );
 
-  // Graph -> outline: build the outline rows down to the clicked node, following
-  // the links the graph has open, so the outline can select and scroll to it.
+  // Graph -> both views: show the node under every parent in the outline, and
+  // open every parent in the graph (merged into GraphView's own toggle).
   const onGraphSelect = useCallback(
     (nodeId: string) => {
-      const path = findPathFromRoot(nodeId, parentsOf, rootIds, isOpenInGraph);
-      if (path) {
-        setTreeData((prev) => revealPath(prev, path, nodesById).rows);
-      }
+      const paths = pathsThroughEachParent(
+        nodeId,
+        parentsOf,
+        rootIds,
+        isOpenInGraph,
+      );
+      revealInOutline(paths);
+      pendingGraphKeys.current = paths.flatMap(graphKeysForPath);
       setCurrentVisibleNode({ id: nodeId });
+      logEvent("node_navigate", {
+        source: "graph",
+        nodeId,
+        nodeTitle: nodesById[nodeId]?.title,
+      });
     },
-    [isOpenInGraph, nodesById, parentsOf, rootIds],
+    [isOpenInGraph, logEvent, nodesById, parentsOf, revealInOutline, rootIds],
   );
 
-  // Search -> both views: reveal the node in the outline and open it in the graph.
+  // Search -> both views: show the node under every parent in the outline, and
+  // focus the graph on the node with every parent open.
   const navigateTo = useCallback(
     (nodeId: string) => {
-      const path = findPathFromRoot(nodeId, parentsOf, rootIds, isOpenInGraph);
-      if (path) {
-        setTreeData((prev) => revealPath(prev, path, nodesById).rows);
-        openInGraph(graphKeysForPath(path));
+      const paths = pathsThroughEachParent(
+        nodeId,
+        parentsOf,
+        rootIds,
+        isOpenInGraph,
+      );
+      revealInOutline(paths);
+      if (paths.length > 0) {
+        focusGraphOn(paths.flatMap(graphKeysForPath), nodeId);
       }
       setCurrentVisibleNode({ id: nodeId });
     },
-    [isOpenInGraph, nodesById, openInGraph, parentsOf, rootIds],
+    [focusGraphOn, isOpenInGraph, parentsOf, revealInOutline, rootIds],
   );
 
   const searchIndex = useMemo(
@@ -762,9 +986,11 @@ function OntTree() {
 
   // Title matches across every loaded doc: prefix matches first, then
   // substring matches, shorter titles first within each group.
-  const searchResults = useMemo<SearchOption[]>(() => {
+  const { searchResults, searchMatchCount } = useMemo(() => {
     const query = searchInput.trim().toLowerCase();
-    if (query.length < 2) return [];
+    if (query.length < 2) {
+      return { searchResults: [] as SearchOption[], searchMatchCount: 0 };
+    }
     const prefix: typeof searchIndex = [];
     const contains: typeof searchIndex = [];
     for (const item of searchIndex) {
@@ -774,13 +1000,28 @@ function OntTree() {
     }
     const byLength = (a: { title: string }, b: { title: string }) =>
       a.title.length - b.title.length;
-    return [...prefix.sort(byLength), ...contains.sort(byLength)]
-      .slice(0, MAX_SEARCH_RESULTS)
-      .map(({ id, title }) => {
-        const parentId = parentsOf[id]?.[0]?.parentId;
-        return { id, title, parentTitle: nodesById[parentId]?.title };
-      });
+    return {
+      searchResults: [...prefix.sort(byLength), ...contains.sort(byLength)]
+        .slice(0, MAX_SEARCH_RESULTS)
+        .map(({ id, title }): SearchOption => {
+          const parentId = parentsOf[id]?.[0]?.parentId;
+          return { id, title, parentTitle: nodesById[parentId]?.title };
+        }),
+      searchMatchCount: prefix.length + contains.length,
+    };
   }, [searchInput, searchIndex, parentsOf, nodesById]);
+
+  const lastLoggedSearch = useRef("");
+  useEffect(() => {
+    const query = searchInput.trim();
+    if (query.length < 2 || query === searchValue?.title) return;
+    const timer = window.setTimeout(() => {
+      if (query === lastLoggedSearch.current) return;
+      lastLoggedSearch.current = query;
+      logEvent("search", { searchQuery: query, resultCount: searchMatchCount });
+    }, SEARCH_LOG_DELAY_MS);
+    return () => window.clearTimeout(timer);
+  }, [searchInput, searchMatchCount, searchValue, logEvent]);
 
   // Builds the next level of the outline when a collapsed row is opened.
   const onOutlineNodeOpen = useCallback(
@@ -796,16 +1037,38 @@ function OntTree() {
     [nodesById],
   );
 
+  // While the outline is showing, the graph keeps the inputs it last drew, so it
+  // does no layout work in the background; it catches up once when shown.
+  // It is still built once when the data arrives, so it initializes early.
+  const graphVisible = view === "graph";
+  const frozenGraph = useRef<{
+    nodesById: Record<string, any>;
+    treeData: TreeRow[];
+    expandedNodes: Set<string>;
+    currentVisibleNode: { id: string } | null;
+  } | null>(null);
+  const needsGraphBuild =
+    graphVisible || frozenGraph.current?.nodesById !== nodesById;
   const graphTreeData = useMemo(
-    () => buildGraphTree(rootDocs, nodesById, expandedNodes),
-    [rootDocs, nodesById, expandedNodes],
+    () =>
+      needsGraphBuild
+        ? buildGraphTree(rootDocs, nodesById, expandedNodes)
+        : null,
+    [needsGraphBuild, rootDocs, nodesById, expandedNodes],
   );
+  if (graphTreeData) {
+    frozenGraph.current = {
+      nodesById,
+      treeData: graphTreeData,
+      expandedNodes,
+      currentVisibleNode,
+    };
+  }
+  const graphInputs = frozenGraph.current!;
 
   const getData = async () => {
     setLoading(true);
-    const nodesDocs = await getDocs(
-      query(collection(db, "oNetNodesDecomposed")),
-    );
+    const nodesDocs = await getDocs(query(collection(db, NODES_ONET)));
     const nodes: Record<string, any> = {};
     let actId = "";
     nodesDocs.docs.forEach((doc) => {
@@ -873,6 +1136,7 @@ function OntTree() {
         <Head>
           <title>Clusters | 1Ontology</title>
         </Head>
+        {NO_PAGE_SCROLL}
         <FullPageLogoLoading />
       </>
     );
@@ -909,6 +1173,7 @@ function OntTree() {
       <Head>
         <title>Clusters | 1Ontology</title>
       </Head>
+      {NO_PAGE_SCROLL}
       <Box
         component="header"
         sx={{
@@ -946,7 +1211,14 @@ function OntTree() {
           onInputChange={(_, value) => setSearchInput(value)}
           onChange={(_, option) => {
             setSearchValue(option);
-            if (option) navigateTo(option.id);
+            if (!option) return;
+            navigateTo(option.id);
+            logEvent("node_navigate", {
+              source: "search",
+              nodeId: option.id,
+              nodeTitle: option.title,
+              searchQuery: searchInput.trim(),
+            });
           }}
           getOptionLabel={(option) => option.title}
           isOptionEqualToValue={(a, b) => a.id === b.id}
@@ -993,7 +1265,10 @@ function OntTree() {
             <TextField
               {...params}
               placeholder="Search nodes"
-              inputProps={{ ...params.inputProps, "aria-label": "Search nodes" }}
+              inputProps={{
+                ...params.inputProps,
+                "aria-label": "Search nodes",
+              }}
               InputProps={{
                 ...params.InputProps,
                 startAdornment: (
@@ -1014,9 +1289,25 @@ function OntTree() {
                 border: "1px solid",
                 borderColor: subtleBorder,
                 boxShadow: "0 12px 32px rgba(0,0,0,0.28)",
+                bgcolor: searchPaperBg,
               },
             },
-            listbox: { sx: { maxHeight: 420, py: 0.5 } },
+            listbox: {
+              sx: {
+                maxHeight: 420,
+                py: 0.5,
+                // The app's scrollbar, blended into the dropdown: no track,
+                // and a thumb border in the dropdown's own color.
+                ...SCROLL_BAR_STYLE,
+                "&::-webkit-scrollbar-track": { background: "transparent" },
+                "&::-webkit-scrollbar-thumb": {
+                  backgroundColor: "#888",
+                  borderRadius: "10px",
+                  border: "3px solid",
+                  borderColor: searchPaperBg,
+                },
+              },
+            },
           }}
           sx={{
             order: { xs: 3, md: 0 },
@@ -1110,34 +1401,63 @@ function OntTree() {
           sx={viewLayerSx(view === "outline")}
           aria-hidden={view !== "outline"}
         >
-          <DraggableTree
+          <MemoOutlineView
             treeViewData={treeData}
-            setSnackbarMessage={() => {}}
+            setSnackbarMessage={noop}
             currentVisibleNode={currentVisibleNode}
-            nodes={{}}
+            nodes={NO_NODES}
             onOpenNodesTree={onOutlineSelect}
             onOutlineNodeOpen={onOutlineNodeOpen as any}
             treeRef={treeRef}
             treeType="oNet"
             appName=""
-            specializationNumsUnder={{}}
+            specializationNumsUnder={NO_COUNTS}
             selectAlign="center"
+            showCopyButton
           />
         </Box>
         <Box
           sx={{ ...viewLayerSx(view === "graph"), ...viewCardSx }}
           aria-hidden={view !== "graph"}
+          onMouseOver={onGraphMouseOver}
+          onMouseLeave={hideGraphHover}
+          onMouseDown={hideGraphHover}
+          onWheel={hideGraphHover}
         >
-          <GraphView
-            treeData={graphTreeData as any}
-            expandedNodes={expandedNodes}
-            setExpandedNodes={setExpandedNodes}
+          <MemoGraphView
+            treeData={graphInputs.treeData as any}
+            expandedNodes={graphInputs.expandedNodes}
+            setExpandedNodes={setGraphExpandedNodes}
             onOpenNodeDagre={onGraphSelect}
-            currentVisibleNode={currentVisibleNode}
+            currentVisibleNode={graphInputs.currentVisibleNode}
             maxLabelChars={GRAPH_LABEL_MAX_CHARS}
             height="100%"
             maxFitScale={1}
+            oNetTaskFill={ONET_TASK_FILL}
           />
+          {graphVisible && graphHover && (
+            <Box
+              sx={{
+                position: "absolute",
+                left: graphHover.left,
+                top: graphHover.top,
+                zIndex: 2,
+              }}
+            >
+              <CopyTitleButton
+                key={graphHover.id}
+                text={graphHover.title}
+                className={GRAPH_COPY_BUTTON_CLASS}
+                sx={{
+                  bgcolor: "background.paper",
+                  border: "1px solid",
+                  borderColor: subtleBorder,
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+                  "&:hover": { bgcolor: "background.paper" },
+                }}
+              />
+            </Box>
+          )}
           <GraphHint />
         </Box>
         {/*  <Box

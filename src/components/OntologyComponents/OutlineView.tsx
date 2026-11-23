@@ -25,6 +25,9 @@ import { useAuth } from "../context/AuthContext";
 import { FillFlexParent } from "./fill-flex-parent";
 import { findNode, removeNode } from "./treeUtils";
 import { userHasOntologyEditAccess } from "@components/lib/utils/helpers";
+import CopyTitleButton from "./CopyTitleButton";
+
+const COPY_BUTTON_CLASS = "outline-copy-button";
 
 const INDENT_STEP = 15;
 const INITIAL_LOAD_COUNT = 20;
@@ -61,6 +64,7 @@ function OutlineView({
   nodesWithComments = EMPTY_SET,
   searchTerm = "",
   selectAlign = "auto",
+  showCopyButton = false,
 }: {
   treeViewData: any;
   setSnackbarMessage: any;
@@ -81,6 +85,8 @@ function OutlineView({
   nodesWithComments?: Set<string>;
   searchTerm?: string;
   selectAlign?: "auto" | "smart" | "center" | "end" | "start";
+  /** Shows a "copy title" button on hovered rows (and on the selected row). */
+  showCopyButton?: boolean;
 }) {
   const db = getFirestore();
   const [{ user }] = useAuth();
@@ -1279,6 +1285,18 @@ function OutlineView({
           [styles.activeNode]: isActiveNode,
         })}
         id={node.data.id}
+        sx={
+          showCopyButton
+            ? {
+                [`& .${COPY_BUTTON_CLASS}`]: {
+                  opacity: isActiveNode ? 1 : 0,
+                  transition: "opacity 120ms ease",
+                },
+                [`&:hover .${COPY_BUTTON_CLASS}, & .${COPY_BUTTON_CLASS}:focus-visible`]:
+                  { opacity: 1 },
+              }
+            : undefined
+        }
       >
         <Box className={styles.indentLines}>
           {new Array(indentSize / INDENT_STEP).fill(0).map((_, index) => {
@@ -1357,6 +1375,13 @@ function OutlineView({
                   <Box component="span" className={styles.alternativesText}>
                     {(node.data.actionAlternatives || []).join(", ")}
                   </Box>
+                )}
+                {showCopyButton && !node.data.isLoadMore && (
+                  <CopyTitleButton
+                    text={node.data.name}
+                    className={COPY_BUTTON_CLASS}
+                    sx={{ ml: 0.75, verticalAlign: "middle" }}
+                  />
                 )}
               </span>
             )}
