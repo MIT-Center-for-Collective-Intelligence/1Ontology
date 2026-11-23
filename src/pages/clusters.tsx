@@ -6,7 +6,6 @@ import CloseIcon from "@mui/icons-material/Close";
 import WorkspacesIcon from "@mui/icons-material/Workspaces";
 import {
   Box,
-  CircularProgress,
   Drawer,
   Grid,
   IconButton,
@@ -16,6 +15,7 @@ import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import { TreeApi } from "react-arborist";
 import { INode, TreeData } from "@components/types/INode";
 import DraggableTree from "@components/components/OntologyComponents/OutlineView";
+import FullPageLogoLoading from "@components/components/layouts/FullPageLogoLoading";
 const NODES_ONET = "oNetNodesDecomposed";
 type TreeNode = {
   title: string;
@@ -306,7 +306,7 @@ const buildTree = (data: any[], nodes: any): TreeNode[] => {
 function OntTree() {
   const db = getFirestore();
   const [treeData, setTreeData] = useState<TreeNode[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [tree, setTree] = useState<TreeApi<TreeData> | null | undefined>(null);
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
   const [expandDefault, setExpandDefault] = useState("");
@@ -377,20 +377,7 @@ function OntTree() {
   };
 
   if (loading) {
-    return (
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100vh",
-          flexDirection: "column",
-        }}
-      >
-        <CircularProgress />
-        <Typography sx={{ mt: "5px" }}> Loading...</Typography>
-      </Box>
-    );
+    return <FullPageLogoLoading />;
   }
 
   return (
@@ -400,8 +387,15 @@ function OntTree() {
         height: "100vh",
       }}
     >
-      <Box sx={{ display: "flex" }}>
-        <Box sx={{ width: /* isExpanded ? "80%" : "98%" */ "100%" }}>
+      <Box sx={{ display: "flex", height: "100%" }}>
+        <Box
+          sx={{
+            width: /* isExpanded ? "80%" : "98%" */ "100%",
+            display: "flex",
+            flexDirection: "column",
+            minHeight: 0,
+          }}
+        >
           <DraggableTree
             treeViewData={treeData}
             setSnackbarMessage={() => {}}
