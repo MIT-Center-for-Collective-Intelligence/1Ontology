@@ -7,18 +7,27 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { Bar, Container, Section } from "@column-resizer/react";
-import SettingsEthernetIcon from "@mui/icons-material/SettingsEthernet";
 import { TreeItem } from "@mui/lab";
 import CloseIcon from "@mui/icons-material/Close";
 import WorkspacesIcon from "@mui/icons-material/Workspaces";
+import AccountTreeOutlinedIcon from "@mui/icons-material/AccountTreeOutlined";
+import HubOutlinedIcon from "@mui/icons-material/HubOutlined";
+import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import {
+  alpha,
+  Autocomplete,
   Box,
   Drawer,
   Grid,
   IconButton,
+  InputAdornment,
+  TextField,
+  ToggleButton,
+  ToggleButtonGroup,
   Typography,
 } from "@mui/material";
+import type { Theme } from "@mui/material/styles";
+import Head from "next/head";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import { TreeApi } from "react-arborist";
 import { INode, TreeData } from "@components/types/INode";
@@ -213,6 +222,8 @@ type TreeRow = {
   ancestorIds?: string[];
   /** Graph expansion keys (doc ids and `${docId}-${collection}`) that make this row visible in the graph. */
   graphKeys?: string[];
+  /** Question rows are docs, so the outline may highlight them when selected. */
+  highlightWhenActive?: boolean;
   outlineLoadChildren?: boolean;
   hasUnresolvedChildren?: boolean;
 };
@@ -292,6 +303,7 @@ const makeRow = (
     children: [],
     actionAlternatives: doc.actionAlternatives,
     category: !!doc.category,
+    highlightWhenActive: !!doc.category,
     task: !!doc.task,
     oNetTask: !!doc.oNetTask,
     comments: !!doc.comments,
@@ -591,8 +603,73 @@ const buildGraphTree = (
   return rootDocs.map(build);
 };
 
+type ClustersView = "outline" | "graph";
+type SearchOption = { id: string; title: string; parentTitle?: string };
+
+const MAX_SEARCH_RESULTS = 50;
+/** Graph labels wrap onto a new line after about this many characters. */
+const GRAPH_LABEL_MAX_CHARS = 28;
+const ACCENT = "#ff8a1f";
+const ACCENT_GRADIENT = "linear-gradient(180deg, #ffb15c 0%, #ff8a1f 100%)";
+
+// Same border as the outline's tree container (the theme divider is harsher).
+const subtleBorder = (t: Theme) =>
+  t.palette.mode === "dark" ? "rgba(255,255,255,0.08)" : "rgba(15, 23, 42, 0.08)";
+
+// Same card look as the outline's tree container, so both views match.
+const viewCardSx = {
+  backgroundColor: (t: Theme) =>
+    t.palette.mode === "dark" ? "#2f3136" : "#eef2f7",
+  border: "1px solid",
+  borderColor: subtleBorder,
+  borderRadius: "10px",
+};
+
+/** Renders `text` with the first case-insensitive match of `query` emphasized. */
+const HighlightedText = ({ text, query }: { text: string; query: string }) => {
+  const at = query ? text.toLowerCase().indexOf(query.toLowerCase()) : -1;
+  if (at === -1) return <>{text}</>;
+  return (
+    <>
+      {text.slice(0, at)}
+      <Box
+        component="mark"
+        sx={{ bgcolor: "transparent", color: ACCENT, fontWeight: 700 }}
+      >
+        {text.slice(at, at + query.length)}
+      </Box>
+      {text.slice(at + query.length)}
+    </>
+  );
+};
+
+const GraphHint = () => (
+  <Box
+    sx={{
+      position: "absolute",
+      right: 12,
+      bottom: 12,
+      px: 1.5,
+      py: 0.75,
+      borderRadius: "999px",
+      bgcolor: (t) => alpha(t.palette.background.paper, 0.85),
+      border: "1px solid",
+      borderColor: subtleBorder,
+      backdropFilter: "blur(6px)",
+      pointerEvents: "none",
+    }}
+  >
+    <Typography variant="caption" color="text.secondary">
+      Scroll to zoom · drag to pan
+    </Typography>
+  </Box>
+);
+
 function OntTree() {
   const db = getFirestore();
+  const [view, setView] = useState<ClustersView>("outline");
+  const [searchInput, setSearchInput] = useState("");
+  const [searchValue, setSearchValue] = useState<SearchOption | null>(null);
   const [treeData, setTreeData] = useState<TreeRow[]>([]);
   const [nodesById, setNodesById] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(true);
@@ -613,48 +690,97 @@ function OntTree() {
   );
   const parentsOf = useMemo(() => buildParentIndex(nodesById), [nodesById]);
 
+  const openInGraph = useCallback((keys: string[]) => {
+    if (keys.length === 0) return;
+    setExpandedNodes((prev) => {
+      const next = new Set(prev);
+      keys.forEach((key) => next.add(key));
+      return next;
+    });
+  }, []);
+
+  // A parent link the graph currently shows (parent, and its collection, open).
+  const isOpenInGraph = useCallback(
+    (link: ParentLink) =>
+      expandedNodes.has(link.parentId) &&
+      (!link.collectionName ||
+        expandedNodes.has(
+          graphCollectionKey(link.parentId, link.collectionName),
+        )),
+    [expandedNodes],
+  );
+
   // Outline -> graph: open the graph nodes/collections on the clicked row's path.
   const onOutlineSelect = useCallback(
     (nodeId: string, _name?: string, row?: TreeRow) => {
-      const keys =
+      openInGraph(
         row?.graphKeys ??
-        graphKeysForPath(
-          findPathFromRoot(nodeId, parentsOf, rootIds, () => true) || [],
-        );
-      if (keys.length > 0) {
-        setExpandedNodes((prev) => {
-          const next = new Set(prev);
-          keys.forEach((key) => next.add(key));
-          return next;
-        });
-      }
+          graphKeysForPath(
+            findPathFromRoot(nodeId, parentsOf, rootIds, () => true) || [],
+          ),
+      );
       setCurrentVisibleNode({ id: nodeId });
     },
-    [parentsOf, rootIds],
+    [openInGraph, parentsOf, rootIds],
   );
 
   // Graph -> outline: build the outline rows down to the clicked node, following
   // the links the graph has open, so the outline can select and scroll to it.
   const onGraphSelect = useCallback(
     (nodeId: string) => {
-      const path = findPathFromRoot(
-        nodeId,
-        parentsOf,
-        rootIds,
-        (link) =>
-          expandedNodes.has(link.parentId) &&
-          (!link.collectionName ||
-            expandedNodes.has(
-              graphCollectionKey(link.parentId, link.collectionName),
-            )),
-      );
+      const path = findPathFromRoot(nodeId, parentsOf, rootIds, isOpenInGraph);
       if (path) {
         setTreeData((prev) => revealPath(prev, path, nodesById).rows);
       }
       setCurrentVisibleNode({ id: nodeId });
     },
-    [expandedNodes, nodesById, parentsOf, rootIds],
+    [isOpenInGraph, nodesById, parentsOf, rootIds],
   );
+
+  // Search -> both views: reveal the node in the outline and open it in the graph.
+  const navigateTo = useCallback(
+    (nodeId: string) => {
+      const path = findPathFromRoot(nodeId, parentsOf, rootIds, isOpenInGraph);
+      if (path) {
+        setTreeData((prev) => revealPath(prev, path, nodesById).rows);
+        openInGraph(graphKeysForPath(path));
+      }
+      setCurrentVisibleNode({ id: nodeId });
+    },
+    [isOpenInGraph, nodesById, openInGraph, parentsOf, rootIds],
+  );
+
+  const searchIndex = useMemo(
+    () =>
+      Object.values(nodesById).map((doc: any) => ({
+        id: doc.id as string,
+        title: (doc.title || "") as string,
+        lower: (doc.title || "").toLowerCase() as string,
+      })),
+    [nodesById],
+  );
+
+  // Title matches across every loaded doc: prefix matches first, then
+  // substring matches, shorter titles first within each group.
+  const searchResults = useMemo<SearchOption[]>(() => {
+    const query = searchInput.trim().toLowerCase();
+    if (query.length < 2) return [];
+    const prefix: typeof searchIndex = [];
+    const contains: typeof searchIndex = [];
+    for (const item of searchIndex) {
+      const at = item.lower.indexOf(query);
+      if (at === 0) prefix.push(item);
+      else if (at > 0) contains.push(item);
+    }
+    const byLength = (a: { title: string }, b: { title: string }) =>
+      a.title.length - b.title.length;
+    return [...prefix.sort(byLength), ...contains.sort(byLength)]
+      .slice(0, MAX_SEARCH_RESULTS)
+      .map(({ id, title }) => {
+        const parentId = parentsOf[id]?.[0]?.parentId;
+        return { id, title, parentTitle: nodesById[parentId]?.title };
+      });
+  }, [searchInput, searchIndex, parentsOf, nodesById]);
 
   // Builds the next level of the outline when a collapsed row is opened.
   const onOutlineNodeOpen = useCallback(
@@ -742,28 +868,247 @@ function OntTree() {
   };
 
   if (loading) {
-    return <FullPageLogoLoading />;
+    return (
+      <>
+        <Head>
+          <title>Clusters | 1Ontology</title>
+        </Head>
+        <FullPageLogoLoading />
+      </>
+    );
   }
+
+  const nodeCount = Object.keys(nodesById).length;
+  const searchQuery = searchInput.trim();
+
+  // Both views stay mounted so each keeps its open nodes and zoom; the hidden
+  // one keeps its size (visibility, not display), so it can still follow the
+  // selection while hidden and is already in place when switched to.
+  const viewLayerSx = (active: boolean) => ({
+    position: "absolute" as const,
+    inset: 0,
+    display: "flex",
+    flexDirection: "column" as const,
+    minHeight: 0,
+    overflow: "hidden",
+    visibility: active ? ("visible" as const) : ("hidden" as const),
+    pointerEvents: active ? ("auto" as const) : ("none" as const),
+    zIndex: active ? 1 : 0,
+  });
 
   return (
     <Box
       sx={{
         width: "100%",
         height: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        bgcolor: "background.default",
       }}
     >
-      <Container
-        style={{ height: "100%", display: "flex", overflow: "hidden" }}
+      <Head>
+        <title>Clusters | 1Ontology</title>
+      </Head>
+      <Box
+        component="header"
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          flexWrap: { xs: "wrap", md: "nowrap" },
+          columnGap: 2,
+          rowGap: 1.25,
+          px: { xs: 1.5, sm: 2.5 },
+          py: 1.5,
+          borderBottom: "1px solid",
+          borderColor: subtleBorder,
+        }}
       >
-        <Section
-          minSize={250}
-          style={{
-            height: "100%",
-            display: "flex",
-            flexDirection: "column",
-            minHeight: 0,
-            overflow: "hidden",
+        <Box sx={{ minWidth: 0, flexShrink: 0 }}>
+          <Typography
+            component="h1"
+            sx={{ fontSize: 17, fontWeight: 700, lineHeight: 1.2 }}
+          >
+            Clusters
+          </Typography>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ display: "block", lineHeight: 1.3 }}
+          >
+            {nodeCount.toLocaleString()} nodes
+          </Typography>
+        </Box>
+        <Autocomplete<SearchOption, false, false, false>
+          options={searchResults}
+          filterOptions={(options) => options}
+          value={searchValue}
+          inputValue={searchInput}
+          onInputChange={(_, value) => setSearchInput(value)}
+          onChange={(_, option) => {
+            setSearchValue(option);
+            if (option) navigateTo(option.id);
           }}
+          getOptionLabel={(option) => option.title}
+          isOptionEqualToValue={(a, b) => a.id === b.id}
+          forcePopupIcon={false}
+          noOptionsText={
+            searchQuery.length < 2
+              ? "Type at least 2 characters to search"
+              : "No nodes match this search"
+          }
+          renderOption={(props, option) => {
+            const { key, ...optionProps } = props as typeof props & {
+              key: string;
+            };
+            return (
+              <Box
+                component="li"
+                key={option.id}
+                {...optionProps}
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "flex-start !important",
+                  gap: 0.25,
+                  py: "8px !important",
+                  px: "14px !important",
+                }}
+              >
+                <Typography variant="body2" sx={{ lineHeight: 1.35 }}>
+                  <HighlightedText text={option.title} query={searchQuery} />
+                </Typography>
+                {option.parentTitle && (
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ lineHeight: 1.3 }}
+                  >
+                    under {option.parentTitle}
+                  </Typography>
+                )}
+              </Box>
+            );
+          }}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              placeholder="Search nodes"
+              inputProps={{ ...params.inputProps, "aria-label": "Search nodes" }}
+              InputProps={{
+                ...params.InputProps,
+                startAdornment: (
+                  <InputAdornment position="start" sx={{ ml: 0.5, mr: 0 }}>
+                    <SearchRoundedIcon
+                      sx={{ fontSize: 20, color: "text.secondary" }}
+                    />
+                  </InputAdornment>
+                ),
+              }}
+            />
+          )}
+          slotProps={{
+            paper: {
+              sx: {
+                mt: 0.75,
+                borderRadius: "12px",
+                border: "1px solid",
+                borderColor: subtleBorder,
+                boxShadow: "0 12px 32px rgba(0,0,0,0.28)",
+              },
+            },
+            listbox: { sx: { maxHeight: 420, py: 0.5 } },
+          }}
+          sx={{
+            order: { xs: 3, md: 0 },
+            flexBasis: { xs: "100%", md: "auto" },
+            flexGrow: 1,
+            maxWidth: { md: 520 },
+            mx: { md: "auto" },
+            "& .MuiOutlinedInput-root": {
+              height: 38,
+              py: "0 !important",
+              pl: 1,
+              borderRadius: "999px",
+              bgcolor: (t) =>
+                t.palette.mode === "dark"
+                  ? alpha("#ffffff", 0.06)
+                  : alpha("#000000", 0.04),
+              "& fieldset": { borderColor: "transparent" },
+              "&:hover fieldset": {
+                borderColor: (t) => alpha(t.palette.text.primary, 0.18),
+              },
+              "&.Mui-focused fieldset": {
+                borderColor: ACCENT,
+                borderWidth: "1px",
+              },
+            },
+            "& .MuiAutocomplete-input": { fontSize: 14 },
+          }}
+        />
+        <ToggleButtonGroup
+          value={view}
+          exclusive
+          size="small"
+          onChange={(_, value: ClustersView | null) => {
+            if (value) setView(value);
+          }}
+          aria-label="View"
+          sx={{
+            ml: { xs: "auto", md: 0 },
+            flexShrink: 0,
+            borderRadius: "999px",
+            height: 38,
+            p: "3px",
+            boxSizing: "border-box",
+            background: (t) =>
+              t.palette.mode === "dark"
+                ? alpha("#ffffff", 0.06)
+                : alpha("#000000", 0.05),
+            "& .MuiToggleButtonGroup-grouped": {
+              border: "none",
+            },
+            "& .MuiToggleButton-root": {
+              border: "none",
+              borderRadius: "999px !important",
+              px: 1.75,
+              py: 0,
+              height: "100%",
+              gap: 0.75,
+              textTransform: "none",
+              fontSize: "13px",
+              fontWeight: 600,
+              lineHeight: 1,
+              color: "text.secondary",
+              "&.Mui-selected": {
+                color: "#ffffff",
+                background: ACCENT_GRADIENT,
+                "&:hover": { background: ACCENT_GRADIENT },
+              },
+            },
+          }}
+        >
+          <ToggleButton value="outline">
+            <AccountTreeOutlinedIcon sx={{ fontSize: 17 }} />
+            Outline
+          </ToggleButton>
+          <ToggleButton value="graph">
+            <HubOutlinedIcon sx={{ fontSize: 17 }} />
+            Graph
+          </ToggleButton>
+        </ToggleButtonGroup>
+      </Box>
+      <Box
+        component="main"
+        sx={{
+          position: "relative",
+          flex: 1,
+          minHeight: 0,
+          m: { xs: 1, sm: 1.5 },
+        }}
+      >
+        <Box
+          sx={viewLayerSx(view === "outline")}
+          aria-hidden={view !== "outline"}
         >
           <DraggableTree
             treeViewData={treeData}
@@ -776,42 +1121,25 @@ function OntTree() {
             treeType="oNet"
             appName=""
             specializationNumsUnder={{}}
+            selectAlign="center"
           />
-        </Section>
-        <Bar
-          size={10}
-          style={{
-            background: "transparent",
-            cursor: "col-resize",
-            position: "relative",
-          }}
+        </Box>
+        <Box
+          sx={{ ...viewLayerSx(view === "graph"), ...viewCardSx }}
+          aria-hidden={view !== "graph"}
         >
-          <SettingsEthernetIcon
-            sx={{
-              position: "absolute",
-              top: "50%",
-              left: "50%",
-              transform: "translate(-50%, -50%)",
-              color: (theme) =>
-                theme.palette.mode === "dark"
-                  ? theme.palette.common.gray50
-                  : theme.palette.common.notebookMainBlack,
-              borderRadius: "50%",
-              ":hover": {
-                backgroundColor: "orange",
-              },
-            }}
-          />
-        </Bar>
-        <Section minSize={250} style={{ height: "100%", overflow: "hidden" }}>
           <GraphView
             treeData={graphTreeData as any}
             expandedNodes={expandedNodes}
             setExpandedNodes={setExpandedNodes}
             onOpenNodeDagre={onGraphSelect}
             currentVisibleNode={currentVisibleNode}
+            maxLabelChars={GRAPH_LABEL_MAX_CHARS}
+            height="100%"
+            maxFitScale={1}
           />
-        </Section>
+          <GraphHint />
+        </Box>
         {/*  <Box
           sx={{
             width: isExpanded ? "20%" : "2%",
@@ -855,7 +1183,7 @@ function OntTree() {
             </Box>
           )}
         </Box> */}
-      </Container>
+      </Box>
     </Box>
   );
 }

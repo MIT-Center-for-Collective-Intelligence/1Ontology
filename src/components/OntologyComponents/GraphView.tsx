@@ -15,6 +15,41 @@ type GraphViewProps = {
   expandedNodes: Set<string>;
   onOpenNodeDagre: (ontologyId: string, nodeTitle?: string) => void;
   currentVisibleNode: { id?: string } | null;
+  /** When set, labels wrap onto new lines after about this many characters. */
+  maxLabelChars?: number;
+  /** SVG height; defaults to 1000px. Pass "100%" to fill the parent. */
+  height?: number | string;
+  /** When set, the initial fit-to-screen zoom never goes above this scale. */
+  maxFitScale?: number;
+};
+
+// Breaks a label into lines of at most `maxChars` characters, at spaces where
+// possible (overlong words are cut). dagre-d3 draws each "\n" as a new line.
+const wrapLabel = (text: string, maxChars: number): string => {
+  const lines: string[] = [];
+  let line: string[] = [];
+  for (const word of (text || "").split(/\s+/).filter(Boolean)) {
+    let chars = Array.from(word);
+    while (chars.length > maxChars) {
+      if (line.length > 0) {
+        lines.push(line.join(""));
+        line = [];
+      }
+      lines.push(chars.slice(0, maxChars).join(""));
+      chars = chars.slice(maxChars);
+    }
+    const next = line.length > 0 ? [...line, " ", ...chars] : chars;
+    if (next.length <= maxChars) {
+      line = next;
+    } else {
+      lines.push(line.join(""));
+      line = chars;
+    }
+  }
+  if (line.length > 0) {
+    lines.push(line.join(""));
+  }
+  return lines.join("\n");
 };
 
 const SVG_HEIGHT = 1000;
@@ -36,6 +71,9 @@ const GraphView = ({
   setExpandedNodes,
   onOpenNodeDagre,
   currentVisibleNode,
+  maxLabelChars,
+  height = SVG_HEIGHT,
+  maxFitScale,
 }: GraphViewProps) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [graph, setGraph] = useState<any>(null);
@@ -226,7 +264,9 @@ const GraphView = ({
       if (!graphRef.hasNode(nodeId)) {
         // If the node doesn't exist, add it to the graph with specified properties.
         graphRef.setNode(nodeId, {
-          label: node.name, // Use node name as the label for the node.
+          label: maxLabelChars
+            ? wrapLabel(node.name, maxLabelChars)
+            : node.name,
           style: getNodeStyle(node, nodeId),
           labelStyle: `fill: ${"black"}; cursor: pointer;`, // Set style for the node label.
           shape: "rect", // Set the shape to rectangle
@@ -255,7 +295,7 @@ const GraphView = ({
         }
       }
     },
-    [expandedNodes, getNodeId, getNodeStyle],
+    [expandedNodes, getNodeId, getNodeStyle, maxLabelChars],
   );
 
   // Helper function to find all ancestor node IDs for a target node
@@ -471,7 +511,11 @@ const GraphView = ({
     const graphWidth = graph.graph().width + 50;
     const graphHeight = graph.graph().height + 50;
 
-    const zoomScale = Math.min(svgWidth / graphWidth, svgHeight / graphHeight);
+    const zoomScale = Math.min(
+      svgWidth / graphWidth,
+      svgHeight / graphHeight,
+      maxFitScale ?? Infinity,
+    );
     const defaultTranslateX = (svgWidth - graphWidth * zoomScale) / 2;
     const defaultTranslateY = (svgHeight - graphHeight * zoomScale) / 2;
 
@@ -536,6 +580,7 @@ const GraphView = ({
     setExpandedNodes,
     treeData,
     updateZoomState,
+    maxFitScale,
   ]);
 
   useEffect(() => {
@@ -594,7 +639,7 @@ const GraphView = ({
     return;
   }, [centerNodeTransform, currentVisibleNode?.id, graph, updateZoomState]);
 
-  return <svg id="graphGroup" ref={svgRef} width="100%" height={SVG_HEIGHT} />;
+  return <svg id="graphGroup" ref={svgRef} width="100%" height={height} />;
 };
 
 export default GraphView;

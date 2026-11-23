@@ -60,6 +60,7 @@ function OutlineView({
   onOutlineNodeOpen,
   nodesWithComments = EMPTY_SET,
   searchTerm = "",
+  selectAlign = "auto",
 }: {
   treeViewData: any;
   setSnackbarMessage: any;
@@ -79,6 +80,7 @@ function OutlineView({
   onOutlineNodeOpen?: (node: NodeApi<PaginatedTreeData>) => Promise<void>;
   nodesWithComments?: Set<string>;
   searchTerm?: string;
+  selectAlign?: "auto" | "smart" | "center" | "end" | "start";
 }) {
   const db = getFirestore();
   const [{ user }] = useAuth();
@@ -466,6 +468,27 @@ function OutlineView({
     [treeRef, nodePathIndex],
   );
 
+
+  const alignRow = useCallback(
+    (treeId: string, align: NonNullable<typeof selectAlign>) => {
+      const tree = treeRef.current as any;
+      if (!tree) return;
+      if (align !== "center") {
+        tree.scrollTo(treeId, align);
+        return;
+      }
+      const index = tree.idToIndex?.[treeId];
+      const list = tree.list?.current;
+      if (index === undefined || !list) return;
+      const paddingTop = tree.props?.paddingTop ?? 0;
+      const rowTop = paddingTop + index * tree.rowHeight;
+      list.scrollTo(
+        Math.max(0, rowTop - (tree.height - tree.rowHeight) / 2),
+      );
+    },
+    [treeRef],
+  );
+
   // Track whether the last navigation attempt needs to wait for new treeData.
   const expansionPendingForTreeData = useRef(false);
   // Track the node id we last scrolled/selected to. Used to distinguish a real
@@ -528,8 +551,14 @@ function OutlineView({
         // Select the first occurrence found
         const treeId = paths[0][paths[0].length - 1];
         if (isNewNavigation) {
-          tree.select(treeId, { align: "auto" });
+          tree.select(treeId, { align: selectAlign });
           lastScrolledNodeIdRef.current = targetNodeId;
+          if (selectAlign !== "auto") {
+            // Align again once the list has rendered the rows just opened.
+            requestAnimationFrame(() =>
+              requestAnimationFrame(() => alignRow(treeId, selectAlign)),
+            );
+          }
         }
         expansionPendingForTreeData.current = false;
       } else {
@@ -552,6 +581,8 @@ function OutlineView({
     expandNodeById,
     findNodesByNodeId,
     treeData,
+    selectAlign,
+    alignRow,
   ]);
 
   // Retry expansion when tab becomes visible, window gains focus, or the URL
@@ -574,7 +605,7 @@ function OutlineView({
         if (tree && currentVisibleNode?.id) {
           const targetNodes = findNodesByNodeId(tree, currentVisibleNode.id);
           if (targetNodes.length > 0) {
-            tree.select(targetNodes[0].id, { align: "auto" });
+            tree.select(targetNodes[0].id, { align: selectAlign });
             lastScrolledNodeIdRef.current = currentVisibleNode.id;
           }
         }
@@ -606,7 +637,13 @@ function OutlineView({
       window.removeEventListener("focus", handleWindowFocus);
       window.removeEventListener("hashchange", handleHashChange);
     };
-  }, [treeRef, expandNodeById, findNodesByNodeId, currentVisibleNode?.id]);
+  }, [
+    treeRef,
+    expandNodeById,
+    findNodesByNodeId,
+    currentVisibleNode?.id,
+    selectAlign,
+  ]);
 
   useEffect(() => {
     const tree = treeRef.current;
@@ -1084,8 +1121,11 @@ function OutlineView({
     const indentSize = Number.parseFloat(`${style.paddingLeft || 0}`);
     const inputRef = useRef<HTMLInputElement>(null);
     const isLoading = loadingStates.has(node.data.id);
+    // Category rows (collections) share their parent's nodeId, so they are not
+    // highlighted unless the row opts in (a category that is a node itself).
     const isActiveNode =
-      node.data.nodeId === currentVisibleNode?.id && !node.data.category;
+      node.data.nodeId === currentVisibleNode?.id &&
+      (!node.data.category || !!(node.data as any).highlightWhenActive);
 
     if (node.data.isLoadingPlaceholder) {
       const width = node.data.id.endsWith("-1")
