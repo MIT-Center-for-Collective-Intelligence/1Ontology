@@ -38,6 +38,8 @@ import GraphView from "@components/components/OntologyComponents/GraphView";
 import CopyTitleButton from "@components/components/OntologyComponents/CopyTitleButton";
 import { SCROLL_BAR_STYLE } from "@components/lib/CONSTANTS";
 import { usePageVisitLog } from "@components/lib/hooks/usePageVisitLog";
+import { useAuth } from "@components/components/context/AuthContext";
+import withAuthUser from "@components/components/hoc/withAuthUser";
 
 /** The search dropdown's background (the theme's Paper colors, made explicit). */
 const searchPaperBg = (t: Theme) =>
@@ -766,6 +768,7 @@ const GraphHint = () => (
 
 function OntTree() {
   const logEvent = usePageVisitLog();
+  const [{ isAuthenticated, isAuthInitialized }] = useAuth();
   const db = getFirestore();
   const [view, setView] = useState<ClustersView>("outline");
   const [searchInput, setSearchInput] = useState("");
@@ -1090,8 +1093,9 @@ function OntTree() {
   };
 
   useEffect(() => {
+    if (!isAuthInitialized || !isAuthenticated) return;
     getData();
-  }, []);
+  }, [isAuthInitialized, isAuthenticated]);
 
   const handleDragStart = (
     event: React.DragEvent<HTMLDivElement>,
@@ -1508,4 +1512,7 @@ function OntTree() {
   );
 }
 
-export default OntTree;
+export default withAuthUser({
+  shouldRedirectToLogin: true,
+  shouldRedirectToHomeIfAuthenticated: false,
+})(OntTree);
