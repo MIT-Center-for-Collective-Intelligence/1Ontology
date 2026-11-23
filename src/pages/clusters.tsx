@@ -211,6 +211,8 @@ type TreeRow = {
   childCount?: number;
   /** Doc ids above this row on its branch (used for cycle checks). */
   ancestorIds?: string[];
+  /** Graph expansion keys (doc ids and `${docId}-${collection}`) that make this row visible in the graph. */
+  graphKeys?: string[];
   outlineLoadChildren?: boolean;
   hasUnresolvedChildren?: boolean;
 };
@@ -274,6 +276,7 @@ const makeRow = (
   id: string,
   ancestorIds: string[],
   nodesById: Record<string, any>,
+  graphKeys: string[],
 ): TreeRow => {
   const { collections, main } = getChildGroups(
     doc,
@@ -294,6 +297,7 @@ const makeRow = (
     comments: !!doc.comments,
     childCount,
     ancestorIds,
+    graphKeys,
     outlineLoadChildren: childCount > 0,
     hasUnresolvedChildren: childCount > 0,
   };
@@ -307,6 +311,8 @@ const expandRow = (row: TreeRow, nodesById: Record<string, any>): TreeRow => {
     return { ...row, outlineLoadChildren: false, hasUnresolvedChildren: false };
   }
   const ancestorIds = [...(row.ancestorIds || []), doc.id];
+  // In the graph, children show once this doc (and their collection) is expanded.
+  const childGraphKeys = [...(row.graphKeys || []), doc.id];
   const { collections, main } = getChildGroups(
     doc,
     nodesById,
@@ -315,9 +321,16 @@ const expandRow = (row: TreeRow, nodesById: Record<string, any>): TreeRow => {
   const children: TreeRow[] = [
     ...collections.map(({ name, docs }) => {
       const collectionId = `${row.id}-${name}`;
+      const memberGraphKeys = [...childGraphKeys, graphCollectionKey(doc.id, name)];
       const members = sortRows(
         docs.map((child) =>
-          makeRow(child, `${collectionId}-${child.id}`, ancestorIds, nodesById),
+          makeRow(
+            child,
+            `${collectionId}-${child.id}`,
+            ancestorIds,
+            nodesById,
+            memberGraphKeys,
+          ),
         ),
       );
       return {
@@ -329,11 +342,18 @@ const expandRow = (row: TreeRow, nodesById: Record<string, any>): TreeRow => {
         actionAlternatives: doc.actionAlternatives,
         category: true,
         childCount: members.length,
+        graphKeys: childGraphKeys,
       };
     }),
     ...sortRows(
       main.map((child) =>
-        makeRow(child, `${row.id}-${child.id}`, ancestorIds, nodesById),
+        makeRow(
+          child,
+          `${row.id}-${child.id}`,
+          ancestorIds,
+          nodesById,
+          childGraphKeys,
+        ),
       ),
     ),
   ];
@@ -353,6 +373,7 @@ const buildOutline = (nodesById: Record<string, any>): TreeRow[] =>
         doc.title.toLowerCase() === "act" ? "root" : doc.id,
         [],
         nodesById,
+        [],
       ),
       nodesById,
     ),
@@ -376,6 +397,137 @@ const mapRowAtId = (
     }
     return row;
   });
+
+const findRow = (rows: TreeRow[], targetId: string): TreeRow | undefined => {
+  for (const row of rows) {
+    if (row.id === targetId) {
+      return row;
+    }
+    if (
+      row.children.length > 0 &&
+      (row.id === "root" || targetId.startsWith(`${row.id}-`))
+    ) {
+      const found = findRow(row.children, targetId);
+      if (found) {
+        return found;
+      }
+    }
+  }
+  return undefined;
+};
+
+/** The graph's expansion key for a named collection under a doc. */
+const graphCollectionKey = (docId: string, collectionName: string) =>
+  `${docId}-${collectionName}`;
+
+/** One step down a path: the doc, and the parent's collection it sits in (null = main). */
+type PathStep = { docId: string; collectionName: string | null };
+type ParentLink = { parentId: string; collectionName: string | null };
+
+// child id -> the docs that list it in their specializations (what the outline uses).
+const buildParentIndex = (nodesById: Record<string, any>) => {
+  const parentsOf: Record<string, ParentLink[]> = {};
+  for (const doc of Object.values(nodesById)) {
+    for (const collection of doc.specializations || []) {
+      const collectionName =
+        collection.collectionName && collection.collectionName !== "main"
+          ? collection.collectionName
+          : null;
+      for (const link of collection.nodes || []) {
+        if (nodesById[link.id] && link.id !== doc.id) {
+          (parentsOf[link.id] ||= []).push({ parentId: doc.id, collectionName });
+        }
+      }
+    }
+  }
+  return parentsOf;
+};
+
+// Shortest path from a root down to `targetId`. Links that pass `isPreferred`
+// are tried first, so the path follows what the user already has open.
+const findPathFromRoot = (
+  targetId: string,
+  parentsOf: Record<string, ParentLink[]>,
+  rootIds: Set<string>,
+  isPreferred: (link: ParentLink) => boolean,
+): PathStep[] | null => {
+  if (rootIds.has(targetId)) {
+    return [{ docId: targetId, collectionName: null }];
+  }
+  const search = (allow: (link: ParentLink) => boolean) => {
+    // parent id -> the step from that parent down toward the target.
+    const down = new Map<string, PathStep>();
+    const visited = new Set([targetId]);
+    let queue = [targetId];
+    while (queue.length > 0) {
+      const nextQueue: string[] = [];
+      for (const childId of queue) {
+        for (const link of parentsOf[childId] || []) {
+          if (!allow(link) || visited.has(link.parentId)) continue;
+          visited.add(link.parentId);
+          down.set(link.parentId, {
+            docId: childId,
+            collectionName: link.collectionName,
+          });
+          if (rootIds.has(link.parentId)) {
+            const path: PathStep[] = [
+              { docId: link.parentId, collectionName: null },
+            ];
+            let current = link.parentId;
+            while (current !== targetId) {
+              const step = down.get(current)!;
+              path.push(step);
+              current = step.docId;
+            }
+            return path;
+          }
+          nextQueue.push(link.parentId);
+        }
+      }
+      queue = nextQueue;
+    }
+    return null;
+  };
+  return search(isPreferred) ?? search(() => true);
+};
+
+/** Graph keys that must be expanded to show the last doc of `path`. */
+const graphKeysForPath = (path: PathStep[]) =>
+  path.slice(1).flatMap((step, i) => {
+    const parentId = path[i].docId;
+    return step.collectionName
+      ? [parentId, graphCollectionKey(parentId, step.collectionName)]
+      : [parentId];
+  });
+
+// Builds the outline rows along `path` (expanding each one) so its last doc
+// has a row the outline can select. Returns the new rows and that row's id.
+const revealPath = (
+  rows: TreeRow[],
+  path: PathStep[],
+  nodesById: Record<string, any>,
+): { rows: TreeRow[]; rowId: string | null } => {
+  const rootRow = rows.find(
+    (row) => row.nodeId === path[0].docId && !row.category,
+  );
+  if (!rootRow) {
+    return { rows, rowId: null };
+  }
+  let rowId = rootRow.id;
+  for (const step of path.slice(1)) {
+    rows = mapRowAtId(rows, rowId, (row) =>
+      row.outlineLoadChildren ? expandRow(row, nodesById) : row,
+    );
+    const childId = step.collectionName
+      ? `${rowId}-${step.collectionName}-${step.docId}`
+      : `${rowId}-${step.docId}`;
+    if (!findRow(rows, childId)) {
+      break;
+    }
+    rowId = childId;
+  }
+  return { rows, rowId };
+};
 
 // Graph tree: one entry per doc (GraphView merges copies by nodeId anyway).
 // Children are built only for expanded nodes; collapsed nodes get lightweight
@@ -439,83 +591,6 @@ const buildGraphTree = (
   return rootDocs.map(build);
 };
 
-// TEMPORARY (dev only): explains why non-O*NET nodes show up as outline leaves.
-// Remove once the data question is settled.
-const logLeafDiagnostics = (nodesById: Record<string, any>) => {
-  const linkedIds = (doc: any, field: "specializations" | "generalizations") =>
-    (doc?.[field] || []).flatMap((collection: any) =>
-      (collection.nodes || []).map((link: { id: string }) => link.id),
-    );
-
-  // Children found from the other direction: docs that name X as a parent.
-  const pointsUpTo: Record<string, string[]> = {};
-  for (const doc of Object.values(nodesById)) {
-    for (const parentId of linkedIds(doc, "generalizations")) {
-      (pointsUpTo[parentId] ||= []).push(doc.id);
-    }
-  }
-
-  const ancestorsOf = (id: string) => {
-    const seen = new Set<string>();
-    const stack = [...linkedIds(nodesById[id], "generalizations")];
-    while (stack.length > 0 && seen.size < 10_000) {
-      const next = stack.pop()!;
-      if (seen.has(next)) continue;
-      seen.add(next);
-      stack.push(...linkedIds(nodesById[next], "generalizations"));
-    }
-    return seen;
-  };
-
-  const rows: Record<string, string | number>[] = [];
-  for (const doc of Object.values(nodesById)) {
-    if (doc.oNetTask) continue;
-    const links = linkedIds(doc, "specializations");
-    const existing = links.filter((id: string) => nodesById[id] && id !== doc.id);
-    const ancestors = ancestorsOf(doc.id);
-    const usable = existing.filter((id: string) => !ancestors.has(id));
-    if (usable.length > 0) continue;
-
-    const listed = new Set(links);
-    const unlisted = (pointsUpTo[doc.id] || []).filter((id) => !listed.has(id));
-    let reason = "no specializations listed";
-    if (links.length > 0 && existing.length === 0) {
-      reason = "specializations point to missing docs";
-    } else if (existing.length > 0) {
-      reason = "specializations only point to its own ancestors (cycle)";
-    }
-    rows.push({
-      title: doc.title,
-      id: doc.id,
-      reason,
-      linksInSpecializations: links.length,
-      missingIds: links.filter((id: string) => !nodesById[id]).join(", "),
-      cycleTitles: existing
-        .filter((id: string) => ancestors.has(id))
-        .map((id: string) => nodesById[id]?.title)
-        .join(", "),
-      docsNamingItAsParent: unlisted.length,
-      oNetDocsNamingItAsParent: unlisted.filter((id) => nodesById[id]?.oNetTask)
-        .length,
-    });
-  }
-
-  const byReason = rows.reduce<Record<string, number>>((acc, row) => {
-    const key = String(row.reason);
-    acc[key] = (acc[key] || 0) + 1;
-    return acc;
-  }, {});
-  const withHiddenONet = rows.filter(
-    (row) => Number(row.oNetDocsNamingItAsParent) > 0,
-  ).length;
-  console.log(
-    `[clusters] ${rows.length} non-O*NET nodes have no children in the outline`,
-    byReason,
-    `| ${withHiddenONet} of them have O*NET docs that name them as a parent (in generalizations) but aren't in their specializations`,
-  );
-  console.table(rows);
-};
-
 function OntTree() {
   const db = getFirestore();
   const [treeData, setTreeData] = useState<TreeRow[]>([]);
@@ -526,14 +601,60 @@ function OntTree() {
   const [expandDefault, setExpandDefault] = useState("");
   const treeRef = useRef<TreeApi<TreeData>>(null);
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
-  // Shared selection: clicking a node in either view highlights it in both.
+  // Shared selection: selecting a node in either view navigates the other to it.
   const [currentVisibleNode, setCurrentVisibleNode] = useState<{
     id: string;
   } | null>(null);
 
-  const openNode = useCallback((nodeId: string) => {
-    setCurrentVisibleNode({ id: nodeId });
-  }, []);
+  const rootDocs = useMemo(() => getRootDocs(nodesById), [nodesById]);
+  const rootIds = useMemo(
+    () => new Set<string>(rootDocs.map((doc: any) => doc.id)),
+    [rootDocs],
+  );
+  const parentsOf = useMemo(() => buildParentIndex(nodesById), [nodesById]);
+
+  // Outline -> graph: open the graph nodes/collections on the clicked row's path.
+  const onOutlineSelect = useCallback(
+    (nodeId: string, _name?: string, row?: TreeRow) => {
+      const keys =
+        row?.graphKeys ??
+        graphKeysForPath(
+          findPathFromRoot(nodeId, parentsOf, rootIds, () => true) || [],
+        );
+      if (keys.length > 0) {
+        setExpandedNodes((prev) => {
+          const next = new Set(prev);
+          keys.forEach((key) => next.add(key));
+          return next;
+        });
+      }
+      setCurrentVisibleNode({ id: nodeId });
+    },
+    [parentsOf, rootIds],
+  );
+
+  // Graph -> outline: build the outline rows down to the clicked node, following
+  // the links the graph has open, so the outline can select and scroll to it.
+  const onGraphSelect = useCallback(
+    (nodeId: string) => {
+      const path = findPathFromRoot(
+        nodeId,
+        parentsOf,
+        rootIds,
+        (link) =>
+          expandedNodes.has(link.parentId) &&
+          (!link.collectionName ||
+            expandedNodes.has(
+              graphCollectionKey(link.parentId, link.collectionName),
+            )),
+      );
+      if (path) {
+        setTreeData((prev) => revealPath(prev, path, nodesById).rows);
+      }
+      setCurrentVisibleNode({ id: nodeId });
+    },
+    [expandedNodes, nodesById, parentsOf, rootIds],
+  );
 
   // Builds the next level of the outline when a collapsed row is opened.
   const onOutlineNodeOpen = useCallback(
@@ -549,7 +670,6 @@ function OntTree() {
     [nodesById],
   );
 
-  const rootDocs = useMemo(() => getRootDocs(nodesById), [nodesById]);
   const graphTreeData = useMemo(
     () => buildGraphTree(rootDocs, nodesById, expandedNodes),
     [rootDocs, nodesById, expandedNodes],
@@ -575,9 +695,6 @@ function OntTree() {
       }
     });
     setExpandDefault(actId);
-    if (process.env.NODE_ENV === "development") {
-      logLeafDiagnostics(nodes);
-    }
     setNodesById(nodes);
     setTreeData(buildOutline(nodes));
     setLoading(false);
@@ -653,7 +770,7 @@ function OntTree() {
             setSnackbarMessage={() => {}}
             currentVisibleNode={currentVisibleNode}
             nodes={{}}
-            onOpenNodesTree={openNode}
+            onOpenNodesTree={onOutlineSelect}
             onOutlineNodeOpen={onOutlineNodeOpen as any}
             treeRef={treeRef}
             treeType="oNet"
@@ -691,7 +808,7 @@ function OntTree() {
             treeData={graphTreeData as any}
             expandedNodes={expandedNodes}
             setExpandedNodes={setExpandedNodes}
-            onOpenNodeDagre={openNode}
+            onOpenNodeDagre={onGraphSelect}
             currentVisibleNode={currentVisibleNode}
           />
         </Section>

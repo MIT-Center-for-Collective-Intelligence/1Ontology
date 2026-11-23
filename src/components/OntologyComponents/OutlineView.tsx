@@ -1448,7 +1448,7 @@ function OutlineView({
                   }
                   isTreeClickRef.current = true;
                   treeActivatedNodeIdRef.current = node.data.nodeId;
-                  onOpenNodesTree(node.data.nodeId, node.data.name);
+                  onOpenNodesTree(node.data.nodeId, node.data.name, node.data);
                   // Selecting a node should also expand it (and lazy-load children if needed).
                   if (!node.isOpen) {
                     ensureExpandedWithLazyLoad(node as any);
