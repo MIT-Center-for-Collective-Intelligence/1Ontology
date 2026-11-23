@@ -158,3 +158,26 @@ test("restores a prior review and confirms before discarding an edited case", as
     confirm.mockRestore();
   }
 });
+
+test.each([
+  ["first", "/api/som-review/grouping-review"],
+  ["second", "/api/som-review/grouping-review-round-2"],
+] as const)("grouping round %s asks for a decision and saves to its own route", async (groupingRound, endpoint) => {
+  const groupingCase = { ...firstCase, groups: [], reason: "" };
+  const categorization = { rating: "not_acceptable", comment: "Separate descriptions 1 and 2." };
+  mockFetch
+    .mockResolvedValueOnce(reply({ ...session, cases: [groupingCase] }))
+    .mockResolvedValueOnce(reply({ ...answer, titles: {}, categorization }));
+  render(<MultiSourceReview groupingRound={groupingRound} />);
+  await screen.findByText("Inspect production equipment for wear.");
+  expect(screen.getAllByRole("radiogroup")).toHaveLength(1);
+  fireEvent.click(radio("Decision", "Split"));
+  fireEvent.click(screen.getByRole("button", {name: "Save review"}));
+  expect(await screen.findByText("Give a brief reason for your decision.")).toBeInTheDocument();
+  fireEvent.change(screen.getByRole("textbox", { name: /Brief reason/ }), { target: {value: categorization.comment} });
+  fireEvent.click(screen.getByRole("button", {name: "Save review"}));
+  await screen.findByText("Review saved.");
+  expect(mockFetch.mock.calls[0][0]).toBe(endpoint);
+  expect(mockFetch.mock.calls[1][0]).toBe(endpoint);
+  expect(JSON.parse(mockFetch.mock.calls[1][1].body)).toMatchObject({titles: {}, categorization});
+});

@@ -9,8 +9,10 @@
     "src/components/SomReview/QuickTitleVerification.tsx",
     "src/pages/review/title-validation.tsx",
     "src/pages/review/multi-source-title-review.tsx",
+    "src/pages/review/grouping-review*.tsx",
     "src/pages/api/som-review/title-validation/*.ts",
     "src/pages/api/som-review/multi-source-title-review.ts",
+    "src/pages/api/som-review/grouping-review*.ts",
     "__tests__/lib/titleValidation/**/*.ts",
     "__tests__/components/SomReview/HumanTitleValidation.test.tsx",
     "__tests__/components/SomReview/QuickTitleVerification.test.tsx"
