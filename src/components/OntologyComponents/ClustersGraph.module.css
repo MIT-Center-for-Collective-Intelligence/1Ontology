@@ -1,0 +1,92 @@
+.node {
+  position: relative;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  padding: 10px 14px;
+  border-radius: 22px;
+  border: 1px solid rgba(0, 0, 0, 0.22);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  color: #111;
+  font: 500 14px/18px Roboto, "Helvetica Neue", Arial, sans-serif;
+  cursor: pointer;
+  transition: box-shadow 120ms ease;
+}
+
+.node:hover {
+  box-shadow: 0 0 0 2px rgba(255, 138, 31, 0.55), 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+.selected {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.85), 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.label {
+  white-space: pre;
+}
+
+.handle {
+  width: 1px !important;
+  height: 1px !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  border: none !important;
+  background: transparent !important;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.badge {
+  position: absolute;
+  left: calc(100% + 6px);
+  top: 50%;
+  transform: translateY(-50%);
+  min-width: 22px;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 9px;
+  border: 1px solid #e5e7eb;
+  background: #1f2937;
+  color: #f9fafb;
+  font: 700 10px/16px Roboto, "Helvetica Neue", Arial, sans-serif;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.badge:hover {
+  background: #ff8a1f;
+  border-color: #ff8a1f;
+}
+
+.copy {
+  position: absolute !important;
+  top: -12px;
+  right: -10px;
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.node:hover .copy,
+.copy:focus-visible {
+  opacity: 1;
+}
+
+.pulse {
+  position: absolute;
+  inset: -3px;
+  border-radius: 25px;
+  border: 3px solid #ff8a1f;
+  pointer-events: none;
+  animation: clusters-graph-pulse 900ms ease-out 2;
+}
+
+@keyframes clusters-graph-pulse {
+  from {
+    transform: scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: scale(1.12);
+    opacity: 0;
+  }
+}

@@ -29,6 +29,20 @@ import CopyTitleButton from "./CopyTitleButton";
 
 const COPY_BUTTON_CLASS = "outline-copy-button";
 
+const PULSE_ROW_SX = {
+  animation: "outline-row-pulse 900ms ease-out 2",
+  "@keyframes outline-row-pulse": {
+    "0%": {
+      boxShadow:
+        "inset 0 0 0 2px rgba(255, 138, 31, 0.95), inset 0 0 0 999px rgba(255, 138, 31, 0.18)",
+    },
+    "100%": {
+      boxShadow:
+        "inset 0 0 0 2px rgba(255, 138, 31, 0), inset 0 0 0 999px rgba(255, 138, 31, 0)",
+    },
+  },
+};
+
 const INDENT_STEP = 15;
 const INITIAL_LOAD_COUNT = 20;
 const LOAD_MORE_COUNT = 20;
@@ -65,6 +79,8 @@ function OutlineView({
   searchTerm = "",
   selectAlign = "auto",
   showCopyButton = false,
+  expandAncestorCategories = true,
+  pulse = null,
 }: {
   treeViewData: any;
   setSnackbarMessage: any;
@@ -87,6 +103,8 @@ function OutlineView({
   selectAlign?: "auto" | "smart" | "center" | "end" | "start";
   /** Shows a "copy title" button on hovered rows (and on the selected row). */
   showCopyButton?: boolean;
+  expandAncestorCategories?: boolean;
+  pulse?: { nodeId: string; key: number } | null;
 }) {
   const db = getFirestore();
   const [{ user }] = useAuth();
@@ -456,6 +474,7 @@ function OutlineView({
           const ancestorId = path[i];
           tree.open(ancestorId);
 
+          if (!expandAncestorCategories) continue;
           // Best-effort: also expand categories for this ancestor if we can get the node API
           const ancestorNode = tree.get(ancestorId);
           if (ancestorNode?.children) {
@@ -471,7 +490,7 @@ function OutlineView({
       hasExpandedSuccessfully.current = true;
       pendingExpansionNodeId.current = null;
     },
-    [treeRef, nodePathIndex],
+    [treeRef, nodePathIndex, expandAncestorCategories],
   );
 
 
@@ -494,6 +513,14 @@ function OutlineView({
     },
     [treeRef],
   );
+
+  const lastPulseKeyRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (!pulse || lastPulseKeyRef.current === pulse.key) return;
+    lastPulseKeyRef.current = pulse.key;
+    const path = nodePathIndex.get(pulse.nodeId)?.[0];
+    if (path) alignRow(path[path.length - 1], "center");
+  }, [pulse, nodePathIndex, alignRow]);
 
   // Track whether the last navigation attempt needs to wait for new treeData.
   const expansionPendingForTreeData = useRef(false);
@@ -1132,6 +1159,10 @@ function OutlineView({
     const isActiveNode =
       node.data.nodeId === currentVisibleNode?.id &&
       (!node.data.category || !!(node.data as any).highlightWhenActive);
+    const isPulsing =
+      !!pulse &&
+      node.data.nodeId === pulse.nodeId &&
+      (!node.data.category || !!(node.data as any).highlightWhenActive);
 
     if (node.data.isLoadingPlaceholder) {
       const width = node.data.id.endsWith("-1")
@@ -1285,8 +1316,8 @@ function OutlineView({
           [styles.activeNode]: isActiveNode,
         })}
         id={node.data.id}
-        sx={
-          showCopyButton
+        sx={{
+          ...(showCopyButton
             ? {
                 [`& .${COPY_BUTTON_CLASS}`]: {
                   opacity: isActiveNode ? 1 : 0,
@@ -1295,8 +1326,9 @@ function OutlineView({
                 [`&:hover .${COPY_BUTTON_CLASS}, & .${COPY_BUTTON_CLASS}:focus-visible`]:
                   { opacity: 1 },
               }
-            : undefined
-        }
+            : {}),
+          ...(isPulsing ? PULSE_ROW_SX : {}),
+        }}
       >
         <Box className={styles.indentLines}>
           {new Array(indentSize / INDENT_STEP).fill(0).map((_, index) => {
