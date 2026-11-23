@@ -1,6 +1,14 @@
 // import { NODES_ONET } from " @components/lib/firestoreClient/collections";
 import { collection, getDocs, getFirestore, query } from "firebase/firestore";
-import React, { useEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { Bar, Container, Section } from "@column-resizer/react";
+import SettingsEthernetIcon from "@mui/icons-material/SettingsEthernet";
 import { TreeItem } from "@mui/lab";
 import CloseIcon from "@mui/icons-material/Close";
 import WorkspacesIcon from "@mui/icons-material/Workspaces";
@@ -16,6 +24,7 @@ import { TreeApi } from "react-arborist";
 import { INode, TreeData } from "@components/types/INode";
 import DraggableTree from "@components/components/OntologyComponents/OutlineView";
 import FullPageLogoLoading from "@components/components/layouts/FullPageLogoLoading";
+import GraphView from "@components/components/OntologyComponents/GraphView";
 const NODES_ONET = "oNetNodesDecomposed";
 type TreeNode = {
   title: string;
@@ -147,191 +156,430 @@ const domainsEmojis: Record<string, string> = {
   "🐾": "Veterinary Services",
 };
 
-const getTreeView = (
-  mainCategories: any[],
-  visited: Map<string, any> = new Map(),
-  nodes: any,
-  parentId?: string,
-): any => {
-  const newNodes = [];
-  for (let node of mainCategories) {
-    if (!node) {
-      continue;
-    }
+// The hierarchy is a DAG: a node with several parents is shown in full under
+// each of them. Building every copy up front grows multiplicatively and froze
+// the page, so the outline is built lazily (one level per opened node) and the
+// graph only builds the nodes that are expanded in it.
 
-    const specializations = node.specializations;
-    let collections = [];
-    let mainChildren = [];
-    for (let collection of specializations) {
-      const children = [];
-      for (let _node of collection.nodes) {
-        if (nodes[_node.id]) {
-          children.push(nodes[_node.id]);
-        }
+const ROOT_ORDER = [
+  "direct",
+  "engage",
+  "inspire",
+  "provide",
+  "organize",
+  "conduct",
+  "evaluate",
+  "inform",
+  "initiate",
+  "observe",
+  "assist",
+  "request",
+  "log",
+  "alert",
+  "recommend",
+  "redirect",
+  "rank",
+  "toggle",
+  "assume",
+  "utilize",
+  "terminate",
+  "create",
+  "authorize",
+  "distribute",
+  "modify",
+  "combine",
+  "file",
+  "question",
+  "verify",
+  "care",
+  "select",
+  "accompany",
+  "instruct",
+];
+
+type TreeRow = {
+  id: string;
+  nodeId: string;
+  name: string;
+  nodeType?: string;
+  children: TreeRow[];
+  actionAlternatives?: string[];
+  category: boolean;
+  task?: boolean;
+  oNetTask?: boolean;
+  comments?: boolean;
+  childCount?: number;
+  /** Doc ids above this row on its branch (used for cycle checks). */
+  ancestorIds?: string[];
+  outlineLoadChildren?: boolean;
+  hasUnresolvedChildren?: boolean;
+};
+
+const uniqueById = (docs: any[]) => {
+  const seen = new Set<string>();
+  return docs.filter((doc) => !seen.has(doc.id) && !!seen.add(doc.id));
+};
+
+// Splits a doc's specializations into named collections and the main list.
+// Links to missing docs, or to docs already on the branch (cycles), are dropped.
+const getChildGroups = (
+  doc: any,
+  nodesById: Record<string, any>,
+  branch: Set<string>,
+) => {
+  const collections: { name: string; docs: any[] }[] = [];
+  const main: any[] = [];
+  for (const collection of doc.specializations || []) {
+    const docs = (collection.nodes || [])
+      .map((link: { id: string }) => nodesById[link.id])
+      .filter((child: any) => child && !branch.has(child.id));
+    if (collection.collectionName && collection.collectionName !== "main") {
+      if (docs.length > 0) {
+        collections.push({ name: collection.collectionName, docs: uniqueById(docs) });
       }
-
-      // if (children.length > 0) {
-      if (collection.collectionName !== "main" && collection.collectionName) {
-        const id = parentId
-          ? `${parentId}-${node.id}-${collection.collectionName}`
-          : `${node.id}-${collection.collectionName}`;
-        if (visited.has(id)) {
-          continue;
-        }
-        visited.set(id, true);
-
-        collections.push({
-          id: id,
-          nodeId: node.id,
-          nodeType: node.nodeType,
-          name: collection.collectionName,
-          children: getTreeView(
-            children,
-            visited,
-            nodes,
-            !node.category ? node.id : undefined,
-          ),
-          actionAlternatives: node.actionAlternatives,
-          category: true,
-        });
-      } else {
-        mainChildren.push(...children);
-      }
-
-      // } else {
-      //   collections.push({
-      //     id: `${parentId}-${node.id}`,
-      //     nodeId: node.id,
-      //     name: node.title,
-      //     category: !!parentId
-      //   });
-      // }
+    } else {
+      main.push(...docs);
     }
-    const id = parentId ? `${parentId}-${node.id}` : `${node.id}`;
-    if (visited.has(id)) {
-      continue;
-    }
-    visited.set(id, true);
-    newNodes.push({
-      id: node.title.toLowerCase() === "act" ? "root" : id,
-      nodeId: node.id,
-      name: node.title,
-      nodeType: node.nodeType,
-      children: [
-        ...collections,
-        ...getTreeView(
-          mainChildren,
-          visited,
-          nodes,
-          !node.category ? node.id : undefined,
-        ),
-      ],
-      actionAlternatives: node.actionAlternatives,
-      category: !!node.category,
-      task: !!node.task,
-      oNetTask: !!node.oNetTask,
-      comments: !!node.comments,
-    });
   }
-  return newNodes.sort((a, b) => {
+  return { collections, main: uniqueById(main) };
+};
+
+const sortRows = (rows: TreeRow[]) =>
+  rows.sort((a, b) => {
     if ((!!a.task || !!a.comments) && (!!b.task || !!b.comments)) {
       return 0;
     }
-
     if (!!a.task || b.comments) {
       return 1;
     }
     if (!!b.task || !!b.comments) {
       return -1;
     }
-
-    return b.children.length - a.children.length;
+    return (b.childCount || 0) - (a.childCount || 0);
   });
+
+const getRootDocs = (nodesById: Record<string, any>) => {
+  const rootIndex = (title: string) => {
+    const index = ROOT_ORDER.indexOf(title.toLowerCase());
+    return index !== -1 ? index : ROOT_ORDER.length;
+  };
+  return Object.values(nodesById)
+    .filter((doc: any) => (doc.generalizations?.[0]?.nodes?.length ?? 0) <= 0)
+    .sort((a: any, b: any) => rootIndex(a.title) - rootIndex(b.title));
 };
 
-const buildTree = (data: any[], nodes: any): TreeNode[] => {
-  const mainCategories = Object.values(data).filter(
-    (node: INode) => node.generalizations[0].nodes.length <= 0,
+// A collapsed outline row: children are filled in by expandRow when opened.
+const makeRow = (
+  doc: any,
+  id: string,
+  ancestorIds: string[],
+  nodesById: Record<string, any>,
+): TreeRow => {
+  const { collections, main } = getChildGroups(
+    doc,
+    nodesById,
+    new Set([...ancestorIds, doc.id]),
+  );
+  const childCount = collections.length + main.length;
+  return {
+    id,
+    nodeId: doc.id,
+    name: doc.title,
+    nodeType: doc.nodeType,
+    children: [],
+    actionAlternatives: doc.actionAlternatives,
+    category: !!doc.category,
+    task: !!doc.task,
+    oNetTask: !!doc.oNetTask,
+    comments: !!doc.comments,
+    childCount,
+    ancestorIds,
+    outlineLoadChildren: childCount > 0,
+    hasUnresolvedChildren: childCount > 0,
+  };
+};
+
+// Builds one level under a row: its named collections (with their members)
+// and its main children. Row ids are full paths, so every copy is unique.
+const expandRow = (row: TreeRow, nodesById: Record<string, any>): TreeRow => {
+  const doc = nodesById[row.nodeId];
+  if (!doc) {
+    return { ...row, outlineLoadChildren: false, hasUnresolvedChildren: false };
+  }
+  const ancestorIds = [...(row.ancestorIds || []), doc.id];
+  const { collections, main } = getChildGroups(
+    doc,
+    nodesById,
+    new Set(ancestorIds),
+  );
+  const children: TreeRow[] = [
+    ...collections.map(({ name, docs }) => {
+      const collectionId = `${row.id}-${name}`;
+      const members = sortRows(
+        docs.map((child) =>
+          makeRow(child, `${collectionId}-${child.id}`, ancestorIds, nodesById),
+        ),
+      );
+      return {
+        id: collectionId,
+        nodeId: doc.id,
+        nodeType: doc.nodeType,
+        name,
+        children: members,
+        actionAlternatives: doc.actionAlternatives,
+        category: true,
+        childCount: members.length,
+      };
+    }),
+    ...sortRows(
+      main.map((child) =>
+        makeRow(child, `${row.id}-${child.id}`, ancestorIds, nodesById),
+      ),
+    ),
+  ];
+  return {
+    ...row,
+    children,
+    outlineLoadChildren: false,
+    hasUnresolvedChildren: false,
+  };
+};
+
+const buildOutline = (nodesById: Record<string, any>): TreeRow[] =>
+  getRootDocs(nodesById).map((doc: any) =>
+    expandRow(
+      makeRow(
+        doc,
+        doc.title.toLowerCase() === "act" ? "root" : doc.id,
+        [],
+        nodesById,
+      ),
+      nodesById,
+    ),
   );
 
-  // Sort main nodes based on a predefined order
-  mainCategories.sort((nodeA: any, nodeB: any) => {
-    const order = [
-      "direct",
-      "engage",
-      "inspire",
-      "provide",
-      "organize",
-      "conduct",
-      "evaluate",
-      "inform",
-      "initiate",
-      "observe",
-      "assist",
-      "request",
-      "log",
-      "alert",
-      "recommend",
-      "redirect",
-      "rank",
-      "toggle",
-      "assume",
-      "utilize",
-      "terminate",
-      "create",
-      "authorize",
-      "distribute",
-      "modify",
-      "combine",
-      "file",
-      "question",
-      "verify",
-      "care",
-      "select",
-      "accompany",
-      "instruct",
-    ];
-
-    const getIndex = (title: string): number => {
-      const index = order.indexOf(title.toLowerCase());
-      return index !== -1 ? index : order.length;
-    };
-
-    return getIndex(nodeA.title) - getIndex(nodeB.title);
+// Replaces the row with `targetId`, only walking the branch that leads to it.
+const mapRowAtId = (
+  rows: TreeRow[],
+  targetId: string,
+  update: (row: TreeRow) => TreeRow,
+): TreeRow[] =>
+  rows.map((row) => {
+    if (row.id === targetId) {
+      return update(row);
+    }
+    if (
+      row.children.length > 0 &&
+      (row.id === "root" || targetId.startsWith(`${row.id}-`))
+    ) {
+      return { ...row, children: mapRowAtId(row.children, targetId, update) };
+    }
+    return row;
   });
 
-  return getTreeView(mainCategories, new Map(), nodes);
+// Graph tree: one entry per doc (GraphView merges copies by nodeId anyway).
+// Children are built only for expanded nodes; collapsed nodes get lightweight
+// placeholders so the graph's "N▸" child count stays correct.
+const buildGraphTree = (
+  rootDocs: any[],
+  nodesById: Record<string, any>,
+  expanded: Set<string>,
+): TreeRow[] => {
+  const memo = new Map<string, TreeRow>();
+  const onBranch = new Set<string>();
+  const placeholder = (id: string, name: string): TreeRow => ({
+    id,
+    nodeId: id,
+    name,
+    category: false,
+    children: [],
+  });
+
+  const build = (doc: any): TreeRow => {
+    const cached = memo.get(doc.id);
+    if (cached) {
+      return cached;
+    }
+    onBranch.add(doc.id);
+    const { collections, main } = getChildGroups(doc, nodesById, onBranch);
+    const isOpen = expanded.has(doc.id);
+    const children: TreeRow[] = [
+      ...collections.map(({ name, docs }) => {
+        const collectionId = `${doc.id}-${name}`;
+        return {
+          id: collectionId,
+          nodeId: doc.id,
+          name,
+          category: true,
+          children:
+            isOpen && expanded.has(collectionId)
+              ? docs.map(build)
+              : docs.map((child) => placeholder(child.id, child.title)),
+        };
+      }),
+      ...(isOpen
+        ? main.map(build)
+        : main.map((child) => placeholder(child.id, child.title))),
+    ];
+    onBranch.delete(doc.id);
+    const row: TreeRow = {
+      id: doc.id,
+      nodeId: doc.id,
+      name: doc.title,
+      nodeType: doc.nodeType,
+      children,
+      actionAlternatives: doc.actionAlternatives,
+      category: !!doc.category,
+      oNetTask: !!doc.oNetTask,
+    };
+    memo.set(doc.id, row);
+    return row;
+  };
+
+  return rootDocs.map(build);
+};
+
+// TEMPORARY (dev only): explains why non-O*NET nodes show up as outline leaves.
+// Remove once the data question is settled.
+const logLeafDiagnostics = (nodesById: Record<string, any>) => {
+  const linkedIds = (doc: any, field: "specializations" | "generalizations") =>
+    (doc?.[field] || []).flatMap((collection: any) =>
+      (collection.nodes || []).map((link: { id: string }) => link.id),
+    );
+
+  // Children found from the other direction: docs that name X as a parent.
+  const pointsUpTo: Record<string, string[]> = {};
+  for (const doc of Object.values(nodesById)) {
+    for (const parentId of linkedIds(doc, "generalizations")) {
+      (pointsUpTo[parentId] ||= []).push(doc.id);
+    }
+  }
+
+  const ancestorsOf = (id: string) => {
+    const seen = new Set<string>();
+    const stack = [...linkedIds(nodesById[id], "generalizations")];
+    while (stack.length > 0 && seen.size < 10_000) {
+      const next = stack.pop()!;
+      if (seen.has(next)) continue;
+      seen.add(next);
+      stack.push(...linkedIds(nodesById[next], "generalizations"));
+    }
+    return seen;
+  };
+
+  const rows: Record<string, string | number>[] = [];
+  for (const doc of Object.values(nodesById)) {
+    if (doc.oNetTask) continue;
+    const links = linkedIds(doc, "specializations");
+    const existing = links.filter((id: string) => nodesById[id] && id !== doc.id);
+    const ancestors = ancestorsOf(doc.id);
+    const usable = existing.filter((id: string) => !ancestors.has(id));
+    if (usable.length > 0) continue;
+
+    const listed = new Set(links);
+    const unlisted = (pointsUpTo[doc.id] || []).filter((id) => !listed.has(id));
+    let reason = "no specializations listed";
+    if (links.length > 0 && existing.length === 0) {
+      reason = "specializations point to missing docs";
+    } else if (existing.length > 0) {
+      reason = "specializations only point to its own ancestors (cycle)";
+    }
+    rows.push({
+      title: doc.title,
+      id: doc.id,
+      reason,
+      linksInSpecializations: links.length,
+      missingIds: links.filter((id: string) => !nodesById[id]).join(", "),
+      cycleTitles: existing
+        .filter((id: string) => ancestors.has(id))
+        .map((id: string) => nodesById[id]?.title)
+        .join(", "),
+      docsNamingItAsParent: unlisted.length,
+      oNetDocsNamingItAsParent: unlisted.filter((id) => nodesById[id]?.oNetTask)
+        .length,
+    });
+  }
+
+  const byReason = rows.reduce<Record<string, number>>((acc, row) => {
+    const key = String(row.reason);
+    acc[key] = (acc[key] || 0) + 1;
+    return acc;
+  }, {});
+  const withHiddenONet = rows.filter(
+    (row) => Number(row.oNetDocsNamingItAsParent) > 0,
+  ).length;
+  console.log(
+    `[clusters] ${rows.length} non-O*NET nodes have no children in the outline`,
+    byReason,
+    `| ${withHiddenONet} of them have O*NET docs that name them as a parent (in generalizations) but aren't in their specializations`,
+  );
+  console.table(rows);
 };
 
 function OntTree() {
   const db = getFirestore();
-  const [treeData, setTreeData] = useState<TreeNode[]>([]);
+  const [treeData, setTreeData] = useState<TreeRow[]>([]);
+  const [nodesById, setNodesById] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(true);
   const [tree, setTree] = useState<TreeApi<TreeData> | null | undefined>(null);
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
   const [expandDefault, setExpandDefault] = useState("");
   const treeRef = useRef<TreeApi<TreeData>>(null);
+  const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
+  // Shared selection: clicking a node in either view highlights it in both.
+  const [currentVisibleNode, setCurrentVisibleNode] = useState<{
+    id: string;
+  } | null>(null);
+
+  const openNode = useCallback((nodeId: string) => {
+    setCurrentVisibleNode({ id: nodeId });
+  }, []);
+
+  // Builds the next level of the outline when a collapsed row is opened.
+  const onOutlineNodeOpen = useCallback(
+    async (apiNode: { data: TreeRow }) => {
+      const row = apiNode.data;
+      if (!row.outlineLoadChildren) {
+        return;
+      }
+      setTreeData((prev) =>
+        mapRowAtId(prev, row.id, (target) => expandRow(target, nodesById)),
+      );
+    },
+    [nodesById],
+  );
+
+  const rootDocs = useMemo(() => getRootDocs(nodesById), [nodesById]);
+  const graphTreeData = useMemo(
+    () => buildGraphTree(rootDocs, nodesById, expandedNodes),
+    [rootDocs, nodesById, expandedNodes],
+  );
 
   const getData = async () => {
     setLoading(true);
     const nodesDocs = await getDocs(
       query(collection(db, "oNetNodesDecomposed")),
     );
-    const nodes_data: any = [];
-    const nodes: any = {};
+    const nodes: Record<string, any> = {};
     let actId = "";
     nodesDocs.docs.forEach((doc) => {
-      nodes_data.push(doc.data());
+      const data = doc.data();
       nodes[doc.id] = {
-        ...doc.data(),
-        category: doc.data().title.endsWith("?"),
+        ...data,
+        // Links in specializations are looked up by Firestore doc id.
+        id: doc.id,
+        category: data.title.endsWith("?"),
       };
-      if (doc.data().title === "act") {
+      if (data.title === "act") {
         actId = doc.id;
       }
-      setExpandDefault(actId);
     });
-    setTreeData(buildTree(nodes_data, nodes));
+    setExpandDefault(actId);
+    if (process.env.NODE_ENV === "development") {
+      logLeafDiagnostics(nodes);
+    }
+    setNodesById(nodes);
+    setTreeData(buildOutline(nodes));
     setLoading(false);
   };
 
@@ -387,27 +635,66 @@ function OntTree() {
         height: "100vh",
       }}
     >
-      <Box sx={{ display: "flex", height: "100%" }}>
-        <Box
-          sx={{
-            width: /* isExpanded ? "80%" : "98%" */ "100%",
+      <Container
+        style={{ height: "100%", display: "flex", overflow: "hidden" }}
+      >
+        <Section
+          minSize={250}
+          style={{
+            height: "100%",
             display: "flex",
             flexDirection: "column",
             minHeight: 0,
+            overflow: "hidden",
           }}
         >
           <DraggableTree
             treeViewData={treeData}
             setSnackbarMessage={() => {}}
-            currentVisibleNode={null}
+            currentVisibleNode={currentVisibleNode}
             nodes={{}}
-            onOpenNodesTree={() => {}}
+            onOpenNodesTree={openNode}
+            onOutlineNodeOpen={onOutlineNodeOpen as any}
             treeRef={treeRef}
             treeType="oNet"
             appName=""
             specializationNumsUnder={{}}
           />
-        </Box>
+        </Section>
+        <Bar
+          size={10}
+          style={{
+            background: "transparent",
+            cursor: "col-resize",
+            position: "relative",
+          }}
+        >
+          <SettingsEthernetIcon
+            sx={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              color: (theme) =>
+                theme.palette.mode === "dark"
+                  ? theme.palette.common.gray50
+                  : theme.palette.common.notebookMainBlack,
+              borderRadius: "50%",
+              ":hover": {
+                backgroundColor: "orange",
+              },
+            }}
+          />
+        </Bar>
+        <Section minSize={250} style={{ height: "100%", overflow: "hidden" }}>
+          <GraphView
+            treeData={graphTreeData as any}
+            expandedNodes={expandedNodes}
+            setExpandedNodes={setExpandedNodes}
+            onOpenNodeDagre={openNode}
+            currentVisibleNode={currentVisibleNode}
+          />
+        </Section>
         {/*  <Box
           sx={{
             width: isExpanded ? "20%" : "2%",
@@ -451,7 +738,7 @@ function OntTree() {
             </Box>
           )}
         </Box> */}
-      </Box>
+      </Container>
     </Box>
   );
 }
