@@ -68,17 +68,21 @@ const SELECTED_FILL = "#87D37C";
 export const CATEGORY_FILL = "#ffbe48";
 export const DEFAULT_FILL = "#ffffff";
 const EDGE_COLOR = "#ff9a3c";
-const HOVER_COLOR = "#22c55e";
-const HOVERED_EDGE = {
-  zIndex: 1,
-  style: { stroke: HOVER_COLOR, strokeWidth: 2.5 },
+const HIGHLIGHT_COLOR = "#22c55e";
+// Arrowheads scale with the stroke width, so a thicker line gets a smaller
+// marker size to keep the arrowhead about the same size.
+const edgeLook = (color: string, strokeWidth: number, markerSize: number) => ({
+  style: { stroke: color, strokeWidth },
   markerEnd: {
     type: MarkerType.ArrowClosed,
-    color: HOVER_COLOR,
-    width: 10,
-    height: 10,
+    color,
+    width: markerSize,
+    height: markerSize,
   },
-};
+});
+const PLAIN_EDGE = edgeLook(EDGE_COLOR, 1.5, 14);
+const SELECTED_EDGE = { zIndex: 1, ...edgeLook(HIGHLIGHT_COLOR, 2, 10.5) };
+const HOVERED_EDGE = { zIndex: 1, ...edgeLook(HIGHLIGHT_COLOR, 2.5, 10) };
 const FIT_VIEW_OPTIONS = { padding: 0.2, maxZoom: 1 };
 const PRO_OPTIONS = { hideAttribution: true };
 const FLOW_STYLE = { background: "transparent" };
@@ -247,13 +251,9 @@ const layoutGraph = ({
     source,
     target,
     type: "default",
-    style: { stroke: EDGE_COLOR, strokeWidth: 1.5 },
-    markerEnd: {
-      type: MarkerType.ArrowClosed,
-      color: EDGE_COLOR,
-      width: 14,
-      height: 14,
-    },
+    ...(source === selectedId || target === selectedId
+      ? SELECTED_EDGE
+      : PLAIN_EDGE),
   }));
   return { nodes, edges, centers };
 };
