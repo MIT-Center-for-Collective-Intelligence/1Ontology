@@ -567,6 +567,66 @@ const pathsThroughEachParent = (
   return paths;
 };
 
+// Every parent -> child link on any path from a root down to `nodeId`, each as
+// a two-step path. There can be trillions of such paths, but the graph draws
+// each doc once, so their links stay in the hundreds. Ancestors that a root
+// only reaches by passing through `nodeId` (loops) are left out.
+const linksOnAllPaths = (
+  nodeId: string,
+  parentsOf: Record<string, ParentLink[]>,
+  rootIds: Set<string>,
+): PathStep[][] => {
+  const ancestors = new Set([nodeId]);
+  const links: { childId: string; link: ParentLink }[] = [];
+  let queue = [nodeId];
+  while (queue.length > 0) {
+    const nextQueue: string[] = [];
+    for (const childId of queue) {
+      for (const link of parentsOf[childId] || []) {
+        links.push({ childId, link });
+        if (!ancestors.has(link.parentId)) {
+          ancestors.add(link.parentId);
+          nextQueue.push(link.parentId);
+        }
+      }
+    }
+    queue = nextQueue;
+  }
+
+  const childrenOf = new Map<string, string[]>();
+  for (const { childId, link } of links) {
+    if (!childrenOf.has(link.parentId)) childrenOf.set(link.parentId, []);
+    childrenOf.get(link.parentId)!.push(childId);
+  }
+  const reached = new Set([...rootIds].filter((id) => ancestors.has(id)));
+  queue = [...reached];
+  while (queue.length > 0) {
+    const nextQueue: string[] = [];
+    for (const id of queue) {
+      if (id === nodeId) continue;
+      for (const childId of childrenOf.get(id) || []) {
+        if (!reached.has(childId)) {
+          reached.add(childId);
+          nextQueue.push(childId);
+        }
+      }
+    }
+    queue = nextQueue;
+  }
+
+  return links
+    .filter(
+      ({ childId, link }) =>
+        reached.has(link.parentId) &&
+        link.parentId !== nodeId &&
+        reached.has(childId),
+    )
+    .map(({ childId, link }) => [
+      { docId: link.parentId, collectionName: null },
+      { docId: childId, collectionName: link.collectionName },
+    ]);
+};
+
 /** Outline row ids along `path`, root first (collection rows included). */
 const outlineRowIdsForPath = (
   path: PathStep[],
@@ -918,17 +978,19 @@ function OntTree() {
     () => new Set(),
   );
 
-  // Navigating from the outline or search focuses the graph on the node: only
-  // the paths to it (and the node itself) stay open.
+  // Navigating from the outline or search focuses the graph on the node: every
+  // path from a root to it (and the node itself) stays open, nothing else.
   const focusGraphOn = useCallback(
-    (paths: PathStep[][], nodeId: string) => {
+    (nodeId: string) => {
+      const links = linksOnAllPaths(nodeId, parentsOf, rootIds);
+      if (links.length === 0 && !rootIds.has(nodeId)) return;
       setExpandedNodes(
-        new Set([...rootIds, ...paths.flatMap(graphKeysForPath), nodeId]),
+        new Set([...rootIds, ...links.flatMap(graphKeysForPath), nodeId]),
       );
-      setGraphFocus(graphFocusForPaths(paths));
+      setGraphFocus(graphFocusForPaths(links));
       setGraphShowAll(new Set());
     },
-    [rootIds],
+    [parentsOf, rootIds],
   );
 
   // A parent link the graph currently shows (parent, and its collection, open).
@@ -1018,7 +1080,7 @@ function OntTree() {
         ? paths.filter((path) => path[path.length - 2]?.docId !== rowParentId)
         : paths;
       revealInOutline(otherPaths);
-      focusGraphOn(paths, nodeId);
+      focusGraphOn(nodeId);
       setCurrentVisibleNode({ id: nodeId });
       logEvent("node_navigate", {
         source: "outline",
@@ -1071,7 +1133,7 @@ function OntTree() {
   );
 
   // Search -> both views: show the node under every parent in the outline, and
-  // focus the graph on the node with every parent open.
+  // focus the graph on every path to the node.
   const navigateTo = useCallback(
     (nodeId: string) => {
       const paths = pathsThroughEachParent(
@@ -1081,9 +1143,7 @@ function OntTree() {
         isOpenInGraph,
       );
       revealInOutline(paths);
-      if (paths.length > 0) {
-        focusGraphOn(paths, nodeId);
-      }
+      focusGraphOn(nodeId);
       setCurrentVisibleNode({ id: nodeId });
     },
     [focusGraphOn, isOpenInGraph, parentsOf, revealInOutline, rootIds],
