@@ -33,7 +33,10 @@ import { TreeApi } from "react-arborist";
 import { INode, TreeData } from "@components/types/INode";
 import DraggableTree from "@components/components/OntologyComponents/OutlineView";
 import FullPageLogoLoading from "@components/components/layouts/FullPageLogoLoading";
-import ClustersGraph from "@components/components/OntologyComponents/ClustersGraph";
+import ClustersGraph, {
+  CATEGORY_FILL,
+  DEFAULT_FILL,
+} from "@components/components/OntologyComponents/ClustersGraph";
 import { SCROLL_BAR_STYLE } from "@components/lib/CONSTANTS";
 import { usePageVisitLog } from "@components/lib/hooks/usePageVisitLog";
 import { useAuth } from "@components/components/context/AuthContext";
@@ -811,15 +814,28 @@ const NO_PAGE_SCROLL = (
   <GlobalStyles styles={{ "html, body": { overflow: "hidden" } }} />
 );
 
+const GRAPH_LEGEND = [
+  { label: "Activity", fill: DEFAULT_FILL },
+  { label: "Collection", fill: CATEGORY_FILL },
+  { label: "O*NET task", fill: ONET_TASK_FILL },
+];
+
 const GraphHint = () => (
   <Box
     sx={{
       position: "absolute",
       right: 12,
       bottom: 12,
+      maxWidth: "calc(100% - 24px)",
+      display: "flex",
+      flexWrap: "wrap",
+      alignItems: "center",
+      justifyContent: "flex-end",
+      columnGap: 1.5,
+      rowGap: 0.5,
       px: 1.5,
       py: 0.75,
-      borderRadius: "999px",
+      borderRadius: "16px",
       bgcolor: (t) => alpha(t.palette.background.paper, 0.85),
       border: "1px solid",
       borderColor: subtleBorder,
@@ -827,7 +843,27 @@ const GraphHint = () => (
       pointerEvents: "none",
     }}
   >
-    <Typography variant="caption" color="text.secondary">
+    {GRAPH_LEGEND.map(({ label, fill }) => (
+      <Box
+        key={label}
+        sx={{ display: "flex", alignItems: "center", gap: 0.75 }}
+      >
+        <Box
+          sx={{
+            width: 10,
+            height: 10,
+            borderRadius: "50%",
+            bgcolor: fill,
+            border: "1px solid rgba(0,0,0,0.35)",
+            flexShrink: 0,
+          }}
+        />
+        <Typography variant="caption" color="text.secondary">
+          {label}
+        </Typography>
+      </Box>
+    ))}
+    <Typography variant="caption" color="text.disabled">
       Scroll to zoom · drag to pan
     </Typography>
   </Box>

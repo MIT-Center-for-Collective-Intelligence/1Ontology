@@ -21,6 +21,17 @@
   box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.85), 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
+.edgeEnd .node,
+.edgeEnd .node:hover {
+  box-shadow: 0 0 0 3px #22c55e, 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+.flow :global(.react-flow__edge),
+.flow :global(.react-flow__edge.inactive) {
+  pointer-events: visibleStroke;
+  cursor: grab;
+}
+
 .label {
   white-space: pre;
 }

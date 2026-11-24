@@ -6,6 +6,7 @@ import React, {
   useEffect,
   useMemo,
   useRef,
+  useState,
 } from "react";
 import {
   Controls,
@@ -64,9 +65,23 @@ type ClusterNodeData = {
 type ClusterNode = Node<ClusterNodeData, "cluster">;
 
 const SELECTED_FILL = "#87D37C";
-const CATEGORY_FILL = "#ffbe48";
-const DEFAULT_FILL = "#ffffff";
+export const CATEGORY_FILL = "#ffbe48";
+export const DEFAULT_FILL = "#ffffff";
 const EDGE_COLOR = "#ff9a3c";
+const HOVER_COLOR = "#22c55e";
+const HOVERED_EDGE = {
+  zIndex: 1,
+  style: { stroke: HOVER_COLOR, strokeWidth: 2.5 },
+  markerEnd: {
+    type: MarkerType.ArrowClosed,
+    color: HOVER_COLOR,
+    width: 10,
+    height: 10,
+  },
+};
+const FIT_VIEW_OPTIONS = { padding: 0.2, maxZoom: 1 };
+const PRO_OPTIONS = { hideAttribution: true };
+const FLOW_STYLE = { background: "transparent" };
 const FONT = '500 14px Roboto, "Helvetica Neue", Arial, sans-serif';
 const LINE_HEIGHT = 18;
 const PADDING_X = 14;
@@ -220,6 +235,7 @@ const layoutGraph = ({
       position: { x: left, y: top },
       width: nodeData.width,
       height: nodeData.height,
+      zIndex: 2,
       data: nodeData,
       draggable: false,
       selectable: false,
@@ -321,7 +337,8 @@ const ClustersGraphCanvas = (props: ClustersGraphProps) => {
     onShowHidden,
   } = props;
   const theme = useTheme();
-  const { setCenter, getZoom } = useReactFlow();
+  const { setCenter, getZoom, getViewport, setViewport } = useReactFlow();
+  const [hoveredEdgeId, setHoveredEdgeId] = useState<string | null>(null);
 
   const { nodes, edges, centers } = useMemo(
     () =>
@@ -335,6 +352,66 @@ const ClustersGraphCanvas = (props: ClustersGraphProps) => {
         oNetTaskFill,
       }),
     [tree, expanded, hiddenCounts, selectedId, pulse, maxLabelChars, oNetTaskFill],
+  );
+
+  const hoveredEdge = useMemo(
+    () => (hoveredEdgeId ? edges.find((edge) => edge.id === hoveredEdgeId) : undefined),
+    [edges, hoveredEdgeId],
+  );
+  const shownEdges = useMemo(
+    () =>
+      hoveredEdge
+        ? edges.map((edge) => (edge === hoveredEdge ? { ...edge, ...HOVERED_EDGE } : edge))
+        : edges,
+    [edges, hoveredEdge],
+  );
+  const shownNodes = useMemo(
+    () =>
+      hoveredEdge
+        ? nodes.map((node) =>
+            node.id === hoveredEdge.source || node.id === hoveredEdge.target
+              ? { ...node, className: styles.edgeEnd }
+              : node,
+          )
+        : nodes,
+    [nodes, hoveredEdge],
+  );
+
+  const onEdgeMouseEnter = useCallback(
+    (_: React.MouseEvent, edge: Edge) => setHoveredEdgeId(edge.id),
+    [],
+  );
+  const onEdgeMouseLeave = useCallback(() => setHoveredEdgeId(null), []);
+
+  const panFromEdge = useCallback(
+    (event: React.PointerEvent) => {
+      if (event.button !== 0) return;
+      if (!(event.target as Element).closest?.(".react-flow__edge")) return;
+      event.preventDefault();
+      const start = getViewport();
+      const { clientX, clientY } = event;
+      const move = (e: PointerEvent) =>
+        setViewport({
+          x: start.x + e.clientX - clientX,
+          y: start.y + e.clientY - clientY,
+          zoom: start.zoom,
+        });
+      const stop = () => {
+        window.removeEventListener("pointermove", move);
+        window.removeEventListener("pointerup", stop);
+        window.removeEventListener("pointercancel", stop);
+      };
+      window.addEventListener("pointermove", move);
+      window.addEventListener("pointerup", stop);
+      window.addEventListener("pointercancel", stop);
+    },
+    [getViewport, setViewport],
+  );
+
+  const handleNodeClick = useCallback(
+    (_: React.MouseEvent, node: Node) =>
+      onNodeClick(node.id, (node.data as ClusterNodeData).isCategory),
+    [onNodeClick],
   );
 
   const centerOn = useCallback(
@@ -377,16 +454,18 @@ const ClustersGraphCanvas = (props: ClustersGraphProps) => {
   return (
     <ActionsContext.Provider value={actions}>
       <ReactFlow
-        nodes={nodes}
-        edges={edges}
+        className={styles.flow}
+        nodes={shownNodes}
+        edges={shownEdges}
         nodeTypes={nodeTypes}
-        onNodeClick={(_, node) =>
-          onNodeClick(node.id, (node.data as ClusterNodeData).isCategory)
-        }
+        onNodeClick={handleNodeClick}
+        onEdgeMouseEnter={onEdgeMouseEnter}
+        onEdgeMouseLeave={onEdgeMouseLeave}
+        onPointerDown={panFromEdge}
         colorMode={theme.palette.mode === "dark" ? "dark" : "light"}
-        style={{ background: "transparent" }}
+        style={FLOW_STYLE}
         fitView
-        fitViewOptions={{ padding: 0.2, maxZoom: 1 }}
+        fitViewOptions={FIT_VIEW_OPTIONS}
         minZoom={0.05}
         maxZoom={2}
         onlyRenderVisibleElements
@@ -394,7 +473,7 @@ const ClustersGraphCanvas = (props: ClustersGraphProps) => {
         nodesConnectable={false}
         elementsSelectable={false}
         zoomOnDoubleClick={false}
-        proOptions={{ hideAttribution: true }}
+        proOptions={PRO_OPTIONS}
       >
         <Controls showInteractive={false} position="top-right" />
       </ReactFlow>
