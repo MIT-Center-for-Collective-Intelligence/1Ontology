@@ -8,7 +8,8 @@ import React, {
 import CloseIcon from "@mui/icons-material/Close";
 import HistoryIcon from "@mui/icons-material/History";
 import NoteAltOutlinedIcon from "@mui/icons-material/NoteAltOutlined";
-import { useReviewMode } from "../Review/ReviewModeContext";
+import { openReview, useReviewMode } from "../Review/ReviewModeContext";
+import ProposalList from "../Review/ProposalList";
 import CircularProgress from "@mui/material/CircularProgress";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import AutoStoriesIcon from "@mui/icons-material/AutoStories";
@@ -96,7 +97,6 @@ import {
   ref as refStorage,
 } from "firebase/storage";
 import { NODES, USERS } from "@components/lib/firestoreClient/collections";
-import { useRouter } from "next/router";
 import ROUTES from "@components/lib/utils/routes";
 import { userHasOntologyEditAccess } from "@components/lib/utils/helpers";
 
@@ -195,7 +195,6 @@ const ToolbarSidebar = ({
   appName,
 }: MainSidebarProps) => {
   const theme = useTheme();
-  const router = useRouter();
   const reviewMode = useReviewMode();
   const isMobile = useMediaQuery("(max-width:599px)");
   const db = getFirestore();
@@ -359,7 +358,10 @@ const ToolbarSidebar = ({
         return;
       }
 
-      confirmIt("Ontology is large (~40k nodes). Generating JSON export, please wait (1-2 mins)...", "Ok");
+      confirmIt(
+        "Ontology is large (~40k nodes). Generating JSON export, please wait (1-2 mins)...",
+        "Ok",
+      );
 
       const TIMEOUT_MS = 3 * 60 * 1000;
       const timeoutId = setTimeout(() => {
@@ -1713,6 +1715,15 @@ const ToolbarSidebar = ({
             fetchNode={fetchNode}
           />
         );
+      case "proposalReview":
+        return (
+          <ProposalList
+            appName={appName}
+            currentId={reviewMode ? currentVisibleNode?.id : null}
+            dark={theme.palette.mode === "dark"}
+            onOpen={openReview}
+          />
+        );
       case "nodeHistory":
         return (
           <NodeActivity
@@ -1823,6 +1834,8 @@ const ToolbarSidebar = ({
         return "Notifications";
       case "nodeHistory":
         return "Node's History";
+      case "proposalReview":
+        return "Proposal review";
       case "inheritanceSettings":
         return "Node's Inheritance Settings";
       case "improvements":
@@ -2334,20 +2347,13 @@ const ToolbarSidebar = ({
                   sx={{ color: reviewMode ? "white" : "" }}
                 />
               }
-              onClick={() => {
-                // Same node, other surface: the review workspace or back to
-                // the node page. The hash carries the node id either way.
-                const hash = currentVisibleNode?.id
-                  ? `#${currentVisibleNode.id}`
-                  : "";
-                const app = appName.replaceAll(" ", "_");
-                router.push(
-                  reviewMode
-                    ? `/${app}${hash}`
-                    : `/review/proposals?app=${encodeURIComponent(app)}${hash}`,
-                );
-              }}
-              text={reviewMode ? "Back to the node page" : "Proposal review"}
+              // The panel lists the nodes with proposals; one opens its review.
+              onClick={() =>
+                setActiveSidebar(
+                  activeSidebar === "proposalReview" ? null : "proposalReview",
+                )
+              }
+              text="Proposal review"
               toolbarIsOpen={hovered}
               variant={reviewMode ? "fill" : undefined}
             />

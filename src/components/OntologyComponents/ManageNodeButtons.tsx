@@ -50,6 +50,7 @@ const ManageNodeButtons = ({
   aiPeer,
   hasComments,
   appName,
+  viewOntologyHref,
 }: {
   locked: boolean;
   lockedInductor: boolean;
@@ -69,8 +70,13 @@ const ManageNodeButtons = ({
   aiPeer: { on: boolean; waiting: boolean };
   hasComments: boolean;
   appName?: string;
+  /** Proposal review: the node's own hash, which leaves the review in
+   * place. With it the editing actions (Edit Node, lock, Delete Node) give
+   * way to an "Exit review" button. */
+  viewOntologyHref?: string;
 }) => {
-  const canEditOntology = userHasOntologyEditAccess(user, appName);
+  const review = !!viewOntologyHref;
+  const canEditOntology = !review && userHasOntologyEditAccess(user, appName);
   const db = getFirestore();
   const displayNodeChat = () => displaySidebar("chat");
   const displayNodeHistory = () => displaySidebar("nodeHistory");
@@ -171,7 +177,7 @@ const ManageNodeButtons = ({
               </ListItemIcon>
               <ListItemText>Node History</ListItemText>
             </MenuItem>
-            {!locked && !unclassified && (
+            {!locked && !unclassified && !review && (
               <MenuItem onClick={() => deleteNode()}>
                 <ListItemIcon>
                   <DeleteIcon fontSize="small" />
@@ -286,7 +292,22 @@ const ManageNodeButtons = ({
             </Box>
           )}
         </Box> */}{" "}
-        {aiPeer.on && (
+        {viewOntologyHref && (
+          <Button
+            component="a"
+            href={viewOntologyHref}
+            variant="outlined"
+            sx={{
+              borderRadius: "25px",
+              py: 0.2,
+              textTransform: "none",
+              whiteSpace: "nowrap",
+            }}
+          >
+            Exit review
+          </Button>
+        )}
+        {aiPeer.on && !review && (
           <>
             <Tooltip
               title="The previous proposals has been implemented. Would you like to

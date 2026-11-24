@@ -7,15 +7,24 @@ import { NavigateLandingSection } from "./landing/navigate";
 import { useRouter } from "next/router";
 import { ONTOLOGY_APPS } from "@components/lib/CONSTANTS";
 import { createLandingTheme } from "@components/theme/landingTheme";
+import {
+  REVIEW_SUFFIX,
+  ReviewModeContext,
+} from "@components/components/Review/ReviewModeContext";
 
-type Mode = "platform" | "navigate";
+type Mode = "platform" | "navigate" | "review";
 
-// Hash: `#<nodeId>` → platform, `#<nodeId>/navigate` → navigator.
+// Hash: `#<nodeId>` → platform, `#<nodeId>/navigate` → navigator,
+// `#<nodeId>/review` → the platform with the proposal review in the
+// content area.
 const parseHash = (raw: string): { nodeId: string; mode: Mode } => {
   const h = raw.replace(/^#/, "");
   if (!h) return { nodeId: "", mode: "platform" };
   if (h.endsWith("/navigate")) {
     return { nodeId: h.slice(0, -"/navigate".length), mode: "navigate" };
+  }
+  if (h.endsWith(REVIEW_SUFFIX)) {
+    return { nodeId: h.slice(0, -REVIEW_SUFFIX.length), mode: "review" };
   }
   return { nodeId: h, mode: "platform" };
 };
@@ -76,11 +85,7 @@ const SkillsFuture = () => {
     if (typeof window === "undefined") return;
     const { nodeId } = parseHash(window.location.hash);
     const target = nodeId ? `#${nodeId}` : "";
-    window.history.pushState(
-      null,
-      "",
-      `${window.location.pathname}${target}`,
-    );
+    window.history.pushState(null, "", `${window.location.pathname}${target}`);
     window.dispatchEvent(new HashChangeEvent("hashchange"));
   }, []);
 
@@ -88,20 +93,25 @@ const SkillsFuture = () => {
 
   const tabTitle =
     (mode === "navigate"
-      ? navigatorTitle ?? platformTitle
-      : platformTitle ?? navigatorTitle) ?? "Ontology of Collective Intelligence";
+      ? (navigatorTitle ?? platformTitle)
+      : (platformTitle ?? navigatorTitle)) ??
+    "Ontology of Collective Intelligence";
+  const title =
+    mode === "review" && platformTitle ? `Review · ${platformTitle}` : tabTitle;
 
   return (
     <>
       <Head>
-        <title>{tabTitle}</title>
+        <title>{title}</title>
       </Head>
-      <Box sx={{ display: mode === "platform" ? "block" : "none" }}>
-        <Ontology
-          appName={appName}
-          onOpenInNavigator={openInNavigator}
-          onFocusedTitleChange={setPlatformTitle}
-        />
+      <Box sx={{ display: mode === "navigate" ? "none" : "block" }}>
+        <ReviewModeContext.Provider value={mode === "review"}>
+          <Ontology
+            appName={appName}
+            onOpenInNavigator={openInNavigator}
+            onFocusedTitleChange={setPlatformTitle}
+          />
+        </ReviewModeContext.Provider>
       </Box>
       {hasVisitedNavigator && (
         <Box sx={{ display: mode === "navigate" ? "block" : "none" }}>

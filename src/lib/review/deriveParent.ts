@@ -4,6 +4,8 @@
  * it; steps take the order most flows use; a run of steps that most of those
  * flows repeat becomes a loop, and a run most of them do only on a condition
  * becomes a condition's Y branch, each labelled with the most common text.
+ * `keyOf` maps a task to the column it counts for (a specialization of a
+ * sibling's task counts as that task), so the grid and the parent agree.
  */
 import { IActivity, IAlgorithm } from "@components/types/INode";
 import { conditionText } from "@components/components/NodBody/AlgorithmFlowVisualizer/FlowGenerator";
@@ -16,7 +18,10 @@ type Seen = {
   par: boolean;
 };
 
-const walkFlow = (alg: IAlgorithm): Seen[] => {
+const walkFlow = (
+  alg: IAlgorithm,
+  keyOf: (id: string) => string | null,
+): Seen[] => {
   const out: Seen[] = [];
   const go = (
     a: IActivity,
@@ -43,7 +48,8 @@ const walkFlow = (alg: IAlgorithm): Seen[] => {
         kids.forEach((k) => go(k, ctx));
         return;
       default:
-        if (a.partId) out.push({ key: a.partId, pos: 0, ...ctx });
+        if (a.partId)
+          out.push({ key: keyOf(a.partId) ?? a.partId, pos: 0, ...ctx });
     }
   };
   go(alg as unknown as IActivity, { loop: null, cond: null, par: false });
@@ -73,9 +79,10 @@ export function deriveParentFlow(
   name: string,
   flows: IAlgorithm[],
   titleOf: (id: string) => string,
+  keyOf: (id: string) => string | null = () => null,
 ): Derived {
   const total = flows.length;
-  const seen = flows.map(walkFlow);
+  const seen = flows.map((f) => walkFlow(f, keyOf));
   const counts = new Map<string, number>();
   const pos = new Map<string, number[]>();
   const inLoop = new Map<string, string[]>();

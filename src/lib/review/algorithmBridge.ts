@@ -105,3 +105,35 @@ export function algorithmToProposal(alg: IAlgorithm): {
             : "sequence";
   return { steps, kind, unbound };
 }
+
+/** Makes the tree's tasks match `steps` while keeping its shape: a task whose
+ * part is gone goes, a kept task takes the step's title, and a part the tree
+ * does not have yet is appended as a task. A construct left empty goes too. */
+export function applyPartsToAlgorithm(
+  alg: IAlgorithm,
+  steps: ProposalStep[],
+): IAlgorithm {
+  const want = new Map(steps.map((s) => [s.id, s]));
+  const seen = new Set<string>();
+  const prune = (a: IActivity): IActivity | null => {
+    if (a.type === "task") {
+      if (!a.partId) return a;
+      const s = want.get(a.partId);
+      if (!s) return null;
+      seen.add(a.partId);
+      return { ...a, name: s.title };
+    }
+    const kids = (a.sub_activities || [])
+      .map(prune)
+      .filter((k): k is IActivity => !!k);
+    if (!kids.length && a.sub_activities?.length) return null;
+    return { ...a, sub_activities: kids };
+  };
+  const kept = (alg.sub_activities || [])
+    .map(prune)
+    .filter((k): k is IActivity => !!k);
+  const added = steps
+    .filter((s) => !seen.has(s.id))
+    .map((s, i) => ({ ...task(s, i), id: `A${i + 1}` }));
+  return { ...alg, sub_activities: [...kept, ...added] };
+}

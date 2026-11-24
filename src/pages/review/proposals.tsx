@@ -1,45 +1,26 @@
-import React, { useEffect, useState } from "react";
-import Head from "next/head";
+import { useEffect } from "react";
 import { useRouter } from "next/router";
-import withAuthUser from "@components/components/hoc/withAuthUser";
-import Ontology from "../Ontology";
 import { ONTOLOGY_APPS } from "@components/lib/CONSTANTS";
-import { ReviewModeContext } from "@components/components/Review/ReviewModeContext";
-import { ProposalIndexProvider } from "@components/components/Review/ProposalIndexContext";
+import { reviewHash } from "@components/components/Review/ReviewModeContext";
 
 /**
- * /review/proposals[?app=test-ontology]#<nodeId>
- * The normal platform shell (outline on the left, toolbar on the right) with
- * the content area replaced by the proposal review workspace.
+ * /review/proposals[?app=test-ontology]#<nodeId>: the review's old address.
+ * The review now opens on the app page itself, at `#<nodeId>/review`, so the
+ * shell is not loaded again; this page only sends the browser there.
  */
 const ProposalsReviewPage = () => {
   const router = useRouter();
-  const [appName, setAppName] = useState<string | null>(null);
-  const [title, setTitle] = useState<string | null>(null);
-
   useEffect(() => {
     if (!router.isReady) return;
     const requested = (
       (router.query?.app || "test-ontology") as string
     ).replaceAll("_", " ");
     const found = ONTOLOGY_APPS.find((a: any) => a.id === requested);
-    setAppName(found ? requested : ONTOLOGY_APPS[0].id);
-  }, [router.isReady, router.query]);
-
-  if (!appName) return null;
-  return (
-    <ReviewModeContext.Provider value={true}>
-      <ProposalIndexProvider appName={appName}>
-        <Head>
-          <title>{title ? `Review · ${title}` : "Proposal review"}</title>
-        </Head>
-        <Ontology appName={appName} onFocusedTitleChange={setTitle} />
-      </ProposalIndexProvider>
-    </ReviewModeContext.Provider>
-  );
+    const app = (found ? requested : ONTOLOGY_APPS[0].id).replaceAll(" ", "_");
+    const nodeId = window.location.hash.replace(/^#/, "");
+    router.replace(`/${app}${nodeId ? reviewHash(nodeId) : ""}`);
+  }, [router.isReady, router.query, router]);
+  return null;
 };
 
-export default withAuthUser({
-  shouldRedirectToLogin: true,
-  shouldRedirectToHomeIfAuthenticated: false,
-})(ProposalsReviewPage);
+export default ProposalsReviewPage;

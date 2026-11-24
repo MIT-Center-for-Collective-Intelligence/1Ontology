@@ -1442,8 +1442,13 @@ const Ontology = ({
       let node: INode | null = null;
       try {
         const raw = window.location.hash.split("#").reverse()[0] ?? "";
-        const isNavigateMode = raw.endsWith("/navigate");
-        const hashId = isNavigateMode ? raw.slice(0, -"/navigate".length) : raw;
+        // `/navigate` and `/review` are modes, not part of the node id.
+        const mode = raw.endsWith("/navigate")
+          ? "/navigate"
+          : raw.endsWith("/review")
+            ? "/review"
+            : "";
+        const hashId = mode ? raw.slice(0, -mode.length) : raw;
         const userCurrentNodeId = user?.currentNode?.[appName]?.id;
 
         if (hashId) {
@@ -1461,9 +1466,7 @@ const Ontology = ({
         }
 
         if (node) {
-          window.location.hash = isNavigateMode
-            ? `${node.id}/navigate`
-            : node.id;
+          window.location.hash = `${node.id}${mode}`;
           setCurrentVisibleNode(node);
         }
       } finally {
@@ -1531,6 +1534,8 @@ const Ontology = ({
     // the mode back to platform on every render.
     if (window.location.hash.endsWith("/navigate")) {
       newHash = `${newHash}/navigate`;
+    } else if (window.location.hash.endsWith("/review")) {
+      newHash = `${newHash}/review`;
     }
 
     // Don't update if hash is already correct to prevent duplicate history entries
@@ -1716,7 +1721,7 @@ const Ontology = ({
         } as any;
         setIsLoadingNodeDetails(true);
       } else {
-        setIsLoadingNodeDetails(false); 
+        setIsLoadingNodeDetails(false);
       }
 
       if (node && !node.category) {
@@ -1853,7 +1858,11 @@ const Ontology = ({
 
       if (currentHash.endsWith("/navigate")) return;
 
-      const visibleNodeId = currentHash.split("#").reverse()[0];
+      // The review marker is a mode on the same node, not part of its id.
+      const visibleNodeId = currentHash
+        .split("#")
+        .reverse()[0]
+        .replace(/\/review$/, "");
 
       if (currentHash === lastHashSetRef.current) return;
 
@@ -2334,7 +2343,7 @@ const Ontology = ({
                           theme.palette.mode === "dark"
                             ? "rgba(255,255,255,0.12)"
                             : "rgba(0,0,0,0.1)",
-                        mx: "8px",  
+                        mx: "8px",
                         px: "4px",
                       }}
                     >

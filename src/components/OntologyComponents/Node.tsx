@@ -524,7 +524,7 @@ const Node = ({
   // const [newTitle, setNewTitle] = useState<string>("");
   // const [description, setDescription] = useState<string>("");
   const isSmallScreen = useMediaQuery("(max-width: 600px)");
-  // Under /review/proposals the content area shows the proposal review
+  // With a review open the content area shows the proposal review
   // workspace instead of the node's properties. The title header stays.
   const reviewMode = useReviewMode();
 
@@ -1978,7 +1978,7 @@ const Node = ({
             sx={{
               position: "sticky",
               top: 0,
-              mb: "15px",
+              mb: reviewMode ? "16px" : "15px",
               zIndex: 100,
               // display: "flex",
               gap: "5px",
@@ -2008,7 +2008,8 @@ const Node = ({
               activeSidebar={activeSidebar}
               currentImprovement={currentImprovement}
               checkDuplicateTitle={checkDuplicateTitle}
-              enableEdit={enableEdit}
+              // In review the title is read only; decisions go on proposals.
+              enableEdit={enableEdit && !reviewMode}
               setEnableEdit={setEnableEdit}
               handleCloseAddLinksModel={handleCloseAddLinksModel}
               onInstantTreeUpdate={onInstantTreeUpdate}

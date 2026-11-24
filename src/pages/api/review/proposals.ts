@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import fbAuth from "@components/middlewares/fbAuth";
 import { db } from "@components/lib/firestoreServer/admin";
 import { FieldValue } from "firebase-admin/firestore";
+import { reviewTargets } from "@components/lib/review/reviewTargets";
 
 /**
  * Proposal review store. Proposals are generated algorithms (steps bound to
@@ -9,13 +10,33 @@ import { FieldValue } from "firebase-admin/firestore";
  * Nothing in this endpoint touches the nodes collection: accepting a proposal
  * records the decision only.
  *
- * Actions: index, list, decide, undecide, place (where a rejected activity
- * goes; recorded on the decision, the hierarchy is not changed), propose
- * (write a parent's derived flow as a pending proposal), families (the other
- * families with proposals and the tasks their children share, for placing).
+ * Actions: targets (the nodes a review opens on, for the sidebar's list), list, decide, undecide, place (where a rejected activity
+ * goes; recorded on the decision, the hierarchy is not changed), save (a
+ * step's decisions and places, written together), propose (write a parent's
+ * derived flow as a pending proposal), families (the other families with
+ * proposals and the tasks their children share, for placing).
  */
 const PROPOSALS = "proposals";
 const OUTCOMES = ["accepted", "edited", "rejected"];
+
+// The generalizations a reviewer left an activity under, as stored.
+function cleanUnder(list: any[]) {
+  return list
+    .filter((u: any) => u && typeof u.id === "string")
+    .map((u: any) => ({
+      id: u.id,
+      title: String(u.title || ""),
+      ...(u.isNew === true
+        ? {
+            isNew: true,
+            parent:
+              u.parent && typeof u.parent.id === "string"
+                ? { id: u.parent.id, title: String(u.parent.title || "") }
+                : null,
+          }
+        : {}),
+    }));
+}
 
 function fail(res: NextApiResponse, status: number, msg: string) {
   return res.status(status).json({ error: msg, message: msg });
@@ -34,22 +55,30 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     return fail(res, 400, "appName is required");
 
   try {
-    if (action === "index") {
+    if (action === "targets") {
       const snap = await db
         .collection(PROPOSALS)
         .where("appName", "==", appName)
         .where("kind", "==", "algorithm")
         .select("nodeId", "parentId", "status")
         .get();
-      const index = snap.docs.map((d) => {
-        const x = d.data();
-        return {
-          nodeId: x.nodeId,
-          parentId: x.parentId ?? null,
-          status: x.status,
-        };
-      });
-      return res.status(200).json({ index });
+      const targets = reviewTargets(snap.docs.map((d) => d.data() as any));
+      const titles = new Map<string, string>();
+      for (let i = 0; i < targets.length; i += 100) {
+        const refs = targets
+          .slice(i, i + 100)
+          .map((t) => db.collection("nodes").doc(t.id));
+        const docs = await db.getAll(...refs);
+        docs.forEach((d) => {
+          if (d.exists && !d.data()?.deleted)
+            titles.set(d.id, d.data()?.title || "");
+        });
+      }
+      const nodes = targets
+        .filter((t) => titles.has(t.id))
+        .map((t) => ({ ...t, title: titles.get(t.id) || "" }))
+        .sort((a, b) => a.title.localeCompare(b.title));
+      return res.status(200).json({ nodes });
     }
 
     if (action === "list") {
@@ -95,7 +124,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
           ...(algorithm && typeof algorithm === "object" ? { algorithm } : {}),
           ...(reason ? { reason } : {}),
           ...(outcome === "rejected" && doesNotBelong === true
-            ? { doesNotBelong: true, movedTo: null }
+            ? { doesNotBelong: true, under: null }
             : {}),
           by: uname || null,
           at: FieldValue.serverTimestamp(),
@@ -115,14 +144,11 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         return fail(res, 404, `Proposal ${id} not found`);
       if (!snap.data()?.decision)
         return fail(res, 400, "The proposal has no decision to place");
-      const { movedTo, doesNotBelong } = data;
-      const to =
-        movedTo && typeof movedTo.id === "string"
-          ? { id: movedTo.id, title: String(movedTo.title || "") }
-          : null;
+      // The generalizations it should be under, as the reviewer left them.
+      const under = Array.isArray(data.under) ? cleanUnder(data.under) : null;
+      if (!under) return fail(res, 400, "under must be a list");
       await ref.update({
-        "decision.doesNotBelong": doesNotBelong !== false,
-        "decision.movedTo": to,
+        "decision.under": under,
         "decision.placedBy": uname || null,
         "decision.placedAt": FieldValue.serverTimestamp(),
         updatedAt: FieldValue.serverTimestamp(),
@@ -130,11 +156,78 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       return res.status(200).json({ ok: true });
     }
 
+    if (action === "save") {
+      // The changes of one step: each proposal's decision as the reviewer
+      // left it, written together or not at all.
+      const changes: any[] = Array.isArray(data.changes) ? data.changes : [];
+      if (!changes.length) return fail(res, 400, "changes is required");
+      for (const c of changes) {
+        if (!c || typeof c.proposalId !== "string")
+          return fail(res, 400, "proposalId is required");
+        if (c.outcome !== null && !OUTCOMES.includes(c.outcome))
+          return fail(res, 400, "outcome is not valid");
+      }
+      const refs = changes.map((c) =>
+        db.collection(PROPOSALS).doc(c.proposalId),
+      );
+      const snaps = await db.getAll(...refs);
+      const missing = snaps.find(
+        (d) => !d.exists || d.data()?.appName !== appName,
+      );
+      if (missing) return fail(res, 404, `Proposal ${missing.id} not found`);
+      const batch = db.batch();
+      changes.forEach((c, i) => {
+        if (c.outcome === null) {
+          batch.update(refs[i], {
+            status: "pending",
+            decision: null,
+            updatedAt: FieldValue.serverTimestamp(),
+          });
+          return;
+        }
+        const out = c.outcome === "rejected" && c.doesNotBelong === true;
+        batch.update(refs[i], {
+          status: c.outcome,
+          decision: {
+            outcome: c.outcome,
+            ...(Array.isArray(c.steps) ? { steps: c.steps } : {}),
+            ...(c.kind ? { kind: c.kind } : {}),
+            ...(c.algorithm && typeof c.algorithm === "object"
+              ? { algorithm: c.algorithm }
+              : {}),
+            ...(c.inheritance && typeof c.inheritance === "object"
+              ? { inheritance: c.inheritance }
+              : {}),
+            ...(c.reason ? { reason: c.reason } : {}),
+            ...(out
+              ? {
+                  doesNotBelong: true,
+                  under: Array.isArray(c.under) ? cleanUnder(c.under) : null,
+                }
+              : {}),
+            by: uname || null,
+            at: FieldValue.serverTimestamp(),
+          },
+          updatedAt: FieldValue.serverTimestamp(),
+        });
+      });
+      await batch.commit();
+      return res.status(200).json({ ok: true });
+    }
+
     if (action === "propose") {
       // A parent's flow built from its specializations: written as a pending
       // proposal; a proposal already decided is left alone.
-      const { nodeId, nodeTitle, parentId, algorithm, steps, kind, from } =
-        data;
+      const {
+        nodeId,
+        nodeTitle,
+        parentId,
+        algorithm,
+        steps,
+        kind,
+        from,
+        inheritance,
+      } = data;
       if (!nodeId || typeof nodeId !== "string")
         return fail(res, 400, "nodeId is required");
       if (!algorithm || typeof algorithm !== "object")
@@ -163,6 +256,11 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
           from: Array.isArray(from) ? from : [],
           at: FieldValue.serverTimestamp(),
         },
+        // how each accepted specialization inherits the parts, as computed
+        // by the client that built the flow
+        ...(inheritance && typeof inheritance === "object"
+          ? { inheritance }
+          : {}),
         updatedAt: FieldValue.serverTimestamp(),
         ...(snap.exists ? {} : { createdAt: FieldValue.serverTimestamp() }),
       };

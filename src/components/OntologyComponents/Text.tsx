@@ -64,6 +64,7 @@ import PartInheritanceModeButton, {
   InheritanceMode,
 } from "../Common/PartInheritanceModeButton";
 import { setPropertyInheritanceMode } from "@components/lib/utils/propertyInheritanceMode";
+import { useReviewMode } from "../Review/ReviewModeContext";
 // import YjsEditor from "../YJSEditor/YjsEditor";
 
 type ITextProps = {
@@ -136,6 +137,7 @@ const Text = ({
 }: ITextProps) => {
   const db = getFirestore();
   const theme: any = useTheme();
+  const reviewMode = useReviewMode();
   const [editorContent, setEditorContent] = useState(text); // Local state to manage text
   const [error, setError] = useState("");
   const [isEditing, setIsEditing] = useState(false); // State to check if user is editing
@@ -669,6 +671,9 @@ const Text = ({
                   aiPeer={aiPeer}
                   hasComments={hasComments}
                   appName={appName}
+                  viewOntologyHref={
+                    reviewMode ? `#${currentVisibleNode.id}` : undefined
+                  }
                 />
               )}{" "}
             {enableEdit &&
@@ -734,7 +739,7 @@ const Text = ({
                   property={property}
                   nodes={relatedNodes}
                   enableEdit={enableEdit}
-                    onInheritanceChange={triggerInheritanceSend}
+                  onInheritanceChange={triggerInheritanceSend}
                 />
               )}
           </Box>
@@ -758,8 +763,27 @@ const Text = ({
             userSelect: "text",
             WebkitUserSelect: "text",
             MozUserSelect: "text",
+            ...(reviewMode && property === "title"
+              ? { fontSize: "24px", fontWeight: 600 }
+              : {}),
           }}
         >
+          {reviewMode && property === "title" && (
+            <Box
+              component="span"
+              sx={{
+                display: "block",
+                mb: "2px",
+                color: "primary.main",
+                fontSize: "13px",
+                fontWeight: 600,
+                lineHeight: "20px",
+                userSelect: "none",
+              }}
+            >
+              Reviewing proposals for
+            </Box>
+          )}
           {text}
         </Typography>
       ) : (
