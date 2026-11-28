@@ -40,9 +40,6 @@ import { DESIGN_SYSTEM_COLORS } from "@components/lib/theme/colors";
 import { extractMoves } from "@components/lib/utils/ConsultantUtils";
 import { LoadingButton } from "@mui/lab";
 
-// Assume you'll import the image yourself
-// import consultantImage from "@/public/consultant.png";
-
 const CONSULTANT_MESSAGES = "consultantMessages";
 
 const getMoveTooltip = (action: string): string => {
